@@ -1,0 +1,177 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+.container {
+    border-right: 1px solid #ffffff55;
+    width: 21vw;
+    height: 100vh;
+    background-color: var( --background-color);
+    transition: width 0.3s ease;
+}
+.containerOpenClose {
+    display: flex;
+    width: 100%;
+    justify-content: flex-end;
+}
+.close {
+    margin: 1rem 1rem;
+    cursor: pointer;
+}
+.closed {
+    width: 60px;
+}
+.containerForm{
+    width: 30vw;
+    overflow: hidden;
+    margin: 2rem 0.5rem;
+}
+.containerForm input{
+    border: 1px solid white;
+    padding: 1rem;
+    border-radius: 13px;
+    width: 17vw;
+    font-style: 'poppins';
+    font-weight: 800;
+    font-style: normal;
+}
+.titleKeep{
+    color: var(--color-text);
+    font-size: 1.5rem;
+    padding-left: 0.5rem;
+    font-weight: 500;
+    font-family: 'poppins';
+    font-style: normal;
+}
+.subtitle{
+    color: #545B77;
+    width: 20vw;
+    text-align: center;
+    font-size: 1rem;
+     font-family: 'poppins';
+    font-style: normal;
+    font-weight: 200;
+}
+.circleOne{
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: #545B77;
+    border: 1px solid #fff;
+}
+.circleTwo{
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: #006769;
+    border: 2px solid #fff;
+}
+.circleThree{
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: #967E42;
+    border: 2px solid #fff;
+}
+.circleFour{
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: #4F6F52;
+    border: 2px solid #fff;
+}
+
+.containerColors{
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    width: 20vw;
+   
+    
+
+}
+.circleOne:hover,
+.circleTwo:hover,
+.circleThree:hover,
+.circleFour:hover{
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+}
+
+.keep{
+    cursor: pointer;
+    color: var(--color-text);
+    font-size: 1rem;
+      font-family: 'poppins';
+    font-style: normal;
+    font-weight: 200;
+    padding-left: 2rem;
+ 
+}
+
+.containerKeep{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    width: 20vw;
+}
+
+.select{
+    border: 1px solid white;
+    padding: 1rem;
+    border-radius: 13px;
+    width: 19vw;
+    font-style: 'poppins';
+    font-weight: 800;
+    font-style: normal;
+    background:none ;
+    color:  var(--color-text);
+
+}
+
+form{
+    width: 20vw;
+}
+
+.btn{
+    background: none;
+    border: none;
+    background-color: #4F4F4F;
+    border-radius: 16px;
+    color: var(--color-text);
+    width: 20vw;
+    cursor: pointer;
+}
+
+.btn:hover{
+    border: 1px solid var(--color-text);
+}
+
+
+.selected {
+  border: 3px solid #008000; /* <-- Borde verde brillante */
+  transform: scale(1.1);
+  /* El box-shadow es opcional, puedes quitarlo si quieres un look más limpio */
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5); 
+}
+
+
+.datePicker{
+
+ 
+    background: none;
+    color: var(--color-text);
+    border: 1px solid var(--color-text);
+    border-radius: 13px;
+
+}
+
+/* Seleccionamos el icono del calendario del input tipo date */
+.datePicker::-webkit-calendar-picker-indicator {
+  /* Invertimos su color (negro -> blanco) y le damos brillo */
+  filter: invert(1) brightness(1.5);
+  
+  /* Opcional: Cambia el cursor para indicar que es clickeable */
+  cursor: pointer;
+}
+

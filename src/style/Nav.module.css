@@ -1,0 +1,109 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@font-face {
+  font-family: 'Menda';
+  src: url('../../public/Menda\ Font/Menda\ Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+.container{
+    background-color: var(--background-color);
+}
+.nav  {
+    border-bottom: 1px solid #ffffff55;
+    color: var(--color-text);
+    display: flex;
+    justify-content: space-between;
+}
+.navItems{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+}
+.navItemHome{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--color-grey);
+    border-radius: 13px;
+    margin: auto 0;
+    height: fit-content;
+    padding: 0 0.5rem;
+}
+.navItemHome p{
+    font-family: "Poppins", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.user{
+    display: flex;
+    gap: 2rem;
+}
+
+.logo{
+    width: 4rem;
+    height: 3rem;
+}
+.nameLogo{
+    text-transform: uppercase;
+    font-size: 1.5rem;
+    color: var(--color-text);
+    font-family: 'Menda';
+    text-shadow: 4px 2px 7.2px #9DDE8B;
+}
+.containerLogo{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 1rem;
+    cursor: pointer;
+}
+.containerImg{
+    display: flex;
+    gap: 1rem;
+    margin: 1rem 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.containerImg img:hover{
+    width: 1.9rem  ;
+    height: 1.9rem ;
+}
+.user{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 1rem;
+}
+
+.userActions{
+    display: flex;
+}
+
+.logoutButton{
+    cursor: pointer;
+    background: none ;
+    color: var(--color-text);
+    font-size: 1rem;
+    border: 1px solid #ffffff55;
+}
+.link{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.link p{
+    margin: 0;
+}
+
+.imgUser{
+    display:  none;
+}
