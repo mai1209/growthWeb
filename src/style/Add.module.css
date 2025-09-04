@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap');
+
+.container {
+    background-color: var(--background-color);
+    height: fit-content;
+    width: calc(100vw - 287px);
+    color: var(--color-text);
+}
+
+.containerAllForm {
+    display: flex;
+    gap: 5rem;
+    margin: 2rem;
+}
+
+.formone, .formtwo {
+    padding: 2rem;
+    margin: 0;
+    flex: 1;
+    height: fit-content;
+    border-radius: 13px;
+}
+
+.formone {
+    border: 1px solid var(--color-verde);
+}
+
+.formtwo {
+    border: 1px solid var(--color-rojo);
+}
+
+.input {
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: center;
+    border-bottom: 2px solid var(--color-text);
+    margin-bottom: 1rem;
+    color: var(--color-text);
+    padding: 0.5rem 0;
+    font-size: 1rem;
+}
+
+input:focus {
+    outline: none;
+}
+
+.input::placeholder {
+    color: var(--color-text);
+}
+
+.containerBtn, .containerDetalle {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* Regla para los campos que no son el de la fecha */
+.btn, .detalle, .buttonSend {
+    width: calc(50% - 0.5rem);
+    box-sizing: border-box;
+}
+
+/* Regla para el CONTENEDOR del DatePicker */
+.datePickerWrapper {
+    width: calc(50% - 0.5rem);
+}
+
+/* Estilos unificados para todos los campos */
+.btn, .detalle, .buttonSend {
+    background: transparent;
+    border: 1px solid var(--color-text);
+    color: var(--color-text);
+    padding: 0.5rem;
+    border-radius: 13px;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+}
+
+.buttonSend {
+    cursor: pointer;
+}
+
+/* Estilo para el INPUT que se muestra en el DatePicker */
+.datePicker {
+    background: transparent;
+    border: 1px solid var(--color-text);
+    color: var(--color-text);
+    padding: 0.5rem;
+    border-radius: 13px;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 100%; /* Ocupa todo el ancho de su contenedor (.datePickerWrapper) */
+    box-sizing: border-box;
+}
+
+.btn::placeholder, .detalle::placeholder {
+    color: var(--color-dark-text);
+}
+
+.title {
+    padding: 0.5rem 1rem;
+}
+
+.subTitle {
+    padding: 0 1rem;
+}

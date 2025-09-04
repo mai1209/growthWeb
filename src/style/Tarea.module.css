@@ -1,0 +1,254 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+.container{
+    color: var(--color-text);
+}
+
+.header h1{
+    margin: 2rem ;
+}
+
+.datePicker{
+
+    margin: 2rem;
+    padding: 1rem;
+    background: none;
+    color: var(--color-text);
+    border: 1px solid var(--color-text);
+    border-radius: 13px;
+    font-family: 'Poppins';
+    font-size: 0.9rem;
+    text-align: center;
+
+}
+
+/* Seleccionamos el icono del calendario del input tipo date */
+.datePicker::-webkit-calendar-picker-indicator {
+  /* Invertimos su color (negro -> blanco) y le damos brillo */
+  filter: invert(1) brightness(1.5);
+  
+  /* Opcional: Cambia el cursor para indicar que es clickeable */
+  cursor: pointer;
+}
+
+.tasksList{
+    display: flex;
+    gap: 2rem;
+    margin: 2rem;
+    width: 100%;
+}
+
+.taskCard{
+    border: 1px solid var(--color-text);
+    border-radius: 33px;
+    width: 216px;
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1.5rem 1rem;
+}
+
+.taskMeta{
+    text-align: center;
+      font-family: "Poppins", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  margin: 0.5rem 0;
+  font-size: 1.2rem;
+  line-height: 1.2rem;
+}
+
+.taskUrgency{
+  font-family: "Inter";
+  font-weight: 300;
+  font-style: italic;
+  margin: 0.5rem 0;
+  line-height: 1.2rem;
+
+}
+.taskDetails{
+    text-align: center;
+}
+
+.taskDetails p{
+
+  line-height: 1.2rem;
+}
+
+
+
+/* --- AÑADE ESTA CLASE --- */
+.completed .taskMeta {
+  text-decoration: line-through;
+  color: #888;
+}
+
+.completed {
+  opacity: 0.6;
+  border-left: 5px solid #28a745; /* Un borde verde para indicar que está completa */
+}
+
+
+/* --- CLASES PARA EL TEXTO DE ESTADO --- */
+
+.statusPending {
+  color: #ffc107; /* Amarillo/Naranja */
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+}
+
+.statusDone {
+  color: #28a745; /* Verde */
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+}
+
+.taskActions{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #222222;
+    padding: 0.7rem 1rem;
+    border-radius: 16px;
+    gap: 10px;
+}
+
+.taskActions p{
+    margin: 0;
+}
+
+
+/* ... tus estilos existentes ... */
+
+/* --- AÑADE ESTAS CLASES PARA LOS COLORES DE FONDO --- */
+
+/* Estos nombres deben coincidir con los que guardas en la base de datos */
+/* Paleta de colores sugerida */
+
+.color1 {
+  background-color: #545b77; /* Fondo: Gris azulado oscuro */
+  border-color: #98a0c2;     /* Borde: Un gris azulado más claro y suave */
+}
+
+.color2 {
+  background-color: #006769; /* Fondo: Verde azulado (Teal) oscuro */
+  border-color: #42c2c2;     /* Borde: Un verde azulado más vibrante y claro */
+}
+
+.color3 {
+  background-color: #967E42; /* Fondo: Dorado/mostaza oscuro */
+  border-color: #d4b26b;     /* Borde: Un dorado/arena más claro y luminoso */
+}
+
+.color4 {
+  background-color: #4f6f52; /* Fondo: Verde militar/oscuro */
+  border-color: #94ac97;     /* Borde: Un verde salvia suave y claro */
+}
+
+.taskHeader p{
+    text-align: center;
+
+}
+
+/* En Tarea.module.css */
+
+.deleteButton {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.7rem; 
+  padding: 5px;
+
+}
+
+.deleteButton:hover {
+
+  transform: scale(1.1); 
+}
+
+/* En Results.module.css */
+
+/* --- ESTILOS PARA EL CALENDARIO DESPLEGABLE (POP-UP) --- */
+
+/* Contenedor principal del calendario */
+:global(.react-datepicker) {
+  font-family: inherit !important;
+  background-color: #2c3e50 !important; /* Fondo oscuro principal */
+  border: 1px solid #34495e !important;
+  border-radius: 8px !important;
+}
+
+/* Triángulo que apunta al campo de fecha */
+:global(.react-datepicker__triangle) {
+  border-bottom-color: #2c3e50 !important;
+}
+:global(.react-datepicker__triangle::before) {
+    border-bottom-color: #34495e !important;
+}
+
+
+/* Cabecera (donde va el mes y las flechas) */
+:global(.react-datepicker__header) {
+  background-color: #1a252f !important;
+  border-bottom: 1px solid #34495e !important;
+  padding-top: 15px !important;
+}
+
+/* Color del texto del mes (ej: "Septiembre 2025") */
+:global(.react-datepicker__current-month) {
+  color: #ecf0f1 !important;
+  font-size: 1.2rem !important;
+  font-weight: bold !important;
+}
+
+/* Estilo de las flechas de navegación */
+:global(.react-datepicker__navigation-arrow) {
+  border-color: #ecf0f1 !important;
+}
+:global(.react-datepicker__navigation:hover .react-datepicker__navigation-arrow) {
+    border-color: #3498db !important; /* Color al pasar el mouse */
+}
+
+
+/* Días de la semana (Lu, Ma, Mi...) */
+:global(.react-datepicker__day-name) {
+  color: #95a5a6 !important; /* Un gris sutil */
+  font-weight: bold !important;
+}
+
+/* Estilo para todos los días (los números) */
+:global(.react-datepicker__day) {
+  color: #ecf0f1 !important;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* Día al pasar el mouse por encima */
+:global(.react-datepicker__day:hover) {
+  background-color: #34495e !important;
+  color: white !important;
+  border-radius: 50% !important;
+}
+
+/* Día que está seleccionado */
+:global(.react-datepicker__day--selected) {
+  background-color: #3498db !important; /* Azul para el día seleccionado */
+  color: white !important;
+  border-radius: 50% !important;
+  font-weight: bold !important;
+}
+
+/* Día de hoy, pero no seleccionado */
+:global(.react-datepicker__day--today) {
+    font-weight: bold;
+    color: #3498db !important; /* Lo resalta en azul */
+}
+
+/* Días que no pertenecen al mes actual (se ven opacos) */
+:global(.react-datepicker__day--outside-month) {
+  opacity: 0.4 !important;
+}
