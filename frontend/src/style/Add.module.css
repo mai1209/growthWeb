@@ -75,7 +75,7 @@ input:focus {
     border-radius: 13px;
     text-align: center;
     font-family: 'Poppins', sans-serif;
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 
 .buttonSend {
@@ -91,7 +91,7 @@ input:focus {
     border-radius: 13px;
     text-align: center;
     font-family: 'Poppins', sans-serif;
-    font-size: 1rem;
+    font-size: 0.9rem;
     cursor: pointer;
     width: 100%; /* Ocupa todo el ancho de su contenedor (.datePickerWrapper) */
     box-sizing: border-box;

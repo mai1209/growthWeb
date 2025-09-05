@@ -10,12 +10,14 @@ function LoginPage({ onClose, onAuthSuccess }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+
   // 2. Función que se ejecuta al enviar el formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      const res = await axios.post("http://localhost:3000/api/auth/login", {
+      const res = await axios.post( `${API_URL}/api/auth/login`, {
         email,
         password,
       });

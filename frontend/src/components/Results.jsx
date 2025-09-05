@@ -12,6 +12,8 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
   const [movimientos, setMovimientos] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+
   useEffect(() => {
     const fetchMovimientos = async () => {
       if (!token) {
@@ -25,7 +27,7 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
         dateToFetch.setMinutes(dateToFetch.getMinutes() - dateToFetch.getTimezoneOffset());
         const formattedDate = dateToFetch.toISOString().slice(0, 10); // "YYYY-MM-DD"
 
-        const res = await axios.get(`http://localhost:3000/api/add?fecha=${formattedDate}`, {
+        const res = await axios.get(`${API_URL}/api/add?fecha=${formattedDate}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setMovimientos(res.data);
@@ -47,7 +49,7 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
       return;
     }
     try {
-      await axios.delete(`http://localhost:3000/api/add/${movimientoId}`, {
+      await axios.delete(`${API_URL}/api/add/${movimientoId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMovimientos(prevMovimientos => prevMovimientos.filter(mov => mov._id !== movimientoId));

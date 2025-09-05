@@ -21,7 +21,7 @@ function LeftSideNotas({ onTaskAdded }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prevData => ({
@@ -73,7 +73,7 @@ const handleSubmit = async (e) => {
       };
 
       // 4. Enviamos 'dataToSend' en lugar de 'formData'
-      await axios.post('http://localhost:3000/api/task', dataToSend, {
+      await axios.post(`${API_URL}/api/task`, dataToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

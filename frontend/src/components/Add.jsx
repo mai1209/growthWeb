@@ -13,6 +13,8 @@ function Add({ onMovementAdded }) {
 
   const [selectedDate, setSelectedDate] = useState(new Date());
 
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+
   const handleDateChange = (date) => {
     setSelectedDate(date);
   };
@@ -48,7 +50,7 @@ function Add({ onMovementAdded }) {
     };
 
     try {
-      await axios.post("http://localhost:3000/api/add", data, {
+      await axios.post(`${API_URL}/api/add`,  data, {
         headers: {
           Authorization: `Bearer ${token}`
         }

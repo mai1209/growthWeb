@@ -9,6 +9,8 @@ function Tareas({ token, refreshKey }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+
   // CORRECCIÓN 1: El estado inicial debe ser un objeto Date
   const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -26,7 +28,7 @@ function Tareas({ token, refreshKey }) {
         dateToFetch.setMinutes(dateToFetch.getMinutes() - dateToFetch.getTimezoneOffset());
         const formattedDate = dateToFetch.toISOString().slice(0, 10);
 
-        const res = await axios.get(`http://localhost:3000/api/task?fecha=${formattedDate}`, {
+        const res = await axios.get(`${API_URL}/api/task?fecha=${formattedDate}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setTasks(res.data);
@@ -53,7 +55,7 @@ function Tareas({ token, refreshKey }) {
 
     const handleToggleComplete = async (taskId, currentStatus) => {
       try {
-        const response = await axios.put(`http://localhost:3000/api/task/${taskId}`,
+        const response = await axios.put(`${API_URL}/api/task/${taskId}`,
           { completada: !currentStatus },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -70,7 +72,7 @@ function Tareas({ token, refreshKey }) {
     const handleDeleteTask = async (taskId) => {
       if (!window.confirm("¿Estás seguro de que quieres eliminar esta tarea?")) return;
       try {
-        await axios.delete(`http://localhost:3000/api/task/${taskId}`, {
+        await axios.delete(`${API_URL}/api/task/${taskId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setTasks(prevTasks => prevTasks.filter(task => task._id !== taskId));
@@ -114,7 +116,7 @@ function Tareas({ token, refreshKey }) {
     <div className={style.container}>
       <div className={style.header}>
         <h1>Mis Tareas</h1>
-        {/* CORRECCIÓN 4: Usar 'selected' y el formato correcto */}
+      
         <DatePicker
           selected={selectedDate}
           onChange={handleDateChange}
