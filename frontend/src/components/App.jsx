@@ -9,7 +9,7 @@ function App() {
   const [activeView, setActiveView] = useState(null); // Para el modal de login
   const [refreshKey, setRefreshKey] = useState(0);
   const [movimientos, setMovimientos] = useState([]);
-
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
   useEffect(() => {
     const fetchMovimientos = async () => {
       if (!token) {
@@ -17,7 +17,7 @@ function App() {
         return;
       }
       try {
-        const res = await axios.get("http://localhost:3000/api/add", {
+        const res = await axios.get(`${API_URL}/api/add`,  {
           headers: { Authorization: `Bearer ${token}` },
         });
         setMovimientos(res.data);

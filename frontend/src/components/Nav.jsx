@@ -1,64 +1,55 @@
-// Nav.jsx (Versión Final con Nombre de Usuario Dinámico)
-
-import { useMemo } from 'react'; // <-- 1. Importamos useMemo
-import { jwtDecode } from 'jwt-decode'; // <-- 2. Importamos la librería que instalaste
+import { useMemo } from 'react';
+import { jwtDecode } from 'jwt-decode';
 import style from '../style/Nav.module.css';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 function Nav({ token, onLogout }) {
-
-  // 3. Usamos useMemo para decodificar el token de forma eficiente
   const userData = useMemo(() => {
-    // Si no hay token, no hay datos de usuario
-    if (!token) {
-      return null;
-    }
+    if (!token) return null;
     try {
-      // Decodificamos el token y devolvemos el payload (los datos del usuario)
       return jwtDecode(token);
     } catch (error) {
       console.error("Error al decodificar el token:", error);
-      // Si el token es inválido, tampoco hay datos de usuario
       return null;
     }
-  }, [token]); // Esto se ejecutará de nuevo solo si el 'token' cambia
+  }, [token]);
+
+  // Esta función decide qué clase aplicar basado en si el enlace está activo
+  const getNavLinkClass = ({ isActive }) => {
+    return isActive ? `${style.navLink} ${style.activeLink}` : style.navLink;
+  };
 
   return (
     <div className={style.container}>
       <nav className={style.nav}>
         <div className={style.containerLogo}>
-          <img className={style.logo} src="./logo.png" alt="logo" />
+          <img className={style.logo} src="/logo.png" alt="logo" />
           <p className={style.nameLogo}>growth</p>
         </div>
 
         <div className={style.navItems}>
-     
-          <Link to="/" className={style.navItemHome}>
-            <img className={style.imgItem} src="./home.png" alt="home" />
-            <p className={style.textItem}>Home</p>
-          </Link>
-          <div className={style.containerImg}>
-
-            <Link to="/notas" className={style.link}>
-             <img src="./tasklist.png" alt="tasklist" />
-              <p>Tareas</p>
-            </Link>
-            <div className={style.link}>
-               <img src="./notes.png" alt="notes" />
-              
-              <p>Notas</p>
-            </div>
-            <div className={style.link}>
-              <img src="./help.png" alt="help" />
-              <p>Ayuda</p>
-            </div>
-            <div className={style.link}>
-              <img src="./settings.png" alt="settings" />
-              <p>Ajustes</p>
-            </div>
-          </div>
+          {/* 👇 CORRECCIÓN: Usamos la FUNCIÓN, no la clase de CSS 👇 */}
+          <NavLink to="/" className={getNavLinkClass}>
+            <img src="/homedos.png" alt="home2" />
+            <p>Home</p>
+          </NavLink>
+          <NavLink to="/notas" className={getNavLinkClass}>
+            <img src="/tarea.png" alt="tasklist" />
+            <p>Tareas</p>
+          </NavLink>
+          <NavLink to="/notes" className={getNavLinkClass}>
+            <img src="/notas.png" alt="notes" />
+            <p>Notas</p>
+          </NavLink>
+          <NavLink to="/help" className={getNavLinkClass}>
+            <img src="/help.png" alt="help" />
+            <p>Ayuda</p>
+          </NavLink>
+          <NavLink to="/settings" className={getNavLinkClass}>
+            <img src="/settings.png" alt="settings" />
+            <p>Ajustes</p>
+          </NavLink>
         </div>
-
 
         {token && userData ? (
           <div className={style.userActions}>

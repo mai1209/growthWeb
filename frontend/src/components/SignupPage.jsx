@@ -12,6 +12,8 @@ function SignupPage({ onSwitchToLogin, onAuthSuccess }) {
   const [repeatPassword, setRepeatPassword] = useState('');
   const [error, setError] = useState('');
 
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+
   // 2. Función que se ejecuta al enviar el formulario
   const handleSubmit = async (e) => {
     e.preventDefault(); // Evita que la página se recargue
@@ -22,7 +24,7 @@ function SignupPage({ onSwitchToLogin, onAuthSuccess }) {
     }
 
     try {
-      const res = await axios.post("http://localhost:3000/api/auth/signup", {
+      const res = await axios.post( `${API_URL}/api/auth/signup`,{
         username, // Asegúrate que tu backend maneje 'username'
         email,
         password,
