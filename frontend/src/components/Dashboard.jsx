@@ -1,24 +1,30 @@
-// src/components/Dashboard.jsx
-
 import Results from './Results';
 import Add from './Add';
 import style from '../style/App.module.css';
 
-function Dashboard({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView, onMovementAdded, movimientos, refreshKey }) {
+// 1. Recibe 'setMovementToEdit' de AppRoutes
+function Dashboard({ 
+  token, 
+  movimientos, 
+  refreshKey, 
+  onMovementUpdate, 
+  movementToEdit, 
+  setMovementToEdit, 
+  ...authProps 
+}) {
   return (
     <div className={style.contentSide}>
       <Results
         token={token}
-        onAuthSuccess={onAuthSuccess}
-        onLoginClick={onLoginClick}
-        onCloseModal={onCloseModal}
-        activeView={activeView}
         movimientos={movimientos}
         refreshKey={refreshKey}
+        onEditClick={setMovementToEdit} // <-- 2. Pasa la función a Results como 'onEditClick'
+        onMovementUpdate={onMovementUpdate}
+        {...authProps}
       />
       <Add 
-        token={token} 
-        onMovementAdded={onMovementAdded} 
+        onMovementAdded={onMovementUpdate} 
+        movementToEdit={movementToEdit}
       />
     </div>
   );

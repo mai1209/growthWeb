@@ -130,3 +130,51 @@ export const deleteTask = async (req, res) => {
     res.status(500).json({ message: 'Error en el servidor al eliminar la tarea' });
   }
 };
+
+
+
+
+// En /backend/src/controllers/taskController.js
+
+// ... (tus otras funciones como createHabito, getTasks, etc.)
+
+export const updateTask = async (req, res) => {
+  try {
+    // 1. Buscamos la tarea por su ID
+    const task = await Task.findById(req.params.id);
+
+    if (!task) {
+      return res.status(404).json({ message: 'Tarea no encontrada' });
+    }
+
+    // 2. Verificamos que el usuario sea el dueño
+    if (task.user.toString() !== req.user.id) {
+      return res.status(401).json({ message: 'Usuario no autorizado' });
+    }
+
+    // (Opcional pero recomendado) Imprime en la consola de Render qué datos llegan
+    console.log('Datos recibidos para actualizar:', req.body);
+
+    // 3. Extraemos los campos que SÍ queremos permitir que se actualicen
+    const { meta, fecha, horario, urgencia, color, esRecurrente, completada } = req.body;
+
+    // 4. Actualizamos el documento que encontramos en la base de datos
+    task.meta = meta || task.meta;
+    task.fecha = fecha || task.fecha;
+    task.horario = horario || task.horario;
+    task.urgencia = urgencia || task.urgencia;
+    task.color = color || task.color;
+    // Para los booleanos, necesitamos una comprobación explícita
+    if (esRecurrente !== undefined) task.esRecurrente = esRecurrente;
+    if (completada !== undefined) task.completada = completada;
+
+    // 5. Guardamos el documento actualizado (esto SIEMPRE ejecuta las validaciones del modelo)
+    const updatedTask = await task.save();
+    
+    res.status(200).json(updatedTask);
+
+  } catch (error) {
+    console.error('Error al actualizar la tarea:', error);
+    res.status(500).json({ message: 'Error en el servidor al actualizar la tarea' });
+  }
+};

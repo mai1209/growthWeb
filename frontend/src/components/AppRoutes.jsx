@@ -1,48 +1,67 @@
-// src/AppRoutes.jsx
-
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-
-// Importamos los componentes que vamos a usar en las rutas
 import MainLayout from './MainLayout';
 import Dashboard from './Dashboard';
 import Tareas from './Tareas';
 
-function AppRoutes({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView, onMovementAdded, onLogout, movimientos, refreshKey }) {
+// 1. Añadimos 'onUpdate' a la lista de props que recibe
+function AppRoutes({ 
+  token, 
+  onLogout, 
+  movimientos, 
+  taskToEdit, 
+  setTaskToEdit, 
+  onTaskUpdate, 
+  onUpdate, // <-- AÑADIDO AQUÍ
+  movementToEdit,
+  setMovementToEdit,
+  refreshKey, 
+  ...authProps 
+}) {
   return (
     <Routes>
-      {/* Ruta Padre que renderiza el Layout principal. SIEMPRE está activa. */}
       <Route
         path="/"
-        element={<MainLayout token={token} onLogout={onLogout} movimientos={movimientos} />}
+        element={
+          <MainLayout 
+            token={token} 
+            onLogout={onLogout} 
+            movimientos={movimientos}
+            taskToEdit={taskToEdit}
+            onTaskUpdate={onTaskUpdate}
+            refreshKey={refreshKey}
+          />
+        }
       >
-        {/* Ruta Hija 1 (índice): Muestra el Dashboard en la URL "/" */}
         <Route
           index
           element={
             <Dashboard
               token={token}
-              onAuthSuccess={onAuthSuccess}
-              onLoginClick={onLoginClick}
-              onCloseModal={onCloseModal}
-              activeView={activeView}
-              onMovementAdded={onMovementAdded}
-              movimientos={movimientos}
               refreshKey={refreshKey}
+              onMovementUpdate={onUpdate} // <-- 2. Ahora 'onUpdate' está definido y se pasa correctamente
+              movementToEdit={movementToEdit}
+              setMovementToEdit={setMovementToEdit}
+              movimientos={movimientos}
+              {...authProps}
             />
           }
         />
-
-        {/* Ruta Hija 2: Muestra las Notas en la URL "/notas" */}
-        {/* Solo se puede acceder si hay un token */}
         <Route
           path="notas"
-         element={token ? <Tareas token={token} refreshKey={refreshKey} /> : <Navigate to="/" />}/>
-        
-        {/* AQUÍ PUEDES AÑADIR MÁS RUTAS EN EL FUTURO */}
+          element={
+            token ? (
+              <Tareas 
+                token={token} 
+                refreshKey={refreshKey} 
+                onEditClick={setTaskToEdit} 
+              />
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
       </Route>
-
-      {/* Si alguien escribe una URL que no existe, lo redirigimos al inicio */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );

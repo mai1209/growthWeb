@@ -98,6 +98,12 @@ h2{
 
 
 }
+.ButtonImg{
+    width: 15px;
+ 
+  margin-top: 4px;
+  cursor: pointer;
+}
 
 .deleteButton:hover {
 
@@ -195,5 +201,11 @@ h2{
     justify-content: center;
     align-items: center;
     transition: background-color 0.3s, transform 0.3s;
+}
+
+
+.containerButton{
+  display: flex;
+  flex-direction: row;
 }
 

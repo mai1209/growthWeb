@@ -252,3 +252,15 @@
 :global(.react-datepicker__day--outside-month) {
   opacity: 0.4 !important;
 }
+
+.editButton{
+background: none;
+border: none;
+}
+
+.ButtonImg{
+  width: 15px;
+ 
+  margin-top: 4px;
+  cursor: pointer;
+}
