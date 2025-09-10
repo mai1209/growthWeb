@@ -4,30 +4,24 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import style from '../style/Tarea.module.css';
 
-function Tareas({ token, refreshKey }) {
+// Mover la constante fuera del componente para optimizar
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+
+function Tareas({ token, refreshKey, onEditClick }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
-
-  // CORRECCIÓN 1: El estado inicial debe ser un objeto Date
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
     const fetchTasks = async () => {
-      if (!token) {
-        setTasks([]);
-        return;
-      }
+      if (!token) { setTasks([]); return; }
       setLoading(true);
       setError('');
       try {
-        // CORRECCIÓN 2: Formatear la fecha antes de enviarla a la API
         const dateToFetch = new Date(selectedDate);
         dateToFetch.setMinutes(dateToFetch.getMinutes() - dateToFetch.getTimezoneOffset());
         const formattedDate = dateToFetch.toISOString().slice(0, 10);
-
         const res = await axios.get(`${API_URL}/api/task?fecha=${formattedDate}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -43,7 +37,6 @@ function Tareas({ token, refreshKey }) {
     fetchTasks();
   }, [token, refreshKey, selectedDate]);
 
-  // CORRECCIÓN 3: La función debe recibir 'date' directamente
   const handleDateChange = (date) => {
     setSelectedDate(date);
   };
@@ -55,7 +48,8 @@ function Tareas({ token, refreshKey }) {
 
     const handleToggleComplete = async (taskId, currentStatus) => {
       try {
-        const response = await axios.put(`${API_URL}/api/task/${taskId}`,
+        // NOTA: Asegúrate que esta ruta exista en tu backend para evitar conflictos
+        const response = await axios.put(`${API_URL}/api/task/${taskId}/status`,
           { completada: !currentStatus },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -101,10 +95,16 @@ function Tareas({ token, refreshKey }) {
               onChange={() => handleToggleComplete(task._id, task.completada)}
             />
             <button
+              onClick={() => onEditClick(task)}
+              className={style.editButton}
+            >
+              <img className={style.ButtonImg} src="/edit.png" alt="edit" />
+            </button>
+            <button
               onClick={() => handleDeleteTask(task._id)}
               className={style.deleteButton}
             >
-              🗑️
+              <img className={style.ButtonImg} src="/trush.png" alt="delete" />
             </button>
           </div>
         </div>
@@ -116,7 +116,6 @@ function Tareas({ token, refreshKey }) {
     <div className={style.container}>
       <div className={style.header}>
         <h1>Mis Tareas</h1>
-      
         <DatePicker
           selected={selectedDate}
           onChange={handleDateChange}

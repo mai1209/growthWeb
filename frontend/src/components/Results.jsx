@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import axios from 'axios';
 import LoginPage from './LoginPage';
 import SignupPage from './SignupPage';
@@ -6,45 +6,33 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import style from '../style/Results.module.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
 
-
-function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView, refreshKey }) {
-  const [movimientos, setMovimientos] = useState([]);
+function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView, onEditClick, movimientos, onMovementUpdate }) {
+  // --- HOOKS ---
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+  const filteredMovimientos = useMemo(() => {
+    // Guarda de seguridad: si 'movimientos' no llega, devuelve una lista vacía.
+    if (!Array.isArray(movimientos)) return [];
 
-  useEffect(() => {
-    const fetchMovimientos = async () => {
-      if (!token) {
-        setMovimientos([]);
-        return;
-      }
-      try {
-        // --- CAMBIO 2: Formateamos la fecha a texto ANTES de enviarla a la API ---
-        // Ajustamos la zona horaria para evitar problemas de un día antes/después
-        const dateToFetch = new Date(selectedDate);
-        dateToFetch.setMinutes(dateToFetch.getMinutes() - dateToFetch.getTimezoneOffset());
-        const formattedDate = dateToFetch.toISOString().slice(0, 10); // "YYYY-MM-DD"
+    // Formatea la fecha seleccionada para una comparación sin zona horaria
+    const localSelectedDate = new Date(selectedDate);
+    localSelectedDate.setMinutes(localSelectedDate.getMinutes() - localSelectedDate.getTimezoneOffset());
+    const formattedSelectedDate = localSelectedDate.toISOString().slice(0, 10);
 
-        const res = await axios.get(`${API_URL}/api/add?fecha=${formattedDate}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setMovimientos(res.data);
-      } catch (err) {
-        console.error("Error al obtener movimientos:", err);
-        setMovimientos([]);
-      }
-    };
-    fetchMovimientos();
-  }, [token, refreshKey, selectedDate]);
+    return movimientos.filter(mov => {
+      // Compara solo la parte 'YYYY-MM-DD' de las fechas
+      return mov.fecha.slice(0, 10) === formattedSelectedDate;
+    });
+  }, [movimientos, selectedDate]);
 
+  // --- MANEJADORES DE EVENTOS ---
   const handleDateChange = (date) => {
     setSelectedDate(date);
   };
 
   const handleDeleteMovimiento = async (movimientoId) => {
-
     if (!window.confirm("¿Estás seguro de que quieres eliminar este movimiento?")) {
       return;
     }
@@ -52,14 +40,18 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
       await axios.delete(`${API_URL}/api/add/${movimientoId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setMovimientos(prevMovimientos => prevMovimientos.filter(mov => mov._id !== movimientoId));
+      // Llama a la función del padre para refrescar la lista de datos
+      if (onMovementUpdate) {
+        onMovementUpdate();
+      }
     } catch (err) {
       console.error("Error al eliminar el movimiento:", err);
       alert("No se pudo eliminar el movimiento.");
     }
   };
 
-
+  // --- RENDERIZADO CONDICIONAL ---
+  // Si no hay token, muestra la vista de Login/Registro
   if (!token) {
     return (
       <div>
@@ -72,7 +64,7 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
     );
   }
 
-
+  // Si hay token, muestra la vista principal
   return (
     <div className={style.container}>
       <div className={style.header}>
@@ -84,23 +76,19 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
             dateFormat="dd-MM-yyyy"
             className={style.datePicker}
           />
-
         </div>
       </div>
 
       <div className={style.containerInfoAll}>
-        {movimientos.length === 0 ? (
+        {filteredMovimientos.length === 0 ? (
           <p style={{ textAlign: 'center', marginTop: '2rem' }}>
-            No tienes movimientos para esta fecha. ¡Añade uno para comenzar!
+            No tienes movimientos para esta fecha.
           </p>
         ) : (
-          movimientos.map((mov) => (
-          
+          filteredMovimientos.map((mov) => (
             <div className={`${style.containerInfo} ${mov.tipo === 'ingreso' ? style.bordeIngreso : style.bordeEgreso}`} key={mov._id}>
-
               <div className={style.cardInner}>
-
-                {/* CARA FRONTAL: Contiene TUS estilos y estructura original */}
+                {/* CARA FRONTAL */}
                 <div className={style.cardFront}>
                   <div className={style.info}>
                     <p className={style.category}>{mov.categoria}</p>
@@ -116,21 +104,25 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
                         src={mov.tipo === 'ingreso' ? '/arrowGreen.png' : '/arrowRed.png'}
                         alt={mov.tipo === 'ingreso' ? 'Ingreso' : 'Egreso'}
                       />
+
                     </div>
                   </div>
                 </div>
-
-                {/* CARA TRASERA: Contiene solo el botón de borrar */}
+                {/* CARA TRASERA */}
                 <div className={style.cardBack}>
-                  <p className={style.deletePromptText}>¿Desea eliminar este movimiento?</p>
+                  <p className={style.deletePromptText}>¿Desea eliminar?</p>
+               <div className={style.containerButton}>
+                   <button onClick={() => onEditClick(mov)} className={style.deleteButton}>
+                    <img className={style.ButtonImg} src="/edit.png" alt="edit" />
+                  </button>
                   <button
                     onClick={() => handleDeleteMovimiento(mov._id)}
                     className={style.deleteButton}
                   >
-                    🗑️
+                    <img className={style.ButtonImg} src="/trush.png" alt="delete" />
                   </button>
+               </div>
                 </div>
-
               </div>
             </div>
           ))
