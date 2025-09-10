@@ -1,23 +1,46 @@
 
-:root{
-  --background-color: #000000;
-  --color-text: #ffffff;
-  --color-grey: #ffffff45;
-  --color-verde:#75F94C;
-  --color-rojo:#EB3223;
-  --color-dark-text:#545B77;
-}
-.content{
-  display: flex;
-}
+  :root{
+    --background-color: #000000;
+    --color-text: #ffffff;
+    --color-grey: #ffffff45;
+    --color-verde:#75F94C;
+    --color-rojo:#EB3223;
+    --color-dark-text:#545B77;
+  }
+  .content{
+    display: flex;
+  }
 
-.contentSide{
-  display: flex ;
-  flex-direction: column;
+  .contentSide{
+    display: flex ;
+    flex-direction: column;
 
-}
+  }
 
-.container{
-  background-color: var(--background-color);
-  height: 100vh;
-}
+  .container{
+    background-color: var(--background-color);
+    height: 100vh;
+  }
+
+
+  /* Archivo: /style/Add.module.css */
+
+  .inputMonto {
+    text-align: center;
+    /* Otros estilos que quieras, como el ancho, borde, etc. */
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--color-grey);
+    background-color: transparent;
+    color: var(--color-text);
+    border-radius: 5px;
+  }
+
+  .inputMonto::placeholder {
+    text-align: center;
+    color: var(--color-grey);
+  }
+
+  form input{
+    text-align: center;
+  }

@@ -1,15 +1,18 @@
+/* Archivo: LeftSite.module.css */
+
 .container {
     border-right: 1px solid #ffffff55;
     width: 21vw;
     background-color: var( --background-color);
     transition: width 0.3s ease;
-  
 }
+
 .containerOpenClose {
     display: flex;
     width: 100%;
     justify-content: flex-end;
 }
+
 .close {
     margin: 1rem 1rem;
     cursor: pointer;
@@ -21,11 +24,14 @@
     margin-top: 2.5rem;
 }
 
+/* --- ESTILO MODIFICADO --- */
 .containerInfo {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    margin-left: 1rem;
+    display: flex; /* Cambiado para alinear horizontalmente */
+    flex-direction: row;
+    justify-content: space-between; /* Para separar el texto del botón */
+    align-items: center; /* Para centrar verticalmente */
+    margin-left: 2rem;
+    margin-right: 2rem; /* Añadido para dar espacio al botón */
     color: var(--color-text);
 }
 
@@ -77,12 +83,32 @@
     font-weight: 600;
     font-style: normal;
 }
+
 .closed {
     width: 60px;
 }
+
 .textTotal{
     font-size: 1.3rem;
 }
+
 .total{
     font-size: 1.5rem;
+}
+
+/* --- NUEVOS ESTILOS PARA EL BOTÓN DE VISIBILIDAD --- */
+.visibilityButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 0.5rem;
+
+  
+}
+
+.visibilityIcon {
+    width: 25px; /* Un poco más grande para que se vea bien */
+    height: 25px;
+    
 }

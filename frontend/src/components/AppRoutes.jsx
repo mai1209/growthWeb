@@ -30,6 +30,7 @@ function AppRoutes({
             taskToEdit={taskToEdit}
             onTaskUpdate={onTaskUpdate}
             refreshKey={refreshKey}
+            onUpdate={onUpdate}  
           />
         }
       >
