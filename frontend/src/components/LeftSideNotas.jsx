@@ -14,27 +14,42 @@ const initialFormData = {
   esRecurrente: false,
 };
 
-function LeftSideNotas({ onTaskUpdate, taskToEdit }) {
+// ====================================================================
+// CORRECCIÓN 1: La prop ahora se llama 'onUpdate'
+// ====================================================================
+function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
   const [isOpen, setIsOpen] = useState(true);
   const toggleContainer = () => setIsOpen(!isOpen);
-  
+
   const [formData, setFormData] = useState(initialFormData);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   useEffect(() => {
     if (taskToEdit) {
+      // --- INICIA LA CORRECCIÓN ---
+
+      // 1. Creamos el objeto Date desde el string UTC que viene del backend.
+      //    Esto la convierte a tu hora local (ej: 9 de sep a las 21:00).
+      const fechaUTC = new Date(taskToEdit.fecha);
+      
+      // 2. Le sumamos el desfase de tu zona horaria para "cancelar" la conversión.
+      //    getTimezoneOffset() para Argentina es 180. Al sumarlo,
+      //    la fecha vuelve a ser 10 de sep a las 00:00 en tu hora local.
+      fechaUTC.setMinutes(fechaUTC.getMinutes() + fechaUTC.getTimezoneOffset());
+
+      // --- TERMINA LA CORRECCIÓN ---
+
       setFormData({
         ...taskToEdit,
-        fecha: new Date(taskToEdit.fecha),
+        fecha: fechaUTC, // <-- Usamos la fecha ya corregida
       });
       setIsOpen(true);
     } else {
       setFormData(initialFormData);
     }
   }, [taskToEdit]);
-
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prevData => ({
@@ -42,7 +57,7 @@ function LeftSideNotas({ onTaskUpdate, taskToEdit }) {
       [name]: type === 'checkbox' ? checked : value,
     }));
   };
-  
+
   const handleDateChange = (date) => {
     setFormData(prevData => ({ ...prevData, fecha: date }));
   };
@@ -67,7 +82,6 @@ function LeftSideNotas({ onTaskUpdate, taskToEdit }) {
       const token = localStorage.getItem('token');
       if (!token) { throw new Error('No estás autenticado.'); }
 
-      // --- CORRECCIÓN DE ZONA HORARIA AQUÍ ---
       const fechaLocal = new Date(formData.fecha);
       fechaLocal.setMinutes(fechaLocal.getMinutes() - fechaLocal.getTimezoneOffset());
       const fechaFormateada = fechaLocal.toISOString().slice(0, 10); // "YYYY-MM-DD"
@@ -76,7 +90,6 @@ function LeftSideNotas({ onTaskUpdate, taskToEdit }) {
         ...formData,
         fecha: fechaFormateada,
       };
-      // ------------------------------------
 
       if (taskToEdit) {
         // --- MODO EDICIÓN ---
@@ -91,8 +104,11 @@ function LeftSideNotas({ onTaskUpdate, taskToEdit }) {
         });
         setSuccess('¡Hábito/Tarea añadido con éxito!');
       }
-      
-      if (onTaskUpdate) onTaskUpdate();
+
+      // ====================================================================
+      // CORRECCIÓN 2: Se llama a 'onUpdate()' después de guardar
+      // ====================================================================
+      onUpdate();
       setTimeout(() => setSuccess(''), 3000);
 
     } catch (err) {
@@ -133,25 +149,28 @@ function LeftSideNotas({ onTaskUpdate, taskToEdit }) {
               <div>
                 <p className={style.subtitle}>Seleccione un color para su tarea</p>
                 <div className={style.containerColors}>
-                   {['color1', 'color2', 'color3', 'color4'].map((color, index) => (
-                      <div
-                        key={color}
-                        className={`${style[`circle${['One', 'Two', 'Three', 'Four'][index]}`]} ${formData.color === color ? style.selected : ''}`}
-                        onClick={() => handleColorSelect(color)}
-                      ></div>
-                   ))}
+                  {['color1', 'color2', 'color3', 'color4'].map((color, index) => (
+                    <div
+                      key={color}
+                      className={`${style[`circle${['One', 'Two', 'Three', 'Four'][index]}`]} ${formData.color === color ? style.selected : ''}`}
+                      onClick={() => handleColorSelect(color)}
+                    ></div>
+                  ))}
                 </div>
               </div>
               <div className={style.containerKeep}>
                 <p className={style.keep}>Repetir diariamente</p>
                 <input name="esRecurrente" type='checkbox' checked={formData.esRecurrente} onChange={handleChange} />
               </div>
-              <div>
+              <div className={style.containerEditCancel}>
                 <button className={style.btn} type="submit" disabled={loading}>
                   <p>{loading ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Añade un habito')}</p>
                 </button>
                 {isEditing && (
-                  <button type="button" className={style.btnCancel} onClick={() => onTaskUpdate()}>
+                  // ====================================================================
+                  // CORRECCIÓN 3: El botón 'Cancelar' llama a 'onUpdate'
+                  // ====================================================================
+                  <button type="button" className={style.btn} onClick={onUpdate}>
                     Cancelar
                   </button>
                 )}

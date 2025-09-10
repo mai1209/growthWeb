@@ -110,7 +110,7 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
                 </div>
                 {/* CARA TRASERA */}
                 <div className={style.cardBack}>
-                  <p className={style.deletePromptText}>¿Desea eliminar?</p>
+                  <p className={style.deletePromptText}>¿Desea eliminar o editar?</p>
                <div className={style.containerButton}>
                    <button onClick={() => onEditClick(mov)} className={style.deleteButton}>
                     <img className={style.ButtonImg} src="/edit.png" alt="edit" />

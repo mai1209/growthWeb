@@ -115,7 +115,7 @@ function Add({ onMovementAdded, movementToEdit }) {
       <div className={style.containerAllForm}>
         {/* --- Formulario de Ingreso --- */}
         <form className={style.formone} onSubmit={(e) => handleSubmit(e, "ingreso")}>
-            <InputMonto value={ingresoMonto} onChange={setIngresoMonto} disabled={isEditing && movementToEdit.tipo === 'egreso'} />
+            <InputMonto  className={style.inputMonto}  value={ingresoMonto} onChange={setIngresoMonto} disabled={isEditing && movementToEdit.tipo === 'egreso'} />
             <div className={style.containerBtn}>
                 <input name="categoria" className={style.btn} placeholder="Categoría" value={categoria} onChange={(e) => setCategoria(e.target.value)} required disabled={isEditing && movementToEdit.tipo === 'egreso'} />
                 <DatePicker selected={selectedDate} onChange={handleDateChange} dateFormat="dd/MM/yyyy" customInput={<CustomDateInput />} wrapperClassName={style.datePickerWrapper} disabled={isEditing && movementToEdit.tipo === 'egreso'} />
@@ -130,7 +130,7 @@ function Add({ onMovementAdded, movementToEdit }) {
 
         {/* --- Formulario de Egreso --- */}
         <form className={style.formtwo} onSubmit={(e) => handleSubmit(e, "egreso")}>
-            <InputMonto value={egresoMonto} onChange={setEgresoMonto} disabled={isEditing && movementToEdit.tipo === 'ingreso'} />
+            <InputMonto     className={style.inputMonto} value={egresoMonto} onChange={setEgresoMonto} disabled={isEditing && movementToEdit.tipo === 'ingreso'} />
             <div className={style.containerBtn}>
                 <input name="categoria" className={style.btn} placeholder="Categoría" value={categoria} onChange={(e) => setCategoria(e.target.value)} required disabled={isEditing && movementToEdit.tipo === 'ingreso'} />
                 <DatePicker selected={selectedDate} onChange={handleDateChange} dateFormat="dd/MM/yyyy" customInput={<CustomDateInput />} wrapperClassName={style.datePickerWrapper} disabled={isEditing && movementToEdit.tipo === 'ingreso'} />

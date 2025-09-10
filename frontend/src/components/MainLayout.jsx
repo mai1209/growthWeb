@@ -1,15 +1,14 @@
-import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Nav from './Nav';
 import LeftsSite from './LeftsSite';
 import LeftSideNotas from './LeftSideNotas';
 
-function MainLayout({ token, onLogout, taskToEdit, onTaskUpdate , refreshKey}) {
+function MainLayout({ token, onLogout, taskToEdit, onTaskUpdate , refreshKey, onUpdate}) {
   const location = useLocation();
 
   const sidebarMap = {
     // Pasamos la prop con el nombre consistente a LeftSideNotas
-    '/notas': <LeftSideNotas onTaskUpdate={onTaskUpdate} taskToEdit={taskToEdit} />,
+    '/notas': <LeftSideNotas onTaskUpdate={onTaskUpdate}  onUpdate={onUpdate} taskToEdit={taskToEdit} />,
   };
 
   const DefaultSidebar = <LeftsSite    token={token} refreshKey={refreshKey} />;
