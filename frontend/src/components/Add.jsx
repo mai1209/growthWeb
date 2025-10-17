@@ -10,9 +10,12 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
 function Add({ onMovementAdded, movementToEdit }) {
   const [ingresoMonto, setIngresoMonto] = useState('');
   const [egresoMonto, setEgresoMonto] = useState('');
-  const [categoria, setCategoria] = useState('');
-  const [detalle, setDetalle] = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [categoriaIngreso, setCategoriaIngreso] = useState('');
+  const [categoriaEgreso, setCategoriaEgreso] = useState('');
+  const [detalleIngreso, setDetalleIngreso] = useState('');
+  const [detalleEgreso, setDetalleEgreso] = useState('');
+  const [selectedDateIngreso, setSelectedDateIngreso] = useState(new Date());
+  const [selectedDateEgreso, setSelectedDateEgreso] = useState(new Date());
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,52 +23,69 @@ function Add({ onMovementAdded, movementToEdit }) {
 
   useEffect(() => {
     if (isEditing) {
-      // --- CORRECCIÓN DE ZONA HORARIA AL EDITAR ---
       const fechaUTC = new Date(movementToEdit.fecha);
-      // Le sumamos el desfase horario para que la fecha local sea la correcta
       fechaUTC.setMinutes(fechaUTC.getMinutes() + fechaUTC.getTimezoneOffset());
-      // ---------------------------------------------
-      
-      setCategoria(movementToEdit.categoria);
-      setDetalle(movementToEdit.detalle || '');
-      setSelectedDate(fechaUTC); // Usamos la fecha corregida
-
       if (movementToEdit.tipo === 'ingreso') {
         setIngresoMonto(movementToEdit.monto.toString());
+        setCategoriaIngreso(movementToEdit.categoria);
+        setDetalleIngreso(movementToEdit.detalle || '');
+        setSelectedDateIngreso(fechaUTC);
         setEgresoMonto('');
+        setCategoriaEgreso('');
+        setDetalleEgreso('');
+        setSelectedDateEgreso(new Date());
       } else {
         setEgresoMonto(movementToEdit.monto.toString());
+        setCategoriaEgreso(movementToEdit.categoria);
+        setDetalleEgreso(movementToEdit.detalle || '');
+        setSelectedDateEgreso(fechaUTC);
         setIngresoMonto('');
+        setCategoriaIngreso('');
+        setDetalleIngreso('');
+        setSelectedDateIngreso(new Date());
       }
     } else {
-      setCategoria('');
-      setDetalle('');
       setIngresoMonto('');
+      setCategoriaIngreso('');
+      setDetalleIngreso('');
+      setSelectedDateIngreso(new Date());
       setEgresoMonto('');
-      setSelectedDate(new Date());
+      setCategoriaEgreso('');
+      setDetalleEgreso('');
+      setSelectedDateEgreso(new Date());
     }
   }, [movementToEdit, isEditing]);
 
-  const handleDateChange = (date) => setSelectedDate(date);
+  const handleDateChangeIngreso = (date) => setSelectedDateIngreso(date);
+  const handleDateChangeEgreso = (date) => setSelectedDateEgreso(date);
 
   const handleSubmit = async (e, tipo) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    const monto = tipo === 'ingreso' ? ingresoMonto : egresoMonto;
+    let monto, categoria, detalle, selectedDate;
+    if (tipo === 'ingreso') {
+      monto = ingresoMonto;
+      categoria = categoriaIngreso;
+      detalle = detalleIngreso;
+      selectedDate = selectedDateIngreso;
+    } else {
+      monto = egresoMonto;
+      categoria = categoriaEgreso;
+      detalle = detalleEgreso;
+      selectedDate = selectedDateEgreso;
+    }
     if (!monto || isNaN(parseFloat(monto)) || parseFloat(monto) <= 0) {
       setError("Por favor, ingresa un monto válido.");
       setLoading(false);
       return;
     }
-
     const fechaLocal = new Date(selectedDate);
     fechaLocal.setMinutes(fechaLocal.getMinutes() - fechaLocal.getTimezoneOffset());
     const fechaFormateada = fechaLocal.toISOString().slice(0, 10);
-
     const dataToSend = {
-      tipo: isEditing ? movementToEdit.tipo : tipo, // Usamos el tipo original al editar
+      tipo: isEditing ? movementToEdit.tipo : tipo,
       monto: parseFloat(monto),
       categoria: categoria,
       fecha: fechaFormateada,
@@ -84,8 +104,19 @@ function Add({ onMovementAdded, movementToEdit }) {
         await axios.post(`${API_URL}/api/add`, dataToSend, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        // Limpiar solo los inputs del formulario usado
+        if (tipo === 'ingreso') {
+          setIngresoMonto('');
+          setCategoriaIngreso('');
+          setDetalleIngreso('');
+          setSelectedDateIngreso(new Date());
+        } else {
+          setEgresoMonto('');
+          setCategoriaEgreso('');
+          setDetalleEgreso('');
+          setSelectedDateEgreso(new Date());
+        }
       }
-   
       if (onMovementAdded) onMovementAdded();
 
     } catch (err) {
@@ -114,34 +145,34 @@ function Add({ onMovementAdded, movementToEdit }) {
       
       <div className={style.containerAllForm}>
         {/* --- Formulario de Ingreso --- */}
-        <form className={style.formone} onSubmit={(e) => handleSubmit(e, "ingreso")}>
-            <InputMonto  className={style.inputMonto}  value={ingresoMonto} onChange={setIngresoMonto} disabled={isEditing && movementToEdit.tipo === 'egreso'} />
-            <div className={style.containerBtn}>
-                <input name="categoria" className={style.btn} placeholder="Categoría" value={categoria} onChange={(e) => setCategoria(e.target.value)} required disabled={isEditing && movementToEdit.tipo === 'egreso'} />
-                <DatePicker selected={selectedDate} onChange={handleDateChange} dateFormat="dd/MM/yyyy" customInput={<CustomDateInput />} wrapperClassName={style.datePickerWrapper} disabled={isEditing && movementToEdit.tipo === 'egreso'} />
-            </div>
-            <div className={style.containerDetalle}>
-                <input name="detalle" className={style.detalle} placeholder="Detalle" value={detalle} onChange={(e) => setDetalle(e.target.value)} disabled={isEditing && movementToEdit.tipo === 'egreso'} />
-                <button className={style.buttonSend} type="submit" disabled={loading || (isEditing && movementToEdit.tipo === 'egreso')}>
-                  {isEditing ? 'Guardar Cambios' : 'Añadir ingreso'}
-                </button>
-            </div>
-        </form>
+    <form className={style.formone} onSubmit={(e) => handleSubmit(e, "ingreso")}> 
+      <InputMonto  className={style.inputMonto}  value={ingresoMonto} onChange={setIngresoMonto} disabled={isEditing && movementToEdit.tipo === 'egreso'} />
+      <div className={style.containerBtn}>
+        <input name="categoriaIngreso" className={style.btn} placeholder="Categoría" value={categoriaIngreso} onChange={(e) => setCategoriaIngreso(e.target.value)} required disabled={isEditing && movementToEdit.tipo === 'egreso'} />
+        <DatePicker selected={selectedDateIngreso} onChange={handleDateChangeIngreso} dateFormat="dd/MM/yyyy" customInput={<CustomDateInput />} wrapperClassName={style.datePickerWrapper} disabled={isEditing && movementToEdit.tipo === 'egreso'} />
+      </div>
+      <div className={style.containerDetalle}>
+        <input name="detalleIngreso" className={style.detalle} placeholder="Detalle" value={detalleIngreso} onChange={(e) => setDetalleIngreso(e.target.value)} disabled={isEditing && movementToEdit.tipo === 'egreso'} />
+        <button className={style.buttonSend} type="submit" disabled={loading || (isEditing && movementToEdit.tipo === 'egreso')}>
+          {isEditing ? 'Guardar Cambios' : 'Añadir ingreso'}
+        </button>
+      </div>
+    </form>
 
         {/* --- Formulario de Egreso --- */}
-        <form className={style.formtwo} onSubmit={(e) => handleSubmit(e, "egreso")}>
-            <InputMonto     className={style.inputMonto} value={egresoMonto} onChange={setEgresoMonto} disabled={isEditing && movementToEdit.tipo === 'ingreso'} />
-            <div className={style.containerBtn}>
-                <input name="categoria" className={style.btn} placeholder="Categoría" value={categoria} onChange={(e) => setCategoria(e.target.value)} required disabled={isEditing && movementToEdit.tipo === 'ingreso'} />
-                <DatePicker selected={selectedDate} onChange={handleDateChange} dateFormat="dd/MM/yyyy" customInput={<CustomDateInput />} wrapperClassName={style.datePickerWrapper} disabled={isEditing && movementToEdit.tipo === 'ingreso'} />
-            </div>
-            <div className={style.containerDetalle}>
-                <input name="detalle" className={style.detalle} placeholder="Detalle" value={detalle} onChange={(e) => setDetalle(e.target.value)} disabled={isEditing && movementToEdit.tipo === 'ingreso'} />
-                <button className={style.buttonSend} type="submit" disabled={loading || (isEditing && movementToEdit.tipo === 'ingreso')}>
-                  {isEditing ? 'Guardar Cambios' : 'Añadir egreso'}
-                </button>
-            </div>
-        </form>
+    <form className={style.formtwo} onSubmit={(e) => handleSubmit(e, "egreso")}> 
+      <InputMonto className={style.inputMonto} value={egresoMonto} onChange={setEgresoMonto} disabled={isEditing && movementToEdit.tipo === 'ingreso'} />
+      <div className={style.containerBtn}>
+        <input name="categoriaEgreso" className={style.btn} placeholder="Categoría" value={categoriaEgreso} onChange={(e) => setCategoriaEgreso(e.target.value)} required disabled={isEditing && movementToEdit.tipo === 'ingreso'} />
+        <DatePicker selected={selectedDateEgreso} onChange={handleDateChangeEgreso} dateFormat="dd/MM/yyyy" customInput={<CustomDateInput />} wrapperClassName={style.datePickerWrapper} disabled={isEditing && movementToEdit.tipo === 'ingreso'} />
+      </div>
+      <div className={style.containerDetalle}>
+        <input name="detalleEgreso" className={style.detalle} placeholder="Detalle" value={detalleEgreso} onChange={(e) => setDetalleEgreso(e.target.value)} disabled={isEditing && movementToEdit.tipo === 'ingreso'} />
+        <button className={style.buttonSend} type="submit" disabled={loading || (isEditing && movementToEdit.tipo === 'ingreso')}>
+          {isEditing ? 'Guardar Cambios' : 'Añadir egreso'}
+        </button>
+      </div>
+    </form>
       </div>
       {isEditing && (
         <div className={style.cancelContainer}>

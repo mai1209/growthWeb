@@ -48,7 +48,7 @@ h2{
     display: flex;
     margin: 1rem;
     gap: 3rem;
-    flex-wrap: wrap; /* Añadido para que las tarjetas pasen a la siguiente línea si no caben */
+    flex-wrap: wrap; 
 }
 
 .containerInfo{
@@ -98,6 +98,10 @@ h2{
     font-size: 1.5rem;
     font-family: 'Poppins', sans-serif;
     font-weight: 500;
+    display: flex;
+    width: 300px;
+    justify-content: center ;
+    overflow: scroll;
 }
 
 .containerFirstInfo{
