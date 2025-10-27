@@ -37,7 +37,7 @@ function LeftSite({ token, refreshKey }) {
       }
     };
     fetchMovimientos();
-  }, [token, refreshKey]);
+  }, [token, refreshKey , API_URL]);
 
   useEffect(() => {
     if (movimientos && movimientos.length > 0) {

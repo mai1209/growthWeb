@@ -8,8 +8,7 @@ import style from '../style/Results.module.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
 
-function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView, onEditClick, movimientos, onMovementUpdate }) {
-  // --- HOOKS ---
+function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView, onEditClick, movimientos, onMovementUpdate,onShowAllChange }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAll, setShowAll] = useState(false);
 
@@ -26,15 +25,32 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
     return movimientos.filter(mov => mov.fecha.slice(0, 10) === formattedSelectedDate);
   }, [movimientos, selectedDate, showAll]);
 
-  // --- MANEJADORES DE EVENTOS ---
+  // --- MANEJADORES ---
   const handleDateChange = (date) => {
     setSelectedDate(date);
-    setShowAll(false); // volver a filtrar por fecha si cambian la fecha
+    setShowAll(false); // volver a filtrar por fecha
+      if (onShowAllChange) onShowAllChange(false);
+  };
+
+
+    const handleAllMovimientos = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/add/all`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data) {
+        if (onMovementUpdate) onMovementUpdate(res.data);
+        setShowAll(true);
+         if (onShowAllChange) onShowAllChange(true);
+      }
+    } catch (err) {
+      console.error("Error al obtener todos los movimientos:", err);
+      alert("No se pudieron obtener los movimientos.");
+    }
   };
 
   const handleDeleteMovimiento = async (movimientoId) => {
     if (!window.confirm("¿Estás seguro de que quieres eliminar este movimiento?")) return;
-
     try {
       await axios.delete(`${API_URL}/api/add/${movimientoId}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -46,22 +62,9 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
     }
   };
 
-  const handleAllMovimientos = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/add/all`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.data) {
-        if (onMovementUpdate) onMovementUpdate(res.data);
-        setShowAll(true); // mostrar todos los movimientos
-      }
-    } catch (err) {
-      console.error("Error al obtener todos los movimientos:", err);
-      alert("No se pudieron obtener los movimientos.");
-    }
-  };
 
-  // --- RENDERIZADO CONDICIONAL ---
+
+  // --- RENDER LOGIN / REGISTRO ---
   if (!token) {
     return (
       <div>
@@ -78,72 +81,121 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
   return (
     <div className={style.container}>
       <div className={style.header}>
-        <h2>Movimientos</h2>
-        <div className={style.datePickerContainer}>
-          <DatePicker
-            selected={selectedDate}
-            onChange={handleDateChange}
-            dateFormat="dd-MM-yyyy"
-            className={style.datePicker}
-          />
-          <button onClick={handleAllMovimientos} className={style.datePicker}>
-            Ver todos los movimientos
-          </button>
-        </div>
+        <h2>{showAll ? 'Todos los Movimientos' : 'Movimientos del día'}</h2>
+     <div className={style.datePickerContainer}>
+  {!showAll && (
+    <DatePicker
+      selected={selectedDate}
+      onChange={handleDateChange}
+      dateFormat="dd-MM-yyyy"
+      className={style.datePicker}
+    />
+  )}
+
+  {!showAll ? (
+    <button onClick={handleAllMovimientos} className={`${style.datePicker} ${style.allMovimientos}`}>
+      Ver todos los movimientos
+    </button>
+  ) : (
+    <button 
+      onClick={() => {
+        setShowAll(false);
+        if (onShowAllChange) onShowAllChange(false);
+      }} 
+      className={style.datePicker}
+    >
+      Volver a movimientos por fecha
+    </button>
+  )}
+</div>
+
       </div>
 
-      <div className={style.containerInfoAll}>
-        {filteredMovimientos.length === 0 ? (
-          <p style={{ textAlign: 'center', marginTop: '2rem' }}>
-            No tienes movimientos para esta fecha.
-          </p>
-        ) : (
-          filteredMovimientos.map((mov) => (
-            <div
-              className={`${style.containerInfo} ${mov.tipo === 'ingreso' ? style.bordeIngreso : style.bordeEgreso}`}
-              key={mov._id}
-            >
-              <div className={style.cardInner}>
-                {/* CARA FRONTAL */}
-                <div className={style.cardFront}>
-                  <div className={style.info}>
-                    <p className={style.category}>{mov.categoria}</p>
-                    <p className={style.detalle}>{mov.detalle}</p>
+      {/* --- CONTENEDOR DE MOVIMIENTOS --- */}
+      {showAll ? (
+        <div className={style.allMovimientosContainer}>
+          <table className={style.movimientosTable}>
+            <thead className={style.titleMovimientos}>
+              <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Categoría</th>
+                <th>Detalle</th>
+                <th>Monto</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {movimientos.map((mov) => (
+                <tr key={mov._id}>
+                  <td>{new Date(mov.fecha).toLocaleDateString()}</td>
+                  <td>{mov.tipo}</td>
+                  <td>{mov.categoria}</td>
+                  <td>{mov.detalle}</td>
+                  <td>{mov.tipo === 'ingreso' ? '+' : '-'} ${mov.monto}</td>
+                  <td>
+                    <button onClick={() => onEditClick(mov)}>Editar</button>
+                    <button onClick={() => handleDeleteMovimiento(mov._id)}>Borrar</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className={style.containerInfoAll}>
+          {filteredMovimientos.length === 0 ? (
+            <p style={{ textAlign: 'center', marginTop: '2rem' }}>
+              No tienes movimientos para esta fecha.
+            </p>
+          ) : (
+            filteredMovimientos.map((mov) => (
+              <div
+                className={`${style.containerInfo} ${mov.tipo === 'ingreso' ? style.bordeIngreso : style.bordeEgreso}`}
+                key={mov._id}
+              >
+                <div className={style.cardInner}>
+                  {/* CARA FRONTAL */}
+                  <div className={style.cardFront}>
+                    <div className={style.info}>
+                      <p className={style.category}>{mov.categoria}</p>
+                      <p className={style.detalle}>{mov.detalle}</p>
+                    </div>
+                    <div className={style.montoContainer}>
+                      <p className={`${style.monto} ${mov.tipo === 'ingreso' ? style.montoIngreso : style.montoEgreso}`}>
+                        {mov.tipo === 'ingreso' ? '+' : '-'} ${mov.monto}
+                      </p>
+                      <div className={style.containerArrowDelete}>
+                        <img
+                          className={style.arrowResult}
+                          src={mov.tipo === 'ingreso' ? '/arrowGreen.png' : '/arrowRed.png'}
+                          alt={mov.tipo === 'ingreso' ? 'Ingreso' : 'Egreso'}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className={style.montoContainer}>
-                    <p className={`${style.monto} ${mov.tipo === 'ingreso' ? style.montoIngreso : style.montoEgreso}`}>
-                      {mov.tipo === 'ingreso' ? '+' : '-'} ${mov.monto}
-                    </p>
-                    <div className={style.containerArrowDelete}>
-                      <img
-                        className={style.arrowResult}
-                        src={mov.tipo === 'ingreso' ? '/arrowGreen.png' : '/arrowRed.png'}
-                        alt={mov.tipo === 'ingreso' ? 'Ingreso' : 'Egreso'}
-                      />
+
+                  {/* CARA TRASERA */}
+                  <div className={style.cardBack}>
+                    <p className={style.deletePromptText}>¿Desea eliminar o editar?</p>
+                    <div className={style.containerButton}>
+                      <button onClick={() => onEditClick(mov)} className={style.deleteButton}>
+                        <img className={style.ButtonImg} src="/edit.png" alt="edit" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMovimiento(mov._id)}
+                        className={style.deleteButton}
+                      >
+                        <img className={style.ButtonImg} src="/trush.png" alt="delete" />
+                      </button>
                     </div>
                   </div>
                 </div>
-
-                {/* CARA TRASERA */}
-                <div className={style.cardBack}>
-                  <p className={style.deletePromptText}>¿Desea eliminar o editar?</p>
-                  <div className={style.containerButton}>
-                    <button onClick={() => onEditClick(mov)} className={style.deleteButton}>
-                      <img className={style.ButtonImg} src="/edit.png" alt="edit" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteMovimiento(mov._id)}
-                      className={style.deleteButton}
-                    >
-                      <img className={style.ButtonImg} src="/trush.png" alt="delete" />
-                    </button>
-                  </div>
-                </div>
               </div>
-            </div>
-          ))
-        )}
-      </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
