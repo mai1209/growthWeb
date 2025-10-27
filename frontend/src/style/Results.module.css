@@ -212,3 +212,61 @@ h2{
     display: flex;
     flex-direction: row;
 }
+
+.allMovimientos{
+    background-color: var(--color-verde);
+    color: var(--color-dark-text);
+    border: 1px solid var(--color-dark-text);
+}
+
+.allMovimientosContainer{
+    
+    margin-bottom: 2rem;
+}
+
+.movimientosTable {
+  width: 100%;              /* ocupa todo el contenedor */
+  border-collapse: collapse; /* quita doble borde */
+  font-family: 'Arial', sans-serif;
+  margin-top: 1rem;
+}
+
+.movimientosTable th,
+.movimientosTable td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.movimientosTable th {
+  background-color: #1e1e1e; /* encabezado oscuro */
+  color: #fff;
+  font-weight: 600;
+}
+
+.movimientosTable td {
+
+  border-bottom: 1px solid #ddd; /* separación entre filas */
+}
+
+.movimientosTable tr:hover td {
+  background-color: #e0e0e070; /* efecto hover */
+}
+
+.movimientosTable button {
+  padding: 0.25rem 0.5rem;
+  margin-right: 0.25rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.movimientosTable button:first-child {
+  background-color: #4caf50;
+  color: white;
+}
+
+.movimientosTable button:last-child {
+  background-color: #f44336;
+  color: white;
+}

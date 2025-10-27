@@ -1,8 +1,8 @@
+import { useState } from 'react';
 import Results from './Results';
 import Add from './Add';
 import style from '../style/App.module.css';
 
-// 1. Recibe 'setMovementToEdit' de AppRoutes
 function Dashboard({ 
   token, 
   movimientos, 
@@ -10,22 +10,43 @@ function Dashboard({
   onMovementUpdate, 
   movementToEdit, 
   setMovementToEdit, 
+  
   ...authProps 
 }) {
+  // --- NUEVO ESTADO: controlar si se ven todos los movimientos ---
+  const [showAllMovimientos, setShowAllMovimientos] = useState(false);
+
+  // --- FUNCIONES QUE PASAMOS A RESULTS ---
+  const handleShowAllChange = (showAll) => {
+    setShowAllMovimientos(showAll);
+  };
+
+  const handleEditClick = (mov) => {
+    setMovementToEdit(mov);
+    setShowAllMovimientos(false); // opcional: esconder tabla al editar
+  };
+
+
+
   return (
     <div className={style.contentSide}>
       <Results
-        token={token}
+        token={token} 
         movimientos={movimientos}
         refreshKey={refreshKey}
-        onEditClick={setMovementToEdit} // <-- 2. Pasa la función a Results como 'onEditClick'
+        onEditClick={handleEditClick}
         onMovementUpdate={onMovementUpdate}
+        onShowAllChange={handleShowAllChange} // <-- NUEVO PROP
         {...authProps}
       />
-      <Add 
-        onMovementAdded={onMovementUpdate} 
-        movementToEdit={movementToEdit}
-      />
+
+      {/* Mostrar Add solo si no estamos viendo todos los movimientos */}
+      {!showAllMovimientos && (
+        <Add 
+          onMovementAdded={onMovementUpdate} 
+          movementToEdit={movementToEdit}
+        />
+      )}
     </div>
   );
 }
