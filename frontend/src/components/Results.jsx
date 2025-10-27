@@ -11,47 +11,57 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
 function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView, onEditClick, movimientos, onMovementUpdate }) {
   // --- HOOKS ---
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showAll, setShowAll] = useState(false);
 
+  // --- FILTRADO DE MOVIMIENTOS ---
   const filteredMovimientos = useMemo(() => {
-    // Guarda de seguridad: si 'movimientos' no llega, devuelve una lista vacía.
     if (!Array.isArray(movimientos)) return [];
 
-    // Formatea la fecha seleccionada para una comparación sin zona horaria
+    if (showAll) return movimientos;
+
     const localSelectedDate = new Date(selectedDate);
     localSelectedDate.setMinutes(localSelectedDate.getMinutes() - localSelectedDate.getTimezoneOffset());
     const formattedSelectedDate = localSelectedDate.toISOString().slice(0, 10);
 
-    return movimientos.filter(mov => {
-      // Compara solo la parte 'YYYY-MM-DD' de las fechas
-      return mov.fecha.slice(0, 10) === formattedSelectedDate;
-    });
-  }, [movimientos, selectedDate]);
+    return movimientos.filter(mov => mov.fecha.slice(0, 10) === formattedSelectedDate);
+  }, [movimientos, selectedDate, showAll]);
 
   // --- MANEJADORES DE EVENTOS ---
   const handleDateChange = (date) => {
     setSelectedDate(date);
+    setShowAll(false); // volver a filtrar por fecha si cambian la fecha
   };
 
   const handleDeleteMovimiento = async (movimientoId) => {
-    if (!window.confirm("¿Estás seguro de que quieres eliminar este movimiento?")) {
-      return;
-    }
+    if (!window.confirm("¿Estás seguro de que quieres eliminar este movimiento?")) return;
+
     try {
       await axios.delete(`${API_URL}/api/add/${movimientoId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // Llama a la función del padre para refrescar la lista de datos
-      if (onMovementUpdate) {
-        onMovementUpdate();
-      }
+      if (onMovementUpdate) onMovementUpdate();
     } catch (err) {
       console.error("Error al eliminar el movimiento:", err);
       alert("No se pudo eliminar el movimiento.");
     }
   };
 
+  const handleAllMovimientos = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/add/all`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data) {
+        if (onMovementUpdate) onMovementUpdate(res.data);
+        setShowAll(true); // mostrar todos los movimientos
+      }
+    } catch (err) {
+      console.error("Error al obtener todos los movimientos:", err);
+      alert("No se pudieron obtener los movimientos.");
+    }
+  };
+
   // --- RENDERIZADO CONDICIONAL ---
-  // Si no hay token, muestra la vista de Login/Registro
   if (!token) {
     return (
       <div>
@@ -64,11 +74,11 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
     );
   }
 
-  // Si hay token, muestra la vista principal
+  // --- RENDER PRINCIPAL ---
   return (
     <div className={style.container}>
       <div className={style.header}>
-        <h2>Movimientos del día</h2>
+        <h2>Movimientos</h2>
         <div className={style.datePickerContainer}>
           <DatePicker
             selected={selectedDate}
@@ -76,6 +86,9 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
             dateFormat="dd-MM-yyyy"
             className={style.datePicker}
           />
+          <button onClick={handleAllMovimientos} className={style.datePicker}>
+            Ver todos los movimientos
+          </button>
         </div>
       </div>
 
@@ -86,7 +99,10 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
           </p>
         ) : (
           filteredMovimientos.map((mov) => (
-            <div className={`${style.containerInfo} ${mov.tipo === 'ingreso' ? style.bordeIngreso : style.bordeEgreso}`} key={mov._id}>
+            <div
+              className={`${style.containerInfo} ${mov.tipo === 'ingreso' ? style.bordeIngreso : style.bordeEgreso}`}
+              key={mov._id}
+            >
               <div className={style.cardInner}>
                 {/* CARA FRONTAL */}
                 <div className={style.cardFront}>
@@ -104,24 +120,24 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
                         src={mov.tipo === 'ingreso' ? '/arrowGreen.png' : '/arrowRed.png'}
                         alt={mov.tipo === 'ingreso' ? 'Ingreso' : 'Egreso'}
                       />
-
                     </div>
                   </div>
                 </div>
+
                 {/* CARA TRASERA */}
                 <div className={style.cardBack}>
                   <p className={style.deletePromptText}>¿Desea eliminar o editar?</p>
-               <div className={style.containerButton}>
-                   <button onClick={() => onEditClick(mov)} className={style.deleteButton}>
-                    <img className={style.ButtonImg} src="/edit.png" alt="edit" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteMovimiento(mov._id)}
-                    className={style.deleteButton}
-                  >
-                    <img className={style.ButtonImg} src="/trush.png" alt="delete" />
-                  </button>
-               </div>
+                  <div className={style.containerButton}>
+                    <button onClick={() => onEditClick(mov)} className={style.deleteButton}>
+                      <img className={style.ButtonImg} src="/edit.png" alt="edit" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteMovimiento(mov._id)}
+                      className={style.deleteButton}
+                    >
+                      <img className={style.ButtonImg} src="/trush.png" alt="delete" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

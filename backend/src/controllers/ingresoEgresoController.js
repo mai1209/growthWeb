@@ -164,4 +164,27 @@ export const deleteIncomeEgress = async (req, res) => {
   }
 }
 
+export const getAllIncomeEgress = async (req, res) => {
+  console.log("📦 GET /api/add/all ejecutado");
+
+  try {
+    const userId = req.userId;
+    console.log("🧠 ID del usuario autenticado:", userId, typeof userId);
+
+    if (!userId) {
+      return res.status(401).json({ error: "No autorizado." });
+    }
+
+    const movimientos = await IngresoEgresoModel.find({ usuario: new mongoose.Types.ObjectId(userId) }).sort({ fecha: -1 });
+    console.log("✅ Movimientos encontrados:", movimientos.length);
+
+    res.status(200).json(movimientos);
+  } catch (error) {
+    console.error("💥 Error al obtener todos los movimientos:", error);
+    console.error(error.stack);
+    res.status(500).json({ error: "Error al obtener todos los movimientos", details: error.message });
+  }
+};
+
+
 

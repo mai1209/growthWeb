@@ -1,30 +1,51 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-const userSchema = new mongoose.Schema({
-    // =======================================================
-  username: {
-    type: String,
-    required: [true, "El nombre de usuario es obligatorio"],
-    trim: true, // Quita espacios en blanco al principio y al final
-    unique: true, // Opcional: asegura que cada nombre de usuario sea único
+const userSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      required: [true, 'El nombre de usuario es obligatorio'],
+      trim: true,
+      unique: true,
+      index: true, // 🔹 Índice directo
+    },
+    email: {
+      type: String,
+      required: [true, 'El email es obligatorio'],
+      unique: true,
+      trim: true,
+      lowercase: true,
+      index: true, // 🔹 Mejora búsqueda por email
+    },
+    password: {
+      type: String,
+      required: [true, 'La contraseña es obligatoria'],
+      minlength: 6,
+    },
   },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true }
+  { timestamps: true }
+);
+
+// 🧩 Middleware pre-save optimizado
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  try {
+    const salt = await bcrypt.genSalt(8); // 🔹 Más rápido que 10
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (err) {
+    next(err);
+  }
 });
 
-// 🔥 ESTE ES EL CÓDIGO CRÍTICO 🔥
-// Se ejecuta automáticamente ANTES de que un usuario se guarde en la BD
-userSchema.pre('save', async function (next) {
-  // Si la contraseña no se ha modificado, no hacer nada
-  if (!this.isModified('password')) {
-    return next();
-  }
-  
-  // Hashear la contraseña
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
-});
+// 🔐 Método para comparar contraseñas (evita hacerlo manualmente en el controller)
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// 🔹 Crea índices si no existen
+userSchema.index({ email: 1 });
+userSchema.index({ username: 1 });
 
 export default mongoose.model('User', userSchema);

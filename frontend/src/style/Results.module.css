@@ -129,13 +129,14 @@ h2{
 }
 
 .datePicker{
-    margin: 2rem;
+    margin: 1rem;
     padding: 1rem;
     background: none;
     color: var(--color-text);
     border: 1px solid var(--color-text);
     border-radius: 13px;
     text-align: center;
+    cursor: pointer;
 }
 
 .datePicker::-webkit-calendar-picker-indicator {

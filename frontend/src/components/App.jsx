@@ -47,7 +47,6 @@ function App() {
     localStorage.setItem("token", newToken);
     setToken(newToken);
     setActiveView(null);
-    setRefreshKey(prevKey => prevKey + 1); // Fuerza la recarga de movimientos
   };
 
   const handleLogout = () => {
