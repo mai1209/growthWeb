@@ -55,7 +55,7 @@ function LoginPage({ onClose, onAuthSuccess }) {
             <div className={style.containerRegister}>
               <button 
                 type="submit" 
-                className={style.btn} 
+                className={loading ? style.btnLoading : style.btn}
                 disabled={loading} // 👈 deshabilita el botón
               >
                 {loading ? (
