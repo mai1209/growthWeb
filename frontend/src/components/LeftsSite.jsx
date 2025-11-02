@@ -100,6 +100,7 @@ function LeftSite({ token, refreshKey }) {
               {/* Lógica condicional para el total en la lista */}
               <p className={style.containerInfoNumber}>${areTotalsVisible ? formatNumber(totales.total) : '****'}</p>
             </div>
+            
           </div>
         </>
       )}

@@ -44,11 +44,15 @@ h2{
 
 
 .containerInfoAll{
-    padding: 0 2rem ;
+  
     display: flex;
-    margin: 1rem;
+    justify-content: center;
+    margin: 1rem auto;
     gap: 3rem;
     flex-wrap: wrap; 
+    max-width: 800px;
+    max-height: 500px;
+    overflow-y: scroll;
 }
 
 .containerInfo{
