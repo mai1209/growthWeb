@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './MainLayout';
 import Dashboard from './Dashboard';
+import Add from './Add';
 import Tareas from './Tareas';
 
 // 1. Añadimos 'onUpdate' a la lista de props que recibe
@@ -44,6 +45,16 @@ function AppRoutes({
               movementToEdit={movementToEdit}
               setMovementToEdit={setMovementToEdit}
               movimientos={movimientos}
+              {...authProps}
+            />
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <Add
+              onMovementAdded={onUpdate}
+              movementToEdit={movementToEdit}
               {...authProps}
             />
           }
