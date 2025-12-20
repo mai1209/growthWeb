@@ -5,13 +5,21 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 0 1rem;
+    margin: 2rem 1rem;
 }
 
 .titleContainer {
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 1rem;
+}
+
+/* Asegurar que el título de la lista esté centrado y en gris, igual que los encabezados de columna */
+.titleContainer h1 {
+    margin: 0;
+    text-align: center;
+    color: #ffffff; /* texto blanco */
 }
 
 .visibilityButton {
@@ -35,7 +43,7 @@
     min-height: fit-content;
     width: calc(100vw - 287px);
     color: var(--color-text);
-    background-color: black;
+    background-color: transparent; /* dejar que el layout maneje el fondo */
 }
 
 h2{
@@ -44,13 +52,15 @@ h2{
 
 
 .containerInfoAll{
-  
+  border-radius: 12px;
+    box-shadow: inset 0 0 10px #ffffff1d;
+    padding: 1rem;
     display: flex;
     justify-content: center;
     margin: 1rem auto;
     gap: 3rem;
     flex-wrap: wrap; 
-    max-width: 800px;
+    max-width: 1200px;
     max-height: 500px;
     overflow-y: scroll;
 }
@@ -135,10 +145,11 @@ h2{
 .datePicker{
     margin: 1rem;
     padding: 1rem;
-    background: none;
+  
     color: var(--color-text);
-    border: 1px solid var(--color-text);
-    border-radius: 13px;
+  border: 1px solid var(--color-text);
+background: none;
+    border-radius: 12px;
     text-align: center;
     cursor: pointer;
 }
@@ -217,11 +228,6 @@ h2{
     flex-direction: row;
 }
 
-.allMovimientos{
-    background-color: var(--color-verde);
-    color: var(--color-dark-text);
-    border: 1px solid var(--color-dark-text);
-}
 
 .allMovimientosContainer{
     
@@ -229,32 +235,36 @@ h2{
 }
 
 .movimientosTable {
-  width: 100%;              /* ocupa todo el contenedor */
-  border-collapse: collapse; /* quita doble borde */
-  font-family: 'Arial', sans-serif;
-  margin-top: 1rem;
-}
-
-.movimientosTable th,
-.movimientosTable td {
-  padding: 0.75rem 1rem;
-  text-align: left;
-}
-
-.movimientosTable th {
-  background-color: #1e1e1e; /* encabezado oscuro */
-  color: #fff;
-  font-weight: 600;
+    width: 100%;
+    /* use separate collapse so we can have vertical gaps between rows */
+    border-collapse: separate;
+    border-spacing: 0 12px; /* vertical gap between rows */
+    font-family: 'Arial', sans-serif;
+    margin-top: 1rem;
 }
 
 .movimientosTable td {
-
-  border-bottom: 1px solid #ddd; /* separación entre filas */
+    /* remove bottom border so gaps are visible when using border-spacing */
+    border-bottom: none;
+    padding: 0.75rem 1rem;
+    background-color: var(--background-color);
+    color: var(--color-text);
+    border-radius: 0; /* aspecto cuadrado */
 }
 
 .movimientosTable tr:hover td {
-  background-color: #e0e0e070; /* efecto hover */
+    background-color: #e0e0e070; /* efecto hover */
 }
+
+
+.titleMovimientos th {
+    color:#545B77; 
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+    text-align: start;
+}
+
+
 
 .movimientosTable button {
   padding: 0.25rem 0.5rem;
@@ -273,4 +283,49 @@ h2{
 .movimientosTable button:last-child {
   background-color: #f44336;
   color: white;
+}
+
+
+.allMovimientos{
+border: none;
+background-color: #006769;
+
+}
+
+/* Clase opcional para mostrar listas a pantalla completa desde otros componentes */
+.fullScreenContainer {
+    width: 100%;
+   
+    box-sizing: border-box;
+    background: transparent; /* hereda el fondo del layout */
+}
+
+/* --- CLASES DE COLOR PARA FILAS (coinciden con Tarea.module.css) --- */
+.color1 td {
+    background-color: #545b77; /* Gris azulado oscuro */
+    border-color: #98a0c2;
+    color: var(--color-text);
+}
+
+.color2 td {
+    background-color: #006769; /* Verde azulado oscuro */
+    border-color: #42c2c2;
+    color: var(--color-text);
+}
+
+.color3 td {
+    background-color: #967E42; /* Dorado/mostaza oscuro */
+    border-color: #d4b26b;
+    color: var(--color-text);
+}
+
+.color4 td {
+    background-color: #4f6f52; /* Verde militar/oscuro */
+    border-color: #94ac97;
+    color: var(--color-text);
+}
+
+/* Texto de fila para asegurar contraste cuando la fila tiene fondo de color */
+.rowText {
+    color: var(--color-text);
 }

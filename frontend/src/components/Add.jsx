@@ -1,4 +1,5 @@
 import { useState, useEffect, forwardRef } from "react";
+import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -7,7 +8,8 @@ import InputMonto from "./InputMonto";
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
 
-function Add({ onMovementAdded, movementToEdit }) {
+function Add({ onMovementAdded, movementToEdit, only }) {
+  const navigate = useNavigate();
   const [ingresoMonto, setIngresoMonto] = useState('');
   const [egresoMonto, setEgresoMonto] = useState('');
   const [categoriaIngreso, setCategoriaIngreso] = useState('');
@@ -141,10 +143,11 @@ function Add({ onMovementAdded, movementToEdit }) {
     <div className={style.container}>
       {loading && <div className={style.spinner}></div>}
 
-      <p className={style.title}>{isEditing ? `Editando Movimiento` : 'Añadir ingreso / Añadir egreso'}</p>
+      <p className={style.title}>{isEditing ? `Editando Movimiento` : 'Añadir Movimiento '}</p>
       
       <div className={style.containerAllForm}>
         {/* --- Formulario de Ingreso --- */}
+    {!only || only === 'ingreso' ? (
     <form className={style.formone} onSubmit={(e) => handleSubmit(e, "ingreso")}> 
       <InputMonto  className={style.inputMonto}  value={ingresoMonto} onChange={setIngresoMonto} disabled={isEditing && movementToEdit.tipo === 'egreso'} />
       <div className={style.containerBtn}>
@@ -158,8 +161,10 @@ function Add({ onMovementAdded, movementToEdit }) {
         </button>
       </div>
     </form>
+    ) : null}
 
         {/* --- Formulario de Egreso --- */}
+    {!only || only === 'egreso' ? (
     <form className={style.formtwo} onSubmit={(e) => handleSubmit(e, "egreso")}> 
       <InputMonto className={style.inputMonto} value={egresoMonto} onChange={setEgresoMonto} disabled={isEditing && movementToEdit.tipo === 'ingreso'} />
       <div className={style.containerBtn}>
@@ -173,13 +178,21 @@ function Add({ onMovementAdded, movementToEdit }) {
         </button>
       </div>
     </form>
+    ) : null}
       </div>
       {isEditing && (
-        <div className={style.cancelContainer}>
-          <button className={style.cancelButton} type="button" onClick={onMovementAdded}>
-            Cancelar Edición
-          </button>
-        </div>
+          <div className={style.cancelContainer}>
+            <button
+              className={style.cancelButton}
+              type="button"
+              onClick={() => {
+                if (onMovementAdded) onMovementAdded();
+                navigate('/');
+              }}
+            >
+              Cancelar Edición
+            </button>
+          </div>
       )}
       {error && <p className={style.errorText}>{error}</p>}
     </div>

@@ -3,25 +3,18 @@
 
 .container{
     color: var(--color-text);
+    display: flex;
+    flex-direction: column;
+   
+  
+    width: 100%;
 }
 
 .header h1{
     margin: 2rem ;
 }
 
-.datePicker{
 
-    margin: 2rem;
-    padding: 1rem;
-    background: none;
-    color: var(--color-text);
-    border: 1px solid var(--color-text);
-    border-radius: 13px;
-    font-family: 'Poppins';
-    font-size: 0.9rem;
-    text-align: center;
-
-}
 
 /* Seleccionamos el icono del calendario del input tipo date */
 .datePicker::-webkit-calendar-picker-indicator {
@@ -35,20 +28,24 @@
 .tasksList{
     display: flex;
     gap: 2rem;
-    margin: 2rem;
-    width: 100%;
+    margin: 1rem 4rem;
+   
+
 }
 
+
+
+
 .taskCard{
-    border: 1px solid var(--color-text);
-    border-radius: 33px;
-    width: 216px;
-    height: fit-content;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 1.5rem 1rem;
+  border: 1px solid var(--color-text);
+  border-radius: 20px; /* menos redondeado para aspecto cuadrado */
+
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem 1rem;
 }
 
 .taskMeta{
@@ -150,6 +147,11 @@
   border-color: #94ac97;     /* Borde: Un verde salvia suave y claro */
 }
 
+/* Texto de fila para asegurar contraste cuando la fila tiene fondo de color */
+.rowText{
+  color: var(--color-text);
+}
+
 .taskHeader p{
     text-align: center;
 
@@ -175,68 +177,66 @@
 
 /* --- ESTILOS PARA EL CALENDARIO DESPLEGABLE (POP-UP) --- */
 
-/* Contenedor principal del calendario */
+/* Contenedor principal del calendario: usar variables para integrarse con el tema */
 :global(.react-datepicker) {
   font-family: inherit !important;
-  background-color: #2c3e50 !important; /* Fondo oscuro principal */
-  border: 1px solid #34495e !important;
-  border-radius: 8px !important;
+  background-color: var(--background-color) !important;
+  border: 1px solid var(--color-text) !important;
+  border-radius: 4px !important;
 }
 
 /* Triángulo que apunta al campo de fecha */
 :global(.react-datepicker__triangle) {
-  border-bottom-color: #2c3e50 !important;
+  border-bottom-color: var(--background-color) !important;
 }
 :global(.react-datepicker__triangle::before) {
-    border-bottom-color: #34495e !important;
+  border-bottom-color: var(--color-text) !important;
 }
-
 
 /* Cabecera (donde va el mes y las flechas) */
 :global(.react-datepicker__header) {
-  background-color: #1a252f !important;
-  border-bottom: 1px solid #34495e !important;
-  padding-top: 15px !important;
+  background-color: transparent !important;
+  border-bottom: 1px solid var(--color-text) !important;
+  padding-top: 12px !important;
 }
 
 /* Color del texto del mes (ej: "Septiembre 2025") */
 :global(.react-datepicker__current-month) {
-  color: #ecf0f1 !important;
-  font-size: 1.2rem !important;
-  font-weight: bold !important;
+  color: var(--color-text) !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
 }
 
 /* Estilo de las flechas de navegación */
 :global(.react-datepicker__navigation-arrow) {
-  border-color: #ecf0f1 !important;
+  border-color: var(--color-text) !important;
 }
 :global(.react-datepicker__navigation:hover .react-datepicker__navigation-arrow) {
-    border-color: #3498db !important; /* Color al pasar el mouse */
+  border-color: var(--color-text) !important; /* mantener sutil */
 }
-
 
 /* Días de la semana (Lu, Ma, Mi...) */
 :global(.react-datepicker__day-name) {
-  color: #95a5a6 !important; /* Un gris sutil */
-  font-weight: bold !important;
+  color: var(--color-dark-text) !important;
+  font-weight: 600 !important;
 }
 
 /* Estilo para todos los días (los números) */
 :global(.react-datepicker__day) {
-  color: #ecf0f1 !important;
-  transition: background-color 0.2s, color 0.2s;
+  color: var(--color-text) !important;
+  transition: background-color 0.15s, color 0.15s;
 }
 
 /* Día al pasar el mouse por encima */
 :global(.react-datepicker__day:hover) {
-  background-color: #34495e !important;
-  color: white !important;
+  background-color: rgba(0,0,0,0.06) !important;
+  color: var(--color-text) !important;
   border-radius: 50% !important;
 }
 
 /* Día que está seleccionado */
 :global(.react-datepicker__day--selected) {
-  background-color: #3498db !important; /* Azul para el día seleccionado */
+  background-color: var(--color-accent, #3498db) !important; /* fallback si no existe */
   color: white !important;
   border-radius: 50% !important;
   font-weight: bold !important;
@@ -244,13 +244,13 @@
 
 /* Día de hoy, pero no seleccionado */
 :global(.react-datepicker__day--today) {
-    font-weight: bold;
-    color: #3498db !important; /* Lo resalta en azul */
+  font-weight: 700;
+  color: var(--color-accent, #3498db) !important;
 }
 
 /* Días que no pertenecen al mes actual (se ven opacos) */
 :global(.react-datepicker__day--outside-month) {
-  opacity: 0.4 !important;
+  opacity: 0.5 !important;
 }
 
 .editButton{
@@ -264,3 +264,5 @@ border: none;
   margin-top: 4px;
   cursor: pointer;
 }
+
+

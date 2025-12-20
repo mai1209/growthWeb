@@ -25,8 +25,10 @@ export const getTasks = async (req, res) => {
     const { fecha } = req.query;
     const userId = req.user.id;
 
+    // Si no se proporciona 'fecha', devolvemos todas las tareas del usuario
     if (!fecha) {
-      return res.status(400).json({ message: 'Se requiere una fecha' });
+      const allTasks = await Task.find({ user: new mongoose.Types.ObjectId(userId) }).sort({ fecha: 1, horario: 1 });
+      return res.status(200).json(allTasks);
     }
 
     // Creamos la fecha de inicio y fin del día solicitado
