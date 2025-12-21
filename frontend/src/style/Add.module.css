@@ -157,3 +157,13 @@ input:focus {
 .subTitle {
     padding: 0 1rem;
 }
+
+.cancelButton{
+    background: none;
+    color: var(--color-text);
+    border: 1px solid var(--color-text);
+    padding: 1rem;
+    border-radius: 12px;
+    margin: 3rem;
+    cursor: pointer;
+}

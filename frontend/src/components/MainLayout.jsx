@@ -18,8 +18,11 @@ function MainLayout({ token, onLogout, taskToEdit, onTaskUpdate , refreshKey, on
     <div>
       <Nav token={token} onLogout={onLogout} />
       <main style={{ display: 'flex' }}>
-        {CurrentSidebar || DefaultSidebar}
-        <Outlet />
+        {/* Mostrar sidebar solo si el usuario está autenticado (token) */}
+        {token ? (CurrentSidebar || DefaultSidebar) : null}
+        <div style={{ flex: 1 }}>
+          <Outlet />
+        </div>
       </main>
     </div>
   );

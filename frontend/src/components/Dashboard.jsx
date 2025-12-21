@@ -53,7 +53,7 @@ function Dashboard({
                 <span className={style.toggleText}>{selectedType === 'ingreso' ? 'Ingreso' : 'Egreso'}</span>
               </label>
               <button onClick={() => setShowOnly(selectedType)} className={`${style.buttonSend} ${style.buttonToggle}`}>
-                Abrir
+                Cargar 
               </button>
             </>
           )}
