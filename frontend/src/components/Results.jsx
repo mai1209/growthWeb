@@ -8,7 +8,7 @@ import style from '../style/Results.module.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
 
-function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView, onEditClick, movimientos, onMovementUpdate,onShowAllChange }) {
+function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView, onEditClick, movimientos, onMovementUpdate, onShowAllChange }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAll, setShowAll] = useState(false);
 
@@ -29,11 +29,11 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
   const handleDateChange = (date) => {
     setSelectedDate(date);
     setShowAll(false); // volver a filtrar por fecha
-      if (onShowAllChange) onShowAllChange(false);
+    if (onShowAllChange) onShowAllChange(false);
   };
 
 
-    const handleAllMovimientos = async () => {
+  const handleAllMovimientos = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/add/all`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -41,7 +41,7 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
       if (res.data) {
         if (onMovementUpdate) onMovementUpdate(res.data);
         setShowAll(true);
-         if (onShowAllChange) onShowAllChange(true);
+        if (onShowAllChange) onShowAllChange(true);
       }
     } catch (err) {
       console.error("Error al obtener todos los movimientos:", err);
@@ -82,32 +82,33 @@ function Results({ token, onAuthSuccess, onLoginClick, onCloseModal, activeView,
     <div className={style.container}>
       <div className={style.header}>
         <h2>{showAll ? 'Todos los Movimientos' : 'Movimientos del día'}</h2>
-     <div className={style.datePickerContainer}>
-  {!showAll && (
-    <DatePicker
-      selected={selectedDate}
-      onChange={handleDateChange}
-      dateFormat="dd-MM-yyyy"
-      className={style.datePicker}
-    />
-  )}
+        <div className={style.datePickerContainer}>
+          {!showAll && (
+            <DatePicker
+              selected={selectedDate}
+              onChange={handleDateChange}
+              dateFormat="dd-MM-yyyy"
+              className={style.datePicker}
+            />
+          )}
 
-  {!showAll ? (
-    <button onClick={handleAllMovimientos} className={`${style.datePicker} ${style.allMovimientos}`}>
-      Ver todos los movimientos
-    </button>
-  ) : (
-    <button 
-      onClick={() => {
-        setShowAll(false);
-        if (onShowAllChange) onShowAllChange(false);
-      }} 
-      className={style.datePicker}
-    >
-      Volver a movimientos por fecha
-    </button>
-  )}
-</div>
+          {!showAll ? (
+            <button onClick={handleAllMovimientos} className={`${style.icon} `}>
+              <img src="/list.png" alt="lista" />
+
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setShowAll(false);
+                if (onShowAllChange) onShowAllChange(false);
+              }}
+              className={style.icon}
+            >
+              <img src="/cuadrado.png" alt="cuadrado" />
+            </button>
+          )}
+        </div>
 
       </div>
 

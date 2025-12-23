@@ -1,331 +1,391 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
-/* --- NUEVOS ESTILOS PARA EL HEADER Y BOTÓN DE VISIBILIDAD --- */
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 2rem 1rem;
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 2rem 3rem 2rem 1rem;
+        height: fit-content;
+    }
+
+    .titleContainer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+
+    .titleContainer h1 {
+        margin: 0;
+        text-align: center;
+        color: #ffffff;
+
+    }
+
+    .visibilityButton {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        margin-top: -5px;
+
+    }
+
+    .visibilityIcon {
+        width: 24px;
+        height: 24px;
+        filter: invert(1);
+
+    }
+
+
+
+    .container {
+        height: calc(50vh - 45px);
+        min-height: fit-content;
+
+        color: var(--color-text);
+        background-color: transparent;
+
+    }
+
+    h2 {
+        margin: 2rem 1rem;
+    }
+
+
+    .containerInfoAll {
+        border-radius: 12px;
+        box-shadow: inset 0 0 10px #ffffff1d;
+        padding: 1rem;
+        display: flex;
+        justify-content: center;
+        margin: 1rem auto;
+        gap: 3rem;
+        flex-wrap: wrap;
+        max-width: 1200px;
+
+    }
+
+    .containerInfo {
+        width: 180px;
+        height: 180px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border-radius: 33px;
+        padding: 0.5rem 1rem;
+    }
+
+    .bordeIngreso {
+        border: 2px solid var(--color-verde);
+    }
+
+    .bordeEgreso {
+        border: 2px solid var(--color-rojo);
+    }
+
+    .info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        line-height: 1.5rem;
+    }
+
+    .info p {
+        margin: 0;
+        text-align: center;
+    }
+
+    .category {
+        font-size: 1.5rem;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 500;
+    }
+
+    .detalle {
+        color: var(--color-dark-text);
+        font-family: 'Poppins', sans-serif;
+        font-weight: 300;
+    }
+
+    .monto {
+        font-size: 1.5rem;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 500;
+        display: flex;
+        width: 300px;
+        justify-content: center;
+
+    }
+
+    .containerFirstInfo {
+        display: flex;
+        gap: 2rem;
+        width: calc(100vw - 20vw);
+        justify-content: center;
+    }
+
+    .deleteButton {
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 0.7rem;
+    }
+
+    .ButtonImg {
+        width: 15px;
+        margin-top: 4px;
+        cursor: pointer;
+    }
+
+    .deleteButton:hover {
+        transform: scale(1.1);
+    }
+
+    .datePicker {
+        margin: 1rem;
+        padding: 1rem;
+
+        color: var(--color-text);
+        border: 1px solid var(--color-text);
+        background: none;
+        border-radius: 12px;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .datePicker::-webkit-calendar-picker-indicator {
+        filter: invert(1) brightness(1.5);
+        cursor: pointer;
+    }
+
+    .arrowResult {
+        width: 30px;
+        height: 30px;
+        padding-top: 3px;
+    }
+
+    .containerArrowDelete {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .cardInner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.8s;
+        transform-style: preserve-3d;
+    }
+
+    .containerInfo:hover .cardInner {
+        transform: rotateY(180deg);
+    }
+
+    .cardFront,
+    .cardBack {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .cardBack {
+        transform: rotateY(180deg);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .deletePromptText {
+        font-family: 'Poppins', sans-serif;
+        font-size: 1rem;
+        text-align: center;
+    }
+
+    .cardBack .deleteButton {
+        font-size: 1.2rem;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: background-color 0.3s, transform 0.3s;
+    }
+
+    .containerButton {
+        display: flex;
+        flex-direction: row;
+    }
+
+
+    .allMovimientosContainer {
+        height: 600px;
+
+        overflow-x: hidden;
+        box-shadow: inset 0 0 10px #ffffff1d;
+    }
+
+    /* Scrollbar */
+    .allMovimientosContainer::-webkit-scrollbar {
+        width: 3px;
+        /* 👈 grosor */
+    }
+
+    /* Track */
+    .allMovimientosContainer::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    /* Thumb */
+    .allMovimientosContainer::-webkit-scrollbar-thumb {
+        background-color: #4caf50;
+        /* 👈 rojo */
+        border-radius: 10px;
+    }
+
+    /* Hover opcional */
+    .allMovimientosContainer::-webkit-scrollbar-thumb:hover {
+        background-color: #f44666;
+    }
+
+
+
+
+    .movimientosTable {
+        width: calc(100% - 2rem);
+        border-collapse: separate;
+        border-spacing: 0 12px;
+        font-family: 'Arial', sans-serif;
+        margin: 2rem 0;
+    }
+
+    .movimientosTable td {
+        border-bottom: none;
+        padding: 0.75rem 1rem;
+        background-color: var(--background-color);
+        color: var(--color-text);
+        border-radius: 0;
+
+
+    }
+
+    .movimientosTable tr:hover td {
+        background-color: #e0e0e070;
+
+    }
+
+
+    .titleMovimientos th {
+        color: #545B77;
+        font-weight: 600;
+        padding: 0.75rem 1rem;
+        text-align: start;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background-color: #000000;
+
+
+
+    }
+.category::first-letter {
+  text-transform: uppercase;
 }
 
-.titleContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-}
 
-/* Asegurar que el título de la lista esté centrado y en gris, igual que los encabezados de columna */
-.titleContainer h1 {
-    margin: 0;
-    text-align: center;
-    color: #ffffff; /* texto blanco */
-}
+    .movimientosTable button {
+        padding: 0.25rem 0.5rem;
+        margin-right: 0.25rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+    }
 
-.visibilityButton {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    margin-top: -5px; /* Ajuste para alinear con el título */
-}
+    .movimientosTable button:first-child {
+        background-color: #4caf50;
+        color: white;
+    }
 
-.visibilityIcon {
-    width: 24px;
-    height: 24px;
-    filter: invert(1); /* Para que el ícono sea blanco */
-}
-/* --- FIN DE NUEVOS ESTILOS --- */
+    .movimientosTable button:last-child {
+        background-color: #f44336;
+        color: white;
+    }
 
 
-.container{
-    height: calc(50vh - 45px);
-    min-height: fit-content;
-    width: calc(100vw - 287px);
-    color: var(--color-text);
-    background-color: transparent; /* dejar que el layout maneje el fondo */
-}
+    .datePickerContainer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+    }
 
-h2{
-    margin: 2rem 1rem;
-}
-
-
-.containerInfoAll{
-  border-radius: 12px;
-    box-shadow: inset 0 0 10px #ffffff1d;
-    padding: 1rem;
-    display: flex;
-    justify-content: center;
-    margin: 1rem auto;
-    gap: 3rem;
-    flex-wrap: wrap; 
-    max-width: 1200px;
-    max-height: 500px;
-    overflow-y: scroll;
-}
-
-.containerInfo{
-    width: 180px;
-    height: 180px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    border-radius: 33px ;
-    padding: 0.5rem 1rem;
-}
-
-.bordeIngreso{
-    border: 2px solid var(--color-verde); 
-}
-
-.bordeEgreso{
-    border: 2px solid var(--color-rojo);
-}
-
-.info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    line-height: 1.5rem;
-}
-
-.info p{
-    margin: 0;
-    text-align: center;
-}
-
-.category{
-    font-size: 1.5rem;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 500;
-}
-
-.detalle{
-    color: var(--color-dark-text);
-    font-family: 'Poppins', sans-serif;
-    font-weight: 300;
-}
-
-.monto{
-    font-size: 1.5rem;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 500;
-    display: flex;
-    width: 300px;
-    justify-content: center ;
-    overflow: scroll;
-}
-
-.containerFirstInfo{
-    display: flex;
-    gap: 2rem;
-    width: calc(100vw - 20vw);
-    justify-content: center;
-}
-
-.deleteButton {
-    background-color: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 0.7rem; 
-}
-
-.ButtonImg{
-    width: 15px;
-    margin-top: 4px;
-    cursor: pointer;
-}
-
-.deleteButton:hover {
-    transform: scale(1.1); 
-}
-
-.datePicker{
-    margin: 1rem;
-    padding: 1rem;
-  
-    color: var(--color-text);
-  border: 1px solid var(--color-text);
-background: none;
-    border-radius: 12px;
-    text-align: center;
-    cursor: pointer;
-}
-
-.datePicker::-webkit-calendar-picker-indicator {
-    filter: invert(1) brightness(1.5);
-    cursor: pointer;
-}
-
-.arrowResult{
-    width: 30px;
-    height: 30px;
-    padding-top: 3px;
-}
-
-.containerArrowDelete{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* --- ESTILOS PARA LA ANIMACIÓN DE VOLTEO --- */
-.cardInner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transition: transform 0.8s;
-    transform-style: preserve-3d;
-}
-
-.containerInfo:hover .cardInner {
-    transform: rotateY(180deg);
-}
-
-.cardFront, .cardBack {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.cardBack {
-    transform: rotateY(180deg); 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-}
-
-.deletePromptText {
-    font-family: 'Poppins', sans-serif;
-    font-size: 1rem;
-    text-align: center;
-}
-
-.cardBack .deleteButton {
-    font-size: 1.2rem; 
-    border: none;
-    border-radius: 50%; 
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: background-color 0.3s, transform 0.3s;
-}
-
-.containerButton{
-    display: flex;
-    flex-direction: row;
-}
-
-
-.allMovimientosContainer{
-    
-    margin-bottom: 2rem;
-}
-
-.movimientosTable {
-    width: 100%;
-    /* use separate collapse so we can have vertical gaps between rows */
-    border-collapse: separate;
-    border-spacing: 0 12px; /* vertical gap between rows */
-    font-family: 'Arial', sans-serif;
-    margin-top: 1rem;
-}
-
-.movimientosTable td {
-    /* remove bottom border so gaps are visible when using border-spacing */
-    border-bottom: none;
-    padding: 0.75rem 1rem;
-    background-color: var(--background-color);
-    color: var(--color-text);
-    border-radius: 0; /* aspecto cuadrado */
-}
-
-.movimientosTable tr:hover td {
-    background-color: #e0e0e070; /* efecto hover */
-}
-
-
-.titleMovimientos th {
-    color:#545B77; 
-    font-weight: 600;
-    padding: 0.75rem 1rem;
-    text-align: start;
-}
+    .icon {
+        background: none;
+        cursor: pointer;
+        border: none;
 
 
 
-.movimientosTable button {
-  padding: 0.25rem 0.5rem;
-  margin-right: 0.25rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
-}
 
-.movimientosTable button:first-child {
-  background-color: #4caf50;
-  color: white;
-}
-
-.movimientosTable button:last-child {
-  background-color: #f44336;
-  color: white;
-}
+    }
 
 
-.allMovimientos{
-border: none;
-background-color: #006769;
 
-}
+    /* Clase opcional para mostrar listas a pantalla completa desde otros componentes */
+    .fullScreenContainer {
+        width: 100%;
 
-/* Clase opcional para mostrar listas a pantalla completa desde otros componentes */
-.fullScreenContainer {
-    width: 100%;
-   
-    box-sizing: border-box;
-    background: transparent; /* hereda el fondo del layout */
-}
+        box-sizing: border-box;
+        background: transparent;
+        /* hereda el fondo del layout */
+    }
 
-/* --- CLASES DE COLOR PARA FILAS (coinciden con Tarea.module.css) --- */
-.color1 td {
-    background-color: #545b77; /* Gris azulado oscuro */
-    border-color: #98a0c2;
-    color: var(--color-text);
-}
+    /* --- CLASES DE COLOR PARA FILAS (coinciden con Tarea.module.css) --- */
+    .color1 td {
+        background-color: #545b77;
+        /* Gris azulado oscuro */
+        border-color: #98a0c2;
+        color: var(--color-text);
+    }
 
-.color2 td {
-    background-color: #006769; /* Verde azulado oscuro */
-    border-color: #42c2c2;
-    color: var(--color-text);
-}
+    .color2 td {
+        background-color: #006769;
+        /* Verde azulado oscuro */
+        border-color: #42c2c2;
+        color: var(--color-text);
+    }
 
-.color3 td {
-    background-color: #967E42; /* Dorado/mostaza oscuro */
-    border-color: #d4b26b;
-    color: var(--color-text);
-}
+    .color3 td {
+        background-color: #967E42;
+        /* Dorado/mostaza oscuro */
+        border-color: #d4b26b;
+        color: var(--color-text);
+    }
 
-.color4 td {
-    background-color: #4f6f52; /* Verde militar/oscuro */
-    border-color: #94ac97;
-    color: var(--color-text);
-}
+    .color4 td {
+        background-color: #4f6f52;
+        /* Verde militar/oscuro */
+        border-color: #94ac97;
+        color: var(--color-text);
+    }
 
-/* Texto de fila para asegurar contraste cuando la fila tiene fondo de color */
-.rowText {
-    color: var(--color-text);
-}
+
+    .rowText {
+        color: var(--color-text);
+
+    }

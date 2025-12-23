@@ -24,10 +24,7 @@ function Dashboard({
   // --- FUNCIONES QUE PASAMOS A RESULTS ---
   const navigate = useNavigate();
 
-  const handleShowAllChange = (showAll) => {
-    // placeholder if later we want to track showAll state in Dashboard
-  };
-
+ 
   const handleEditClick = (mov) => {
     // set the movement to edit at App level and navigate to the Add page
     if (setMovementToEdit) setMovementToEdit(mov);
