@@ -172,12 +172,12 @@ function Tareas({ token, refreshKey, onEditClick }) {
 
         <div>
           {!showList ? (
-            <button onClick={() => setShowList(true)} className={`${resultsStyle.datePicker} ${resultsStyle.allMovimientos}`} >
-              Ver las tareas en lista
+            <button onClick={() => setShowList(true)} className={`${resultsStyle.icon}`} >
+             <img src="/list.png" alt="lista" />
             </button>
           ) : (
-            <button onClick={() => setShowList(false)} className={resultsStyle.datePicker}>
-              Volver a tareas por fecha
+            <button onClick={() => setShowList(false)} className={resultsStyle.icon}>
+                <img src="/cuadrado.png" alt="cuadrado" />
             </button>
           )}
         </div>
