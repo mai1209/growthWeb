@@ -14,7 +14,6 @@ function Nav({ token, onLogout }) {
     }
   }, [token]);
 
-  // Esta función decide qué clase aplicar basado en si el enlace está activo
   const getNavLinkClass = ({ isActive }) => {
     return isActive ? `${style.navLink} ${style.activeLink}` : style.navLink;
   };
@@ -28,7 +27,7 @@ function Nav({ token, onLogout }) {
         </div>
 
         <div className={style.navItems}>
-          {/* 👇 CORRECCIÓN: Usamos la FUNCIÓN, no la clase de CSS 👇 */}
+
           <NavLink to="/" className={getNavLinkClass}>
             <img src="/homedos.png" alt="home2" />
             <p>Home</p>
@@ -64,6 +63,8 @@ function Nav({ token, onLogout }) {
         ) : (
           <div></div>
         )}
+        <button className={style.menuButton}><img src="./menu.png" alt="menuHamburguesass"/></button>
+
       </nav>
     </div>
   );

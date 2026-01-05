@@ -3,6 +3,7 @@
 .container {
     border-right: 1px solid #ffffff55;
     width: 21vw;
+    height: 100vh;
     background-color: var( --background-color);
     transition: width 0.3s ease;
 }
@@ -183,6 +184,7 @@ form{
     gap: 1rem;
     max-width: 20vw;
 }
+
 
 
 

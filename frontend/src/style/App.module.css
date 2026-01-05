@@ -1,155 +1,139 @@
+:root {
+  --background-color: #000000;
+  --color-text: #ffffff;
+  --color-grey: #ffffff45;
+  --color-verde: #75f94c;
+  --color-rojo: #eb3223;
+  --color-dark-text: #545b77;
+}
+.content {
+  display: flex;
+}
 
-  :root{
-    --background-color: #000000;
-    --color-text: #ffffff;
-    --color-grey: #ffffff45;
-    --color-verde:#75F94C;
-    --color-rojo:#EB3223;
-    --color-dark-text:#545B77;
-  }
-  .content{
-    display: flex;
-  }
+.contentSide {
+  display: flex;
+  flex-direction: column;
+}
 
-  .contentSide{
-    display: flex ;
-    flex-direction: column;
-  
-    margin: 2rem;
+.container {
+  background-color: var(--background-color);
+}
 
-  }
+/* Archivo: /style/Add.module.css */
 
-  .container{
-    background-color: var(--background-color);
-    height: 100vh;
-  }
+.inputMonto {
+  text-align: center;
+  /* Otros estilos que quieras, como el ancho, borde, etc. */
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--color-grey);
+  background-color: transparent;
+  color: var(--color-text);
+  border-radius: 5px;
+}
 
+.inputMonto::placeholder {
+  text-align: center;
+  color: var(--color-grey);
+}
 
-  /* Archivo: /style/Add.module.css */
+form input {
+  text-align: center;
+}
 
-  .inputMonto {
-    text-align: center;
-    /* Otros estilos que quieras, como el ancho, borde, etc. */
-    width: 100%;
-    padding: 8px;
-    border: 1px solid var(--color-grey);
-    background-color: transparent;
-    color: var(--color-text);
-    border-radius: 5px;
-  }
+.contentAllCargar {
+  position: relative;
+  top: 22rem;
+  right: 0.6rem;
+  display: flex;
+}
 
-  .inputMonto::placeholder {
-    text-align: center;
-    color: var(--color-grey);
-  }
+.typeButtons {
+  border: 0.5px solid var(--color-text);
+  border-radius: 8px;
+  display: flex;
+  flex: 1;
+}
 
-  form input{
-    text-align: center;
-  }
+.typeButton {
+  background: none;
+  border: none;
+  color: var(--color-text);
+  padding: 0;
+}
 
-  /* Toggle switch (nicer look) */
-  .toggleSwitch {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    cursor: pointer;
-    user-select: none;
-  }
+.typeButton p {
+  font-size: 1rem;
+}
 
-  .toggleSwitchInput {
-    /* hide native checkbox */
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
+.contentButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.4rem;
+  height: 40px;
+}
 
-  .toggleSlider {
-    position: relative;
-    width: 56px;
-    height: 30px;
-    background: linear-gradient(180deg,#dcdcdc,#cfcfcf);
-    border-radius: 10px;
-    transition: background 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-    flex-shrink: 0;
-    display: inline-block;
-  }
+.ingresoBtn {
+  background-color: #12240a;
+}
 
-  .toggleSlider::before {
-    content: '';
-    position: absolute;
-    left: 4px;
-    top: 4px;
-    width: 22px;
-    height: 22px;
-    background: #fff;
-    border-radius:20px;
-    transition: transform 0.22s cubic-bezier(.2,.9,.3,1), box-shadow 0.15s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  }
+.egresoBtn {
+  background-color: #230804;
+}
 
-  /* Unchecked = ingreso (green accent) */
-  .toggleSwitchInput:not(:checked) + .toggleSlider {
-    background: linear-gradient(180deg,var(--color-verde),#9aaf97);
-  }
+.cancelContainer {
+  background-color: var(--background-color);
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  padding: 1rem;
+}
 
-  .toggleSwitchInput:not(:checked) + .toggleSlider::before {
-    transform: translateX(0);
-  }
-
-  /* Checked = egreso (red accent) */
-  .toggleSwitchInput:checked + .toggleSlider {
-    background: linear-gradient(180deg,var(--color-rojo),#4905025e);
+@media (max-width: 1000px) {
+  .contentAllCargar {
+    position: fixed;
+    top: 21rem;
+    z-index: 999999;
   }
 
-  .toggleSwitchInput:checked + .toggleSlider::before {
-    transform: translateX(26px);
-  }
-
-  .toggleText {
-    color: var(--color-text);
-    font-weight: 700;
-    font-size: 0.95rem;
-    letter-spacing: 0.2px;
-  }
-
-  /* Button style for consistency */
-  .buttonSend {
-       backdrop-filter: blur(18px) saturate(161%);
-    -webkit-backdrop-filter: blur(18px) saturate(161%);
-    background-color: rgba(250, 255, 250, 0.06);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.125);
-
-    color: var(--color-text);
+  .typeButton {
+    background: none;
     border: none;
-    padding: 0.5rem 0.9rem;
-    border-radius: 10px;
-    font-weight: 800;
-    cursor: pointer;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.12);
-    transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
-       
-  }
-
-  .buttonSend:hover { transform: translateY(-2px); }
-  .buttonSend:active { transform: translateY(0); }
-  .buttonSend:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-  /* Variant used for small toggle-style buttons (Abrir/Cerrar) */
-  .buttonToggle {
-    padding: 0.35rem 0.6rem;
-    font-size: 0.95rem;
-    font-weight: 700;
-    border-radius: 8px;
-    background: transparent;
     color: var(--color-text);
-    box-shadow: none;
-    border: 1px solid rgba(255,255,255,0.06);
+    padding: 0;
   }
 
-  .buttonToggle:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  .typeButton p {
+    font-size: 0.6rem;
+    width: 60px;
   }
+
+  .contentButton {
+    padding: 0rem 0.7rem;
+    height: 40px;
+  }
+
+  .contentButton img {
+    width: 20px;
+    height: 20px;
+  }
+  .ingresoBtn {
+    background-color: #12240a;
+    border-right: 0.5px solid var(--color-text);
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+  }
+
+  .egresoBtn {
+    background-color: #230804;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+  }
+
+  .cancelContainer {
+    position: fixed;
+    z-index: 9999999999;
+    padding: 5rem 2rem 3rem ;
+  }
+}

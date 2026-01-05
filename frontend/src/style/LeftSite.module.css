@@ -1,115 +1,184 @@
 /* Archivo: LeftSite.module.css */
 
 .container {
-    border-right: 1px solid #ffffff55;
-    width: 21vw;
-    background-color: var( --background-color);
-    transition: width 0.3s ease;
-    padding: 0 1rem 0 0;
+  border-right: 1px solid #ffffff55;
+  width: 21vw;
+  background-color: var(--background-color);
+  transition: width 0.3s ease;
 }
 
 .containerOpenClose {
-    display: flex;
-    width: 100%;
-    justify-content: flex-end;
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
 }
 
 .close {
-    margin: 1rem 1rem;
-    cursor: pointer;
+  margin: 1rem 1rem;
+  cursor: pointer;
 }
 
 .containerAllInfo {
-    display: flex;
-    flex-direction: column;
-    margin-top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  margin-top: 2.5rem;
 }
 
-/* --- ESTILO MODIFICADO --- */
 .containerInfo {
-    display: flex; /* Cambiado para alinear horizontalmente */
-    flex-direction: row;
-    justify-content: space-between; /* Para separar el texto del botón */
-    align-items: center; /* Para centrar verticalmente */
-    margin-left: 2rem;
-    margin-right: 2rem; /* Añadido para dar espacio al botón */
-    color: var(--color-text);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 1rem;
 }
 
 .containerInfo p {
-    margin: 0;
-    font-family: "Poppins", sans-serif;
-    font-weight: 600;
-    font-style: normal;
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  font-style: normal;
+  color: var(--color-text);
 }
 
 .containerInfoIngreso,
 .containerInfoEgreso,
 .containerInfoTotal {
-    display: flex;
-    justify-content: flex-start;
-    gap: 0.5rem;
-    align-items: center;
-    margin-left: 1rem;
-    font-size: 1.2rem;
+  display: flex;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  align-items: center;
+  margin-left: 1rem;
+  font-size: 1.2rem;
 }
 
 .containerInfoIngresoIngresoText {
-    color: var(--color-verde);
-    font-family: "Poppins", sans-serif;
-    font-weight: 600;
-    font-style: normal;
-    font-size: 1.2rem;
+  color: var(--color-verde);
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-style: normal;
+  font-size: 1.2rem;
 }
 
 .containerInfoEgresoEgresoText {
-    color: var(--color-rojo);
-    font-family: "Poppins", sans-serif;
-    font-weight: 600;
-    font-style: normal;
-    font-size: 1.2rem;
+  color: var(--color-rojo);
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-style: normal;
+  font-size: 1.2rem;
 }
 
 .containerInfoNumber {
-    color: var(--color-text);
-    font-family: "Poppins", sans-serif;
-    font-weight: 600;
-    font-style: normal;
-    font-size: 1rem;
+  color: var(--color-text);
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-style: normal;
+  font-size: 1rem;
 }
 
 .text {
-    color: var(--color-dark-text);
-    font-family: "Poppins", sans-serif;
-    font-weight: 600;
-    font-style: normal;
+  color: var(--color-dark-text);
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-style: normal;
 }
 
 .closed {
-    width: 60px;
+  width: 60px;
 }
 
-.textTotal{
-    font-size: 1.3rem;
+.textTotal {
+  font-size: 1.3rem;
 }
 
-.total{
-    font-size: 1.5rem;
+.total {
+  font-size: 1.5rem;
 }
 
 /* --- NUEVOS ESTILOS PARA EL BOTÓN DE VISIBILIDAD --- */
 .visibilityButton {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    margin-left: 0.5rem;
-
-  
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 0.5rem;
 }
 
 .visibilityIcon {
-    width: 25px; /* Un poco más grande para que se vea bien */
-    height: 25px;
-    
+  width: 25px;
+  height: 25px;
+}
+
+@media (max-width: 1000px) {
+   .container {
+    position: fixed;
+    top: 80px; 
+    left: 0;
+    width: 100%;
+    overflow-y: scroll;
+    border: none;
+    padding: 1.4rem 0.6rem 5.5rem 0.6rem;
+    background: rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    z-index: 999;
+  }
+
+  .firstContainer {
+    border-radius: 21px;
+    padding: 1rem;
+    margin: 0 0rem;
+    background-color: #141514;
+  }
+
+  .containerAllInfo {
+    margin-top: 0rem;
+  }
+
+  .containerOpenClose {
+    display: none;
+  }
+
+  .textTotal {
+    font-size: 1rem;
+    font-weight: 200;
+  }
+
+  .total {
+    font-size: 2rem;
+  }
+
+  .containerInfo {
+    margin-left: 0rem;
+    margin-right: 0rem;
+    padding: 0.5rem 0;
+  }
+
+  .containerInfoIngreso,
+  .containerInfoEgreso,
+  .containerInfoTotal {
+    margin-left: 0rem;
+  }
+
+  .containerInfoIngresoIngresoText {
+    font-weight: 300;
+    font-size: 1rem;
+    margin: 0rem;
+  }
+
+  .containerInfoEgresoEgresoText {
+    font-weight: 300;
+    font-size: 1rem;
+    margin: 0rem;
+  }
+
+  .text {
+    font-weight: 300;
+    font-size: 1rem;
+    margin: 0rem;
+  }
+
+  .containerInfoNumber {
+    font-weight: 300;
+    font-size: 1rem;
+    margin: 0.1rem;
+  }
 }

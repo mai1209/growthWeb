@@ -5,7 +5,7 @@ import axios from 'axios';
 import style from '../style/LeftSite.module.css';
 
 function LeftSite({ token, refreshKey }) {
-  // --- NUEVO: Estado para controlar la visibilidad de los montos ---
+    // --- NUEVO: Estado para controlar la visibilidad de los montos ---
   const [areTotalsVisible, setAreTotalsVisible] = useState(true);
   
   const [isOpen, setIsOpen] = useState(true);
@@ -54,7 +54,8 @@ function LeftSite({ token, refreshKey }) {
 
   return (
     <div className={`${style.container} ${!isOpen ? style.closed : ''}`}>
-      <div className={style.containerOpenClose}>
+     <div className={style.firstContainer}>
+       <div className={style.containerOpenClose}>
         <img 
           className={style.close} 
           src={isOpen ? "/close.png" : "/open.png"} 
@@ -84,19 +85,19 @@ function LeftSite({ token, refreshKey }) {
           <div className={style.containerAllInfo}>
             <div className={style.containerInfoIngreso}>
               <p className={style.containerInfoIngresoIngresoText}>Ingresos</p>
-              <img src="/arrow.png" alt="arrow" />
+              <img src="/arrowValores.png" alt="arrow" />
               {/* Lógica condicional para ingresos */}
               <p className={style.containerInfoNumber}>${areTotalsVisible ? formatNumber(totales.ingreso) : '****'}</p>
             </div>
             <div className={style.containerInfoEgreso}>
               <p className={style.containerInfoEgresoEgresoText}>Egresos</p>
-              <img src="/arrow.png" alt="arrow" />
+              <img src="/arrowValores.png" alt="arrow" />
               {/* Lógica condicional para egresos */}
               <p className={style.containerInfoNumber}>${areTotalsVisible ? formatNumber(totales.egreso) : '****'}</p>
             </div>
             <div className={style.containerInfoTotal}>
               <p className={style.text}>Total</p>
-              <img src="/arrow.png" alt="arrow" />
+              <img src="/arrowValores.png" alt="arrow" />
               {/* Lógica condicional para el total en la lista */}
               <p className={style.containerInfoNumber}>${areTotalsVisible ? formatNumber(totales.total) : '****'}</p>
             </div>
@@ -104,6 +105,7 @@ function LeftSite({ token, refreshKey }) {
           </div>
         </>
       )}
+     </div>
     </div>
   );
 }
