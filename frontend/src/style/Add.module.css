@@ -1,17 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap');
 
 .container {
-  
-  
+    background-color: var(--background-color);
+    height: fit-content;
+    width: calc(100vw - 287px);
     color: var(--color-text);
-    margin: 0 4rem;
 }
 
 .containerAllForm {
     display: flex;
     gap: 5rem;
     margin: 2rem;
-   
 }
 
 .formone, .formtwo {
@@ -104,7 +103,6 @@ input:focus {
 .btn, .detalle, .buttonSend {
     width: calc(50% - 0.5rem);
     box-sizing: border-box;
-   
 }
 
 /* Regla para el CONTENEDOR del DatePicker */
@@ -123,18 +121,15 @@ input:focus {
     font-family: 'Poppins', sans-serif;
     font-size: 0.95rem;
     background: rgba(255,255,255,0.02);
-    
 }
 
 .buttonSend {
     cursor: pointer;
     font-weight: 800;
     letter-spacing: 0.6px;
-
    
 }
 
-/* Estilo para el INPUT que se muestra en el DatePicker */
 .datePicker {
     background: transparent;
     border: 1px solid var(--color-text);
@@ -145,7 +140,7 @@ input:focus {
     font-family: 'Poppins', sans-serif;
     font-size: 0.9rem;
     cursor: pointer;
-    width: 100%; /* Ocupa todo el ancho de su contenedor (.datePickerWrapper) */
+    width: 100%;
     box-sizing: border-box;
 }
 
@@ -169,4 +164,16 @@ input:focus {
     border-radius: 12px;
     margin: 3rem;
     cursor: pointer;
+}
+
+@media (max-width: 1000px) {
+    .container{
+        position: fixed;
+        z-index: 999999999;
+        top: 149.5px;
+        width: 100%;
+
+
+    }
+
 }

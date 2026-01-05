@@ -1,9 +1,17 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
+.container{
+    color: var(--color-text);
+    display: flex;
+    flex-direction: column;
+   
+  
+    width: 100%;
+}
 
-.header h1 {
-  margin: 2rem;
- 
+.header h1{
+    margin: 2rem ;
 }
 
 
@@ -12,65 +20,37 @@
 .datePicker::-webkit-calendar-picker-indicator {
   /* Invertimos su color (negro -> blanco) y le damos brillo */
   filter: invert(1) brightness(1.5);
-
+  
   /* Opcional: Cambia el cursor para indicar que es clickeable */
   cursor: pointer;
 }
 
-.tasksList {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 2rem;
-  box-shadow: inset 0 0 10px #ffffff1d;
-  overflow: hidden; /* 🔥 clave */
+.tasksList{
+    display: flex;
+    gap: 2rem;
+    margin: 1rem 4rem;
+   
+
 }
 
 
- /* Scrollbar */
-    .tasksList::-webkit-scrollbar {
-        width: 3px;
-        /* 👈 grosor */
-    }
-
-    /* Track */
-    .tasksList::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    /* Thumb */
-    .tasksList::-webkit-scrollbar-thumb {
-        background-color: #4caf50;
-        /* 👈 rojo */
-        border-radius: 10px;
-    }
-
-    /* Hover opcional */
-    .tasksList::-webkit-scrollbar-thumb:hover {
-        background-color: #f44666;
-    }
 
 
-.taskCard {
+.taskCard{
   border: 1px solid var(--color-text);
-  border-radius: 20px;
-  width: 250px;
-  height: 180px;
+  border-radius: 20px; /* menos redondeado para aspecto cuadrado */
+
+  height: fit-content;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 1.5rem 1rem;
-  color: var(--color-text);
 }
 
-.taskMeta::first-letter {
-  text-transform: uppercase;
-}
-
-.taskMeta {
-  text-align: center;
-  font-family: "Poppins", sans-serif;
+.taskMeta{
+    text-align: center;
+      font-family: "Poppins", sans-serif;
   font-weight: 400;
   font-style: normal;
   margin: 0.5rem 0;
@@ -78,7 +58,7 @@
   line-height: 1.2rem;
 }
 
-.taskUrgency {
+.taskUrgency{
   font-family: "Inter";
   font-weight: 300;
   font-style: italic;
@@ -86,12 +66,11 @@
   line-height: 1.2rem;
 
 }
-
-.taskDetails {
-  text-align: center;
+.taskDetails{
+    text-align: center;
 }
 
-.taskDetails p {
+.taskDetails p{
 
   line-height: 1.2rem;
 }
@@ -106,41 +85,38 @@
 
 .completed {
   opacity: 0.6;
-  border-left: 5px solid #28a745;
-  /* Un borde verde para indicar que está completa */
+  border-left: 5px solid #28a745; /* Un borde verde para indicar que está completa */
 }
 
 
 /* --- CLASES PARA EL TEXTO DE ESTADO --- */
 
 .statusPending {
-  color: #ffc107;
-  /* Amarillo/Naranja */
+  color: #ffc107; /* Amarillo/Naranja */
   font-weight: bold;
   font-size: 0.9rem;
   margin-bottom: 5px;
 }
 
 .statusDone {
-  color: #28a745;
-  /* Verde */
+  color: #28a745; /* Verde */
   font-weight: bold;
   font-size: 0.9rem;
   margin-bottom: 5px;
 }
 
-.taskActions {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #222222;
-  padding: 0.7rem 1rem;
-  border-radius: 16px;
-  gap: 10px;
+.taskActions{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #222222;
+    padding: 0.7rem 1rem;
+    border-radius: 16px;
+    gap: 10px;
 }
 
-.taskActions p {
-  margin: 0;
+.taskActions p{
+    margin: 0;
 }
 
 
@@ -152,40 +128,32 @@
 /* Paleta de colores sugerida */
 
 .color1 {
-  background-color: #545b77;
-  /* Fondo: Gris azulado oscuro */
-  border-color: #98a0c2;
-  /* Borde: Un gris azulado más claro y suave */
+  background-color: #545b77; /* Fondo: Gris azulado oscuro */
+  border-color: #98a0c2;     /* Borde: Un gris azulado más claro y suave */
 }
 
 .color2 {
-  background-color: #006769;
-  /* Fondo: Verde azulado (Teal) oscuro */
-  border-color: #42c2c2;
-  /* Borde: Un verde azulado más vibrante y claro */
+  background-color: #006769; /* Fondo: Verde azulado (Teal) oscuro */
+  border-color: #42c2c2;     /* Borde: Un verde azulado más vibrante y claro */
 }
 
 .color3 {
-  background-color: #967E42;
-  /* Fondo: Dorado/mostaza oscuro */
-  border-color: #d4b26b;
-  /* Borde: Un dorado/arena más claro y luminoso */
+  background-color: #967E42; /* Fondo: Dorado/mostaza oscuro */
+  border-color: #d4b26b;     /* Borde: Un dorado/arena más claro y luminoso */
 }
 
 .color4 {
-  background-color: #4f6f52;
-  /* Fondo: Verde militar/oscuro */
-  border-color: #94ac97;
-  /* Borde: Un verde salvia suave y claro */
+  background-color: #4f6f52; /* Fondo: Verde militar/oscuro */
+  border-color: #94ac97;     /* Borde: Un verde salvia suave y claro */
 }
 
 /* Texto de fila para asegurar contraste cuando la fila tiene fondo de color */
-.rowText {
+.rowText{
   color: var(--color-text);
 }
 
-.taskHeader p {
-  text-align: center;
+.taskHeader p{
+    text-align: center;
 
 }
 
@@ -195,14 +163,14 @@
   background-color: transparent;
   border: none;
   cursor: pointer;
-  font-size: 0.7rem;
+  font-size: 0.7rem; 
   padding: 5px;
 
 }
 
 .deleteButton:hover {
 
-  transform: scale(1.1);
+  transform: scale(1.1); 
 }
 
 /* En Results.module.css */
@@ -221,7 +189,6 @@
 :global(.react-datepicker__triangle) {
   border-bottom-color: var(--background-color) !important;
 }
-
 :global(.react-datepicker__triangle::before) {
   border-bottom-color: var(--color-text) !important;
 }
@@ -244,10 +211,8 @@
 :global(.react-datepicker__navigation-arrow) {
   border-color: var(--color-text) !important;
 }
-
 :global(.react-datepicker__navigation:hover .react-datepicker__navigation-arrow) {
-  border-color: var(--color-text) !important;
-  /* mantener sutil */
+  border-color: var(--color-text) !important; /* mantener sutil */
 }
 
 /* Días de la semana (Lu, Ma, Mi...) */
@@ -264,15 +229,14 @@
 
 /* Día al pasar el mouse por encima */
 :global(.react-datepicker__day:hover) {
-  background-color: rgba(0, 0, 0, 0.06) !important;
+  background-color: rgba(0,0,0,0.06) !important;
   color: var(--color-text) !important;
   border-radius: 50% !important;
 }
 
 /* Día que está seleccionado */
 :global(.react-datepicker__day--selected) {
-  background-color: var(--color-accent, #3498db) !important;
-  /* fallback si no existe */
+  background-color: var(--color-accent, #3498db) !important; /* fallback si no existe */
   color: white !important;
   border-radius: 50% !important;
   font-weight: bold !important;
@@ -289,14 +253,16 @@
   opacity: 0.5 !important;
 }
 
-.editButton {
-  background: none;
-  border: none;
+.editButton{
+background: none;
+border: none;
 }
 
-.ButtonImg {
+.ButtonImg{
   width: 15px;
-
+ 
   margin-top: 4px;
   cursor: pointer;
 }
+
+

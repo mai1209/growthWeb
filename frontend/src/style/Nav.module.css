@@ -1,105 +1,145 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap");
 @font-face {
-  font-family: 'Menda';
-   src: url('../../public/Menda\ Font/Menda\ Medium.ttf') format('truetype');
+  font-family: "Menda";
+  src: url("../../public/Menda\ Font/Menda\ Medium.ttf") format("truetype");
   font-weight: 500;
   font-style: normal;
 }
 
 .container {
-    background-color: var(--background-color);
+  background-color: var(--background-color);
 }
 .nav {
-    border-bottom: 1px solid #ffffff55;
-    color: var(--color-text);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  border-bottom: 1px solid #ffffff55;
+  color: var(--color-text);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 .navItems {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1.2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.2rem;
 }
 
-/* --- ESTILO BASE PARA TODOS LOS ENLACES (INACTIVOS) --- */
 .navLink {
-    display: flex;
-    flex-direction: column; /* Icono arriba, texto abajo */
-    justify-content: center;
-    align-items: center;
-    padding: 0.5rem;
-    border-radius: 13px;
-    transition: background-color 0.3s, transform 0.2s;
-    color: var(--color-text);
-    text-decoration: none;
-    cursor: pointer;
-    gap: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 13px;
+  transition: background-color 0.3s, transform 0.2s;
+  color: var(--color-text);
+  text-decoration: none;
+  cursor: pointer;
+  gap: 5px;
 }
 .navLink img {
-    width: 1.2rem;
-    height: 1.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
 }
 .navLink p {
-    margin: 0;
-    font-size: 0.9rem;
-    font-family: "Poppins", sans-serif;
+  margin: 0;
+  font-size: 0.9rem;
+  font-family: "Poppins", sans-serif;
 }
 .navLink:hover {
-    background-color: #ffffff1a;
+  background-color: #ffffff1a;
 }
 
-/* --- ESTILO ADICIONAL QUE SE APLICA SOLO AL ENLACE ACTIVO --- */
 .activeLink {
-    flex-direction: row; /* Icono al lado del texto */
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background-color: var(--color-grey); /* Fondo oscuro */
+  flex-direction: row;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--color-grey);
 }
 .activeLink p {
-    font-weight: 500;
+  font-weight: 500;
 }
-/* Ya no necesitamos la clase .getNavLinkClass, la eliminamos para evitar confusión */
 
 .user {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-right: 1rem;
 }
 .logo {
-    width: 4rem;
-    height: 3rem;
+  width: 4rem;
+  height: 3rem;
 }
 .nameLogo {
-    text-transform: uppercase;
-    font-size: 1.5rem;
-    color: var(--color-text);
-    font-family: 'Menda';
-    text-shadow: 4px 2px 7.2px #9DDE8B;
+  text-transform: uppercase;
+  font-size: 1.5rem;
+  color: var(--color-text);
+  font-family: "Menda";
+  text-shadow: 4px 2px 7.2px #9dde8b;
 }
 .containerLogo {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-left: 1rem;
-    cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 1rem;
+  cursor: pointer;
 }
 .userActions {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 .logoutButton {
-    cursor: pointer;
-    background: none;
-    color: var(--color-text);
-    font-size: 1rem;
-    border: 1px solid #ffffff55;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    margin-right: 1rem;
+  cursor: pointer;
+  background: none;
+  color: var(--color-text);
+  font-size: 1rem;
+  border: 1px solid #ffffff55;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  margin-right: 1rem;
 }
 .imgUser {
+  display: none;
+}
+.menuButton {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .nav {
+    padding: 1rem 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: none ;
+  }
+
+  .nameLogo {
     display: none;
+  }
+
+  .navItems {
+    display: none;
+  }
+
+  .logoutButton {
+    display: none;
+  }
+
+  .user {
+    display: none;
+  }
+  .menuButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-right: 2rem;
+    width: 50px;
+    height: 50px;
+    display: flex;
+  }
 }
