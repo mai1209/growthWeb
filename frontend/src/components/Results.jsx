@@ -93,6 +93,14 @@ function Results({
     </button>
   ));
 
+  //funcion de hoy
+  const handleToday = () => {
+    const today = new Date();
+    setSelectedDate(today);
+    setShowAll(false);
+    if (onShowAllChange) onShowAllChange(false);
+  };
+
   // --- RENDER LOGIN / REGISTRO ---
   if (!token) {
     return (
@@ -109,9 +117,26 @@ function Results({
     );
   }
 
+  //funcion de fecha
+
+  const formatFecha = (fechaISO) => {
+    if (!fechaISO) return "";
+
+    const fecha = new Date(fechaISO);
+
+    const dia = fecha.getDate();
+    const mes = fecha
+      .toLocaleDateString("es-AR", { month: "long" })
+      .replace(/^./, (l) => l.toUpperCase());
+
+    return `${dia} ${mes}`;
+  };
+
+  const listaFinal = showAll ? movimientos : filteredMovimientos;
   // --- RENDER PRINCIPAL ---
   return (
     <div className={style.container}>
+      {/* HEADER (Se queda igual como pediste) */}
       <div className={style.header}>
         <div className={style.datePickerContainer}>
           <button className={style.icon}>
@@ -120,17 +145,13 @@ function Results({
               onChange={handleDateChange}
               dateFormat="dd-MM-yyyy"
               customInput={<CalendarButton />}
+              popperPortalId="root"
+              popperPlacement="bottom-start"
             />
             <p>Calendario</p>
           </button>
 
-          <button
-            onClick={() => {
-              setShowAll(false);
-              if (onShowAllChange) onShowAllChange(false);
-            }}
-            className={style.icon}
-          >
+          <button onClick={handleToday} className={style.icon}>
             <img src="./hoy.png" alt="historial" />
             <p>Hoy</p>
           </button>
@@ -142,121 +163,60 @@ function Results({
         </div>
       </div>
 
-      {/* --- CONTENEDOR DE MOVIMIENTOS --- */}
-      {showAll ? (
-        <div className={style.movimientosList}>
-          {movimientos.map((mov) => (
+      {/* 2. RENDER UNIFICADO (Sin repetir código) */}
+      <div className={style.listadoPrincipal}>
+        {listaFinal.length === 0 ? (
+          <p style={{ textAlign: "center", marginTop: "2rem" }}>
+            No hay movimientos para mostrar.
+          </p>
+        ) : (
+          listaFinal.map((mov) => (
             <div
               key={mov._id}
               className={`${style.movimientoRow} ${
                 mov.tipo === "ingreso" ? style.bordeIngreso : style.bordeEgreso
               }`}
             >
-              <div className={style.rowFecha}>
-                {new Date(mov.fecha).toLocaleDateString()}
+              {/* COLUMNA 1: INFO */}
+              <div className={style.columna1}>
+                <p className={style.categoriaTexto}>{mov.categoria}</p>
+                <p className={style.fechaTexto}>{formatFecha(mov.fecha)}</p>
               </div>
+              <div className={style.columnados}>
+                {/* COLUMNA 2: MONTO Y DETALLE */}
+                <div className={style.columna2}>
+                  <p
+                    className={`${style.montoTexto} ${
+                      mov.tipo === "ingreso"
+                        ? style.montoIngreso
+                        : style.montoEgreso
+                    }`}
+                  >
+                    {mov.tipo === "ingreso" ? "+" : "-"} ${mov.monto}
+                  </p>
+                  <p className={style.detalleTexto}>{mov.detalle}</p>
+                </div>
 
-              <div className={style.rowInfo}>
-                <p className={style.category}>{mov.categoria}</p>
-                <p className={style.detalle}>{mov.detalle}</p>
-              </div>
-
-              <div className={style.rowMonto}>
-                {mov.tipo === "ingreso" ? "+" : "-"} ${mov.monto}
-              </div>
-
-              <div className={style.rowActions}>
-                <button onClick={() => onEditClick(mov)}>
-                  <img src="/edit.png" alt="edit" />
-                </button>
-                <button onClick={() => handleDeleteMovimiento(mov._id)}>
-                  <img src="/trush.png" alt="delete" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className={style.containerInfoAll}>
-          {filteredMovimientos.length === 0 ? (
-            <p style={{ textAlign: "center", marginTop: "2rem" }}>
-              No tienes movimientos para esta fecha.
-            </p>
-          ) : (
-            filteredMovimientos.map((mov) => (
-              <div
-                className={`${style.containerInfo} ${
-                  mov.tipo === "ingreso"
-                    ? style.bordeIngreso
-                    : style.bordeEgreso
-                }`}
-                key={mov._id}
-              >
-                <div className={style.cardInner}>
-                  {/* CARA FRONTAL */}
-                  <div className={style.cardFront}>
-                    <div className={style.info}>
-                      <p className={style.category}>{mov.categoria}</p>
-                      <p className={style.detalle}>{mov.detalle}</p>
-                    </div>
-                    <div className={style.montoContainer}>
-                      <p
-                        className={`${style.monto} ${
-                          mov.tipo === "ingreso"
-                            ? style.montoIngreso
-                            : style.montoEgreso
-                        }`}
-                      >
-                        {mov.tipo === "ingreso" ? "+" : "-"} ${mov.monto}
-                      </p>
-                      <div className={style.containerArrowDelete}>
-                        <img
-                          className={style.arrowResult}
-                          src={
-                            mov.tipo === "ingreso"
-                              ? "/arrowGreen.png"
-                              : "/arrowRed.png"
-                          }
-                          alt={mov.tipo === "ingreso" ? "Ingreso" : "Egreso"}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* CARA TRASERA */}
-                  <div className={style.cardBack}>
-                    <p className={style.deletePromptText}>
-                      ¿Desea eliminar o editar?
-                    </p>
-                    <div className={style.containerButton}>
-                      <button
-                        onClick={() => onEditClick(mov)}
-                        className={style.deleteButton}
-                      >
-                        <img
-                          className={style.ButtonImg}
-                          src="/edit.png"
-                          alt="edit"
-                        />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteMovimiento(mov._id)}
-                        className={style.deleteButton}
-                      >
-                        <img
-                          className={style.ButtonImg}
-                          src="/trush.png"
-                          alt="delete"
-                        />
-                      </button>
-                    </div>
-                  </div>
+                {/* COLUMNA 3: ACCIONES */}
+                <div className={style.columna3}>
+                  <button
+                    onClick={() => onEditClick(mov)}
+                    className={style.btnAccion}
+                  >
+                    <img src="/edit.png" alt="edit" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteMovimiento(mov._id)}
+                    className={style.btnAccion}
+                  >
+                    <img src="/trush.png" alt="delete" />
+                  </button>
                 </div>
               </div>
-            ))
-          )}
-        </div>
-      )}
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }

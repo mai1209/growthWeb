@@ -43,16 +43,19 @@ form input {
 
 .contentAllCargar {
   position: relative;
-  top: 22rem;
+  top: 4.5rem;
   right: 0.6rem;
+  left: auto;
   display: flex;
+  margin-left: auto;
 }
 
 .typeButtons {
   border: 0.5px solid var(--color-text);
   border-radius: 8px;
   display: flex;
-  flex: 1;
+
+  border: 0.5px solid var(--color-text);
 }
 
 .typeButton {
@@ -72,14 +75,18 @@ form input {
   align-items: center;
   padding: 0.4rem;
   height: 40px;
+  gap: 0.3rem;
 }
 
 .ingresoBtn {
   background-color: #12240a;
+  border-top-left-radius: 8px ;
+  border-bottom-left-radius: 8px;
 }
 
 .egresoBtn {
   background-color: #230804;
+  border-radius: 8px;
 }
 
 .cancelContainer {
@@ -90,11 +97,26 @@ form input {
   padding: 1rem;
 }
 
+.buttonToggle {
+  background: none;
+  border: none;
+  color: var(--color-text);
+  background-color: #12240a;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-text);
+  cursor: pointer;
+}
+
+ .contentButton img {
+    width: 20px;
+    height: 20px;
+  }
+
 @media (max-width: 1000px) {
   .contentAllCargar {
     position: fixed;
     top: 21rem;
-    z-index: 999999;
+    z-index: 88888888;
   }
 
   .typeButton {
@@ -110,7 +132,7 @@ form input {
   }
 
   .contentButton {
-    padding: 0rem 0.7rem;
+    padding: 0rem 0.4rem;
     height: 40px;
   }
 
@@ -134,6 +156,10 @@ form input {
   .cancelContainer {
     position: fixed;
     z-index: 9999999999;
-    padding: 5rem 2rem 3rem ;
+    padding: 5rem 2rem 2.2rem;
+  }
+
+  .cerrar {
+    padding: 0.5rem;
   }
 }

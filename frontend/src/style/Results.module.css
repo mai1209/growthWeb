@@ -53,22 +53,18 @@
 }
 
 .containerInfo {
-  width: 180px;
-  height: 180px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  border-radius: 33px;
-  padding: 0.5rem 1rem;
+  width: 100%;
+  height: 100px;
 }
 
-.bordeIngreso {
-  border: 2px solid var(--color-verde);
+.bordeIngreso0 {
+  border: 0.2px solid var(--color-verde);
+  border-radius: 8px;
 }
 
-.bordeEgreso {
-  border: 2px solid var(--color-rojo);
+.bordeEgreso0 {
+  border: 0.2px solid var(--color-rojo);
+  border-radius: 8px;
 }
 
 .info {
@@ -81,18 +77,6 @@
 .info p {
   margin: 0;
   text-align: center;
-}
-
-.category {
-  font-size: 1.5rem;
-  font-family: "Poppins", sans-serif;
-  font-weight: 500;
-}
-
-.detalle {
-  color: var(--color-dark-text);
-  font-family: "Poppins", sans-serif;
-  font-weight: 300;
 }
 
 .monto {
@@ -137,59 +121,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-/* --- ESTILOS PARA LA ANIMACIÓN DE VOLTEO --- */
-.cardInner {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transition: transform 0.8s;
-  transform-style: preserve-3d;
-}
-
-.containerInfo:hover .cardInner {
-  transform: rotateY(180deg);
-}
-
-.cardFront,
-.cardBack {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.cardBack {
-  transform: rotateY(180deg);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-}
-
-.deletePromptText {
-  font-family: "Poppins", sans-serif;
-  font-size: 1rem;
-  text-align: center;
-}
-
-.cardBack .deleteButton {
-  font-size: 1.2rem;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: background-color 0.3s, transform 0.3s;
 }
 
 .containerButton {
@@ -247,89 +178,134 @@
   color: white;
 }
 
-.fullScreenContainer {
-  width: 100%;
-  box-sizing: border-box;
-  background: transparent;
-}
-
-.color1 td {
-  background-color: #545b77;
-  border-color: #98a0c2;
-  color: var(--color-text);
-}
-
-.color2 td {
-  background-color: #006769;
-  border-color: #42c2c2;
-  color: var(--color-text);
-}
-
-.color3 td {
-  background-color: #967e42;
-  border-color: #d4b26b;
-  color: var(--color-text);
-}
-
-.color4 td {
-  background-color: #4f6f52;
-  border-color: #94ac97;
-  color: var(--color-text);
-}
-
-.rowText {
-  color: var(--color-text);
-}
-
-.movimientosList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  margin: 1.5rem auto;
-  max-width: 1200px;
-  padding: 0 1rem;
-}
-
-.movimientoRow {
-  display: grid;
-  grid-template-columns: 110px 1fr auto auto;
-  align-items: center;
-  padding: 0.8rem 1rem;
-  border-radius: 14px;
-  background: var(--background-color);
-  box-shadow: inset 0 0 10px #ffffff1d;
-  transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.movimientoRow:hover {
-  transform: translateY(-2px);
-  background: #1a1a1a;
-}
-
-.rowFecha {
-  font-size: 0.75rem;
-  opacity: 0.7;
-}
-
-.rowMonto {
-  font-size: 1.2rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.rowActions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.rowActions button {
+.btnAccion {
   background: none;
   border: none;
   cursor: pointer;
+  padding: 0;
+  margin: 0 0.2rem;
 }
 
-.rowActions img {
+.btnAccion img {
   width: 16px;
+  height: 16px;
+}
+
+.react-datepicker-popper {
+  z-index: 9999999999 !important;
+}
+
+.listadoPrincipal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+.movimientoRow {
+  padding: 0.8rem;
+}
+
+.movimientoRow {
+  display: flex;
+  justify-content: space-between;
+}
+
+.columna1 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.columna2 {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.columna3 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.columnados {
+  display: flex;
+  gap: 1rem;
+}
+
+.categoriaTexto {
+  font-family: "poppins", sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.categoriaTexto::first-letter {
+  text-transform: uppercase;
+}
+
+.fechaTexto {
+  color: #545b77;
+  font-size: 0.8rem;
+  font-family: "poppins", sans-serif;
+  font-style: italic;
+}
+
+.montoTexto {
+  font-family: "poppins", sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.montoIngreso {
+  color: var(--color-verde);
+}
+
+.montoEgreso {
+  color: var(--color-rojo);
+}
+
+.detalleTexto {
+  font-family: "poppins", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 200;
+}
+
+.calendarButton {
+  background: none;
+  border: none;
+}
+
+.icon {
+  width: fit-content;
+  height: fit-content;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.icon:nth-child(2) {
+  border-left: 0.5px solid var(--color-text);
+}
+
+.icon:nth-child(3) {
+  border-left: 0.5px solid var(--color-text);
+}
+
+.icon img {
+  width: 45px;
+  height: 45px;
+}
+
+.icon p {
+  font-size: 0.8rem;
+  color: var(--color-text);
+}
+
+.datePickerContainer {
+  border: 0.5px solid var(--color-text);
+  border-radius: 8px;
 }
 
 @media (max-width: 1000px) {
@@ -357,11 +333,6 @@
     border-radius: 8px;
   }
 
-  .calendarButton {
-    background: none;
-    border: none;
-  }
-
   .calendarButton img {
     width: 20px;
     height: 20px;
@@ -386,7 +357,6 @@
 
   .icon p {
     font-size: 0.6rem;
-    color: var(--color-text);
   }
 
   .movimientosTable {
@@ -394,28 +364,9 @@
     top: 0;
   }
 
-  .movimientoRow {
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "info monto"
-      "fecha actions";
-    row-gap: 0.4rem;
-  }
+  .containerInfoAll {
+    box-shadow: inset 0 0 10px #ffffff1d;
 
-  .rowFecha {
-    grid-area: fecha;
-  }
-
-  .rowInfo {
-    grid-area: info;
-  }
-
-  .rowMonto {
-    grid-area: monto;
-  }
-
-  .rowActions {
-    grid-area: actions;
-    justify-content: flex-end;
+    gap: 1rem;
   }
 }
