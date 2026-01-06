@@ -90,7 +90,7 @@ function Dashboard({
               onClick={() => setShowOnly(null)}
               className={`${style.buttonSend} ${style.buttonToggle}`}
             >
-              Cerrar
+              <p className={style.cerrar}>X</p>
             </button>
           </div>
           <Add
