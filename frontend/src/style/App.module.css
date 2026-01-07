@@ -74,6 +74,7 @@ form input {
   align-items: center;
   padding: 0.4rem;
   height: 40px;
+  cursor: pointer;
 }
 
 .ingresoBtn {
@@ -132,7 +133,7 @@ form input {
 
   .contentButton {
     padding: 0rem 0.3rem;
-    height: 40px;
+    height: 47.39px;
     gap: 0;
   }
 

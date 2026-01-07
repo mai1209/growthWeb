@@ -24,6 +24,7 @@ function Results({
 }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAll, setShowAll] = useState(false);
+  const [titulo, setTitulo] = useState("Hoy");
 
   // --- FILTRADO DE MOVIMIENTOS ---
   const filteredMovimientos = useMemo(() => {
@@ -45,7 +46,8 @@ function Results({
   // --- MANEJADORES ---
   const handleDateChange = (date) => {
     setSelectedDate(date);
-    setShowAll(false); // volver a filtrar por fecha
+    setShowAll(false);
+    setTitulo(`Movimientos del día ${date.toLocaleDateString("es-AR")}`);
     if (onShowAllChange) onShowAllChange(false);
   };
 
@@ -57,11 +59,11 @@ function Results({
       if (res.data) {
         if (onMovementUpdate) onMovementUpdate(res.data);
         setShowAll(true);
+        setTitulo("Todos los Movimientos");
         if (onShowAllChange) onShowAllChange(true);
       }
     } catch (err) {
-      console.error("Error al obtener todos los movimientos:", err);
-      alert("No se pudieron obtener los movimientos.");
+      console.error(err);
     }
   };
 
@@ -98,6 +100,7 @@ function Results({
     const today = new Date();
     setSelectedDate(today);
     setShowAll(false);
+    setTitulo("Movimientos de Hoy");
     if (onShowAllChange) onShowAllChange(false);
   };
 
@@ -128,8 +131,9 @@ function Results({
     const mes = fecha
       .toLocaleDateString("es-AR", { month: "long" })
       .replace(/^./, (l) => l.toUpperCase());
+    const anio = fecha.getFullYear();
 
-    return `${dia} ${mes}`;
+    return `${dia}/${mes}/${anio}`;
   };
 
   const listaFinal = showAll ? movimientos : filteredMovimientos;
@@ -162,6 +166,7 @@ function Results({
           </button>
         </div>
       </div>
+      <p className={style.titulo}>{titulo}</p>
 
       {/* 2. RENDER UNIFICADO (Sin repetir código) */}
       <div className={style.listadoPrincipal}>
@@ -194,7 +199,9 @@ function Results({
                   >
                     {mov.tipo === "ingreso" ? "+" : "-"} ${mov.monto}
                   </p>
-                  <p className={style.detalleTexto}>{mov.detalle}</p>
+                  <p className={style.detalleTexto}>
+                    {mov.detalle === "" ? "sin detalle" : mov.detalle}
+                  </p>
                 </div>
 
                 {/* COLUMNA 3: ACCIONES */}
