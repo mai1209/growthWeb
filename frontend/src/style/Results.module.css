@@ -2,7 +2,7 @@
 
 .header {
   display: flex;
-  
+
   align-items: center;
   margin: 2rem 3rem 2rem 5rem;
 }
@@ -271,7 +271,6 @@
   font-family: "poppins", sans-serif;
   font-size: 0.8rem;
   font-weight: 500;
-  
 }
 
 .calendarButton {
@@ -291,7 +290,6 @@
   align-items: center;
   gap: 0rem;
   flex-direction: column;
-
 }
 
 .icon:nth-child(2) {
@@ -319,11 +317,19 @@
   display: flex;
 }
 
-.titulo{
+.titulo {
   text-align: start;
-  padding:  0 1rem;
+  padding: 1rem 1rem;
   padding-bottom: 1rem;
+  width: 100%;
+
+     background: rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  
 }
+
+
 
 @media (max-width: 1000px) {
   .container {
@@ -385,9 +391,12 @@
   }
 
   .listadoPrincipal {
+    max-width: 100%;
+  }
 
-
-  max-width: 100%;
-}
-
+  .titulo{
+      position: fixed;
+  top: 24.4rem;
+  z-index: 88888;
+  }
 }

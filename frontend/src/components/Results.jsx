@@ -140,7 +140,7 @@ function Results({
   // --- RENDER PRINCIPAL ---
   return (
     <div className={style.container}>
-      {/* HEADER (Se queda igual como pediste) */}
+      {" "}
       <div className={style.header}>
         <div className={style.datePickerContainer}>
           <button className={style.icon}>
@@ -166,8 +166,10 @@ function Results({
           </button>
         </div>
       </div>
-      <p className={style.titulo}>{titulo}</p>
-
+      <div className={style.titulocontainer}>
+        {" "}
+        <p className={style.titulo}>{titulo}</p>
+      </div>
       {/* 2. RENDER UNIFICADO (Sin repetir código) */}
       <div className={style.listadoPrincipal}>
         {listaFinal.length === 0 ? (
