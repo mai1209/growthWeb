@@ -2,22 +2,20 @@
 
 .header {
   display: flex;
-
-  align-items: center;
+  gap: 1rem;
   margin: 2rem 3rem 2rem 5rem;
 }
 
 .titleContainer {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 1rem;
+  padding: 4rem 3rem;
 }
 
 .titleContainer h1 {
-  margin: 0;
-  text-align: center;
-  color: #ffffff;
+  font-size: 1.9rem;
+  font-family: 'poppins';
 }
 
 .visibilityButton {
@@ -323,13 +321,10 @@
   padding-bottom: 1rem;
   width: 100%;
 
-     background: rgba(0, 0, 0, 0.12);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  
+  background: rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
-
-
 
 @media (max-width: 1000px) {
   .container {
@@ -338,17 +333,14 @@
     left: 0;
     width: 100vw;
   }
-
   .header {
     display: flex;
-    flex-direction: column;
-    align-items: start;
-    margin: 1rem 0rem;
+    gap: 1rem;
+    margin-left: 0.5rem;
+
     position: fixed;
-    top: 20rem;
-    left: 0.6rem;
-    width: fit-content;
-    z-index: 99999;
+    top: 19.1rem;
+    z-index: 99999999;
   }
 
   .datePickerContainer {
@@ -394,9 +386,14 @@
     max-width: 100%;
   }
 
-  .titulo{
-      position: fixed;
-  top: 24.4rem;
-  z-index: 88888;
+  .titulo {
+    position: fixed;
+    top: 24.4rem;
+    z-index: 88888;
   }
+
+.titleContainer {
+
+  padding: 1rem;
+}
 }

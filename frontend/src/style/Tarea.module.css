@@ -1,44 +1,33 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-
-.container{
-    color: var(--color-text);
-    display: flex;
-    flex-direction: column;
-   
-  
-    width: 100%;
+.container {
+  color: var(--color-text);
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  flex-direction: column;
 }
 
-.header h1{
-    margin: 2rem ;
+.header h1 {
+  margin: 2rem;
+  z-index: 99999999;
 }
 
-
-
-/* Seleccionamos el icono del calendario del input tipo date */
 .datePicker::-webkit-calendar-picker-indicator {
-  /* Invertimos su color (negro -> blanco) y le damos brillo */
   filter: invert(1) brightness(1.5);
-  
-  /* Opcional: Cambia el cursor para indicar que es clickeable */
+
   cursor: pointer;
 }
 
-.tasksList{
-    display: flex;
-    gap: 2rem;
-    margin: 1rem 4rem;
-   
-
+.tasksList {
+  display: flex;
+  gap: 2rem;
+  margin: 1rem 4rem;
 }
 
-
-
-
-.taskCard{
+.taskCard {
   border: 1px solid var(--color-text);
-  border-radius: 20px; /* menos redondeado para aspecto cuadrado */
+  border-radius: 20px; 
 
   height: fit-content;
   display: flex;
@@ -48,9 +37,9 @@
   padding: 1.5rem 1rem;
 }
 
-.taskMeta{
-    text-align: center;
-      font-family: "Poppins", sans-serif;
+.taskMeta {
+  text-align: center;
+  font-family: "Poppins", sans-serif;
   font-weight: 400;
   font-style: normal;
   margin: 0.5rem 0;
@@ -58,24 +47,20 @@
   line-height: 1.2rem;
 }
 
-.taskUrgency{
+.taskUrgency {
   font-family: "Inter";
   font-weight: 300;
   font-style: italic;
   margin: 0.5rem 0;
   line-height: 1.2rem;
-
 }
-.taskDetails{
-    text-align: center;
+.taskDetails {
+  text-align: center;
 }
 
-.taskDetails p{
-
+.taskDetails p {
   line-height: 1.2rem;
 }
-
-
 
 /* --- AÑADE ESTA CLASE --- */
 .completed .taskMeta {
@@ -87,7 +72,6 @@
   opacity: 0.6;
   border-left: 5px solid #28a745; /* Un borde verde para indicar que está completa */
 }
-
 
 /* --- CLASES PARA EL TEXTO DE ESTADO --- */
 
@@ -105,20 +89,19 @@
   margin-bottom: 5px;
 }
 
-.taskActions{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #222222;
-    padding: 0.7rem 1rem;
-    border-radius: 16px;
-    gap: 10px;
+.taskActions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #222222;
+  padding: 0.7rem 1rem;
+  border-radius: 16px;
+  gap: 10px;
 }
 
-.taskActions p{
-    margin: 0;
+.taskActions p {
+  margin: 0;
 }
-
 
 /* ... tus estilos existentes ... */
 
@@ -129,32 +112,31 @@
 
 .color1 {
   background-color: #545b77; /* Fondo: Gris azulado oscuro */
-  border-color: #98a0c2;     /* Borde: Un gris azulado más claro y suave */
+  border-color: #98a0c2; /* Borde: Un gris azulado más claro y suave */
 }
 
 .color2 {
   background-color: #006769; /* Fondo: Verde azulado (Teal) oscuro */
-  border-color: #42c2c2;     /* Borde: Un verde azulado más vibrante y claro */
+  border-color: #42c2c2; /* Borde: Un verde azulado más vibrante y claro */
 }
 
 .color3 {
-  background-color: #967E42; /* Fondo: Dorado/mostaza oscuro */
-  border-color: #d4b26b;     /* Borde: Un dorado/arena más claro y luminoso */
+  background-color: #967e42; /* Fondo: Dorado/mostaza oscuro */
+  border-color: #d4b26b; /* Borde: Un dorado/arena más claro y luminoso */
 }
 
 .color4 {
   background-color: #4f6f52; /* Fondo: Verde militar/oscuro */
-  border-color: #94ac97;     /* Borde: Un verde salvia suave y claro */
+  border-color: #94ac97; /* Borde: Un verde salvia suave y claro */
 }
 
 /* Texto de fila para asegurar contraste cuando la fila tiene fondo de color */
-.rowText{
+.rowText {
   color: var(--color-text);
 }
 
-.taskHeader p{
-    text-align: center;
-
+.taskHeader p {
+  text-align: center;
 }
 
 /* En Tarea.module.css */
@@ -163,21 +145,14 @@
   background-color: transparent;
   border: none;
   cursor: pointer;
-  font-size: 0.7rem; 
+  font-size: 0.7rem;
   padding: 5px;
-
 }
 
 .deleteButton:hover {
-
-  transform: scale(1.1); 
+  transform: scale(1.1);
 }
 
-/* En Results.module.css */
-
-/* --- ESTILOS PARA EL CALENDARIO DESPLEGABLE (POP-UP) --- */
-
-/* Contenedor principal del calendario: usar variables para integrarse con el tema */
 :global(.react-datepicker) {
   font-family: inherit !important;
   background-color: var(--background-color) !important;
@@ -211,7 +186,9 @@
 :global(.react-datepicker__navigation-arrow) {
   border-color: var(--color-text) !important;
 }
-:global(.react-datepicker__navigation:hover .react-datepicker__navigation-arrow) {
+:global(
+    .react-datepicker__navigation:hover .react-datepicker__navigation-arrow
+  ) {
   border-color: var(--color-text) !important; /* mantener sutil */
 }
 
@@ -229,14 +206,17 @@
 
 /* Día al pasar el mouse por encima */
 :global(.react-datepicker__day:hover) {
-  background-color: rgba(0,0,0,0.06) !important;
+  background-color: rgba(0, 0, 0, 0.06) !important;
   color: var(--color-text) !important;
   border-radius: 50% !important;
 }
 
 /* Día que está seleccionado */
 :global(.react-datepicker__day--selected) {
-  background-color: var(--color-accent, #3498db) !important; /* fallback si no existe */
+  background-color: var(
+    --color-accent,
+    #3498db
+  ) !important; /* fallback si no existe */
   color: white !important;
   border-radius: 50% !important;
   font-weight: bold !important;
@@ -253,16 +233,39 @@
   opacity: 0.5 !important;
 }
 
-.editButton{
-background: none;
-border: none;
+.editButton {
+  background: none;
+  border: none;
 }
 
-.ButtonImg{
+.ButtonImg {
   width: 15px;
- 
+
   margin-top: 4px;
   cursor: pointer;
 }
+.containerFecha {
+  display: flex;
+  gap: 0.5rem;
 
+}
 
+.containerFecha p{
+color: var(--color-dark-text);
+}
+
+.containerFecha input{
+  background: none;
+  border: none;
+  color: var(--color-dark-text);
+}
+
+.lista{
+  display: none;
+}
+
+@media (max-width: 1000px) {
+  .container {
+    margin-top: 82px;
+  }
+}

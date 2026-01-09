@@ -1,89 +1,84 @@
-import 'react-datepicker/dist/react-datepicker.css';
-import style from '../style/LeftsideNotas.module.css';
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import style from "../style/LeftsideNotas.module.css";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import DatePicker from "react-datepicker";
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 const initialFormData = {
-  meta: '',
+  meta: "",
   fecha: new Date(),
-  horario: '12:00',
-  urgencia: 'importante',
-  color: 'color1',
+  horario: "12:00",
+  urgencia: "importante",
+  color: "color1",
   esRecurrente: false,
 };
 
-// ====================================================================
-// CORRECCIÓN 1: La prop ahora se llama 'onUpdate'
-// ====================================================================
 function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
   const [isOpen, setIsOpen] = useState(true);
   const toggleContainer = () => setIsOpen(!isOpen);
 
   const [formData, setFormData] = useState(initialFormData);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (taskToEdit) {
-      // --- INICIA LA CORRECCIÓN ---
-
-      // 1. Creamos el objeto Date desde el string UTC que viene del backend.
-      //    Esto la convierte a tu hora local (ej: 9 de sep a las 21:00).
       const fechaUTC = new Date(taskToEdit.fecha);
-      
-      // 2. Le sumamos el desfase de tu zona horaria para "cancelar" la conversión.
-      //    getTimezoneOffset() para Argentina es 180. Al sumarlo,
-      //    la fecha vuelve a ser 10 de sep a las 00:00 en tu hora local.
-      fechaUTC.setMinutes(fechaUTC.getMinutes() + fechaUTC.getTimezoneOffset());
 
-      // --- TERMINA LA CORRECCIÓN ---
+      fechaUTC.setMinutes(fechaUTC.getMinutes() + fechaUTC.getTimezoneOffset());
 
       setFormData({
         ...taskToEdit,
-        fecha: fechaUTC, // <-- Usamos la fecha ya corregida
+        fecha: fechaUTC,
       });
       setIsOpen(true);
     } else {
       setFormData(initialFormData);
     }
   }, [taskToEdit]);
+
+
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   const handleDateChange = (date) => {
-    setFormData(prevData => ({ ...prevData, fecha: date }));
+    setFormData((prevData) => ({ ...prevData, fecha: date }));
   };
 
   const handleColorSelect = (colorName) => {
-    setFormData(prevData => ({ ...prevData, color: colorName }));
+    setFormData((prevData) => ({ ...prevData, color: colorName }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
     setLoading(true);
 
     if (!formData.meta) {
-      setError('Por favor, escribe el nombre de la meta.');
+      setError("Por favor, escribe el nombre de la meta.");
       setLoading(false);
       return;
     }
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) { throw new Error('No estás autenticado.'); }
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No estás autenticado.");
+      }
 
       const fechaLocal = new Date(formData.fecha);
-      fechaLocal.setMinutes(fechaLocal.getMinutes() - fechaLocal.getTimezoneOffset());
+      fechaLocal.setMinutes(
+        fechaLocal.getMinutes() - fechaLocal.getTimezoneOffset()
+      );
       const fechaFormateada = fechaLocal.toISOString().slice(0, 10); // "YYYY-MM-DD"
 
       const dataToSend = {
@@ -92,27 +87,21 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
       };
 
       if (taskToEdit) {
-        // --- MODO EDICIÓN ---
         await axios.put(`${API_URL}/api/task/${taskToEdit._id}`, dataToSend, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setSuccess('¡Tarea actualizada con éxito!');
+        setSuccess("¡Tarea actualizada con éxito!");
       } else {
-        // --- MODO CREACIÓN ---
         await axios.post(`${API_URL}/api/task`, dataToSend, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setSuccess('¡Hábito/Tarea añadido con éxito!');
+        setSuccess("¡Hábito/Tarea añadido con éxito!");
       }
 
-      // ====================================================================
-      // CORRECCIÓN 2: Se llama a 'onUpdate()' después de guardar
-      // ====================================================================
       onUpdate();
-      setTimeout(() => setSuccess(''), 3000);
-
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Hubo un error al guardar.');
+      setError(err.response?.data?.message || "Hubo un error al guardar.");
     } finally {
       setLoading(false);
     }
@@ -121,7 +110,7 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
   const isEditing = !!taskToEdit;
 
   return (
-    <div className={`${style.container} ${!isOpen ? style.closed : ''}`}>
+    <div className={`${style.container}`}>
       <div className={style.containerOpenClose}>
         <img
           className={style.close}
@@ -133,51 +122,100 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
       {isOpen && (
         <>
           <div className={style.containerInfo}>
-            <p className={style.titleKeep}>{isEditing ? 'Editar Hábito' : 'Crea un habito'}</p>
+            <p className={style.titleKeep}>
+              {isEditing ? "Editar Hábito" : "Crea un habito"}
+            </p>
           </div>
           <div className={style.containerForm}>
-            <form onSubmit={handleSubmit}>
-              <input name="meta" type="text" placeholder='Escriba su meta' value={formData.meta} onChange={handleChange} />
-              <DatePicker selected={formData.fecha} onChange={handleDateChange} dateFormat="dd-MM-yyyy" className={style.datePicker} />
-              <input name="horario" type="time" value={formData.horario} onChange={handleChange} className={style.datePicker} />
-              <select name="urgencia" value={formData.urgencia} onChange={handleChange} className={style.select}>
+            <form className={style.form} onSubmit={handleSubmit}>
+              <input
+                name="meta"
+                type="text"
+                placeholder="Escriba su meta"
+                value={formData.meta}
+                onChange={handleChange}
+              />
+              <DatePicker
+                selected={formData.fecha}
+                onChange={handleDateChange}
+                dateFormat="dd-MM-yyyy"
+                className={style.datePicker}
+              />
+              <input
+                name="horario"
+                type="time"
+                value={formData.horario}
+                onChange={handleChange}
+                className={style.datePicker}
+              />
+              <select
+                name="urgencia"
+                value={formData.urgencia}
+                onChange={handleChange}
+                className={style.select}
+              >
                 <option value="importante">Importante</option>
                 <option value="urgente">Urgente</option>
                 <option value="no importante">No Importante</option>
                 <option value="obligaciones">Obligaciones</option>
               </select>
               <div>
-                <p className={style.subtitle}>Seleccione un color para su tarea</p>
+                <p className={style.subtitle}>
+                  Seleccione un color para su tarea
+                </p>
                 <div className={style.containerColors}>
-                  {['color1', 'color2', 'color3', 'color4'].map((color, index) => (
-                    <div
-                      key={color}
-                      className={`${style[`circle${['One', 'Two', 'Three', 'Four'][index]}`]} ${formData.color === color ? style.selected : ''}`}
-                      onClick={() => handleColorSelect(color)}
-                    ></div>
-                  ))}
+                  {["color1", "color2", "color3", "color4"].map(
+                    (color, index) => (
+                      <div
+                        key={color}
+                        className={`${
+                          style[
+                            `circle${["One", "Two", "Three", "Four"][index]}`
+                          ]
+                        } ${formData.color === color ? style.selected : ""}`}
+                        onClick={() => handleColorSelect(color)}
+                      ></div>
+                    )
+                  )}
                 </div>
               </div>
               <div className={style.containerKeep}>
                 <p className={style.keep}>Repetir diariamente</p>
-                <input name="esRecurrente" type='checkbox' checked={formData.esRecurrente} onChange={handleChange} />
+                <input
+                  name="esRecurrente"
+                  type="checkbox"
+                  checked={formData.esRecurrente}
+                  onChange={handleChange}
+                  className={style.repetir}
+                />
               </div>
               <div className={style.containerEditCancel}>
                 <button className={style.btn} type="submit" disabled={loading}>
-                  <p>{loading ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Añade un habito')}</p>
+                  <p>
+                    {loading
+                      ? "Guardando..."
+                      : isEditing
+                      ? "Guardar Cambios"
+                      : "Añade un habito"}
+                  </p>
                 </button>
                 {isEditing && (
-                  // ====================================================================
-                  // CORRECCIÓN 3: El botón 'Cancelar' llama a 'onUpdate'
-                  // ====================================================================
-                  <button type="button" className={style.btn} onClick={onUpdate}>
+                  <button
+                    type="button"
+                    className={style.btn}
+                    onClick={onUpdate}
+                  >
                     Cancelar
                   </button>
                 )}
               </div>
             </form>
-            {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
-            {success && <p style={{ color: 'green', marginTop: '10px' }}>{success}</p>}
+            {error && (
+              <p style={{ color: "red", marginTop: "10px" }}>{error}</p>
+            )}
+            {success && (
+              <p style={{ color: "green", marginTop: "10px" }}>{success}</p>
+            )}
           </div>
         </>
       )}
