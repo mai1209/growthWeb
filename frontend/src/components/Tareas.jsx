@@ -144,46 +144,47 @@ function Tareas({ token, refreshKey, onEditClick }) {
       );
 
     return (
-      <div className={resultsStyle.fullScreenContainer}>
-        <div className={resultsStyle.allMovimientosContainer}>
-          <table className={resultsStyle.movimientosTable}>
-            <thead className={resultsStyle.titleMovimientos}>
-              <tr>
-                <th>Fecha</th>
-                <th>Meta</th>
-                <th>Horario</th>
-                <th>Urgencia</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tasks.map((t) => (
-                <tr key={t._id} className={resultsStyle[t.color] || ""}>
-                  <td className={resultsStyle.rowText}>
-                    {t.fecha ? t.fecha.slice(0, 10) : "-"}
-                  </td>
-                  <td className={resultsStyle.rowText}>{t.meta}</td>
-                  <td className={resultsStyle.rowText}>{t.horario || "-"}</td>
-                  <td className={resultsStyle.rowText}>{t.urgencia}</td>
-                  <td className={resultsStyle.rowText}>
-                    {t.completada ? "Hecho" : "Pendiente"}
-                  </td>
-                  <td>
-                    <button
-                      onClick={() => onEditClick(t)}
-                      style={{ marginRight: 8 }}
-                    >
-                      Editar
-                    </button>
+      <div >
+        <div >
+          <div >
+            {tasks.map((t) => (
+              <div key={t._id}>
+                <div >
+                  <div >
+                    <div >
+                      <p >{t.meta}</p>
+                      <p >
+                        {t.fecha ? t.fecha.slice(0, 10) : "-"} ·{" "}
+                        {t.horario || "--:--"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span >
+                        {t.urgencia}
+                      </span>
+                      <span
+                        className={
+                          t.completada
+                            ? resultsStyle.estadoHecho
+                            : resultsStyle.estadoPendiente
+                        }
+                      >
+                        {t.completada ? "Hecho" : "Pendiente"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className={resultsStyle.taskActions}>
+                    <button onClick={() => onEditClick(t)}>Editar</button>
                     <button onClick={() => handleDeleteTask(t._id)}>
                       Eliminar
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -191,7 +192,7 @@ function Tareas({ token, refreshKey, onEditClick }) {
 
   return (
     <div className={style.container}>
-      <div className={resultsStyle.headerDos}>
+      <div >
         <div className={resultsStyle.titleContainer}>
           <h1 style={{ margin: 0 }}>
             {showList ? "Todas las Tareas" : "Mis Tareas de hoy"}

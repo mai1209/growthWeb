@@ -39,8 +39,6 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
     }
   }, [taskToEdit]);
 
-
-
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prevData) => ({
@@ -111,13 +109,15 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
 
   return (
     <div className={`${style.container}`}>
-      <div className={style.containerOpenClose}>
-        <img
-          className={style.close}
-          src={isOpen ? "/close.png" : "/open.png"}
-          alt={isOpen ? "close-tab" : "open-tab"}
-          onClick={toggleContainer}
-        />
+      <div className={style.containerOpen}>
+        <div className={style.containerOpenClose}>
+          <img
+            className={style.close}
+            src={isOpen ? "/close.png" : "/open.png"}
+            alt={isOpen ? "close-tab" : "open-tab"}
+            onClick={toggleContainer}
+          />
+        </div>
       </div>
       {isOpen && (
         <>

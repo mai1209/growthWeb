@@ -115,7 +115,7 @@
     background: rgba(0, 0, 0, 0.12);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    border-bottom: none ;
+    border-bottom: none;
   }
 
   .nameLogo {
@@ -123,10 +123,17 @@
   }
 
   .navItems {
-    display: none;
+    position: fixed;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    width: 100%;
+    background-color: var(--background-color);
+    gap: 0.5rem;
+    
   }
-
-
 
   .user {
     display: none;
@@ -139,5 +146,18 @@
     width: 50px;
     height: 50px;
     display: flex;
+    display: none;
   }
+  
+.navLink img {
+  width: 1.4rem;
+  height: 1.4em;
+}
+.navLink p {
+  margin: 0;
+  font-size: 0.9rem;
+  font-family: "Poppins", sans-serif;
+}
+
+  
 }
