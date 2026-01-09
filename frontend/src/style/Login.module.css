@@ -43,6 +43,7 @@
   background-color: transparent;
   width: fit-content;
   padding: 3rem;
+
 }
 
 form {
@@ -146,23 +147,26 @@ form label {
   .containerForm {
     padding: 0rem;
     flex-direction: column;
+    width: 100%;
   }
 
   .container {
     align-items: flex-start; 
-    justify-content: center;
+    justify-content: start;
     overflow-y: auto;
-    padding-top: 2rem;
+    padding: 2rem 1rem;
     -webkit-overflow-scrolling: touch;
   }
 
   .back {
     margin-top: 0rem;
     border: none;
+    width: 100%;
   }
 
   .title {
     font-size: 1.2rem;
+    margin-bottom : 1rem ;
   }
   form {
     gap: 0rem;
@@ -170,6 +174,7 @@ form label {
     margin-left: 0rem;
     margin-top: 3rem;
     padding-left: 1rem;
+
   }
 
   .btn {
@@ -183,4 +188,16 @@ form label {
   .containerLogOut p {
     font-size: 0.7rem;
   }
+
+  .containerRegister {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+  padding-right: 1rem;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+
 }
