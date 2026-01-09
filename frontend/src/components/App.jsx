@@ -57,6 +57,15 @@ function App() {
   const handleLoginClick = () => setActiveView("login");
   const handleCloseModal = () => setActiveView(null);
 
+//funcion de ingreso y egreso 
+const handleAddMovement = () => {
+  setMovementToEdit(null);
+  setActiveView(null);
+};
+
+
+
+
   return (
  
       <AppRoutes
@@ -76,6 +85,8 @@ function App() {
         
         taskToEdit={taskToEdit}
         setTaskToEdit={setTaskToEdit}
+
+          onAddMovement={handleAddMovement}
       />
   
   );

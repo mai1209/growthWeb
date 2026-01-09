@@ -5,12 +5,20 @@ import SignupPage from "./SignupPage";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Results.module.css";
-import { CiCalendarDate } from "react-icons/ci";
 import { forwardRef } from "react";
-import { PiListBulletsThin } from "react-icons/pi";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
-
+//componente de icono de calendario
+const CalendarButton = forwardRef(({ onClick }, ref) => (
+  <button
+    type="button"
+    className={style.calendarButton}
+    onClick={onClick}
+    ref={ref}
+  >
+    <img src="./calendario.png" alt="calendario" />
+  </button>
+));
 function Results({
   token,
   onAuthSuccess,
@@ -83,18 +91,6 @@ function Results({
     }
   };
 
-  //componente de icono de calendario
-  const CalendarButton = forwardRef(({ onClick }, ref) => (
-    <button
-      type="button"
-      className={style.calendarButton}
-      onClick={onClick}
-      ref={ref}
-    >
-      <img src="./calendario.png" alt="calendario" />
-    </button>
-  ));
-
   //funcion de hoy
   const handleToday = () => {
     const today = new Date();
@@ -144,15 +140,19 @@ function Results({
       <div className={style.header}>
         <div className={style.datePickerContainer}>
           <button className={style.icon}>
-            <DatePicker
-              selected={selectedDate}
-              onChange={handleDateChange}
-              dateFormat="dd-MM-yyyy"
-              customInput={<CalendarButton />}
-              popperPortalId="root"
-              popperPlacement="bottom-start"
-            />
-            <p>Calendario</p>
+            <div className={style.icon}>
+              <DatePicker
+                selected={selectedDate}
+                onChange={handleDateChange}
+                dateFormat="dd-MM-yyyy"
+                customInput={<CalendarButton />}
+                popperPortalId="root"
+                popperPlacement="bottom-start"
+              />
+              <p>Calendario</p>
+            </div>
+
+            
           </button>
 
           <button onClick={handleToday} className={style.icon}>
