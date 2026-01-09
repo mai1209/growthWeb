@@ -2,16 +2,23 @@
 
 .container {
   background-color: var(--background-color);
-  height: fit-content;
+  height: calc(100vw - 287px);
   width: calc(100vw - 287px);
+  padding: 3rem 0;
   color: var(--color-text);
+
+
 }
 
 .containerAllForm {
   display: flex;
   gap: 5rem;
   margin: 2rem;
+
+
 }
+
+/* ===================== CARDS ===================== */
 
 .formone,
 .formtwo {
@@ -51,10 +58,10 @@
   box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35);
 }
 
-/* Badges for each card */
+/* ===================== BADGES ===================== */
+
 .formone::before,
 .formtwo::before {
-  content: "";
   position: absolute;
   top: -14px;
   left: 20px;
@@ -64,15 +71,20 @@
   font-weight: 700;
   font-size: 0.85rem;
   color: var(--color-text);
+  pointer-events: none; /* 🔥 FIX TOUCH */
 }
+
 .formone::before {
   content: "Ingreso";
   background: #6ac6145a;
 }
+
 .formtwo::before {
   content: "Egreso";
   background: #c614145a;
 }
+
+/* ===================== INPUTS ===================== */
 
 .input {
   background: none;
@@ -102,9 +114,7 @@ input:focus {
   outline: none;
 }
 
-.input::placeholder {
-  color: var(--color-text);
-}
+/* ===================== BOTONES ===================== */
 
 .containerBtn,
 .containerDetalle {
@@ -117,17 +127,12 @@ input:focus {
 .detalle,
 .buttonSend {
   width: calc(50% - 0.5rem);
-  box-sizing: border-box;
-}
-
-.datePickerWrapper {
-  width: calc(50% - 0.5rem);
 }
 
 .btn,
 .detalle,
 .buttonSend {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   color: var(--color-text);
   padding: 0.6rem;
@@ -135,13 +140,18 @@ input:focus {
   text-align: center;
   font-family: "Poppins", sans-serif;
   font-size: 0.95rem;
-  background: rgba(255, 255, 255, 0.02);
 }
 
 .buttonSend {
   cursor: pointer;
   font-weight: 800;
   letter-spacing: 0.6px;
+}
+
+/* ===================== DATEPICKER ===================== */
+
+.datePickerWrapper {
+  width: calc(50% - 0.5rem);
 }
 
 .datePicker {
@@ -155,21 +165,19 @@ input:focus {
   font-size: 0.9rem;
   cursor: pointer;
   width: 100%;
-  box-sizing: border-box;
 }
 
-.btn::placeholder,
-.detalle::placeholder {
-  color: var(--color-dark-text);
-}
+/* ===================== TEXT ===================== */
 
 .title {
-  padding: 0.5rem 7rem;
+  padding: 0.7rem 2rem;
 }
 
 .subTitle {
   padding: 0 1rem;
 }
+
+/* ===================== CANCEL ===================== */
 
 .cancelButton {
   background: none;
@@ -181,17 +189,32 @@ input:focus {
   cursor: pointer;
 }
 
+/* ===================== MOBILE FIX ===================== */
+
 @media (max-width: 1000px) {
   .container {
     position: fixed;
-    z-index: 999999999;
-    top: 149.5px;
+    top: 0;
+    bottom: 0;
     width: 100%;
+    height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    z-index: 9999;
+    padding: 4rem 0;
+  }
+
+  .containerAllForm {
+    flex-direction: column;
+    gap: 2rem;
+    margin: 1rem;
   }
 
   .buttonSend {
-    letter-spacing: 0.6px;
-
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
+
+  .cancelButton {
+  padding: 0.7rem 2rem;
+}
 }

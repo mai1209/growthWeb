@@ -40,11 +40,12 @@ function SignupPage({ onSwitchToLogin, onAuthSuccess }) {
   return (
     <div className={style.container}>
       <div className={style.back}>
-        <p className={style.title}>Registrate para comenzar</p>
         <div className={style.containerForm}>
           <img src="./imgInicio.png" alt="imgInicio" />
 
           <form onSubmit={handleSubmit}>
+            <p className={style.title}>Registrate para comenzar</p>
+
             <div className={style.containerInput}>
               <label htmlFor="name">Usuario:</label>
               <input

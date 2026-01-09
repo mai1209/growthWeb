@@ -30,11 +30,12 @@ function LoginPage({ onClose, onAuthSuccess }) {
   return (
     <div className={style.container}>
       <div className={style.back}>
-        <p className={style.title}>Iniciar sesión</p>
         <div className={style.containerForm}>
           <img src="./imgInicio.png" alt="imgInicio" />
 
           <form onSubmit={handleSubmit}>
+            <p className={style.title}>Iniciar sesión</p>
+
             <div className={style.containerInput}>
               <label htmlFor="email">Email:</label>
               <input
@@ -57,7 +58,7 @@ function LoginPage({ onClose, onAuthSuccess }) {
               <button
                 type="submit"
                 className={loading ? style.btnLoading : style.btn}
-                disabled={loading} 
+                disabled={loading}
               >
                 {loading ? (
                   <div className={style.spinner}></div>

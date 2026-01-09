@@ -3,8 +3,10 @@
 .container {
   border-right: 1px solid #ffffff55;
   width: 21vw;
+  height: calc(100vh - 62.7px);
   background-color: var(--background-color);
   transition: width 0.3s ease;
+
 }
 
 .containerOpenClose {
@@ -116,17 +118,20 @@
     overflow-y: scroll;
     border: none;
     padding: 1.4rem 0.6rem 5.5rem 0.6rem;
-    background: rgba(0, 0, 0, 0.12);
+    background: rgba(0, 0, 0, 0.077);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     z-index: 999;
+
+      height: fit-content;
+
   }
 
   .firstContainer {
     border-radius: 21px;
     padding: 1rem;
     margin: 0 0rem;
-    background-color: #141514;
+    background-color: #1415140a;
   }
 
   .containerAllInfo {
