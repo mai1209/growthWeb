@@ -326,6 +326,8 @@
   -webkit-backdrop-filter: blur(14px);
 }
 
+
+
 @media (max-width: 1000px) {
   .container {
     position: relative;
@@ -337,10 +339,9 @@
     display: flex;
     gap: 1rem;
     margin-left: 0.5rem;
-
     position: fixed;
-    top: 19.1rem;
-    z-index: 99999999;
+    top: 19rem;
+    z-index: 8888888;
   }
 
   .datePickerContainer {
@@ -395,5 +396,10 @@
 .titleContainer {
 
   padding: 1rem;
+}
+
+.titleContainer h1 {
+  font-size: 1.2rem;
+  font-weight: 300;
 }
 }
