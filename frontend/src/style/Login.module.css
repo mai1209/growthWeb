@@ -60,6 +60,7 @@ form input {
   color: var(--color-text);
   text-align: start;
   width: 100%;
+  font-size: 16px;
 }
 
 form label {
@@ -184,6 +185,7 @@ form label {
   }
   form label {
     font-size: 0.7rem;
+    
   }
   .containerLogOut p {
     font-size: 0.7rem;
