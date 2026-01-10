@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
-import { jwtDecode } from 'jwt-decode';
-import style from '../style/Nav.module.css';
-import { NavLink } from 'react-router-dom';
+import { useMemo } from "react";
+import { jwtDecode } from "jwt-decode";
+import style from "../style/Nav.module.css";
+import { NavLink } from "react-router-dom";
 
 function Nav({ token, onLogout }) {
   const userData = useMemo(() => {
@@ -18,6 +18,22 @@ function Nav({ token, onLogout }) {
     return isActive ? `${style.navLink} ${style.activeLink}` : style.navLink;
   };
 
+
+
+  ///LOS LINKS QUE FALTAN EN EL MENU
+  //   <NavLink to="/notes" className={getNavLinkClass}>
+  //           <img src="/notas.png" alt="notes" />
+  //         <p>Notas</p>
+  //     </NavLink>
+  //   <NavLink to="/help" className={getNavLinkClass}>
+  //   <img src="/help.png" alt="help" />
+  // <p>Ayuda</p>
+  //</NavLink>
+  //<NavLink to="/settings" className={getNavLinkClass}>
+  // <img src="/settings.png" alt="settings" />
+  //<p>Ajustes</p>
+  //</NavLink>
+
   return (
     <div className={style.container}>
       <nav className={style.nav}>
@@ -27,7 +43,6 @@ function Nav({ token, onLogout }) {
         </div>
 
         <div className={style.navItems}>
-
           <NavLink to="/" className={getNavLinkClass}>
             <img src="/homedos.png" alt="home2" />
             <p>Home</p>
@@ -36,24 +51,12 @@ function Nav({ token, onLogout }) {
             <img src="/tarea.png" alt="tasklist" />
             <p>Tareas</p>
           </NavLink>
-          <NavLink to="/notes" className={getNavLinkClass}>
-            <img src="/notas.png" alt="notes" />
-            <p>Notas</p>
-          </NavLink>
-          <NavLink to="/help" className={getNavLinkClass}>
-            <img src="/help.png" alt="help" />
-            <p>Ayuda</p>
-          </NavLink>
-          <NavLink to="/settings" className={getNavLinkClass}>
-            <img src="/settings.png" alt="settings" />
-            <p>Ajustes</p>
-          </NavLink>
         </div>
 
         {token && userData ? (
           <div className={style.userActions}>
             <div className={style.user}>
-              <p>Hola, {userData.username || 'Usuario'}!</p>
+              <p>Hola, {userData.username || "Usuario"}!</p>
               <img className={style.imgUser} src="" alt="user" />
             </div>
             <button onClick={onLogout} className={style.logoutButton}>
@@ -63,8 +66,9 @@ function Nav({ token, onLogout }) {
         ) : (
           <div></div>
         )}
-        <button className={style.menuButton}><img src="./menu.png" alt="menuHamburguesass"/></button>
-
+        <button className={style.menuButton}>
+          <img src="./menu.png" alt="menuHamburguesass" />
+        </button>
       </nav>
     </div>
   );
