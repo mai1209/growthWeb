@@ -156,8 +156,10 @@ form input {
 
   .cancelContainer {
     position: fixed;
+    top: 3rem;
+    right: 0rem;
     z-index: 9999999999;
-    padding: 5rem 2rem 2.2rem;
+    padding: 0rem 1rem;
   }
 
   .cerrar {

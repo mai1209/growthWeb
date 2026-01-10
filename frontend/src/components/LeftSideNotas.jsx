@@ -110,13 +110,10 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
   return (
     <div className={`${style.container}`}>
       <div className={style.containerOpen}>
-        <div className={style.containerOpenClose}>
-          <img
-            className={style.close}
-            src={isOpen ? "/close.png" : "/open.png"}
-            alt={isOpen ? "close-tab" : "open-tab"}
-            onClick={toggleContainer}
-          />
+        <div className={`${style.containerOpenClose} ${isOpen ? style.open : ""}`}  onClick={toggleContainer}>
+          <p className={style.close}  onClick={toggleContainer}>
+            {isOpen ? "X" : "Crear un hábito +"}
+          </p>
         </div>
       </div>
       {isOpen && (

@@ -15,6 +15,10 @@
 .close {
   cursor: pointer;
   display: none;
+  color: #ffffff;
+  padding: 0.5rem;
+  background-color: #006769;
+  border-radius: 8px;
 }
 
 .containerForm input:not([type="checkbox"]) {
@@ -178,8 +182,8 @@
     height: fit-content;
     z-index: 9999999;
     position: absolute;
-    top: 5rem;
-    border-right: none  ;
+    top: 6.4rem;
+    border-right: none;
     background-color: transparent;
   }
 
@@ -189,7 +193,6 @@
     height: fit-content;
     justify-content: flex-end;
     margin-top: 0px;
-
   }
   .containerForm {
     width: 100vw;
@@ -231,21 +234,25 @@
     padding: 0 1rem;
     border: 3px solid;
     margin-top: 0rem;
-
   }
 
   .containerOpenClose {
     width: fit-content;
+    padding: 0.7rem 1rem 0;
+  }
+
+  .open {
+    width: 100%;
+    background-color: #000000;
   }
 
   .titleKeep {
-  color: var(--color-text);
-  font-size: 1.5rem;
-  padding: 1rem 1rem 1.3rem;
-  font-weight: 500;
-  font-family: "poppins";
-  font-style: normal;
-  background-color: var(--background-color);
-
-}
+    color: var(--color-text);
+    font-size: 1.5rem;
+    padding: 0rem 1rem 1.3rem;
+    font-weight: 500;
+    font-family: "poppins";
+    font-style: normal;
+    background-color: var(--background-color);
+  }
 }
