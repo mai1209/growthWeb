@@ -99,24 +99,23 @@ function Tareas({ token, refreshKey, onEditClick }) {
         >
           <div className={style.taskHeader}>
             <p className={style.taskMeta}>{task.meta}</p>
-            <p className={style.taskUrgency}>Urgencia &gt; {task.urgencia}</p>
+          </div>
+          <div>
+            <p className={style.taskUrgency}> {task.urgencia}</p>
           </div>
           <div className={style.taskDetails}>
-            <p>Horario: {task.horario || "Sin horario"}</p>
+            <p>{task.horario || "Sin horario"} </p>
           </div>
           <div className={style.taskActions}>
-            <p
-              className={
-                task.completada ? style.statusDone : style.statusPending
-              }
-            >
-              {task.completada ? "Hecho" : "Pendiente"}
-            </p>
-            <input
-              type="checkbox"
-              checked={task.completada}
-              onChange={() => handleToggleComplete(task._id, task.completada)}
-            />
+            <label className={style.checkboxWrapper}>
+              <input
+                type="checkbox"
+                checked={task.completada}
+                onChange={() => handleToggleComplete(task._id, task.completada)}
+              />
+              <span className={style.customCheckbox}></span>
+            </label>
+
             <button
               onClick={() => onEditClick(task)}
               className={style.editButton}
@@ -144,25 +143,23 @@ function Tareas({ token, refreshKey, onEditClick }) {
       );
 
     return (
-      <div >
-        <div >
-          <div >
+      <div>
+        <div>
+          <div>
             {tasks.map((t) => (
               <div key={t._id}>
-                <div >
-                  <div >
-                    <div >
-                      <p >{t.meta}</p>
-                      <p >
+                <div>
+                  <div>
+                    <div>
+                      <p>{t.meta}</p>
+                      <p>
                         {t.fecha ? t.fecha.slice(0, 10) : "-"} ·{" "}
                         {t.horario || "--:--"}
                       </p>
                     </div>
 
                     <div>
-                      <span >
-                        {t.urgencia}
-                      </span>
+                      <span>{t.urgencia}</span>
                       <span
                         className={
                           t.completada
@@ -192,7 +189,7 @@ function Tareas({ token, refreshKey, onEditClick }) {
 
   return (
     <div className={style.container}>
-      <div >
+      <div>
         <div className={resultsStyle.titleContainer}>
           <h1 style={{ margin: 0 }}>
             {showList ? "Todas las Tareas" : "Mis Tareas de hoy"}
