@@ -166,25 +166,25 @@ form label {
   }
 
   .title {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     margin-bottom : 1rem ;
   }
   form {
     gap: 0rem;
     width: 100%;
     margin-left: 0rem;
-    margin-top: 3rem;
-    padding-left: 1rem;
+    margin-top: 2rem;
+    padding-left: 0.5rem;
 
   }
 
   .btn {
     padding: 0.5rem 1rem;
 
-    font-size: 0.7rem;
+    font-size: 0.9rem;
   }
   form label {
-    font-size: 0.7rem;
+    font-size: 0.9rem;
     
   }
   .containerLogOut p {
@@ -197,8 +197,8 @@ form label {
   justify-content: flex-end;
   align-items: flex-end;
   padding-right: 1rem;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 
