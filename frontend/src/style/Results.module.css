@@ -15,7 +15,7 @@
 
 .titleContainer h1 {
   font-size: 1.9rem;
-  font-family: 'poppins';
+  font-family: "poppins";
 }
 
 .visibilityButton {
@@ -201,23 +201,21 @@
   max-width: 70%;
   margin: 0 auto;
 
-  max-height: 30rem ;
+  max-height: 30rem;
   overflow-y: scroll;
-   scrollbar-width: 1px;       
+  scrollbar-width: 1px;
   scrollbar-color: #88888898 #111;
 }
-
-
 
 .movimientoRow {
   display: flex;
   justify-content: space-between;
-    padding: 0.8rem;
-    cursor: pointer;
+  padding: 0.8rem;
+  cursor: pointer;
 }
 
-.movimientoRow:hover{
-  background-color: #3BCB23;
+.movimientoRow:hover {
+  background-color: #3bcb23;
   color: #111;
 }
 
@@ -321,8 +319,15 @@
 .datePickerContainer {
   border: 0.5px solid var(--color-text);
   border-radius: 8px;
-
+  transition: background-color 0.2s ease;
   display: flex;
+  transition: background-color 0.2s ease;
+}
+
+.active {
+  background-color: #12240a; /* verde suave */
+  border-bottom-right-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
 .titulo {
@@ -334,8 +339,6 @@
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
-
-
 
 @media (max-width: 1000px) {
   .container {
@@ -394,25 +397,27 @@
 
   .listadoPrincipal {
     max-width: 100%;
-      max-height: none ;
-
+    max-height: none;
   }
 
   .titulo {
     position: fixed;
     top: 24.4rem;
     z-index: 88888;
-      padding: 1rem ;
-
+    padding: 1rem;
   }
 
-.titleContainer {
+  .titleContainer {
+    padding: 2rem 1rem 1rem 1rem;
+  }
 
-  padding: 2rem 1rem 1rem 1rem;
-}
-
-.titleContainer h1 {
-  font-size: 1.2rem;
-  font-weight: 300;
-}
+  .titleContainer h1 {
+    font-size: 1.2rem;
+    font-weight: 300;
+  }
+  .active {
+    background-color: #12240a; 
+      border-bottom-right-radius: 6px;
+  border-top-right-radius: 6px;
+  }
 }
