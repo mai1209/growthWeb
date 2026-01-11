@@ -28,12 +28,17 @@ const TaskSchema = new mongoose.Schema({
     type: String, 
     default: 'color1'
   },
-    // --- AÑADE ESTE CAMPO NUEVO ---
-  completada: {
-    type: Boolean,
-    default: false, // Las tareas nuevas siempre empiezan como "pendientes"
-  },
-    // --- 👇 AÑADE ESTE NUEVO CAMPO 👇 ---
+  
+diasRepeticion: {
+  type: [String], // ["lun","mar","vie"]
+  default: []
+},
+
+completadasEn: {
+  type: [String], // ["2026-01-09"]
+  default: []
+}
+,
   esRecurrente: {
     type: Boolean,
     default: false, // Por defecto, las tareas no son recurrentes

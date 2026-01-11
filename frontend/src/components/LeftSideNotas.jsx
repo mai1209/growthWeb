@@ -12,6 +12,7 @@ const initialFormData = {
   urgencia: "importante",
   color: "color1",
   esRecurrente: false,
+  diasRepeticion: [],
 };
 
 function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
@@ -32,7 +33,9 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
       setFormData({
         ...taskToEdit,
         fecha: fechaUTC,
+        diasRepeticion: taskToEdit.diasRepeticion || [],
       });
+
       setIsOpen(true);
     } else {
       setFormData(initialFormData);
@@ -106,13 +109,29 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
   };
 
   const isEditing = !!taskToEdit;
+  const toggleDia = (dia) => {
+    setFormData((prev) => ({
+      ...prev,
+      diasRepeticion: prev.diasRepeticion.includes(dia)
+        ? prev.diasRepeticion.filter((d) => d !== dia)
+        : [...prev.diasRepeticion, dia],
+    }));
+  };
 
   return (
     <div className={`${style.container}`}>
       <div className={style.containerOpen}>
-        <div className={`${style.containerOpenClose} ${isOpen ? style.open : ""}`}  onClick={toggleContainer}>
-          <p className={style.close}  onClick={toggleContainer}>
-            {isOpen ? "X" : "Crear un hábito +"}
+        <div
+          className={`${style.containerOpenClose} ${isOpen ? style.open : ""}`}
+          onClick={toggleContainer}
+        >
+          <p
+            className={`${style.close} ${
+              isOpen ? style.closeX : style.closeCreate
+            }`}
+            onClick={toggleContainer}
+          >
+            {isOpen ? "✕" : "Crear un hábito +"}
           </p>
         </div>
       </div>
@@ -177,7 +196,7 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
                 </div>
               </div>
               <div className={style.containerKeep}>
-                <p className={style.keep}>Repetir diariamente</p>
+                <p className={style.keep}>Repetir habito</p>
                 <input
                   name="esRecurrente"
                   type="checkbox"
@@ -185,6 +204,23 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
                   onChange={handleChange}
                   className={style.repetir}
                 />
+              </div>
+
+              <div className={style.containerDias}>
+                {formData.esRecurrente && (
+                  <div className={style.diasContainer}>
+                    {["L", "M", "Mi", "J", "V", "S", "D"].map((dia) => (
+                      <label key={dia} className={style.diaItem}>
+                        <input
+                          type="checkbox"
+                          checked={formData.diasRepeticion.includes(dia)}
+                          onChange={() => toggleDia(dia)}
+                        />
+                        <span>{dia.toUpperCase()}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className={style.containerEditCancel}>
                 <button className={style.btn} type="submit" disabled={loading}>
