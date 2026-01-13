@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema(
       required: [true, 'El nombre de usuario es obligatorio'],
       trim: true,
       unique: true,
-      index: true, // 🔹 Índice directo
+      index: true, 
     },
     email: {
       type: String,
@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
-      index: true, // 🔹 Mejora búsqueda por email
+      index: true,
     },
     password: {
       type: String,

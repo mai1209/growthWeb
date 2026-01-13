@@ -60,7 +60,7 @@ export const getTasks = async (req, res) => {
     endDate.setDate(startDate.getDate() + 1);
 
 
-    const diasMap = ["dom", "lun", "mar", "mie", "jue", "vie", "sab"];
+    const diasMap = ["D", "L", "M", "MI", "J", "V", "S"];
 const diaActual = diasMap[startDate.getUTCDay()];
 
 
@@ -83,8 +83,20 @@ const diaActual = diasMap[startDate.getUTCDay()];
       ],
     };
 
-    const tasks = await Task.find(query).sort({ horario: 1 });
-    res.status(200).json(tasks);
+ const tasks = await Task.find(query).sort({ horario: 1 });
+
+// 👇 FECHA STRING (YYYY-MM-DD)
+const fechaStr = startDate.toISOString().slice(0, 10);
+
+// 👇 INYECTAMOS "completada" SEGÚN completadasEn
+const tasksConEstado = tasks.map((task) => {
+  const taskObj = task.toObject();
+  taskObj.completada = task.completadasEn?.includes(fechaStr);
+  return taskObj;
+});
+
+res.status(200).json(tasksConEstado);
+
 
   } catch (error) {
     console.error(error);
@@ -99,31 +111,43 @@ const diaActual = diasMap[startDate.getUTCDay()];
 // @access  Private
 export const updateTaskStatus = async (req, res) => {
   try {
-    const { completada } = req.body; // Recibimos el nuevo estado del frontend
+    const { fecha } = req.body; // "YYYY-MM-DD"
 
-    // Verificamos que la tarea exista
     const task = await Task.findById(req.params.id);
     if (!task) {
       return res.status(404).json({ message: "Tarea no encontrada" });
     }
 
-    // Verificación de seguridad: Asegurarnos de que el usuario sea el dueño de la tarea
     if (task.user.toString() !== req.user.id) {
       return res.status(401).json({ message: "Usuario no autorizado" });
     }
 
-    // Actualizamos la tarea
-    task.completada = completada;
-    const updatedTask = await task.save();
+    // 🔁 Toggle en completadasEn
+    const index = task.completadasEn.indexOf(fecha);
 
-    res.status(200).json(updatedTask);
+    if (index === -1) {
+      task.completadasEn.push(fecha);
+    } else {
+      task.completadasEn.splice(index, 1);
+    }
+
+    await task.save();
+
+    // ✅ CALCULAR completada PARA ESA FECHA
+    const completada = task.completadasEn.includes(fecha);
+
+    const taskObj = task.toObject();
+    taskObj.completada = completada;
+
+    // 👈 ESTO ES LO CLAVE
+    res.status(200).json(taskObj);
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ message: "Error en el servidor al actualizar la tarea" });
+    res.status(500).json({ message: "Error al actualizar estado" });
   }
 };
+
+
 
 // --- AÑADE ESTA NUEVA FUNCIÓN ---
 // @desc    Borrar una tarea
