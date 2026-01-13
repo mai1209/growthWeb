@@ -5,6 +5,9 @@ import axios from "axios";
 import style from "../style/LeftSite.module.css";
 
 function LeftSite({ token, refreshKey }) {
+  const [viewMode, setViewMode] = useState("total"); // total | month
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
+
   // --- NUEVO: Estado para controlar la visibilidad de los montos ---
   const [areTotalsVisible, setAreTotalsVisible] = useState(true);
 
@@ -40,18 +43,28 @@ function LeftSite({ token, refreshKey }) {
   }, [token, refreshKey, API_URL]);
 
   useEffect(() => {
-    if (movimientos && movimientos.length > 0) {
-      const ingreso = movimientos
-        .filter((m) => m.tipo === "ingreso")
-        .reduce((acc, cur) => acc + Number(cur.monto), 0);
-      const egreso = movimientos
-        .filter((m) => m.tipo === "egreso")
-        .reduce((acc, cur) => acc + Number(cur.monto), 0);
-      setTotales({ ingreso, egreso, total: ingreso - egreso });
-    } else {
-      setTotales({ ingreso: 0, egreso: 0, total: 0 });
+    let data = movimientos;
+
+    if (viewMode === "month") {
+      const month = selectedMonth.getMonth();
+      const year = selectedMonth.getFullYear();
+
+      data = movimientos.filter((m) => {
+        const date = new Date(m.fecha);
+        return date.getMonth() === month && date.getFullYear() === year;
+      });
     }
-  }, [movimientos]);
+
+    const ingreso = data
+      .filter((m) => m.tipo === "ingreso")
+      .reduce((acc, cur) => acc + Number(cur.monto), 0);
+
+    const egreso = data
+      .filter((m) => m.tipo === "egreso")
+      .reduce((acc, cur) => acc + Number(cur.monto), 0);
+
+    setTotales({ ingreso, egreso, total: ingreso - egreso });
+  }, [movimientos, viewMode, selectedMonth]);
 
   const formatNumber = (num) =>
     num.toLocaleString("es-AR", {
@@ -62,8 +75,6 @@ function LeftSite({ token, refreshKey }) {
   return (
     <div className={`${style.container} ${!isOpen ? style.closed : ""}`}>
       <div className={style.firstContainer}>
-       
-
         {isOpen && (
           <>
             <div className={style.containerInfo}>
@@ -88,6 +99,37 @@ function LeftSite({ token, refreshKey }) {
                 />
               </button>
             </div>
+
+            <div className={style.viewMode}>
+              <button
+                className={viewMode === "total" ? style.active : ""}
+                onClick={() => setViewMode("total")}
+              >
+                Total
+              </button>
+
+              <button
+                className={viewMode === "month" ? style.active : ""}
+                onClick={() => setViewMode("month")}
+              >
+                Mes
+              </button>
+                {viewMode === "month" && (
+              <input
+                type="month"
+                value={`${selectedMonth.getFullYear()}-${String(
+                  selectedMonth.getMonth() + 1
+                ).padStart(2, "0")}`}
+                onChange={(e) => {
+                  const [year, month] = e.target.value.split("-");
+                  setSelectedMonth(new Date(year, month - 1));
+                }}
+                className={style.monthPicker}
+              />
+            )}
+            </div>
+          
+
             <div className={style.containerAllInfo}>
               <div className={style.containerInfoIngreso}>
                 <p className={style.containerInfoIngresoIngresoText}>
@@ -119,9 +161,9 @@ function LeftSite({ token, refreshKey }) {
           </>
         )}
       </div>
-    <div className={style.containerImg}>
+      <div className={style.containerImg}>
         <img className={style.imgLeft} src="./imgCelu.jpg" alt="" />{" "}
-    </div>
+      </div>
     </div>
   );
 }

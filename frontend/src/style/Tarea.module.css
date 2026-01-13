@@ -40,7 +40,7 @@
 
 .completed.taskCard {
   border-left: 10px solid #3bcb23;
-  background-color: #23371D;
+  background-color: #23371d;
 }
 
 .taskActions {
@@ -81,8 +81,7 @@
   color: var(--color-text);
 }
 
-.taskMeta,
-.taskUrgency {
+.taskMeta {
   white-space: nowrap; /* todo en una sola línea */
   overflow: hidden; /* oculta lo que sobra */
   text-overflow: ellipsis; /* muestra ... */
@@ -223,6 +222,7 @@
 }
 .containerFecha {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
 }
 
@@ -234,6 +234,7 @@
   background: none;
   border: none;
   color: var(--color-dark-text);
+  font-size: 16px;
 }
 
 .checkboxWrapper {
@@ -299,9 +300,15 @@
     margin: 1rem 0.5rem;
   }
 
-  .taskMeta,
-  .taskUrgency {
+  .taskMeta {
     max-width: 80px;
+  }
+
+  .taskUrgency {
+    white-space: nowrap; /* todo en una sola línea */
+    overflow: hidden; /* oculta lo que sobra */
+    text-overflow: ellipsis; /* muestra ... */
+    max-width: 50px;
   }
 
   .taskActions {
@@ -312,4 +319,13 @@
     border-radius: 16px;
     gap: 10px;
   }
+
+  .taskCard {
+    gap: 0.5rem;
+  }
+
+  .checkboxWrapper {
+
+  padding: 0 0.5rem;
+}
 }

@@ -23,7 +23,7 @@
 .containerAllInfo {
   display: flex;
   flex-direction: column;
-  margin-top: 2.5rem;
+  margin-top: 1rem;
 }
 
 .containerInfo {
@@ -117,12 +117,36 @@
   height: 60%;
   overflow: hidden;
   margin: 2rem 0;
-  
 }
 
 .imgLeft {
   width: 90%;
 }
+
+
+.viewMode {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0 0.5rem 1rem;
+}
+
+
+.viewMode button,
+input {
+  background: none;
+  border: none;
+  color: var(--color-text);
+  border: 0.5px solid var(--color-text);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  background-color: #12240A;
+}
+
+.viewMode input{
+  width: 150px;
+}
+
+
 
 @media (max-width: 1000px) {
   .container {
@@ -202,7 +226,13 @@
   }
 
   .containerImg {
-display: none;
-  
+    display: none;
+  }
+
+
+.viewMode {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
 }
 }
