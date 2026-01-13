@@ -16,13 +16,17 @@ const initialFormData = {
 };
 
 function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
-  const [isOpen, setIsOpen] = useState(true);
+    const isMobile = window.matchMedia("(max-width: 1000px)").matches;
+
+const [isOpen, setIsOpen] = useState(() => !isMobile);
   const toggleContainer = () => setIsOpen(!isOpen);
 
   const [formData, setFormData] = useState(initialFormData);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+
+
 
   useEffect(() => {
     if (taskToEdit) {
