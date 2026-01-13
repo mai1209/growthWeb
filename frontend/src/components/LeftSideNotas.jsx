@@ -209,7 +209,7 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
               <div className={style.containerDias}>
                 {formData.esRecurrente && (
                   <div className={style.diasContainer}>
-                    {["L", "M", "Mi", "J", "V", "S", "D"].map((dia) => (
+                    {["D", "L", "M", "MI", "J", "V", "S"].map((dia) => (
                       <label key={dia} className={style.diaItem}>
                         <input
                           type="checkbox"

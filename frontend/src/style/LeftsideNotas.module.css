@@ -226,6 +226,31 @@
   background-color: #3bcb23;
   border-color: #3bcb23;
 }
+/* SOLO Chrome / Brave */
+.timePicker {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  text-align: left;
+  padding-left: 12px;
+
+  height: 40px; /* igualalo al date */
+  line-height: 40px;
+
+  box-sizing: border-box;
+}
+
+/* Evita que Chrome meta padding interno raro */
+.timePicker::-webkit-datetime-edit {
+  text-align: left;
+  padding-left: 0;
+}
+
+/* Saca el reloj gigante */
+.timePicker::-webkit-calendar-picker-indicator {
+  opacity: 0.6;
+}
 
 @media (max-width: 1000px) {
   .container {

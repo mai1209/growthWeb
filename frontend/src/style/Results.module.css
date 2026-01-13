@@ -3,7 +3,7 @@
 .header {
   display: flex;
   gap: 1rem;
-  margin: 2rem 3rem 2rem 5rem;
+  margin: 2rem 3rem 1rem 5rem;
 }
 
 .titleContainer {
@@ -198,13 +198,24 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  max-width: 70%;
-  margin: 0 auto;
+  flex: 1;
 
   max-height: 30rem;
   overflow-y: scroll;
   scrollbar-width: 1px;
   scrollbar-color: #88888898 #111;
+}
+
+.containerAllPublicidadResults {
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+  padding: 0 2rem;
+}
+
+.publicidad {
+  width: 200px;
+  height: 90%;
 }
 
 .movimientoRow {
@@ -332,7 +343,7 @@
 
 .titulo {
   text-align: start;
-  padding: 1rem 5rem;
+  padding: 1rem 5rem 2rem 17rem;
   width: 100%;
 
   background: rgba(0, 0, 0, 0.12);
@@ -416,8 +427,20 @@
     font-weight: 300;
   }
   .active {
-    background-color: #12240a; 
-      border-bottom-right-radius: 6px;
-  border-top-right-radius: 6px;
+    background-color: #12240a;
+    border-bottom-right-radius: 6px;
+    border-top-right-radius: 6px;
   }
+
+  .publicidad {
+    display: none;
+  }
+
+  .containerAllPublicidadResults {
+  display: flex;
+  justify-content: space-around;
+  gap: 0rem;
+  padding: 0 0rem;
+}
+
 }

@@ -49,9 +49,7 @@ function Results({
     );
     const formatted = localDate.toISOString().slice(0, 10);
 
-    return movimientos.filter(
-      (mov) => mov.fecha.slice(0, 10) === formatted
-    );
+    return movimientos.filter((mov) => mov.fecha.slice(0, 10) === formatted);
   }, [movimientos, selectedDate, showAll]);
 
   const listaFinal = showAll ? movimientos : filteredMovimientos;
@@ -182,61 +180,69 @@ function Results({
         <p className={style.titulo}>{titulo}</p>
       </div>
 
-      {/* LISTADO */}
-      <div className={style.listadoPrincipal}>
-        {listaFinal.length === 0 ? (
-          <p style={{ textAlign: "center", marginTop: "2rem" }}>
-            No hay movimientos para mostrar.
-          </p>
-        ) : (
-          listaFinal.map((mov) => (
-            <div
-              key={mov._id}
-              className={`${style.movimientoRow} ${
-                mov.tipo === "ingreso"
-                  ? style.bordeIngreso
-                  : style.bordeEgreso
-              }`}
-            >
-              <div className={style.columna1}>
-                <p className={style.categoriaTexto}>{mov.categoria}</p>
-                <p className={style.fechaTexto}>{formatFecha(mov.fecha)}</p>
-              </div>
-
-              <div className={style.columnados}>
-                <div className={style.columna2}>
-                  <p
-                    className={`${style.montoTexto} ${
-                      mov.tipo === "ingreso"
-                        ? style.montoIngreso
-                        : style.montoEgreso
-                    }`}
-                  >
-                    {mov.tipo === "ingreso" ? "+" : "-"} ${mov.monto}
-                  </p>
-                  <p className={style.detalleTexto}>
-                    {mov.detalle || "sin detalle"}
-                  </p>
+      <div className={style.containerAllPublicidadResults}>
+        <div>
+          <img className={style.publicidad} src="./publicidad.jpg" alt="publicidad" />
+        </div>
+        {/* LISTADO */}
+        <div className={style.listadoPrincipal}>
+          {listaFinal.length === 0 ? (
+            <p style={{ textAlign: "center", marginTop: "2rem" }}>
+              No hay movimientos para mostrar.
+            </p>
+          ) : (
+            listaFinal.map((mov) => (
+              <div
+                key={mov._id}
+                className={`${style.movimientoRow} ${
+                  mov.tipo === "ingreso"
+                    ? style.bordeIngreso
+                    : style.bordeEgreso
+                }`}
+              >
+                <div className={style.columna1}>
+                  <p className={style.categoriaTexto}>{mov.categoria}</p>
+                  <p className={style.fechaTexto}>{formatFecha(mov.fecha)}</p>
                 </div>
 
-                <div className={style.columna3}>
-                  <button
-                    onClick={() => onEditClick(mov)}
-                    className={style.btnAccion}
-                  >
-                    <img src="/edit.png" alt="edit" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteMovimiento(mov._id)}
-                    className={style.btnAccion}
-                  >
-                    <img src="/trush.png" alt="delete" />
-                  </button>
+                <div className={style.columnados}>
+                  <div className={style.columna2}>
+                    <p
+                      className={`${style.montoTexto} ${
+                        mov.tipo === "ingreso"
+                          ? style.montoIngreso
+                          : style.montoEgreso
+                      }`}
+                    >
+                      {mov.tipo === "ingreso" ? "+" : "-"} ${mov.monto}
+                    </p>
+                    <p className={style.detalleTexto}>
+                      {mov.detalle || "sin detalle"}
+                    </p>
+                  </div>
+
+                  <div className={style.columna3}>
+                    <button
+                      onClick={() => onEditClick(mov)}
+                      className={style.btnAccion}
+                    >
+                      <img src="/edit.png" alt="edit" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteMovimiento(mov._id)}
+                      className={style.btnAccion}
+                    >
+                      <img src="/trush.png" alt="delete" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
-        )}
+            ))
+          )}
+        </div>
+        <div>
+          <img className={style.publicidad} src="./publicidad.jpg" alt="publicidad" />
+        </div>
       </div>
     </div>
   );
