@@ -252,6 +252,9 @@
   opacity: 0.6;
 }
 
+
+
+
 @media (max-width: 1000px) {
   .container {
     width: 100vw;

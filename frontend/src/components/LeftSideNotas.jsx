@@ -16,17 +16,15 @@ const initialFormData = {
 };
 
 function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
-    const isMobile = window.matchMedia("(max-width: 1000px)").matches;
+  const isMobile = window.matchMedia("(max-width: 1000px)").matches;
 
-const [isOpen, setIsOpen] = useState(() => !isMobile);
+  const [isOpen, setIsOpen] = useState(() => !isMobile);
   const toggleContainer = () => setIsOpen(!isOpen);
 
   const [formData, setFormData] = useState(initialFormData);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-
-
 
   useEffect(() => {
     if (taskToEdit) {
@@ -104,7 +102,15 @@ const [isOpen, setIsOpen] = useState(() => !isMobile);
       }
 
       onUpdate();
-      setTimeout(() => setSuccess(""), 3000);
+
+      // UX PRO
+      setTimeout(() => {
+        if (!taskToEdit) {
+          setFormData(initialFormData); // limpia solo si crea
+        }
+        setIsOpen(false); // cierra siempre
+        setSuccess("");
+      }, 900);
     } catch (err) {
       setError(err.response?.data?.message || "Hubo un error al guardar.");
     } finally {
@@ -139,6 +145,7 @@ const [isOpen, setIsOpen] = useState(() => !isMobile);
           </p>
         </div>
       </div>
+
       {isOpen && (
         <>
           <div className={style.containerInfo}>
@@ -146,6 +153,10 @@ const [isOpen, setIsOpen] = useState(() => !isMobile);
               {isEditing ? "Editar Hábito" : "Crea un habito"}
             </p>
           </div>
+          {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
+          {success && (
+            <p style={{ color: "green", marginTop: "10px" }}>{success}</p>
+          )}
           <div className={style.containerForm}>
             <form className={style.form} onSubmit={handleSubmit}>
               <input
@@ -233,7 +244,7 @@ const [isOpen, setIsOpen] = useState(() => !isMobile);
                       ? "Guardando..."
                       : isEditing
                       ? "Guardar Cambios"
-                      : "Añade un habito"}
+                      : "Añade  un habito"}
                   </p>
                 </button>
                 {isEditing && (
@@ -247,12 +258,6 @@ const [isOpen, setIsOpen] = useState(() => !isMobile);
                 )}
               </div>
             </form>
-            {error && (
-              <p style={{ color: "red", marginTop: "10px" }}>{error}</p>
-            )}
-            {success && (
-              <p style={{ color: "green", marginTop: "10px" }}>{success}</p>
-            )}
           </div>
         </>
       )}
