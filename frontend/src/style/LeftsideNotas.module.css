@@ -51,28 +51,28 @@
   width: 45px;
   height: 45px;
   border-radius: 50%;
-  background-color: #545b77;
+  background-color: #e03525;
   border: 1px solid #fff;
 }
 .circleTwo {
   width: 45px;
   height: 45px;
   border-radius: 50%;
-  background-color: #006769;
+  background-color: #cf522a;
   border: 2px solid #fff;
 }
 .circleThree {
   width: 45px;
   height: 45px;
   border-radius: 50%;
-  background-color: #967e42;
+  background-color: #bc8b35;
   border: 2px solid #fff;
 }
 .circleFour {
   width: 45px;
   height: 45px;
   border-radius: 50%;
-  background-color: #4f6f52;
+  background-color: #a3ab3c;
   border: 2px solid #fff;
 }
 
