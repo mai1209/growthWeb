@@ -16,9 +16,28 @@ const initialFormData = {
 };
 
 function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
-  const isMobile = window.matchMedia("(max-width: 1000px)").matches;
+  const [isOpen, setIsOpen] = useState(true);
+  const isDesktop = !window.matchMedia("(max-width: 1000px)").matches;
 
-  const [isOpen, setIsOpen] = useState(() => !isMobile);
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 1000px)");
+
+    // función que setea el estado según el tamaño
+    const handleResize = (e) => {
+      setIsOpen(!e.matches); // true en desktop, false en mobile
+    };
+
+    // set inicial
+    handleResize(mediaQuery);
+
+    // escuchar cambios
+    mediaQuery.addEventListener("change", handleResize);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleResize);
+    };
+  }, []);
+
   const toggleContainer = () => setIsOpen(!isOpen);
 
   const [formData, setFormData] = useState(initialFormData);
@@ -108,7 +127,9 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
         if (!taskToEdit) {
           setFormData(initialFormData); // limpia solo si crea
         }
-        setIsOpen(false); // cierra siempre
+        if (!isDesktop) {
+          setIsOpen(false); // solo mobile
+        }
         setSuccess("");
       }, 900);
     } catch (err) {
@@ -135,13 +156,12 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
           className={`${style.containerOpenClose} ${isOpen ? style.open : ""}`}
           onClick={toggleContainer}
         >
-          <p
-            className={`${style.close} ${
-              isOpen ? style.closeX : style.closeCreate
-            }`}
-            onClick={toggleContainer}
-          >
-            {isOpen ? "✕" : "Crear un hábito +"}
+          <p className={style.close} onClick={toggleContainer}>
+            {isDesktop
+              ? "Crear un hábito +"
+              : isOpen
+              ? "✕"
+              : "Crear un hábito +"}
           </p>
         </div>
       </div>
