@@ -301,7 +301,7 @@
   }
 
   .taskMeta {
-    max-width: 80px;
+    max-width: 200px;
   }
 
   .taskUrgency {
@@ -309,19 +309,25 @@
     overflow: hidden; /* oculta lo que sobra */
     text-overflow: ellipsis; /* muestra ... */
     max-width: 50px;
+
+
+    display: none;
   }
 
   .taskActions {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0.7rem 0.5rem;
+    padding: 0.5rem;
     border-radius: 16px;
-    gap: 10px;
+    gap: 6px;
+      flex: 0 0 90px; /* ancho fijo */
+
   }
 
   .taskCard {
-    gap: 0.5rem;
+    gap: 0rem;
+    padding: 0 0.5rem;
   }
 
   .checkboxWrapper {

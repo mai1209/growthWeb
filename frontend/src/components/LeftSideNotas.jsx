@@ -150,7 +150,7 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
   };
 
   return (
-    <div className={`${style.container}`}>
+    <div className={`${style.container} ${isOpen ? style.containerOpenn : ""}   ${isEditing ? style.editingStyle : ""}` }>
       <div className={style.containerOpen}>
         <div
           className={`${style.containerOpenClose} ${isOpen ? style.open : ""}`}
@@ -169,7 +169,7 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
       {isOpen && (
         <>
           <div className={style.containerInfo}>
-            <p className={style.titleKeep}>
+            <p className={style.titleKeep}   >
               {isEditing ? "Editar Hábito" : "Crea un habito"}
             </p>
           </div>
