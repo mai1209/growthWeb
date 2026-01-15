@@ -1,5 +1,3 @@
-/* Archivo: LeftSite.module.css */
-
 .container {
   border-right: 1px solid #ffffff55;
   width: 21vw;
@@ -94,8 +92,6 @@
 .total {
   font-size: 1.5rem;
 }
-
-/* --- NUEVOS ESTILOS PARA EL BOTÓN DE VISIBILIDAD --- */
 .visibilityButton {
   background: none;
   border: none;
@@ -123,30 +119,36 @@
   width: 90%;
 }
 
-
 .viewMode {
   display: flex;
-  gap: 0.5rem;
-  margin: 1rem 0 0.5rem 1rem;
+  width: fit-content;
+  border: 0.5px solid var(--color-text);
+  border-radius: 8px;
+  background-color: #272726;
+  margin-top: 1rem;
+  margin-left: 1rem;
 }
 
-
-.viewMode button,
-input {
+.viewMode button {
   background: none;
   border: none;
   color: var(--color-text);
-  border: 0.5px solid var(--color-text);
+  max-width: 90px;
+  padding: 0.5rem 1rem;
+
+}
+
+.monthPicker {
+  background: none;
+  border: none;
+  width: 85px;
+  color: var(--color-text);
+}
+
+.active {
+  background-color: #32472c !important;
   border-radius: 8px;
-  padding: 0.4rem 0.6rem;
-  background-color: #12240A;
 }
-
-.viewMode input{
-  width: 150px;
-}
-
-
 
 @media (max-width: 1000px) {
   .container {
@@ -229,10 +231,14 @@ input {
     display: none;
   }
 
+  .viewMode {
+    margin-top: 0.6rem;
+    margin-left: 0rem;
+  }
 
-.viewMode {
-  display: flex;
-  gap: 0.5rem;
-  margin: 0 0 0.5rem;
-}
+  .viewMode button {
+    font-size: 0.6rem;
+    font-family: "poppins";
+    padding: 0.2rem 1rem;
+  }
 }

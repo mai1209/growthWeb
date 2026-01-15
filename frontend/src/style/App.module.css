@@ -49,7 +49,7 @@ form input {
 }
 
 .typeButtons {
-  border: 0.5px solid var(--color-text);
+
   border-radius: 8px;
   display: flex;
 
@@ -78,15 +78,16 @@ form input {
 }
 
 .ingresoBtn {
-  background-color: #12240a;
+  background-color: #32472c68;
   border-top-left-radius: 8px ;
   border-bottom-left-radius: 8px;
   padding: 0.4rem 0;
 }
 
 .egresoBtn {
-  background-color: #230804;
-  border-radius: 8px;
+  background-color: #eb342368;
+  border-bottom-right-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
 .cancelContainer {
