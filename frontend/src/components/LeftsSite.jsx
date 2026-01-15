@@ -100,22 +100,56 @@ function LeftSite({ token, refreshKey }) {
               </button>
             </div>
 
+          
+
+            <div className={style.containerAllInfo}>
+              <div className={style.containerInfoIngreso}>
+                <p className={style.containerInfoIngresoIngresoText}>
+                  Ingresos
+                </p>
+                <img src="/arrow.png" alt="arrow" />
+                {/* Lógica condicional para ingresos */}
+                <p className={style.containerInfoNumber}>
+                  ${areTotalsVisible ? formatNumber(totales.ingreso) : "****"}
+                </p>
+              </div>
+              <div className={style.containerInfoEgreso}>
+                <p className={style.containerInfoEgresoEgresoText}>Egresos</p>
+                <img src="/arrow.png" alt="arrow" />
+                {/* Lógica condicional para egresos */}
+                <p className={style.containerInfoNumber}>
+                  ${areTotalsVisible ? formatNumber(totales.egreso) : "****"}
+                </p>
+              </div>
+              <div className={style.containerInfoTotal}>
+                <p className={style.text}>Total</p>
+                <img src="/arrow.png" alt="arrow" />
+                {/* Lógica condicional para el total en la lista */}
+                <p className={style.containerInfoNumber}>
+                  ${areTotalsVisible ? formatNumber(totales.total) : "****"}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+
             <div className={style.viewMode}>
               <button
                 className={viewMode === "total" ? style.active : ""}
                 onClick={() => setViewMode("total")}
               >
-                Total
+                Resumen Historico
               </button>
 
               <button
                 className={viewMode === "month" ? style.active : ""}
                 onClick={() => setViewMode("month")}
               >
-                Mes
+                Resumen del mes
               </button>
                 {viewMode === "month" && (
               <input
+                  
                 type="month"
                 value={`${selectedMonth.getFullYear()}-${String(
                   selectedMonth.getMonth() + 1
@@ -128,38 +162,6 @@ function LeftSite({ token, refreshKey }) {
               />
             )}
             </div>
-          
-
-            <div className={style.containerAllInfo}>
-              <div className={style.containerInfoIngreso}>
-                <p className={style.containerInfoIngresoIngresoText}>
-                  Ingresos
-                </p>
-                <img src="/arrowValores.png" alt="arrow" />
-                {/* Lógica condicional para ingresos */}
-                <p className={style.containerInfoNumber}>
-                  ${areTotalsVisible ? formatNumber(totales.ingreso) : "****"}
-                </p>
-              </div>
-              <div className={style.containerInfoEgreso}>
-                <p className={style.containerInfoEgresoEgresoText}>Egresos</p>
-                <img src="/arrowValores.png" alt="arrow" />
-                {/* Lógica condicional para egresos */}
-                <p className={style.containerInfoNumber}>
-                  ${areTotalsVisible ? formatNumber(totales.egreso) : "****"}
-                </p>
-              </div>
-              <div className={style.containerInfoTotal}>
-                <p className={style.text}>Total</p>
-                <img src="/arrowValores.png" alt="arrow" />
-                {/* Lógica condicional para el total en la lista */}
-                <p className={style.containerInfoNumber}>
-                  ${areTotalsVisible ? formatNumber(totales.total) : "****"}
-                </p>
-              </div>
-            </div>
-          </>
-        )}
       </div>
       <div className={style.containerImg}>
         <img className={style.imgLeft} src="./imgCelu.jpg" alt="" />{" "}

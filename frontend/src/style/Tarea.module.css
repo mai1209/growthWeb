@@ -23,8 +23,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-
-  margin: 2rem;
+  height: 480px;
+  overflow-y: scroll;
+  margin:  2rem;
 }
 
 .containerTareas {
@@ -113,6 +114,11 @@
   justify-content: center;
 }
 
+.taskUrgency::first-letter {
+  text-transform: uppercase;
+}
+
+
 .taskHeader p {
   text-align: center;
 }
@@ -187,24 +193,21 @@
   border-radius: 50% !important;
 }
 
-/* Día que está seleccionado */
 :global(.react-datepicker__day--selected) {
   background-color: var(
     --color-accent,
     #3498db
-  ) !important; /* fallback si no existe */
+  ) !important; 
   color: white !important;
   border-radius: 50% !important;
   font-weight: bold !important;
 }
 
-/* Día de hoy, pero no seleccionado */
 :global(.react-datepicker__day--today) {
   font-weight: 700;
   color: var(--color-accent, #3498db) !important;
 }
 
-/* Días que no pertenecen al mes actual (se ven opacos) */
 :global(.react-datepicker__day--outside-month) {
   opacity: 0.5 !important;
 }
@@ -215,7 +218,7 @@
 }
 
 .ButtonImg {
-  width: 20px;
+  width: 25px;
 
   margin-top: 4px;
   cursor: pointer;
@@ -297,7 +300,8 @@
     flex-direction: column;
     gap: 0.9rem;
 
-    margin: 1rem 0.5rem;
+    margin: 10rem 0.5rem;
+    overflow: hidden;
   }
 
   .taskMeta {
@@ -305,12 +309,10 @@
   }
 
   .taskUrgency {
-    white-space: nowrap; /* todo en una sola línea */
-    overflow: hidden; /* oculta lo que sobra */
-    text-overflow: ellipsis; /* muestra ... */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     max-width: 50px;
-
-
     display: none;
   }
 
@@ -321,8 +323,7 @@
     padding: 0.5rem;
     border-radius: 16px;
     gap: 6px;
-      flex: 0 0 90px; /* ancho fijo */
-
+    flex: 0 0 90px;
   }
 
   .taskCard {
@@ -331,7 +332,6 @@
   }
 
   .checkboxWrapper {
-
-  padding: 0 0.5rem;
-}
+    padding: 0 0.5rem;
+  }
 }

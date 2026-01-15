@@ -336,7 +336,7 @@
 }
 
 .active {
-  background-color: #12240a; /* verde suave */
+  background-color: #32472c; /* verde suave */
   border-bottom-right-radius: 8px;
   border-top-right-radius: 8px;
 }
@@ -420,6 +420,13 @@
 
   .titleContainer {
     padding: 2rem 1rem 1rem 1rem;
+    position: fixed;
+    left: 0;
+    width: 100%;
+    z-index: 999999;
+       background: rgba(0, 0, 0, 0.077);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
 
   .titleContainer h1 {
