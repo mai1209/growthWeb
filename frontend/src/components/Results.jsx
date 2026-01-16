@@ -135,7 +135,7 @@ function Results({
       <div className={style.header}>
         <div className={style.datePickerContainer}>
           {/* CALENDARIO */}
-          <button
+          <div
             className={`${style.icon} ${
               activeButton === "calendar" ? style.active : ""
             }`}
@@ -149,7 +149,7 @@ function Results({
               popperPlacement="bottom-start"
             />
             <p>Calendario</p>
-          </button>
+          </div>
 
           {/* HOY */}
           <button
