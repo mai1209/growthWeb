@@ -57,7 +57,6 @@ function Nav({ token, onLogout }) {
           <div className={style.userActions}>
             <div className={style.user}>
               <p>Hola, {userData.username || "Usuario"}!</p>
-              <img className={style.imgUser} src="" alt="user" />
             </div>
             <button onClick={onLogout} className={style.logoutButton}>
               Cerrar Sesión
