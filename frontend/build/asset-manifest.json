@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/static/css/main.b1febae6.css",
+    "main.js": "/static/js/main.6b6a9802.js",
+    "static/js/453.239f4ee3.chunk.js": "/static/js/453.239f4ee3.chunk.js",
+    "static/media/Menda Medium.ttf": "/static/media/Menda Medium.b09f2fa00a70b7c5e2d6.ttf",
+    "index.html": "/index.html",
+    "main.b1febae6.css.map": "/static/css/main.b1febae6.css.map",
+    "main.6b6a9802.js.map": "/static/js/main.6b6a9802.js.map",
+    "453.239f4ee3.chunk.js.map": "/static/js/453.239f4ee3.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.b1febae6.css",
+    "static/js/main.6b6a9802.js"
+  ]
+}
