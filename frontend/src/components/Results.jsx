@@ -181,7 +181,7 @@ function Results({
       </div>
 
       <div className={style.containerAllPublicidadResults}>
-        <div>
+        <div className={style.containerImg}>
           <img className={style.publicidad} src="./publicidad.jpg" alt="publicidad" />
         </div>
         {/* LISTADO */}
@@ -240,7 +240,7 @@ function Results({
             ))
           )}
         </div>
-        <div>
+        <div className={style.containerImg}>
           <img className={style.publicidad} src="./publicidad.jpg" alt="publicidad" />
         </div>
       </div>

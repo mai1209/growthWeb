@@ -211,11 +211,17 @@
   justify-content: space-around;
   gap: 1rem;
   padding: 0 2rem;
+  height: fit-content;
+
 }
 
 .publicidad {
   width: 200px;
-  height: 90%;
+  height: 100%;
+}
+
+.containerImg{
+  height: 60vh;
 }
 
 .movimientoRow {

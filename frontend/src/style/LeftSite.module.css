@@ -1,7 +1,7 @@
 .container {
   border-right: 1px solid #ffffff55;
   width: 21vw;
-  height: calc(100vh - 62.7px);
+  height: calc(100vh - 10vh);
   background-color: var(--background-color);
   transition: width 0.3s ease;
   padding-top: 3rem;
