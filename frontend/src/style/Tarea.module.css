@@ -289,19 +289,28 @@
   padding: 0.5rem;
 }
 
+  .hiddenMobile {
+    display: flex;
+  }
+
 @media (max-width: 1000px) {
   .container {
     margin-top: 82px;
     gap: 0;
-  }
 
+  }
+  .hiddenMobile {
+    display: none;
+  }
   .tasksList {
     display: flex;
     flex-direction: column;
     gap: 0.9rem;
-
     margin: 10rem 0.5rem;
     overflow: hidden;
+    height: fit-content;
+
+
   }
 
   .taskMeta {
