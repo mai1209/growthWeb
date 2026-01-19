@@ -16,7 +16,11 @@ connectDB();
 // --- 👇 ESTA ES LA SECCIÓN CORREGIDA 👇 ---
 
 // 1. Define tu "lista blanca" de orígenes permitidos
-const whitelist = [process.env.FRONTEND_URL, 'http://localhost:3001'];
+const whitelist = [
+  process.env.FRONTEND_URL,          
+  "https://www.growthmanager.app",
+  "http://localhost:3001",
+];
 
 const corsOptions = {
   // 2. La opción 'origin' ahora es una función que revisa la lista blanca
