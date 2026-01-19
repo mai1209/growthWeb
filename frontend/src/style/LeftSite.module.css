@@ -5,6 +5,7 @@
   background-color: var(--background-color);
   transition: width 0.3s ease;
   padding-top: 3rem;
+  
 }
 
 .containerOpenClose {
@@ -162,9 +163,14 @@
     background: rgba(0, 0, 0, 0.077);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    z-index: 999;
+    z-index: 1;
 
     height: fit-content;
+
+
+
+    
+
   }
 
   .firstContainer {

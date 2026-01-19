@@ -9,6 +9,7 @@
   padding: 3rem 0;
   color: var(--color-text);
   font-family: "Poppins", sans-serif;
+  position: relative;
 }
 
 /* ===================== TITLE ===================== */
@@ -218,22 +219,38 @@
   }
 }
 
-/* ===================== MOBILE ===================== */
+/* ===================== MOBILE (FULL SCREEN) ===================== */
 
 @media (max-width: 1000px) {
+  /* ✅ Pantalla completa */
   .container {
-    padding: 4rem 0;
+    position: fixed;
+    inset: 0;
+    z-index: 9999999;
+
+    padding: 2rem 0 2.5rem 0; /* deja espacio para navbar si existe */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+
+    /* ✅ para que NO se vea nada del fondo */
+    background: var(--background-color);
+  }
+
+  .title {
+    padding: 0.7rem 1.2rem;
+    font-size: 1.05rem;
   }
 
   .containerAllForm {
     flex-direction: column;
-    gap: 2rem;
+    gap: 1.2rem;
     margin: 1rem;
+    justify-content: flex-start;
   }
 
   .formone,
   .formtwo {
-    padding: 1.6rem;
+    padding: 1.4rem;
     border-radius: 16px;
   }
 
@@ -250,10 +267,11 @@
   }
 
   .buttonSend {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
 
   .cancelButton {
-    padding: 0.7rem 2rem;
+    padding: 0.75rem 1.6rem;
+    margin: 2rem auto 0;
   }
 }
