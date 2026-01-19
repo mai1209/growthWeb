@@ -1,12 +1,17 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import style from "../style/Login.module.css";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
-function LoginPage({ onClose, onAuthSuccess }) {
+function LoginPage({ onAuthSuccess }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const navigate = useNavigate();
 
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -14,12 +19,17 @@ function LoginPage({ onClose, onAuthSuccess }) {
     e.preventDefault();
     setError("");
     setLoading(true);
+
     try {
       const res = await axios.post(`${API_URL}/api/auth/login`, {
         email,
         password,
       });
+
       onAuthSuccess(res.data.token);
+
+      // ✅ ir al dashboard
+      navigate("/");
     } catch (err) {
       setError(err.response?.data?.error || "Error al iniciar sesión");
     } finally {
@@ -37,7 +47,7 @@ function LoginPage({ onClose, onAuthSuccess }) {
             <p className={style.title}>Iniciar sesión</p>
 
             <div className={style.containerInput}>
-              <label htmlFor="email">Email:</label>
+              <label>Email</label>
               <input
                 type="email"
                 value={email}
@@ -45,34 +55,41 @@ function LoginPage({ onClose, onAuthSuccess }) {
                 required
               />
             </div>
+
             <div className={style.containerInput}>
-              <label htmlFor="password">Contraseña:</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <div className={style.containerRegister}>
-              <button
-                type="submit"
-                className={loading ? style.btnLoading : style.btn}
-                disabled={loading}
-              >
-                {loading ? (
-                  <div className={style.spinner}></div>
-                ) : (
-                  "Iniciar sesión"
-                )}
-              </button>
+              <label>Contraseña</label>
 
-              {error && <p style={{ color: "red" }}>{error}</p>}
+              <div className={style.passwordWrapper}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
 
-              <div className={style.containerLogOut} onClick={onClose}>
-                <p>Volver a Registro</p>
+                <span
+                  className={style.eye}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </span>
               </div>
             </div>
+
+            <button
+              type="submit"
+              className={loading ? style.btnLoading : style.btn}
+              disabled={loading}
+            >
+              {loading ? <div className={style.spinner} /> : "Iniciar sesión"}
+            </button>
+
+            {error && <p style={{ color: "red" }}>{error}</p>}
+
+            {/* ✅ navegación real */}
+            <p className={style.link} onClick={() => navigate("/register")}>
+              ¿No tenés cuenta? Registrate
+            </p>
           </form>
         </div>
       </div>

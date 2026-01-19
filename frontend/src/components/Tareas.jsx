@@ -4,18 +4,18 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Tarea.module.css";
 import resultsStyle from "../style/Results.module.css";
+import { useOutletContext } from "react-router-dom";
 
-// Mover la constante fuera del componente para optimizar
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 function Tareas({ token, refreshKey, onEditClick }) {
+  const { isNotesOpen } = useOutletContext(); // ✅ viene desde MainLayout (Outlet context)
+
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showList, setShowList] = useState(false);
   const [error, setError] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
-
-  
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -25,10 +25,11 @@ function Tareas({ token, refreshKey, onEditClick }) {
       }
       setLoading(true);
       setError("");
+
       try {
         let res;
+
         if (showList) {
-          // Cuando estamos en vista lista, pedimos todas las tareas sin filtrar por fecha
           res = await axios.get(`${API_URL}/api/task`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -38,10 +39,12 @@ function Tareas({ token, refreshKey, onEditClick }) {
             dateToFetch.getMinutes() - dateToFetch.getTimezoneOffset()
           );
           const formattedDate = dateToFetch.toISOString().slice(0, 10);
+
           res = await axios.get(`${API_URL}/api/task?fecha=${formattedDate}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
         }
+
         setTasks(res.data);
       } catch (err) {
         console.error("Error al obtener las tareas:", err);
@@ -51,6 +54,7 @@ function Tareas({ token, refreshKey, onEditClick }) {
         setLoading(false);
       }
     };
+
     fetchTasks();
   }, [token, refreshKey, selectedDate, showList]);
 
@@ -75,10 +79,12 @@ function Tareas({ token, refreshKey, onEditClick }) {
   const handleDeleteTask = async (taskId) => {
     if (!window.confirm("¿Estás seguro de que quieres eliminar esta tarea?"))
       return;
+
     try {
       await axios.delete(`${API_URL}/api/task/${taskId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       setTasks((prevTasks) => prevTasks.filter((task) => task._id !== taskId));
     } catch (err) {
       console.error("Error al eliminar la tarea:", err);
@@ -90,6 +96,7 @@ function Tareas({ token, refreshKey, onEditClick }) {
     if (error) return <p style={{ color: "red" }}>{error}</p>;
     if (tasks.length === 0)
       return <p>Aún no tienes tareas. ¡Añade una para comenzar!</p>;
+
     return tasks.map((task) => (
       <div className={style.taskContainer} key={task._id}>
         <div
@@ -105,15 +112,19 @@ function Tareas({ token, refreshKey, onEditClick }) {
             />
             <span className={style.customCheckbox}></span>
           </label>
+
           <div className={style.taskHeader}>
             <p className={style.taskMeta}>{task.meta}</p>
           </div>
+
           <div>
             <p className={style.taskUrgency}> {task.urgencia}</p>
           </div>
+
           <div className={style.taskDetails}>
             <p>{task.horario || "Sin horario"} </p>
           </div>
+
           <div className={style.taskActions}>
             <button
               onClick={() => onEditClick(task)}
@@ -121,6 +132,7 @@ function Tareas({ token, refreshKey, onEditClick }) {
             >
               <img className={style.ButtonImg} src="/edit.png" alt="edit" />
             </button>
+
             <button
               onClick={() => handleDeleteTask(task._id)}
               className={style.deleteButton}
@@ -137,62 +149,48 @@ function Tareas({ token, refreshKey, onEditClick }) {
     if (loading) return <p>Cargando tareas...</p>;
     if (error) return <p style={{ color: "red" }}>{error}</p>;
     if (!tasks || tasks.length === 0)
-      return (
-        <p style={{ textAlign: "center" }}>No hay tareas para esta fecha.</p>
-      );
+      return <p style={{ textAlign: "center" }}>No hay tareas para esta fecha.</p>;
 
     return (
       <div>
-        <div>
-          <div>
-            {tasks.map((t) => (
-              <div key={t._id}>
-                <div>
-                  <div>
-                    <div>
-                      <p>{t.meta}</p>
-                      <p>
-                        {t.fecha ? t.fecha.slice(0, 10) : "-"} ·{" "}
-                        {t.horario || "--:--"}
-                      </p>
-                    </div>
+        {tasks.map((t) => (
+          <div key={t._id}>
+            <p>{t.meta}</p>
+            <p>
+              {t.fecha ? t.fecha.slice(0, 10) : "-"} · {t.horario || "--:--"}
+            </p>
 
-                    <div>
-                      <span>{t.urgencia}</span>
-                      <span
-                        className={
-                          t.completada
-                            ? resultsStyle.estadoHecho
-                            : resultsStyle.estadoPendiente
-                        }
-                      >
-                        {t.completada ? "Hecho" : "Pendiente"}
-                      </span>
-                    </div>
-                  </div>
+            <div>
+              <span>{t.urgencia}</span>
+              <span
+                className={
+                  t.completada
+                    ? resultsStyle.estadoHecho
+                    : resultsStyle.estadoPendiente
+                }
+              >
+                {t.completada ? "Hecho" : "Pendiente"}
+              </span>
+            </div>
 
-                  <div className={resultsStyle.taskActions}>
-                    <button onClick={() => onEditClick(t)}>Editar</button>
-                    <button onClick={() => handleDeleteTask(t._id)}>
-                      Eliminar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+            <div className={resultsStyle.taskActions}>
+              <button onClick={() => onEditClick(t)}>Editar</button>
+              <button onClick={() => handleDeleteTask(t._id)}>Eliminar</button>
+            </div>
           </div>
-        </div>
+        ))}
       </div>
     );
   };
 
   return (
-    <div className={style.container}>
+    <div className={`${style.container} ${isNotesOpen ? style.hiddenMobile : ""}`}>
       <div>
         <div className={resultsStyle.titleContainer}>
           <h1 style={{ margin: 0 }}>
             {showList ? "Todas las Tareas" : "Mis Tareas de hoy"}
           </h1>
+
           <div className={style.containerFecha}>
             <p>Tareas de </p>
             {!showList && (

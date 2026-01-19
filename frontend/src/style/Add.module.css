@@ -1,198 +1,227 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap");
+
+/* ===================== CONTAINER ===================== */
 
 .container {
   background-color: var(--background-color);
-  height: calc(100vw - 287px);
-  width: calc(100vw - 287px);
+  min-height: 100vh;
+  width: 100%;
   padding: 3rem 0;
   color: var(--color-text);
+  font-family: "Poppins", sans-serif;
 }
+
+/* ===================== TITLE ===================== */
+
+.title {
+  padding: 0.7rem 2rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+/* ===================== FORMS WRAPPER ===================== */
 
 .containerAllForm {
   display: flex;
-  gap: 5rem;
+  gap: 4rem;
   margin: 2rem;
+  justify-content: center;
 }
 
+/* ===================== FORM BASE ===================== */
 
 .formone,
 .formtwo {
-  padding: 2rem;
-  margin: 0 auto;
+  padding: 2.2rem;
   flex: 1;
-  height: fit-content;
-  border-radius: 13px;
-  max-width: 900px;
+  max-width: 520px;
+  border-radius: 18px;
   position: relative;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
 
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+
+  animation: cardEnter 0.45s ease both;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
 }
 
+/* ===================== INGRESO / EGRESO COLORS ===================== */
+
 .formone {
-  border: 1px solid rgba(116, 249, 76, 0.197);
-  background: linear-gradient(
-    180deg,
-    rgba(117, 249, 76, 0.02),
-    rgba(255, 255, 255, 0.01)
-  );
-  box-shadow: 0 8px 24px rgba(18, 38, 12, 0.25);
+  border: 1px solid rgba(106, 198, 20, 0.35);
+  box-shadow: 0 10px 30px rgba(106, 198, 20, 0.15);
 }
 
 .formtwo {
-  border: 1px solid rgba(235, 50, 35, 0.197);
-  background: linear-gradient(
-    180deg,
-    rgba(235, 50, 35, 0.02),
-    rgba(255, 255, 255, 0.01)
-  );
-  box-shadow: 0 8px 24px rgba(50, 18, 18, 0.25);
+  border: 1px solid rgba(235, 50, 35, 0.35);
+  box-shadow: 0 10px 30px rgba(235, 50, 35, 0.15);
 }
 
-.formone:hover,
+/* ===================== HOVER ===================== */
+
+.formone:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 45px rgba(106, 198, 20, 0.28);
+}
+
 .formtwo:hover {
   transform: translateY(-6px);
-  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 20px 45px rgba(235, 50, 35, 0.28);
 }
 
+/* ===================== BADGE ===================== */
 
 .formone::before,
 .formtwo::before {
   position: absolute;
-  top: -14px;
+  top: -12px;
   left: 20px;
-  padding: 6px 10px;
-  border-radius: 12px;
-  font-family: "Poppins", sans-serif;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: var(--color-text);
-  pointer-events: none; 
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: #000;
+  animation: badgePop 0.4s ease both;
 }
 
 .formone::before {
-  content: "Ingreso";
-  background: #6ac6145a;
+  content: "INGRESO";
+  background: linear-gradient(135deg, #6ac614, #9be68f);
 }
 
 .formtwo::before {
-  content: "Egreso";
-  background: #c614145a;
+  content: "EGRESO";
+  background: linear-gradient(135deg, #eb3223, #ff8a80);
 }
 
-
-.input {
-  background: none;
-  border: none;
-  width: 100%;
-  text-align: center;
-  border-bottom: 2px solid var(--color-text);
-  margin-bottom: 1rem;
-  color: var(--color-text);
-  padding: 0.5rem 0;
-  font-size: 1rem;
-}
+/* ===================== INPUTS ===================== */
 
 .inputMonto {
   text-align: center;
-  padding: 0.6rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.02);
+  padding: 0.7rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
   color: var(--color-text);
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
 }
-
-input:focus {
-  outline: none;
-}
-
 
 .containerBtn,
 .containerDetalle {
   display: flex;
-  gap: 1rem;
+  gap: 0.8rem;
   margin-top: 1rem;
 }
 
 .btn,
 .detalle,
 .buttonSend {
-  width: calc(50% - 0.5rem);
+  width: calc(50% - 0.4rem);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-text);
+  padding: 0.65rem;
+  border-radius: 14px;
+  font-size: 0.9rem;
 }
 
-.btn,
-.detalle,
-.buttonSend {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: var(--color-text);
-  padding: 0.6rem;
-  border-radius: 12px;
-  text-align: center;
-  font-family: "Poppins", sans-serif;
-  font-size: 0.95rem;
+.btn::placeholder,
+.detalle::placeholder {
+  color: rgba(255, 255, 255, 0.45);
 }
+
+/* ===================== BUTTON ===================== */
 
 .buttonSend {
   cursor: pointer;
   font-weight: 800;
   letter-spacing: 0.6px;
+  transition: transform 0.15s ease, background 0.15s ease;
 }
 
-/* ===================== DATEPICKER ===================== */
+.buttonSend:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ===================== DATE PICKER ===================== */
 
 .datePickerWrapper {
-  width: calc(50% - 0.5rem);
+  width: calc(50% - 0.4rem);
 }
 
 .datePicker {
   background: transparent;
   border: 1px solid var(--color-text);
   color: var(--color-text);
-  padding: 0.5rem;
+  padding: 0.55rem;
   border-radius: 13px;
   text-align: center;
-  font-family: "Poppins", sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
   width: 100%;
 }
 
-/* ===================== TEXT ===================== */
-
-.title {
-  padding: 0.7rem 2rem;
-}
-
-.subTitle {
-  padding: 0 1rem;
-}
-
 /* ===================== CANCEL ===================== */
 
-.cancelButton {
-  background: none;
-  color: var(--color-text);
-  border: 1px solid var(--color-text);
-  padding: 1rem;
-  border-radius: 12px;
-  margin: 3rem;
-  cursor: pointer;
+.cancelContainer {
+  display: flex;
+  justify-content: center;
 }
 
-/* ===================== MOBILE FIX ===================== */
+.cancelButton {
+  margin: 3rem auto 0;
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-text);
+  padding: 0.8rem 2.5rem;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cancelButton:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ===================== ERROR ===================== */
+
+.errorText {
+  color: #ff7b7b;
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+/* ===================== ANIMATIONS ===================== */
+
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes badgePop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ===================== MOBILE ===================== */
 
 @media (max-width: 1000px) {
   .container {
-    position: fixed;
-    top: 1rem;
-    bottom: 0;
-    width: 100%;
-    height: 100vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    z-index: 9999;
     padding: 4rem 0;
   }
 
@@ -202,8 +231,26 @@ input:focus {
     margin: 1rem;
   }
 
+  .formone,
+  .formtwo {
+    padding: 1.6rem;
+    border-radius: 16px;
+  }
+
+  .containerBtn,
+  .containerDetalle {
+    flex-direction: column;
+  }
+
+  .btn,
+  .detalle,
+  .buttonSend,
+  .datePickerWrapper {
+    width: 100%;
+  }
+
   .buttonSend {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
   }
 
   .cancelButton {

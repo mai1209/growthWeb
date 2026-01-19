@@ -5,6 +5,7 @@ import axios from "axios";
 import DatePicker from "react-datepicker";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+
 const initialFormData = {
   meta: "",
   fecha: new Date(),
@@ -15,22 +16,27 @@ const initialFormData = {
   diasRepeticion: [],
 };
 
-function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
+function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
   const [isOpen, setIsOpen] = useState(true);
   const isDesktop = !window.matchMedia("(max-width: 1000px)").matches;
+
+  // ✅ Avisar al layout si está abierto/cerrado
+  useEffect(() => {
+    if (setIsNotesOpen) setIsNotesOpen(isOpen);
+
+    return () => {
+      if (setIsNotesOpen) setIsNotesOpen(false);
+    };
+  }, [isOpen, setIsNotesOpen]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 1000px)");
 
-    // función que setea el estado según el tamaño
     const handleResize = (e) => {
-      setIsOpen(!e.matches); // true en desktop, false en mobile
+      setIsOpen(!e.matches); // desktop abierto, mobile cerrado
     };
 
-    // set inicial
     handleResize(mediaQuery);
-
-    // escuchar cambios
     mediaQuery.addEventListener("change", handleResize);
 
     return () => {
@@ -38,7 +44,7 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
     };
   }, []);
 
-  const toggleContainer = () => setIsOpen(!isOpen);
+  const toggleContainer = () => setIsOpen((prev) => !prev);
 
   const [formData, setFormData] = useState(initialFormData);
   const [error, setError] = useState("");
@@ -48,7 +54,6 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
   useEffect(() => {
     if (taskToEdit) {
       const fechaUTC = new Date(taskToEdit.fecha);
-
       fechaUTC.setMinutes(fechaUTC.getMinutes() + fechaUTC.getTimezoneOffset());
 
       setFormData({
@@ -79,6 +84,15 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
     setFormData((prevData) => ({ ...prevData, color: colorName }));
   };
 
+  const toggleDia = (dia) => {
+    setFormData((prev) => ({
+      ...prev,
+      diasRepeticion: prev.diasRepeticion.includes(dia)
+        ? prev.diasRepeticion.filter((d) => d !== dia)
+        : [...prev.diasRepeticion, dia],
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -93,15 +107,13 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
 
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("No estás autenticado.");
-      }
+      if (!token) throw new Error("No estás autenticado.");
 
       const fechaLocal = new Date(formData.fecha);
       fechaLocal.setMinutes(
         fechaLocal.getMinutes() - fechaLocal.getTimezoneOffset()
       );
-      const fechaFormateada = fechaLocal.toISOString().slice(0, 10); // "YYYY-MM-DD"
+      const fechaFormateada = fechaLocal.toISOString().slice(0, 10);
 
       const dataToSend = {
         ...formData,
@@ -122,14 +134,9 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
 
       onUpdate();
 
-      // UX PRO
       setTimeout(() => {
-        if (!taskToEdit) {
-          setFormData(initialFormData); // limpia solo si crea
-        }
-        if (!isDesktop) {
-          setIsOpen(false); // solo mobile
-        }
+        if (!taskToEdit) setFormData(initialFormData);
+        if (!isDesktop) setIsOpen(false);
         setSuccess("");
       }, 900);
     } catch (err) {
@@ -140,28 +147,20 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
   };
 
   const isEditing = !!taskToEdit;
-  const toggleDia = (dia) => {
-    setFormData((prev) => ({
-      ...prev,
-      diasRepeticion: prev.diasRepeticion.includes(dia)
-        ? prev.diasRepeticion.filter((d) => d !== dia)
-        : [...prev.diasRepeticion, dia],
-    }));
-  };
 
   return (
-    <div className={`${style.container} ${isOpen ? style.containerOpenn : ""}   ${isEditing ? style.editingStyle : ""}` }>
+    <div
+      className={`${style.container} ${
+        isOpen ? style.containerOpenn : ""
+      } ${isEditing ? style.editingStyle : ""}`}
+    >
       <div className={style.containerOpen}>
         <div
           className={`${style.containerOpenClose} ${isOpen ? style.open : ""}`}
           onClick={toggleContainer}
         >
-          <p className={style.close} onClick={toggleContainer}>
-            {isDesktop
-              ? "Crear un hábito +"
-              : isOpen
-              ? "✕"
-              : "Crear un hábito +"}
+          <p className={style.close}>
+            {isDesktop ? "Crear un hábito +" : isOpen ? "✕" : "Crear un hábito +"}
           </p>
         </div>
       </div>
@@ -169,14 +168,16 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
       {isOpen && (
         <>
           <div className={style.containerInfo}>
-            <p className={style.titleKeep}   >
+            <p className={style.titleKeep}>
               {isEditing ? "Editar Hábito" : "Crea un habito"}
             </p>
           </div>
+
           {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
           {success && (
             <p style={{ color: "green", marginTop: "10px" }}>{success}</p>
           )}
+
           <div className={style.containerForm}>
             <form className={style.form} onSubmit={handleSubmit}>
               <input
@@ -185,13 +186,17 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
                 placeholder="Escriba su meta"
                 value={formData.meta}
                 onChange={handleChange}
+                                className={style.datePicker}
+
               />
+
               <DatePicker
                 selected={formData.fecha}
                 onChange={handleDateChange}
                 dateFormat="dd-MM-yyyy"
                 className={style.datePicker}
               />
+
               <input
                 name="horario"
                 type="time"
@@ -199,6 +204,7 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
                 onChange={handleChange}
                 className={style.datePicker}
               />
+
               <select
                 name="urgencia"
                 value={formData.urgencia}
@@ -210,26 +216,22 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
                 <option value="no importante">No Importante</option>
                 <option value="obligaciones">Obligaciones</option>
               </select>
+
               <div>
-                <p className={style.subtitle}>
-                  Seleccione un color para su tarea
-                </p>
+                <p className={style.subtitle}>Seleccione un color para su tarea</p>
                 <div className={style.containerColors}>
-                  {["color1", "color2", "color3", "color4"].map(
-                    (color, index) => (
-                      <div
-                        key={color}
-                        className={`${
-                          style[
-                            `circle${["One", "Two", "Three", "Four"][index]}`
-                          ]
-                        } ${formData.color === color ? style.selected : ""}`}
-                        onClick={() => handleColorSelect(color)}
-                      ></div>
-                    )
-                  )}
+                  {["color1", "color2", "color3", "color4"].map((color, index) => (
+                    <div
+                      key={color}
+                      className={`${
+                        style[`circle${["One", "Two", "Three", "Four"][index]}`]
+                      } ${formData.color === color ? style.selected : ""}`}
+                      onClick={() => handleColorSelect(color)}
+                    />
+                  ))}
                 </div>
               </div>
+
               <div className={style.containerKeep}>
                 <p className={style.keep}>Repetir habito</p>
                 <input
@@ -257,6 +259,7 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
                   </div>
                 )}
               </div>
+
               <div className={style.containerEditCancel}>
                 <button className={style.btn} type="submit" disabled={loading}>
                   <p>
@@ -264,15 +267,12 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit }) {
                       ? "Guardando..."
                       : isEditing
                       ? "Guardar Cambios"
-                      : "Añade  un habito"}
+                      : "Añade un habito"}
                   </p>
                 </button>
+
                 {isEditing && (
-                  <button
-                    type="button"
-                    className={style.btn}
-                    onClick={onUpdate}
-                  >
+                  <button type="button" className={style.btn} onClick={onUpdate}>
                     Cancelar
                   </button>
                 )}

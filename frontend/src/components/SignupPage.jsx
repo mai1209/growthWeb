@@ -1,39 +1,47 @@
-// SignupPage.js (COMPLETO Y CONECTADO)
-
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import style from "../style/Login.module.css";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
-function SignupPage({ onSwitchToLogin, onAuthSuccess }) {
-  // 1. Estados para guardar los datos de cada input
+function SignupPage({ onAuthSuccess }) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showRepeatPassword, setShowRepeatPassword] = useState(false);
+
+  const navigate = useNavigate();
 
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-  // 2. Función que se ejecuta al enviar el formulario
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Evita que la página se recargue
+    e.preventDefault();
     setError("");
 
     if (password !== repeatPassword) {
       return setError("Las contraseñas no coinciden");
     }
 
+    setLoading(true);
     try {
       const res = await axios.post(`${API_URL}/api/auth/signup`, {
-        username, // Asegúrate que tu backend maneje 'username'
+        username,
         email,
         password,
       });
 
-      // 3. Si el backend responde con éxito, llamamos a onAuthSuccess
       onAuthSuccess(res.data.token);
+
+      // ✅ al registrarse, lo mandás a la app
+      navigate("/");
     } catch (err) {
       setError(err.response?.data?.error || "Error al registrarse");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -47,7 +55,7 @@ function SignupPage({ onSwitchToLogin, onAuthSuccess }) {
             <p className={style.title}>Registrate para comenzar</p>
 
             <div className={style.containerInput}>
-              <label htmlFor="name">Usuario:</label>
+              <label>Usuario:</label>
               <input
                 type="text"
                 value={username}
@@ -55,8 +63,9 @@ function SignupPage({ onSwitchToLogin, onAuthSuccess }) {
                 required
               />
             </div>
+
             <div className={style.containerInput}>
-              <label htmlFor="email">Email:</label>
+              <label>Email:</label>
               <input
                 type="email"
                 value={email}
@@ -64,37 +73,62 @@ function SignupPage({ onSwitchToLogin, onAuthSuccess }) {
                 required
               />
             </div>
+
             <div className={style.containerInput}>
-              <label htmlFor="password">Contraseña:</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <div className={style.containerInput}>
-              <label htmlFor="password">Repetir Contraseña:</label>
-              <input
-                type="password"
-                value={repeatPassword}
-                onChange={(e) => setRepeatPassword(e.target.value)}
-                required
-              />
-            </div>
-            <div className={style.containerRegister}>
-              <button type="submit" className={style.btn}>
-                Registrate
-              </button>
-              {error && <p style={{ color: "red" }}>{error}</p>}
-              <div className={style.containerLogOut} onClick={onSwitchToLogin}>
-                <p>Ya tengo una cuenta</p>
-                <img
-                  className={style.logOutImg}
-                  src="./logOut.png"
-                  alt="logout"
+              <label>Contraseña</label>
+
+              <div className={style.passwordWrapper}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
+
+                <span
+                  className={style.eye}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </span>
               </div>
+            </div>
+
+            <div className={style.containerInput}>
+              <label>Repetir contraseña</label>
+
+              <div className={style.passwordWrapper}>
+                <input
+                  type={showRepeatPassword ? "text" : "password"}
+                  value={repeatPassword}
+                  onChange={(e) => setRepeatPassword(e.target.value)}
+                  required
+                />
+
+                <span
+                  className={style.eye}
+                  onClick={() => setShowRepeatPassword((prev) => !prev)}
+                >
+                  {showRepeatPassword ? <FiEyeOff /> : <FiEye />}
+                </span>
+              </div>
+            </div>
+
+            <div className={style.containerRegister}>
+              <button
+                type="submit"
+                className={loading ? style.btnLoading : style.btn}
+                disabled={loading}
+              >
+                {loading ? <div className={style.spinner}></div> : "Registrate"}
+              </button>
+
+              {error && <p style={{ color: "red" }}>{error}</p>}
+
+              {/* ✅ navegación real */}
+              <p className={style.link} onClick={() => navigate("/login")}>
+                Ya tengo una cuenta
+              </p>
             </div>
           </form>
         </div>

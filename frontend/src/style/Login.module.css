@@ -1,131 +1,197 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
 
+
+
+/* =========================
+   CONTENEDOR GENERAL
+========================= */
 .container {
   position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-sizing: border-box;
-
   padding: 2rem;
-  background: transparent;
+
+  background:
+    radial-gradient(900px 500px at var(--x1) var(--y1), rgba(86, 255, 95, 0.14), transparent 60%),
+    radial-gradient(700px 420px at var(--x2) var(--y2), rgba(104, 195, 0, 0.10), transparent 65%),
+    radial-gradient(900px 500px at var(--x3) var(--y3), rgba(255, 88, 54, 0.10), transparent 70%),
+    radial-gradient(700px 420px at var(--x4) var(--y4), rgba(255, 176, 58, 0.08), transparent 70%),
+    linear-gradient(180deg, #070a07, #050605 60%, #060606);
+
+  animation: backgroundFlow 45s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  will-change: background;
+
   color: white;
-  background-color: var(--background-color);
   z-index: 9999999999;
+  font-family: "Poppins", sans-serif;
 }
 
-.loginBox {
-  display: flex;
-  width: 100%;
+
+@keyframes backgroundFlow {
+  0% {
+    --x1: 18%;
+    --y1: 40%;
+    --x2: 35%;
+    --y2: 65%;
+    --x3: 28%;
+    --y3: 92%;
+    --x4: 55%;
+    --y4: 95%;
+  }
+
+  25% {
+    --x1: 20%;
+    --y1: 42%;
+    --x2: 38%;
+    --y2: 63%;
+    --x3: 30%;
+    --y3: 90%;
+    --x4: 53%;
+    --y4: 93%;
+  }
+
+  50% {
+    --x1: 22%;
+    --y1: 45%;
+    --x2: 40%;
+    --y2: 60%;
+    --x3: 32%;
+    --y3: 88%;
+    --x4: 50%;
+    --y4: 92%;
+  }
+
+  75% {
+    --x1: 20%;
+    --y1: 42%;
+    --x2: 37%;
+    --y2: 63%;
+    --x3: 30%;
+    --y3: 90%;
+    --x4: 53%;
+    --y4: 94%;
+  }
+
+  100% {
+    --x1: 18%;
+    --y1: 40%;
+    --x2: 35%;
+    --y2: 65%;
+    --x3: 28%;
+    --y3: 92%;
+    --x4: 55%;
+    --y4: 95%;
+  }
 }
 
+
+
+/* =========================
+   CARD / GLASS
+========================= */
 .back {
-  background: rgba(45, 45, 45, 0.063);
-  border: 0.5px solid rgba(255, 255, 255, 0.273);
-  border-radius: 16px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(2px);
-  height: auto;
+  background: rgba(20, 20, 20, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  width: 100%;
+  max-width: 900px;
 }
 
-.title {
-  font-size: 1.9rem;
-  font-style: "poppins";
-  font-weight: 500;
-  font-style: normal;
-  margin-bottom: 3rem;
-}
-
+/* =========================
+   CONTENIDO INTERNO
+========================= */
 .containerForm {
   display: flex;
-  background-color: transparent;
-  width: fit-content;
+  gap: 3rem;
   padding: 3rem;
-
+  background-color: transparent;
 }
 
+/* =========================
+   FORM
+========================= */
 form {
   display: flex;
   flex-direction: column;
-
   width: 400px;
-  margin-left: 3rem;
 }
 
-form input {
-  background: none;
-  border: none;
-  color: var(--color-text);
-  text-align: start;
-  width: 100%;
-  font-size: 16px;
+.title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  letter-spacing: -0.5px;
 }
 
-form label {
-  font-style: "poppins";
-  font-weight: 500;
-  font-style: normal;
-  display: flex;
-}
-
+/* =========================
+   INPUTS
+========================= */
 .containerInput {
   display: flex;
-  gap: 0.4rem;
-  margin-bottom: 1rem;
-  border-bottom: 0.1px solid #ffffff75;
-  text-align: start;
-}
-
-.containerRegister {
-  display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  align-items: flex-end;
-  padding-right: 1rem;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-.btn {
-  background-color: var(--color-verde);
-  border-radius: 13px;
-  padding: 0.8rem 1rem;
-  color: var(--background-color);
-  font-size: 1rem;
-  font-style: "poppins";
-  font-weight: 800;
-  font-style: normal;
-  cursor: pointer;
+  gap: 0.3rem;
+  margin-bottom: 1.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 0.4rem;
 }
 
-.containerLogOut {
-  display: flex;
-  align-items: center;
-}
-
-.containerLogOut {
-  cursor: pointer;
-  display: flex;
-
-  gap: 0.5rem;
-}
-
-.containerLogOut p {
-  font-family: "poppins";
+.containerInput label {
+  font-size: 0.85rem;
   font-weight: 500;
+  opacity: 0.9;
 }
 
-.logOutImg {
-  width: 20px;
-  height: 20px;
+.containerInput input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--color-text);
+  font-size: 16px;
+  padding: 0.4rem 0;
 }
 
+.containerInput:focus-within {
+  border-color: var(--color-verde);
+}
+
+/* =========================
+   BOTÓN PRINCIPAL
+========================= */
+.btn {
+  background: linear-gradient(135deg, var(--color-verde), #2fa81d);
+  border-radius: 14px;
+  padding: 0.8rem 1rem;
+  color: #0b1a07;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(59, 203, 35, 0.35);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* =========================
+   LOADING
+========================= */
 .btnLoading {
   background: transparent;
   border: none;
   box-shadow: none;
-  cursor: default;
 }
 
 .spinner {
@@ -144,62 +210,79 @@ form label {
   }
 }
 
-@media (max-width: 1000px) {
-  .containerForm {
-    padding: 0rem;
-    flex-direction: column;
-    width: 100%;
-  }
+/* =========================
+   LINK SECUNDARIO
+========================= */
+.link {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #9be68f;
+  cursor: pointer;
+  align-self: flex-end;
+}
 
+.link:hover {
+  text-decoration: underline;
+}
+
+.passwordWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.passwordWrapper input {
+  flex: 1;
+}
+
+.eye {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.1rem;
+  transition: color 0.2s ease;
+}
+
+.eye:hover {
+  color: var(--color-verde);
+}
+
+/* =========================
+   MOBILE
+========================= */
+@media (max-width: 1000px) {
   .container {
-    align-items: flex-start; 
-    justify-content: start;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 1.5rem 1rem;
     overflow-y: auto;
-    padding: 2rem 1rem;
     -webkit-overflow-scrolling: touch;
   }
 
   .back {
-    margin-top: 0rem;
-    border: none;
+    border-radius: 14px;
+    width: 100%;
+  }
+
+  .containerForm {
+    flex-direction: column;
+    padding: 2rem 1.5rem;
+    gap: 2rem;
+  }
+
+  form {
     width: 100%;
   }
 
   .title {
     font-size: 1.5rem;
-    margin-bottom : 1rem ;
-  }
-  form {
-    gap: 0rem;
-    width: 100%;
-    margin-left: 0rem;
-    margin-top: 2rem;
-    padding-left: 0.5rem;
-
+    margin-bottom: 1rem;
   }
 
   .btn {
-    padding: 0.5rem 1rem;
-
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    padding: 0.6rem 1rem;
   }
-  form label {
-    font-size: 0.9rem;
-    
-  }
-  .containerLogOut p {
-    font-size: 0.7rem;
-  }
-
-  .containerRegister {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: flex-end;
-  padding-right: 1rem;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-
 }
