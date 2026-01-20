@@ -19,7 +19,6 @@
   background-color: var(--background-color);
 }
 
-
 .inputMonto {
   text-align: center;
   width: 100%;
@@ -49,7 +48,6 @@ form input {
 }
 
 .typeButtons {
-
   border-radius: 8px;
   display: flex;
 
@@ -79,7 +77,7 @@ form input {
 
 .ingresoBtn {
   background-color: #32472c68;
-  border-top-left-radius: 8px ;
+  border-top-left-radius: 8px;
   border-bottom-left-radius: 8px;
   padding: 0.4rem 0;
 }
@@ -95,7 +93,7 @@ form input {
   display: flex;
   width: 100%;
   justify-content: flex-end;
-  padding: 1rem;
+  padding: 3rem 10rem 0 0;
 }
 
 .buttonToggle {
@@ -106,19 +104,22 @@ form input {
   cursor: pointer;
 }
 
- .contentButton img {
-    width: 22px;
-    height: 22px;
-  }
-  
+.contentButton img {
+  width: 22px;
+  height: 22px;
+}
+
+.cerrar {
+  font-size: 1rem;
+}
+
 
 @media (max-width: 1000px) {
   .contentAllCargar {
     position: fixed;
     top: 21rem;
     z-index: 88888888;
-      right: 0.5rem;
-
+    right: 0.5rem;
   }
 
   .typeButton {
