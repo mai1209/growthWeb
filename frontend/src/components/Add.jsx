@@ -147,7 +147,7 @@ function Add({ onMovementAdded, movementToEdit, only }) {
       
       <div className={style.containerAllForm}>
         {/* --- Formulario de Ingreso --- */}
-    {!only || only === 'ingreso' ? (
+    {(!only || only === 'ingreso') && (!isEditing || movementToEdit.tipo === 'ingreso') &&(
     <form className={style.formone} onSubmit={(e) => handleSubmit(e, "ingreso")}> 
       <InputMonto  className={style.inputMonto}  value={ingresoMonto} onChange={setIngresoMonto} disabled={isEditing && movementToEdit.tipo === 'egreso'} />
       <div className={style.containerBtn}>
@@ -161,10 +161,10 @@ function Add({ onMovementAdded, movementToEdit, only }) {
         </button>
       </div>
     </form>
-    ) : null}
+    ) }
 
         {/* --- Formulario de Egreso --- */}
-    {!only || only === 'egreso' ? (
+    {(!only || only === 'egreso' ) &&  (!isEditing || movementToEdit.tipo === 'egreso') && (
     <form className={style.formtwo} onSubmit={(e) => handleSubmit(e, "egreso")}> 
       <InputMonto className={style.inputMonto} value={egresoMonto} onChange={setEgresoMonto} disabled={isEditing && movementToEdit.tipo === 'ingreso'} />
       <div className={style.containerBtn}>
@@ -178,7 +178,7 @@ function Add({ onMovementAdded, movementToEdit, only }) {
         </button>
       </div>
     </form>
-    ) : null}
+    ) }
       </div>
       {isEditing && (
           <div className={style.cancelContainer}>

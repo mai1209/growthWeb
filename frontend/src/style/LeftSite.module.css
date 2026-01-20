@@ -128,14 +128,20 @@
   background-color: #272726;
   margin-top: 1rem;
   margin-left: 1rem;
+
 }
 
 .viewMode button {
   background: none;
   border: none;
   color: var(--color-text);
-  max-width: 90px;
-  padding: 0.5rem 1rem;
+  max-width: 85px;
+  padding: 0.2rem 0.5rem;
+    font-family: 'poppins';
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 0.7rem;
+  cursor: pointer;
 
 }
 
