@@ -112,6 +112,11 @@
   background-color: transparent;
 }
 
+.containerForm img{
+  width: 366px;
+  height: 442px;
+}
+
 /* =========================
    FORM
 ========================= */
