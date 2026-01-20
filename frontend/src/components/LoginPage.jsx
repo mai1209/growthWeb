@@ -49,7 +49,7 @@ function LoginPage({ onAuthSuccess }) {
     <div className={style.container}>
       <div className={style.back}>
         <div className={style.containerForm}>
-          <img src="./imgInicio.png" alt="imgInicio" />
+          <img src="./imgInicio.webp" alt="imgInicio" />
 
           <form onSubmit={handleSubmit}>
             <p className={style.title}>Iniciar sesión</p>
