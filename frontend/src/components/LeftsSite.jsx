@@ -63,6 +63,7 @@ function LeftSite({ token, refreshKey }) {
       .filter((m) => m.tipo === "ingreso")
       .reduce((acc, cur) => acc + Number(cur.monto), 0);
 
+      
     const egreso = data
       .filter((m) => m.tipo === "egreso")
       .reduce((acc, cur) => acc + Number(cur.monto), 0);
