@@ -2,21 +2,20 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import AppRoutes from './AppRoutes';
 
+const getStoredToken = () =>
+  localStorage.getItem("token") || sessionStorage.getItem("token");
+
 function App() {
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(getStoredToken());
   const [activeView, setActiveView] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // --- Estado para TAREAS ---
   const [taskToEdit, setTaskToEdit] = useState(null);
-
-  // --- Estado para MOVIMIENTOS ---
   const [movementToEdit, setMovementToEdit] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
 
-  // useEffect para buscar los movimientos (para el sidebar y el dashboard)
   useEffect(() => {
     const fetchMovimientos = async () => {
       if (!token) {
@@ -36,59 +35,49 @@ function App() {
     fetchMovimientos();
   }, [token, refreshKey, API_URL]);
 
-  // Función unificada que refresca datos y limpia los formularios de edición
   const handleDataUpdate = () => {
-    setTaskToEdit(null);      // Limpia el formulario de tareas
-    setMovementToEdit(null);  // Limpia el formulario de movimientos
-    setRefreshKey(prevKey => prevKey + 1); // Fuerza la actualización de datos
+    setTaskToEdit(null);
+    setMovementToEdit(null);
+    setRefreshKey(prevKey => prevKey + 1);
   };
 
   const handleAuthSuccess = (newToken) => {
-    localStorage.setItem("token", newToken);
+    // ❌ ya NO guardar acá
     setToken(newToken);
     setActiveView(null);
   };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     setToken(null);
   };
-  
+
   const handleLoginClick = () => setActiveView("login");
   const handleCloseModal = () => setActiveView(null);
 
-//funcion de ingreso y egreso 
-const handleAddMovement = () => {
-  setMovementToEdit(null);
-  setActiveView(null);
-};
-
-
-
+  const handleAddMovement = () => {
+    setMovementToEdit(null);
+    setActiveView(null);
+  };
 
   return (
- 
-      <AppRoutes
-        token={token}
-        onAuthSuccess={handleAuthSuccess}
-        onLogout={handleLogout}
-        onLoginClick={handleLoginClick}
-        onCloseModal={handleCloseModal}
-        activeView={activeView}
-        
-        refreshKey={refreshKey}
-        onUpdate={handleDataUpdate}
-        
-        movimientos={movimientos}
-        movementToEdit={movementToEdit}
-        setMovementToEdit={setMovementToEdit}
-        
-        taskToEdit={taskToEdit}
-        setTaskToEdit={setTaskToEdit}
-
-          onAddMovement={handleAddMovement}
-      />
-  
+    <AppRoutes
+      token={token}
+      onAuthSuccess={handleAuthSuccess}
+      onLogout={handleLogout}
+      onLoginClick={handleLoginClick}
+      onCloseModal={handleCloseModal}
+      activeView={activeView}
+      refreshKey={refreshKey}
+      onUpdate={handleDataUpdate}
+      movimientos={movimientos}
+      movementToEdit={movementToEdit}
+      setMovementToEdit={setMovementToEdit}
+      taskToEdit={taskToEdit}
+      setTaskToEdit={setTaskToEdit}
+      onAddMovement={handleAddMovement}
+    />
   );
 }
 

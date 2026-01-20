@@ -7,6 +7,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 function LoginPage({ onAuthSuccess }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false); // ✅ nuevo
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -24,11 +25,18 @@ function LoginPage({ onAuthSuccess }) {
       const res = await axios.post(`${API_URL}/api/auth/login`, {
         email,
         password,
+        rememberMe, // ✅ se manda al backend
       });
+
+      // ✅ Guardar token según el checkbox
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem("token", res.data.token);
+
+      // (opcional) por si tenías token viejo guardado en el otro storage:
+      (rememberMe ? sessionStorage : localStorage).removeItem("token");
 
       onAuthSuccess(res.data.token);
 
-      // ✅ ir al dashboard
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.error || "Error al iniciar sesión");
@@ -76,6 +84,8 @@ function LoginPage({ onAuthSuccess }) {
               </div>
             </div>
 
+         
+
             <button
               type="submit"
               className={loading ? style.btnLoading : style.btn}
@@ -86,10 +96,18 @@ function LoginPage({ onAuthSuccess }) {
 
             {error && <p style={{ color: "red" }}>{error}</p>}
 
-            {/* ✅ navegación real */}
             <p className={style.link} onClick={() => navigate("/register")}>
               ¿No tenés cuenta? Registrate
             </p>
+               {/* ✅ CHECKBOX */}
+            <label className={style.rememberRow}>
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              <span>Recordarme por 30 días</span>
+            </label>
           </form>
         </div>
       </div>

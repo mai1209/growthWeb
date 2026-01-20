@@ -28,26 +28,21 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    console.time('login');
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
 
     if (!email || !password)
       return res.status(400).json({ error: 'Email y contraseña requeridos' });
 
     const user = await User.findOne({ email }).select('+password');
-    console.timeLog('login', 'User found');
-
     if (!user)
       return res.status(401).json({ error: 'Credenciales inválidas' });
 
     const isMatch = await user.matchPassword(password);
-    console.timeLog('login', 'Password checked');
-
     if (!isMatch)
       return res.status(401).json({ error: 'Credenciales inválidas' });
 
-    const token = generateToken(user);
-    console.timeEnd('login');
+    const expiresIn = rememberMe ? '30d' : '1d';
+    const token = generateToken(user, expiresIn);
 
     res.json({
       message: 'Login exitoso',
@@ -59,3 +54,4 @@ export const login = async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
+

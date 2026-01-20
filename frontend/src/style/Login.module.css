@@ -250,6 +250,15 @@ form {
   color: var(--color-verde);
 }
 
+.rememberRow{
+display: flex;
+gap: 0.5rem;
+justify-content: flex-end;
+margin-top: 0.6rem;
+font-family: 'poppins';
+font-size: 0.8rem;
+}
+
 /* =========================
    MOBILE
 ========================= */

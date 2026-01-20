@@ -111,7 +111,7 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
 
       const fechaLocal = new Date(formData.fecha);
       fechaLocal.setMinutes(
-        fechaLocal.getMinutes() - fechaLocal.getTimezoneOffset()
+        fechaLocal.getMinutes() - fechaLocal.getTimezoneOffset(),
       );
       const fechaFormateada = fechaLocal.toISOString().slice(0, 10);
 
@@ -159,8 +159,12 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
           className={`${style.containerOpenClose} ${isOpen ? style.open : ""}`}
           onClick={toggleContainer}
         >
-          <p className={style.close}>
-            {isDesktop ? "Crear un hábito +" : isOpen ? "✕" : "Crear un hábito +"}
+          <p className={style.close}  onClick={onUpdate}>
+            {isDesktop
+              ? "Crear un hábito +"
+              : isOpen
+                ? "✕"
+                : "Crear un hábito +"}
           </p>
         </div>
       </div>
@@ -186,8 +190,7 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
                 placeholder="Escriba su meta"
                 value={formData.meta}
                 onChange={handleChange}
-                                className={style.datePicker}
-
+                className={style.datePicker}
               />
 
               <DatePicker
@@ -218,17 +221,23 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
               </select>
 
               <div>
-                <p className={style.subtitle}>Seleccione un color para su tarea</p>
+                <p className={style.subtitle}>
+                  Seleccione un color para su tarea
+                </p>
                 <div className={style.containerColors}>
-                  {["color1", "color2", "color3", "color4"].map((color, index) => (
-                    <div
-                      key={color}
-                      className={`${
-                        style[`circle${["One", "Two", "Three", "Four"][index]}`]
-                      } ${formData.color === color ? style.selected : ""}`}
-                      onClick={() => handleColorSelect(color)}
-                    />
-                  ))}
+                  {["color1", "color2", "color3", "color4"].map(
+                    (color, index) => (
+                      <div
+                        key={color}
+                        className={`${
+                          style[
+                            `circle${["One", "Two", "Three", "Four"][index]}`
+                          ]
+                        } ${formData.color === color ? style.selected : ""}`}
+                        onClick={() => handleColorSelect(color)}
+                      />
+                    ),
+                  )}
                 </div>
               </div>
 
@@ -266,13 +275,17 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
                     {loading
                       ? "Guardando..."
                       : isEditing
-                      ? "Guardar Cambios"
-                      : "Añade un habito"}
+                        ? "Guardar Cambios"
+                        : "Añade un habito"}
                   </p>
                 </button>
 
                 {isEditing && (
-                  <button type="button" className={style.btn} onClick={onUpdate}>
+                  <button
+                    type="button"
+                    className={style.btn}
+                    onClick={onUpdate}
+                  >
                     Cancelar
                   </button>
                 )}
