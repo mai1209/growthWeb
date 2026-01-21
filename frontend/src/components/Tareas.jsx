@@ -16,47 +16,52 @@ function Tareas({ token, refreshKey, onEditClick }) {
   const [showList, setShowList] = useState(false);
   const [error, setError] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
+useEffect(() => {
+  let isMounted = true; // Evita fugas de memoria
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      if (!token) {
-        setTasks([]);
-        return;
+  const fetchTasks = async () => {
+    if (!token) {
+      setTasks([]);
+      return;
+    }
+    
+    setLoading(true);
+    // IMPORTANTE: No limpies el error ni las tareas inmediatamente 
+    // para evitar que la pantalla "salte" a blanco.
+
+    try {
+      let res;
+      if (showList) {
+        res = await axios.get(`${API_URL}/api/task`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        const formattedDate = selectedDate.toISOString().slice(0, 10);
+        res = await axios.get(`${API_URL}/api/task?fecha=${formattedDate}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       }
-      setLoading(true);
-      setError("");
 
-      try {
-        let res;
-
-        if (showList) {
-          res = await axios.get(`${API_URL}/api/task`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-        } else {
-          const dateToFetch = new Date(selectedDate);
-          dateToFetch.setMinutes(
-            dateToFetch.getMinutes() - dateToFetch.getTimezoneOffset()
-          );
-          const formattedDate = dateToFetch.toISOString().slice(0, 10);
-
-          res = await axios.get(`${API_URL}/api/task?fecha=${formattedDate}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-        }
-
+      if (isMounted) {
         setTasks(res.data);
-      } catch (err) {
-        console.error("Error al obtener las tareas:", err);
-        setError("No se pudieron cargar las tareas para esta fecha.");
-        setTasks([]);
-      } finally {
-        setLoading(false);
+        setError(""); // Solo limpiamos error si la carga fue exitosa
       }
-    };
+    } catch (err) {
+      // Si err.response.status === 401, el INTERCEPTOR de App.js 
+      // sacará al usuario de aquí automáticamente.
+      
+      if (isMounted && err.response?.status !== 401) {
+        console.error("Error al obtener las tareas:", err);
+        setError("Error de conexión. Intenta recargar.");
+      }
+    } finally {
+      if (isMounted) setLoading(false);
+    }
+  };
 
-    fetchTasks();
-  }, [token, refreshKey, selectedDate, showList]);
+  fetchTasks();
+  return () => { isMounted = false; };
+}, [token, refreshKey, selectedDate, showList]);
 
   const handleDateChange = (date) => {
     setSelectedDate(date);

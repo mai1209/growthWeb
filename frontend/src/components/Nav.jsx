@@ -9,9 +9,19 @@ function Nav({ token, onLogout }) {
   const userData = useMemo(() => {
     if (!token) return null;
     try {
-      return jwtDecode(token);
+      const decoded = jwtDecode(token);
+      
+      // ✅ Opcional: Verificar si el token ya expiró en el cliente
+      const currentTime = Date.now() / 1000;
+      if (decoded.exp < currentTime) {
+        console.warn("El token ha expirado.");
+        // Podríamos forzar logout aquí, pero el Interceptor de Axios 
+        // lo hará apenas intentes hacer un fetch, lo cual es más seguro.
+      }
+      
+      return decoded;
     } catch (error) {
-      console.error("Error al decodificar el token:", error);
+      console.error("Token inválido:", error);
       return null;
     }
   }, [token]);
@@ -21,8 +31,8 @@ function Nav({ token, onLogout }) {
   };
 
   const handleLogout = () => {
-    onLogout();
-    navigate("/login"); // ✅ al cerrar sesión, volvés a login
+    onLogout(); // Esto limpia localStorage/sessionStorage en App.js
+    navigate("/"); // Mejor ir a la raíz, AppRoutes se encargará de mostrar Login
   };
 
   return (
@@ -33,8 +43,8 @@ function Nav({ token, onLogout }) {
           <p className={style.nameLogo}>growth</p>
         </div>
 
-        {/* ✅ Links SOLO si está logueado */}
-        {token ? (
+        {/* ✅ Links solo si hay token */}
+        {token && (
           <div className={style.navItems}>
             <NavLink to="/" className={getNavLinkClass}>
               <img src="/homedos.png" alt="home" />
@@ -46,25 +56,20 @@ function Nav({ token, onLogout }) {
               <p>Tareas</p>
             </NavLink>
           </div>
-        ) : (
-          <div />
         )}
 
-        {/* ✅ User actions solo si hay sesión válida */}
-        {token && userData ? (
+        {/* ✅ User actions: Cambié la condición para que si hay token pero userData falla, no rompa */}
+        {token && (
           <div className={style.userActions}>
             <div className={style.user}>
-              <p>Hola, {userData.username || "Usuario"}!</p>
+              <p>Hola, {userData?.username || "Usuario"}!</p>
             </div>
             <button onClick={handleLogout} className={style.logoutButton}>
               Cerrar Sesión
             </button>
           </div>
-        ) : (
-          <div />
         )}
 
-        {/* ✅ Hamburguesa solo si hay token (si no, confunde) */}
         {token && (
           <button className={style.menuButton} type="button">
             <img src="/menu.png" alt="menu" />
