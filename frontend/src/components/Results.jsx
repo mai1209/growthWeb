@@ -102,6 +102,12 @@ function Results({
       console.error(err);
     }
   };
+const formatMonto = (monto) => {
+  return new Intl.NumberFormat("es-AR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(monto);
+};
 
   // ---------------- LOGIN / SIGNUP ----------------
   if (!token) {
@@ -214,7 +220,7 @@ function Results({
                           : style.montoEgreso
                       }`}
                     >
-                      {mov.tipo === "ingreso" ? "+" : "-"} ${mov.monto}
+                      {mov.tipo === "ingreso" ? "+" : "-"} ${formatMonto(mov.monto)}
                     </p>
                     <p className={style.detalleTexto}>
                       {mov.detalle || "sin detalle"}
