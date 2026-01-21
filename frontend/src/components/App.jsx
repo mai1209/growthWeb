@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import AppRoutes from './AppRoutes';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import AppRoutes from "./AppRoutes";
 
 const getStoredToken = () =>
   localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -14,7 +14,7 @@ function App() {
   const [movementToEdit, setMovementToEdit] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
   useEffect(() => {
     const fetchMovimientos = async () => {
@@ -28,6 +28,18 @@ function App() {
         });
         setMovimientos(res.data);
       } catch (err) {
+        const status = err?.response?.status;
+
+        // ✅ Si el backend responde "no autorizado" => token inválido/expirado
+        if (status === 401) {
+          localStorage.removeItem("token");
+          sessionStorage.removeItem("token");
+          setToken(null);
+          setMovimientos([]);
+          return;
+        }
+
+        // ✅ Otros errores: red, 500, etc. No borres token.
         console.error("Error al obtener movimientos en App.js:", err);
         setMovimientos([]);
       }
@@ -35,10 +47,22 @@ function App() {
     fetchMovimientos();
   }, [token, refreshKey, API_URL]);
 
+  useEffect(() => {
+    const syncToken = () => setToken(getStoredToken());
+
+    window.addEventListener("storage", syncToken);
+    window.addEventListener("focus", syncToken);
+
+    return () => {
+      window.removeEventListener("storage", syncToken);
+      window.removeEventListener("focus", syncToken);
+    };
+  }, []);
+
   const handleDataUpdate = () => {
     setTaskToEdit(null);
     setMovementToEdit(null);
-    setRefreshKey(prevKey => prevKey + 1);
+    setRefreshKey((prevKey) => prevKey + 1);
   };
 
   const handleAuthSuccess = (newToken) => {

@@ -20,6 +20,8 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
   const [isOpen, setIsOpen] = useState(true);
   const isDesktop = !window.matchMedia("(max-width: 1000px)").matches;
 
+
+  
   // ✅ Avisar al layout si está abierto/cerrado
   useEffect(() => {
     if (setIsNotesOpen) setIsNotesOpen(isOpen);
