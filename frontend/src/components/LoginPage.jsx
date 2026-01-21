@@ -16,7 +16,7 @@ function LoginPage({ onAuthSuccess }) {
 
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -25,20 +25,28 @@ function LoginPage({ onAuthSuccess }) {
       const res = await axios.post(`${API_URL}/api/auth/login`, {
         email,
         password,
-        rememberMe, // ✅ se manda al backend
+        rememberMe,
       });
 
-      // ✅ Guardar token según el checkbox
-      const storage = rememberMe ? localStorage : sessionStorage;
-      storage.setItem("token", res.data.token);
+      const newToken = res.data.token;
 
-      // (opcional) por si tenías token viejo guardado en el otro storage:
-      (rememberMe ? sessionStorage : localStorage).removeItem("token");
+      // 1. Limpiamos TODO rastro anterior para evitar conflictos
+      localStorage.removeItem("token");
+      sessionStorage.removeItem("token");
 
-      onAuthSuccess(res.data.token);
+      // 2. Guardamos en el lugar correcto
+      if (rememberMe) {
+        localStorage.setItem("token", newToken);
+      } else {
+        sessionStorage.setItem("token", newToken);
+      }
 
+      // 3. Informamos a App.js y navegamos
+      onAuthSuccess(newToken);
       navigate("/");
+      
     } catch (err) {
+      console.error("Login error:", err);
       setError(err.response?.data?.error || "Error al iniciar sesión");
     } finally {
       setLoading(false);

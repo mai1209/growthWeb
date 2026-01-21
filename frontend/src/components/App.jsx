@@ -2,21 +2,37 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import AppRoutes from "./AppRoutes";
 
+// 1. INTERCEPTOR GLOBAL (Mantenlo aquí, fuera de la función App)
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem("token");
+      sessionStorage.removeItem("token");
+      // Usamos href para resetear todo el estado de la memoria de React
+      window.location.href = "/"; 
+    }
+    return Promise.reject(error);
+  }
+);
+
 const getStoredToken = () =>
   localStorage.getItem("token") || sessionStorage.getItem("token");
 
 function App() {
-  const [token, setToken] = useState(getStoredToken());
+  const [token, setToken] = useState(getStoredToken); // Pasamos la función, no el resultado, para optimizar
   const [activeView, setActiveView] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
-
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [movementToEdit, setMovementToEdit] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
 
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
+  // 2. FETCH DE MOVIMIENTOS SEGURO
   useEffect(() => {
+    let isMounted = true; // Para evitar actualizar estado si el componente se desmonta
+
     const fetchMovimientos = async () => {
       if (!token) {
         setMovimientos([]);
@@ -26,38 +42,33 @@ function App() {
         const res = await axios.get(`${API_URL}/api/add`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setMovimientos(res.data);
-      } catch (err) {
-        const status = err?.response?.status;
-
-        // ✅ Si el backend responde "no autorizado" => token inválido/expirado
-        if (status === 401) {
-          localStorage.removeItem("token");
-          sessionStorage.removeItem("token");
-          setToken(null);
-          setMovimientos([]);
-          return;
+        if (isMounted && res.data) {
+          setMovimientos(res.data);
         }
-
-        // ✅ Otros errores: red, 500, etc. No borres token.
-        console.error("Error al obtener movimientos en App.js:", err);
-        setMovimientos([]);
+      } catch (err) {
+        // Si es 401, el interceptor ya se encarga.
+        // Si es otro error (red, 500), mantenemos los movimientos anteriores 
+        // o mostramos un mensaje, pero NO los borramos para que la web no parpadee en blanco.
+        console.error("Error en fetchMovimientos:", err.message);
       }
     };
+
     fetchMovimientos();
+    return () => { isMounted = false; }; 
   }, [token, refreshKey, API_URL]);
 
+  // 3. SINCRONIZACIÓN DE TOKEN (Solo Storage)
   useEffect(() => {
-    const syncToken = () => setToken(getStoredToken());
+    const syncToken = () => {
+      const currentToken = getStoredToken();
+      if (currentToken !== token) {
+        setToken(currentToken);
+      }
+    };
 
     window.addEventListener("storage", syncToken);
-    window.addEventListener("focus", syncToken);
-
-    return () => {
-      window.removeEventListener("storage", syncToken);
-      window.removeEventListener("focus", syncToken);
-    };
-  }, []);
+    return () => window.removeEventListener("storage", syncToken);
+  }, [token]);
 
   const handleDataUpdate = () => {
     setTaskToEdit(null);

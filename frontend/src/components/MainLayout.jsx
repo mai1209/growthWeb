@@ -23,6 +23,7 @@ function MainLayout({ token, onLogout, taskToEdit, onTaskUpdate, refreshKey, onU
         onTaskUpdate={onTaskUpdate}
         onUpdate={onUpdate}
         taskToEdit={taskToEdit}
+        token={token}
       />
     ),
   };
