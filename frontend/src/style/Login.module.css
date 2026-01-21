@@ -1,7 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
 
-
-
 /* =========================
    CONTENEDOR GENERAL
 ========================= */
@@ -14,10 +12,26 @@
   padding: 2rem;
 
   background:
-    radial-gradient(900px 500px at var(--x1) var(--y1), rgba(86, 255, 95, 0.14), transparent 60%),
-    radial-gradient(700px 420px at var(--x2) var(--y2), rgba(104, 195, 0, 0.10), transparent 65%),
-    radial-gradient(900px 500px at var(--x3) var(--y3), rgba(255, 88, 54, 0.10), transparent 70%),
-    radial-gradient(700px 420px at var(--x4) var(--y4), rgba(255, 176, 58, 0.08), transparent 70%),
+    radial-gradient(
+      900px 500px at var(--x1) var(--y1),
+      rgba(86, 255, 95, 0.14),
+      transparent 60%
+    ),
+    radial-gradient(
+      700px 420px at var(--x2) var(--y2),
+      rgba(104, 195, 0, 0.1),
+      transparent 65%
+    ),
+    radial-gradient(
+      900px 500px at var(--x3) var(--y3),
+      rgba(255, 88, 54, 0.1),
+      transparent 70%
+    ),
+    radial-gradient(
+      700px 420px at var(--x4) var(--y4),
+      rgba(255, 176, 58, 0.08),
+      transparent 70%
+    ),
     linear-gradient(180deg, #070a07, #050605 60%, #060606);
 
   animation: backgroundFlow 45s cubic-bezier(0.45, 0, 0.55, 1) infinite;
@@ -27,7 +41,6 @@
   z-index: 9999999999;
   font-family: "Poppins", sans-serif;
 }
-
 
 @keyframes backgroundFlow {
   0% {
@@ -86,18 +99,15 @@
   }
 }
 
-
-
 /* =========================
    CARD / GLASS
 ========================= */
 .back {
- 
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(12px);
-   background: rgba(20, 20, 20, 0.65);
+  background: rgba(20, 20, 20, 0.65);
   width: 100%;
   max-width: 900px;
 }
@@ -112,7 +122,7 @@
   background-color: transparent;
 }
 
-.containerForm img{
+.containerForm img {
   width: 366px;
   height: 442px;
 }
@@ -255,13 +265,13 @@ form {
   color: var(--color-verde);
 }
 
-.rememberRow{
-display: flex;
-gap: 0.5rem;
-justify-content: flex-end;
-margin-top: 0.6rem;
-font-family: 'poppins';
-font-size: 0.8rem;
+.rememberRow {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.6rem;
+  font-family: "poppins";
+  font-size: 0.8rem;
 }
 
 /* =========================
@@ -283,7 +293,7 @@ font-size: 0.8rem;
 
   .containerForm {
     flex-direction: column;
-    padding: 2rem 1.5rem;
+    padding: 1rem 1rem;
     gap: 2rem;
   }
 
@@ -299,5 +309,10 @@ font-size: 0.8rem;
   .btn {
     font-size: 0.95rem;
     padding: 0.6rem 1rem;
+  }
+
+  .containerForm img {
+    width: 100%;
+    height: 442px;
   }
 }
