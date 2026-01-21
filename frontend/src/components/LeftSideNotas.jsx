@@ -106,7 +106,8 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
     }
 
     try {
-      const token = localStorage.getItem("token");
+   const token =
+  localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) throw new Error("No estás autenticado.");
 
       const fechaLocal = new Date(formData.fecha);
