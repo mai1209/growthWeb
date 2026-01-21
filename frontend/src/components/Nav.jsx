@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import { jwtDecode } from "jwt-decode";
 import style from "../style/Nav.module.css";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 function Nav({ token, onLogout }) {
+  const navigate = useNavigate();
+
   const userData = useMemo(() => {
     if (!token) return null;
     try {
@@ -18,21 +20,10 @@ function Nav({ token, onLogout }) {
     return isActive ? `${style.navLink} ${style.activeLink}` : style.navLink;
   };
 
-
-
-  ///LOS LINKS QUE FALTAN EN EL MENU
-  //   <NavLink to="/notes" className={getNavLinkClass}>
-  //           <img src="/notas.png" alt="notes" />
-  //         <p>Notas</p>
-  //     </NavLink>
-  //   <NavLink to="/help" className={getNavLinkClass}>
-  //   <img src="/help.png" alt="help" />
-  // <p>Ayuda</p>
-  //</NavLink>
-  //<NavLink to="/settings" className={getNavLinkClass}>
-  // <img src="/settings.png" alt="settings" />
-  //<p>Ajustes</p>
-  //</NavLink>
+  const handleLogout = () => {
+    onLogout();
+    navigate("/login"); // ✅ al cerrar sesión, volvés a login
+  };
 
   return (
     <div className={style.container}>
@@ -42,32 +33,43 @@ function Nav({ token, onLogout }) {
           <p className={style.nameLogo}>growth</p>
         </div>
 
-        <div className={style.navItems}>
-          <NavLink to="/" className={getNavLinkClass}>
-            <img src="/homedos.png" alt="home2" />
-            <p>Home</p>
-          </NavLink>
-          <NavLink to="/notas" className={getNavLinkClass}>
-            <img src="/tarea.png" alt="tasklist" />
-            <p>Tareas</p>
-          </NavLink>
-        </div>
+        {/* ✅ Links SOLO si está logueado */}
+        {token ? (
+          <div className={style.navItems}>
+            <NavLink to="/" className={getNavLinkClass}>
+              <img src="/homedos.png" alt="home" />
+              <p>Home</p>
+            </NavLink>
 
+            <NavLink to="/notas" className={getNavLinkClass}>
+              <img src="/tarea.png" alt="tasklist" />
+              <p>Tareas</p>
+            </NavLink>
+          </div>
+        ) : (
+          <div />
+        )}
+
+        {/* ✅ User actions solo si hay sesión válida */}
         {token && userData ? (
           <div className={style.userActions}>
             <div className={style.user}>
               <p>Hola, {userData.username || "Usuario"}!</p>
             </div>
-            <button onClick={onLogout} className={style.logoutButton}>
+            <button onClick={handleLogout} className={style.logoutButton}>
               Cerrar Sesión
             </button>
           </div>
         ) : (
-          <div></div>
+          <div />
         )}
-        <button className={style.menuButton}>
-          <img src="./menu.png" alt="menuHamburguesass" />
-        </button>
+
+        {/* ✅ Hamburguesa solo si hay token (si no, confunde) */}
+        {token && (
+          <button className={style.menuButton} type="button">
+            <img src="/menu.png" alt="menu" />
+          </button>
+        )}
       </nav>
     </div>
   );

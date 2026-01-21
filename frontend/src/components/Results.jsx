@@ -72,23 +72,13 @@ function Results({
     onShowAllChange?.(false);
   };
 
-  const handleAllMovimientos = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/add/all`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+ const handleAllMovimientos = () => {
+  setShowAll(true);
+  setTitulo("Todos los Movimientos");
+  setActiveButton("all");
+  onShowAllChange?.(true);
+};
 
-      if (res.data) {
-        onMovementUpdate?.(res.data);
-        setShowAll(true);
-        setTitulo("Todos los Movimientos");
-        setActiveButton("all");
-        onShowAllChange?.(true);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const handleDeleteMovimiento = async (id) => {
     if (!window.confirm("¿Eliminar movimiento?")) return;
