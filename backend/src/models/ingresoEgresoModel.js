@@ -31,5 +31,7 @@ const ingresoEgresoSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+// al final del schema (antes del export)
+ingresoEgresoSchema.index({ usuario: 1, fecha: -1 });
 
 export default mongoose.model('IngresoEgreso', ingresoEgresoSchema);
