@@ -147,7 +147,7 @@
 
 .selected {
   transform: scale(1.1);
-  border: 1px solid rgba(0, 255, 0, 0.5) ;
+  border: 1px solid rgba(0, 255, 0, 0.5);
   box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
 }
 
@@ -267,7 +267,7 @@
     background-color: transparent;
   }
 
-    .containerForm {
+  .containerForm {
     width: 100vw;
     overflow: hidden;
     background-color: var(--background-color);
@@ -329,23 +329,20 @@
     border: 3px solid;
     margin-top: 0rem;
     gap: 0.7rem;
-    height: 80vh;
+    height: 100vh;
   }
-
-
 
   .containerOpenClose {
     width: fit-content;
     padding: 2rem 1rem 0;
     position: fixed;
-  
   }
 
   .open {
     width: 100%;
     background-color: #000000;
     padding: 2rem 2rem 0;
-  position: static; /* o relative */
+    position: static; /* o relative */
   }
 
   .titleKeep {

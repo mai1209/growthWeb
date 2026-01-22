@@ -25,7 +25,7 @@
   gap: 0.9rem;
   height: 60vh;
   overflow-y: scroll;
-  margin:  2rem;
+  margin: 2rem;
 }
 
 .containerTareas {
@@ -117,7 +117,6 @@
   text-transform: uppercase;
 }
 
-
 .taskHeader p {
   text-align: center;
 }
@@ -168,8 +167,8 @@
   border-color: var(--color-text) !important;
 }
 :global(
-    .react-datepicker__navigation:hover .react-datepicker__navigation-arrow
-  ) {
+  .react-datepicker__navigation:hover .react-datepicker__navigation-arrow
+) {
   border-color: var(--color-text) !important; /* mantener sutil */
 }
 
@@ -182,7 +181,9 @@
 /* Estilo para todos los días (los números) */
 :global(.react-datepicker__day) {
   color: var(--color-text) !important;
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
 /* Día al pasar el mouse por encima */
@@ -193,10 +194,7 @@
 }
 
 :global(.react-datepicker__day--selected) {
-  background-color: var(
-    --color-accent,
-    #3498db
-  ) !important; 
+  background-color: var(--color-accent, #3498db) !important;
   color: white !important;
   border-radius: 50% !important;
   font-weight: bold !important;
@@ -288,19 +286,17 @@
   padding: 0.5rem;
 }
 
-  .hiddenMobile {
-    display: flex;
-  }
+.hiddenMobile {
+  display: flex;
+}
 
 @media (max-width: 1000px) {
   .container {
     margin-top: 82px;
     gap: 0;
+     max-width: 100%;
+  }
 
-  }
-  .hiddenMobile {
-    display: none;
-  }
   .tasksList {
     display: flex;
     flex-direction: column;
@@ -308,8 +304,6 @@
     margin: 10rem 0.5rem;
     overflow: hidden;
     height: fit-content;
-
-
   }
 
   .taskMeta {
@@ -331,7 +325,8 @@
     padding: 0.5rem;
     border-radius: 16px;
     gap: 6px;
-    flex: 0 0 90px;
+   flex: 0 1 90px;   /* antes 0 0 90px */
+    min-width: 0;  
   }
 
   .taskCard {
