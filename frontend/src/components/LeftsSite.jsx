@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+//import axios from "axios";
 import style from "../style/LeftSite.module.css";
+import { movimientoService } from "../api";
 
 function LeftSite({ token, refreshKey }) {
   const [viewMode, setViewMode] = useState("total");
@@ -9,27 +10,31 @@ function LeftSite({ token, refreshKey }) {
   const [movimientos, setMovimientos] = useState([]);
   const [totales, setTotales] = useState({ ingreso: 0, egreso: 0, total: 0 });
 
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+  //const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
   const toggleTotalsVisibility = () => setAreTotalsVisible((prev) => !prev);
 
-  // 1. Efecto para traer los datos (FETCH)
-  useEffect(() => {
-    let isMounted = true;
-    const fetchMovimientos = async () => {
-      if (!token) return;
-      try {
-        const res = await axios.get(`${API_URL}/api/add`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (isMounted && res.data) setMovimientos(res.data);
-      } catch (err) {
-        console.error("Error al obtener movimientos:", err.message);
+ useEffect(() => {
+  let isMounted = true;
+
+  const fetchMovimientos = async () => {
+    if (!token) return;
+
+    try {
+      // 2. Usás el nombre que vos inventaste en api.js
+      const res = await movimientoService.getAll(token); 
+      
+      if (isMounted && res.data) {
+        setMovimientos(res.data);
       }
-    };
-    fetchMovimientos();
-    return () => { isMounted = false; };
-  }, [token, refreshKey, API_URL]);
+    } catch (err) {
+      console.error("Error al obtener movimientos:", err.message);
+    }
+  };
+
+  fetchMovimientos();
+  return () => { isMounted = false; };
+}, [token, refreshKey]);
 
   // 2. ÚNICO efecto para calcular totales (LÓGICA)
   useEffect(() => {
@@ -67,7 +72,7 @@ function LeftSite({ token, refreshKey }) {
       egreso,
       total: ingreso - egreso,
     });
-  }, [movimientos, viewMode, selectedMonth]); // Solo un useEffect para esto
+  }, [movimientos, viewMode, selectedMonth]); 
 
   const formatNumber = (num) =>
     num.toLocaleString("es-AR", {

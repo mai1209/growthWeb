@@ -1,98 +1,70 @@
-import axios from "axios";
 import { useState, useEffect } from "react";
+import { taskService } from "../api"; // Importamos el servicio
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Tarea.module.css";
 import resultsStyle from "../style/Results.module.css";
 import { useOutletContext } from "react-router-dom";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
-
 function Tareas({ token, refreshKey, onEditClick }) {
-  const { isNotesOpen } = useOutletContext(); // ✅ viene desde MainLayout (Outlet context)
-
+  const { isNotesOpen } = useOutletContext();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showList, setShowList] = useState(false);
   const [error, setError] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
-useEffect(() => {
-  let isMounted = true; // Evita fugas de memoria
 
-  const fetchTasks = async () => {
-    if (!token) {
-      setTasks([]);
-      return;
-    }
-    
-    setLoading(true);
-    // IMPORTANTE: No limpies el error ni las tareas inmediatamente 
-    // para evitar que la pantalla "salte" a blanco.
+  useEffect(() => {
+    let isMounted = true;
 
-    try {
-      let res;
-      if (showList) {
-        res = await axios.get(`${API_URL}/api/task`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      } else {
-        const formattedDate = selectedDate.toISOString().slice(0, 10);
-        res = await axios.get(`${API_URL}/api/task?fecha=${formattedDate}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    const fetchTasks = async () => {
+      if (!token) return;
+      setLoading(true);
+      try {
+        let res;
+        if (showList) {
+          res = await taskService.getAll(token); // ✅ Uso del servicio
+        } else {
+          const formattedDate = selectedDate.toISOString().slice(0, 10);
+          res = await taskService.getByDate(token, formattedDate); // ✅ Uso del servicio
+        }
+        if (isMounted) {
+          setTasks(res.data);
+          setError("");
+        }
+      } catch (err) {
+        if (isMounted && err.response?.status !== 401) {
+          setError("No se pudieron cargar las tareas.");
+        }
+      } finally {
+        if (isMounted) setLoading(false);
       }
+    };
 
-      if (isMounted) {
-        setTasks(res.data);
-        setError(""); // Solo limpiamos error si la carga fue exitosa
-      }
-    } catch (err) {
-      // Si err.response.status === 401, el INTERCEPTOR de App.js 
-      // sacará al usuario de aquí automáticamente.
-      
-      if (isMounted && err.response?.status !== 401) {
-        console.error("Error al obtener las tareas:", err);
-        setError("Error de conexión. Intenta recargar.");
-      }
-    } finally {
-      if (isMounted) setLoading(false);
-    }
-  };
-
-  fetchTasks();
-  return () => { isMounted = false; };
-}, [token, refreshKey, selectedDate, showList]);
-
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
-  };
+    fetchTasks();
+    return () => { isMounted = false; };
+  }, [token, refreshKey, selectedDate, showList]);
 
   const handleToggleComplete = async (taskId) => {
-    const date = new Date(selectedDate);
-    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-    const fecha = date.toISOString().slice(0, 10);
+    try {
+      const date = new Date(selectedDate);
+      date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+      const fecha = date.toISOString().slice(0, 10);
 
-    const response = await axios.put(
-      `${API_URL}/api/task/${taskId}/status`,
-      { fecha },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    setTasks((prev) => prev.map((t) => (t._id === taskId ? response.data : t)));
+      const res = await taskService.updateStatus(token, taskId, { fecha });
+      setTasks((prev) => prev.map((t) => (t._id === taskId ? res.data : t)));
+    } catch (err) {
+      console.error("Error al actualizar estado");
+    }
   };
 
   const handleDeleteTask = async (taskId) => {
-    if (!window.confirm("¿Estás seguro de que quieres eliminar esta tarea?"))
-      return;
-
+    if (!window.confirm("¿Eliminar tarea?")) return;
     try {
-      await axios.delete(`${API_URL}/api/task/${taskId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setTasks((prevTasks) => prevTasks.filter((task) => task._id !== taskId));
+      await taskService.delete(token, taskId);
+      setTasks((prev) => prev.filter((t) => t._id !== taskId));
     } catch (err) {
-      console.error("Error al eliminar la tarea:", err);
+      console.error("Error al eliminar");
     }
   };
 
@@ -186,6 +158,10 @@ useEffect(() => {
         ))}
       </div>
     );
+  };
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
   };
 
   return (

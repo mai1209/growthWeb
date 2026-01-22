@@ -32,7 +32,6 @@
   display: flex;
   padding: 3rem;
   margin: 3rem;
-  background-color: red;
 }
 
 .completed .taskMeta {
