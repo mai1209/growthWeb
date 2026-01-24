@@ -1,85 +1,73 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import AppRoutes from "./AppRoutes";
-
-// 1. INTERCEPTOR GLOBAL (Mantenlo aquí, fuera de la función App)
-axios.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem("token");
-      sessionStorage.removeItem("token");
-      // Usamos href para resetear todo el estado de la memoria de React
-      window.location.href = "/"; 
-    }
-    return Promise.reject(error);
-  }
-);
+import { movimientoService } from "../api"; // Importamos tu nuevo servicio centralizado
 
 const getStoredToken = () =>
   localStorage.getItem("token") || sessionStorage.getItem("token");
 
 function App() {
-  const [token, setToken] = useState(getStoredToken); // Pasamos la función, no el resultado, para optimizar
-  const [activeView, setActiveView] = useState(null);
+  const [token, setToken] = useState(getStoredToken()); 
+  const [ready, setReady] = useState(false); // Clave para evitar el problema del "cero"
   const [refreshKey, setRefreshKey] = useState(0);
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [movementToEdit, setMovementToEdit] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
 
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
-
-  // 2. FETCH DE MOVIMIENTOS SEGURO
+  // 1. CARGA INICIAL: Sincroniza el token apenas abre la app
   useEffect(() => {
-    let isMounted = true; // Para evitar actualizar estado si el componente se desmonta
+    const savedToken = getStoredToken();
+    if (savedToken) {
+      setToken(savedToken);
+    }
+    setReady(true); // Marcamos como listo una vez revisado el storage
+  }, []);
+
+  // 2. FETCH DE MOVIMIENTOS: Ahora usa el servicio centralizado
+  useEffect(() => {
+    let isMounted = true;
 
     const fetchMovimientos = async () => {
-      if (!token) {
+      // Si no hay token o la app no terminó de cargar el storage, no pedimos nada
+      if (!token || !ready) {
         setMovimientos([]);
         return;
       }
+
       try {
-        const res = await axios.get(`${API_URL}/api/add`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        // Usamos el servicio. api.js ya sabe poner el token en los headers
+        const res = await movimientoService.getAll(); 
         if (isMounted && res.data) {
           setMovimientos(res.data);
         }
       } catch (err) {
-        // Si es 401, el interceptor ya se encarga.
-        // Si es otro error (red, 500), mantenemos los movimientos anteriores 
-        // o mostramos un mensaje, pero NO los borramos para que la web no parpadee en blanco.
+        // Los errores 401 los maneja el interceptor de api.js redirigiendo al login
         console.error("Error en fetchMovimientos:", err.message);
       }
     };
 
     fetchMovimientos();
     return () => { isMounted = false; }; 
-  }, [token, refreshKey, API_URL]);
+  }, [token, refreshKey, ready]);
 
-  // 3. SINCRONIZACIÓN DE TOKEN (Solo Storage)
+  // 3. SINCRONIZACIÓN ENTRE PESTAÑAS (Opcional pero recomendado)
   useEffect(() => {
     const syncToken = () => {
       const currentToken = getStoredToken();
-      if (currentToken !== token) {
-        setToken(currentToken);
-      }
+      if (currentToken !== token) setToken(currentToken);
     };
-
     window.addEventListener("storage", syncToken);
     return () => window.removeEventListener("storage", syncToken);
   }, [token]);
 
+  // Manejadores de eventos
   const handleDataUpdate = () => {
     setTaskToEdit(null);
     setMovementToEdit(null);
-    setRefreshKey((prevKey) => prevKey + 1);
+    setRefreshKey((prev) => prev + 1);
   };
 
   const handleAuthSuccess = (newToken) => {
-    // ❌ ya NO guardar acá
     setToken(newToken);
-    setActiveView(null);
   };
 
   const handleLogout = () => {
@@ -88,22 +76,16 @@ function App() {
     setToken(null);
   };
 
-  const handleLoginClick = () => setActiveView("login");
-  const handleCloseModal = () => setActiveView(null);
-
-  const handleAddMovement = () => {
-    setMovementToEdit(null);
-    setActiveView(null);
-  };
+  // 4. PREVENCIÓN DE "PANTALLA EN CERO"
+  // Si React no terminó de leer el storage, no renderizamos las rutas todavía.
+  // Esto evita que te mande al login por error al recargar (F5).
+  if (!ready) return null; 
 
   return (
     <AppRoutes
       token={token}
       onAuthSuccess={handleAuthSuccess}
       onLogout={handleLogout}
-      onLoginClick={handleLoginClick}
-      onCloseModal={handleCloseModal}
-      activeView={activeView}
       refreshKey={refreshKey}
       onUpdate={handleDataUpdate}
       movimientos={movimientos}
@@ -111,7 +93,6 @@ function App() {
       setMovementToEdit={setMovementToEdit}
       taskToEdit={taskToEdit}
       setTaskToEdit={setTaskToEdit}
-      onAddMovement={handleAddMovement}
     />
   );
 }

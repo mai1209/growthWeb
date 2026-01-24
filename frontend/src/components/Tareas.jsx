@@ -6,7 +6,7 @@ import style from "../style/Tarea.module.css";
 import resultsStyle from "../style/Results.module.css";
 import { useOutletContext } from "react-router-dom";
 
-function Tareas({ token, refreshKey, onEditClick }) {
+function Tareas({  refreshKey, onEditClick }) {
   const { isNotesOpen } = useOutletContext();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,24 +18,25 @@ function Tareas({ token, refreshKey, onEditClick }) {
     let isMounted = true;
 
     const fetchTasks = async () => {
-      if (!token) return;
+      const storedToken = localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!storedToken) return;
+
+
       setLoading(true);
       try {
         let res;
         if (showList) {
-          res = await taskService.getAll(token); // ✅ Uso del servicio
+          res = await taskService.getAll(); 
         } else {
           const formattedDate = selectedDate.toISOString().slice(0, 10);
-          res = await taskService.getByDate(token, formattedDate); // ✅ Uso del servicio
+          res = await taskService.getByDate( formattedDate); 
         }
         if (isMounted) {
           setTasks(res.data);
           setError("");
         }
       } catch (err) {
-        if (isMounted && err.response?.status !== 401) {
-          setError("No se pudieron cargar las tareas.");
-        }
+       if (isMounted) setError("No se pudieron cargar las tareas.");
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -43,7 +44,7 @@ function Tareas({ token, refreshKey, onEditClick }) {
 
     fetchTasks();
     return () => { isMounted = false; };
-  }, [token, refreshKey, selectedDate, showList]);
+  }, [ refreshKey, selectedDate, showList]);
 
   const handleToggleComplete = async (taskId) => {
     try {
@@ -51,7 +52,7 @@ function Tareas({ token, refreshKey, onEditClick }) {
       date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
       const fecha = date.toISOString().slice(0, 10);
 
-      const res = await taskService.updateStatus(token, taskId, { fecha });
+      const res = await taskService.updateStatus( taskId, { fecha });
       setTasks((prev) => prev.map((t) => (t._id === taskId ? res.data : t)));
     } catch (err) {
       console.error("Error al actualizar estado");
@@ -61,7 +62,7 @@ function Tareas({ token, refreshKey, onEditClick }) {
   const handleDeleteTask = async (taskId) => {
     if (!window.confirm("¿Eliminar tarea?")) return;
     try {
-      await taskService.delete(token, taskId);
+      await taskService.delete( taskId);
       setTasks((prev) => prev.filter((t) => t._id !== taskId));
     } catch (err) {
       console.error("Error al eliminar");

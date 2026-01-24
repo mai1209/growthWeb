@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-//import axios from "axios";
 import style from "../style/LeftSite.module.css";
 import { movimientoService } from "../api";
 
-function LeftSite({ token, refreshKey }) {
+function LeftSite({ refreshKey }) {
   const [viewMode, setViewMode] = useState("total");
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [areTotalsVisible, setAreTotalsVisible] = useState(true);
@@ -15,26 +14,35 @@ function LeftSite({ token, refreshKey }) {
   const toggleTotalsVisibility = () => setAreTotalsVisible((prev) => !prev);
 
  useEffect(() => {
+ {
   let isMounted = true;
 
   const fetchMovimientos = async () => {
-    if (!token) return;
+    // 1. Verificamos que exista el token en el storage antes de pedir
+    const storedToken = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!storedToken) return;
 
     try {
-      // 2. Usás el nombre que vos inventaste en api.js
-      const res = await movimientoService.getAll(token); 
+      // 2. ¡OJO ACÁ!: Ya NO pases 'token' por paréntesis. 
+      // El interceptor lo saca solo del localStorage.
+      const res = await movimientoService.getAll(); 
       
       if (isMounted && res.data) {
         setMovimientos(res.data);
       }
     } catch (err) {
+      // El error 401 ya lo maneja el interceptor (te redirige solo)
+      // Acá solo manejamos errores de conexión o del servidor
       console.error("Error al obtener movimientos:", err.message);
     }
   };
 
   fetchMovimientos();
   return () => { isMounted = false; };
-}, [token, refreshKey]);
+  };
+
+
+}, [refreshKey]);
 
   // 2. ÚNICO efecto para calcular totales (LÓGICA)
   useEffect(() => {

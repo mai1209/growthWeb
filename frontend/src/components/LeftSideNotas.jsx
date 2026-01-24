@@ -1,10 +1,11 @@
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/LeftsideNotas.module.css";
 import { useState, useEffect } from "react";
-import axios from "axios";
-import DatePicker from "react-datepicker";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+import DatePicker from "react-datepicker";
+import { taskService } from "../api";
+
+//const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 const initialFormData = {
   meta: "",
@@ -20,8 +21,6 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
   const [isOpen, setIsOpen] = useState(true);
   const isDesktop = !window.matchMedia("(max-width: 1000px)").matches;
 
-
-  
   // ✅ Avisar al layout si está abierto/cerrado
   useEffect(() => {
     if (setIsNotesOpen) setIsNotesOpen(isOpen);
@@ -108,10 +107,6 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
     }
 
     try {
-   const token =
-  localStorage.getItem("token") || sessionStorage.getItem("token");
-      if (!token) throw new Error("No estás autenticado.");
-
       const fechaLocal = new Date(formData.fecha);
       fechaLocal.setMinutes(
         fechaLocal.getMinutes() - fechaLocal.getTimezoneOffset(),
@@ -124,14 +119,13 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
       };
 
       if (taskToEdit) {
-        await axios.put(`${API_URL}/api/task/${taskToEdit._id}`, dataToSend, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        //Editar tarea existente
+        await taskService.update(taskToEdit._id, dataToSend);
         setSuccess("¡Tarea actualizada con éxito!");
       } else {
-        await axios.post(`${API_URL}/api/task`, dataToSend, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        // Crear tarea nueva
+        await taskService.create(dataToSend);
+
         setSuccess("¡Hábito/Tarea añadido con éxito!");
       }
 
@@ -162,7 +156,7 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
           className={`${style.containerOpenClose} ${isOpen ? style.open : ""}`}
           onClick={toggleContainer}
         >
-          <p className={style.close}  onClick={onUpdate}>
+          <p className={style.close} onClick={onUpdate}>
             {isDesktop
               ? "Crear un hábito +"
               : isOpen

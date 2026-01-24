@@ -2,12 +2,20 @@ import axios from "axios";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-// Creamos una instancia personalizada
 const api = axios.create({
   baseURL: API_URL,
 });
 
-// Interceptor para el 401 y limpieza de tokens
+// 1. INTERCEPTOR DE SOLICITUD (El que automatiza el Token)
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// 2. INTERCEPTOR DE RESPUESTA (El que te saca si el token vence)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -20,26 +28,29 @@ api.interceptors.response.use(
   }
 );
 
-// Definimos las funciones de tareas (Data Access Layer)
+// --- SERVICIOS SEPARADOS POR COMPONENTE ---
+
+// Para tus tareas (Componente de Tareas)
 export const taskService = {
-  getAll: (token) => 
-    api.get("/api/task", { headers: { Authorization: `Bearer ${token}` } }),
-    
-  getByDate: (token, fecha) => 
-    api.get(`/api/task?fecha=${fecha}`, { headers: { Authorization: `Bearer ${token}` } }),
-    
-  updateStatus: (token, taskId, data) => 
-    api.put(`/api/task/${taskId}/status`, data, { headers: { Authorization: `Bearer ${token}` } }),
-    
-  delete: (token, taskId) => 
-    api.delete(`/api/task/${taskId}`, { headers: { Authorization: `Bearer ${token}` } }),
+  getAll: () => api.get("/api/task"), // ¡Ya no pasas el token!
+  getByDate: (fecha) => api.get(`/api/task?fecha=${fecha}`),
+  updateStatus: (taskId, data) => api.put(`/api/task/${taskId}/status`, data),
+  delete: (taskId) => api.delete(`/api/task/${taskId}`),
+  // AGREGAMOS ESTOS DOS:
+  create: (data) => api.post("/api/task", data),
+  update: (taskId, data) => api.put(`/api/task/${taskId}`, data),
 };
 
-//defino las funciones de leftside.jsx
-
+// Para tus movimientos (Componentes LeftSide y Add)
 export const movimientoService = {
-  // Le pusimos "getAll" porque trae todos los movimientos del usuario
-  getAll: (token) => api.get("/api/add", { headers: { Authorization: `Bearer ${token}` } }),
+  getAll: () => api.get("/api/add"),
+  create: (data) => api.post("/api/add", data),
+  update: (id, data) => api.put(`/api/add/${id}`, data),
 };
 
+
+export const authService = {
+  login: (credentials) => api.post("/api/auth/login", credentials),
+  signup: (userData) => api.post("/api/auth/register", userData),
+};
 export default api;

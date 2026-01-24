@@ -1,12 +1,13 @@
 import { useState, useEffect, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+//import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Add.module.css";
 import InputMonto from "./InputMonto";
+import { movimientoService } from "../api";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+//const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 function Add({ onMovementAdded, movementToEdit, only }) {
   const navigate = useNavigate();
@@ -61,6 +62,7 @@ function Add({ onMovementAdded, movementToEdit, only }) {
   const handleDateChangeIngreso = (date) => setSelectedDateIngreso(date);
   const handleDateChangeEgreso = (date) => setSelectedDateEgreso(date);
 
+  //envio de formulario
   const handleSubmit = async (e, tipo) => {
     e.preventDefault();
     setError("");
@@ -97,21 +99,11 @@ function Add({ onMovementAdded, movementToEdit, only }) {
     };
 
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      if (!token) throw new Error("No se encontró autorización.");
-
       if (isEditing) {
-        await axios.put(
-          `${API_URL}/api/add/${movementToEdit._id}`,
-          dataToSend,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        // Usamos el servicio centralizado
+        await movimientoService.update(movementToEdit._id, dataToSend);
       } else {
-        await axios.post(`${API_URL}/api/add`, dataToSend, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await movimientoService.create(dataToSend);
         // Limpiar solo los inputs del formulario usado
         if (tipo === "ingreso") {
           setIngresoMonto("");

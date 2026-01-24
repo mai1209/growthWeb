@@ -60,7 +60,7 @@ function AppRoutes({
         path="/"
         element={
           <MainLayout
-            token={token}
+           token={token}
             onLogout={onLogout}
             movimientos={movimientos}
             taskToEdit={taskToEdit}
@@ -103,7 +103,7 @@ function AppRoutes({
           path="notas"
           element={
             <Tareas
-              token={token}
+             token={token}
               refreshKey={refreshKey}
               onEditClick={setTaskToEdit}
             />

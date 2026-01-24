@@ -1,12 +1,12 @@
 import { useState, useMemo, forwardRef } from "react";
-import axios from "axios";
-import LoginPage from "./LoginPage";
-import SignupPage from "./SignupPage";
+//import axios from "axios";
+//import LoginPage from "./LoginPage";
+//import SignupPage from "./SignupPage";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Results.module.css";
-
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+import { movimientoService } from "../api";
+//const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 // 📅 Botón calendario custom
 const CalendarButton = forwardRef(({ onClick }, ref) => (
@@ -21,12 +21,8 @@ const CalendarButton = forwardRef(({ onClick }, ref) => (
 ));
 
 function Results({
-  token,
-  onAuthSuccess,
-  onLoginClick,
-  onCloseModal,
-  activeView,
-  onEditClick,
+
+onEditClick,
   movimientos,
   onMovementUpdate,
   onShowAllChange,
@@ -80,16 +76,17 @@ function Results({
 };
 
 
+// 2. ELIMINACIÓN REFACTORIZADA
   const handleDeleteMovimiento = async (id) => {
     if (!window.confirm("¿Eliminar movimiento?")) return;
 
     try {
-      await axios.delete(`${API_URL}/api/add/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      onMovementUpdate?.();
+      // Usamos el servicio centralizado
+      await movimientoService.delete(id); 
+      onMovementUpdate?.(); // Avisamos al padre (App.js) para que refresque la lista
     } catch (err) {
-      console.error(err);
+      console.error("Error al eliminar:", err);
+      alert("No se pudo eliminar el movimiento");
     }
   };
 const formatMonto = (monto) => {
@@ -99,21 +96,7 @@ const formatMonto = (monto) => {
   }).format(monto);
 };
 
-  // ---------------- LOGIN / SIGNUP ----------------
-  if (!token) {
-    return (
-      <div>
-        {activeView === "login" ? (
-          <LoginPage onClose={onCloseModal} onAuthSuccess={onAuthSuccess} />
-        ) : (
-          <SignupPage
-            onSwitchToLogin={onLoginClick}
-            onAuthSuccess={onAuthSuccess}
-          />
-        )}
-      </div>
-    );
-  }
+
 
   // ---------------- UTIL ----------------
   const formatFecha = (fechaISO) => {
