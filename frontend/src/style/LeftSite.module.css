@@ -1,11 +1,10 @@
 .container {
-  border-right: 1px solid #ffffff55;
+  border-right: 1px solid #ffffff22; /* Un poco más sutil */
   width: 21vw;
   height: calc(100vh - 10vh);
   background-color: var(--background-color);
   transition: width 0.3s ease;
   padding-top: 3rem;
-  
 }
 
 .containerOpenClose {
@@ -55,7 +54,6 @@
   color: var(--color-verde);
   font-family: "Poppins", sans-serif;
   font-weight: 600;
-  font-style: normal;
   font-size: 1.2rem;
 }
 
@@ -63,7 +61,6 @@
   color: var(--color-rojo);
   font-family: "Poppins", sans-serif;
   font-weight: 600;
-  font-style: normal;
   font-size: 1.2rem;
 }
 
@@ -71,7 +68,6 @@
   color: var(--color-text);
   font-family: "Poppins", sans-serif;
   font-weight: 600;
-  font-style: normal;
   font-size: 1rem;
 }
 
@@ -79,7 +75,6 @@
   color: var(--color-dark-text);
   font-family: "Poppins", sans-serif;
   font-weight: 600;
-  font-style: normal;
 }
 
 .closed {
@@ -93,6 +88,7 @@
 .total {
   font-size: 1.5rem;
 }
+
 .visibilityButton {
   background: none;
   border: none;
@@ -120,43 +116,58 @@
   width: 90%;
 }
 
+/* =====================================================
+   ESTILO MEJORADO PARA LOS BOTONES DE VISTA
+===================================================== */
 .viewMode {
   display: flex;
   width: fit-content;
-  border: 0.5px solid var(--color-text);
-  border-radius: 8px;
-  background-color: #272726;
-  margin-top: 1rem;
-  margin-left: 1rem;
-
+  background-color: #1a1a1a; /* Fondo más profundo */
+  border-radius: 10px;
+  margin: 1.5rem auto 1rem 0.8rem;
+  border: 1px solid #ffffff11;
 }
 
 .viewMode button {
   background: none;
   border: none;
-  color: var(--color-text);
-  max-width: 85px;
-  padding: 0.2rem 0.5rem;
-    font-family: 'poppins';
-  font-size: 0.7rem;
+  color: #888; /* Color neutro para inactivos */
+  padding: 0.5rem 0.5rem;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.5rem;
   font-weight: 500;
-  line-height: 0.7rem;
   cursor: pointer;
-
+  transition: all 0.3s ease;
+  border-radius: 7px;
+  white-space: nowrap;
 }
 
-.monthPicker {
-  background: none;
-  border: none;
-  width: 85px;
-  color: var(--color-text);
+.viewMode button:hover {
+  color: #fff;
 }
 
 .active {
-  background-color: #32472c !important;
-  border-radius: 8px;
+  background-color: #32472c !important; /* Tu verde */
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
+.monthPicker {
+  background: #272726;
+  border: 1px solid #ffffff22;
+  border-radius: 6px;
+  margin-left: 5px;
+  padding: 2px 5px;
+  color: var(--color-text);
+  font-family: 'Poppins';
+  font-size: 0.5rem;
+  outline: none;
+  width: 90px;
+}
+
+/* =====================================================
+   MEDIA QUERIES
+===================================================== */
 @media (max-width: 1000px) {
   .container {
     position: fixed;
@@ -166,24 +177,20 @@
     overflow-y: scroll;
     border: none;
     padding: 1.4rem 0rem 5.5rem 0rem;
-    background: rgba(0, 0, 0, 0.077);
+    background: rgba(0, 0, 0, 0.85); /* Más oscuro para legibilidad */
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    z-index: 1;
-
+    z-index: 10;
     height: fit-content;
-
-
-
-    
-
   }
 
-  .firstContainer {
-    border-radius: 21px;
-    padding: 1rem;
-    margin: 0 0rem;
- 
+  .viewMode {
+    margin: 1rem auto 0.5rem 0.5rem;
+  }
+
+  .viewMode button {
+    font-size: 0.65rem;
+    padding: 0.4rem 0.8rem;
   }
 
   .containerAllInfo {
@@ -200,57 +207,15 @@
   }
 
   .total {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
 
   .containerInfo {
-    margin-left: 0rem;
-    margin-right: 0rem;
-    padding: 0.9rem 0;
-  }
-
-  .containerInfoIngreso,
-  .containerInfoEgreso,
-  .containerInfoTotal {
-    margin-left: 0rem;
-  }
-
-  .containerInfoIngresoIngresoText {
-    font-weight: 300;
-    font-size: 1rem;
-    margin: 0rem;
-  }
-
-  .containerInfoEgresoEgresoText {
-    font-weight: 300;
-    font-size: 1rem;
-    margin: 0rem;
-  }
-
-  .text {
-    font-weight: 300;
-    font-size: 1rem;
-    margin: 0rem;
-  }
-
-  .containerInfoNumber {
-    font-weight: 300;
-    font-size: 1rem;
-    margin: 0.1rem;
+    margin: 0;
+    padding: 0.7rem 1.5rem;
   }
 
   .containerImg {
     display: none;
-  }
-
-  .viewMode {
-    margin-top: 0.6rem;
-    margin-left: 0rem;
-  }
-
-  .viewMode button {
-    font-size: 0.6rem;
-    font-family: "poppins";
-    padding: 0.2rem 1rem;
   }
 }
