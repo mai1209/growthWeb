@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+//import axios from "axios";
 import style from "../style/Login.module.css";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import { authService } from "../api";
 
 function LoginPage({ onAuthSuccess }) {
   const [email, setEmail] = useState("");
@@ -14,44 +15,45 @@ function LoginPage({ onAuthSuccess }) {
 
   const navigate = useNavigate();
 
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-    try {
-      const res = await axios.post(`${API_URL}/api/auth/login`, {
-        email,
-        password,
-        rememberMe,
-      });
+  try {
+    // 1. Llamamos al servicio (pasamos el objeto que espera la API)
+    const res = await authService.login({
+      email,
+      password,
+      rememberMe,
+    });
 
-      const newToken = res.data.token;
+    const newToken = res.data.token;
 
-      // 1. Limpiamos TODO rastro anterior para evitar conflictos
-      localStorage.removeItem("token");
-      sessionStorage.removeItem("token");
+    // 2. Limpiamos rastro anterior
+    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
 
-      // 2. Guardamos en el lugar correcto
-      if (rememberMe) {
-        localStorage.setItem("token", newToken);
-      } else {
-        sessionStorage.setItem("token", newToken);
-      }
-
-      // 3. Informamos a App.js y navegamos
-      onAuthSuccess(newToken);
-      navigate("/");
-      
-    } catch (err) {
-      console.error("Login error:", err);
-      setError(err.response?.data?.error || "Error al iniciar sesión");
-    } finally {
-      setLoading(false);
+    // 3. Guardamos según la preferencia del usuario
+    if (rememberMe) {
+      localStorage.setItem("token", newToken);
+    } else {
+      sessionStorage.setItem("token", newToken);
     }
-  };
+
+    // 4. Éxito: avisamos a App y navegamos
+    onAuthSuccess(newToken);
+    navigate("/");
+    
+  } catch (err) {
+    console.error("Login error:", err);
+    // Usamos el mensaje que viene del backend o uno genérico
+    setError(err.response?.data?.error || "Error al iniciar sesión");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className={style.container}>

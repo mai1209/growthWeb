@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { authService } from "../api";
 import style from "../style/Login.module.css";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
@@ -16,7 +16,7 @@ function SignupPage({ onAuthSuccess }) {
 
   const navigate = useNavigate();
 
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+  //const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,14 +28,18 @@ function SignupPage({ onAuthSuccess }) {
 
     setLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/api/auth/signup`, {
+      const res = await authService.signup({
         username,
         email,
         password,
       });
+const newToken = res.data.token;
+     
+// Guardamos el token (por defecto en localStorage para que no se pierda al recargar)
+    localStorage.setItem("token", newToken);
 
-      onAuthSuccess(res.data.token);
-
+    // Informamos al estado global de App.js
+    onAuthSuccess(newToken);
       // ✅ al registrarse, lo mandás a la app
       navigate("/");
     } catch (err) {

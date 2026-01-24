@@ -3,28 +3,21 @@ import { jwtDecode } from "jwt-decode";
 import style from "../style/Nav.module.css";
 import { NavLink, useNavigate } from "react-router-dom";
 
-function Nav({ token, onLogout }) {
+function Nav({ onLogout }) {
   const navigate = useNavigate();
-
+  //Buscamos el token directamente aquí para que sea instantáneo
+  const currentToken =
+    localStorage.getItem("token") || sessionStorage.getItem("token");
   const userData = useMemo(() => {
-    if (!token) return null;
+    if (!currentToken) return null; // Usamos la variable local
     try {
-      const decoded = jwtDecode(token);
-      
-      // ✅ Opcional: Verificar si el token ya expiró en el cliente
-      const currentTime = Date.now() / 1000;
-      if (decoded.exp < currentTime) {
-        console.warn("El token ha expirado.");
-        // Podríamos forzar logout aquí, pero el Interceptor de Axios 
-        // lo hará apenas intentes hacer un fetch, lo cual es más seguro.
-      }
-      
+      const decoded = jwtDecode(currentToken);
+
       return decoded;
     } catch (error) {
-      console.error("Token inválido:", error);
       return null;
     }
-  }, [token]);
+  }, [currentToken]);
 
   const getNavLinkClass = ({ isActive }) => {
     return isActive ? `${style.navLink} ${style.activeLink}` : style.navLink;
@@ -43,14 +36,13 @@ function Nav({ token, onLogout }) {
           <p className={style.nameLogo}>growth</p>
         </div>
 
-        {/* ✅ Links solo si hay token */}
-        {token && (
+        {/* Cambiamos las condiciones para usar 'currentToken' */}
+        {currentToken && (
           <div className={style.navItems}>
             <NavLink to="/" className={getNavLinkClass}>
               <img src="/homedos.png" alt="home" />
               <p>Home</p>
             </NavLink>
-
             <NavLink to="/notas" className={getNavLinkClass}>
               <img src="/tarea.png" alt="tasklist" />
               <p>Tareas</p>
@@ -58,8 +50,7 @@ function Nav({ token, onLogout }) {
           </div>
         )}
 
-        {/* ✅ User actions: Cambié la condición para que si hay token pero userData falla, no rompa */}
-        {token && (
+        {currentToken && (
           <div className={style.userActions}>
             <div className={style.user}>
               <p>Hola, {userData?.username || "Usuario"}!</p>
@@ -70,7 +61,7 @@ function Nav({ token, onLogout }) {
           </div>
         )}
 
-        {token && (
+        {currentToken && (
           <button className={style.menuButton} type="button">
             <img src="/menu.png" alt="menu" />
           </button>
