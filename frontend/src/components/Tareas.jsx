@@ -28,7 +28,7 @@ function Tareas({  refreshKey, onEditClick }) {
         if (showList) {
           res = await taskService.getAll(); 
         } else {
-          const formattedDate = selectedDate.toISOString().slice(0, 10);
+        const formattedDate = selectedDate.toLocaleDateString('sv-SE');
           res = await taskService.getByDate( formattedDate); 
         }
         if (isMounted) {
