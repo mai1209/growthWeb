@@ -292,18 +292,21 @@
 
 @media (max-width: 1000px) {
   .container {
-    margin-top: 82px;
+    margin-top: 0px;
+    position: fixed;
+    top: 82px;
     gap: 0;
-     max-width: 100%;
+    max-width: 100%;
+    height: fit-content;
   }
 
   .tasksList {
     display: flex;
     flex-direction: column;
     gap: 0.9rem;
-    margin: 10rem 0.5rem;
-    overflow: hidden;
-    height: fit-content;
+    height: 60vh;
+    overflow-y: none;
+    margin: 120px 0rem;
   }
 
   .taskMeta {
@@ -325,8 +328,8 @@
     padding: 0.5rem;
     border-radius: 16px;
     gap: 6px;
-   flex: 0 1 90px;   /* antes 0 0 90px */
-    min-width: 0;  
+    flex: 0 1 90px; /* antes 0 0 90px */
+    min-width: 0;
   }
 
   .taskCard {
