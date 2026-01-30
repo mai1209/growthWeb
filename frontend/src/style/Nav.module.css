@@ -169,7 +169,8 @@
   }
   .logoutButton {
     z-index: 99999999;
-    margin-top: -0.5rem;
+    margin-top: -7px;
     margin-right: 1rem;
+    
   }
 }
