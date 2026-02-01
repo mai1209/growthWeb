@@ -51,6 +51,6 @@ export const movimientoService = {
 
 export const authService = {
   login: (credentials) => api.post("/api/auth/login", credentials),
-  signup: (userData) => api.post("/api/auth/register", userData),
+  signup: (userData) => api.post("/api/auth/signup", userData),
 };
 export default api;
