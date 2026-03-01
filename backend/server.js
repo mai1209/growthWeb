@@ -9,19 +9,19 @@ import authRoutes from "./src/routes/authRoutes.js";
 import taskRoutes from "./src/routes/taskRoutes.js";
 
 dotenv.config();
+await connectDB();
 
 const app = express();
-connectDB();
 
 const whitelist = [
-  process.env.FRONTEND_URL,          // ej: https://growthmanager.app
+  process.env.FRONTEND_URL, // ej: https://growthmanager.app
   "https://growthmanager.app",
   "https://www.growthmanager.app",
   "http://localhost:3001",
-];
+].filter(Boolean);
 
 const corsOptions = {
-  origin: function (origin, callback) {
+  origin(origin, callback) {
     if (!origin) return callback(null, true); // Postman / server-to-server
     if (whitelist.includes(origin)) return callback(null, true);
     return callback(new Error("No permitido por CORS"));
@@ -43,5 +43,9 @@ app.use("/api/add", ingresoEgresoRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/task", taskRoutes);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+if (process.env.VERCEL !== "1") {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+export default app;
