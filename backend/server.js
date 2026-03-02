@@ -9,7 +9,6 @@ import authRoutes from "./src/routes/authRoutes.js";
 import taskRoutes from "./src/routes/taskRoutes.js";
 
 dotenv.config();
-await connectDB();
 
 const app = express();
 
@@ -22,8 +21,8 @@ const whitelist = [
 ].filter(Boolean);
 
 /**
- * ✅ PASO 1: aseguramos que el preflight (OPTIONS) SIEMPRE responda con headers CORS
- * IMPORTANTE: va ANTES de cors()
+ * ✅ PASO 1: preflight SIEMPRE responde rápido (antes de todo)
+ * - Si el OPTIONS se clava, el browser te tira CORS + ERR_FAILED
  */
 app.use((req, res, next) => {
   const origin = req.headers.origin;
@@ -48,14 +47,40 @@ app.use((req, res, next) => {
 });
 
 /**
- * ✅ PASO 2: NO lanzar Error en origin() (eso hace que falten headers y el browser diga "No ACAO")
+ * ✅ Conexión a DB "lazy" (serverless friendly)
+ * - NO conectar DB en top-level
+ * - NO conectar DB para OPTIONS
+ * - health/debug sin DB
+ */
+let dbReady = false;
+
+app.use(async (req, res, next) => {
+  // nunca para OPTIONS
+  if (req.method === "OPTIONS") return next();
+
+  // endpoints que no dependen de DB
+  if (req.path === "/api/health" || req.path === "/api/debug") return next();
+
+  try {
+    if (!dbReady) {
+      await connectDB();
+      dbReady = true;
+    }
+    next();
+  } catch (e) {
+    console.error("DB connection error:", e);
+    return res.status(500).json({ error: "DB connection failed" });
+  }
+});
+
+/**
+ * ✅ PASO 2: CORS sin tirar Error (si tirás Error a veces el browser ve "No ACAO")
  */
 const corsOptions = {
   origin(origin, callback) {
     console.log("CORS origin:", origin || "direct/server-to-server");
 
-    if (!origin) return callback(null, true); // Postman / server-to-server
-
+    if (!origin) return callback(null, true);
     if (whitelist.includes(origin)) return callback(null, true);
 
     console.log("❌ Origin bloqueado:", origin, "Whitelist:", whitelist);
@@ -63,14 +88,12 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  // ✅ ACA va esto:
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 };
 
 app.use(cors(corsOptions));
-// esto ya no es obligatorio con el middleware de arriba, pero lo podés dejar:
-app.options("*", cors(corsOptions));
 
+// parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -80,6 +103,7 @@ app.use("/api/add", ingresoEgresoRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/task", taskRoutes);
 
+// health/debug
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 app.get("/api/debug", (req, res) => {
   res.json({
@@ -90,6 +114,7 @@ app.get("/api/debug", (req, res) => {
   });
 });
 
+// local only
 if (process.env.VERCEL !== "1") {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
