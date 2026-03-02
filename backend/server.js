@@ -14,7 +14,8 @@ await connectDB();
 const app = express();
 
 const whitelist = [
-  process.env.FRONTEND_URL, // ej: https://growthmanager.app
+  process.env.FRONTEND_URL, // principal configurada en Vercel
+  process.env.FRONTEND_URL_ALT, // dominio alternativo (www, etc.)
   "https://growthmanager.app",
   "https://www.growthmanager.app",
   "http://localhost:3001",
