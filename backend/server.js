@@ -32,7 +32,23 @@ const corsOptions = {
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    const origin = req.headers.origin;
 
+    res.header("Access-Control-Allow-Origin", origin || "*");
+    res.header("Vary", "Origin");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, X-Requested-With"
+    );
+
+    return res.sendStatus(204);
+  }
+  next();
+});
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions)); // asegura que OPTIONS responda siempre
 
@@ -45,6 +61,14 @@ app.use("/api/add", ingresoEgresoRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/task", taskRoutes);
 app.get("/api/health", (req, res) => res.json({ ok: true }));
+app.get("/api/debug", (req, res) => {
+  res.json({
+    ok: true,
+    origin: req.headers.origin || null,
+    host: req.headers.host || null,
+    referer: req.headers.referer || null,
+  });
+});
 
 if (process.env.VERCEL !== "1") {
   const PORT = process.env.PORT || 3000;
