@@ -1,5 +1,6 @@
 {
-  "rewrites": [
-    { "source": "/api/:path*", "destination": "https://growth-web-backend.vercel.app/api/:path*" }
+  "version": 2,
+  "routes": [
+    { "src": "/api/(.*)", "dest": "https://growth-web-backend.vercel.app/api/$1" }
   ]
 }
