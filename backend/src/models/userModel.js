@@ -8,7 +8,6 @@ const userSchema = new mongoose.Schema(
       required: [true, 'El nombre de usuario es obligatorio'],
       trim: true,
       unique: true,
-      index: true, 
     },
     email: {
       type: String,
@@ -16,7 +15,6 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
-      index: true,
     },
     password: {
       type: String,
@@ -43,9 +41,5 @@ userSchema.pre('save', async function (next) {
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
-
-// 🔹 Crea índices si no existen
-userSchema.index({ email: 1 });
-userSchema.index({ username: 1 });
 
 export default mongoose.model('User', userSchema);
