@@ -22,6 +22,7 @@ const whitelist = [
 
 const corsOptions = {
   origin(origin, callback) {
+    console.log("CORS origin:", origin || "direct/server-to-server");
     if (!origin) return callback(null, true); // Postman / server-to-server
     if (whitelist.includes(origin)) return callback(null, true);
     return callback(new Error("No permitido por CORS"));
