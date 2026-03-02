@@ -44,6 +44,7 @@ app.use(cookieParser());
 app.use("/api/add", ingresoEgresoRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/task", taskRoutes);
+app.get("/api/health", (req, res) => res.json({ ok: true }));
 
 if (process.env.VERCEL !== "1") {
   const PORT = process.env.PORT || 3000;
