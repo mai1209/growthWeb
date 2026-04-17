@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import connectDB from "./src/config/db.js";
 
 import ingresoEgresoRoutes from "./src/routes/ingresoEgresoRoutes.js";
@@ -10,6 +11,29 @@ import taskRoutes from "./src/routes/taskRoutes.js";
 dotenv.config();
 
 const app = express();
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (process.env.NODE_ENV !== "production") {
+        return callback(null, true);
+      }
+
+      const allowedOrigins = [process.env.FRONTEND_URL].filter(Boolean);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Origen no permitido por CORS"));
+    },
+    credentials: true,
+  })
+);
 
 // Parsers
 app.use(express.json());

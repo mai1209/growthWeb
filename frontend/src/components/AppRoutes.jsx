@@ -21,6 +21,8 @@ function AppRoutes({
   movementToEdit,
   setMovementToEdit,
   refreshKey,
+  panelCurrency,
+  onPanelCurrencyChange,
   ...authProps
 }) {
   /* =====================================================
@@ -67,6 +69,8 @@ function AppRoutes({
             onTaskUpdate={onTaskUpdate}
             refreshKey={refreshKey}
             onUpdate={onUpdate}
+            panelCurrency={panelCurrency}
+            onPanelCurrencyChange={onPanelCurrencyChange}
           />
         }
       >
@@ -81,6 +85,8 @@ function AppRoutes({
               movementToEdit={movementToEdit}
               setMovementToEdit={setMovementToEdit}
               movimientos={movimientos}
+              currentCurrency={panelCurrency}
+              onCurrencyChange={onPanelCurrencyChange}
               {...authProps}
             />
           }
@@ -93,6 +99,7 @@ function AppRoutes({
             <Add
               onMovementAdded={onUpdate}
               movementToEdit={movementToEdit}
+              defaultCurrency={panelCurrency}
               {...authProps}
             />
           }

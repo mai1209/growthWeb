@@ -1,8 +1,35 @@
 import axios from "axios";
 
+const normalizeBaseURL = (rawUrl = "") => {
+  const cleaned = rawUrl.trim().replace(/\/+$/, "");
+
+  if (!cleaned) {
+    return "";
+  }
+
+  return cleaned.replace(/\/api$/i, "");
+};
+
+const resolveBaseURL = () => {
+  const envBaseURL = normalizeBaseURL(process.env.REACT_APP_API_URL || "");
+
+  if (typeof window !== "undefined") {
+    const { hostname } = window.location;
+
+    // En producción sobre Vercel usamos mismo dominio y dejamos que /api
+    // resuelva al backend del mismo deploy.
+    if (hostname !== "localhost" && hostname !== "127.0.0.1") {
+      return "";
+    }
+
+    return envBaseURL || "http://localhost:3000";
+  }
+
+  return envBaseURL;
+};
+
 const api = axios.create({
-  baseURL: "", // mismo dominio
-  // withCredentials: true, // solo si usás cookies
+  baseURL: resolveBaseURL(),
 });
 
 // 1️⃣ Interceptor de request (token automático)
@@ -21,7 +48,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const requestUrl = error.config?.url || "";
+    const isAuthRequest =
+      requestUrl.includes("/api/auth/login") ||
+      requestUrl.includes("/api/auth/signup");
+
+    if (error.response?.status === 401 && !isAuthRequest) {
       localStorage.removeItem("token");
       sessionStorage.removeItem("token");
       window.location.href = "/";
@@ -45,6 +77,7 @@ export const movimientoService = {
   getAll: () => api.get("/api/add"),
   create: (data) => api.post("/api/add", data),
   update: (id, data) => api.put(`/api/add/${id}`, data),
+  delete: (id) => api.delete(`/api/add/${id}`),
 };
 
 export const authService = {

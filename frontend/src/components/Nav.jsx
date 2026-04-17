@@ -1,10 +1,18 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
 import style from "../style/Nav.module.css";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
-function Nav({ onLogout }) {
+function Nav({
+  onLogout,
+  isMobileMenuOpen,
+  onToggleMobileMenu,
+  onCloseMobileMenu,
+  drawerContent,
+}) {
   const navigate = useNavigate();
+  const location = useLocation();
   //Buscamos el token directamente aquí para que sea instantáneo
   const currentToken =
     localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -19,6 +27,10 @@ function Nav({ onLogout }) {
     }
   }, [currentToken]);
 
+  useEffect(() => {
+    onCloseMobileMenu?.();
+  }, [location.pathname, onCloseMobileMenu]);
+
   const getNavLinkClass = ({ isActive }) => {
     return isActive ? `${style.navLink} ${style.activeLink}` : style.navLink;
   };
@@ -28,22 +40,80 @@ function Nav({ onLogout }) {
     navigate("/"); // Mejor ir a la raíz, AppRoutes se encargará de mostrar Login
   };
 
+  const mobileMenu =
+    currentToken && isMobileMenuOpen && typeof document !== "undefined"
+      ? createPortal(
+          <div className={style.mobileMenuShell}>
+            <button
+              type="button"
+              className={style.mobileBackdrop}
+              onClick={onCloseMobileMenu}
+              aria-label="Cerrar menu"
+            />
+
+            <div className={style.mobileDrawer}>
+              <div className={style.mobileDrawerHeader}>
+                <div>
+                  <p className={style.drawerEyebrow}>Menu</p>
+                  <h2>{userData?.username || "Usuario"}</h2>
+                </div>
+
+                <button
+                  type="button"
+                  className={style.mobileCloseButton}
+                  onClick={onCloseMobileMenu}
+                >
+                  Cerrar
+                </button>
+              </div>
+
+              <div className={style.mobileNavItems}>
+                <NavLink to="/" className={getNavLinkClass} onClick={onCloseMobileMenu}>
+                  <img src="/homedos.png" alt="home" />
+                  <p>Home</p>
+                </NavLink>
+                <NavLink
+                  to="/notas"
+                  className={getNavLinkClass}
+                  onClick={onCloseMobileMenu}
+                >
+                  <img src="/tarea.png" alt="tasklist" />
+                  <p>Tareas</p>
+                </NavLink>
+              </div>
+
+              <div className={style.mobileUserBlock}>
+                <p className={style.mobileGreeting}>
+                  Hola, {userData?.username || "Usuario"}.
+                </p>
+                <button onClick={handleLogout} className={style.logoutButton}>
+                  Cerrar Sesion
+                </button>
+              </div>
+
+              {drawerContent ? <div className={style.mobileSidebar}>{drawerContent}</div> : null}
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
   return (
-    <div className={style.container}>
+    <>
+      <div className={style.container}>
       <nav className={style.nav}>
         <div className={style.containerLogo}>
           <img className={style.logo} src="/logo.png" alt="logo" />
           <p className={style.nameLogo}>growth</p>
         </div>
 
-        {/* Cambiamos las condiciones para usar 'currentToken' */}
         {currentToken && (
           <div className={style.navItems}>
-            <NavLink to="/" className={getNavLinkClass}>
+            <NavLink to="/" className={getNavLinkClass} onClick={onCloseMobileMenu}>
               <img src="/homedos.png" alt="home" />
               <p>Home</p>
             </NavLink>
-            <NavLink to="/notas" className={getNavLinkClass}>
+            <NavLink to="/notas" className={getNavLinkClass} onClick={onCloseMobileMenu}>
               <img src="/tarea.png" alt="tasklist" />
               <p>Tareas</p>
             </NavLink>
@@ -62,12 +132,21 @@ function Nav({ onLogout }) {
         )}
 
         {currentToken && (
-          <button className={style.menuButton} type="button">
-            <img src="/menu.png" alt="menu" />
+          <button
+            className={style.menuButton}
+            type="button"
+            onClick={onToggleMobileMenu}
+            aria-label="Abrir menu"
+          >
+            <span className={style.menuBar} />
+            <span className={style.menuBar} />
+            <span className={style.menuBar} />
           </button>
         )}
       </nav>
-    </div>
+      </div>
+      {mobileMenu}
+    </>
   );
 }
 

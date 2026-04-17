@@ -1,0 +1,30 @@
+.shell {
+  min-height: 100vh;
+}
+
+.main {
+  display: flex;
+  align-items: stretch;
+}
+
+.sidebar {
+  flex: 0 0 auto;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 1000px) {
+  .main {
+    display: block;
+    padding-top: 70px;
+  }
+}
+
+@media (max-width: 520px) {
+  .main {
+    padding-top: 64px;
+  }
+}

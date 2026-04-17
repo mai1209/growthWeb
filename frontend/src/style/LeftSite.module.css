@@ -1,221 +1,415 @@
 .container {
-  border-right: 1px solid #ffffff22; /* Un poco más sutil */
-  width: 21vw;
-  height: calc(100vh - 10vh);
-  background-color: var(--background-color);
-  transition: width 0.3s ease;
-  padding-top: 3rem;
+  width: 350px;
+  min-height: calc(100vh - 78px);
+  padding: 1.3rem;
+  background: linear-gradient(180deg, rgba(7, 13, 10, 0.98), rgba(10, 18, 14, 0.96));
+  border-right: 1px solid rgba(216, 241, 224, 0.08);
 }
 
-.containerOpenClose {
-  display: flex;
-  width: 100%;
-  justify-content: flex-end;
-}
-
-.close {
-  margin: 1rem 1rem;
-  cursor: pointer;
-}
-
-.containerAllInfo {
+.panel {
   display: flex;
   flex-direction: column;
-  margin-top: 1rem;
+  gap: 1rem;
+  position: sticky;
+  top: 1rem;
 }
 
-.containerInfo {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin: 0 1rem;
+.headerBlock,
+.balanceCard,
+.section,
+.statCard {
+  border-radius: 24px;
+  border: 1px solid rgba(216, 241, 224, 0.1);
+  background: rgba(17, 29, 22, 0.78);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
 }
 
-.containerInfo p {
-  margin: 0;
-  font-family: "Poppins", sans-serif;
-  font-style: normal;
-  color: var(--color-text);
+.headerBlock {
+  padding: 1.2rem;
 }
 
-.containerInfoIngreso,
-.containerInfoEgreso,
-.containerInfoTotal {
-  display: flex;
-  justify-content: flex-start;
-  gap: 0.5rem;
-  align-items: center;
-  margin-left: 1rem;
-  font-size: 1.2rem;
-}
-
-.containerInfoIngresoIngresoText {
+.eyebrow {
   color: var(--color-verde);
-  font-family: "Poppins", sans-serif;
-  font-weight: 600;
-  font-size: 1.2rem;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.55rem;
 }
 
-.containerInfoEgresoEgresoText {
-  color: var(--color-rojo);
-  font-family: "Poppins", sans-serif;
-  font-weight: 600;
-  font-size: 1.2rem;
-}
-
-.containerInfoNumber {
+.headerBlock h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  line-height: 1.1;
   color: var(--color-text);
-  font-family: "Poppins", sans-serif;
-  font-weight: 600;
+}
+
+.headerText {
+  margin-top: 0.75rem;
+  color: var(--color-muted);
+  line-height: 1.30;
+  font-size: 0.9rem;
+}
+
+.currencySwitch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.currencyButton {
+  border: 1px solid rgba(216, 241, 224, 0.08);
+  border-radius: 18px;
+  padding: 0.85rem 0.9rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-muted);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.currencyButton span,
+.currencyButton small {
+  display: block;
+}
+
+.currencyButton span {
+  font-weight: 700;
   font-size: 1rem;
+  color: var(--color-verde);
 }
 
-.text {
+.currencyButton small {
+  margin-top: 0.1rem;
+  color: inherit;
+}
+
+.currencyButton:hover {
+  transform: translateY(-1px);
+  color: var(--color-text);
+}
+
+.currencyButtonActive {
+  color: var(--color-text);
+  border-color: rgba(144, 211, 106, 0.24);
+  background: linear-gradient(135deg, rgba(59, 203, 35, 0.26), rgba(17, 38, 12, 0.92));
+}
+
+.balanceCard {
+  padding: 1.2rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  background:
+    linear-gradient(135deg, rgba(59, 203, 35, 0.16), transparent 55%),
+    rgba(17, 29, 22, 0.86);
+}
+
+.balanceLabel {
+  color: var(--color-verde);
+  font-size: 0.9rem;
+}
+
+.balanceValue {
+  font-size: 1.95rem;
+  line-height: 1.1;
+  margin: 0.35rem 0;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.balanceHint {
   color: var(--color-dark-text);
-  font-family: "Poppins", sans-serif;
-  font-weight: 600;
-}
-
-.closed {
-  width: 60px;
-}
-
-.textTotal {
-  font-size: 1.3rem;
-}
-
-.total {
-  font-size: 1.5rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .visibilityButton {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  margin-left: 0.5rem;
-}
-
-.visibilityIcon {
-  width: 25px;
-  height: 25px;
-}
-
-.containerImg {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 60%;
-  overflow: hidden;
-  margin: 2rem 0;
-}
-
-.imgLeft {
-  width: 90%;
-}
-
-/* =====================================================
-   ESTILO MEJORADO PARA LOS BOTONES DE VISTA
-===================================================== */
-.viewMode {
-  display: flex;
-  width: fit-content;
-  background-color: #1a1a1a; /* Fondo más profundo */
-  border-radius: 10px;
-  margin: 1.5rem auto 1rem 0.8rem;
-  border: 1px solid #ffffff11;
-}
-
-.viewMode button {
-  background: none;
-  border: none;
-  color: #888; /* Color neutro para inactivos */
-  padding: 0.5rem 0.5rem;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.5rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border-radius: 7px;
-  white-space: nowrap;
-}
-
-.viewMode button:hover {
-  color: #fff;
-}
-
-.active {
-  background-color: #32472c !important; /* Tu verde */
-  color: #ffffff !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-.monthPicker {
-  background: #272726;
-  border: 1px solid #ffffff22;
-  border-radius: 6px;
-  margin-left: 5px;
-  padding: 2px 5px;
+  align-self: flex-start;
+  border: 1px solid rgba(216, 241, 224, 0.1);
+  border-radius: 999px;
+  background: transparent;
   color: var(--color-text);
-  font-family: 'Poppins';
-  font-size: 0.5rem;
-  outline: none;
-  width: 90px;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
 }
 
-/* =====================================================
-   MEDIA QUERIES
-===================================================== */
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.statCard {
+  padding: 1rem;
+}
+
+.statIngreso {
+  background:
+    linear-gradient(135deg, rgba(59, 203, 35, 0.18), rgba(16, 34, 10, 0.88));
+}
+
+.statEgreso {
+  background:
+    linear-gradient(135deg, rgba(235, 50, 35, 0.18), rgba(45, 15, 10, 0.88));
+}
+
+.statTotal {
+  background:
+    linear-gradient(135deg, rgba(163, 171, 60, 0.18), rgba(42, 44, 12, 0.88));
+}
+
+.statTicket {
+  background:
+    linear-gradient(135deg, rgba(207, 82, 42, 0.18), rgba(48, 21, 10, 0.88));
+}
+
+.statAhorro {
+  background:
+    linear-gradient(135deg, rgba(76, 160, 154, 0.18), rgba(14, 46, 50, 0.88));
+}
+
+.statCard span {
+  display: block;
+  color: var(--color-verde);
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.statCard strong {
+  display: block;
+  font-size: 1.05rem;
+  line-height: 1.3;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.section {
+  padding: 1.15rem;
+  background:
+    linear-gradient(180deg, rgba(17, 29, 22, 0.84), rgba(10, 18, 14, 0.88));
+}
+
+.sectionTitle h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-verde);
+}
+
+.sectionTitle p {
+  margin-top: 0.3rem;
+  color: var(--color-dark-text);
+  font-size: 0.9rem;
+}
+
+.insightList {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.insightItem {
+  padding: 0.9rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(216, 241, 224, 0.06);
+}
+
+.insightItem span {
+  display: block;
+  color: var(--color-verde);
+  font-size: 0.82rem;
+  margin-bottom: 0.35rem;
+}
+
+.insightItem strong {
+  line-height: 1.45;
+  font-size: 0.96rem;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.notesCard {
+  display: flex;
+  margin-top: 1rem;
+  gap: 0.6rem;
+  justify-content: space-between;
+}
+
+.notesCard div{
+  flex: 1;
+  width:50px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 1rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+
+    border-radius: 18px;
+
+}
+
+
+
+.notesCard span {
+  display: block;
+  color: var(--color-verde);
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+.notesCard strong {
+  font-size: 1.2rem;
+  color: var(--color-text);
+}
+
+.quickActions {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.quickActions button {
+  border: none;
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
+  text-align: left;
+  font-weight: 700;
+  color: var(--color-text);
+  background: linear-gradient(135deg, rgba(61, 95, 68, 0.92), rgba(25, 44, 32, 0.96));
+  cursor: pointer;
+}
+
 @media (max-width: 1000px) {
   .container {
-    position: fixed;
-    top: 50px;
-    left: 0;
     width: 100%;
-    overflow-y: scroll;
-    border: none;
-    padding: 1.4rem 0rem 5.5rem 0rem;
-    background: rgba(0, 0, 0, 0.85); /* Más oscuro para legibilidad */
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    z-index: 10;
-    height: fit-content;
+    min-height: auto;
+    padding: 0.85rem 0.85rem 0;
+    border-right: none;
+    background: transparent;
   }
 
-  .viewMode {
-    margin: 1rem auto 0.5rem 0.5rem;
+  .panel {
+    position: relative;
+    top: 0;
+    gap: 0.85rem;
   }
 
-  .viewMode button {
-    font-size: 0.65rem;
-    padding: 0.4rem 0.8rem;
+  .headerBlock,
+  .balanceCard,
+  .section,
+  .statCard {
+    border-radius: 20px;
   }
 
-  .containerAllInfo {
-    margin-top: 0rem;
+  .headerBlock,
+  .balanceCard,
+  .section {
+    padding: 1rem;
   }
 
-  .containerOpenClose {
-    display: none;
+  .headerBlock h2 {
+    font-size: 1.35rem;
   }
 
-  .textTotal {
-    font-size: 1rem;
-    font-weight: 200;
+  .headerText,
+  .sectionTitle p,
+  .balanceHint {
+    font-size: 0.84rem;
   }
 
-  .total {
-    font-size: 1.8rem;
+  .currencyButton {
+    padding: 0.75rem 0.8rem;
   }
 
-  .containerInfo {
-    margin: 0;
-    padding: 0.7rem 1.5rem;
+  .currencyButton span {
+    font-size: 0.92rem;
   }
 
-  .containerImg {
-    display: none;
+  .balanceCard {
+    flex-direction: column;
+  }
+
+  .balanceValue {
+    font-size: 1.3rem;
+  }
+
+  .statGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .statCard {
+    padding: 0.9rem;
+  }
+
+  .statCard span,
+  .insightItem span {
+    font-size: 0.76rem;
+  }
+
+  .statCard strong,
+  .insightItem strong {
+    font-size: 0.9rem;
+  }
+
+  .quickActions {
+    gap: 0.6rem;
+  }
+
+  .quickActions button {
+    padding: 0.8rem 0.9rem;
+    font-size: 0.9rem;
+  }
+
+  .notesCard {
+    gap: 0.5rem;
+  }
+
+  .notesCard div {
+    padding: 0.85rem 0.45rem;
+  }
+
+  .notesCard strong {
+    font-size: 1.02rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .container {
+    padding: 0.7rem 0.7rem 0;
+  }
+
+  .headerBlock h2 {
+    font-size: 1.18rem;
+  }
+
+  .balanceLabel,
+  .sectionTitle h3 {
+    font-size: 0.84rem;
+  }
+
+  .balanceValue {
+    font-size: 1.12rem;
+  }
+
+  .statGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .currencySwitch {
+    grid-template-columns: 1fr;
+  }
+
+  .currencyButton {
+    text-align: center;
+  }
+
+  .notesCard {
+    flex-direction: column;
   }
 }

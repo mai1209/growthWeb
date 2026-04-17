@@ -181,7 +181,7 @@ form {
   background: linear-gradient(135deg, var(--color-verde), #2fa81d);
   border-radius: 14px;
   padding: 0.8rem 1rem;
-  color: #0b1a07;
+  color: var(--color-text);
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;

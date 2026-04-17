@@ -2,12 +2,21 @@ import IngresoEgresoModel from "../models/ingresoEgresoModel.js";
 import mongoose from 'mongoose'; 
 export const createIncomeEgress = async (req, res) => {
   try {
-    const { tipo, monto, categoria, fecha, detalle } = req.body;
+    const {
+      tipo,
+      monto,
+      categoria,
+      fecha,
+      detalle,
+      moneda,
+      esRecurrente,
+      frecuencia,
+    } = req.body;
     const userId = req.userId; // 🔥 Obtenido del middleware de autenticación
 
     // Validaciones
-    if (!tipo || !["ingreso", "egreso"].includes(tipo)) {
-      return res.status(400).json({ error: "El tipo debe ser 'ingreso' o 'egreso'" });
+    if (!tipo || !["ingreso", "egreso", "ahorro"].includes(tipo)) {
+      return res.status(400).json({ error: "El tipo debe ser 'ingreso', 'egreso' o 'ahorro'" });
     }
     if (!monto || isNaN(monto)) {
       return res.status(400).json({ error: "El monto es obligatorio y debe ser un número" });
@@ -15,14 +24,23 @@ export const createIncomeEgress = async (req, res) => {
     if (!categoria) {
       return res.status(400).json({ error: "La categoría es obligatoria" });
     }
+    if (moneda && !["ARS", "USD"].includes(moneda)) {
+      return res.status(400).json({ error: "La moneda debe ser ARS o USD" });
+    }
+    if (esRecurrente && !["mensual", "quincenal", "semanal"].includes(frecuencia)) {
+      return res.status(400).json({ error: "La frecuencia debe ser mensual, quincenal o semanal" });
+    }
 
     // Crear nuevo documento vinculado al usuario
     const nuevoMovimiento = new IngresoEgresoModel({
       tipo,
       monto,
+      moneda: moneda || "ARS",
       categoria,
       fecha: fecha ? new Date(fecha) : new Date(),
       detalle,
+      esRecurrente: Boolean(esRecurrente),
+      frecuencia: esRecurrente ? frecuencia : null,
       usuario: userId // 🔥 Vincular con el usuario
     });
 
@@ -126,11 +144,37 @@ export const updateIncomeEgress = async (req, res) => {
       return res.status(401).json({ error: "No autorizado" });
     }
     
-    const { monto, categoria, fecha, detalle } = req.body;
-    movimiento.monto = monto || movimiento.monto;
-    movimiento.categoria = categoria || movimiento.categoria;
-    movimiento.fecha = fecha || movimiento.fecha;
-    movimiento.detalle = detalle || movimiento.detalle;
+    const {
+      tipo,
+      monto,
+      categoria,
+      fecha,
+      detalle,
+      moneda,
+      esRecurrente,
+      frecuencia,
+    } = req.body;
+
+    if (moneda && !["ARS", "USD"].includes(moneda)) {
+      return res.status(400).json({ error: "La moneda debe ser ARS o USD" });
+    }
+    if (tipo && !["ingreso", "egreso", "ahorro"].includes(tipo)) {
+      return res.status(400).json({ error: "Tipo de movimiento inválido" });
+    }
+    if (esRecurrente && !["mensual", "quincenal", "semanal"].includes(frecuencia)) {
+      return res.status(400).json({ error: "La frecuencia debe ser mensual, quincenal o semanal" });
+    }
+
+    movimiento.tipo = tipo ?? movimiento.tipo;
+    movimiento.monto = monto ?? movimiento.monto;
+    movimiento.categoria = categoria ?? movimiento.categoria;
+    movimiento.fecha = fecha ? new Date(fecha) : movimiento.fecha;
+    movimiento.detalle = detalle ?? movimiento.detalle;
+    movimiento.moneda = moneda ?? movimiento.moneda ?? "ARS";
+    movimiento.esRecurrente = esRecurrente ?? movimiento.esRecurrente;
+    movimiento.frecuencia = movimiento.esRecurrente
+      ? frecuencia ?? movimiento.frecuencia
+      : null;
     
     const movimientoActualizado = await movimiento.save();
     
@@ -185,6 +229,4 @@ export const getAllIncomeEgress = async (req, res) => {
     res.status(500).json({ error: "Error al obtener todos los movimientos", details: error.message });
   }
 };
-
-
 
