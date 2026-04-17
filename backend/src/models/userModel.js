@@ -39,7 +39,16 @@ userSchema.pre('save', async function (next) {
 
 // 🔐 Método para comparar contraseñas (evita hacerlo manualmente en el controller)
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  if (!enteredPassword || !this.password || typeof this.password !== "string") {
+    return false;
+  }
+
+  try {
+    return await bcrypt.compare(enteredPassword, this.password);
+  } catch (error) {
+    console.error("Password compare error:", error);
+    return false;
+  }
 };
 
 export default mongoose.model('User', userSchema);
