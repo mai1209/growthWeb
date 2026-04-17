@@ -40,6 +40,14 @@ export const login = async (req, res) => {
     if (!user)
       return res.status(401).json({ error: 'Credenciales inválidas' });
 
+    if (!user.password || typeof user.password !== "string") {
+      console.error("Login warning: user without valid password hash", {
+        userId: user._id,
+        email,
+      });
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
     const isMatch = await user.matchPassword(password);
     if (!isMatch)
       return res.status(401).json({ error: 'Credenciales inválidas' });
