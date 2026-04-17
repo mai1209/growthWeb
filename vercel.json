@@ -65,11 +65,20 @@
       "dest": "backend/api/[...path].js"
     },
     {
-      "handle": "filesystem"
+      "src": "/static/(.*)",
+      "dest": "frontend/static/$1"
+    },
+    {
+      "src": "/(.*\\.(?:png|jpg|jpeg|webp|svg|ico|json|txt|woff|woff2|ttf|otf))",
+      "dest": "frontend/$1"
+    },
+    {
+      "src": "/",
+      "dest": "frontend/index.html"
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "frontend/index.html"
     }
   ]
 }
