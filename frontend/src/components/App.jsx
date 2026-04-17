@@ -9,6 +9,8 @@ const getStoredToken = () =>
 const getStoredCurrency = () =>
   normalizeCurrency(localStorage.getItem("panelCurrency") || DEFAULT_CURRENCY);
 
+const getStoredTheme = () => localStorage.getItem("appTheme") || "dark";
+
 function App() {
   const [token, setToken] = useState(getStoredToken()); 
   const [ready, setReady] = useState(false); // Clave para evitar el problema del "cero"
@@ -17,6 +19,7 @@ function App() {
   const [movementToEdit, setMovementToEdit] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
   const [panelCurrency, setPanelCurrency] = useState(getStoredCurrency());
+  const [theme, setTheme] = useState(getStoredTheme());
 
   // 1. CARGA INICIAL: Sincroniza el token apenas abre la app
   useEffect(() => {
@@ -68,6 +71,11 @@ function App() {
     localStorage.setItem("panelCurrency", panelCurrency);
   }, [panelCurrency]);
 
+  useEffect(() => {
+    localStorage.setItem("appTheme", theme);
+    document.body.dataset.theme = theme;
+  }, [theme]);
+
   // Manejadores de eventos
   const handleDataUpdate = (updatedItem = null) => {
     setTaskToEdit(null);
@@ -100,6 +108,10 @@ function App() {
     setToken(null);
   };
 
+  const handleThemeToggle = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
   // 4. PREVENCIÓN DE "PANTALLA EN CERO"
   // Si React no terminó de leer el storage, no renderizamos las rutas todavía.
   // Esto evita que te mande al login por error al recargar (F5).
@@ -119,6 +131,8 @@ function App() {
       setTaskToEdit={setTaskToEdit}
       panelCurrency={panelCurrency}
       onPanelCurrencyChange={setPanelCurrency}
+      theme={theme}
+      onThemeToggle={handleThemeToggle}
     />
   );
 }

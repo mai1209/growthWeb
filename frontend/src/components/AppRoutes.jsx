@@ -23,6 +23,8 @@ function AppRoutes({
   refreshKey,
   panelCurrency,
   onPanelCurrencyChange,
+  theme,
+  onThemeToggle,
   ...authProps
 }) {
   /* =====================================================
@@ -39,12 +41,24 @@ function AppRoutes({
 
         <Route
           path="/login"
-          element={<LoginPage onAuthSuccess={onAuthSuccess} />}
+          element={
+            <LoginPage
+              onAuthSuccess={onAuthSuccess}
+              theme={theme}
+              onThemeToggle={onThemeToggle}
+            />
+          }
         />
 
         <Route
           path="/register"
-          element={<SignupPage onAuthSuccess={onAuthSuccess} />}
+          element={
+            <SignupPage
+              onAuthSuccess={onAuthSuccess}
+              theme={theme}
+              onThemeToggle={onThemeToggle}
+            />
+          }
         />
 
         {/* Cualquier otra ruta → login */}
@@ -71,6 +85,8 @@ function AppRoutes({
             onUpdate={onUpdate}
             panelCurrency={panelCurrency}
             onPanelCurrencyChange={onPanelCurrencyChange}
+            theme={theme}
+            onThemeToggle={onThemeToggle}
           />
         }
       >

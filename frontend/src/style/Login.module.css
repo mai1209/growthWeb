@@ -11,33 +11,12 @@
   justify-content: center;
   padding: 2rem;
 
-  background:
-    radial-gradient(
-      900px 500px at var(--x1) var(--y1),
-      rgba(86, 255, 95, 0.14),
-      transparent 60%
-    ),
-    radial-gradient(
-      700px 420px at var(--x2) var(--y2),
-      rgba(104, 195, 0, 0.1),
-      transparent 65%
-    ),
-    radial-gradient(
-      900px 500px at var(--x3) var(--y3),
-      rgba(255, 88, 54, 0.1),
-      transparent 70%
-    ),
-    radial-gradient(
-      700px 420px at var(--x4) var(--y4),
-      rgba(255, 176, 58, 0.08),
-      transparent 70%
-    ),
-    linear-gradient(180deg, #070a07, #050605 60%, #060606);
+  background: var(--page-background);
 
   animation: backgroundFlow 45s cubic-bezier(0.45, 0, 0.55, 1) infinite;
   will-change: background;
 
-  color: white;
+  color: var(--color-text);
   z-index: 9999999999;
   font-family: "Poppins", sans-serif;
 }
@@ -104,12 +83,18 @@
 ========================= */
 .back {
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(12px);
-  background: rgba(20, 20, 20, 0.65);
+  background: var(--surface-card);
   width: 100%;
   max-width: 900px;
+}
+
+.authTopbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem 1rem 0;
 }
 
 /* =========================
@@ -179,7 +164,7 @@ form {
 ========================= */
 .btn {
   background: linear-gradient(135deg, var(--color-verde), #2fa81d);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   padding: 0.8rem 1rem;
   color: var(--color-text);
   font-size: 1rem;
@@ -232,7 +217,7 @@ form {
 .link {
   margin-top: 1rem;
   font-size: 0.85rem;
-  color: #9be68f;
+  color: var(--color-verde);
   cursor: pointer;
   align-self: flex-end;
 }
@@ -256,7 +241,7 @@ form {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--color-muted);
   font-size: 1.1rem;
   transition: color 0.2s ease;
 }
@@ -274,6 +259,16 @@ form {
   font-size: 0.8rem;
 }
 
+.themeButton {
+  cursor: pointer;
+  background: var(--surface-input);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  border: 1px solid rgba(216, 241, 224, 0.12);
+  padding: 0.7rem 0.95rem;
+  border-radius: var(--radius-lg);
+}
+
 /* =========================
    MOBILE
 ========================= */
@@ -287,7 +282,7 @@ form {
   }
 
   .back {
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
     width: 100%;
   }
 

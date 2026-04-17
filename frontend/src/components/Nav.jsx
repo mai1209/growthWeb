@@ -7,9 +7,15 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 function Nav({
   onLogout,
   isMobileMenuOpen,
+  isMobilePanelOpen,
   onToggleMobileMenu,
   onCloseMobileMenu,
-  drawerContent,
+  onToggleMobilePanel,
+  onCloseMobilePanel,
+  panelContent,
+  panelLabel = "Dashboard",
+  theme = "dark",
+  onThemeToggle,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -86,12 +92,48 @@ function Nav({
                 <p className={style.mobileGreeting}>
                   Hola, {userData?.username || "Usuario"}.
                 </p>
+                <button type="button" onClick={onThemeToggle} className={style.themeButton}>
+                  {theme === "dark" ? "Version blanca" : "Version oscura"}
+                </button>
                 <button onClick={handleLogout} className={style.logoutButton}>
                   Cerrar Sesion
                 </button>
               </div>
 
-              {drawerContent ? <div className={style.mobileSidebar}>{drawerContent}</div> : null}
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
+  const mobilePanel =
+    currentToken && isMobilePanelOpen && typeof document !== "undefined"
+      ? createPortal(
+          <div className={style.mobileMenuShell}>
+            <button
+              type="button"
+              className={style.mobileBackdrop}
+              onClick={onCloseMobilePanel}
+              aria-label={`Cerrar ${panelLabel.toLowerCase()}`}
+            />
+
+            <div className={`${style.mobileDrawer} ${style.mobilePanelDrawer}`}>
+              <div className={style.mobileDrawerHeader}>
+                <div>
+                  <p className={style.drawerEyebrow}>{panelLabel}</p>
+                  <h2>{panelLabel === "Dashboard" ? "Resumen lateral" : "Panel de notas"}</h2>
+                </div>
+
+                <button
+                  type="button"
+                  className={style.mobileCloseButton}
+                  onClick={onCloseMobilePanel}
+                >
+                  Cerrar
+                </button>
+              </div>
+
+              {panelContent ? <div className={style.mobileSidebar}>{panelContent}</div> : null}
             </div>
           </div>,
           document.body
@@ -125,6 +167,9 @@ function Nav({
             <div className={style.user}>
               <p>Hola, {userData?.username || "Usuario"}!</p>
             </div>
+            <button type="button" onClick={onThemeToggle} className={style.themeButton}>
+              {theme === "dark" ? "Version blanca" : "Version oscura"}
+            </button>
             <button onClick={handleLogout} className={style.logoutButton}>
               Cerrar Sesión
             </button>
@@ -132,20 +177,31 @@ function Nav({
         )}
 
         {currentToken && (
-          <button
-            className={style.menuButton}
-            type="button"
-            onClick={onToggleMobileMenu}
-            aria-label="Abrir menu"
-          >
-            <span className={style.menuBar} />
-            <span className={style.menuBar} />
-            <span className={style.menuBar} />
-          </button>
+          <div className={style.mobileActions}>
+            <button
+              className={style.panelButton}
+              type="button"
+              onClick={onToggleMobilePanel}
+            >
+              {panelLabel}
+            </button>
+
+            <button
+              className={style.menuButton}
+              type="button"
+              onClick={onToggleMobileMenu}
+              aria-label="Abrir menu"
+            >
+              <span className={style.menuBar} />
+              <span className={style.menuBar} />
+              <span className={style.menuBar} />
+            </button>
+          </div>
         )}
       </nav>
       </div>
       {mobileMenu}
+      {mobilePanel}
     </>
   );
 }

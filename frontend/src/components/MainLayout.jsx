@@ -14,10 +14,13 @@ function MainLayout({
   movimientos,
   panelCurrency,
   onPanelCurrencyChange,
+  theme,
+  onThemeToggle,
 }) {
   const location = useLocation();
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" ? window.innerWidth <= 1000 : false
   );
@@ -26,13 +29,13 @@ function MainLayout({
   const currentToken = localStorage.getItem("token") || sessionStorage.getItem("token");
 
   useEffect(() => {
-    if ((isNotesOpen || isMobileMenuOpen) && isMobile) {
+    if ((isNotesOpen || isMobileMenuOpen || isMobilePanelOpen) && isMobile) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
     }
     return () => (document.body.style.overflow = "");
-  }, [isMobile, isMobileMenuOpen, isNotesOpen]);
+  }, [isMobile, isMobileMenuOpen, isMobilePanelOpen, isNotesOpen]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 1000px)");
@@ -42,6 +45,7 @@ function MainLayout({
 
       if (!event.matches) {
         setIsMobileMenuOpen(false);
+        setIsMobilePanelOpen(false);
       }
     };
 
@@ -53,6 +57,7 @@ function MainLayout({
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
+    setIsMobilePanelOpen(false);
   }, [location.pathname]);
 
   // 2. Mapeo de Sidebars: YA NO pasamos 'token={token}'
@@ -84,18 +89,36 @@ function MainLayout({
     setIsMobileMenuOpen(false);
   }, []);
 
+  const handleCloseMobilePanel = useCallback(() => {
+    setIsMobilePanelOpen(false);
+  }, []);
+
   const handleToggleMobileMenu = useCallback(() => {
+    setIsMobilePanelOpen(false);
     setIsMobileMenuOpen((prev) => !prev);
   }, []);
+
+  const handleToggleMobilePanel = useCallback(() => {
+    setIsMobileMenuOpen(false);
+    setIsMobilePanelOpen((prev) => !prev);
+  }, []);
+
+  const mobilePanelLabel = location.pathname === "/notas" ? "Panel" : "Dashboard";
 
   return (
     <div className={style.shell}>
       <Nav
         onLogout={onLogout}
         isMobileMenuOpen={isMobileMenuOpen}
+        isMobilePanelOpen={isMobilePanelOpen}
         onToggleMobileMenu={handleToggleMobileMenu}
         onCloseMobileMenu={handleCloseMobileMenu}
-        drawerContent={sidebarContent}
+        onToggleMobilePanel={handleToggleMobilePanel}
+        onCloseMobilePanel={handleCloseMobilePanel}
+        panelContent={sidebarContent}
+        panelLabel={mobilePanelLabel}
+        theme={theme}
+        onThemeToggle={onThemeToggle}
       />
 
       <main className={style.main}>
