@@ -39,9 +39,9 @@
 
 .modeButton {
   border: 1px solid rgba(216, 241, 224, 0.12);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.7rem 0.95rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-input);
   color: var(--color-muted);
   cursor: pointer;
 }
@@ -53,9 +53,9 @@
 
 .formCard {
   padding: 1.4rem;
-  border-radius: 26px;
+  border-radius: var(--radius-2xl);
   border: 1px solid var(--border-color);
-  background: linear-gradient(180deg, rgba(17, 29, 22, 0.84), rgba(11, 19, 15, 0.9));
+  background: var(--panel-background);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
 }
 
@@ -103,14 +103,14 @@
   display: inline-flex;
   gap: 0.4rem;
   padding: 0.35rem;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   border: 1px solid rgba(216, 241, 224, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-input);
 }
 
 .currencyOption {
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   padding: 0.65rem 0.8rem;
   background: transparent;
   color: var(--color-muted);
@@ -130,9 +130,9 @@
 .datePicker,
 .buttonSend {
   width: 100%;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 0.85rem 1rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-input);
   border: 1px solid rgba(216, 241, 224, 0.08);
   color: var(--color-text);
 }
@@ -163,9 +163,9 @@
 .select,
 .helperBox {
   width: 100%;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 0.85rem 1rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-input);
   border: 1px solid rgba(216, 241, 224, 0.08);
   color: var(--color-text);
 }
@@ -191,7 +191,7 @@
 .cancelButton {
   margin: 1.5rem auto 0;
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 0.85rem 1.4rem;
   color: var(--color-text);
   background: transparent;

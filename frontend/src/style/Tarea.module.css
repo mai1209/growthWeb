@@ -15,9 +15,9 @@
 
 .headerCard {
   padding: 1.3rem;
-  border-radius: 28px;
+  border-radius: var(--radius-2xl);
   border: 1px solid rgba(216, 241, 224, 0.1);
-  background: linear-gradient(135deg, rgba(18, 32, 24, 0.94), rgba(9, 16, 12, 0.9));
+  background: var(--hero-background);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
 }
 
@@ -139,8 +139,8 @@
   flex: 1;
   text-align: center;
   padding: 0.45rem 0.7rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-pill);
+  background: var(--surface-hover);
   color: var(--color-text);
   font-size: 0.8rem;
   text-transform: capitalize;
@@ -281,7 +281,7 @@
   border: 1px solid rgba(216, 241, 224, 0.08);
   color: var(--color-text);
   font-size: 16px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   padding: 0.75rem 1rem;
 }
 
@@ -331,7 +331,7 @@
   display: flex;
   justify-content: space-around;
   align-items: center;
-  border-radius: 24px;
+  border-radius: var(--radius-xl);
   padding: 1rem;
   border: 1px solid rgba(216, 241, 224, 0.08);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.2);
@@ -344,7 +344,7 @@
 
 .viewButton {
   border: 1px solid rgba(216, 241, 224, 0.12);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 0.8rem 1rem;
   background: linear-gradient(135deg, rgba(59, 203, 35, 0.24), rgba(18, 43, 11, 0.92));
   color: var(--color-text);
@@ -359,13 +359,13 @@
 .emptyMessage,
 .errorMessage {
   padding: 1.2rem;
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   text-align: center;
 }
 
 .emptyMessage {
   color: var(--color-muted);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-input);
 }
 
 .errorMessage {
@@ -389,9 +389,9 @@
   gap: 1rem;
   align-items: center;
   padding: 1rem;
-  border-radius: 22px;
+  border-radius: var(--radius-xl);
   border: 1px solid rgba(216, 241, 224, 0.08);
-  background: rgba(17, 29, 22, 0.72);
+  background: var(--surface-card);
 }
 
 .listTitle {
@@ -417,9 +417,9 @@
 
 .listActions button {
   border: 1px solid rgba(216, 241, 224, 0.1);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 0.65rem 0.9rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface-hover);
   color: var(--color-text);
   cursor: pointer;
 }

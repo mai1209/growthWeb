@@ -9,7 +9,7 @@
   position: sticky;
   top: 0;
   z-index: 1300;
-  background: rgba(7, 13, 10, 0.9);
+  background: var(--nav-background);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(216, 241, 224, 0.08);
 }
@@ -55,14 +55,14 @@
   align-items: center;
   gap: 0.55rem;
   padding: 0.72rem 1rem;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   color: var(--color-muted);
   text-decoration: none;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .navLink:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface-hover);
   color: var(--color-text);
 }
 
@@ -89,8 +89,8 @@
 
 .user {
   padding: 0.65rem 0.9rem;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-lg);
+  background: var(--surface-input);
   color: var(--color-muted);
 }
 
@@ -101,11 +101,26 @@
   font-size: 0.95rem;
   border: 1px solid rgba(216, 241, 224, 0.12);
   padding: 0.7rem 1rem;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
+}
+
+.themeButton {
+  cursor: pointer;
+  background: var(--surface-input);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  border: 1px solid rgba(216, 241, 224, 0.12);
+  padding: 0.7rem 0.95rem;
+  border-radius: var(--radius-lg);
 }
 
 .menuButton,
 .mobileMenuShell {
+  display: none;
+}
+
+.mobileActions,
+.panelButton {
   display: none;
 }
 
@@ -152,15 +167,36 @@
     align-items: center;
     gap: 0.24rem;
     border: 1px solid rgba(216, 241, 224, 0.12);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-lg);
+    background: var(--surface-input);
+    cursor: pointer;
+  }
+
+  .mobileActions {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .panelButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.7rem 0.95rem;
+    border: 1px solid rgba(216, 241, 224, 0.12);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, rgba(59, 203, 35, 0.22), rgba(18, 43, 11, 0.9));
+    color: var(--color-text);
+    font-size: 0.84rem;
+    font-weight: 700;
     cursor: pointer;
   }
 
   .menuBar {
     width: 18px;
     height: 2px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: var(--color-text);
   }
 
@@ -176,7 +212,7 @@
     z-index: 2147483020;
     border: none;
     width: 100%;
-    background: rgba(0, 0, 0, 0.62);
+    background: var(--overlay-dark);
     backdrop-filter: blur(4px);
     cursor: pointer;
   }
@@ -190,10 +226,13 @@
     width: min(92vw, 430px);
     overflow-y: auto;
     padding: 1rem;
-    background:
-      linear-gradient(180deg, rgba(8, 15, 11, 0.98), rgba(11, 20, 15, 0.98));
+    background: var(--drawer-background);
     border-left: 1px solid rgba(216, 241, 224, 0.08);
     box-shadow: -18px 0 48px rgba(0, 0, 0, 0.28);
+  }
+
+  .mobilePanelDrawer {
+    width: min(94vw, 410px);
   }
 
   .mobileDrawerHeader {
@@ -221,7 +260,7 @@
 
   .mobileCloseButton {
     border: 1px solid rgba(216, 241, 224, 0.12);
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
     background: transparent;
     color: var(--color-text);
     padding: 0.65rem 0.8rem;
@@ -254,6 +293,10 @@
   .mobileSidebar :global(aside) {
     width: 100%;
   }
+
+  .mobileSidebar :global(.container) {
+    width: 100%;
+  }
 }
 
 @media (max-width: 520px) {
@@ -270,6 +313,12 @@
     top: 64px;
     width: 100%;
     padding: 0.85rem;
+  }
+
+  .panelButton {
+    min-height: 40px;
+    padding: 0.62rem 0.8rem;
+    font-size: 0.8rem;
   }
 
   .nameLogo {

@@ -4,7 +4,7 @@ import { authService } from "../api";
 import style from "../style/Login.module.css";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
-function SignupPage({ onAuthSuccess }) {
+function SignupPage({ onAuthSuccess, theme = "dark", onThemeToggle }) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,6 +52,11 @@ const newToken = res.data.token;
   return (
     <div className={style.container}>
       <div className={style.back}>
+        <div className={style.authTopbar}>
+          <button type="button" className={style.themeButton} onClick={onThemeToggle}>
+            {theme === "dark" ? "Version blanca" : "Version oscura"}
+          </button>
+        </div>
         <div className={style.containerForm}>
           <img src="./imgInicio.webp" alt="imgInicio" />
 

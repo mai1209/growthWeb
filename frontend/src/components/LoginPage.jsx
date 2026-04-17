@@ -5,7 +5,7 @@ import style from "../style/Login.module.css";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { authService } from "../api";
 
-function LoginPage({ onAuthSuccess }) {
+function LoginPage({ onAuthSuccess, theme = "dark", onThemeToggle }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false); // ✅ nuevo
@@ -58,6 +58,11 @@ const handleSubmit = async (e) => {
   return (
     <div className={style.container}>
       <div className={style.back}>
+        <div className={style.authTopbar}>
+          <button type="button" className={style.themeButton} onClick={onThemeToggle}>
+            {theme === "dark" ? "Version blanca" : "Version oscura"}
+          </button>
+        </div>
         <div className={style.containerForm}>
           <img src="./imgInicio.webp" alt="imgInicio" />
 
