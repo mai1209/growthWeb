@@ -126,6 +126,7 @@ form {
   font-weight: 600;
   margin-bottom: 2rem;
   letter-spacing: -0.5px;
+  color: var(--color-text);
 }
 
 /* =========================
@@ -144,6 +145,7 @@ form {
   font-size: 0.85rem;
   font-weight: 500;
   opacity: 0.9;
+  color: var(--color-muted);
 }
 
 .containerInput input {
@@ -153,6 +155,10 @@ form {
   color: var(--color-text);
   font-size: 16px;
   padding: 0.4rem 0;
+}
+
+.containerInput input::placeholder {
+  color: var(--color-dark-text);
 }
 
 .containerInput:focus-within {
@@ -257,16 +263,113 @@ form {
   margin-top: 0.6rem;
   font-family: "poppins";
   font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.rememberRow input {
+  accent-color: var(--color-verde);
+}
+
+.errorText {
+  margin-top: 0.85rem;
+  color: var(--color-rojo);
+  font-size: 0.92rem;
+  font-weight: 600;
 }
 
 .themeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   cursor: pointer;
   background: var(--surface-input);
   color: var(--color-text);
   font-size: 0.9rem;
   border: 1px solid rgba(216, 241, 224, 0.12);
-  padding: 0.7rem 0.95rem;
+  padding: 0.56rem 0.72rem;
   border-radius: var(--radius-lg);
+}
+
+.themeIcon {
+  width: 14px;
+  height: 14px;
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.themeSwitchTrack {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(216, 241, 224, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(216, 241, 224, 0.08);
+}
+
+.themeSwitchThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(144, 211, 106, 0.98), rgba(81, 145, 75, 0.98));
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
+  transition: transform 0.22s ease;
+}
+
+:global(body[data-theme="light"]) .back {
+  border-color: rgba(22, 41, 31, 0.09);
+  box-shadow: 0 24px 56px rgba(24, 35, 27, 0.12);
+}
+
+:global(body[data-theme="light"]) .containerForm {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.52), rgba(244, 248, 240, 0.2));
+}
+
+:global(body[data-theme="light"]) .containerInput {
+  border-bottom-color: rgba(22, 41, 31, 0.14);
+}
+
+:global(body[data-theme="light"]) .containerInput label,
+:global(body[data-theme="light"]) .rememberRow,
+:global(body[data-theme="light"]) .eye {
+  color: #526459;
+}
+
+:global(body[data-theme="light"]) .containerInput input,
+:global(body[data-theme="light"]) .title,
+:global(body[data-theme="light"]) .themeButton {
+  color: #16241d;
+}
+
+:global(body[data-theme="light"]) .containerInput input::placeholder {
+  color: #809187;
+}
+
+:global(body[data-theme="light"]) .themeButton {
+  border-color: rgba(22, 41, 31, 0.1);
+  background: rgba(244, 248, 240, 0.96);
+}
+
+:global(body[data-theme="light"]) .themeSwitchTrack {
+  background: rgba(61, 140, 68, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(22, 41, 31, 0.08);
+}
+
+:global(body[data-theme="light"]) .themeSwitchThumb {
+  transform: translateX(18px);
+  background: linear-gradient(135deg, #ffd56a, #f2a33b);
+}
+
+:global(body[data-theme="light"]) .btn {
+  color: #f8fff7;
+  box-shadow: 0 14px 28px rgba(61, 140, 68, 0.18);
+}
+
+:global(body[data-theme="light"]) .link {
+  color: #34793b;
 }
 
 /* =========================

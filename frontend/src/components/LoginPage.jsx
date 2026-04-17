@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 //import axios from "axios";
 import style from "../style/Login.module.css";
-import { FiEye, FiEyeOff } from "react-icons/fi";
+import { FiEye, FiEyeOff, FiMoon, FiSun } from "react-icons/fi";
 import { authService } from "../api";
 
 function LoginPage({ onAuthSuccess, theme = "dark", onThemeToggle }) {
@@ -59,8 +59,17 @@ const handleSubmit = async (e) => {
     <div className={style.container}>
       <div className={style.back}>
         <div className={style.authTopbar}>
-          <button type="button" className={style.themeButton} onClick={onThemeToggle}>
-            {theme === "dark" ? "Version blanca" : "Version oscura"}
+          <button
+            type="button"
+            className={style.themeButton}
+            onClick={onThemeToggle}
+            aria-label={theme === "dark" ? "Activar tema claro" : "Activar tema oscuro"}
+          >
+            <FiSun className={style.themeIcon} />
+            <span className={style.themeSwitchTrack}>
+              <span className={style.themeSwitchThumb} />
+            </span>
+            <FiMoon className={style.themeIcon} />
           </button>
         </div>
         <div className={style.containerForm}>
@@ -109,7 +118,7 @@ const handleSubmit = async (e) => {
               {loading ? <div className={style.spinner} /> : "Iniciar sesión"}
             </button>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className={style.errorText}>{error}</p>}
 
             <p className={style.link} onClick={() => navigate("/register")}>
               ¿No tenés cuenta? Registrate
