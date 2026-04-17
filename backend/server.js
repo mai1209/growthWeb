@@ -12,6 +12,20 @@ dotenv.config();
 
 const app = express();
 
+const resolveAllowedOrigins = () => {
+  const rawOrigins = [
+    process.env.FRONTEND_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.REACT_APP_API_URL,
+    process.env.APP_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+    "https://www.growthmanager.app",
+    "https://growthmanager.app",
+  ].filter(Boolean);
+
+  return [...new Set(rawOrigins.map((origin) => origin.replace(/\/+$/, "")))];
+};
+
 app.use(
   cors({
     origin(origin, callback) {
@@ -23,11 +37,17 @@ app.use(
         return callback(null, true);
       }
 
-      const allowedOrigins = [process.env.FRONTEND_URL].filter(Boolean);
+      const normalizedOrigin = origin.replace(/\/+$/, "");
+      const allowedOrigins = resolveAllowedOrigins();
 
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes(normalizedOrigin)) {
         return callback(null, true);
       }
+
+      console.error("CORS blocked origin:", {
+        origin: normalizedOrigin,
+        allowedOrigins,
+      });
 
       return callback(new Error("Origen no permitido por CORS"));
     },
