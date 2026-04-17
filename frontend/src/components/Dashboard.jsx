@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Add from "./Add";
+import { FiX } from "react-icons/fi";
 import Results from "./Results";
 import style from "../style/App.module.css";
 import { CURRENCY_OPTIONS, getCurrencyMeta } from "../utils/finance";
@@ -171,8 +172,9 @@ function Dashboard({
                 type="button"
                 className={style.closeInlineForm}
                 onClick={() => setShowOnly(null)}
+                aria-label="Cerrar formulario"
               >
-                Cerrar
+                <FiX />
               </button>
             </div>
 

@@ -252,7 +252,7 @@
   background: var(--surface-input);
   color: var(--color-text);
   border: 1px solid rgba(216, 241, 224, 0.08);
-  border-radius: 16px;
+  border-radius: 0;
 }
 
 .datePicker::-webkit-calendar-picker-indicator {
@@ -361,7 +361,7 @@
 .feedbackSuccess {
   margin: 0 0 1rem;
   padding: 0.9rem 1rem;
-  border-radius: 16px;
+  border-radius: 0;
   font-size: 0.92rem;
 }
 
@@ -433,7 +433,7 @@
   }
   .summaryCard,
   .form {
-    border-radius: 20px;
+    border-radius: 0;
     padding: 1rem;
   }
   .summaryHeader h3 {

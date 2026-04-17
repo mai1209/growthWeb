@@ -105,13 +105,59 @@
 }
 
 .themeButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   cursor: pointer;
   background: var(--surface-input);
   color: var(--color-text);
   font-size: 0.9rem;
   border: 1px solid rgba(216, 241, 224, 0.12);
-  padding: 0.7rem 0.95rem;
+  padding: 0.56rem 0.7rem;
   border-radius: var(--radius-lg);
+}
+
+.themeIcon {
+  width: 14px;
+  height: 14px;
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.themeSwitchTrack {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(216, 241, 224, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(216, 241, 224, 0.08);
+}
+
+.themeSwitchThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(144, 211, 106, 0.98), rgba(81, 145, 75, 0.98));
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.22);
+  transition: transform 0.22s ease;
+}
+
+:global(body[data-theme="light"]) .themeSwitchThumb {
+  transform: translateX(18px);
+  background: linear-gradient(135deg, #ffd56a, #f2a33b);
+}
+
+:global(body[data-theme="light"]) .themeButton {
+  border-color: rgba(22, 41, 31, 0.1);
+}
+
+:global(body[data-theme="light"]) .themeSwitchTrack {
+  background: rgba(61, 140, 68, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(22, 41, 31, 0.08);
 }
 
 .menuButton,
@@ -259,12 +305,18 @@
   }
 
   .mobileCloseButton {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
     border: 1px solid rgba(216, 241, 224, 0.12);
-    border-radius: var(--radius-lg);
-    background: transparent;
+    border-radius: 999px;
+    background: var(--surface-input);
     color: var(--color-text);
-    padding: 0.65rem 0.8rem;
     cursor: pointer;
+    flex-shrink: 0;
   }
 
   .mobileNavItems {
@@ -330,9 +382,13 @@
     flex-direction: column;
   }
 
-  .mobileCloseButton,
   .logoutButton {
     width: 100%;
     text-align: center;
+  }
+
+  .mobileCloseButton {
+    width: 36px;
+    align-self: flex-end;
   }
 }

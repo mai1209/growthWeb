@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
+import { FiMoon, FiSun, FiX } from "react-icons/fi";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
@@ -68,8 +69,9 @@ function Nav({
                   type="button"
                   className={style.mobileCloseButton}
                   onClick={onCloseMobileMenu}
+                  aria-label="Cerrar menu"
                 >
-                  Cerrar
+                  <FiX />
                 </button>
               </div>
 
@@ -93,7 +95,11 @@ function Nav({
                   Hola, {userData?.username || "Usuario"}.
                 </p>
                 <button type="button" onClick={onThemeToggle} className={style.themeButton}>
-                  {theme === "dark" ? "Version blanca" : "Version oscura"}
+                  <FiSun className={style.themeIcon} />
+                  <span className={style.themeSwitchTrack}>
+                    <span className={style.themeSwitchThumb} />
+                  </span>
+                  <FiMoon className={style.themeIcon} />
                 </button>
                 <button onClick={handleLogout} className={style.logoutButton}>
                   Cerrar Sesion
@@ -128,8 +134,9 @@ function Nav({
                   type="button"
                   className={style.mobileCloseButton}
                   onClick={onCloseMobilePanel}
+                  aria-label={`Cerrar ${panelLabel.toLowerCase()}`}
                 >
-                  Cerrar
+                  <FiX />
                 </button>
               </div>
 
@@ -168,7 +175,11 @@ function Nav({
               <p>Hola, {userData?.username || "Usuario"}!</p>
             </div>
             <button type="button" onClick={onThemeToggle} className={style.themeButton}>
-              {theme === "dark" ? "Version blanca" : "Version oscura"}
+              <FiSun className={style.themeIcon} />
+              <span className={style.themeSwitchTrack}>
+                <span className={style.themeSwitchThumb} />
+              </span>
+              <FiMoon className={style.themeIcon} />
             </button>
             <button onClick={handleLogout} className={style.logoutButton}>
               Cerrar Sesión

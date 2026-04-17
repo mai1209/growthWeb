@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../api";
 import style from "../style/Login.module.css";
-import { FiEye, FiEyeOff } from "react-icons/fi";
+import { FiEye, FiEyeOff, FiMoon, FiSun } from "react-icons/fi";
 
 function SignupPage({ onAuthSuccess, theme = "dark", onThemeToggle }) {
   const [username, setUsername] = useState("");
@@ -53,8 +53,17 @@ const newToken = res.data.token;
     <div className={style.container}>
       <div className={style.back}>
         <div className={style.authTopbar}>
-          <button type="button" className={style.themeButton} onClick={onThemeToggle}>
-            {theme === "dark" ? "Version blanca" : "Version oscura"}
+          <button
+            type="button"
+            className={style.themeButton}
+            onClick={onThemeToggle}
+            aria-label={theme === "dark" ? "Activar tema claro" : "Activar tema oscuro"}
+          >
+            <FiSun className={style.themeIcon} />
+            <span className={style.themeSwitchTrack}>
+              <span className={style.themeSwitchThumb} />
+            </span>
+            <FiMoon className={style.themeIcon} />
           </button>
         </div>
         <div className={style.containerForm}>
@@ -132,7 +141,7 @@ const newToken = res.data.token;
                 {loading ? <div className={style.spinner}></div> : "Registrate"}
               </button>
 
-              {error && <p style={{ color: "red" }}>{error}</p>}
+              {error && <p className={style.errorText}>{error}</p>}
 
               {/* ✅ navegación real */}
               <p className={style.link} onClick={() => navigate("/login")}>

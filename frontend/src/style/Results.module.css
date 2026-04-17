@@ -297,7 +297,7 @@
   }
 
   .listShell {
-    border-radius: 20px;
+    border-radius: 0;
   }
 
   .listadoPrincipal {
@@ -306,7 +306,7 @@
   }
 
   .movimientoRow {
-    border-radius: 18px;
+    border-radius: 0;
   }
 
   .rowMain {
