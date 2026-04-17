@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import AppRoutes from "./AppRoutes";
 import { movimientoService } from "../api"; // Importamos tu nuevo servicio centralizado
+import { DEFAULT_CURRENCY, normalizeCurrency } from "../utils/finance";
 
 const getStoredToken = () =>
   localStorage.getItem("token") || sessionStorage.getItem("token");
+
+const getStoredCurrency = () =>
+  normalizeCurrency(localStorage.getItem("panelCurrency") || DEFAULT_CURRENCY);
 
 function App() {
   const [token, setToken] = useState(getStoredToken()); 
@@ -12,6 +16,7 @@ function App() {
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [movementToEdit, setMovementToEdit] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
+  const [panelCurrency, setPanelCurrency] = useState(getStoredCurrency());
 
   // 1. CARGA INICIAL: Sincroniza el token apenas abre la app
   useEffect(() => {
@@ -59,10 +64,29 @@ function App() {
     return () => window.removeEventListener("storage", syncToken);
   }, [token]);
 
+  useEffect(() => {
+    localStorage.setItem("panelCurrency", panelCurrency);
+  }, [panelCurrency]);
+
   // Manejadores de eventos
-  const handleDataUpdate = () => {
+  const handleDataUpdate = (updatedItem = null) => {
     setTaskToEdit(null);
     setMovementToEdit(null);
+
+    if (updatedItem?._id && Object.prototype.hasOwnProperty.call(updatedItem, "monto")) {
+      setMovimientos((prev) => {
+        const exists = prev.some((movimiento) => movimiento._id === updatedItem._id);
+
+        if (exists) {
+          return prev.map((movimiento) =>
+            movimiento._id === updatedItem._id ? updatedItem : movimiento
+          );
+        }
+
+        return [updatedItem, ...prev];
+      });
+    }
+
     setRefreshKey((prev) => prev + 1);
   };
 
@@ -93,6 +117,8 @@ function App() {
       setMovementToEdit={setMovementToEdit}
       taskToEdit={taskToEdit}
       setTaskToEdit={setTaskToEdit}
+      panelCurrency={panelCurrency}
+      onPanelCurrencyChange={setPanelCurrency}
     />
   );
 }

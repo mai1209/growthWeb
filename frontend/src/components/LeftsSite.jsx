@@ -1,161 +1,207 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import style from "../style/LeftSite.module.css";
-import { movimientoService } from "../api";
+import {
+  CURRENCY_OPTIONS,
+  filterMovimientosByCurrency,
+  formatMoney,
+  getAverageTicket,
+  getCurrencyMeta,
+  getLatestMovimiento,
+  getTopCategory,
+  isSameMonth,
+  summarizeByType,
+} from "../utils/finance";
 
-function LeftSite({ refreshKey }) {
-  const [viewMode, setViewMode] = useState("total");
-  const [selectedMonth, setSelectedMonth] = useState(new Date());
+function LeftSite({
+  refreshKey,
+  movimientos = [],
+  currentCurrency,
+  onCurrencyChange,
+}) {
+  const navigate = useNavigate();
   const [areTotalsVisible, setAreTotalsVisible] = useState(true);
-  const [movimientos, setMovimientos] = useState([]);
-  const [totales, setTotales] = useState({ ingreso: 0, egreso: 0, total: 0 });
 
-  //const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+  const currencyMeta = getCurrencyMeta(currentCurrency);
 
-  const toggleTotalsVisibility = () => setAreTotalsVisible((prev) => !prev);
+  const currencyMovimientos = useMemo(
+    () => filterMovimientosByCurrency(movimientos, currentCurrency),
+    [movimientos, currentCurrency]
+  );
 
- useEffect(() => {
- {
-  let isMounted = true;
+  const monthMovimientos = useMemo(
+    () => currencyMovimientos.filter((movimiento) => isSameMonth(movimiento.fecha)),
+    [currencyMovimientos]
+  );
 
-  const fetchMovimientos = async () => {
-    // 1. Verificamos que exista el token en el storage antes de pedir
-    const storedToken = localStorage.getItem("token") || sessionStorage.getItem("token");
-    if (!storedToken) return;
+  const historicalSummary = useMemo(
+    () => summarizeByType(currencyMovimientos),
+    [currencyMovimientos]
+  );
 
-    try {
-      // 2. ¡OJO ACÁ!: Ya NO pases 'token' por paréntesis. 
-      // El interceptor lo saca solo del localStorage.
-      const res = await movimientoService.getAll(); 
-      
-      if (isMounted && res.data) {
-        setMovimientos(res.data);
-      }
-    } catch (err) {
-      // El error 401 ya lo maneja el interceptor (te redirige solo)
-      // Acá solo manejamos errores de conexión o del servidor
-      console.error("Error al obtener movimientos:", err.message);
-    }
-  };
+  const monthSummary = useMemo(
+    () => summarizeByType(monthMovimientos),
+    [monthMovimientos]
+  );
 
-  fetchMovimientos();
-  return () => { isMounted = false; };
-  };
+  const topExpense = useMemo(
+    () => getTopCategory(monthMovimientos, "egreso"),
+    [monthMovimientos]
+  );
 
+  const topIncome = useMemo(
+    () => getTopCategory(monthMovimientos, "ingreso"),
+    [monthMovimientos]
+  );
 
-}, [refreshKey]);
+  const latestMovimiento = useMemo(
+    () => getLatestMovimiento(currencyMovimientos),
+    [currencyMovimientos]
+  );
 
-  // 2. ÚNICO efecto para calcular totales (LÓGICA)
-  useEffect(() => {
-    // Si no hay movimientos, reseteamos totales a 0 y salimos
-    if (!movimientos || movimientos.length === 0) {
-      setTotales({ ingreso: 0, egreso: 0, total: 0 });
-      return;
-    }
+  const averageTicket = useMemo(
+    () => getAverageTicket(monthMovimientos),
+    [monthMovimientos]
+  );
 
-    let data = movimientos;
-
-    if (viewMode === "month") {
-      const month = selectedMonth.getMonth();
-      const year = selectedMonth.getFullYear();
-
-      data = movimientos.filter((m) => {
-        // Validamos que el movimiento tenga fecha para evitar el error que mencionas
-        if (!m.fecha || typeof m.fecha !== "string") return false;
-
-        const [y, mStr] = m.fecha.split(/[-T/]/);
-        return parseInt(y) === year && (parseInt(mStr) - 1) === month;
-      });
-    }
-
-    const ingreso = data
-      .filter((m) => m.tipo === "ingreso")
-      .reduce((acc, cur) => acc + Number(cur.monto || 0), 0);
-
-    const egreso = data
-      .filter((m) => m.tipo === "egreso")
-      .reduce((acc, cur) => acc + Number(cur.monto || 0), 0);
-
-    setTotales({
-      ingreso,
-      egreso,
-      total: ingreso - egreso,
-    });
-  }, [movimientos, viewMode, selectedMonth]); 
-
-  const formatNumber = (num) =>
-    num.toLocaleString("es-AR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  const hideableMoney = (amount) =>
+    areTotalsVisible ? formatMoney(amount, currentCurrency) : "••••";
 
   return (
-    <div className={style.container}>
-      {/* ... todo tu JSX de renderizado igual que antes ... */}
-      <div className={style.firstContainer}>
-        <div className={style.containerInfo}>
+    <aside className={style.container}>
+      <div className={style.panel}>
+        <div className={style.headerBlock}>
+          <p className={style.eyebrow}>Panel de control</p>
+          <h2 >Tu caja en {currencyMeta.label.toLowerCase()}</h2>
+          <p className={style.headerText}>
+            Cambia la moneda visible del panel y revisa rapido saldo, flujo del
+            mes y notas de hoy.
+          </p>
+        </div>
+
+        <div className={style.currencySwitch}>
+          {CURRENCY_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={`${style.currencyButton} ${
+                option.value === currentCurrency ? style.currencyButtonActive : ""
+              }`}
+              onClick={() => onCurrencyChange?.(option.value)}
+            >
+              <span>{option.codeLabel}</span>
+              <small>{option.label}</small>
+            </button>
+          ))}
+        </div>
+
+        <div className={style.balanceCard}>
           <div>
-            <p className={style.textTotal}>Su dinero:</p>
-            <p className={style.total}>
-              ${areTotalsVisible ? formatNumber(totales.total) : "****"}
+            <p className={style.balanceLabel}>Saldo acumulado</p>
+            <p className={style.balanceValue}>
+              {hideableMoney(historicalSummary.total)}
+            </p>
+            <p className={style.balanceHint}>
+              {currencyMovimientos.length} movimientos guardados en{" "}
+              {currencyMeta.codeLabel}
             </p>
           </div>
-          <button onClick={toggleTotalsVisibility} className={style.visibilityButton}>
-            <img 
-              className={style.visibilityIcon} 
-              src={areTotalsVisible ? "/eyeopen.png" : "/eyeclose.png"} 
-              alt="Toggle" 
-            />
+
+          <button
+            type="button"
+            onClick={() => setAreTotalsVisible((prev) => !prev)}
+            className={style.visibilityButton}
+          >
+            {areTotalsVisible ? "Ocultar" : "Mostrar"}
           </button>
         </div>
 
-        <div className={style.containerAllInfo}>
-          <div className={style.containerInfoIngreso}>
-            <p className={style.containerInfoIngresoIngresoText}>Ingresos</p>
-            <img src="/arrow.png" alt="arrow" />
-            <p className={style.containerInfoNumber}>
-              ${areTotalsVisible ? formatNumber(totales.ingreso) : "****"}
-            </p>
-          </div>
-          <div className={style.containerInfoEgreso}>
-            <p className={style.containerInfoEgresoEgresoText}>Egresos</p>
-            <img src="/arrow.png" alt="arrow" />
-            <p className={style.containerInfoNumber}>
-              ${areTotalsVisible ? formatNumber(totales.egreso) : "****"}
-            </p>
-          </div>
-          <div className={style.containerInfoTotal}>
-            <p className={style.text}>Total</p>
-            <img src="/arrow.png" alt="arrow" />
-            <p className={style.containerInfoNumber}>
-              ${areTotalsVisible ? formatNumber(totales.total) : "****"}
-            </p>
-          </div>
+        <div className={style.statGrid}>
+          <article className={`${style.statCard} ${style.statIngreso}`}>
+            <span>Ingresos del mes</span>
+            <strong>{hideableMoney(monthSummary.ingreso)}</strong>
+          </article>
+
+          <article className={`${style.statCard} ${style.statEgreso}`}>
+            <span>Egresos del mes</span>
+            <strong>{hideableMoney(monthSummary.egreso)}</strong>
+          </article>
+
+          <article className={`${style.statCard} ${style.statTotal}`}>
+            <span>Resultado mensual</span>
+            <strong>{hideableMoney(monthSummary.total)}</strong>
+          </article>
+
+          <article className={`${style.statCard} ${style.statAhorro}`}>
+            <span>Ahorro del mes</span>
+            <strong>{hideableMoney(monthSummary.ahorro)}</strong>
+          </article>
         </div>
 
-        <div className={style.viewMode}>
-          <button className={viewMode === "total" ? style.active : ""} onClick={() => setViewMode("total")}>
-            Resumen Histórico
-          </button>
-          <button className={viewMode === "month" ? style.active : ""} onClick={() => setViewMode("month")}>
-            Resumen del mes
-          </button>
-          {viewMode === "month" && (
-            <input
-              type="month"
-              value={`${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, "0")}`}
-              onChange={(e) => {
-                const [year, month] = e.target.value.split("-");
-                setSelectedMonth(new Date(year, month - 1));
-              }}
-              className={style.monthPicker}
-            />
-          )}
-        </div>
+        <section className={style.section}>
+          <div className={style.sectionTitle}>
+            <h3>Lecturas utiles</h3>
+            <p>Lo mas relevante de este mes en {currencyMeta.codeLabel}.</p>
+          </div>
+
+          <div className={style.insightList}>
+            <div className={style.insightItem}>
+              <span>Categoria con mayor egreso</span>
+              <strong>
+                {topExpense
+                  ? `${topExpense.categoria} · ${hideableMoney(topExpense.monto)}`
+                  : "Sin egresos este mes"}
+              </strong>
+            </div>
+
+            <div className={style.insightItem}>
+              <span>Categoria con mayor ingreso</span>
+              <strong>
+                {topIncome
+                  ? `${topIncome.categoria} · ${hideableMoney(topIncome.monto)}`
+                  : "Sin ingresos este mes"}
+              </strong>
+            </div>
+
+            <div className={style.insightItem}>
+              <span>Ultimo movimiento</span>
+              <strong>
+                {latestMovimiento
+                  ? `${latestMovimiento.categoria} · ${formatMoney(
+                      latestMovimiento.monto,
+                      currentCurrency
+                    )}`
+                  : "Todavia no cargaste movimientos"}
+              </strong>
+            </div>
+
+            <div className={style.insightItem}>
+              <span>Ticket promedio</span>
+              <strong>{hideableMoney(averageTicket)}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section className={style.section}>
+          <div className={style.sectionTitle}>
+            <h3>Accesos rapidos</h3>
+            <p>Movete entre caja y notas sin perder contexto.</p>
+          </div>
+
+          <div className={style.quickActions}>
+            <button type="button" onClick={() => navigate("/")}>
+              Ver resumen
+            </button>
+            <button type="button" onClick={() => navigate("/add")}>
+              Cargar movimiento
+            </button>
+            <button type="button" onClick={() => navigate("/notas")}>
+              Ir a notas
+            </button>
+          </div>
+        </section>
       </div>
-      <div className={style.containerImg}>
-        <img className={style.imgLeft} src="./imgCelu.jpg" alt="" />
-      </div>
-    </div>
+    </aside>
   );
 }
 

@@ -1,171 +1,187 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap");
-
-/* ===================== CONTAINER ===================== */
-
 .container {
-  background-color: var(--background-color);
   width: 100%;
-  padding: 0rem 0;
   color: var(--color-text);
-  font-family: "Poppins", sans-serif;
   position: relative;
 }
 
+.titleRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-end;
+  padding: 0.2rem 0 1rem;
+}
 
-/* ===================== TITLE ===================== */
+.kicker {
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+}
 
 .title {
-  padding: 0.7rem 2rem;
-  font-size: 1.3rem;
-  font-weight: 600;
+  font-size: 1.8rem;
+  margin-top: 0.35rem;
 }
 
-/* ===================== FORMS WRAPPER ===================== */
+.subtitle {
+  max-width: 34ch;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
 
-.containerAllForm {
+.modeSelector {
   display: flex;
-  gap: 4rem;
-  margin: 2rem;
-  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
 }
 
-/* ===================== FORM BASE ===================== */
-
-.formone,
-.formtwo {
-  padding: 2.2rem;
-  flex: 1;
-  max-width: 520px;
-  border-radius: 18px;
-  position: relative;
-font-size: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
-
-  animation: cardEnter 0.45s ease both;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
-}
-
-/* ===================== INGRESO / EGRESO COLORS ===================== */
-
-.formone {
-  border: 1px solid rgba(106, 198, 20, 0.35);
-  box-shadow: 0 10px 30px rgba(106, 198, 20, 0.15);
-}
-
-.formtwo {
-  border: 1px solid rgba(235, 50, 35, 0.35);
-  box-shadow: 0 10px 30px rgba(235, 50, 35, 0.15);
-}
-
-/* ===================== HOVER ===================== */
-
-.formone:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 20px 45px rgba(106, 198, 20, 0.28);
-}
-
-.formtwo:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 20px 45px rgba(235, 50, 35, 0.28);
-}
-
-/* ===================== BADGE ===================== */
-
-.formone::before,
-.formtwo::before {
-  position: absolute;
-  top: -12px;
-  left: 20px;
-  padding: 6px 16px;
+.modeButton {
+  border: 1px solid rgba(216, 241, 224, 0.12);
   border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  color: #000;
-  animation: badgePop 0.4s ease both;
+  padding: 0.7rem 0.95rem;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-muted);
+  cursor: pointer;
 }
 
-.formone::before {
-  content: "INGRESO";
-  background: linear-gradient(135deg, #6ac614, #9be68f);
-}
-
-.formtwo::before {
-  content: "EGRESO";
-  background: linear-gradient(135deg, #eb3223, #ff8a80);
-}
-
-/* ===================== INPUTS ===================== */
-
-.inputMonto {
-  text-align: center;
-  padding: 0.7rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
+.modeButtonActive {
   color: var(--color-text);
-  font-weight: 700;
-  font-size: 1.1rem;
+  background: linear-gradient(135deg, rgba(59, 203, 35, 0.24), rgba(18, 43, 11, 0.92));
 }
 
-.containerBtn,
-.containerDetalle {
+.formCard {
+  padding: 1.4rem;
+  border-radius: 26px;
+  border: 1px solid var(--border-color);
+  background: linear-gradient(180deg, rgba(17, 29, 22, 0.84), rgba(11, 19, 15, 0.9));
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+}
+
+.formIngreso {
+  box-shadow:
+    inset 0 0 0 1px rgba(144, 211, 106, 0.12),
+    0 20px 50px rgba(0, 0, 0, 0.22);
+}
+
+.formEgreso {
+  box-shadow:
+    inset 0 0 0 1px rgba(241, 141, 113, 0.12),
+    0 20px 50px rgba(0, 0, 0, 0.22);
+}
+
+.formAhorro {
+  box-shadow:
+    inset 0 0 0 1px rgba(76, 160, 154, 0.16),
+    0 20px 50px rgba(0, 0, 0, 0.22);
+}
+
+.formHeader {
   display: flex;
-  gap: 0.8rem;
-  margin-top: 1rem;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
 }
 
+.formEyebrow {
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+}
+
+.formHeader h3 {
+  margin-top: 0.35rem;
+  font-size: 1.2rem;
+  max-width: 17ch;
+  line-height: 1.2;
+}
+
+.currencySwitch {
+  display: inline-flex;
+  gap: 0.4rem;
+  padding: 0.35rem;
+  border-radius: 14px;
+  border: 1px solid rgba(216, 241, 224, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.currencyOption {
+  border: none;
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.currencyOptionActive {
+  color: var(--color-text);
+  background: linear-gradient(135deg, rgba(59, 203, 35, 0.28), rgba(16, 37, 10, 0.92));
+  box-shadow: inset 0 0 0 1px rgba(144, 211, 106, 0.35);
+}
+
+.inputMonto,
 .btn,
 .detalle,
+.datePicker,
 .buttonSend {
-  width: calc(50% - 0.4rem);
+  width: 100%;
+  border-radius: 16px;
+  padding: 0.85rem 1rem;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(216, 241, 224, 0.08);
   color: var(--color-text);
-  padding: 0.65rem;
-  border-radius: 14px;
-  font-size: 0.9rem;
+}
+
+.inputMonto {
+  font-size: 1.45rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 0.9rem;
 }
 
 .btn::placeholder,
-.detalle::placeholder {
-  color: rgba(255, 255, 255, 0.45);
+.detalle::placeholder,
+.inputMonto::placeholder {
+  color: var(--color-muted);
 }
 
-/* ===================== BUTTON ===================== */
+.datePickerWrapper {
+  width: 100%;
+}
+
+.select,
+.helperBox {
+  width: 100%;
+  border-radius: 16px;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(216, 241, 224, 0.08);
+  color: var(--color-text);
+}
+
+.helperBox {
+  color: var(--color-muted);
+  line-height: 1.5;
+}
 
 .buttonSend {
   cursor: pointer;
   font-weight: 800;
-  letter-spacing: 0.6px;
-  transition: transform 0.15s ease, background 0.15s ease;
-}
-
-.buttonSend:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-/* ===================== DATE PICKER ===================== */
-
-.datePickerWrapper {
-  width: calc(50% - 0.4rem);
-}
-
-.datePicker {
-  background: transparent;
-  border: 1px solid var(--color-text);
+  background: linear-gradient(135deg, rgba(144, 211, 106, 0.95), rgba(81, 145, 75, 0.96));
   color: var(--color-text);
-  padding: 0.55rem;
-  border-radius: 13px;
-  text-align: center;
-  font-size: 0.85rem;
-  cursor: pointer;
-  width: 100%;
+  box-shadow: inset 0 0 0 1px rgba(214, 239, 200, 0.16);
 }
-
-/* ===================== CANCEL ===================== */
 
 .cancelContainer {
   display: flex;
@@ -173,106 +189,121 @@ font-size: 16px;
 }
 
 .cancelButton {
-  margin: 3rem auto 0;
-  background: transparent;
+  margin: 1.5rem auto 0;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 0.85rem 1.4rem;
   color: var(--color-text);
-  border: 1px solid var(--color-text);
-  padding: 0.8rem 2.5rem;
-  border-radius: 14px;
+  background: transparent;
   cursor: pointer;
-  transition: background 0.15s ease;
 }
-
-.cancelButton:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-/* ===================== ERROR ===================== */
 
 .errorText {
-  color: #ff7b7b;
+  color: #ff9f8a;
   text-align: center;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
 }
 
-/* ===================== ANIMATIONS ===================== */
+.spinner {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.2rem;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: white;
+  animation: spin 0.7s linear infinite;
+}
 
-@keyframes cardEnter {
-  from {
-    opacity: 0;
-    transform: translateY(18px) scale(0.96);
-  }
+@keyframes spin {
   to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: rotate(360deg);
   }
 }
-
-@keyframes badgePop {
-  from {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.85);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* ===================== MOBILE (FULL SCREEN) ===================== */
 
 @media (max-width: 1000px) {
-  /* ✅ Pantalla completa */
-  .container {
-    position: fixed;
-    inset: 0;
-    z-index: 9999999;
-
-    padding: 2rem 0 2.5rem 0; /* deja espacio para navbar si existe */
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-
-    /* ✅ para que NO se vea nada del fondo */
-    background: var(--background-color);
+  .titleRow,
+  .formHeader {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .title {
-    padding: 0.7rem 1.2rem;
+    font-size: 1.35rem;
+  }
+
+  .subtitle {
+    max-width: none;
+    font-size: 0.88rem;
+  }
+
+  .modeButton {
+    padding: 0.62rem 0.86rem;
+    font-size: 0.88rem;
+  }
+
+  .formCard {
+    padding: 1rem;
+    border-radius: 20px;
+  }
+
+  .formHeader h3 {
     font-size: 1.05rem;
   }
 
-  .containerAllForm {
-    flex-direction: column;
-    gap: 1.2rem;
-    margin: 1rem;
-    justify-content: flex-start;
-  }
-
-  .formone,
-  .formtwo {
-    padding: 1.4rem;
-    border-radius: 16px;
-    margin-top: 2rem;
-  }
-
-  .containerBtn,
-  .containerDetalle {
-    flex-direction: column;
-  }
-
-  .btn,
-  .detalle,
-  .buttonSend,
-  .datePickerWrapper {
-    width: 100%;
-  }
-
-  .buttonSend {
+  .currencyOption {
+    padding: 0.55rem 0.72rem;
     font-size: 0.85rem;
   }
 
+  .inputMonto {
+    font-size: 1.2rem;
+  }
+
+  .select,
+  .helperBox,
+  .inputMonto,
+  .btn,
+  .detalle,
+  .datePicker,
+  .buttonSend {
+    padding: 0.78rem 0.9rem;
+  }
+
+  .fieldGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .titleRow {
+    gap: 0.7rem;
+    padding-bottom: 0.8rem;
+  }
+
+  .title {
+    font-size: 1.15rem;
+  }
+
+  .modeSelector {
+    gap: 0.5rem;
+  }
+
+  .modeButton {
+    width: 100%;
+    text-align: center;
+  }
+
+  .currencySwitch {
+    width: 100%;
+  }
+
+  .currencyOption {
+    flex: 1;
+  }
+
   .cancelButton {
-    padding: 0.75rem 1.6rem;
-    margin: 2rem auto 0;
+    width: 100%;
   }
 }

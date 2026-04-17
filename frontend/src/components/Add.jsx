@@ -1,129 +1,111 @@
-import { useState, useEffect, forwardRef } from "react";
+import { forwardRef, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-//import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Add.module.css";
 import InputMonto from "./InputMonto";
 import { movimientoService } from "../api";
+import {
+  CURRENCY_OPTIONS,
+  RECURRENCE_OPTIONS,
+  normalizeCurrency,
+} from "../utils/finance";
 
-//const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+const MODE_CONFIG = {
+  ingreso: {
+    title: "Ingreso",
+    description: "Registra cobros, ventas o entradas de efectivo.",
+    tipo: "ingreso",
+    recurrente: false,
+    tone: "ingreso",
+  },
+  egreso: {
+    title: "Egreso",
+    description: "Guarda pagos, compras o gastos operativos.",
+    tipo: "egreso",
+    recurrente: false,
+    tone: "egreso",
+  },
+  ahorro: {
+    title: "Ahorro",
+    description: "Separa dinero para objetivos, reserva o fondo de seguridad.",
+    tipo: "ahorro",
+    recurrente: false,
+    tone: "ahorro",
+  },
+  "ingreso-fijo": {
+    title: "Ingreso fijo",
+    description: "Se proyecta automaticamente segun la frecuencia elegida.",
+    tipo: "ingreso",
+    recurrente: true,
+    tone: "ingreso",
+  },
+  "egreso-fijo": {
+    title: "Gasto fijo",
+    description: "Se repite segun la frecuencia que elijas y aparece en el panel.",
+    tipo: "egreso",
+    recurrente: true,
+    tone: "egreso",
+  },
+};
 
-function Add({ onMovementAdded, movementToEdit, only }) {
+const getModeFromMovement = (movement) => {
+  if (!movement) return "ingreso";
+  if (movement.esRecurrente) {
+    return movement.tipo === "ingreso" ? "ingreso-fijo" : "egreso-fijo";
+  }
+  return movement.tipo === "ahorro" ? "ahorro" : movement.tipo;
+};
+
+function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" }) {
   const navigate = useNavigate();
-  const [ingresoMonto, setIngresoMonto] = useState("");
-  const [egresoMonto, setEgresoMonto] = useState("");
-  const [categoriaIngreso, setCategoriaIngreso] = useState("");
-  const [categoriaEgreso, setCategoriaEgreso] = useState("");
-  const [detalleIngreso, setDetalleIngreso] = useState("");
-  const [detalleEgreso, setDetalleEgreso] = useState("");
-  const [selectedDateIngreso, setSelectedDateIngreso] = useState(new Date());
-  const [selectedDateEgreso, setSelectedDateEgreso] = useState(new Date());
-
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const isEditing = !!movementToEdit;
 
+  const [selectedMode, setSelectedMode] = useState(
+    only || getModeFromMovement(movementToEdit)
+  );
+  const [monto, setMonto] = useState("");
+  const [categoria, setCategoria] = useState("");
+  const [detalle, setDetalle] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [moneda, setMoneda] = useState(normalizeCurrency(defaultCurrency));
+  const [frecuencia, setFrecuencia] = useState("mensual");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    if (isEditing) {
-      const fechaUTC = new Date(movementToEdit.fecha);
-      fechaUTC.setMinutes(fechaUTC.getMinutes() + fechaUTC.getTimezoneOffset());
-      if (movementToEdit.tipo === "ingreso") {
-        setIngresoMonto(movementToEdit.monto.toString());
-        setCategoriaIngreso(movementToEdit.categoria);
-        setDetalleIngreso(movementToEdit.detalle || "");
-        setSelectedDateIngreso(fechaUTC);
-        setEgresoMonto("");
-        setCategoriaEgreso("");
-        setDetalleEgreso("");
-        setSelectedDateEgreso(new Date());
-      } else {
-        setEgresoMonto(movementToEdit.monto.toString());
-        setCategoriaEgreso(movementToEdit.categoria);
-        setDetalleEgreso(movementToEdit.detalle || "");
-        setSelectedDateEgreso(fechaUTC);
-        setIngresoMonto("");
-        setCategoriaIngreso("");
-        setDetalleIngreso("");
-        setSelectedDateIngreso(new Date());
-      }
-    } else {
-      setIngresoMonto("");
-      setCategoriaIngreso("");
-      setDetalleIngreso("");
-      setSelectedDateIngreso(new Date());
-      setEgresoMonto("");
-      setCategoriaEgreso("");
-      setDetalleEgreso("");
-      setSelectedDateEgreso(new Date());
+    if (only) {
+      setSelectedMode(only);
     }
-  }, [movementToEdit, isEditing]);
+  }, [only]);
 
-  const handleDateChangeIngreso = (date) => setSelectedDateIngreso(date);
-  const handleDateChangeEgreso = (date) => setSelectedDateEgreso(date);
-
-  //envio de formulario
-  const handleSubmit = async (e, tipo) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    let monto, categoria, detalle, selectedDate;
-    if (tipo === "ingreso") {
-      monto = ingresoMonto;
-      categoria = categoriaIngreso;
-      detalle = detalleIngreso;
-      selectedDate = selectedDateIngreso;
-    } else {
-      monto = egresoMonto;
-      categoria = categoriaEgreso;
-      detalle = detalleEgreso;
-      selectedDate = selectedDateEgreso;
-    }
-    if (!monto || isNaN(parseFloat(monto)) || parseFloat(monto) <= 0) {
-      setError("Por favor, ingresa un monto válido.");
-      setLoading(false);
+  useEffect(() => {
+    if (!movementToEdit) {
+      setMonto("");
+      setCategoria("");
+      setDetalle("");
+      setSelectedDate(new Date());
+      setMoneda(normalizeCurrency(defaultCurrency));
+      setFrecuencia("mensual");
       return;
     }
-    const fechaLocal = new Date(selectedDate);
-    fechaLocal.setMinutes(
-      fechaLocal.getMinutes() - fechaLocal.getTimezoneOffset(),
-    );
-    const fechaFormateada = fechaLocal.toISOString().slice(0, 10);
-    const dataToSend = {
-      tipo: isEditing ? movementToEdit.tipo : tipo,
-      monto: parseFloat(monto),
-      categoria: categoria,
-      fecha: fechaFormateada,
-      detalle: detalle,
-    };
 
-    try {
-      if (isEditing) {
-        // Usamos el servicio centralizado
-        await movimientoService.update(movementToEdit._id, dataToSend);
-      } else {
-        await movimientoService.create(dataToSend);
-        // Limpiar solo los inputs del formulario usado
-        if (tipo === "ingreso") {
-          setIngresoMonto("");
-          setCategoriaIngreso("");
-          setDetalleIngreso("");
-          setSelectedDateIngreso(new Date());
-        } else {
-          setEgresoMonto("");
-          setCategoriaEgreso("");
-          setDetalleEgreso("");
-          setSelectedDateEgreso(new Date());
-        }
-      }
-      if (onMovementAdded) onMovementAdded();
-    } catch (err) {
-      setError(err.response?.data?.error || "Error al guardar el movimiento");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fechaUTC = new Date(movementToEdit.fecha);
+    fechaUTC.setMinutes(fechaUTC.getMinutes() + fechaUTC.getTimezoneOffset());
+
+    setSelectedMode(getModeFromMovement(movementToEdit));
+    setMonto(String(movementToEdit.monto ?? ""));
+    setCategoria(movementToEdit.categoria || "");
+    setDetalle(movementToEdit.detalle || "");
+    setSelectedDate(fechaUTC);
+    setMoneda(normalizeCurrency(movementToEdit.moneda));
+    setFrecuencia(movementToEdit.frecuencia || "mensual");
+  }, [movementToEdit, defaultCurrency]);
+
+  const mode = useMemo(
+    () => MODE_CONFIG[selectedMode] || MODE_CONFIG.ingreso,
+    [selectedMode]
+  );
 
   const CustomDateInput = forwardRef(({ value, onClick }, ref) => (
     <input
@@ -134,139 +116,213 @@ function Add({ onMovementAdded, movementToEdit, only }) {
       readOnly
     />
   ));
+
   CustomDateInput.displayName = "CustomDateInput";
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
+
+    if (!monto || Number.isNaN(parseFloat(monto)) || parseFloat(monto) <= 0) {
+      setError("Ingresa un monto valido.");
+      setLoading(false);
+      return;
+    }
+
+    if (!categoria.trim()) {
+      setError("La categoria es obligatoria.");
+      setLoading(false);
+      return;
+    }
+
+    const fechaLocal = new Date(selectedDate);
+    fechaLocal.setMinutes(fechaLocal.getMinutes() - fechaLocal.getTimezoneOffset());
+    const fechaFormateada = fechaLocal.toISOString().slice(0, 10);
+
+    const dataToSend = {
+      tipo: mode.tipo,
+      monto: parseFloat(monto),
+      categoria: categoria.trim(),
+      fecha: fechaFormateada,
+      detalle: detalle.trim(),
+      moneda: normalizeCurrency(moneda),
+      esRecurrente: mode.recurrente,
+      frecuencia: mode.recurrente ? frecuencia : null,
+    };
+
+    try {
+      let savedMovement;
+
+      if (isEditing) {
+        const response = await movimientoService.update(movementToEdit._id, dataToSend);
+        savedMovement = response.data;
+      } else {
+        const response = await movimientoService.create(dataToSend);
+        savedMovement = response.data;
+      }
+
+      onMovementAdded?.(savedMovement);
+
+      if (!isEditing) {
+        setMonto("");
+        setCategoria("");
+        setDetalle("");
+        setSelectedDate(new Date());
+      }
+
+      if (!only) {
+        navigate("/");
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || "Error al guardar el movimiento");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toneClass =
+    mode.tone === "ingreso"
+      ? style.formIngreso
+      : mode.tone === "egreso"
+        ? style.formEgreso
+        : style.formAhorro;
 
   return (
     <div className={style.container}>
       {loading && <div className={style.spinner}></div>}
 
-      <p className={style.title}>
-        {isEditing ? `Editando Movimiento` : "Añadir Movimiento "}
-      </p>
-
-      <div className={style.containerAllForm}>
-        {/* --- Formulario de Ingreso --- */}
-        {(!only || only === "ingreso") &&
-          (!isEditing || movementToEdit.tipo === "ingreso") && (
-            <form
-              className={style.formone}
-              onSubmit={(e) => handleSubmit(e, "ingreso")}
-            >
-              <InputMonto
-                className={style.inputMonto}
-                value={ingresoMonto}
-                onChange={setIngresoMonto}
-                disabled={isEditing && movementToEdit.tipo === "egreso"}
-              />
-              <div className={style.containerBtn}>
-                <input
-                  name="categoriaIngreso"
-                  className={style.btn}
-                  placeholder="Categoría"
-                  value={categoriaIngreso}
-                  onChange={(e) => setCategoriaIngreso(e.target.value)}
-                  required
-                  disabled={isEditing && movementToEdit.tipo === "egreso"}
-                />
-                <DatePicker
-                  selected={selectedDateIngreso}
-                  onChange={handleDateChangeIngreso}
-                  dateFormat="dd/MM/yyyy"
-                  customInput={<CustomDateInput />}
-                  wrapperClassName={style.datePickerWrapper}
-                  disabled={isEditing && movementToEdit.tipo === "egreso"}
-                />
-              </div>
-              <div className={style.containerDetalle}>
-                <input
-                  name="detalleIngreso"
-                  className={style.detalle}
-                  placeholder="Detalle"
-                  value={detalleIngreso}
-                  onChange={(e) => setDetalleIngreso(e.target.value)}
-                  disabled={isEditing && movementToEdit.tipo === "egreso"}
-                />
-                <button
-                  className={style.buttonSend}
-                  type="submit"
-                  disabled={
-                    loading || (isEditing && movementToEdit.tipo === "egreso")
-                  }
-                >
-                  {isEditing ? "Guardar Cambios" : "Añadir ingreso"}
-                </button>
-              </div>
-            </form>
-          )}
-
-        {/* --- Formulario de Egreso --- */}
-        {(!only || only === "egreso") &&
-          (!isEditing || movementToEdit.tipo === "egreso") && (
-            <form
-              className={style.formtwo}
-              onSubmit={(e) => handleSubmit(e, "egreso")}
-            >
-              <InputMonto
-                className={style.inputMonto}
-                value={egresoMonto}
-                onChange={setEgresoMonto}
-                disabled={isEditing && movementToEdit.tipo === "ingreso"}
-              />
-              <div className={style.containerBtn}>
-                <input
-                  name="categoriaEgreso"
-                  className={style.btn}
-                  placeholder="Categoría"
-                  value={categoriaEgreso}
-                  onChange={(e) => setCategoriaEgreso(e.target.value)}
-                  required
-                  disabled={isEditing && movementToEdit.tipo === "ingreso"}
-                />
-                <DatePicker
-                  selected={selectedDateEgreso}
-                  onChange={handleDateChangeEgreso}
-                  dateFormat="dd/MM/yyyy"
-                  customInput={<CustomDateInput />}
-                  wrapperClassName={style.datePickerWrapper}
-                  disabled={isEditing && movementToEdit.tipo === "ingreso"}
-                />
-              </div>
-              <div className={style.containerDetalle}>
-                <input
-                  name="detalleEgreso"
-                  className={style.detalle}
-                  placeholder="Detalle"
-                  value={detalleEgreso}
-                  onChange={(e) => setDetalleEgreso(e.target.value)}
-                  disabled={isEditing && movementToEdit.tipo === "ingreso"}
-                />
-                <button
-                  className={style.buttonSend}
-                  type="submit"
-                  disabled={
-                    loading || (isEditing && movementToEdit.tipo === "ingreso")
-                  }
-                >
-                  {isEditing ? "Guardar Cambios" : "Añadir egreso"}
-                </button>
-              </div>
-            </form>
-          )}
+      <div className={style.titleRow}>
+        <div>
+          <p className={style.kicker}>Movimientos</p>
+          <h2 className={style.title}>
+            {isEditing ? "Editar movimiento" : `Cargar ${mode.title.toLowerCase()}`}
+          </h2>
+        </div>
+        <p className={style.subtitle}>
+          {mode.recurrente
+            ? "Los movimientos fijos se renderizan automaticamente segun la frecuencia elegida."
+            : "Cada movimiento puede guardarse en pesos o dolares sin mezclar cajas."}
+        </p>
       </div>
+
+      {!only && !isEditing && (
+        <div className={style.modeSelector}>
+          {Object.entries(MODE_CONFIG).map(([key, config]) => (
+            <button
+              key={key}
+              type="button"
+              className={`${style.modeButton} ${
+                selectedMode === key ? style.modeButtonActive : ""
+              }`}
+              onClick={() => setSelectedMode(key)}
+            >
+              {config.title}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <form className={`${style.formCard} ${toneClass}`} onSubmit={handleSubmit}>
+        <div className={style.formHeader}>
+          <div>
+            <p className={style.formEyebrow}>{mode.title}</p>
+            <h3>{mode.description}</h3>
+          </div>
+
+          <div className={style.currencySwitch}>
+            {CURRENCY_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={`${style.currencyOption} ${
+                  moneda === option.value ? style.currencyOptionActive : ""
+                }`}
+                onClick={() => setMoneda(option.value)}
+              >
+                {option.codeLabel}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <InputMonto
+          className={style.inputMonto}
+          value={monto}
+          onChange={setMonto}
+          placeholder={`Monto en ${moneda === "USD" ? "USD" : "ARS"}`}
+        />
+
+        <div className={style.fieldGrid}>
+          <input
+            name="categoria"
+            className={style.btn}
+            placeholder="Categoria"
+            value={categoria}
+            onChange={(event) => setCategoria(event.target.value)}
+            required
+          />
+
+          <DatePicker
+            selected={selectedDate}
+            onChange={setSelectedDate}
+            dateFormat="dd/MM/yyyy"
+            customInput={<CustomDateInput />}
+            wrapperClassName={style.datePickerWrapper}
+          />
+        </div>
+
+        {mode.recurrente && (
+          <div className={style.fieldGrid}>
+            <select
+              className={style.select}
+              value={frecuencia}
+              onChange={(event) => setFrecuencia(event.target.value)}
+            >
+              {RECURRENCE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <div className={style.helperBox}>
+              Se tomara la fecha elegida como inicio y se repetira segun la
+              frecuencia seleccionada.
+            </div>
+          </div>
+        )}
+
+        <div className={style.fieldGrid}>
+          <input
+            name="detalle"
+            className={style.detalle}
+            placeholder="Detalle o referencia"
+            value={detalle}
+            onChange={(event) => setDetalle(event.target.value)}
+          />
+
+          <button className={style.buttonSend} type="submit" disabled={loading}>
+            {isEditing ? "Guardar cambios" : `Guardar ${mode.title.toLowerCase()}`}
+          </button>
+        </div>
+      </form>
+
       {isEditing && (
         <div className={style.cancelContainer}>
           <button
             className={style.cancelButton}
             type="button"
             onClick={() => {
-              if (onMovementAdded) onMovementAdded();
+              onMovementAdded?.();
               navigate("/");
             }}
           >
-            Cancelar Edición
+            Cancelar edicion
           </button>
         </div>
       )}
+
       {error && <p className={style.errorText}>{error}</p>}
     </div>
   );

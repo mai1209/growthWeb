@@ -205,7 +205,16 @@ export const updateTask = async (req, res) => {
     console.log("Datos recibidos para actualizar:", req.body);
 
     // 3. Extraemos los campos que SÍ queremos permitir que se actualicen
-    const { meta, fecha, horario, urgencia, color, esRecurrente, completada } =
+    const {
+      meta,
+      fecha,
+      horario,
+      urgencia,
+      color,
+      esRecurrente,
+      diasRepeticion,
+      completada,
+    } =
       req.body;
 
     // 4. Actualizamos el documento que encontramos en la base de datos
@@ -216,6 +225,9 @@ export const updateTask = async (req, res) => {
     task.color = color || task.color;
     // Para los booleanos, necesitamos una comprobación explícita
     if (esRecurrente !== undefined) task.esRecurrente = esRecurrente;
+    if (diasRepeticion !== undefined) {
+      task.diasRepeticion = task.esRecurrente ? diasRepeticion : [];
+    }
     if (completada !== undefined) task.completada = completada;
 
     // 5. Guardamos el documento actualizado (esto SIEMPRE ejecuta las validaciones del modelo)

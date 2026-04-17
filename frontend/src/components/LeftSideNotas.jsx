@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 
 import DatePicker from "react-datepicker";
 import { taskService } from "../api";
+import { getIsoDate } from "../utils/finance";
 
 //const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -17,9 +18,23 @@ const initialFormData = {
   diasRepeticion: [],
 };
 
-function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
-  const [isOpen, setIsOpen] = useState(true);
-  const isDesktop = !window.matchMedia("(max-width: 1000px)").matches;
+function LeftSideNotas({
+  onUpdate = () => {},
+  taskToEdit,
+  setIsNotesOpen,
+  refreshKey,
+  embeddedMobile = false,
+}) {
+  const [isOpen, setIsOpen] = useState(!embeddedMobile);
+  const isDesktop =
+    typeof window === "undefined"
+      ? true
+      : !window.matchMedia("(max-width: 1000px)").matches;
+  const [taskSummary, setTaskSummary] = useState({
+    pending: 0,
+    completed: 0,
+    total: 0,
+  });
 
   // ✅ Avisar al layout si está abierto/cerrado
   useEffect(() => {
@@ -31,6 +46,11 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
   }, [isOpen, setIsNotesOpen]);
 
   useEffect(() => {
+    if (embeddedMobile) {
+      setIsOpen(true);
+      return undefined;
+    }
+
     const mediaQuery = window.matchMedia("(max-width: 1000px)");
 
     const handleResize = (e) => {
@@ -43,9 +63,12 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
     return () => {
       mediaQuery.removeEventListener("change", handleResize);
     };
-  }, []);
+  }, [embeddedMobile]);
 
-  const toggleContainer = () => setIsOpen((prev) => !prev);
+  const toggleContainer = () => {
+    if (embeddedMobile) return;
+    setIsOpen((prev) => !prev);
+  };
 
   const [formData, setFormData] = useState(initialFormData);
   const [error, setError] = useState("");
@@ -68,6 +91,43 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
       setFormData(initialFormData);
     }
   }, [taskToEdit]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchTaskSummary = async () => {
+      const storedToken =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
+
+      if (!storedToken) return;
+
+      try {
+        const today = getIsoDate(new Date());
+        const response = await taskService.getByDate(today);
+
+        if (!isMounted || !Array.isArray(response.data)) return;
+
+        const pending = response.data.filter((task) => !task.completada).length;
+        const completed = response.data.length - pending;
+
+        setTaskSummary({
+          pending,
+          completed,
+          total: response.data.length,
+        });
+      } catch (error) {
+        if (isMounted) {
+          setTaskSummary({ pending: 0, completed: 0, total: 0 });
+        }
+      }
+    };
+
+    fetchTaskSummary();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [refreshKey]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -133,7 +193,7 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
 
       setTimeout(() => {
         if (!taskToEdit) setFormData(initialFormData);
-        if (!isDesktop) setIsOpen(false);
+        if (!isDesktop && !embeddedMobile) setIsOpen(false);
         setSuccess("");
       }, 900);
     } catch (err) {
@@ -149,35 +209,64 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
     <div
       className={`${style.container} ${
         isOpen ? style.containerOpenn : ""
-      } ${isEditing ? style.editingStyle : ""}`}
+      } ${isEditing ? style.editingStyle : ""} ${
+        embeddedMobile ? style.embeddedMobile : ""
+      }`}
     >
-      <div className={style.containerOpen}>
-        <div
-          className={`${style.containerOpenClose} ${isOpen ? style.open : ""}`}
-          onClick={toggleContainer}
-        >
-          <p className={style.close} onClick={onUpdate}>
-            {isDesktop
-              ? "Crear un hábito +"
-              : isOpen
-                ? "✕"
-                : "Crear un hábito +"}
-          </p>
+      {!embeddedMobile && (
+        <div className={style.containerOpen}>
+          <div
+            className={`${style.containerOpenClose} ${isOpen ? style.open : ""}`}
+            onClick={toggleContainer}
+          >
+            <p className={style.close} onClick={onUpdate}>
+              {isDesktop
+                ? "Crear un hábito +"
+                : isOpen
+                  ? "✕"
+                  : "Crear un hábito +"}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {isOpen && (
         <>
           <div className={style.containerInfo}>
+            <p className={style.kicker}>Notas y habitos</p>
             <p className={style.titleKeep}>
-              {isEditing ? "Editar Hábito" : "Crea un habito"}
+              {isEditing ? "Editar habito" : "Crea un habito"}
+            </p>
+            <p className={style.subtitleHeader}>
+              Organiza tareas, recordatorios y repeticiones con el mismo look del
+              panel principal.
             </p>
           </div>
 
-          {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
-          {success && (
-            <p style={{ color: "green", marginTop: "10px" }}>{success}</p>
-          )}
+          <section className={style.summaryCard}>
+            <div className={style.summaryHeader}>
+              <h3>Resumen de hoy</h3>
+              <p>Tareas y habitos del dia actual.</p>
+            </div>
+
+            <div className={style.notesCard}>
+              <div>
+                <span>Pendientes</span>
+                <strong>{taskSummary.pending}</strong>
+              </div>
+              <div>
+                <span>Completadas</span>
+                <strong>{taskSummary.completed}</strong>
+              </div>
+              <div>
+                <span>Total</span>
+                <strong>{taskSummary.total}</strong>
+              </div>
+            </div>
+          </section>
+
+          {error && <p className={style.feedbackError}>{error}</p>}
+          {success && <p className={style.feedbackSuccess}>{success}</p>}
 
           <div className={style.containerForm}>
             <form className={style.form} onSubmit={handleSubmit}>
@@ -272,7 +361,7 @@ function LeftSideNotas({ onUpdate = () => {}, taskToEdit, setIsNotesOpen }) {
                     {loading
                       ? "Guardando..."
                       : isEditing
-                        ? "Guardar Cambios"
+                        ? "Guardar cambios"
                         : "Añade un habito"}
                   </p>
                 </button>

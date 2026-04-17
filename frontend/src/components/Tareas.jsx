@@ -70,10 +70,14 @@ function Tareas({  refreshKey, onEditClick }) {
   };
 
   const renderContent = () => {
-    if (loading) return <p>Cargando tareas...</p>;
-    if (error) return <p style={{ color: "red" }}>{error}</p>;
+    if (loading) return <p className={style.emptyMessage}>Cargando tareas...</p>;
+    if (error) return <p className={style.errorMessage}>{error}</p>;
     if (tasks.length === 0)
-      return <p>Aún no tienes tareas. ¡Añade una para comenzar!</p>;
+      return (
+        <p className={style.emptyMessage}>
+          Aun no tienes tareas. Anade una para comenzar.
+        </p>
+      );
 
     return tasks.map((task) => (
       <div className={style.taskContainer} key={task._id}>
@@ -93,9 +97,12 @@ function Tareas({  refreshKey, onEditClick }) {
 
           <div className={style.taskHeader}>
             <p className={style.taskMeta}>{task.meta}</p>
+            <p className={style.taskDate}>
+              {task.fecha ? task.fecha.slice(0, 10) : "-"}
+            </p>
           </div>
 
-          <div>
+          <div className={style.taskInfoBlock}>
             <p className={style.taskUrgency}> {task.urgencia}</p>
           </div>
 
@@ -124,34 +131,30 @@ function Tareas({  refreshKey, onEditClick }) {
   };
 
   const renderListTable = () => {
-    if (loading) return <p>Cargando tareas...</p>;
-    if (error) return <p style={{ color: "red" }}>{error}</p>;
+    if (loading) return <p className={style.emptyMessage}>Cargando tareas...</p>;
+    if (error) return <p className={style.errorMessage}>{error}</p>;
     if (!tasks || tasks.length === 0)
-      return <p style={{ textAlign: "center" }}>No hay tareas para esta fecha.</p>;
+      return <p className={style.emptyMessage}>No hay tareas para esta fecha.</p>;
 
     return (
-      <div>
+      <div className={style.taskListMode}>
         {tasks.map((t) => (
-          <div key={t._id}>
-            <p>{t.meta}</p>
-            <p>
+          <div key={t._id} className={style.listRow}>
+            <div>
+              <p className={style.listTitle}>{t.meta}</p>
+              <p className={style.listMeta}>
+                {t.urgencia} ·{" "}
+                <span className={style.listState}>
+                  {t.completada ? "Hecho" : "Pendiente"}
+                </span>
+              </p>
+            </div>
+
+            <p className={style.listSchedule}>
               {t.fecha ? t.fecha.slice(0, 10) : "-"} · {t.horario || "--:--"}
             </p>
 
-            <div>
-              <span>{t.urgencia}</span>
-              <span
-                className={
-                  t.completada
-                    ? resultsStyle.estadoHecho
-                    : resultsStyle.estadoPendiente
-                }
-              >
-                {t.completada ? "Hecho" : "Pendiente"}
-              </span>
-            </div>
-
-            <div className={resultsStyle.taskActions}>
+            <div className={style.listActions}>
               <button onClick={() => onEditClick(t)}>Editar</button>
               <button onClick={() => handleDeleteTask(t._id)}>Eliminar</button>
             </div>
@@ -167,14 +170,19 @@ function Tareas({  refreshKey, onEditClick }) {
 
   return (
     <div className={`${style.container} ${isNotesOpen ? style.hiddenMobile : ""}`}>
-      <div>
-        <div className={resultsStyle.titleContainer}>
-          <h1 style={{ margin: 0 }}>
+      <div className={style.headerShell}>
+        <div className={style.headerCard}>
+          <p className={style.kicker}>Panel de notas</p>
+          <h1 className={style.pageTitle}>
             {showList ? "Todas las Tareas" : "Mis Tareas de hoy"}
           </h1>
+          <p className={style.pageText}>
+            Mantiene el mismo estilo del dashboard y te deja alternar entre vista
+            diaria y lista completa.
+          </p>
 
           <div className={style.containerFecha}>
-            <p>Tareas de </p>
+            <p>Tareas de</p>
             {!showList && (
               <DatePicker
                 selected={selectedDate}
@@ -184,24 +192,24 @@ function Tareas({  refreshKey, onEditClick }) {
               />
             )}
           </div>
-        </div>
 
-        <div className={style.lista}>
-          {!showList ? (
-            <button
-              onClick={() => setShowList(true)}
-              className={`${resultsStyle.datePicker} ${resultsStyle.allMovimientos}`}
-            >
-              Ver las tareas en lista
-            </button>
-          ) : (
-            <button
-              onClick={() => setShowList(false)}
-              className={resultsStyle.datePicker}
-            >
-              Volver a tareas por fecha
-            </button>
-          )}
+          <div className={style.lista}>
+            {!showList ? (
+              <button
+                onClick={() => setShowList(true)}
+                className={`${style.viewButton} ${style.viewButtonAlt}`}
+              >
+                Ver tareas en lista
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowList(false)}
+                className={style.viewButton}
+              >
+                Volver a la vista diaria
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

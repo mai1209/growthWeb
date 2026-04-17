@@ -1,14 +1,15 @@
-import { useState, useMemo, forwardRef } from "react";
-//import axios from "axios";
-//import LoginPage from "./LoginPage";
-//import SignupPage from "./SignupPage";
+import { forwardRef, useMemo, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Results.module.css";
 import { movimientoService } from "../api";
-//const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+import {
+  filterMovimientosByCurrency,
+  getMovementTypeMeta,
+  formatSignedMoney,
+  getCurrencyMeta,
+} from "../utils/finance";
 
-// 📅 Botón calendario custom
 const CalendarButton = forwardRef(({ onClick }, ref) => (
   <button
     type="button"
@@ -20,41 +21,50 @@ const CalendarButton = forwardRef(({ onClick }, ref) => (
   </button>
 ));
 
-function Results({
+CalendarButton.displayName = "CalendarButton";
 
-onEditClick,
-  movimientos,
+function Results({
+  onEditClick,
+  movimientos = [],
   onMovementUpdate,
   onShowAllChange,
+  currentCurrency,
 }) {
-  // ---------------- ESTADOS ----------------
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAll, setShowAll] = useState(false);
-  const [titulo, setTitulo] = useState("Movimientos de Hoy");
-  const [activeButton, setActiveButton] = useState("today"); // 👈 clave
+  const [titulo, setTitulo] = useState("Movimientos de hoy");
+  const [activeButton, setActiveButton] = useState("today");
 
-  // ---------------- FILTRADO ----------------
-  const filteredMovimientos = useMemo(() => {
-    if (!Array.isArray(movimientos)) return [];
+  const currencyMeta = getCurrencyMeta(currentCurrency);
 
-    if (showAll) return movimientos;
+  const currencyMovimientos = useMemo(
+    () => {
+      if (showAll) {
+        return filterMovimientosByCurrency(movimientos, currentCurrency, {
+          to: new Date(),
+        });
+      }
 
-    const localDate = new Date(selectedDate);
-    localDate.setMinutes(
-      localDate.getMinutes() - localDate.getTimezoneOffset()
-    );
-    const formatted = localDate.toISOString().slice(0, 10);
+      return filterMovimientosByCurrency(movimientos, currentCurrency, {
+        from: selectedDate,
+        to: selectedDate,
+      });
+    },
+    [movimientos, currentCurrency, selectedDate, showAll]
+  );
 
-    return movimientos.filter((mov) => mov.fecha.slice(0, 10) === formatted);
-  }, [movimientos, selectedDate, showAll]);
+  const filteredMovimientos = useMemo(
+    () =>
+      [...currencyMovimientos].sort(
+        (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+      ),
+    [currencyMovimientos]
+  );
 
-  const listaFinal = showAll ? movimientos : filteredMovimientos;
-
-  // ---------------- HANDLERS ----------------
   const handleDateChange = (date) => {
     setSelectedDate(date);
     setShowAll(false);
-    setTitulo(`Movimientos del día ${date.toLocaleDateString("es-AR")}`);
+    setTitulo(`Movimientos del ${date.toLocaleDateString("es-AR")}`);
     setActiveButton("calendar");
     onShowAllChange?.(false);
   };
@@ -63,57 +73,51 @@ onEditClick,
     const today = new Date();
     setSelectedDate(today);
     setShowAll(false);
-    setTitulo("Movimientos de Hoy");
+    setTitulo("Movimientos de hoy");
     setActiveButton("today");
     onShowAllChange?.(false);
   };
 
- const handleAllMovimientos = () => {
-  setShowAll(true);
-  setTitulo("Todos los Movimientos");
-  setActiveButton("all");
-  onShowAllChange?.(true);
-};
+  const handleAllMovimientos = () => {
+    setShowAll(true);
+    setTitulo("Historial completo");
+    setActiveButton("all");
+    onShowAllChange?.(true);
+  };
 
-
-// 2. ELIMINACIÓN REFACTORIZADA
   const handleDeleteMovimiento = async (id) => {
     if (!window.confirm("¿Eliminar movimiento?")) return;
 
     try {
-      // Usamos el servicio centralizado
-      await movimientoService.delete(id); 
-      onMovementUpdate?.(); // Avisamos al padre (App.js) para que refresque la lista
-    } catch (err) {
-      console.error("Error al eliminar:", err);
+      await movimientoService.delete(id);
+      onMovementUpdate?.();
+    } catch (error) {
       alert("No se pudo eliminar el movimiento");
     }
   };
-const formatMonto = (monto) => {
-  return new Intl.NumberFormat("es-AR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(monto);
-};
 
-
-
-  // ---------------- UTIL ----------------
   const formatFecha = (fechaISO) => {
     if (!fechaISO) return "";
-    const f = new Date(fechaISO);
-    return `${f.getDate()}/${f
-      .toLocaleDateString("es-AR", { month: "long" })
-      .replace(/^./, (l) => l.toUpperCase())}/${f.getFullYear()}`;
+    const fecha = new Date(fechaISO);
+    return fecha.toLocaleDateString("es-AR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
-  // ---------------- RENDER ----------------
   return (
-    <div className={style.container}>
-      {/* HEADER */}
+    <section className={style.container}>
       <div className={style.header}>
+        <div className={style.titleGroup}>
+          <p className={style.eyebrow}>Historial filtrado</p>
+          <h2>{titulo}</h2>
+          <p>
+            Mostrando solo movimientos guardados en {currencyMeta.label.toLowerCase()}.
+          </p>
+        </div>
+
         <div className={style.datePickerContainer}>
-          {/* CALENDARIO */}
           <div
             className={`${style.icon} ${
               activeButton === "calendar" ? style.active : ""
@@ -127,11 +131,11 @@ const formatMonto = (monto) => {
               popperPortalId="root"
               popperPlacement="bottom-start"
             />
-            <p>Calendario</p>
+            <p>Fecha</p>
           </div>
 
-          {/* HOY */}
           <button
+            type="button"
             onClick={handleToday}
             className={`${style.icon} ${
               activeButton === "today" ? style.active : ""
@@ -141,8 +145,8 @@ const formatMonto = (monto) => {
             <p>Hoy</p>
           </button>
 
-          {/* HISTORIAL */}
           <button
+            type="button"
             onClick={handleAllMovimientos}
             className={`${style.icon} ${
               activeButton === "all" ? style.active : ""
@@ -154,76 +158,100 @@ const formatMonto = (monto) => {
         </div>
       </div>
 
-      {/* TITULO */}
-      <div className={style.titulocontainer}>
-        <p className={style.titulo}>{titulo}</p>
-      </div>
-
-      <div className={style.containerAllPublicidadResults}>
-        <div className={style.containerImg}>
-          <img className={style.publicidad} src="./publicidad.jpg" alt="publicidad" />
-        </div>
-        {/* LISTADO */}
-        <div className={style.listadoPrincipal}>
-          {listaFinal.length === 0 ? (
-            <p style={{ textAlign: "center", marginTop: "2rem" }}>
-              No hay movimientos para mostrar.
+      <div className={style.listShell}>
+        {filteredMovimientos.length === 0 ? (
+          <div className={style.emptyState}>
+            <h3>No hay movimientos para mostrar</h3>
+            <p>
+              Cambia la fecha o la moneda del panel para revisar otra caja.
             </p>
-          ) : (
-            listaFinal.map((mov) => (
-              <div
-                key={mov._id}
+          </div>
+        ) : (
+          <div className={style.listadoPrincipal}>
+            {filteredMovimientos.map((movimiento) => (
+              <article
+                key={movimiento._id}
                 className={`${style.movimientoRow} ${
-                  mov.tipo === "ingreso"
+                  movimiento.tipo === "ingreso"
                     ? style.bordeIngreso
-                    : style.bordeEgreso
+                    : movimiento.tipo === "ahorro"
+                      ? style.bordeAhorro
+                      : style.bordeEgreso
                 }`}
               >
-                <div className={style.columna1}>
-                  <p className={style.categoriaTexto}>{mov.categoria}</p>
-                  <p className={style.fechaTexto}>{formatFecha(mov.fecha)}</p>
-                </div>
+                <div className={style.rowMain}>
+                  <div className={style.rowTop}>
+                    <div>
+                      <p className={style.categoriaTexto}>{movimiento.categoria}</p>
+                      <p className={style.detalleTexto}>
+                        {movimiento.detalle || "Sin detalle"}
+                      </p>
+                    </div>
 
-                <div className={style.columnados}>
-                  <div className={style.columna2}>
-                    <p
-                      className={`${style.montoTexto} ${
-                        mov.tipo === "ingreso"
-                          ? style.montoIngreso
-                          : style.montoEgreso
-                      }`}
-                    >
-                      {mov.tipo === "ingreso" ? "+" : "-"} ${formatMonto(mov.monto)}
-                    </p>
-                    <p className={style.detalleTexto}>
-                      {mov.detalle || "sin detalle"}
-                    </p>
+                    <div className={style.badges}>
+                      {movimiento.esRecurrente && (
+                        <span className={style.recurrenceBadge}>
+                          Fijo {movimiento.frecuencia}
+                        </span>
+                      )}
+                      <span className={style.currencyBadge}>
+                        {currencyMeta.codeLabel}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className={style.columna3}>
-                    <button
-                      onClick={() => onEditClick(mov)}
-                      className={style.btnAccion}
-                    >
-                      <img src="/edit.png" alt="edit" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteMovimiento(mov._id)}
-                      className={style.btnAccion}
-                    >
-                      <img src="/trush.png" alt="delete" />
-                    </button>
+                  <div className={style.rowBottom}>
+                    <div className={style.metaBlock}>
+                      <span>{formatFecha(movimiento.fecha)}</span>
+                      <span className={style.typeLabel}>
+                        {getMovementTypeMeta(movimiento.tipo).label}
+                        {movimiento.isVirtualOccurrence ? " programado" : ""}
+                      </span>
+                      <strong
+                        className={
+                          movimiento.tipo === "ingreso"
+                            ? style.montoIngreso
+                            : movimiento.tipo === "ahorro"
+                              ? style.montoAhorro
+                              : style.montoEgreso
+                        }
+                      >
+                        {formatSignedMoney(
+                          movimiento.monto,
+                          currentCurrency,
+                          getMovementTypeMeta(movimiento.tipo).signedAsPositive
+                        )}
+                      </strong>
+                    </div>
+
+                    <div className={style.columna3}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onEditClick(movimiento.sourceMovimiento || movimiento)
+                        }
+                        className={style.btnAccion}
+                      >
+                        <img src="/edit.png" alt="edit" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleDeleteMovimiento(movimiento.sourceId || movimiento._id)
+                        }
+                        className={style.btnAccion}
+                      >
+                        <img src="/trush.png" alt="delete" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
-        <div className={style.containerImg}>
-          <img className={style.publicidad} src="./publicidad.jpg" alt="publicidad" />
-        </div>
+              </article>
+            ))}
+          </div>
+        )}
       </div>
-    </div>
+    </section>
   );
 }
 

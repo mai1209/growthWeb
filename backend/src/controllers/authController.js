@@ -3,7 +3,9 @@ import { generateToken } from '../utils/jwt.js';
 
 export const signup = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const username = req.body.username?.trim();
+    const email = req.body.email?.trim().toLowerCase();
+    const password = req.body.password;
 
     if (!username || !email || !password)
       return res.status(400).json({ error: 'Todos los campos son requeridos' });
@@ -28,7 +30,8 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password, rememberMe } = req.body;
+    const email = req.body.email?.trim().toLowerCase();
+    const { password, rememberMe } = req.body;
 
     if (!email || !password)
       return res.status(400).json({ error: 'Email y contraseña requeridos' });
@@ -54,4 +57,3 @@ export const login = async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
-

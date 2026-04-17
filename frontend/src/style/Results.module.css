@@ -1,285 +1,184 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+.container {
+  margin-top: 0;
+  color: var(--color-text);
+}
 
 .header {
   display: flex;
-  gap: 1rem;
-  margin: 2rem 3rem 1rem 5rem;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
 }
 
-.titleContainer {
+.titleGroup h2 {
+  font-size: 1.6rem;
+  margin: 0.25rem 0 0.45rem;
+}
+
+.titleGroup p,
+.eyebrow {
+  color: var(--color-muted);
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.76rem;
+}
+
+.datePickerContainer {
+  display: inline-flex;
+  border-radius: 18px;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+}
+
+.icon {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 4rem 3rem 1rem;
-}
-
-.titleContainer h1 {
-  font-size: 1.9rem;
-  font-family: "poppins";
-}
-
-.visibilityButton {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  margin-top: -5px;
-}
-
-.visibilityIcon {
-  width: 24px;
-  height: 24px;
-  filter: invert(1);
-}
-
-.container {
-  width: calc(100vw - 287px);
-  color: var(--color-text);
-  background-color: transparent;
-}
-
-.containerInfoAll {
-  border-radius: 12px;
-  box-shadow: inset 0 0 10px #ffffff1d;
-  padding: 1rem;
-  display: flex;
-  justify-content: center;
-  margin: 1rem auto;
-  gap: 3rem;
-  flex-wrap: wrap;
-  max-width: 1200px;
-}
-
-.containerInfo {
-  width: 100%;
-  height: 100px;
-}
-
-.bordeIngreso0 {
-  border: 0.2px solid var(--color-verde);
-  border-radius: 8px;
-}
-
-.bordeEgreso0 {
-  border: 0.2px solid var(--color-rojo);
-  border-radius: 8px;
-}
-
-.info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  line-height: 1.5rem;
-}
-
-.info p {
-  margin: 0;
-  text-align: center;
-}
-
-.monto {
-  font-size: 1.5rem;
-  font-family: "Poppins", sans-serif;
-  font-weight: 500;
-  display: flex;
-  width: 300px;
-  justify-content: center;
-}
-
-.containerFirstInfo {
-  display: flex;
-  gap: 2rem;
-  justify-content: center;
-}
-
-.deleteButton {
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 0.7rem;
-}
-
-.ButtonImg {
-  width: 15px;
-  margin-top: 4px;
-  cursor: pointer;
-}
-
-.deleteButton:hover {
-  transform: scale(1.1);
-}
-
-.arrowResult {
-  width: 30px;
-  height: 30px;
-  padding-top: 3px;
-}
-
-.containerArrowDelete {
-  display: flex;
-  justify-content: center;
   align-items: center;
-}
-
-.containerButton {
-  display: flex;
-  flex-direction: row;
-}
-
-.allMovimientosContainer {
-  margin-bottom: 2rem;
-}
-
-.movimientosTable {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 12px;
-  font-family: "Arial", sans-serif;
-  margin-top: 1rem;
-}
-
-.movimientosTable td {
-  border-bottom: none;
-  padding: 0.75rem 1rem;
-  background-color: var(--background-color);
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 88px;
+  min-height: 78px;
+  padding: 0.75rem;
+  border: none;
   color: var(--color-text);
-  border-radius: 0;
-}
-
-.movimientosTable tr:hover td {
-  background-color: #e0e0e070;
-}
-
-.titleMovimientos th {
-  color: #545b77;
-  font-weight: 600;
-  padding: 0.75rem 1rem;
-  text-align: start;
-}
-
-.movimientosTable button {
-  padding: 0.25rem 0.5rem;
-  margin-right: 0.25rem;
-  border: none;
-  border-radius: 4px;
+  background: transparent;
   cursor: pointer;
-  font-size: 0.85rem;
 }
 
-.movimientosTable button:first-child {
-  background-color: #4caf50;
-  color: white;
+.icon + .icon {
+  border-left: 1px solid rgba(216, 241, 224, 0.08);
 }
 
-.movimientosTable button:last-child {
-  background-color: #f44336;
-  color: white;
+.icon p {
+  font-size: 0.78rem;
 }
 
-.btnAccion {
-  background: none;
+.icon img,
+.calendarButton img {
+  width: 22px;
+  height: 22px;
+}
+
+.calendarButton {
   border: none;
+  background: transparent;
   cursor: pointer;
-  padding: 0;
-  margin: 0 0.2rem;
 }
 
-.btnAccion img {
-  width: 16px;
-  height: 16px;
+.active {
+  background: rgba(144, 211, 106, 0.14);
 }
 
-.react-datepicker-popper {
-  z-index: 9999999999 !important;
+.listShell {
+  border-radius: 26px;
+  border: 1px solid var(--border-color);
+  background: rgba(11, 20, 15, 0.88);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
 }
 
 .listadoPrincipal {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  flex: 1;
-
-  max-height: 30rem;
-  overflow-y: scroll;
-  scrollbar-width: 1px;
-  scrollbar-color: #88888898 #111;
-}
-
-.containerAllPublicidadResults {
-  display: flex;
-  justify-content: space-around;
-  gap: 1rem;
-  padding: 0 2rem;
-  height: fit-content;
-
-}
-
-.publicidad {
-  width: 200px;
-  height: 100%;
-}
-
-.containerImg{
-  height: 60vh;
+  gap: 0.9rem;
+  padding: 1rem;
+  max-height: 34rem;
+  overflow-y: auto;
 }
 
 .movimientoRow {
+  border-radius: 20px;
+  border: 1px solid rgba(216, 241, 224, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.bordeIngreso {
+  box-shadow: inset 0 0 0 1px rgba(144, 211, 106, 0.16);
+}
+
+.bordeEgreso {
+  box-shadow: inset 0 0 0 1px rgba(241, 141, 113, 0.16);
+}
+
+.bordeAhorro {
+  box-shadow: inset 0 0 0 1px rgba(76, 160, 154, 0.2);
+}
+
+.rowMain {
+  padding: 1rem 1.05rem;
+}
+
+.rowTop,
+.rowBottom {
   display: flex;
   justify-content: space-between;
-  padding: 0.8rem;
-  cursor: pointer;
-}
-
-.movimientoRow:hover {
-  background-color: #3bcb23;
-  color: #111;
-}
-
-.columna1 {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.columna2 {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.columna3 {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.columnados {
-  display: flex;
   gap: 1rem;
+  align-items: center;
+}
+
+.rowBottom {
+  margin-top: 0.9rem;
 }
 
 .categoriaTexto {
-  font-family: "poppins", sans-serif;
-  font-size: 1rem;
-  font-weight: 600;
-}
-.categoriaTexto::first-letter {
-  text-transform: uppercase;
+  font-size: 1.05rem;
+  font-weight: 700;
 }
 
-.fechaTexto {
-  color: #545b77;
-  font-size: 0.8rem;
-  font-family: "poppins", sans-serif;
-  font-style: italic;
+.detalleTexto {
+  margin-top: 0.25rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
 }
 
-.montoTexto {
-  font-family: "poppins", sans-serif;
+.currencyBadge {
+  border-radius: 999px;
+  padding: 0.4rem 0.7rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: #d6e5d1;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.badges {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.recurrenceBadge {
+  border-radius: 999px;
+  padding: 0.4rem 0.7rem;
+  background: rgba(59, 203, 35, 0.16);
+  color: #dff8d5;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.metaBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metaBlock span {
+  color: var(--color-dark-text);
+  font-size: 0.85rem;
+}
+
+.typeLabel {
+  color: var(--color-muted) !important;
+  text-transform: capitalize;
+}
+
+.metaBlock strong {
   font-size: 1rem;
-  font-weight: 500;
 }
 
 .montoIngreso {
@@ -290,171 +189,191 @@
   color: var(--color-rojo);
 }
 
-.detalleTexto {
-  font-family: "poppins", sans-serif;
-  font-size: 0.8rem;
-  font-weight: 500;
+.montoAhorro {
+  color: #72d4cf;
 }
 
-.calendarButton {
-  background: none;
-  border: none;
-}
-
-.icon {
-  width: fit-content;
-  height: 52.8px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
+.columna3 {
   display: flex;
-  justify-content: center;
+  gap: 0.45rem;
+}
+
+.btnAccion {
+  border: none;
+  border-radius: 12px;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
   align-items: center;
-  gap: 0rem;
-  flex-direction: column;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
 }
 
-.icon:nth-child(2) {
-  border-left: 0.5px solid var(--color-text);
+.btnAccion img {
+  width: 16px;
+  height: 16px;
 }
 
-.icon:nth-child(3) {
-  border-left: 0.5px solid var(--color-text);
+.emptyState {
+  padding: 3.5rem 1.4rem;
+  text-align: center;
 }
 
-.icon img {
-  width: 22px;
-  height: 22px;
+.emptyState h3 {
+  margin-bottom: 0.4rem;
 }
 
-.icon p {
-  font-size: 0.8rem;
-  color: var(--color-text);
+.emptyState p {
+  color: var(--color-muted);
 }
 
-.datePickerContainer {
-  border: 0.5px solid var(--color-text);
-  border-radius: 8px;
-  transition: background-color 0.2s ease;
+.titleContainer {
   display: flex;
-  transition: background-color 0.2s ease;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 2rem 2rem 0;
 }
 
-.active {
-  background-color: #32472c; 
-  border-bottom-right-radius: 8px;
-  border-top-right-radius: 8px;
-
+.datePicker {
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.titulo {
-  text-align: start;
-  padding: 1rem 5rem 2rem 17rem;
-  width: 100%;
+.allMovimientos {
+  cursor: pointer;
+}
 
-  background: rgba(0, 0, 0, 0.12);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+.estadoHecho {
+  color: var(--color-verde);
+}
+
+.estadoPendiente {
+  color: var(--color-rojo);
+}
+
+.taskActions {
+  display: flex;
+  gap: 0.6rem;
 }
 
 @media (max-width: 1000px) {
-  .container {
-    position: relative;
-    top: 430px;
-    left: 0;
-    width: 100vw;
-  }
   .header {
-    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     gap: 1rem;
-    margin-left: 0.5rem;
-    position: fixed;
-    top: 19rem;
-    z-index: 8888888;
+  }
+
+  .titleGroup h2 {
+    font-size: 1.2rem;
+  }
+
+  .titleGroup p {
+    font-size: 0.85rem;
   }
 
   .datePickerContainer {
-    border-radius: 8px;
-    padding-bottom: 0.2rem;
-    padding-top: 0.2rem;
-  }
-
-  .calendarButton img {
-    width: 20px;
-    height: 20px;
-  }
-
-  .icon img {
-    width: 20px;
-    height: 20px;
+    width: 100%;
   }
 
   .icon {
-    width: 58px;
-    height: 40px;
-    background: none;
-    border: none;
-    padding: 0rem;
+    flex: 1;
+    min-width: 0;
+    min-height: 64px;
+    padding: 0.55rem 0.35rem;
   }
 
   .icon p {
-    font-size: 0.6rem;
+    font-size: 0.72rem;
   }
 
-  .movimientosTable {
-    position: absolute;
-    top: 0;
+  .icon img,
+  .calendarButton img {
+    width: 18px;
+    height: 18px;
   }
 
-  .containerInfoAll {
-    box-shadow: inset 0 0 10px #ffffff1d;
-
-    gap: 1rem;
+  .listShell {
+    border-radius: 20px;
   }
 
   .listadoPrincipal {
-    max-width: 100%;
-    max-height: none;
+    padding: 0.8rem;
+    gap: 0.75rem;
   }
 
-  .titulo {
-    position: fixed;
-    top: 24.4rem;
-    z-index: 88888;
-    padding: 1rem;
+  .movimientoRow {
+    border-radius: 18px;
   }
 
-  .titleContainer {
-    padding: 2rem 1rem 1rem 1rem;
-    position: fixed;
-    left: 0;
+  .rowMain {
+    padding: 0.85rem;
+  }
+
+  .rowTop,
+  .rowBottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .rowBottom {
+    margin-top: 0.8rem;
+  }
+
+  .categoriaTexto {
+    font-size: 0.96rem;
+  }
+
+  .detalleTexto {
+    font-size: 0.82rem;
+  }
+
+  .metaBlock span {
+    font-size: 0.76rem;
+  }
+
+  .metaBlock strong {
+    font-size: 0.92rem;
+  }
+
+  .badges {
     width: 100%;
-    z-index: 999999;
-       background: rgba(0, 0, 0, 0.077);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    justify-content: flex-start;
   }
 
-  .titleContainer h1 {
-    font-size: 1.2rem;
-    font-weight: 300;
-  }
-  .active {
-    background-color: #12240a;
-    border-bottom-right-radius: 6px;
-    border-top-right-radius: 6px;
+  .currencyBadge,
+  .recurrenceBadge {
+    font-size: 0.7rem;
+    padding: 0.34rem 0.58rem;
   }
 
-  .publicidad {
-    display: none;
+  .columna3 {
+    width: 100%;
+    justify-content: flex-end;
   }
-
-  .containerAllPublicidadResults {
-  display: flex;
-  justify-content: space-around;
-  gap: 0rem;
-  padding: 0 0rem;
 }
 
+@media (max-width: 520px) {
+  .datePicker {
+    width: 100%;
+    padding: 0.65rem 0.8rem;
+    font-size: 0.88rem;
+  }
+
+  .btnAccion {
+    width: 38px;
+    height: 38px;
+  }
+
+  .btnAccion img {
+    width: 14px;
+    height: 14px;
+  }
+
+  .emptyState {
+    padding: 2.4rem 1rem;
+  }
 }
