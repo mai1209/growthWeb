@@ -285,14 +285,7 @@ function MonthlyFilters({
       </div>
 
       <div className={style.summaryStrip}>
-        <article className={`${style.summaryCard} ${style.primarySummary}`}>
-          <span>Balance de {formatMonthLabel(selectedMonth)}</span>
-          <strong>{formatMoney(monthSummary.total, currentCurrency)}</strong>
-          <p>
-            Caja mensual en {currencyMeta.label.toLowerCase()} antes de aplicar
-            filtros finos.
-          </p>
-        </article>
+     
 
         <article className={style.summaryCard}>
           <span>Ingresos</span>
