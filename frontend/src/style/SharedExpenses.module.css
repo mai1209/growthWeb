@@ -42,7 +42,7 @@
   line-height: 1.04;
 }
 
-.heroText
+.heroText,
 .emptyMessage,
 .expenseMeta,
 .expenseNotes {
@@ -163,6 +163,24 @@
   padding: 0;
 }
 
+.groupCardButton strong,
+.groupCardButton span,
+.sidebarHeader h2,
+.panelHeader h2,
+.participantRow strong,
+.participantRow span,
+.summaryCard strong,
+.summaryMeta p,
+.balanceText,
+.settlementAmount,
+.settlementMeta,
+.expenseTitle,
+.expenseMeta,
+.expenseNotes {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .groupCardButton span {
   color: var(--color-muted);
   font-size: 0.86rem;
@@ -238,8 +256,9 @@
 
 .groupForm,
 .expenseForm {
-  display: grid;
-  gap: 1rem;
+ width: 100%;
+ display: flex;
+ gap: 1rem;
 }
 
 .configColumns {
@@ -404,7 +423,11 @@
 }
 
 .participantRow > div,
-.allocationRow > span {
+.allocationRow > span,
+.summaryTop > div,
+.settlementRow > div,
+.expenseRow > div,
+.expenseSide {
   min-width: 0;
   flex: 1;
 }
@@ -522,7 +545,7 @@
 }
 
 .summaryCard strong {
-  font-size: 1.25rem;
+  font-size: 0.8rem;
   line-height: 1.15;
 }
 
@@ -620,6 +643,13 @@
   justify-items: end;
 }
 
+.expenseSide strong {
+  max-width: 100%;
+  text-align: right;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .feedbackError,
 .feedbackSuccess {
   padding: 0.95rem 1rem;
@@ -699,6 +729,43 @@
   }
 }
 
+@media (max-width: 1360px) {
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .groupShelf {
+    flex-basis: auto;
+  }
+
+  .sidebar {
+    overflow: hidden;
+  }
+
+  .groupList {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(220px, 260px);
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.35rem;
+    scrollbar-width: thin;
+  }
+
+  .groupCard {
+    height: 100%;
+  }
+
+  .panelHeader {
+    flex-wrap: wrap;
+  }
+
+  .panelHeaderActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 1000px) {
   .container {
     padding: 1rem 1rem 7rem;
@@ -724,19 +791,10 @@
     flex-direction: column;
   }
 
-  .layout,
   .addParticipantRow,
   .groupCardActions,
   .panelFooterNav {
     grid-template-columns: 1fr;
-  }
-
-  .layout {
-    display: grid;
-  }
-
-  .groupShelf {
-    flex-basis: auto;
   }
 
   .allocationRow,
@@ -756,6 +814,10 @@
     justify-items: start;
   }
 
+  .expenseSide strong {
+    text-align: left;
+  }
+
   .panelFooterMeta {
     order: -1;
   }
@@ -772,5 +834,9 @@
 
   .hero h1 {
     font-size: 1.15rem;
+  }
+
+  .groupList {
+    grid-auto-columns: minmax(200px, 86vw);
   }
 }

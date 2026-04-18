@@ -885,7 +885,7 @@ function SharedExpenses() {
                         <div>
                           <span>
                             {participant.username}
-                            {participant.isOwner ? " · creador" : ""}
+                            {participant.isOwner ? " · creador " : " "}
                           </span>
                           <strong>{participant.email}</strong>
                         </div>
