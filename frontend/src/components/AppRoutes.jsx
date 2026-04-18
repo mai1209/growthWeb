@@ -142,6 +142,8 @@ function AppRoutes({
               movimientos={movimientos}
               currentCurrency={panelCurrency}
               onCurrencyChange={onPanelCurrencyChange}
+              onMovementUpdate={onUpdate}
+              onEditMovement={setMovementToEdit}
             />
           }
         />

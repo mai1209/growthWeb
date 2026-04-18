@@ -622,9 +622,7 @@ function SharedExpenses() {
                     <div className={style.participantBox}>
                       <div className={style.cardSectionHead}>
                         <span className={style.sectionLabel}>Participantes por email</span>
-                        <p className={style.sectionText}>
-                          Si el usuario ya existe, queda vinculado automáticamente.
-                        </p>
+                     
                       </div>
 
                       <div className={style.addParticipantRow}>
@@ -681,9 +679,7 @@ function SharedExpenses() {
                     <div className={style.splitBox}>
                       <div className={style.cardSectionHead}>
                         <span className={style.sectionLabel}>Reparto del total</span>
-                        <p className={style.sectionText}>
-                          El sistema calcula cuánto le corresponde a cada persona.
-                        </p>
+                    
                       </div>
 
                       <div className={style.splitModes}>

@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { taskService } from "../api"; // Importamos el servicio
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Tarea.module.css";
 import resultsStyle from "../style/Results.module.css";
 import { useOutletContext } from "react-router-dom";
-import { getIsoDate } from "../utils/finance";
+import { filterTasksForDate, getTaskTargetDate, isTaskCompletedOnDate } from "../utils/tasks";
 
 function Tareas({  refreshKey, onEditClick }) {
   const { isNotesOpen, openNotesPanel } = useOutletContext();
@@ -14,6 +14,11 @@ function Tareas({  refreshKey, onEditClick }) {
   const [showList, setShowList] = useState(false);
   const [error, setError] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const visibleTasks = useMemo(
+    () => filterTasksForDate(tasks, selectedDate),
+    [tasks, selectedDate]
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -25,13 +30,7 @@ function Tareas({  refreshKey, onEditClick }) {
 
       setLoading(true);
       try {
-        let res;
-        if (showList) {
-          res = await taskService.getAll(); 
-        } else {
-        const formattedDate = selectedDate.toLocaleDateString('sv-SE');
-          res = await taskService.getByDate( formattedDate); 
-        }
+        const res = await taskService.getAll();
         if (isMounted) {
           setTasks(res.data);
           setError("");
@@ -45,13 +44,11 @@ function Tareas({  refreshKey, onEditClick }) {
 
     fetchTasks();
     return () => { isMounted = false; };
-  }, [ refreshKey, selectedDate, showList]);
+  }, [refreshKey]);
 
   const handleToggleComplete = async (taskId) => {
     try {
-      const date = new Date(selectedDate);
-      date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-      const fecha = date.toISOString().slice(0, 10);
+      const fecha = getTaskTargetDate(selectedDate);
 
       const res = await taskService.updateStatus( taskId, { fecha });
       setTasks((prev) => prev.map((t) => (t._id === taskId ? res.data : t)));
@@ -78,28 +75,20 @@ function Tareas({  refreshKey, onEditClick }) {
   };
 
   const isTaskCompleted = (task) => {
-    if (typeof task?.completada === "boolean") {
-      return task.completada;
-    }
-
-    if (!Array.isArray(task?.completadasEn) || !task?.fecha) {
-      return false;
-    }
-
-    return task.completadasEn.includes(getIsoDate(task.fecha));
+    return isTaskCompletedOnDate(task, selectedDate);
   };
 
   const renderContent = () => {
     if (loading) return <p className={style.emptyMessage}>Cargando tareas...</p>;
     if (error) return <p className={style.errorMessage}>{error}</p>;
-    if (tasks.length === 0)
+    if (visibleTasks.length === 0)
       return (
         <p className={style.emptyMessage}>
           Aun no tienes tareas. Anade una para comenzar.
         </p>
       );
 
-    return tasks.map((task) => {
+    return visibleTasks.map((task) => {
       const completed = isTaskCompleted(task);
 
       return (

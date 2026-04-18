@@ -42,8 +42,7 @@
   line-height: 1.04;
 }
 
-.heroText,
-.sectionText,
+.heroText
 .emptyMessage,
 .expenseMeta,
 .expenseNotes {

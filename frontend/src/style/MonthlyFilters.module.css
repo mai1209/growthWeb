@@ -9,7 +9,7 @@
 
 .hero,
 .filtersPanel,
-.metricsPanel,
+.dayPanel,
 .listPanel {
   border: 1px solid var(--border-color);
   background: var(--panel-background);
@@ -23,6 +23,7 @@
   gap: 1.2rem;
   align-items: flex-start;
   padding: 1.5rem;
+  border-radius: 24px;
 }
 
 .kicker,
@@ -87,6 +88,7 @@
   gap: 0.85rem;
   align-items: end;
   padding: 1rem;
+  border-radius: 24px;
 }
 
 .filterField {
@@ -114,6 +116,7 @@
   padding: 0.9rem 1rem;
   width: 100%;
   border: 1px solid rgba(216, 241, 224, 0.12);
+  border-radius: 14px;
   background: var(--surface-input);
   color: var(--color-text);
   transition:
@@ -146,8 +149,6 @@
 }
 
 .summaryCard,
-.metricBox,
-.latestCard,
 .row {
   border: 1px solid rgba(216, 241, 224, 0.08);
   background: var(--surface-card);
@@ -158,25 +159,21 @@
   display: grid;
   gap: 0.4rem;
   min-height: 150px;
+  border-radius: 18px;
 }
 
-.summaryCard span,
-.metricBox span,
-.latestCard span {
+.summaryCard span {
   color: var(--color-muted);
   font-size: 0.8rem;
 }
 
-.summaryCard strong,
-.metricBox strong,
-.latestCard strong {
+.summaryCard strong {
   font-size: 1.35rem;
   line-height: 1.15;
   color: var(--color-text);
 }
 
-.summaryCard p,
-.latestCard p {
+.summaryCard p {
   color: var(--color-muted);
   line-height: 1.5;
 }
@@ -190,14 +187,15 @@
 
 .detailsLayout {
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
   align-items: start;
 }
 
-.metricsPanel,
+.dayPanel,
 .listPanel {
   padding: 1rem;
+  border-radius: 24px;
 }
 
 .panelHeader {
@@ -209,29 +207,39 @@
   font-size: 1.3rem;
 }
 
-.metricsGrid {
+.dayFilterBar {
   display: grid;
-  gap: 0.75rem;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+  align-items: end;
 }
 
-.metricBox {
-  padding: 0.95rem;
-  display: grid;
-  gap: 0.35rem;
-}
-
-.latestCard {
-  margin-top: 0.75rem;
-  padding: 1rem;
-  display: grid;
-  gap: 0.45rem;
+.daySummaryCard {
+  min-height: 48px;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(216, 241, 224, 0.08);
+  border-radius: 18px;
   background:
     linear-gradient(135deg, rgba(123, 231, 173, 0.12), rgba(255, 225, 90, 0.08)),
     var(--surface-card);
 }
 
+.daySummaryCard span,
+.daySummaryCard p {
+  color: var(--color-muted);
+}
+
+.daySummaryCard strong {
+  display: block;
+  margin: 0.3rem 0 0.2rem;
+  font-size: 1.15rem;
+  color: var(--color-text);
+}
+
 .listShell {
   border: 1px solid rgba(216, 241, 224, 0.08);
+  border-radius: 22px;
   background: var(--surface-card-strong);
   max-height: 44rem;
   overflow: hidden;
@@ -250,6 +258,7 @@
   padding: 1rem;
   display: grid;
   gap: 0.85rem;
+  border-radius: 18px;
 }
 
 .incomeRow {
@@ -322,6 +331,12 @@
   gap: 0.2rem;
 }
 
+.rowSide {
+  display: grid;
+  gap: 0.7rem;
+  justify-items: end;
+}
+
 .rowInfo span {
   color: var(--color-muted);
   font-size: 0.85rem;
@@ -330,6 +345,30 @@
 .rowAmount {
   font-size: 1rem;
   color: var(--color-text);
+}
+
+.rowActions {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.actionButton {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(216, 241, 224, 0.1);
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(135deg, rgba(152, 255, 106, 0.14), rgba(255, 163, 108, 0.1)),
+    var(--surface-input);
+  cursor: pointer;
+}
+
+.actionButton img {
+  width: 16px;
+  height: 16px;
 }
 
 .emptyState {
@@ -354,14 +393,18 @@
 :global(body[data-theme="light"]) .currencySwitch,
 :global(body[data-theme="light"]) .hero,
 :global(body[data-theme="light"]) .filtersPanel,
-:global(body[data-theme="light"]) .metricsPanel,
+:global(body[data-theme="light"]) .dayPanel,
 :global(body[data-theme="light"]) .listPanel,
 :global(body[data-theme="light"]) .summaryCard,
-:global(body[data-theme="light"]) .metricBox,
-:global(body[data-theme="light"]) .latestCard,
+:global(body[data-theme="light"]) .daySummaryCard,
 :global(body[data-theme="light"]) .listShell,
-:global(body[data-theme="light"]) .row {
+:global(body[data-theme="light"]) .row,
+:global(body[data-theme="light"]) .actionButton {
   border-color: rgba(12, 18, 14, 0.14);
+}
+
+:global(body[data-theme="light"]) .actionButton img {
+  filter: brightness(0) saturate(100%);
 }
 
 :global(body[data-theme="light"]) .input,
@@ -407,13 +450,17 @@
   }
 
   .filtersPanel,
-  .metricsPanel,
+  .dayPanel,
   .listPanel {
     padding: 1rem;
   }
 
   .filtersPanel,
   .summaryStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .dayFilterBar {
     grid-template-columns: 1fr;
   }
 
@@ -431,6 +478,10 @@
   .rowBadges {
     justify-content: flex-start;
   }
+
+  .rowSide {
+    justify-items: start;
+  }
 }
 
 @media (max-width: 520px) {
@@ -440,16 +491,13 @@
 
   .hero,
   .filtersPanel,
-  .metricsPanel,
+  .dayPanel,
   .listPanel {
     padding: 0.85rem;
   }
 
-
-
   .summaryCard strong,
-  .metricBox strong,
-  .latestCard strong {
+  .daySummaryCard strong {
     font-size: 1.12rem;
   }
 }
