@@ -160,7 +160,6 @@ function MonthlyFilters({
       <div className={style.hero}>
         <div>
           <p className={style.kicker}>Filtros avanzados</p>
-          <h1>Explora el balance mensual con filtros de busqueda mas finos.</h1>
           <p className={style.heroText}>
             Elige un mes, cambia entre pesos y dolares y revisa el detalle completo
             sin mezclar cajas.
@@ -284,10 +283,7 @@ function MonthlyFilters({
           <div className={style.panelHeader}>
             <p className={style.panelKicker}>Lectura del mes</p>
             <h2>{formatMonthLabel(selectedMonth)}</h2>
-            <p className={style.panelText}>
-              {monthMovimientos.length} movimientos del mes en {currencyMeta.codeLabel}.
-              Mostrando {filteredMovimientos.length} despues de aplicar busqueda.
-            </p>
+         
           </div>
 
           <div className={style.metricsGrid}>
@@ -345,9 +341,7 @@ function MonthlyFilters({
           <div className={style.panelHeader}>
             <p className={style.panelKicker}>Detalle del mes</p>
             <h2>Movimientos encontrados</h2>
-            <p className={style.panelText}>
-              Puedes buscar por categoria, detalle, tipo o revisar solo fijos/manuales.
-            </p>
+           
           </div>
 
           <div className={style.listShell}>

@@ -97,11 +97,7 @@
   margin-bottom: 0.8rem;
 }
 
-.hero h1 {
-  font-size: 1.5rem;
-  line-height: 1.04;
-  margin: 0 0 0.8rem;
-}
+
 
 .heroText {
   max-width: 62ch;
@@ -211,16 +207,9 @@
   box-shadow: var(--shadow-soft);
 }
 
-.insightsHeader h2 {
-  margin: 0.2rem 0 0.55rem;
-  font-size: 1.28rem;
-  line-height: 1.1;
-}
 
-.insightsText {
-  color: var(--color-muted);
-  line-height: 1.55;
-}
+
+
 
 .insightsGrid {
   display: grid;
@@ -310,11 +299,6 @@
   padding: 0.35rem 0.1rem 0.2rem;
 }
 
-.promoCopy h2 {
-  font-size: 1.12rem;
-  line-height: 1.15;
-  margin: 0.3rem 0 0.75rem;
-}
 
 .promoCopy p:last-child {
   color: var(--color-muted);
@@ -369,10 +353,6 @@
   padding: 0.4rem 0 0.8rem;
 }
 
-.inlineFormHeader h2 {
-  font-size: 1.3rem;
-  margin: 0.3rem 0 0;
-}
 
 .inlineFormEyebrow {
   color: var(--color-muted);
@@ -452,14 +432,9 @@
     padding: 1rem;
   }
 
-  .insightsHeader h2 {
-    font-size: 1.08rem;
-  }
 
-  .insightsText {
-    font-size: 0.9rem;
-  }
 
+ 
   .promoSidebar {
     position: relative;
     top: 0;
@@ -487,9 +462,7 @@
     max-height: 260px;
   }
 
-  .promoCopy h2 {
-    font-size: 1rem;
-  }
+
 
   .promoCopy p:last-child,
   .heroText {
@@ -550,9 +523,6 @@
     margin-bottom: 0.55rem;
   }
 
-  .hero h1 {
-    font-size:2rem;
-  }
 
   .heroText {
     font-size: 0.84rem;
@@ -576,9 +546,7 @@
     border-radius: 0;
   }
 
-  .inlineFormHeader h2 {
-    font-size: 1.08rem;
-  }
+
 
   .closeInlineForm {
     width: 100%;
