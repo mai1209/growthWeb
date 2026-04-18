@@ -27,6 +27,11 @@ const ingresoEgresoSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  medio: {
+    type: String,
+    enum: ['efectivo', 'transferencia'],
+    default: 'efectivo'
+  },
   esRecurrente: {
     type: Boolean,
     default: false

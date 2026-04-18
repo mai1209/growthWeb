@@ -7,8 +7,10 @@ import InputMonto from "./InputMonto";
 import { movimientoService } from "../api";
 import {
   CURRENCY_OPTIONS,
+  MOVEMENT_METHOD_OPTIONS,
   RECURRENCE_OPTIONS,
   normalizeCurrency,
+  normalizeMovementMethod,
 } from "../utils/finance";
 
 const MODE_CONFIG = {
@@ -69,6 +71,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
   const [detalle, setDetalle] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [moneda, setMoneda] = useState(normalizeCurrency(defaultCurrency));
+  const [medio, setMedio] = useState("efectivo");
   const [frecuencia, setFrecuencia] = useState("mensual");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -86,6 +89,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
       setDetalle("");
       setSelectedDate(new Date());
       setMoneda(normalizeCurrency(defaultCurrency));
+      setMedio("efectivo");
       setFrecuencia("mensual");
       return;
     }
@@ -99,6 +103,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
     setDetalle(movementToEdit.detalle || "");
     setSelectedDate(fechaUTC);
     setMoneda(normalizeCurrency(movementToEdit.moneda));
+    setMedio(normalizeMovementMethod(movementToEdit.medio));
     setFrecuencia(movementToEdit.frecuencia || "mensual");
   }, [movementToEdit, defaultCurrency]);
 
@@ -148,6 +153,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
       fecha: fechaFormateada,
       detalle: detalle.trim(),
       moneda: normalizeCurrency(moneda),
+      medio: normalizeMovementMethod(medio),
       esRecurrente: mode.recurrente,
       frecuencia: mode.recurrente ? frecuencia : null,
     };
@@ -170,6 +176,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
         setCategoria("");
         setDetalle("");
         setSelectedDate(new Date());
+        setMedio("efectivo");
       }
 
       if (!only) {
@@ -270,7 +277,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
           />
         </div>
 
-        <div className={style.fieldGrid}>
+        <div className={style.fieldGridTriple}>
           <div className={style.field}>
             <label className={style.fieldLabel} htmlFor="categoria">
               Categoria
@@ -298,6 +305,36 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
               customInput={<CustomDateInput />}
               wrapperClassName={style.datePickerWrapper}
             />
+          </div>
+
+          <div className={style.field}>
+            <div className={style.fieldLabelRow}>
+              <label className={style.fieldLabel}>Medio</label>
+              <span className={style.fieldTag}>
+                {medio === "transferencia" ? "Digital" : "Fisico"}
+              </span>
+            </div>
+
+            <div
+              className={`${style.methodSwitch} ${
+                medio === "transferencia"
+                  ? style.methodSwitchTransferencia
+                  : style.methodSwitchEfectivo
+              }`}
+            >
+              {MOVEMENT_METHOD_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`${style.methodOption} ${
+                    medio === option.value ? style.methodOptionActive : ""
+                  }`}
+                  onClick={() => setMedio(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

@@ -4,11 +4,13 @@ import style from "../style/MonthlyFilters.module.css";
 import { movimientoService } from "../api";
 import {
   CURRENCY_OPTIONS,
+  MOVEMENT_METHOD_OPTIONS,
   MOVEMENT_TYPE_OPTIONS,
   filterMovimientosByCurrency,
   formatMoney,
   formatSignedMoney,
   getCurrencyMeta,
+  getMovementMethodMeta,
   getMovementTypeMeta,
   summarizeByType,
 } from "../utils/finance";
@@ -20,6 +22,7 @@ const RECURRENCE_FILTERS = [
 ];
 
 const TYPE_FILTERS = [{ value: "all", label: "Todos" }, ...MOVEMENT_TYPE_OPTIONS];
+const METHOD_FILTERS = [{ value: "all", label: "Todos" }, ...MOVEMENT_METHOD_OPTIONS];
 
 const getMonthInputValue = (date = new Date()) => {
   const year = date.getFullYear();
@@ -61,19 +64,6 @@ const getMonthRange = (monthValue) => {
   };
 };
 
-const formatMonthLabel = (monthValue) => {
-  const [year, month] = monthValue.split("-").map(Number);
-
-  if (!year || !month) {
-    return "Mes actual";
-  }
-
-  return new Intl.DateTimeFormat("es-AR", {
-    month: "long",
-    year: "numeric",
-  }).format(new Date(year, month - 1, 1));
-};
-
 const formatDate = (value) => {
   if (!value) return "-";
 
@@ -97,6 +87,7 @@ function MonthlyFilters({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedRecurrence, setSelectedRecurrence] = useState("all");
+  const [selectedMethod, setSelectedMethod] = useState("all");
 
   const { from, to } = useMemo(() => getMonthRange(selectedMonth), [selectedMonth]);
   const selectedDayDate = useMemo(
@@ -131,6 +122,10 @@ function MonthlyFilters({
           return false;
         }
 
+        if (selectedMethod !== "all" && movimiento.medio !== selectedMethod) {
+          return false;
+        }
+
         if (!normalizedSearch) {
           return true;
         }
@@ -139,6 +134,7 @@ function MonthlyFilters({
           movimiento.categoria,
           movimiento.detalle,
           getMovementTypeMeta(movimiento.tipo).label,
+          getMovementMethodMeta(movimiento.medio).label,
           movimiento.frecuencia,
           formatDate(movimiento.fecha),
         ]
@@ -149,9 +145,8 @@ function MonthlyFilters({
         return haystack.includes(normalizedSearch);
       })
       .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
-  }, [monthMovimientos, searchTerm, selectedType, selectedRecurrence]);
+  }, [monthMovimientos, searchTerm, selectedType, selectedRecurrence, selectedMethod]);
 
-  const monthSummary = useMemo(() => summarizeByType(monthMovimientos), [monthMovimientos]);
   const filteredSummary = useMemo(
     () => summarizeByType(filteredMovimientos),
     [filteredMovimientos]
@@ -161,14 +156,19 @@ function MonthlyFilters({
       filterMovimientosByCurrency(movimientos, currentCurrency, {
         from: selectedDayDate,
         to: selectedDayDate,
-      }).sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()),
-    [movimientos, currentCurrency, selectedDayDate]
+      })
+        .filter((movimiento) =>
+          selectedMethod === "all" ? true : movimiento.medio === selectedMethod
+        )
+        .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()),
+    [movimientos, currentCurrency, selectedDayDate, selectedMethod]
   );
 
   const clearFilters = () => {
     setSearchTerm("");
     setSelectedType("all");
     setSelectedRecurrence("all");
+    setSelectedMethod("all");
   };
 
   const handleEditMovimiento = (movimiento) => {
@@ -277,6 +277,22 @@ function MonthlyFilters({
           </select>
         </div>
 
+        <div className={style.filterField}>
+          <label htmlFor="method-filter">Medio</label>
+          <select
+            id="method-filter"
+            value={selectedMethod}
+            onChange={(event) => setSelectedMethod(event.target.value)}
+            className={style.select}
+          >
+            {METHOD_FILTERS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className={style.filterActions}>
           <button type="button" className={style.clearButton} onClick={clearFilters}>
             Limpiar filtros
@@ -347,6 +363,7 @@ function MonthlyFilters({
               <div className={style.list}>
                 {dayMovimientos.map((movimiento) => {
                   const typeMeta = getMovementTypeMeta(movimiento.tipo);
+                  const methodMeta = getMovementMethodMeta(movimiento.medio);
                   const toneClass =
                     movimiento.tipo === "ingreso"
                       ? style.incomeRow
@@ -366,6 +383,7 @@ function MonthlyFilters({
 
                         <div className={style.rowBadges}>
                           <span className={style.badge}>{typeMeta.label}</span>
+                          <span className={style.badge}>{methodMeta.label}</span>
                           <span className={style.badge}>{currencyMeta.codeLabel}</span>
                         </div>
                       </div>
@@ -434,6 +452,7 @@ function MonthlyFilters({
               <div className={style.list}>
                 {filteredMovimientos.map((movimiento) => {
                   const typeMeta = getMovementTypeMeta(movimiento.tipo);
+                  const methodMeta = getMovementMethodMeta(movimiento.medio);
                   const toneClass =
                     movimiento.tipo === "ingreso"
                       ? style.incomeRow
@@ -453,6 +472,7 @@ function MonthlyFilters({
 
                         <div className={style.rowBadges}>
                           <span className={style.badge}>{typeMeta.label}</span>
+                          <span className={style.badge}>{methodMeta.label}</span>
                           <span className={style.badge}>{currencyMeta.codeLabel}</span>
                           {movimiento.esRecurrente ? (
                             <span className={style.badgeAccent}>

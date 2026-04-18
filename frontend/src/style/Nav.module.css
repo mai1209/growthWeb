@@ -71,8 +71,7 @@
   height: 18px;
 }
 
-:global(body[data-theme="light"]) .navLink img,
-:global(body[data-theme="light"]) .logo {
+:global(body[data-theme="light"]) .navLink img {
   filter: brightness(0) saturate(100%);
 }
 

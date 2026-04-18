@@ -17,11 +17,19 @@ export const RECURRENCE_OPTIONS = [
   { value: "semanal", label: "Todas las semanas" },
 ];
 
+export const MOVEMENT_METHOD_OPTIONS = [
+  { value: "efectivo", label: "Efectivo" },
+  { value: "transferencia", label: "Transferencia" },
+];
+
 export const normalizeCurrency = (currency) =>
   currency === "USD" ? "USD" : DEFAULT_CURRENCY;
 
 export const normalizeMovementType = (type) =>
   ["ingreso", "egreso", "ahorro"].includes(type) ? type : "egreso";
+
+export const normalizeMovementMethod = (method) =>
+  method === "transferencia" ? "transferencia" : "efectivo";
 
 export const getCurrencyMeta = (currency) =>
   CURRENCY_OPTIONS.find((option) => option.value === normalizeCurrency(currency)) ||
@@ -40,6 +48,11 @@ export const getMovementTypeMeta = (type) => {
 
   return { label: "Egreso", signedAsPositive: false };
 };
+
+export const getMovementMethodMeta = (method) =>
+  MOVEMENT_METHOD_OPTIONS.find(
+    (option) => option.value === normalizeMovementMethod(method)
+  ) || MOVEMENT_METHOD_OPTIONS[0];
 
 export const getIsoDate = (value) => {
   if (!value) return "";
@@ -159,6 +172,7 @@ export const expandMovimientos = (
     const movimiento = {
       ...rawMovimiento,
       tipo: normalizeMovementType(rawMovimiento.tipo),
+      medio: normalizeMovementMethod(rawMovimiento.medio),
     };
 
     if (!movimiento.esRecurrente) {
