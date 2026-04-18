@@ -32,6 +32,9 @@ const normalizeMovementDate = (value) => {
   );
 };
 
+const normalizeMovementMethod = (value) =>
+  value === "transferencia" ? "transferencia" : "efectivo";
+
 const serializeMovimiento = (movimiento) => {
   const raw = typeof movimiento.toObject === "function" ? movimiento.toObject() : movimiento;
 
@@ -49,6 +52,7 @@ export const createIncomeEgress = async (req, res) => {
       categoria,
       fecha,
       detalle,
+      medio,
       moneda,
       esRecurrente,
       frecuencia,
@@ -68,6 +72,9 @@ export const createIncomeEgress = async (req, res) => {
     if (moneda && !["ARS", "USD"].includes(moneda)) {
       return res.status(400).json({ error: "La moneda debe ser ARS o USD" });
     }
+    if (medio && !["efectivo", "transferencia"].includes(medio)) {
+      return res.status(400).json({ error: "El medio debe ser efectivo o transferencia" });
+    }
     if (esRecurrente && !["mensual", "quincenal", "semanal"].includes(frecuencia)) {
       return res.status(400).json({ error: "La frecuencia debe ser mensual, quincenal o semanal" });
     }
@@ -80,6 +87,7 @@ export const createIncomeEgress = async (req, res) => {
       categoria,
       fecha: normalizeMovementDate(fecha),
       detalle,
+      medio: normalizeMovementMethod(medio),
       esRecurrente: Boolean(esRecurrente),
       frecuencia: esRecurrente ? frecuencia : null,
       usuario: userId // 🔥 Vincular con el usuario
@@ -191,6 +199,7 @@ export const updateIncomeEgress = async (req, res) => {
       categoria,
       fecha,
       detalle,
+      medio,
       moneda,
       esRecurrente,
       frecuencia,
@@ -198,6 +207,9 @@ export const updateIncomeEgress = async (req, res) => {
 
     if (moneda && !["ARS", "USD"].includes(moneda)) {
       return res.status(400).json({ error: "La moneda debe ser ARS o USD" });
+    }
+    if (medio && !["efectivo", "transferencia"].includes(medio)) {
+      return res.status(400).json({ error: "El medio debe ser efectivo o transferencia" });
     }
     if (tipo && !["ingreso", "egreso", "ahorro"].includes(tipo)) {
       return res.status(400).json({ error: "Tipo de movimiento inválido" });
@@ -211,6 +223,7 @@ export const updateIncomeEgress = async (req, res) => {
     movimiento.categoria = categoria ?? movimiento.categoria;
     movimiento.fecha = fecha ? normalizeMovementDate(fecha) : movimiento.fecha;
     movimiento.detalle = detalle ?? movimiento.detalle;
+    movimiento.medio = medio ? normalizeMovementMethod(medio) : movimiento.medio ?? "efectivo";
     movimiento.moneda = moneda ?? movimiento.moneda ?? "ARS";
     movimiento.esRecurrente = esRecurrente ?? movimiento.esRecurrente;
     movimiento.frecuencia = movimiento.esRecurrente

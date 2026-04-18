@@ -9,7 +9,7 @@ const getStoredToken = () =>
 const getStoredCurrency = () =>
   normalizeCurrency(localStorage.getItem("panelCurrency") || DEFAULT_CURRENCY);
 
-const getStoredTheme = () => localStorage.getItem("appTheme") || "dark";
+const getStoredTheme = () => localStorage.getItem("appTheme") || "light";
 
 function App() {
   const [token, setToken] = useState(getStoredToken()); 

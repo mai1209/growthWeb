@@ -84,7 +84,11 @@
 
 .filtersPanel {
   display: grid;
-  grid-template-columns: minmax(160px, 220px) minmax(0, 1.3fr) repeat(2, minmax(160px, 220px)) auto;
+  grid-template-columns:
+    minmax(150px, 210px)
+    minmax(0, 1.25fr)
+    repeat(3, minmax(150px, 210px))
+    auto;
   gap: 0.85rem;
   align-items: end;
   padding: 1rem;

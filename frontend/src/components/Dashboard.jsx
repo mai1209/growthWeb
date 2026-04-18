@@ -66,144 +66,145 @@ function Dashboard({
 
   return (
     <div className={style.page}>
-      <section className={style.hero}>
-        <div className={style.heroCopy}>
-          <p className={style.eyebrow}>Resumen financiero</p>
-          <p className={style.heroText}>
-            El panel filtra todo por moneda para que no mezcles cajas. Hoy estas
-            mirando {currencyMeta.label.toLowerCase()}.
-          </p>
-        </div>
-
-        <div className={style.heroControls}>
-          <div
-            className={`${style.currencySwitch} ${
-              currentCurrency === "USD" ? style.currencySwitchUsd : style.currencySwitchArs
-            }`}
-          >
-            {CURRENCY_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={`${style.currencyButton} ${
-                  currentCurrency === option.value ? style.currencyButtonActive : ""
-                }`}
-                onClick={() => onCurrencyChange?.(option.value)}
-              >
-                {option.codeLabel}
-              </button>
-            ))}
+      <section className={style.overviewCard}>
+        <section className={style.hero}>
+          <div className={style.heroCopy}>
+            <p className={style.eyebrow}>Resumen financiero</p>
+            <p className={style.heroText}>
+              El panel filtra todo por moneda para que no mezcles cajas. Hoy estas
+              mirando {currencyMeta.label.toLowerCase()}.
+            </p>
           </div>
 
-          <div className={style.quickActions}>
-            <button
-              type="button"
-              className={style.primaryAction}
-              onClick={() => setIsActionMenuOpen((prev) => !prev)}
+          <div className={style.heroControls}>
+            <div
+              className={`${style.currencySwitch} ${
+                currentCurrency === "USD" ? style.currencySwitchUsd : style.currencySwitchArs
+              }`}
             >
-              Cargar movimiento
-            </button>
-            {isActionMenuOpen && (
-              <div className={style.actionMenu}>
+              {CURRENCY_OPTIONS.map((option) => (
                 <button
+                  key={option.value}
                   type="button"
-                  className={style.incomeAction}
-                  onClick={() => {
-                    setShowOnly("ingreso");
-                    setIsActionMenuOpen(false);
-                  }}
+                  className={`${style.currencyButton} ${
+                    currentCurrency === option.value ? style.currencyButtonActive : ""
+                  }`}
+                  onClick={() => onCurrencyChange?.(option.value)}
                 >
-                  Nuevo ingreso
+                  {option.codeLabel}
                 </button>
-                <button
-                  type="button"
-                  className={style.expenseAction}
-                  onClick={() => {
-                    setShowOnly("egreso");
-                    setIsActionMenuOpen(false);
-                  }}
-                >
-                  Nuevo egreso
-                </button>
-                <button
-                  type="button"
-                  className={style.savingsAction}
-                  onClick={() => {
-                    setShowOnly("ahorro");
-                    setIsActionMenuOpen(false);
-                  }}
-                >
-                  Nuevo ahorro
-                </button>
-                <button
-                  type="button"
-                  className={style.fixedIncomeAction}
-                  onClick={() => {
-                    setShowOnly("ingreso-fijo");
-                    setIsActionMenuOpen(false);
-                  }}
-                >
-                  Nuevo ingreso fijo
-                </button>
-                <button
-                  type="button"
-                  className={style.fixedExpenseAction}
-                  onClick={() => {
-                    setShowOnly("egreso-fijo");
-                    setIsActionMenuOpen(false);
-                  }}
-                >
-                  Nuevo gasto fijo
-                </button>
-              </div>
-            )}
+              ))}
+            </div>
+
+            <div className={style.quickActions}>
+              <button
+                type="button"
+                className={style.primaryAction}
+                onClick={() => setIsActionMenuOpen((prev) => !prev)}
+              >
+                Cargar movimiento
+              </button>
+              {isActionMenuOpen && (
+                <div className={style.actionMenu}>
+                  <button
+                    type="button"
+                    className={style.incomeAction}
+                    onClick={() => {
+                      setShowOnly("ingreso");
+                      setIsActionMenuOpen(false);
+                    }}
+                  >
+                    Nuevo ingreso
+                  </button>
+                  <button
+                    type="button"
+                    className={style.expenseAction}
+                    onClick={() => {
+                      setShowOnly("egreso");
+                      setIsActionMenuOpen(false);
+                    }}
+                  >
+                    Nuevo egreso
+                  </button>
+                  <button
+                    type="button"
+                    className={style.savingsAction}
+                    onClick={() => {
+                      setShowOnly("ahorro");
+                      setIsActionMenuOpen(false);
+                    }}
+                  >
+                    Nuevo ahorro
+                  </button>
+                  <button
+                    type="button"
+                    className={style.fixedIncomeAction}
+                    onClick={() => {
+                      setShowOnly("ingreso-fijo");
+                      setIsActionMenuOpen(false);
+                    }}
+                  >
+                    Nuevo ingreso fijo
+                  </button>
+                  <button
+                    type="button"
+                    className={style.fixedExpenseAction}
+                    onClick={() => {
+                      setShowOnly("egreso-fijo");
+                      setIsActionMenuOpen(false);
+                    }}
+                  >
+                    Nuevo gasto fijo
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className={style.insightsSection}>
-        <div className={style.insightsHeader}>
-          <p className={style.eyebrow}>Lecturas utiles</p>
-          <h2>Lo mas relevante de este mes en {currencyMeta.codeLabel}</h2>
-      
-        </div>
+        <section className={style.insightsSection}>
+          <div className={style.insightsHeader}>
+            <p className={style.eyebrow}>Lecturas utiles</p>
+            <h2>Lo mas relevante de este mes en {currencyMeta.codeLabel}</h2>
+          </div>
 
-        <div className={style.insightsGrid}>
-          <article className={style.insightCard}>
-            <span>Categoria con mayor egreso</span>
-            <strong>
-              {topExpense
-                ? `${topExpense.categoria} · ${formatMoney(topExpense.monto, currentCurrency)}`
-                : "Sin egresos este mes"}
-            </strong>
-          </article>
+          <div className={style.insightsGrid}>
+            <article className={style.insightCard}>
+              <span>Categoria con mayor egreso</span>
+              <strong>
+                {topExpense
+                  ? `${topExpense.categoria} · ${formatMoney(topExpense.monto, currentCurrency)}`
+                  : "Sin egresos este mes"}
+              </strong>
+            </article>
 
-          <article className={style.insightCard}>
-            <span>Categoria con mayor ingreso</span>
-            <strong>
-              {topIncome
-                ? `${topIncome.categoria} · ${formatMoney(topIncome.monto, currentCurrency)}`
-                : "Sin ingresos este mes"}
-            </strong>
-          </article>
+            <article className={style.insightCard}>
+              <span>Categoria con mayor ingreso</span>
+              <strong>
+                {topIncome
+                  ? `${topIncome.categoria} · ${formatMoney(topIncome.monto, currentCurrency)}`
+                  : "Sin ingresos este mes"}
+              </strong>
+            </article>
 
-          <article className={style.insightCard}>
-            <span>Ultimo movimiento</span>
-            <strong>
-              {latestMovimiento
-                ? `${latestMovimiento.categoria} · ${formatMoney(
-                    latestMovimiento.monto,
-                    currentCurrency
-                  )}`
-                : "Todavia no cargaste movimientos"}
-            </strong>
-          </article>
+            <article className={style.insightCard}>
+              <span>Ultimo movimiento</span>
+              <strong>
+                {latestMovimiento
+                  ? `${latestMovimiento.categoria} · ${formatMoney(
+                      latestMovimiento.monto,
+                      currentCurrency
+                    )}`
+                  : "Todavia no cargaste movimientos"}
+              </strong>
+            </article>
 
-          <article className={style.insightCard}>
-            <span>Ticket promedio</span>
-            <strong>{formatMoney(averageTicket, currentCurrency)}</strong>
-          </article>
-        </div>
+            <article className={style.insightCard}>
+              <span>Ticket promedio</span>
+              <strong>{formatMoney(averageTicket, currentCurrency)}</strong>
+            </article>
+          </div>
+        </section>
       </section>
 
       <section className={style.contentLayout}>
