@@ -74,7 +74,6 @@ function Dashboard({
       <section className={style.hero}>
         <div className={style.heroCopy}>
           <p className={style.eyebrow}>Resumen financiero</p>
-          <h1>Controla ingresos, egresos y notas con una vista mas clara.</h1>
           <p className={style.heroText}>
             El panel filtra todo por moneda para que no mezcles cajas. Hoy estas
             mirando {currencyMeta.label.toLowerCase()}.
@@ -171,10 +170,7 @@ function Dashboard({
         <div className={style.insightsHeader}>
           <p className={style.eyebrow}>Lecturas utiles</p>
           <h2>Lo mas relevante de este mes en {currencyMeta.codeLabel}</h2>
-          <p className={style.insightsText}>
-            Un resumen rapido para entender en que se mueve tu caja antes de mirar el
-            historial filtrado.
-          </p>
+      
         </div>
 
         <div className={style.insightsGrid}>
@@ -231,11 +227,7 @@ function Dashboard({
           <section className={style.promoCard}>
             <div className={style.promoCopy}>
               <p className={style.eyebrow}>Espacio publicitario</p>
-              <h2>Promociona un servicio, un producto o una novedad importante.</h2>
-              <p>
-                Queda fijo al costado para acompañar el historial sin tapar la
-                vista principal.
-              </p>
+                  
             </div>
 
             <div className={style.promoMedia}>

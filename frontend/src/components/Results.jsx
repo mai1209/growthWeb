@@ -112,9 +112,7 @@ function Results({
         <div className={style.titleGroup}>
           <p className={style.eyebrow}>Historial filtrado</p>
           <h2>{titulo}</h2>
-          <p>
-            Mostrando solo movimientos guardados en {currencyMeta.label.toLowerCase()}.
-          </p>
+          
         </div>
 
         <div className={style.datePickerContainer}>

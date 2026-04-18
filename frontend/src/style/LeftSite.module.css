@@ -42,12 +42,6 @@
   color: var(--color-text);
 }
 
-.headerText {
-  margin-top: 0.75rem;
-  color: var(--color-muted);
-  line-height: 1.30;
-  font-size: 0.6rem;
-}
 
 .currencySwitch {
   position: relative;
@@ -120,11 +114,10 @@
 .balanceCard {
   padding: 1.2rem;
   display: flex;
+  flex-direction: column  ;
   justify-content: space-between;
   gap: 1rem;
-  background:
-    linear-gradient(135deg, rgba(154, 255, 93, 0.34), rgba(255, 168, 96, 0.14) 58%),
-    rgba(17, 29, 22, 0.9);
+  
 }
 
 .balanceLabel {
@@ -419,7 +412,7 @@
     font-size: 1.35rem;
   }
 
-  .headerText,
+
   .sectionTitle p,
   .balanceHint {
     font-size: 0.84rem;

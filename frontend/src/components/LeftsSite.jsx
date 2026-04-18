@@ -47,18 +47,16 @@ function LeftSite({
   return (
     <aside className={style.container}>
       <div className={style.panel}>
-        <div className={style.headerBlock}>
-          <p className={style.eyebrow}>Panel de control</p>
-          <h2 >Tu caja en {currencyMeta.label.toLowerCase()}</h2>
-          <p className={style.headerText}>
-            Cambia la moneda visible del panel y revisa rapido saldo, flujo del
-            mes y notas de hoy.
-          </p>
-        </div>
+       
 
       
 
         <div className={style.balanceCard}>
+           <div className={style.headerBlock}>
+          <p className={style.eyebrow}>Panel de control</p>
+          <h2 >Tu caja en {currencyMeta.label.toLowerCase()}</h2>
+         
+        </div>
           <div>
             <p className={style.balanceLabel}>Saldo acumulado</p>
             <p className={style.balanceValue}>

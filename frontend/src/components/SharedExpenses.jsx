@@ -468,7 +468,6 @@ function SharedExpenses() {
       <div className={style.hero}>
         <div>
           <p className={style.kicker}>Gastos compartidos</p>
-          <h1>Controla cuentas entre amigos, socios o equipos con reparto automático.</h1>
           <p className={style.heroText}>
             Vincula participantes por email, carga quién pagó cada gasto y deja que
             el sistema calcule cuánto corresponde a cada uno.

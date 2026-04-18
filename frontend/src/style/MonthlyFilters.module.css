@@ -18,6 +18,7 @@
 
 .hero {
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
   gap: 1.2rem;
   align-items: flex-start;
@@ -32,17 +33,7 @@
   color: var(--color-verde);
 }
 
-.hero h1 {
-  margin: 0.45rem 0 0.8rem;
-  font-size: 2rem;
-  line-height: 1.04;
-}
 
-.heroText,
-.panelText {
-  color: var(--color-muted);
-  line-height: 1.55;
-}
 
 .currencySwitch {
   position: relative;
@@ -191,9 +182,7 @@
 }
 
 .primarySummary {
-  background:
-    linear-gradient(135deg, rgba(144, 211, 106, 0.2), rgba(255, 163, 108, 0.08)),
-    var(--surface-card);
+ 
   box-shadow:
     inset 0 0 0 1px rgba(144, 211, 106, 0.24),
     0 18px 34px rgba(0, 0, 0, 0.12);
@@ -409,9 +398,8 @@
     padding: 1rem;
   }
 
-  .hero h1 {
-    font-size: 1.5rem;
-  }
+ 
+
 
   .currencySwitch {
     width: 100%;
@@ -457,9 +445,7 @@
     padding: 0.85rem;
   }
 
-  .hero h1 {
-    font-size: 1.2rem;
-  }
+
 
   .summaryCard strong,
   .metricBox strong,
