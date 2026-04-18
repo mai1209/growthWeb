@@ -1,5 +1,46 @@
 import IngresoEgresoModel from "../models/ingresoEgresoModel.js";
 import mongoose from 'mongoose'; 
+
+const normalizeMovementDate = (value) => {
+  if (!value) {
+    const now = new Date();
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12));
+  }
+
+  if (typeof value === "string") {
+    const matched = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+    if (matched) {
+      const [, year, month, day] = matched;
+      return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), 12));
+    }
+  }
+
+  const rawDate = new Date(value);
+
+  if (Number.isNaN(rawDate.getTime())) {
+    return new Date();
+  }
+
+  return new Date(
+    Date.UTC(
+      rawDate.getUTCFullYear(),
+      rawDate.getUTCMonth(),
+      rawDate.getUTCDate(),
+      12
+    )
+  );
+};
+
+const serializeMovimiento = (movimiento) => {
+  const raw = typeof movimiento.toObject === "function" ? movimiento.toObject() : movimiento;
+
+  return {
+    ...raw,
+    fecha: normalizeMovementDate(raw.fecha),
+  };
+};
+
 export const createIncomeEgress = async (req, res) => {
   try {
     const {
@@ -37,7 +78,7 @@ export const createIncomeEgress = async (req, res) => {
       monto,
       moneda: moneda || "ARS",
       categoria,
-      fecha: fecha ? new Date(fecha) : new Date(),
+      fecha: normalizeMovementDate(fecha),
       detalle,
       esRecurrente: Boolean(esRecurrente),
       frecuencia: esRecurrente ? frecuencia : null,
@@ -45,7 +86,7 @@ export const createIncomeEgress = async (req, res) => {
     });
 
     const movimientoGuardado = await nuevoMovimiento.save();
-    res.status(201).json(movimientoGuardado);
+    res.status(201).json(serializeMovimiento(movimientoGuardado));
   } catch (error) {
     console.error("Error al guardar el movimiento:", error);
     res.status(500).json({ error: "Error al guardar el movimiento" });
@@ -93,7 +134,7 @@ export const getIncomeEgress = async (req, res) => {
     }
     
     console.log("--- BÚSQUEDA TERMINADA. Enviando respuesta al frontend. ---\n");
-    res.status(200).json(movimientos);
+    res.status(200).json(movimientos.map(serializeMovimiento));
 
   } catch (error) {
     console.error("Error al obtener los movimientos:", error);
@@ -118,7 +159,7 @@ export const getIncomeEgressById = async (req, res) => {
       return res.status(404).json({ error: "Movimiento no encontrado o no autorizado" });
     }
     
-    res.status(200).json(movimiento);
+    res.status(200).json(serializeMovimiento(movimiento));
   } catch (error) {
     console.error("Error al obtener el movimiento:", error);
     res.status(500).json({ error: "Error al obtener el movimiento" });
@@ -168,7 +209,7 @@ export const updateIncomeEgress = async (req, res) => {
     movimiento.tipo = tipo ?? movimiento.tipo;
     movimiento.monto = monto ?? movimiento.monto;
     movimiento.categoria = categoria ?? movimiento.categoria;
-    movimiento.fecha = fecha ? new Date(fecha) : movimiento.fecha;
+    movimiento.fecha = fecha ? normalizeMovementDate(fecha) : movimiento.fecha;
     movimiento.detalle = detalle ?? movimiento.detalle;
     movimiento.moneda = moneda ?? movimiento.moneda ?? "ARS";
     movimiento.esRecurrente = esRecurrente ?? movimiento.esRecurrente;
@@ -178,7 +219,7 @@ export const updateIncomeEgress = async (req, res) => {
     
     const movimientoActualizado = await movimiento.save();
     
-    res.status(200).json(movimientoActualizado);
+    res.status(200).json(serializeMovimiento(movimientoActualizado));
   } catch (error) {
     console.error("Error al actualizar el movimiento:", error);
     res.status(500).json({ error: "Error al actualizar el movimiento" });
@@ -222,11 +263,10 @@ export const getAllIncomeEgress = async (req, res) => {
     const movimientos = await IngresoEgresoModel.find({ usuario: new mongoose.Types.ObjectId(userId) }).sort({ fecha: -1 });
     console.log("✅ Movimientos encontrados:", movimientos.length);
 
-    res.status(200).json(movimientos);
+    res.status(200).json(movimientos.map(serializeMovimiento));
   } catch (error) {
     console.error("💥 Error al obtener todos los movimientos:", error);
     console.error(error.stack);
     res.status(500).json({ error: "Error al obtener todos los movimientos", details: error.message });
   }
 };
-

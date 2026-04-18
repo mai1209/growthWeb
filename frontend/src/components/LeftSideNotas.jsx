@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 import DatePicker from "react-datepicker";
 import { taskService } from "../api";
-import { getIsoDate } from "../utils/finance";
+import { summarizeTasksForDate } from "../utils/tasks";
 
 //const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -102,19 +102,11 @@ function LeftSideNotas({
       if (!storedToken) return;
 
       try {
-        const today = getIsoDate(new Date());
-        const response = await taskService.getByDate(today);
+        const response = await taskService.getAll();
 
         if (!isMounted || !Array.isArray(response.data)) return;
 
-        const pending = response.data.filter((task) => !task.completada).length;
-        const completed = response.data.length - pending;
-
-        setTaskSummary({
-          pending,
-          completed,
-          total: response.data.length,
-        });
+        setTaskSummary(summarizeTasksForDate(response.data, new Date()));
       } catch (error) {
         if (isMounted) {
           setTaskSummary({ pending: 0, completed: 0, total: 0 });

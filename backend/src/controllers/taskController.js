@@ -1,6 +1,46 @@
 import Task from "../models/taskModel.js";
 import mongoose from "mongoose";
 
+const normalizeTaskDate = (value) => {
+  if (!value) {
+    const now = new Date();
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12));
+  }
+
+  if (typeof value === "string") {
+    const matched = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+    if (matched) {
+      const [, year, month, day] = matched;
+      return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), 12));
+    }
+  }
+
+  const rawDate = new Date(value);
+
+  if (Number.isNaN(rawDate.getTime())) {
+    return new Date();
+  }
+
+  return new Date(
+    Date.UTC(
+      rawDate.getUTCFullYear(),
+      rawDate.getUTCMonth(),
+      rawDate.getUTCDate(),
+      12
+    )
+  );
+};
+
+const serializeTask = (task) => {
+  const raw = typeof task.toObject === "function" ? task.toObject() : task;
+
+  return {
+    ...raw,
+    fecha: normalizeTaskDate(raw.fecha),
+  };
+};
+
 export const createHabito = async (req, res) => {
   try {
     const {
@@ -22,7 +62,7 @@ export const createHabito = async (req, res) => {
     const nuevoHabito = new Task({
       user: userId,
       meta,
-      fecha,
+      fecha: normalizeTaskDate(fecha),
       horario,
       urgencia,
       color,
@@ -30,7 +70,7 @@ export const createHabito = async (req, res) => {
       diasRepeticion: esRecurrente ? diasRepeticion : [],
     });
     const habitoGuardado = await nuevoHabito.save();
-    res.status(201).json(habitoGuardado);
+    res.status(201).json(serializeTask(habitoGuardado));
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error al crear el hábito" });
@@ -44,7 +84,7 @@ export const getTasks = async (req, res) => {
     const userId = req.user.id;
 
     const buildTaskState = (task, targetDate) => {
-      const taskObj = task.toObject();
+      const taskObj = serializeTask(task);
       taskObj.completada = task.completadasEn?.includes(targetDate) || false;
       return taskObj;
     };
@@ -55,11 +95,9 @@ export const getTasks = async (req, res) => {
         user: new mongoose.Types.ObjectId(userId),
       }).sort({ fecha: 1, horario: 1 });
 
-      const allTasksWithState = allTasks.map((task) => {
-        const baseDate = new Date(task.fecha);
-        const targetDate = baseDate.toISOString().slice(0, 10);
-        return buildTaskState(task, targetDate);
-      });
+      const allTasksWithState = allTasks.map((task) =>
+        buildTaskState(task, normalizeTaskDate(task.fecha).toISOString().slice(0, 10))
+      );
 
       return res.status(200).json(allTasksWithState);
     }
@@ -144,7 +182,7 @@ export const updateTaskStatus = async (req, res) => {
     // ✅ CALCULAR completada PARA ESA FECHA
     const completada = task.completadasEn.includes(fecha);
 
-    const taskObj = task.toObject();
+    const taskObj = serializeTask(task);
     taskObj.completada = completada;
 
     // 👈 ESTO ES LO CLAVE
@@ -227,7 +265,7 @@ export const updateTask = async (req, res) => {
 
     // 4. Actualizamos el documento que encontramos en la base de datos
     task.meta = meta || task.meta;
-    task.fecha = fecha || task.fecha;
+    task.fecha = fecha ? normalizeTaskDate(fecha) : task.fecha;
     task.horario = horario || task.horario;
     task.urgencia = urgencia || task.urgencia;
     task.color = color || task.color;
@@ -241,7 +279,7 @@ export const updateTask = async (req, res) => {
     // 5. Guardamos el documento actualizado (esto SIEMPRE ejecuta las validaciones del modelo)
     const updatedTask = await task.save();
 
-    res.status(200).json(updatedTask);
+    res.status(200).json(serializeTask(updatedTask));
   } catch (error) {
     console.error("Error al actualizar la tarea:", error);
     res

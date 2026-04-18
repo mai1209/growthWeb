@@ -49,6 +49,28 @@ export const getIsoDate = (value) => {
     return "";
   }
 
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+export const getDateOnlyValue = (value) => {
+  if (!value) return "";
+
+  if (typeof value === "string") {
+    const matched = value.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (matched) {
+      return matched[1];
+    }
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
   return date.toISOString().slice(0, 10);
 };
 
@@ -76,27 +98,25 @@ export const isSameMonth = (value, referenceDate = new Date()) => {
   }
 
   return (
-    date.getUTCFullYear() === referenceDate.getFullYear() &&
-    date.getUTCMonth() === referenceDate.getMonth()
+    date.getFullYear() === referenceDate.getFullYear() &&
+    date.getMonth() === referenceDate.getMonth()
   );
 };
 
 const startOfDay = (value) => {
   const date = new Date(value);
-  date.setUTCHours(0, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
   return date;
 };
 
 const addMonthly = (currentDate, dayOfMonth) => {
   const next = new Date(currentDate);
-  next.setUTCDate(1);
-  next.setUTCMonth(next.getUTCMonth() + 1);
+  next.setDate(1);
+  next.setMonth(next.getMonth() + 1);
 
-  const lastDay = new Date(
-    Date.UTC(next.getUTCFullYear(), next.getUTCMonth() + 1, 0)
-  ).getUTCDate();
+  const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
 
-  next.setUTCDate(Math.min(dayOfMonth, lastDay));
+  next.setDate(Math.min(dayOfMonth, lastDay));
   return next;
 };
 
@@ -107,7 +127,7 @@ const getRecurringStep = (movimiento, currentDate, baseDayOfMonth) => {
 
   const next = new Date(currentDate);
   const daysToAdd = movimiento.frecuencia === "quincenal" ? 15 : 7;
-  next.setUTCDate(next.getUTCDate() + daysToAdd);
+  next.setDate(next.getDate() + daysToAdd);
   return next;
 };
 
@@ -156,7 +176,7 @@ export const expandMovimientos = (
       return [];
     }
 
-    const baseDayOfMonth = firstDate.getUTCDate();
+    const baseDayOfMonth = firstDate.getDate();
     const generated = [];
     let current = new Date(firstDate);
     let guard = 0;

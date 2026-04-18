@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import Add from "./Add";
 import { FiX } from "react-icons/fi";
-import Results from "./Results";
 import style from "../style/App.module.css";
 import {
   CURRENCY_OPTIONS,
@@ -12,6 +12,7 @@ import {
   getLatestMovimiento,
   getTopCategory,
   isSameMonth,
+  summarizeByType,
 } from "../utils/finance";
 
 function Dashboard({
@@ -56,16 +57,10 @@ function Dashboard({
     () => getAverageTicket(monthMovimientos),
     [monthMovimientos]
   );
-
-  const handleEditClick = (movimiento) => {
-    setMovementToEdit?.(movimiento);
-    if (movimiento?.esRecurrente) {
-      setShowOnly(movimiento.tipo === "ingreso" ? "ingreso-fijo" : "egreso-fijo");
-      return;
-    }
-
-    setShowOnly(movimiento?.tipo || "ingreso");
-  };
+  const monthSummary = useMemo(
+    () => summarizeByType(monthMovimientos),
+    [monthMovimientos]
+  );
 
   const currencyMeta = getCurrencyMeta(currentCurrency);
 
@@ -212,16 +207,44 @@ function Dashboard({
       </section>
 
       <section className={style.contentLayout}>
-        <div className={style.resultsColumn}>
-          <Results
-            movimientos={movimientos}
-            refreshKey={refreshKey}
-            onEditClick={handleEditClick}
-            onMovementUpdate={onMovementUpdate}
-            currentCurrency={currentCurrency}
-            {...authProps}
-          />
-        </div>
+        <section className={style.dashboardInfoCard}>
+          <div className={style.dashboardInfoHeader}>
+            <div>
+              <p className={style.eyebrow}>Panel simplificado</p>
+              <h2>El historial detallado ahora vive en Filtros</h2>
+            </div>
+            <span className={style.dashboardInfoBadge}>{currencyMeta.codeLabel}</span>
+          </div>
+
+         
+
+          <div className={style.dashboardInfoGrid}>
+            <article className={style.dashboardInfoStat}>
+              <span>Movimientos del mes</span>
+              <strong>{monthMovimientos.length}</strong>
+              <p>Registros visibles este mes en {currencyMeta.label.toLowerCase()}.</p>
+            </article>
+
+            <article className={style.dashboardInfoStat}>
+              <span>Balance actual</span>
+              <strong>{formatMoney(monthSummary.total, currentCurrency)}</strong>
+              <p>Resultado neto del mes con ingresos, egresos y ahorros.</p>
+            </article>
+          </div>
+
+          <div className={style.dashboardInfoActions}>
+            <Link to="/filtros" className={style.dashboardPrimaryLink}>
+              Abrir filtros avanzados
+            </Link>
+            <button
+              type="button"
+              className={style.dashboardGhostButton}
+              onClick={() => setShowOnly("ingreso")}
+            >
+              Cargar ingreso rapido
+            </button>
+          </div>
+        </section>
 
         <aside className={style.promoSidebar}>
           <section className={style.promoCard}>
