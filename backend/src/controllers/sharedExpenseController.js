@@ -1,12 +1,24 @@
 import mongoose from "mongoose";
+import { randomUUID } from "crypto";
 import SharedGroup from "../models/sharedGroupModel.js";
 import SharedExpense from "../models/sharedExpenseModel.js";
 import User from "../models/userModel.js";
 
 const normalizeEmail = (value = "") => value.trim().toLowerCase();
+const normalizeName = (value = "") => value.trim();
 const normalizeCurrency = (value) => (value === "USD" ? "USD" : "ARS");
 const normalizeSplitMode = (value) =>
   ["equal", "percentage", "amount"].includes(value) ? value : "equal";
+const isGuestAlias = (value = "") => normalizeEmail(value).endsWith("@growth.local");
+const slugifyName = (value = "") =>
+  normalizeName(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "invitado";
+const createGuestAlias = (name = "") =>
+  `guest+${slugifyName(name)}-${randomUUID().slice(0, 8)}@growth.local`;
 
 const getAccessQuery = (user) => ({
   archived: false,
@@ -29,28 +41,80 @@ const serializeGroup = (group) => ({
   updatedAt: group.updatedAt,
 });
 
+const serializeExpense = (expense, group) => {
+  const participantsByEmail = new Map(
+    (group?.participants || []).map((participant) => [normalizeEmail(participant.email), participant])
+  );
+  const participant = participantsByEmail.get(normalizeEmail(expense.paidByEmail));
+
+  return {
+    _id: expense._id,
+    group: expense.group,
+    createdBy: expense.createdBy,
+    paidByUser: expense.paidByUser,
+    paidByEmail: expense.paidByEmail,
+    paidByName:
+      participant?.username ||
+      expense.paidByEmail?.split("@")[0] ||
+      "Participante",
+    amount: expense.amount,
+    currency: expense.currency,
+    description: expense.description,
+    date: expense.date,
+    notes: expense.notes,
+    createdAt: expense.createdAt,
+    updatedAt: expense.updatedAt,
+  };
+};
+
 const buildParticipantIdentity = (user) => ({
   user: user._id,
   email: normalizeEmail(user.email),
   username: user.username || normalizeEmail(user.email).split("@")[0],
+  isGuest: false,
   isOwner: true,
 });
 
-const buildParticipants = async (rawParticipants = [], ownerUser) => {
+const buildParticipants = async (rawParticipants = [], ownerUser, currentParticipants = []) => {
   const ownerParticipant = buildParticipantIdentity(ownerUser);
-  const emails = new Set([ownerParticipant.email]);
+  const participantsByEmail = new Map([[ownerParticipant.email, ownerParticipant]]);
+  const currentByEmail = new Map(
+    currentParticipants.map((participant) => [normalizeEmail(participant.email), participant])
+  );
 
   rawParticipants.forEach((participant) => {
-    const email = normalizeEmail(
+    const rawEmail = normalizeEmail(
       typeof participant === "string" ? participant : participant?.email || ""
     );
+    const rawName =
+      typeof participant === "string"
+        ? ""
+        : normalizeName(participant?.username || participant?.name || "");
+
+    const email =
+      rawEmail ||
+      (rawName ? createGuestAlias(rawName) : "");
 
     if (email) {
-      emails.add(email);
+      const currentParticipant = currentByEmail.get(email);
+      const nextName =
+        rawName ||
+        currentParticipant?.username ||
+        (email === ownerParticipant.email ? ownerParticipant.username : "");
+
+      participantsByEmail.set(email, {
+        user: currentParticipant?.user || null,
+        email,
+        username: nextName,
+        isGuest:
+          email !== ownerParticipant.email &&
+          (Boolean(participant?.isGuest) || currentParticipant?.isGuest || isGuestAlias(email)),
+        isOwner: email === ownerParticipant.email,
+      });
     }
   });
 
-  const participantEmails = [...emails];
+  const participantEmails = [...participantsByEmail.keys()];
   const users = await User.find({ email: { $in: participantEmails } }).select(
     "_id email username"
   );
@@ -63,22 +127,35 @@ const buildParticipants = async (rawParticipants = [], ownerUser) => {
       return ownerParticipant;
     }
 
+    const requestedParticipant = participantsByEmail.get(email) || {};
+    const currentParticipant = currentByEmail.get(email);
     const matchedUser = usersByEmail.get(email);
 
     return {
-      user: matchedUser?._id || null,
+      user: matchedUser?._id || requestedParticipant.user || currentParticipant?.user || null,
       email,
-      username: matchedUser?.username || email.split("@")[0],
+      username:
+        requestedParticipant.username ||
+        currentParticipant?.username ||
+        matchedUser?.username ||
+        email.split("@")[0],
+      isGuest:
+        !matchedUser &&
+        (requestedParticipant.isGuest || currentParticipant?.isGuest || isGuestAlias(email)),
       isOwner: false,
     };
   });
 };
 
-const ensureHistoricalParticipants = async (groupId, participants = []) => {
+const ensureHistoricalParticipants = async (group, participants = []) => {
+  const groupId = group?._id || group;
   const expenses = await SharedExpense.find({ group: groupId }).select(
     "paidByEmail paidByUser"
   );
   const participantEmails = new Set(participants.map((item) => item.email));
+  const historicalByEmail = new Map(
+    (group?.participants || []).map((participant) => [normalizeEmail(participant.email), participant])
+  );
   const missingEmails = [...new Set(expenses.map((expense) => normalizeEmail(expense.paidByEmail)))]
     .filter(Boolean)
     .filter((email) => !participantEmails.has(email));
@@ -98,11 +175,17 @@ const ensureHistoricalParticipants = async (groupId, participants = []) => {
     ...participants,
     ...missingEmails.map((email) => {
       const matchedUser = usersByEmail.get(email);
+      const historicalParticipant = historicalByEmail.get(email);
 
       return {
-        user: matchedUser?._id || null,
+        user: matchedUser?._id || historicalParticipant?.user || null,
         email,
-        username: matchedUser?.username || email.split("@")[0],
+        username:
+          historicalParticipant?.username ||
+          matchedUser?.username ||
+          email.split("@")[0],
+        isGuest:
+          historicalParticipant?.isGuest || (!matchedUser && isGuestAlias(email)),
         isOwner: false,
       };
     }),
@@ -225,6 +308,7 @@ const buildSummary = (group, expenses = []) => {
     return {
       email: participant.email,
       username: participant.username || participant.email.split("@")[0],
+      isGuest: Boolean(participant.isGuest),
       isOwner: Boolean(participant.isOwner),
       paid: Number(paid.toFixed(2)),
       target: Number(target.toFixed(2)),
@@ -311,7 +395,7 @@ export const getSharedGroupDetail = async (req, res) => {
 
     res.status(200).json({
       group: serializeGroup(group),
-      expenses,
+      expenses: expenses.map((expense) => serializeExpense(expense, group)),
       summary: buildSummary(group, expenses),
     });
   } catch (error) {
@@ -333,8 +417,12 @@ export const updateSharedGroup = async (req, res) => {
     }
 
     const name = req.body.name?.trim();
-    const initialParticipants = await buildParticipants(req.body.participants || [], req.user);
-    const participants = await ensureHistoricalParticipants(group._id, initialParticipants);
+    const initialParticipants = await buildParticipants(
+      req.body.participants || [],
+      req.user,
+      group.participants || []
+    );
+    const participants = await ensureHistoricalParticipants(group, initialParticipants);
     const splitMode = normalizeSplitMode(req.body.splitMode);
     const splitConfig = buildSplitConfig(splitMode, participants, req.body.splitConfig || []);
 
@@ -352,7 +440,7 @@ export const updateSharedGroup = async (req, res) => {
 
     res.status(200).json({
       group: serializeGroup(updatedGroup),
-      expenses,
+      expenses: expenses.map((expense) => serializeExpense(expense, updatedGroup)),
       summary: buildSummary(updatedGroup, expenses),
     });
   } catch (error) {
@@ -428,9 +516,9 @@ export const createSharedExpense = async (req, res) => {
     });
 
     res.status(201).json({
-      expense,
+      expense: serializeExpense(expense, group),
       group: serializeGroup(group),
-      expenses,
+      expenses: expenses.map((expenseItem) => serializeExpense(expenseItem, group)),
       summary: buildSummary(group, expenses),
     });
   } catch (error) {
@@ -472,7 +560,7 @@ export const deleteSharedExpense = async (req, res) => {
 
     res.status(200).json({
       group: serializeGroup(group),
-      expenses,
+      expenses: expenses.map((expenseItem) => serializeExpense(expenseItem, group)),
       summary: buildSummary(group, expenses),
     });
   } catch (error) {
