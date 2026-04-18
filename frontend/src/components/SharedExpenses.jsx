@@ -12,12 +12,26 @@ const SPLIT_OPTIONS = [
 const PANEL_SEQUENCE = ["group", "expenses"];
 
 const todayInput = () => new Date().toISOString().slice(0, 10);
+const slugifyName = (value = "") =>
+  value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "invitado";
+const createGuestAlias = (name = "") =>
+  `guest+${slugifyName(name)}-${Date.now().toString(36)}${Math.random()
+    .toString(36)
+    .slice(2, 6)}@growth.local`;
 
 const createEmptyGroupForm = (currency = "ARS") => ({
   name: "",
   currency,
   participants: [],
-  emailInput: "",
+  participantMode: "linked",
+  participantNameInput: "",
+  participantEmailInput: "",
   splitMode: "equal",
   splitValues: {},
 });
@@ -31,6 +45,13 @@ const createEmptyExpenseForm = () => ({
 });
 
 const normalizeEmail = (value = "") => value.trim().toLowerCase();
+const normalizeName = (value = "") => value.trim();
+const getParticipantDisplayName = (participant = {}) =>
+  participant.username ||
+  (!participant.isGuest && participant.email ? participant.email.split("@")[0] : "") ||
+  "Participante";
+const getParticipantSecondaryText = (participant = {}) =>
+  participant.isGuest ? "Invitado sin cuenta" : participant.email || "Sin correo";
 
 const buildSettlements = (participants = []) => {
   const creditors = participants
@@ -87,7 +108,9 @@ const mapGroupToForm = (group) => {
     name: group.name || "",
     currency: group.currency || "ARS",
     participants: group.participants || [],
-    emailInput: "",
+    participantMode: "linked",
+    participantNameInput: "",
+    participantEmailInput: "",
     splitMode: group.splitMode || "equal",
     splitValues,
   };
@@ -229,30 +252,45 @@ function SharedExpenses() {
   };
 
   const handleAddParticipant = () => {
-    const email = normalizeEmail(groupForm.emailInput);
+    const isGuestMode = groupForm.participantMode === "guest";
+    const name = normalizeName(groupForm.participantNameInput);
+    const email = normalizeEmail(groupForm.participantEmailInput);
 
-    if (!email) return;
+    if (isGuestMode && !name) {
+      setError("Para un invitado sin cuenta tenés que cargar un nombre.");
+      return;
+    }
+
+    if (!isGuestMode && !email) {
+      setError("Para vincular una cuenta tenés que cargar el email.");
+      return;
+    }
 
     if (participants.some((participant) => participant.email === email)) {
       setError("Ese email ya está cargado en el grupo.");
       return;
     }
 
+    const participantEmail = isGuestMode ? createGuestAlias(name) : email;
+
     setGroupForm((prev) => ({
       ...prev,
       participants: [
         ...prev.participants,
         {
-          email,
-          username: email.split("@")[0],
+          email: participantEmail,
+          username: name || email.split("@")[0],
           user: null,
+          isGuest: isGuestMode,
           isOwner: false,
         },
       ],
-      emailInput: "",
+      participantMode: "linked",
+      participantNameInput: "",
+      participantEmailInput: "",
       splitValues: {
         ...prev.splitValues,
-        [email]: prev.splitMode === "amount" ? 1 : "",
+        [participantEmail]: prev.splitMode === "amount" ? 1 : "",
       },
     }));
     setError("");
@@ -302,6 +340,8 @@ function SharedExpenses() {
     currency: groupForm.currency,
     participants: groupForm.participants.map((participant) => ({
       email: participant.email,
+      username: participant.username,
+      isGuest: participant.isGuest,
     })),
     splitMode: groupForm.splitMode,
     splitConfig: groupForm.participants.map((participant) => ({
@@ -330,7 +370,7 @@ function SharedExpenses() {
     }
 
     if (!groupForm.participants.length) {
-      setError("Agrega al menos un participante por email.");
+      setError("Agrega al menos un participante por nombre o email.");
       setSavingGroup(false);
       return;
     }
@@ -621,22 +661,75 @@ function SharedExpenses() {
                   <div className={style.configColumns}>
                     <div className={style.participantBox}>
                       <div className={style.cardSectionHead}>
-                        <span className={style.sectionLabel}>Participantes por email</span>
-                     
+                        <span className={style.sectionLabel}>Participantes del grupo</span>
+                        <p className={style.sectionText}>
+                          Vincula por email a quienes ya usan la app. Si alguien no tiene
+                          cuenta, podés cargarlo como invitado solo con nombre.
+                        </p>
+                      </div>
+
+                      <div className={style.splitModes}>
+                        <button
+                          type="button"
+                          className={`${style.modeButton} ${
+                            groupForm.participantMode === "linked"
+                              ? style.modeButtonActive
+                              : ""
+                          }`}
+                          onClick={() =>
+                            setGroupForm((prev) => ({ ...prev, participantMode: "linked" }))
+                          }
+                        >
+                          Con cuenta
+                        </button>
+                        <button
+                          type="button"
+                          className={`${style.modeButton} ${
+                            groupForm.participantMode === "guest"
+                              ? style.modeButtonActive
+                              : ""
+                          }`}
+                          onClick={() =>
+                            setGroupForm((prev) => ({ ...prev, participantMode: "guest" }))
+                          }
+                        >
+                          Invitado
+                        </button>
                       </div>
 
                       <div className={style.addParticipantRow}>
                         <input
-                          type="email"
-                          value={groupForm.emailInput}
+                          type="text"
+                          value={groupForm.participantNameInput}
                           onChange={(event) =>
                             setGroupForm((prev) => ({
                               ...prev,
-                              emailInput: event.target.value,
+                              participantNameInput: event.target.value,
                             }))
                           }
                           className={style.input}
-                          placeholder="correo@ejemplo.com"
+                          placeholder={
+                            groupForm.participantMode === "guest"
+                              ? "Nombre o apodo del invitado"
+                              : "Nombre opcional para mostrar"
+                          }
+                        />
+                        <input
+                          type="email"
+                          value={groupForm.participantEmailInput}
+                          onChange={(event) =>
+                            setGroupForm((prev) => ({
+                              ...prev,
+                              participantEmailInput: event.target.value,
+                            }))
+                          }
+                          className={style.input}
+                          placeholder={
+                            groupForm.participantMode === "guest"
+                              ? "No hace falta email para invitados"
+                              : "correo@ejemplo.com"
+                          }
+                          disabled={groupForm.participantMode === "guest"}
                         />
                         <button
                           type="button"
@@ -654,10 +747,8 @@ function SharedExpenses() {
                           participants.map((participant) => (
                             <div key={participant.email} className={style.participantRow}>
                               <div>
-                                <strong>
-                                  {participant.username || participant.email.split("@")[0]}
-                                </strong>
-                                <span>{participant.email}</span>
+                                <strong>{getParticipantDisplayName(participant)}</strong>
+                                <span>{getParticipantSecondaryText(participant)}</span>
                               </div>
                               {participant.isOwner ? (
                                 <span className={style.ownerBadge}>Creador</span>
@@ -704,8 +795,8 @@ function SharedExpenses() {
                           {participants.map((participant) => (
                             <label key={participant.email} className={style.allocationRow}>
                               <span>
-                                {participant.username || participant.email.split("@")[0]}
-                                <small>{participant.email}</small>
+                                {getParticipantDisplayName(participant)}
+                                <small>{getParticipantSecondaryText(participant)}</small>
                               </span>
                               <input
                                 type="number"
@@ -821,8 +912,8 @@ function SharedExpenses() {
                         <option value="">Seleccionar participante</option>
                         {groupDetail.group.participants.map((participant) => (
                           <option key={participant.email} value={participant.email}>
-                            {participant.username || participant.email.split("@")[0]} ·{" "}
-                            {participant.email}
+                            {getParticipantDisplayName(participant)}
+                            {participant.isGuest ? " · invitado" : ` · ${participant.email}`}
                           </option>
                         ))}
                       </select>
@@ -884,10 +975,12 @@ function SharedExpenses() {
                       <div className={style.summaryTop}>
                         <div>
                           <span>
-                            {participant.username}
+                            {getParticipantDisplayName(participant)}
                             {participant.isOwner ? " · creador " : " "}
                           </span>
-                          <strong>{participant.email}</strong>
+                          <strong>
+                            {participant.isGuest ? "Invitado sin cuenta" : participant.email}
+                          </strong>
                         </div>
                         <p className={style.balanceText}>
                           {formatSignedMoney(
@@ -971,7 +1064,7 @@ function SharedExpenses() {
                         <div>
                           <p className={style.expenseTitle}>{expense.description}</p>
                           <p className={style.expenseMeta}>
-                            Pago: {expense.paidByEmail} ·{" "}
+                            Pago: {expense.paidByName || expense.paidByEmail} ·{" "}
                             {new Date(expense.date).toLocaleDateString("es-AR")}
                           </p>
                           <p className={style.expenseNotes}>{expense.notes || "Sin notas"}</p>

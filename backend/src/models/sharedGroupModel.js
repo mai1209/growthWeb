@@ -18,6 +18,10 @@ const participantSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+    isGuest: {
+      type: Boolean,
+      default: false,
+    },
     isOwner: {
       type: Boolean,
       default: false,
