@@ -1,0 +1,469 @@
+.container {
+  display: grid;
+  gap: 1.15rem;
+  padding: 2rem;
+  min-height: calc(100vh - 78px);
+  color: var(--color-text);
+  background: var(--page-background);
+}
+
+.hero,
+.filtersPanel,
+.metricsPanel,
+.listPanel {
+  border: 1px solid var(--border-color);
+  background: var(--panel-background);
+  box-shadow: var(--shadow-soft);
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.2rem;
+  align-items: flex-start;
+  padding: 1.5rem;
+}
+
+.kicker,
+.panelKicker {
+  font-size: 0.76rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-verde);
+}
+
+.hero h1 {
+  margin: 0.45rem 0 0.8rem;
+  font-size: 2rem;
+  line-height: 1.04;
+}
+
+.heroText,
+.panelText {
+  color: var(--color-muted);
+  line-height: 1.55;
+}
+
+.currencySwitch {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem;
+  min-width: 220px;
+  padding: 0.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--surface-input);
+  isolation: isolate;
+}
+
+.currencySwitch::before {
+  content: "";
+  position: absolute;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  left: 0.25rem;
+  width: calc(50% - 0.375rem);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(144, 211, 106, 0.95), rgba(81, 145, 75, 0.96));
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.16);
+  transition: transform 0.22s ease;
+}
+
+.currencySwitchUsd::before {
+  transform: translateX(calc(100% + 0.25rem));
+}
+
+.currencyButton {
+  position: relative;
+  z-index: 1;
+  min-height: 46px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.currencyButtonActive {
+  color: var(--color-text);
+}
+
+.filtersPanel {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1.3fr) repeat(2, minmax(160px, 220px)) auto;
+  gap: 0.85rem;
+  align-items: end;
+  padding: 1rem;
+}
+
+.filterField {
+  display: grid;
+  gap: 0.42rem;
+  min-width: 0;
+}
+
+.searchField {
+  min-width: 0;
+}
+
+.filterField label {
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+.input,
+.select,
+.clearButton {
+  min-height: 48px;
+  padding: 0.9rem 1rem;
+  width: 100%;
+  border: 1px solid rgba(216, 241, 224, 0.12);
+  background: var(--surface-input);
+  color: var(--color-text);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: rgba(144, 211, 106, 0.45);
+  box-shadow: 0 0 0 3px rgba(144, 211, 106, 0.14);
+}
+
+.filterActions {
+  display: flex;
+  align-items: end;
+}
+
+.clearButton {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.summaryStrip {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.summaryCard,
+.metricBox,
+.latestCard,
+.row {
+  border: 1px solid rgba(216, 241, 224, 0.08);
+  background: var(--surface-card);
+}
+
+.summaryCard {
+  padding: 1rem;
+  display: grid;
+  gap: 0.4rem;
+  min-height: 150px;
+}
+
+.summaryCard span,
+.metricBox span,
+.latestCard span {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.summaryCard strong,
+.metricBox strong,
+.latestCard strong {
+  font-size: 1.35rem;
+  line-height: 1.15;
+  color: var(--color-text);
+}
+
+.summaryCard p,
+.latestCard p {
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.primarySummary {
+  background:
+    linear-gradient(135deg, rgba(144, 211, 106, 0.2), rgba(255, 163, 108, 0.08)),
+    var(--surface-card);
+  box-shadow:
+    inset 0 0 0 1px rgba(144, 211, 106, 0.24),
+    0 18px 34px rgba(0, 0, 0, 0.12);
+}
+
+.detailsLayout {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.metricsPanel,
+.listPanel {
+  padding: 1rem;
+}
+
+.panelHeader {
+  margin-bottom: 1rem;
+}
+
+.panelHeader h2 {
+  margin: 0.3rem 0 0.45rem;
+  font-size: 1.3rem;
+}
+
+.metricsGrid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.metricBox {
+  padding: 0.95rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.latestCard {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  display: grid;
+  gap: 0.45rem;
+  background:
+    linear-gradient(135deg, rgba(123, 231, 173, 0.12), rgba(255, 225, 90, 0.08)),
+    var(--surface-card);
+}
+
+.listShell {
+  border: 1px solid rgba(216, 241, 224, 0.08);
+  background: var(--surface-card-strong);
+  max-height: 44rem;
+  overflow: hidden;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  max-height: 44rem;
+  overflow-y: auto;
+}
+
+.row {
+  padding: 1rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.incomeRow {
+  background:
+    linear-gradient(135deg, rgba(152, 255, 106, 0.18), rgba(24, 56, 16, 0.18)),
+    var(--surface-input);
+  box-shadow: inset 0 0 0 1px rgba(152, 255, 106, 0.28);
+}
+
+.expenseRow {
+  background:
+    linear-gradient(135deg, rgba(255, 144, 95, 0.18), rgba(78, 26, 14, 0.18)),
+    var(--surface-input);
+  box-shadow: inset 0 0 0 1px rgba(255, 144, 95, 0.26);
+}
+
+.savingsRow {
+  background:
+    linear-gradient(135deg, rgba(123, 231, 173, 0.18), rgba(21, 69, 49, 0.16)),
+    var(--surface-input);
+  box-shadow: inset 0 0 0 1px rgba(123, 231, 173, 0.26);
+}
+
+.rowMain,
+.rowMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.rowCategory {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.rowDetail {
+  margin: 0.24rem 0 0;
+  color: var(--color-muted);
+}
+
+.rowBadges {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.badge,
+.badgeAccent {
+  min-height: 30px;
+  padding: 0.35rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-hover);
+  color: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.badgeAccent {
+  background: rgba(59, 203, 35, 0.18);
+}
+
+.rowInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.rowInfo span {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.rowAmount {
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.emptyState {
+  min-height: 220px;
+  padding: 2rem 1.25rem;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.emptyState h3 {
+  margin-bottom: 0.45rem;
+}
+
+.emptyState p {
+  color: var(--color-muted);
+}
+
+:global(body[data-theme="light"]) .input,
+:global(body[data-theme="light"]) .select,
+:global(body[data-theme="light"]) .clearButton,
+:global(body[data-theme="light"]) .currencySwitch,
+:global(body[data-theme="light"]) .hero,
+:global(body[data-theme="light"]) .filtersPanel,
+:global(body[data-theme="light"]) .metricsPanel,
+:global(body[data-theme="light"]) .listPanel,
+:global(body[data-theme="light"]) .summaryCard,
+:global(body[data-theme="light"]) .metricBox,
+:global(body[data-theme="light"]) .latestCard,
+:global(body[data-theme="light"]) .listShell,
+:global(body[data-theme="light"]) .row {
+  border-color: rgba(12, 18, 14, 0.14);
+}
+
+:global(body[data-theme="light"]) .input,
+:global(body[data-theme="light"]) .select,
+:global(body[data-theme="light"]) .clearButton {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 246, 0.96)),
+    var(--surface-input);
+  border-color: rgba(12, 18, 14, 0.38);
+}
+
+@media (max-width: 1200px) {
+  .filtersPanel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summaryStrip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .detailsLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1000px) {
+  .container {
+    padding: 1rem 1rem 7rem;
+    min-height: auto;
+  }
+
+  .hero {
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .hero h1 {
+    font-size: 1.5rem;
+  }
+
+  .currencySwitch {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .filtersPanel,
+  .metricsPanel,
+  .listPanel {
+    padding: 1rem;
+  }
+
+  .filtersPanel,
+  .summaryStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .listShell,
+  .list {
+    max-height: none;
+  }
+
+  .rowMain,
+  .rowMeta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .rowBadges {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .container {
+    padding: 0.75rem 0.75rem 6.5rem;
+  }
+
+  .hero,
+  .filtersPanel,
+  .metricsPanel,
+  .listPanel {
+    padding: 0.85rem;
+  }
+
+  .hero h1 {
+    font-size: 1.2rem;
+  }
+
+  .summaryCard strong,
+  .metricBox strong,
+  .latestCard strong {
+    font-size: 1.12rem;
+  }
+}

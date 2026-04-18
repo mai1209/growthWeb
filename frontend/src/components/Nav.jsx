@@ -81,6 +81,22 @@ function Nav({
                   <p>Home</p>
                 </NavLink>
                 <NavLink
+                  to="/filtros"
+                  className={getNavLinkClass}
+                  onClick={onCloseMobileMenu}
+                >
+                  <img src="/historial.png" alt="filtros" />
+                  <p>Filtros</p>
+                </NavLink>
+                <NavLink
+                  to="/compartidos"
+                  className={getNavLinkClass}
+                  onClick={onCloseMobileMenu}
+                >
+                  <img src="/lista.png" alt="compartidos" />
+                  <p>Compartidos</p>
+                </NavLink>
+                <NavLink
                   to="/notas"
                   className={getNavLinkClass}
                   onClick={onCloseMobileMenu}
@@ -161,6 +177,14 @@ function Nav({
             <NavLink to="/" className={getNavLinkClass} onClick={onCloseMobileMenu}>
               <img src="/homedos.png" alt="home" />
               <p>Home</p>
+            </NavLink>
+            <NavLink to="/filtros" className={getNavLinkClass} onClick={onCloseMobileMenu}>
+              <img src="/historial.png" alt="filtros" />
+              <p>Filtros</p>
+            </NavLink>
+            <NavLink to="/compartidos" className={getNavLinkClass} onClick={onCloseMobileMenu}>
+              <img src="/lista.png" alt="compartidos" />
+              <p>Compartidos</p>
             </NavLink>
             <NavLink to="/notas" className={getNavLinkClass} onClick={onCloseMobileMenu}>
               <img src="/tarea.png" alt="tasklist" />

@@ -64,6 +64,12 @@
   height: 22px;
 }
 
+:global(body[data-theme="light"]) .icon img,
+:global(body[data-theme="light"]) .calendarButton img,
+:global(body[data-theme="light"]) .btnAccion img {
+  filter: brightness(0) saturate(100%);
+}
+
 .calendarButton {
   border: none;
   background: transparent;
@@ -92,21 +98,39 @@
 }
 
 .movimientoRow {
+  position: relative;
   border-radius: var(--radius-xl);
   border: 1px solid rgba(216, 241, 224, 0.06);
-  background: var(--surface-input);
+  background:
+    linear-gradient(135deg, rgba(152, 255, 106, 0.08), rgba(255, 163, 108, 0.04)),
+    var(--surface-input);
 }
 
 .bordeIngreso {
-  box-shadow: inset 0 0 0 1px rgba(144, 211, 106, 0.16);
+  box-shadow:
+    inset 0 0 0 1px rgba(152, 255, 106, 0.34),
+    0 14px 28px rgba(121, 220, 76, 0.12);
+  background:
+    linear-gradient(135deg, rgba(152, 255, 106, 0.2), rgba(24, 56, 16, 0.2)),
+    var(--surface-input);
 }
 
 .bordeEgreso {
-  box-shadow: inset 0 0 0 1px rgba(241, 141, 113, 0.16);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 144, 95, 0.34),
+    0 14px 28px rgba(228, 112, 61, 0.12);
+  background:
+    linear-gradient(135deg, rgba(255, 144, 95, 0.18), rgba(78, 26, 14, 0.18)),
+    var(--surface-input);
 }
 
 .bordeAhorro {
-  box-shadow: inset 0 0 0 1px rgba(76, 160, 154, 0.2);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 214, 82, 0.32),
+    0 14px 28px rgba(223, 185, 70, 0.1);
+  background:
+    linear-gradient(135deg, rgba(255, 214, 82, 0.18), rgba(80, 62, 14, 0.18)),
+    var(--surface-input);
 }
 
 .rowMain {
@@ -199,6 +223,9 @@
 }
 
 .btnAccion {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
   border: none;
   border-radius: var(--radius-md);
   width: 42px;
@@ -206,8 +233,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface-hover);
+  background: linear-gradient(135deg, rgba(158, 247, 99, 0.16), rgba(255, 155, 88, 0.14));
   cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.btnAccion:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.14);
 }
 
 .btnAccion img {

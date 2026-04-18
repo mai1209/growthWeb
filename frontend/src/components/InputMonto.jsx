@@ -1,6 +1,6 @@
 import React from 'react';
 
-function InputMonto({ value, onChange, placeholder, className, disabled = false }) {
+function InputMonto({ value, onChange, placeholder, className, disabled = false, id }) {
 
   const formatValue = (val) => {
     if (!val) return '';
@@ -45,6 +45,7 @@ function InputMonto({ value, onChange, placeholder, className, disabled = false 
 
   return (
     <input
+      id={id}
       name="monto"
       className={className}
       type="text"

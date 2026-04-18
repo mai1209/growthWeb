@@ -7,6 +7,7 @@ import connectDB from "./src/config/db.js";
 import ingresoEgresoRoutes from "./src/routes/ingresoEgresoRoutes.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import taskRoutes from "./src/routes/taskRoutes.js";
+import sharedExpenseRoutes from "./src/routes/sharedExpenseRoutes.js";
 
 dotenv.config();
 
@@ -85,6 +86,7 @@ app.use(async (req, res, next) => {
 app.use("/api/add", ingresoEgresoRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/task", taskRoutes);
+app.use("/api/shared-groups", sharedExpenseRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

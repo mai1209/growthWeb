@@ -1,10 +1,18 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
 import Add from "./Add";
 import { FiX } from "react-icons/fi";
 import Results from "./Results";
 import style from "../style/App.module.css";
-import { CURRENCY_OPTIONS, getCurrencyMeta } from "../utils/finance";
+import {
+  CURRENCY_OPTIONS,
+  filterMovimientosByCurrency,
+  formatMoney,
+  getAverageTicket,
+  getCurrencyMeta,
+  getLatestMovimiento,
+  getTopCategory,
+  isSameMonth,
+} from "../utils/finance";
 
 function Dashboard({
   movimientos = [],
@@ -16,13 +24,47 @@ function Dashboard({
   onCurrencyChange,
   ...authProps
 }) {
-  const navigate = useNavigate();
   const [showOnly, setShowOnly] = useState(null);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
 
+  const currencyMovimientos = useMemo(
+    () => filterMovimientosByCurrency(movimientos, currentCurrency),
+    [movimientos, currentCurrency]
+  );
+
+  const monthMovimientos = useMemo(
+    () => currencyMovimientos.filter((movimiento) => isSameMonth(movimiento.fecha)),
+    [currencyMovimientos]
+  );
+
+  const topExpense = useMemo(
+    () => getTopCategory(monthMovimientos, "egreso"),
+    [monthMovimientos]
+  );
+
+  const topIncome = useMemo(
+    () => getTopCategory(monthMovimientos, "ingreso"),
+    [monthMovimientos]
+  );
+
+  const latestMovimiento = useMemo(
+    () => getLatestMovimiento(currencyMovimientos),
+    [currencyMovimientos]
+  );
+
+  const averageTicket = useMemo(
+    () => getAverageTicket(monthMovimientos),
+    [monthMovimientos]
+  );
+
   const handleEditClick = (movimiento) => {
     setMovementToEdit?.(movimiento);
-    navigate("/add");
+    if (movimiento?.esRecurrente) {
+      setShowOnly(movimiento.tipo === "ingreso" ? "ingreso-fijo" : "egreso-fijo");
+      return;
+    }
+
+    setShowOnly(movimiento?.tipo || "ingreso");
   };
 
   const currencyMeta = getCurrencyMeta(currentCurrency);
@@ -40,7 +82,11 @@ function Dashboard({
         </div>
 
         <div className={style.heroControls}>
-          <div className={style.currencySwitch}>
+          <div
+            className={`${style.currencySwitch} ${
+              currentCurrency === "USD" ? style.currencySwitchUsd : style.currencySwitchArs
+            }`}
+          >
             {CURRENCY_OPTIONS.map((option) => (
               <button
                 key={option.value}
@@ -121,6 +167,54 @@ function Dashboard({
         </div>
       </section>
 
+      <section className={style.insightsSection}>
+        <div className={style.insightsHeader}>
+          <p className={style.eyebrow}>Lecturas utiles</p>
+          <h2>Lo mas relevante de este mes en {currencyMeta.codeLabel}</h2>
+          <p className={style.insightsText}>
+            Un resumen rapido para entender en que se mueve tu caja antes de mirar el
+            historial filtrado.
+          </p>
+        </div>
+
+        <div className={style.insightsGrid}>
+          <article className={style.insightCard}>
+            <span>Categoria con mayor egreso</span>
+            <strong>
+              {topExpense
+                ? `${topExpense.categoria} · ${formatMoney(topExpense.monto, currentCurrency)}`
+                : "Sin egresos este mes"}
+            </strong>
+          </article>
+
+          <article className={style.insightCard}>
+            <span>Categoria con mayor ingreso</span>
+            <strong>
+              {topIncome
+                ? `${topIncome.categoria} · ${formatMoney(topIncome.monto, currentCurrency)}`
+                : "Sin ingresos este mes"}
+            </strong>
+          </article>
+
+          <article className={style.insightCard}>
+            <span>Ultimo movimiento</span>
+            <strong>
+              {latestMovimiento
+                ? `${latestMovimiento.categoria} · ${formatMoney(
+                    latestMovimiento.monto,
+                    currentCurrency
+                  )}`
+                : "Todavia no cargaste movimientos"}
+            </strong>
+          </article>
+
+          <article className={style.insightCard}>
+            <span>Ticket promedio</span>
+            <strong>{formatMoney(averageTicket, currentCurrency)}</strong>
+          </article>
+        </div>
+      </section>
+
       <section className={style.contentLayout}>
         <div className={style.resultsColumn}>
           <Results
@@ -154,7 +248,10 @@ function Dashboard({
       {showOnly && (
         <section
           className={style.modalOverlay}
-          onClick={() => setShowOnly(null)}
+          onClick={() => {
+            setShowOnly(null);
+            setMovementToEdit?.(null);
+          }}
         >
           <div
             className={style.inlineForm}
@@ -171,7 +268,10 @@ function Dashboard({
               <button
                 type="button"
                 className={style.closeInlineForm}
-                onClick={() => setShowOnly(null)}
+                onClick={() => {
+                  setShowOnly(null);
+                  setMovementToEdit?.(null);
+                }}
                 aria-label="Cerrar formulario"
               >
                 <FiX />
@@ -182,6 +282,7 @@ function Dashboard({
               onMovementAdded={(savedMovement) => {
                 onMovementUpdate?.(savedMovement);
                 setShowOnly(null);
+                setMovementToEdit?.(null);
               }}
               movementToEdit={movementToEdit}
               only={showOnly}

@@ -227,19 +227,23 @@ function Results({
                     <div className={style.columna3}>
                       <button
                         type="button"
-                        onClick={() =>
-                          onEditClick(movimiento.sourceMovimiento || movimiento)
-                        }
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onEditClick(movimiento.sourceMovimiento || movimiento);
+                        }}
                         className={style.btnAccion}
+                        aria-label="Editar movimiento"
                       >
                         <img src="/edit.png" alt="edit" />
                       </button>
                       <button
                         type="button"
-                        onClick={() =>
-                          handleDeleteMovimiento(movimiento.sourceId || movimiento._id)
-                        }
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDeleteMovimiento(movimiento.sourceId || movimiento._id);
+                        }}
                         className={style.btnAccion}
+                        aria-label="Eliminar movimiento"
                       >
                         <img src="/trush.png" alt="delete" />
                       </button>

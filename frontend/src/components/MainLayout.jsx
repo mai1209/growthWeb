@@ -103,6 +103,12 @@ function MainLayout({
     setIsMobilePanelOpen((prev) => !prev);
   }, []);
 
+  const handleOpenNotesPanel = useCallback(() => {
+    if (!isMobile) return;
+    setIsMobileMenuOpen(false);
+    setIsMobilePanelOpen(true);
+  }, [isMobile]);
+
   const mobilePanelLabel = location.pathname === "/notas" ? "Panel" : "Dashboard";
 
   return (
@@ -127,7 +133,13 @@ function MainLayout({
         ) : null}
 
         <div className={style.content}>
-          <Outlet context={{ isNotesOpen, setIsNotesOpen }} />
+          <Outlet
+            context={{
+              isNotesOpen,
+              setIsNotesOpen,
+              openNotesPanel: handleOpenNotesPanel,
+            }}
+          />
         </div>
       </main>
     </div>

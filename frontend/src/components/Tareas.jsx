@@ -5,9 +5,10 @@ import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Tarea.module.css";
 import resultsStyle from "../style/Results.module.css";
 import { useOutletContext } from "react-router-dom";
+import { getIsoDate } from "../utils/finance";
 
 function Tareas({  refreshKey, onEditClick }) {
-  const { isNotesOpen } = useOutletContext();
+  const { isNotesOpen, openNotesPanel } = useOutletContext();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showList, setShowList] = useState(false);
@@ -64,9 +65,28 @@ function Tareas({  refreshKey, onEditClick }) {
     try {
       await taskService.delete( taskId);
       setTasks((prev) => prev.filter((t) => t._id !== taskId));
+      setError("");
     } catch (err) {
       console.error("Error al eliminar");
+      setError("No se pudo eliminar la tarea.");
     }
+  };
+
+  const handleEditTask = (task) => {
+    onEditClick(task);
+    openNotesPanel?.();
+  };
+
+  const isTaskCompleted = (task) => {
+    if (typeof task?.completada === "boolean") {
+      return task.completada;
+    }
+
+    if (!Array.isArray(task?.completadasEn) || !task?.fecha) {
+      return false;
+    }
+
+    return task.completadasEn.includes(getIsoDate(task.fecha));
   };
 
   const renderContent = () => {
@@ -79,55 +99,64 @@ function Tareas({  refreshKey, onEditClick }) {
         </p>
       );
 
-    return tasks.map((task) => (
-      <div className={style.taskContainer} key={task._id}>
-        <div
-          className={`${style.taskCard} ${
-            task.completada ? style.completed : ""
-          } ${style[task.color] || style.color1}`}
-        >
-          <label className={style.checkboxWrapper}>
-            <input
-              type="checkbox"
-              checked={task.completada}
-              onChange={() => handleToggleComplete(task._id)}
-            />
-            <span className={style.customCheckbox}></span>
-          </label>
+    return tasks.map((task) => {
+      const completed = isTaskCompleted(task);
 
-          <div className={style.taskHeader}>
-            <p className={style.taskMeta}>{task.meta}</p>
-            <p className={style.taskDate}>
-              {task.fecha ? task.fecha.slice(0, 10) : "-"}
-            </p>
-          </div>
+      return (
+        <div className={style.taskContainer} key={task._id}>
+          <div
+            className={`${style.taskCard} ${
+              completed ? style.completed : ""
+            } ${style[task.color] || style.color1}`}
+          >
+            <label className={style.checkboxWrapper}>
+              <input
+                type="checkbox"
+                checked={completed}
+                onChange={() => handleToggleComplete(task._id)}
+              />
+              <span className={style.customCheckbox}></span>
+            </label>
 
-          <div className={style.taskInfoBlock}>
-            <p className={style.taskUrgency}> {task.urgencia}</p>
-          </div>
+            <div className={style.taskHeader}>
+              <p className={style.taskMeta}>{task.meta}</p>
+              <p className={style.taskDate}>
+                {task.fecha ? task.fecha.slice(0, 10) : "-"}
+              </p>
+            </div>
 
-          <div className={style.taskDetails}>
-            <p>{task.horario || "Sin horario"} </p>
-          </div>
+            <div className={style.taskInfoBlock}>
+              <p className={style.taskUrgency}>{task.urgencia || "Normal"}</p>
+            </div>
 
-          <div className={style.taskActions}>
-            <button
-              onClick={() => onEditClick(task)}
-              className={style.editButton}
-            >
-              <img className={style.ButtonImg} src="/edit.png" alt="edit" />
-            </button>
+            <div className={style.taskDetails}>
+              <span className={style.taskDetailsLabel}>Horario</span>
+              <p>{task.horario || "Sin horario"}</p>
+            </div>
 
-            <button
-              onClick={() => handleDeleteTask(task._id)}
-              className={style.deleteButton}
-            >
-              <img className={style.ButtonImg} src="/trush.png" alt="delete" />
-            </button>
+            <div className={style.taskActions}>
+              <button
+                type="button"
+                onClick={() => handleEditTask(task)}
+                className={style.editButton}
+                aria-label="Editar tarea"
+              >
+                <img className={style.ButtonImg} src="/edit.png" alt="edit" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDeleteTask(task._id)}
+                className={style.deleteButton}
+                aria-label="Eliminar tarea"
+              >
+                <img className={style.ButtonImg} src="/trush.png" alt="delete" />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    ));
+      );
+    });
   };
 
   const renderListTable = () => {
@@ -138,28 +167,37 @@ function Tareas({  refreshKey, onEditClick }) {
 
     return (
       <div className={style.taskListMode}>
-        {tasks.map((t) => (
-          <div key={t._id} className={style.listRow}>
-            <div>
-              <p className={style.listTitle}>{t.meta}</p>
-              <p className={style.listMeta}>
-                {t.urgencia} ·{" "}
-                <span className={style.listState}>
-                  {t.completada ? "Hecho" : "Pendiente"}
-                </span>
+        {tasks.map((t) => {
+          const completed = isTaskCompleted(t);
+
+          return (
+            <div
+              key={t._id}
+              className={`${style.listRow} ${
+                completed ? style.completedListRow : ""
+              }`}
+            >
+              <div className={style.listCopy}>
+                <p className={style.listTitle}>{t.meta}</p>
+                <div className={style.listMetaRow}>
+                  <span className={style.listUrgency}>{t.urgencia || "Normal"}</span>
+                  <span className={style.listState}>
+                    {completed ? "Hecho" : "Pendiente"}
+                  </span>
+                </div>
+              </div>
+
+              <p className={style.listSchedule}>
+                {t.fecha ? t.fecha.slice(0, 10) : "-"} · {t.horario || "--:--"}
               </p>
-            </div>
 
-            <p className={style.listSchedule}>
-              {t.fecha ? t.fecha.slice(0, 10) : "-"} · {t.horario || "--:--"}
-            </p>
-
-            <div className={style.listActions}>
-              <button onClick={() => onEditClick(t)}>Editar</button>
-              <button onClick={() => handleDeleteTask(t._id)}>Eliminar</button>
+              <div className={style.listActions}>
+                <button type="button" onClick={() => handleEditTask(t)}>Editar</button>
+                <button type="button" onClick={() => handleDeleteTask(t._id)}>Eliminar</button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -176,10 +214,7 @@ function Tareas({  refreshKey, onEditClick }) {
           <h1 className={style.pageTitle}>
             {showList ? "Todas las Tareas" : "Mis Tareas de hoy"}
           </h1>
-          <p className={style.pageText}>
-            Mantiene el mismo estilo del dashboard y te deja alternar entre vista
-            diaria y lista completa.
-          </p>
+      
 
           <div className={style.containerFecha}>
             <p>Tareas de</p>
