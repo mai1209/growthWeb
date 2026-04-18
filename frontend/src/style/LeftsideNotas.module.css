@@ -20,6 +20,9 @@
   padding: 0;
   display: flex;
   justify-content: flex-end;
+  border: none;
+  background: transparent;
+  width: 100%;
 }
 .close {
   cursor: pointer;
@@ -32,7 +35,7 @@
 }
 
 .containerForm input:not([type="checkbox"]) {
-  border: 1px solid rgba(216, 241, 224, 0.08);
+  border: 1px solid rgba(216, 241, 224, 0.12);
   border-radius: var(--radius-lg);
   width: 100%;
   height: 3.2rem;
@@ -48,11 +51,12 @@
 }
 
 .kicker {
-  color: #b4c7b4;
+  color: var(--color-verde);
   font-size: 0.76rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 0.35rem;
+  font-weight: 500;
 }
 
 .titleKeep {
@@ -68,6 +72,7 @@
   color: var(--color-muted);
   line-height: 1.55;
   margin-top: 0.45rem;
+  font-size: 0.6rem;
 }
 
 .summaryCard {
@@ -138,45 +143,69 @@
 .circleOne {
   width: 45px;
   height: 45px;
-  border-radius: 50%;
-  background-color: #e03525;
-  border: 1px solid #fff;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ff6d55, #d93d2f);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0;
+  appearance: none;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 .circleTwo {
   width: 45px;
   height: 45px;
-  border-radius: 50%;
-  background-color: #cf522a;
-  border: 2px solid #fff;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ffb157, #ef6f34);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0;
+  appearance: none;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 .circleThree {
   width: 45px;
   height: 45px;
-  border-radius: 50%;
-  background-color: #bc8b35;
-  border: 2px solid #fff;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ffe86c, #dcae33);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0;
+  appearance: none;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 .circleFour {
   width: 45px;
   height: 45px;
-  border-radius: 50%;
-  background-color: #a3ab3c;
-  border: 2px solid #fff;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #92f0b8, #42c987);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0;
+  appearance: none;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .containerColors {
   display: flex;
   justify-content: flex-start;
-  gap: 1.5rem;
+  gap: 0.9rem;
   width: 100%;
+  flex-wrap: wrap;
 }
 .circleOne:hover,
 .circleTwo:hover,
 .circleThree:hover,
 .circleFour:hover {
-  width: 50px;
-  height: 50px;
   cursor: pointer;
+  transform: translateY(-2px);
 }
 
 .keep {
@@ -196,7 +225,7 @@
 }
 
 .select {
-  border: 1px solid rgba(216, 241, 224, 0.08);
+  border: 1px solid rgba(216, 241, 224, 0.12);
   border-radius: var(--radius-lg);
   width: 100%;
   height: 3.2rem;
@@ -243,15 +272,17 @@
 }
 
 .selected {
-  transform: scale(1.1);
-  border: 1px solid rgba(0, 255, 0, 0.5);
-  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.86);
+  box-shadow:
+    0 0 0 2px rgba(17, 24, 19, 0.22),
+    0 12px 22px rgba(0, 0, 0, 0.18);
 }
 
 .datePicker {
   background: var(--surface-input);
   color: var(--color-text);
-  border: 1px solid rgba(216, 241, 224, 0.08);
+  border: 1px solid rgba(216, 241, 224, 0.12);
   border-radius: 0;
 }
 
@@ -290,21 +321,28 @@
   justify-content: center;
   align-items: center;
   gap: 0.2rem;
-  width: 40px;
-  height: 40px;
-  border: 0.5px solid var(--color-text);
-  border-radius: 50%;
+  min-width: 44px;
+  height: 42px;
+  padding: 0 0.7rem;
+  border: 1px solid rgba(216, 241, 224, 0.16);
+  border-radius: 12px;
   font-size: 0.8rem;
   color: var(--color-text);
   cursor: pointer;
   user-select: none;
-  transition: background 0.2s ease;
-  background-color: transparent;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  background-color: var(--surface-input);
+  font-weight: 700;
 }
 
 /* Hover */
 .diaItem:hover {
   background-color: rgba(59, 203, 35, 0.14);
+  transform: translateY(-1px);
 }
 
 /* Checkbox oculto */
@@ -314,18 +352,22 @@
 
 /* Día seleccionado */
 .diaItem input:checked + span {
-  font-weight: 600;
-  color: var(--color-text);
+  font-weight: 800;
+  color: #111813;
 }
 
-/* 👇 ESTE ES EL IMPORTANTE */
 .diaItem:has(input:checked) {
-  background: linear-gradient(
-    135deg,
-    rgba(59, 203, 35, 0.28),
-    rgba(18, 43, 11, 0.94)
-  );
-  border-color: rgba(144, 211, 106, 0.32);
+  background: linear-gradient(135deg, #9cfb43, #5dc72d);
+  border-color: rgba(156, 251, 67, 0.55);
+  box-shadow: 0 10px 20px rgba(50, 106, 31, 0.22);
+}
+
+.containerForm input:not([type="checkbox"]):focus,
+.select:focus,
+.datePicker:focus {
+  outline: none;
+  border-color: rgba(144, 211, 106, 0.45);
+  box-shadow: 0 0 0 3px rgba(144, 211, 106, 0.16);
 }
 /* SOLO Chrome / Brave */
 .timePicker {
@@ -377,13 +419,40 @@
   border: 1px solid rgba(144, 211, 106, 0.2);
 }
 
+:global(body[data-theme="light"]) .containerForm input:not([type="checkbox"]),
+:global(body[data-theme="light"]) .select,
+:global(body[data-theme="light"]) .datePicker {
+  border-color: rgba(12, 18, 14, 0.42);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 246, 0.96)),
+    var(--surface-input);
+  box-shadow: inset 0 1px 0 rgba(22, 41, 31, 0.05);
+}
+
+:global(body[data-theme="light"]) .summaryCard,
+:global(body[data-theme="light"]) .form {
+  border-color: rgba(22, 41, 31, 0.12);
+}
+
+:global(body[data-theme="light"]) .selected {
+  border-color: rgba(17, 24, 19, 0.82);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.96),
+    0 0 0 4px rgba(17, 24, 19, 0.18),
+    0 12px 22px rgba(21, 33, 24, 0.12);
+}
+
+:global(body[data-theme="light"]) .diaItem {
+  border-color: rgba(22, 41, 31, 0.2);
+}
+
 @media (max-width: 1000px) {
   .container {
     width: 100%;
     height: fit-content;
-    z-index: 20;
-    position: absolute;
-    top: 5rem;
+    z-index: auto;
+    position: relative;
+    top: 0;
     border-right: none;
     background-color: transparent;
     padding: 0.9rem;
@@ -442,7 +511,7 @@
   .summaryHeader p,
   .subtitle,
   .subtitleHeader {
-    font-size: 0.84rem;
+    font-size: 0.6rem;
   }
   .notesCard div {
     padding: 0.85rem 0.45rem;
@@ -507,7 +576,7 @@
   .containerOpenClose {
     width: fit-content;
     padding: 2rem 1rem 0;
-    position: fixed;
+    position: static;
   }
 
   .open {
@@ -554,7 +623,7 @@
   .summaryHeader p,
   .subtitle,
   .keep {
-    font-size: 0.8rem;
+    font-size: 0.6rem;
   }
 
   .containerColors {

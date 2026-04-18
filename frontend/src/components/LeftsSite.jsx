@@ -5,10 +5,7 @@ import {
   CURRENCY_OPTIONS,
   filterMovimientosByCurrency,
   formatMoney,
-  getAverageTicket,
   getCurrencyMeta,
-  getLatestMovimiento,
-  getTopCategory,
   isSameMonth,
   summarizeByType,
 } from "../utils/finance";
@@ -44,26 +41,6 @@ function LeftSite({
     [monthMovimientos]
   );
 
-  const topExpense = useMemo(
-    () => getTopCategory(monthMovimientos, "egreso"),
-    [monthMovimientos]
-  );
-
-  const topIncome = useMemo(
-    () => getTopCategory(monthMovimientos, "ingreso"),
-    [monthMovimientos]
-  );
-
-  const latestMovimiento = useMemo(
-    () => getLatestMovimiento(currencyMovimientos),
-    [currencyMovimientos]
-  );
-
-  const averageTicket = useMemo(
-    () => getAverageTicket(monthMovimientos),
-    [monthMovimientos]
-  );
-
   const hideableMoney = (amount) =>
     areTotalsVisible ? formatMoney(amount, currentCurrency) : "••••";
 
@@ -79,21 +56,7 @@ function LeftSite({
           </p>
         </div>
 
-        <div className={style.currencySwitch}>
-          {CURRENCY_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={`${style.currencyButton} ${
-                option.value === currentCurrency ? style.currencyButtonActive : ""
-              }`}
-              onClick={() => onCurrencyChange?.(option.value)}
-            >
-              <span>{option.codeLabel}</span>
-              <small>{option.label}</small>
-            </button>
-          ))}
-        </div>
+      
 
         <div className={style.balanceCard}>
           <div>
@@ -114,6 +77,26 @@ function LeftSite({
           >
             {areTotalsVisible ? "Ocultar" : "Mostrar"}
           </button>
+        </div>
+
+          <div
+            className={`${style.currencySwitch} ${
+              currentCurrency === "USD" ? style.currencySwitchUsd : style.currencySwitchArs
+            }`}
+          >
+          {CURRENCY_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={`${style.currencyButton} ${
+                option.value === currentCurrency ? style.currencyButtonActive : ""
+              }`}
+              onClick={() => onCurrencyChange?.(option.value)}
+            >
+              <span>{option.codeLabel}</span>
+              <small>{option.label}</small>
+            </button>
+          ))}
         </div>
 
         <div className={style.statGrid}>
@@ -137,50 +120,6 @@ function LeftSite({
             <strong>{hideableMoney(monthSummary.ahorro)}</strong>
           </article>
         </div>
-
-        <section className={style.section}>
-          <div className={style.sectionTitle}>
-            <h3>Lecturas utiles</h3>
-            <p>Lo mas relevante de este mes en {currencyMeta.codeLabel}.</p>
-          </div>
-
-          <div className={style.insightList}>
-            <div className={style.insightItem}>
-              <span>Categoria con mayor egreso</span>
-              <strong>
-                {topExpense
-                  ? `${topExpense.categoria} · ${hideableMoney(topExpense.monto)}`
-                  : "Sin egresos este mes"}
-              </strong>
-            </div>
-
-            <div className={style.insightItem}>
-              <span>Categoria con mayor ingreso</span>
-              <strong>
-                {topIncome
-                  ? `${topIncome.categoria} · ${hideableMoney(topIncome.monto)}`
-                  : "Sin ingresos este mes"}
-              </strong>
-            </div>
-
-            <div className={style.insightItem}>
-              <span>Ultimo movimiento</span>
-              <strong>
-                {latestMovimiento
-                  ? `${latestMovimiento.categoria} · ${formatMoney(
-                      latestMovimiento.monto,
-                      currentCurrency
-                    )}`
-                  : "Todavia no cargaste movimientos"}
-              </strong>
-            </div>
-
-            <div className={style.insightItem}>
-              <span>Ticket promedio</span>
-              <strong>{hideableMoney(averageTicket)}</strong>
-            </div>
-          </div>
-        </section>
 
         <section className={style.section}>
           <div className={style.sectionTitle}>

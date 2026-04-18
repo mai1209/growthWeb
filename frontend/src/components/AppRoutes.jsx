@@ -5,6 +5,8 @@ import MainLayout from "./MainLayout";
 import Dashboard from "./Dashboard";
 import Add from "./Add";
 import Tareas from "./Tareas";
+import MonthlyFilters from "./MonthlyFilters";
+import SharedExpenses from "./SharedExpenses";
 
 import LoginPage from "./LoginPage";
 import SignupPage from "./SignupPage";
@@ -132,6 +134,19 @@ function AppRoutes({
             />
           }
         />
+
+        <Route
+          path="filtros"
+          element={
+            <MonthlyFilters
+              movimientos={movimientos}
+              currentCurrency={panelCurrency}
+              onCurrencyChange={onPanelCurrencyChange}
+            />
+          }
+        />
+
+        <Route path="compartidos" element={<SharedExpenses />} />
 
         {/* Cualquier otra ruta privada → dashboard */}
         <Route path="*" element={<Navigate to="/" />} />

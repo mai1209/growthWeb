@@ -80,6 +80,17 @@ export const movimientoService = {
   delete: (id) => api.delete(`/api/add/${id}`),
 };
 
+export const sharedGroupsService = {
+  getAll: () => api.get("/api/shared-groups"),
+  getById: (id) => api.get(`/api/shared-groups/${id}`),
+  create: (data) => api.post("/api/shared-groups", data),
+  update: (id, data) => api.put(`/api/shared-groups/${id}`, data),
+  delete: (id) => api.delete(`/api/shared-groups/${id}`),
+  createExpense: (id, data) => api.post(`/api/shared-groups/${id}/expenses`, data),
+  deleteExpense: (groupId, expenseId) =>
+    api.delete(`/api/shared-groups/${groupId}/expenses/${expenseId}`),
+};
+
 export const authService = {
   login: (credentials) =>
     api.post("/api/auth/login", credentials),

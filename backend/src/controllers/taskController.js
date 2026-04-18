@@ -43,13 +43,25 @@ export const getTasks = async (req, res) => {
     const { fecha } = req.query;
     const userId = req.user.id;
 
+    const buildTaskState = (task, targetDate) => {
+      const taskObj = task.toObject();
+      taskObj.completada = task.completadasEn?.includes(targetDate) || false;
+      return taskObj;
+    };
+
     // 👇 SI NO HAY FECHA, SALIMOS ANTES
     if (!fecha) {
       const allTasks = await Task.find({
         user: new mongoose.Types.ObjectId(userId),
       }).sort({ fecha: 1, horario: 1 });
 
-      return res.status(200).json(allTasks);
+      const allTasksWithState = allTasks.map((task) => {
+        const baseDate = new Date(task.fecha);
+        const targetDate = baseDate.toISOString().slice(0, 10);
+        return buildTaskState(task, targetDate);
+      });
+
+      return res.status(200).json(allTasksWithState);
     }
 
     // ✅ PRIMERO crear las fechas
@@ -89,11 +101,7 @@ const diaActual = diasMap[startDate.getUTCDay()];
 const fechaStr = startDate.toISOString().slice(0, 10);
 
 // 👇 INYECTAMOS "completada" SEGÚN completadasEn
-const tasksConEstado = tasks.map((task) => {
-  const taskObj = task.toObject();
-  taskObj.completada = task.completadasEn?.includes(fechaStr);
-  return taskObj;
-});
+const tasksConEstado = tasks.map((task) => buildTaskState(task, fechaStr));
 
 res.status(200).json(tasksConEstado);
 

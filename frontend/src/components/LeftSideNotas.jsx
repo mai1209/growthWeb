@@ -215,18 +215,20 @@ function LeftSideNotas({
     >
       {!embeddedMobile && (
         <div className={style.containerOpen}>
-          <div
+          <button
+            type="button"
             className={`${style.containerOpenClose} ${isOpen ? style.open : ""}`}
             onClick={toggleContainer}
+            aria-label={isOpen ? "Cerrar panel de notas" : "Abrir panel de notas"}
           >
-            <p className={style.close} onClick={onUpdate}>
+            <span className={style.close}>
               {isDesktop
                 ? "Crear un hábito +"
                 : isOpen
                   ? "✕"
                   : "Crear un hábito +"}
-            </p>
-          </div>
+            </span>
+          </button>
         </div>
       )}
 
@@ -313,14 +315,16 @@ function LeftSideNotas({
                 <div className={style.containerColors}>
                   {["color1", "color2", "color3", "color4"].map(
                     (color, index) => (
-                      <div
+                      <button
                         key={color}
+                        type="button"
                         className={`${
                           style[
                             `circle${["One", "Two", "Three", "Four"][index]}`
                           ]
                         } ${formData.color === color ? style.selected : ""}`}
                         onClick={() => handleColorSelect(color)}
+                        aria-label={`Seleccionar color ${index + 1}`}
                       />
                     ),
                   )}

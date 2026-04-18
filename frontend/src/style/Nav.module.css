@@ -71,6 +71,11 @@
   height: 18px;
 }
 
+:global(body[data-theme="light"]) .navLink img,
+:global(body[data-theme="light"]) .logo {
+  filter: brightness(0) saturate(100%);
+}
+
 .navLink p {
   font-size: 0.92rem;
 }
@@ -230,21 +235,21 @@
     justify-content: center;
     min-height: 44px;
     padding: 0.7rem 0.95rem;
-    border: 1px solid rgba(216, 241, 224, 0.12);
     border-radius: var(--radius-lg);
     background: linear-gradient(135deg, rgba(59, 203, 35, 0.22), rgba(18, 43, 11, 0.9));
     color: var(--color-text);
     font-size: 0.84rem;
     font-weight: 700;
     cursor: pointer;
+    border: none;
   }
 
-  .menuBar {
-    width: 18px;
-    height: 2px;
-    border-radius: var(--radius-pill);
-    background: var(--color-text);
-  }
+.menuBar {
+  width: 18px;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--color-text);
+}
 
   .mobileMenuShell {
     display: block;

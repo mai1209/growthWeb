@@ -107,8 +107,9 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
     [selectedMode]
   );
 
-  const CustomDateInput = forwardRef(({ value, onClick }, ref) => (
+  const CustomDateInput = forwardRef(({ value, onClick, id }, ref) => (
     <input
+      id={id}
       className={style.datePicker}
       onClick={onClick}
       ref={ref}
@@ -230,7 +231,11 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
             <h3>{mode.description}</h3>
           </div>
 
-          <div className={style.currencySwitch}>
+          <div
+            className={`${style.currencySwitch} ${
+              moneda === "USD" ? style.currencySwitchUsd : style.currencySwitchArs
+            }`}
+          >
             {CURRENCY_OPTIONS.map((option) => (
               <button
                 key={option.value}
@@ -246,65 +251,103 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
           </div>
         </div>
 
-        <InputMonto
-          className={style.inputMonto}
-          value={monto}
-          onChange={setMonto}
-          placeholder={`Monto en ${moneda === "USD" ? "USD" : "ARS"}`}
-        />
+        <div className={`${style.field} ${style.fieldFull} ${style.amountField}`}>
+          <div className={style.fieldLabelRow}>
+            <label className={style.fieldLabel} htmlFor="monto">
+              Monto
+            </label>
+            <span className={style.fieldTag}>
+              {moneda === "USD" ? "Dolares" : "Pesos"}
+            </span>
+          </div>
+
+          <InputMonto
+            className={style.inputMonto}
+            value={monto}
+            onChange={setMonto}
+            placeholder={`Monto en ${moneda === "USD" ? "USD" : "ARS"}`}
+            id="monto"
+          />
+        </div>
 
         <div className={style.fieldGrid}>
-          <input
-            name="categoria"
-            className={style.btn}
-            placeholder="Categoria"
-            value={categoria}
-            onChange={(event) => setCategoria(event.target.value)}
-            required
-          />
+          <div className={style.field}>
+            <label className={style.fieldLabel} htmlFor="categoria">
+              Categoria
+            </label>
+            <input
+              id="categoria"
+              name="categoria"
+              className={style.btn}
+              placeholder="Ej: ventas, alquiler, supermercado"
+              value={categoria}
+              onChange={(event) => setCategoria(event.target.value)}
+              required
+            />
+          </div>
 
-          <DatePicker
-            selected={selectedDate}
-            onChange={setSelectedDate}
-            dateFormat="dd/MM/yyyy"
-            customInput={<CustomDateInput />}
-            wrapperClassName={style.datePickerWrapper}
-          />
+          <div className={style.field}>
+            <label className={style.fieldLabel} htmlFor="fecha-movimiento">
+              Fecha
+            </label>
+            <DatePicker
+              id="fecha-movimiento"
+              selected={selectedDate}
+              onChange={setSelectedDate}
+              dateFormat="dd/MM/yyyy"
+              customInput={<CustomDateInput />}
+              wrapperClassName={style.datePickerWrapper}
+            />
+          </div>
         </div>
 
         {mode.recurrente && (
           <div className={style.fieldGrid}>
-            <select
-              className={style.select}
-              value={frecuencia}
-              onChange={(event) => setFrecuencia(event.target.value)}
-            >
-              {RECURRENCE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <div className={style.field}>
+              <label className={style.fieldLabel} htmlFor="frecuencia">
+                Frecuencia
+              </label>
+              <select
+                id="frecuencia"
+                className={style.select}
+                value={frecuencia}
+                onChange={(event) => setFrecuencia(event.target.value)}
+              >
+                {RECURRENCE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <div className={style.helperBox}>
+            <div className={`${style.helperBox} ${style.field}`}>
               Se tomara la fecha elegida como inicio y se repetira segun la
               frecuencia seleccionada.
             </div>
           </div>
         )}
 
-        <div className={style.fieldGrid}>
-          <input
-            name="detalle"
-            className={style.detalle}
-            placeholder="Detalle o referencia"
-            value={detalle}
-            onChange={(event) => setDetalle(event.target.value)}
-          />
+        <div className={`${style.fieldGrid} ${style.detailGrid}`}>
+          <div className={`${style.field} ${style.fieldWide}`}>
+            <label className={style.fieldLabel} htmlFor="detalle">
+              Detalle
+            </label>
+            <input
+              id="detalle"
+              name="detalle"
+              className={style.detalle}
+              placeholder="Agrega una referencia, nota breve o descripcion"
+              value={detalle}
+              onChange={(event) => setDetalle(event.target.value)}
+            />
+          </div>
 
-          <button className={style.buttonSend} type="submit" disabled={loading}>
-            {isEditing ? "Guardar cambios" : `Guardar ${mode.title.toLowerCase()}`}
-          </button>
+          <div className={style.submitWrap}>
+            <button className={style.buttonSend} type="submit" disabled={loading}>
+              {isEditing ? "Guardar cambios" : `Guardar ${mode.title.toLowerCase()}`}
+            </button>
+          </div>
         </div>
       </form>
 
