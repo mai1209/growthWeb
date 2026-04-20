@@ -319,6 +319,14 @@
     padding: 0.55rem 0.35rem;
   }
 
+  .listShell {
+    border-radius: 22px;
+  }
+
+  .rowMain {
+    padding: 0.9rem;
+  }
+
   .icon p {
     font-size: 0.72rem;
   }
@@ -394,6 +402,35 @@
     width: 100%;
     padding: 0.65rem 0.8rem;
     font-size: 0.88rem;
+  }
+
+  .header {
+    gap: 0.85rem;
+  }
+
+  .titleGroup h2 {
+    font-size: 1.05rem;
+  }
+
+  .datePickerContainer {
+    width: 100%;
+  }
+
+  .icon {
+    min-height: 58px;
+    padding: 0.5rem 0.25rem;
+  }
+
+  .icon p {
+    font-size: 0.72rem;
+  }
+
+  .rowMain {
+    padding: 0.82rem;
+  }
+
+  .categoriaTexto {
+    font-size: 0.96rem;
   }
 
   .btnAccion {

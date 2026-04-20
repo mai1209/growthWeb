@@ -92,6 +92,16 @@
     0 20px 50px rgba(0, 0, 0, 0.22);
 }
 
+.formDeuda {
+  background:
+    linear-gradient(135deg, rgba(255, 210, 92, 0.22), rgba(110, 69, 18, 0.08)),
+    var(--panel-background);
+  border-color: rgba(255, 210, 92, 0.26);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 210, 92, 0.18),
+    0 20px 50px rgba(0, 0, 0, 0.22);
+}
+
 .formHeader {
   display: flex;
   justify-content: space-between;
@@ -253,6 +263,12 @@
   gap: 0.8rem;
 }
 
+.fieldGridDual {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(240px, 0.7fr);
+  gap: 0.8rem;
+}
+
 .detailGrid {
   grid-template-columns: minmax(0, 1.5fr) minmax(220px, 0.5fr);
   align-items: end;
@@ -405,6 +421,12 @@
     var(--panel-background);
 }
 
+:global(body[data-theme="light"]) .formDeuda {
+  background:
+    linear-gradient(135deg, rgba(255, 210, 92, 0.3), rgba(255, 255, 255, 0.92)),
+    var(--panel-background);
+}
+
 .cancelContainer {
   display: flex;
   justify-content: center;
@@ -467,7 +489,8 @@
 
   .formCard {
     padding: 1rem;
-    border-radius: 0;
+    border-radius: 22px;
+    gap: 1rem;
   }
 
   .formHeader h3 {
@@ -477,6 +500,16 @@
   .currencyOption {
     padding: 0.55rem 0.72rem;
     font-size: 0.85rem;
+  }
+
+  .currencySwitch {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .methodOption {
+    padding: 0.68rem 0.72rem;
+    font-size: 0.84rem;
   }
 
   .inputMonto {
@@ -495,6 +528,7 @@
   }
 
   .fieldGrid,
+  .fieldGridDual,
   .fieldGridTriple {
     grid-template-columns: 1fr;
   }
@@ -518,6 +552,19 @@
     font-size: 1.15rem;
   }
 
+  .formCard {
+    padding: 0.85rem;
+    border-radius: 20px;
+  }
+
+  .formHeader {
+    gap: 0.7rem;
+  }
+
+  .formHeader h3 {
+    font-size: 0.98rem;
+  }
+
   .modeSelector {
     gap: 0.5rem;
   }
@@ -533,10 +580,35 @@
 
   .currencyOption {
     flex: 1;
+    font-size: 0.8rem;
+    padding: 0.62rem 0.55rem;
   }
 
   .methodOption {
     flex: 1;
+    font-size: 0.8rem;
+    padding: 0.62rem 0.55rem;
+  }
+
+  .fieldLabel {
+    font-size: 0.72rem;
+  }
+
+  .inputMonto {
+    font-size: 1.25rem;
+    min-height: 56px;
+    padding: 0.72rem 0.85rem;
+  }
+
+  .select,
+  .helperBox,
+  .btn,
+  .detalle,
+  .datePicker,
+  .buttonSend {
+    min-height: 44px;
+    padding: 0.72rem 0.8rem;
+    font-size: 0.9rem;
   }
 
   .cancelButton {

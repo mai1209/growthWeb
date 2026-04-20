@@ -7,9 +7,12 @@ import Add from "./Add";
 import Tareas from "./Tareas";
 import MonthlyFilters from "./MonthlyFilters";
 import SharedExpenses from "./SharedExpenses";
+import SettingsPage from "./SettingsPage";
 
 import LoginPage from "./LoginPage";
 import SignupPage from "./SignupPage";
+import ForgotPasswordPage from "./ForgotPasswordPage";
+import ResetPasswordPage from "./ResetPasswordPage";
 
 function AppRoutes({
   token,
@@ -57,6 +60,26 @@ function AppRoutes({
           element={
             <SignupPage
               onAuthSuccess={onAuthSuccess}
+              theme={theme}
+              onThemeToggle={onThemeToggle}
+            />
+          }
+        />
+
+        <Route
+          path="/forgot-password"
+          element={
+            <ForgotPasswordPage
+              theme={theme}
+              onThemeToggle={onThemeToggle}
+            />
+          }
+        />
+
+        <Route
+          path="/reset-password"
+          element={
+            <ResetPasswordPage
               theme={theme}
               onThemeToggle={onThemeToggle}
             />
@@ -149,6 +172,7 @@ function AppRoutes({
         />
 
         <Route path="compartidos" element={<SharedExpenses />} />
+        <Route path="ajustes" element={<SettingsPage />} />
 
         {/* Cualquier otra ruta privada → dashboard */}
         <Route path="*" element={<Navigate to="/" />} />

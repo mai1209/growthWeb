@@ -7,6 +7,7 @@ import {
   MOVEMENT_METHOD_OPTIONS,
   MOVEMENT_TYPE_OPTIONS,
   filterMovimientosByCurrency,
+  getDebtStatusMeta,
   formatMoney,
   formatSignedMoney,
   getCurrencyMeta,
@@ -88,6 +89,11 @@ function MonthlyFilters({
   const [selectedType, setSelectedType] = useState("all");
   const [selectedRecurrence, setSelectedRecurrence] = useState("all");
   const [selectedMethod, setSelectedMethod] = useState("all");
+  const [settleMovementId, setSettleMovementId] = useState(null);
+  const [settleDate, setSettleDate] = useState(getDayInputValue(new Date()));
+  const [settleMethod, setSettleMethod] = useState("efectivo");
+  const [settleDetail, setSettleDetail] = useState("");
+  const [settlingId, setSettlingId] = useState(null);
 
   const { from, to } = useMemo(() => getMonthRange(selectedMonth), [selectedMonth]);
   const selectedDayDate = useMemo(
@@ -122,8 +128,14 @@ function MonthlyFilters({
           return false;
         }
 
-        if (selectedMethod !== "all" && movimiento.medio !== selectedMethod) {
-          return false;
+        if (selectedMethod !== "all") {
+          if (movimiento.tipo === "deuda" && movimiento.deudaEstado !== "pagada") {
+            return false;
+          }
+
+          if (movimiento.medio !== selectedMethod) {
+            return false;
+          }
         }
 
         if (!normalizedSearch) {
@@ -133,8 +145,12 @@ function MonthlyFilters({
         const haystack = [
           movimiento.categoria,
           movimiento.detalle,
+          movimiento.deudaAcreedor,
+          movimiento.deudaEstado,
           getMovementTypeMeta(movimiento.tipo).label,
-          getMovementMethodMeta(movimiento.medio).label,
+          movimiento.tipo === "deuda" && movimiento.deudaEstado !== "pagada"
+            ? ""
+            : getMovementMethodMeta(movimiento.medio).label,
           movimiento.frecuencia,
           formatDate(movimiento.fecha),
         ]
@@ -158,10 +174,17 @@ function MonthlyFilters({
         to: selectedDayDate,
       })
         .filter((movimiento) =>
-          selectedMethod === "all" ? true : movimiento.medio === selectedMethod
+          selectedType === "all" ? true : movimiento.tipo === selectedType
+        )
+        .filter((movimiento) =>
+          selectedMethod === "all"
+            ? true
+            : movimiento.tipo === "deuda" && movimiento.deudaEstado !== "pagada"
+              ? false
+              : movimiento.medio === selectedMethod
         )
         .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()),
-    [movimientos, currentCurrency, selectedDayDate, selectedMethod]
+    [movimientos, currentCurrency, selectedDayDate, selectedMethod, selectedType]
   );
 
   const clearFilters = () => {
@@ -188,6 +211,214 @@ function MonthlyFilters({
     } catch (error) {
       alert("No se pudo eliminar el movimiento");
     }
+  };
+
+  const handleStartSettleDebt = (movimiento) => {
+    const movementId = movimiento.sourceId || movimiento._id;
+    setSettleMovementId(movementId);
+    setSettleDate(getDayInputValue(new Date()));
+    setSettleMethod("efectivo");
+    setSettleDetail(
+      movimiento.deudaAcreedor
+        ? `Pago de deuda a ${movimiento.deudaAcreedor}`
+        : "Pago de deuda"
+    );
+  };
+
+  const handleConfirmSettleDebt = async (movimiento) => {
+    const movementId = movimiento.sourceId || movimiento._id;
+
+    if (!movementId) return;
+
+    try {
+      setSettlingId(movementId);
+      await movimientoService.settleDebt(movementId, {
+        fecha: settleDate,
+        medio: settleMethod,
+        detalle: settleDetail.trim(),
+      });
+      setSettleMovementId(null);
+      setSettleDetail("");
+      onMovementUpdate?.();
+    } catch (error) {
+      alert(error.response?.data?.error || "No se pudo marcar la deuda como pagada");
+    } finally {
+      setSettlingId(null);
+    }
+  };
+
+  const renderMovementRow = (movimiento) => {
+    const typeMeta = getMovementTypeMeta(movimiento.tipo);
+    const methodMeta = getMovementMethodMeta(movimiento.medio);
+    const debtStatusMeta = getDebtStatusMeta(movimiento.deudaEstado);
+    const isDebt = movimiento.tipo === "deuda";
+    const isPendingDebt = isDebt && movimiento.deudaEstado !== "pagada";
+    const toneClass =
+      movimiento.tipo === "ingreso"
+        ? style.incomeRow
+        : movimiento.tipo === "ahorro"
+          ? style.savingsRow
+          : isDebt
+            ? style.debtRow
+            : style.expenseRow;
+    const movementId = movimiento.sourceId || movimiento._id;
+    const isSettlingThis = settleMovementId === movementId;
+    const amountLabel =
+      typeMeta.signedAsPositive === null
+        ? formatMoney(movimiento.monto, currentCurrency)
+        : formatSignedMoney(
+            movimiento.monto,
+            currentCurrency,
+            typeMeta.signedAsPositive
+          );
+
+    return (
+      <article key={movimiento._id} className={`${style.row} ${toneClass}`}>
+        <div className={style.rowMain}>
+          <div>
+            <p className={style.rowCategory}>{movimiento.categoria}</p>
+            <p className={style.rowDetail}>
+              {movimiento.detalle || "Sin detalle"}
+            </p>
+            {isDebt && movimiento.deudaAcreedor ? (
+              <p className={style.rowExtra}>Acreedor: {movimiento.deudaAcreedor}</p>
+            ) : null}
+          </div>
+
+          <div className={style.rowBadges}>
+            <span className={style.badge}>{typeMeta.label}</span>
+            {isDebt ? (
+              <span
+                className={
+                  debtStatusMeta.tone === "paid"
+                    ? style.badgeNeutral
+                    : style.badgeWarning
+                }
+              >
+                {debtStatusMeta.label}
+              </span>
+            ) : null}
+            {!isPendingDebt ? (
+              <span className={style.badge}>{methodMeta.label}</span>
+            ) : null}
+            <span className={style.badge}>{currencyMeta.codeLabel}</span>
+            {movimiento.esRecurrente ? (
+              <span className={style.badgeAccent}>Fijo {movimiento.frecuencia}</span>
+            ) : null}
+          </div>
+        </div>
+
+        <div className={style.rowMeta}>
+          <div className={style.rowInfo}>
+            <span>{formatDate(movimiento.fecha)}</span>
+            <span>
+              {isDebt
+                ? movimiento.deudaEstado === "pagada"
+                  ? `Pagada ${formatDate(movimiento.deudaPagadaAt)}`
+                  : "Pendiente de pago"
+                : movimiento.isVirtualOccurrence
+                  ? "Renderizado automatico"
+                  : "Movimiento manual"}
+            </span>
+          </div>
+
+          <div className={style.rowSide}>
+            <strong className={style.rowAmount}>{amountLabel}</strong>
+
+            <div className={style.rowActions}>
+              {isPendingDebt ? (
+                <button
+                  type="button"
+                  className={style.payDebtButton}
+                  onClick={() => handleStartSettleDebt(movimiento)}
+                >
+                  Ya lo pague
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className={style.actionButton}
+                onClick={() => handleEditMovimiento(movimiento)}
+                aria-label="Editar movimiento"
+              >
+                <img src="/edit.png" alt="edit" />
+              </button>
+              <button
+                type="button"
+                className={style.actionButton}
+                onClick={() => handleDeleteMovimiento(movimiento)}
+                aria-label="Eliminar movimiento"
+              >
+                <img src="/trush.png" alt="delete" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {isSettlingThis ? (
+          <div className={style.settlePanel}>
+            <div className={style.settleGrid}>
+              <div className={style.filterField}>
+                <label htmlFor={`settle-date-${movementId}`}>Fecha de pago</label>
+                <input
+                  id={`settle-date-${movementId}`}
+                  type="date"
+                  value={settleDate}
+                  onChange={(event) => setSettleDate(event.target.value)}
+                  className={style.input}
+                />
+              </div>
+
+              <div className={style.filterField}>
+                <label htmlFor={`settle-method-${movementId}`}>Como lo pagaste</label>
+                <select
+                  id={`settle-method-${movementId}`}
+                  value={settleMethod}
+                  onChange={(event) => setSettleMethod(event.target.value)}
+                  className={style.select}
+                >
+                  {MOVEMENT_METHOD_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={`${style.filterField} ${style.searchField}`}>
+                <label htmlFor={`settle-detail-${movementId}`}>Detalle del pago</label>
+                <input
+                  id={`settle-detail-${movementId}`}
+                  type="text"
+                  value={settleDetail}
+                  onChange={(event) => setSettleDetail(event.target.value)}
+                  className={style.input}
+                  placeholder="Referencia del pago"
+                />
+              </div>
+            </div>
+
+            <div className={style.settleActions}>
+              <button
+                type="button"
+                className={style.confirmDebtButton}
+                onClick={() => handleConfirmSettleDebt(movimiento)}
+                disabled={settlingId === movementId}
+              >
+                {settlingId === movementId ? "Guardando..." : "Confirmar pago"}
+              </button>
+              <button
+                type="button"
+                className={style.cancelDebtButton}
+                onClick={() => setSettleMovementId(null)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </article>
+    );
   };
 
   return (
@@ -320,6 +551,16 @@ function MonthlyFilters({
           <strong>{formatMoney(filteredSummary.ahorro, currentCurrency)}</strong>
           <p>Monto separado para reserva u objetivos.</p>
         </article>
+
+        <article className={style.summaryCard}>
+          <span>Deuda pendiente</span>
+          <strong>{formatMoney(filteredSummary.deudaPendiente, currentCurrency)}</strong>
+          <p>
+            {filteredSummary.deudaPendienteCount || 0} registro
+            {filteredSummary.deudaPendienteCount === 1 ? "" : "s"} pendiente
+            {filteredSummary.deudaPendienteCount === 1 ? "" : "s"} en este corte.
+          </p>
+        </article>
       </div>
 
       <div className={style.detailsLayout}>
@@ -360,77 +601,7 @@ function MonthlyFilters({
                 <p>Cambia la fecha del calendario para revisar otra jornada.</p>
               </div>
             ) : (
-              <div className={style.list}>
-                {dayMovimientos.map((movimiento) => {
-                  const typeMeta = getMovementTypeMeta(movimiento.tipo);
-                  const methodMeta = getMovementMethodMeta(movimiento.medio);
-                  const toneClass =
-                    movimiento.tipo === "ingreso"
-                      ? style.incomeRow
-                      : movimiento.tipo === "ahorro"
-                        ? style.savingsRow
-                        : style.expenseRow;
-
-                  return (
-                    <article key={movimiento._id} className={`${style.row} ${toneClass}`}>
-                      <div className={style.rowMain}>
-                        <div>
-                          <p className={style.rowCategory}>{movimiento.categoria}</p>
-                          <p className={style.rowDetail}>
-                            {movimiento.detalle || "Sin detalle"}
-                          </p>
-                        </div>
-
-                        <div className={style.rowBadges}>
-                          <span className={style.badge}>{typeMeta.label}</span>
-                          <span className={style.badge}>{methodMeta.label}</span>
-                          <span className={style.badge}>{currencyMeta.codeLabel}</span>
-                        </div>
-                      </div>
-
-                      <div className={style.rowMeta}>
-                        <div className={style.rowInfo}>
-                          <span>{formatDate(movimiento.fecha)}</span>
-                          <span>
-                            {movimiento.isVirtualOccurrence
-                              ? "Renderizado automatico"
-                              : "Movimiento manual"}
-                          </span>
-                        </div>
-
-                        <div className={style.rowSide}>
-                          <strong className={style.rowAmount}>
-                            {formatSignedMoney(
-                              movimiento.monto,
-                              currentCurrency,
-                              typeMeta.signedAsPositive
-                            )}
-                          </strong>
-
-                          <div className={style.rowActions}>
-                            <button
-                              type="button"
-                              className={style.actionButton}
-                              onClick={() => handleEditMovimiento(movimiento)}
-                              aria-label="Editar movimiento"
-                            >
-                              <img src="/edit.png" alt="edit" />
-                            </button>
-                            <button
-                              type="button"
-                              className={style.actionButton}
-                              onClick={() => handleDeleteMovimiento(movimiento)}
-                              aria-label="Eliminar movimiento"
-                            >
-                              <img src="/trush.png" alt="delete" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
+              <div className={style.list}>{dayMovimientos.map(renderMovementRow)}</div>
             )}
           </div>
         </section>
@@ -449,82 +620,7 @@ function MonthlyFilters({
                 <p>Cambia el mes o limpia filtros para revisar otra combinacion.</p>
               </div>
             ) : (
-              <div className={style.list}>
-                {filteredMovimientos.map((movimiento) => {
-                  const typeMeta = getMovementTypeMeta(movimiento.tipo);
-                  const methodMeta = getMovementMethodMeta(movimiento.medio);
-                  const toneClass =
-                    movimiento.tipo === "ingreso"
-                      ? style.incomeRow
-                      : movimiento.tipo === "ahorro"
-                        ? style.savingsRow
-                        : style.expenseRow;
-
-                  return (
-                    <article key={movimiento._id} className={`${style.row} ${toneClass}`}>
-                      <div className={style.rowMain}>
-                        <div>
-                          <p className={style.rowCategory}>{movimiento.categoria}</p>
-                          <p className={style.rowDetail}>
-                            {movimiento.detalle || "Sin detalle"}
-                          </p>
-                        </div>
-
-                        <div className={style.rowBadges}>
-                          <span className={style.badge}>{typeMeta.label}</span>
-                          <span className={style.badge}>{methodMeta.label}</span>
-                          <span className={style.badge}>{currencyMeta.codeLabel}</span>
-                          {movimiento.esRecurrente ? (
-                            <span className={style.badgeAccent}>
-                              Fijo {movimiento.frecuencia}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-
-                      <div className={style.rowMeta}>
-                        <div className={style.rowInfo}>
-                          <span>{formatDate(movimiento.fecha)}</span>
-                          <span>
-                            {movimiento.isVirtualOccurrence
-                              ? "Renderizado automatico"
-                              : "Movimiento manual"}
-                          </span>
-                        </div>
-
-                        <div className={style.rowSide}>
-                          <strong className={style.rowAmount}>
-                            {formatSignedMoney(
-                              movimiento.monto,
-                              currentCurrency,
-                              typeMeta.signedAsPositive
-                            )}
-                          </strong>
-
-                          <div className={style.rowActions}>
-                            <button
-                              type="button"
-                              className={style.actionButton}
-                              onClick={() => handleEditMovimiento(movimiento)}
-                              aria-label="Editar movimiento"
-                            >
-                              <img src="/edit.png" alt="edit" />
-                            </button>
-                            <button
-                              type="button"
-                              className={style.actionButton}
-                              onClick={() => handleDeleteMovimiento(movimiento)}
-                              aria-label="Eliminar movimiento"
-                            >
-                              <img src="/trush.png" alt="delete" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
+              <div className={style.list}>{filteredMovimientos.map(renderMovementRow)}</div>
             )}
           </div>
         </section>

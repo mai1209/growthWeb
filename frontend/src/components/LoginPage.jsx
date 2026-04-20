@@ -120,6 +120,10 @@ const handleSubmit = async (e) => {
 
             {error && <p className={style.errorText}>{error}</p>}
 
+            <p className={style.link} onClick={() => navigate("/forgot-password")}>
+              Olvidé mi contraseña
+            </p>
+
             <p className={style.link} onClick={() => navigate("/register")}>
               ¿No tenés cuenta? Registrate
             </p>

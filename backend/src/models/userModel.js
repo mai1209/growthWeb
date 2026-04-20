@@ -21,6 +21,16 @@ const userSchema = new mongoose.Schema(
       required: [true, 'La contraseña es obligatoria'],
       minlength: 6,
     },
+    resetPasswordToken: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    resetPasswordExpiresAt: {
+      type: Date,
+      default: null,
+      select: false,
+    },
   },
   { timestamps: true }
 );

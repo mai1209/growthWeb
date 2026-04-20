@@ -1,0 +1,192 @@
+.container {
+  display: grid;
+  gap: 1rem;
+  padding: 2rem;
+  min-height: calc(100vh - 78px);
+  background: var(--page-background);
+  color: var(--color-text);
+}
+
+.header,
+.card {
+  border: 1px solid var(--border-color);
+  background: var(--panel-background);
+  box-shadow: var(--shadow-soft);
+  border-radius: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.4rem;
+}
+
+.kicker {
+  color: var(--color-verde);
+  font-size: 0.76rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  margin: 0.35rem 0 0;
+  font-size: 1.8rem;
+}
+
+.headerIcon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(59, 203, 35, 0.22), rgba(18, 43, 11, 0.92));
+  font-size: 1.2rem;
+}
+
+.card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.4rem;
+width: 100%;}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.field span {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.passwordField {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 48px;
+  padding: 0 0.95rem;
+  border: 1px solid rgba(216, 241, 224, 0.12);
+  border-radius: 16px;
+  background: var(--surface-input);
+}
+
+.passwordField input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  outline: none;
+  font-size: 1rem;
+}
+
+.eyeButton {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.saveButton {
+  min-height: 48px;
+  padding: 0.9rem 1.15rem;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(59, 203, 35, 0.92), rgba(24, 84, 15, 0.96));
+  color: var(--color-text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.error,
+.success {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  font-size: 0.92rem;
+}
+
+.error {
+  background: rgba(241, 141, 113, 0.12);
+  border: 1px solid rgba(241, 141, 113, 0.22);
+  color: #ffb1a2;
+}
+
+.success {
+  background: rgba(59, 203, 35, 0.12);
+  border: 1px solid rgba(144, 211, 106, 0.22);
+  color: #c8efb5;
+}
+
+:global(body[data-theme="light"]) .header,
+:global(body[data-theme="light"]) .card,
+:global(body[data-theme="light"]) .passwordField {
+  border-color: rgba(12, 18, 14, 0.14);
+}
+
+:global(body[data-theme="light"]) .passwordField {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 246, 0.96));
+  border-color: rgba(12, 18, 14, 0.38);
+}
+
+@media (max-width: 1000px) {
+  .container {
+    padding: 1rem 1rem 7rem;
+    min-height: auto;
+  }
+
+  .header,
+  .card {
+    padding: 1rem;
+  }
+
+  .header h1 {
+    font-size: 1.35rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .container {
+    padding: 0.75rem 0.75rem 6.5rem;
+  }
+
+  .header,
+  .card {
+    padding: 0.85rem;
+    border-radius: 20px;
+  }
+
+  .header h1 {
+    font-size: 1.15rem;
+  }
+
+  .field span {
+    font-size: 0.74rem;
+  }
+
+  .passwordField {
+    min-height: 44px;
+    padding: 0 0.82rem;
+    border-radius: 14px;
+  }
+
+  .passwordField input {
+    font-size: 0.94rem;
+  }
+
+  .saveButton {
+    min-height: 44px;
+    padding: 0.8rem 0.95rem;
+    border-radius: 14px;
+    font-size: 0.9rem;
+  }
+}

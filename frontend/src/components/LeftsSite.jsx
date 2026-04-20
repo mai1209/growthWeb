@@ -117,6 +117,11 @@ function LeftSite({
             <span>Ahorro del mes</span>
             <strong>{hideableMoney(monthSummary.ahorro)}</strong>
           </article>
+
+          <article className={`${style.statCard} ${style.statDeuda}`}>
+            <span>Deuda pendiente</span>
+            <strong>{hideableMoney(historicalSummary.deudaPendiente)}</strong>
+          </article>
         </div>
 
         <section className={style.section}>

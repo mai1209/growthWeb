@@ -1,6 +1,11 @@
 import IngresoEgresoModel from "../models/ingresoEgresoModel.js";
 import mongoose from 'mongoose'; 
 
+const ALLOWED_TYPES = ["ingreso", "egreso", "ahorro", "deuda"];
+const ALLOWED_CURRENCIES = ["ARS", "USD"];
+const ALLOWED_METHODS = ["efectivo", "transferencia"];
+const ALLOWED_RECURRENCES = ["mensual", "quincenal", "semanal"];
+
 const normalizeMovementDate = (value) => {
   if (!value) {
     const now = new Date();
@@ -35,6 +40,9 @@ const normalizeMovementDate = (value) => {
 const normalizeMovementMethod = (value) =>
   value === "transferencia" ? "transferencia" : "efectivo";
 
+const normalizeDebtStatus = (value) =>
+  value === "pagada" ? "pagada" : "pendiente";
+
 const serializeMovimiento = (movimiento) => {
   const raw = typeof movimiento.toObject === "function" ? movimiento.toObject() : movimiento;
 
@@ -56,12 +64,13 @@ export const createIncomeEgress = async (req, res) => {
       moneda,
       esRecurrente,
       frecuencia,
+      deudaAcreedor,
     } = req.body;
     const userId = req.userId; // 🔥 Obtenido del middleware de autenticación
 
     // Validaciones
-    if (!tipo || !["ingreso", "egreso", "ahorro"].includes(tipo)) {
-      return res.status(400).json({ error: "El tipo debe ser 'ingreso', 'egreso' o 'ahorro'" });
+    if (!tipo || !ALLOWED_TYPES.includes(tipo)) {
+      return res.status(400).json({ error: "El tipo debe ser ingreso, egreso, ahorro o deuda" });
     }
     if (!monto || isNaN(monto)) {
       return res.status(400).json({ error: "El monto es obligatorio y debe ser un número" });
@@ -69,13 +78,19 @@ export const createIncomeEgress = async (req, res) => {
     if (!categoria) {
       return res.status(400).json({ error: "La categoría es obligatoria" });
     }
-    if (moneda && !["ARS", "USD"].includes(moneda)) {
+    if (moneda && !ALLOWED_CURRENCIES.includes(moneda)) {
       return res.status(400).json({ error: "La moneda debe ser ARS o USD" });
     }
-    if (medio && !["efectivo", "transferencia"].includes(medio)) {
+    if (medio && !ALLOWED_METHODS.includes(medio)) {
       return res.status(400).json({ error: "El medio debe ser efectivo o transferencia" });
     }
-    if (esRecurrente && !["mensual", "quincenal", "semanal"].includes(frecuencia)) {
+    if (tipo === "deuda" && !String(deudaAcreedor || "").trim()) {
+      return res.status(400).json({ error: "Debes indicar a quien le debes el monto" });
+    }
+    if (tipo === "deuda" && esRecurrente) {
+      return res.status(400).json({ error: "La deuda principal no se puede crear como movimiento fijo" });
+    }
+    if (esRecurrente && !ALLOWED_RECURRENCES.includes(frecuencia)) {
       return res.status(400).json({ error: "La frecuencia debe ser mensual, quincenal o semanal" });
     }
 
@@ -88,8 +103,12 @@ export const createIncomeEgress = async (req, res) => {
       fecha: normalizeMovementDate(fecha),
       detalle,
       medio: normalizeMovementMethod(medio),
-      esRecurrente: Boolean(esRecurrente),
-      frecuencia: esRecurrente ? frecuencia : null,
+      deudaEstado: normalizeDebtStatus(tipo === "deuda" ? "pendiente" : req.body.deudaEstado),
+      deudaAcreedor: tipo === "deuda" ? String(deudaAcreedor || "").trim() : "",
+      deudaPagadaAt: null,
+      deudaMovimientoPagoId: null,
+      esRecurrente: tipo === "deuda" ? false : Boolean(esRecurrente),
+      frecuencia: tipo === "deuda" ? null : (esRecurrente ? frecuencia : null),
       usuario: userId // 🔥 Vincular con el usuario
     });
 
@@ -203,29 +222,50 @@ export const updateIncomeEgress = async (req, res) => {
       moneda,
       esRecurrente,
       frecuencia,
+      deudaAcreedor,
     } = req.body;
 
-    if (moneda && !["ARS", "USD"].includes(moneda)) {
+    if (moneda && !ALLOWED_CURRENCIES.includes(moneda)) {
       return res.status(400).json({ error: "La moneda debe ser ARS o USD" });
     }
-    if (medio && !["efectivo", "transferencia"].includes(medio)) {
+    if (medio && !ALLOWED_METHODS.includes(medio)) {
       return res.status(400).json({ error: "El medio debe ser efectivo o transferencia" });
     }
-    if (tipo && !["ingreso", "egreso", "ahorro"].includes(tipo)) {
+    if (tipo && !ALLOWED_TYPES.includes(tipo)) {
       return res.status(400).json({ error: "Tipo de movimiento inválido" });
     }
-    if (esRecurrente && !["mensual", "quincenal", "semanal"].includes(frecuencia)) {
+    const nextType = tipo ?? movimiento.tipo;
+
+    if (nextType === "deuda" && !String(deudaAcreedor ?? movimiento.deudaAcreedor ?? "").trim()) {
+      return res.status(400).json({ error: "Debes indicar a quien le debes el monto" });
+    }
+    if (nextType === "deuda" && esRecurrente) {
+      return res.status(400).json({ error: "La deuda principal no se puede guardar como fija" });
+    }
+    if (esRecurrente && !ALLOWED_RECURRENCES.includes(frecuencia)) {
       return res.status(400).json({ error: "La frecuencia debe ser mensual, quincenal o semanal" });
     }
 
-    movimiento.tipo = tipo ?? movimiento.tipo;
+    movimiento.tipo = nextType;
     movimiento.monto = monto ?? movimiento.monto;
     movimiento.categoria = categoria ?? movimiento.categoria;
     movimiento.fecha = fecha ? normalizeMovementDate(fecha) : movimiento.fecha;
     movimiento.detalle = detalle ?? movimiento.detalle;
     movimiento.medio = medio ? normalizeMovementMethod(medio) : movimiento.medio ?? "efectivo";
     movimiento.moneda = moneda ?? movimiento.moneda ?? "ARS";
-    movimiento.esRecurrente = esRecurrente ?? movimiento.esRecurrente;
+    movimiento.deudaAcreedor =
+      nextType === "deuda"
+        ? String(deudaAcreedor ?? movimiento.deudaAcreedor ?? "").trim()
+        : "";
+    movimiento.deudaEstado =
+      nextType === "deuda"
+        ? normalizeDebtStatus(movimiento.deudaEstado)
+        : "pendiente";
+    movimiento.deudaPagadaAt = nextType === "deuda" ? movimiento.deudaPagadaAt : null;
+    movimiento.deudaMovimientoPagoId =
+      nextType === "deuda" ? movimiento.deudaMovimientoPagoId : null;
+    movimiento.esRecurrente =
+      nextType === "deuda" ? false : (esRecurrente ?? movimiento.esRecurrente);
     movimiento.frecuencia = movimiento.esRecurrente
       ? frecuencia ?? movimiento.frecuencia
       : null;
@@ -261,6 +301,66 @@ export const deleteIncomeEgress = async (req, res) => {
     res.status(500).json({ error: "Error al eliminar el movimiento" });
   }
 }
+
+export const settleDebtMovement = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+    const { fecha, medio, detalle } = req.body;
+
+    const deuda = await IngresoEgresoModel.findOne({
+      _id: id,
+      usuario: userId,
+      tipo: "deuda",
+    });
+
+    if (!deuda) {
+      return res.status(404).json({ error: "Deuda no encontrada" });
+    }
+
+    if (deuda.deudaEstado === "pagada") {
+      return res.status(400).json({ error: "La deuda ya estaba marcada como pagada" });
+    }
+
+    if (medio && !ALLOWED_METHODS.includes(medio)) {
+      return res.status(400).json({ error: "El medio debe ser efectivo o transferencia" });
+    }
+
+    const paymentDate = normalizeMovementDate(fecha);
+    const paymentMethod = normalizeMovementMethod(medio);
+    const acreedor = String(deuda.deudaAcreedor || "").trim();
+
+    const paymentMovement = await IngresoEgresoModel.create({
+      tipo: "egreso",
+      monto: deuda.monto,
+      moneda: deuda.moneda || "ARS",
+      categoria: "Pago de deuda",
+      fecha: paymentDate,
+      detalle:
+        String(detalle || "").trim() ||
+        `Pago de deuda${acreedor ? ` a ${acreedor}` : ""}${deuda.categoria ? ` · ${deuda.categoria}` : ""}`,
+      medio: paymentMethod,
+      esRecurrente: false,
+      frecuencia: null,
+      usuario: userId,
+    });
+
+    deuda.deudaEstado = "pagada";
+    deuda.deudaPagadaAt = paymentDate;
+    deuda.deudaMovimientoPagoId = paymentMovement._id;
+    deuda.medio = paymentMethod;
+
+    const deudaActualizada = await deuda.save();
+
+    res.status(200).json({
+      deuda: serializeMovimiento(deudaActualizada),
+      pago: serializeMovimiento(paymentMovement),
+    });
+  } catch (error) {
+    console.error("Error al marcar deuda como pagada:", error);
+    res.status(500).json({ error: "Error al marcar la deuda como pagada" });
+  }
+};
 
 export const getAllIncomeEgress = async (req, res) => {
   console.log("📦 GET /api/add/all ejecutado");

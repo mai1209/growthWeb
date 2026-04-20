@@ -77,6 +77,7 @@ export const movimientoService = {
   getAll: () => api.get("/api/add"),
   create: (data) => api.post("/api/add", data),
   update: (id, data) => api.put(`/api/add/${id}`, data),
+  settleDebt: (id, data) => api.post(`/api/add/${id}/settle-debt`, data),
   delete: (id) => api.delete(`/api/add/${id}`),
 };
 
@@ -85,8 +86,12 @@ export const sharedGroupsService = {
   getById: (id) => api.get(`/api/shared-groups/${id}`),
   create: (data) => api.post("/api/shared-groups", data),
   update: (id, data) => api.put(`/api/shared-groups/${id}`, data),
+  addMember: (id, data) => api.post(`/api/shared-groups/${id}/members`, data),
   delete: (id) => api.delete(`/api/shared-groups/${id}`),
   createExpense: (id, data) => api.post(`/api/shared-groups/${id}/expenses`, data),
+  createDebt: (id, data) => api.post(`/api/shared-groups/${id}/debts`, data),
+  settleDebt: (groupId, debtId, data) =>
+    api.post(`/api/shared-groups/${groupId}/debts/${debtId}/settle`, data),
   deleteExpense: (groupId, expenseId) =>
     api.delete(`/api/shared-groups/${groupId}/expenses/${expenseId}`),
 };
@@ -96,6 +101,9 @@ export const authService = {
     api.post("/api/auth/login", credentials),
   signup: (userData) =>
     api.post("/api/auth/signup", userData),
+  forgotPassword: (data) => api.post("/api/auth/forgot-password", data),
+  resetPassword: (data) => api.post("/api/auth/reset-password", data),
+  changePassword: (data) => api.post("/api/auth/change-password", data),
 };
 
 export default api;
