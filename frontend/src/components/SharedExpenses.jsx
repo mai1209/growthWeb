@@ -8,6 +8,10 @@ const SPLIT_OPTIONS = [
   { value: "percentage", label: "Por porcentaje" },
   { value: "amount", label: "Por monto base" },
 ];
+const PAYMENT_METHOD_OPTIONS = [
+  { value: "efectivo", label: "Efectivo" },
+  { value: "transferencia", label: "Transferencia" },
+];
 
 const PANEL_SEQUENCE = ["group", "expenses"];
 
@@ -42,16 +46,51 @@ const createEmptyExpenseForm = () => ({
   paidByEmail: "",
   date: todayInput(),
   notes: "",
+  participantEmails: [],
+});
+
+const createEmptyMemberForm = () => ({
+  mode: "linked",
+  name: "",
+  email: "",
+  historyMode: "future",
+});
+
+const createEmptyDebtForm = () => ({
+  description: "",
+  amount: "",
+  debtorEmail: "",
+  creditorEmail: "",
+  date: todayInput(),
+  notes: "",
+});
+
+const createEmptyDebtSettlementForm = () => ({
+  paymentMethod: "efectivo",
+  date: todayInput(),
+  notes: "",
 });
 
 const normalizeEmail = (value = "") => value.trim().toLowerCase();
 const normalizeName = (value = "") => value.trim();
+const toDateKey = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") return value.slice(0, 10);
+  return new Date(value).toISOString().slice(0, 10);
+};
 const getParticipantDisplayName = (participant = {}) =>
   participant.username ||
   (!participant.isGuest && participant.email ? participant.email.split("@")[0] : "") ||
   "Participante";
 const getParticipantSecondaryText = (participant = {}) =>
   participant.isGuest ? "Invitado sin cuenta" : participant.email || "Sin correo";
+const getEligibleParticipantEmails = (group, date) =>
+  (group?.participants || [])
+    .filter((participant) => {
+      if (!participant?.joinedAt) return true;
+      return toDateKey(participant.joinedAt) <= toDateKey(date);
+    })
+    .map((participant) => participant.email);
 
 const buildSettlements = (participants = []) => {
   const creditors = participants
@@ -123,12 +162,21 @@ function SharedExpenses() {
   const [groupForm, setGroupForm] = useState(createEmptyGroupForm());
   const [expenseForm, setExpenseForm] = useState(createEmptyExpenseForm());
   const [activePanel, setActivePanel] = useState("group");
+  const [showMemberPanel, setShowMemberPanel] = useState(false);
+  const [showDebtPanel, setShowDebtPanel] = useState(false);
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [savingGroup, setSavingGroup] = useState(false);
+  const [savingMember, setSavingMember] = useState(false);
   const [savingExpense, setSavingExpense] = useState(false);
+  const [savingDebt, setSavingDebt] = useState(false);
+  const [settlingDebtId, setSettlingDebtId] = useState("");
+  const [savingDebtSettlement, setSavingDebtSettlement] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [memberForm, setMemberForm] = useState(createEmptyMemberForm());
+  const [debtForm, setDebtForm] = useState(createEmptyDebtForm());
+  const [debtSettlementForm, setDebtSettlementForm] = useState(createEmptyDebtSettlementForm());
   const selectedGroupIdRef = useRef("");
   const expenseSectionRef = useRef(null);
   const [pendingExpenseFocus, setPendingExpenseFocus] = useState(false);
@@ -145,6 +193,51 @@ function SharedExpenses() {
     () => buildSettlements(groupDetail?.summary?.participants || []),
     [groupDetail]
   );
+  const expenseEligibleParticipants = useMemo(() => {
+    if (!groupDetail?.group) return [];
+
+    const eligibleEmails = new Set(
+      getEligibleParticipantEmails(groupDetail.group, expenseForm.date || todayInput())
+    );
+
+    return (groupDetail.group.participants || []).filter((participant) =>
+      eligibleEmails.has(participant.email)
+    );
+  }, [expenseForm.date, groupDetail]);
+  const debtEligibleParticipants = useMemo(() => {
+    if (!groupDetail?.group) return [];
+
+    const eligibleEmails = new Set(
+      getEligibleParticipantEmails(groupDetail.group, debtForm.date || todayInput())
+    );
+
+    return (groupDetail.group.participants || []).filter((participant) =>
+      eligibleEmails.has(participant.email)
+    );
+  }, [debtForm.date, groupDetail]);
+  const applyGroupDetailData = useCallback((detail) => {
+    const eligibleParticipantEmails = getEligibleParticipantEmails(
+      detail.group,
+      todayInput()
+    );
+    const eligibleDebtParticipants = getEligibleParticipantEmails(
+      detail.group,
+      todayInput()
+    );
+
+    setGroupDetail(detail);
+    setGroupForm(mapGroupToForm(detail.group));
+    setExpenseForm({
+      ...createEmptyExpenseForm(),
+      paidByEmail: eligibleParticipantEmails[0] || "",
+      participantEmails: eligibleParticipantEmails,
+    });
+    setDebtForm({
+      ...createEmptyDebtForm(),
+      debtorEmail: eligibleDebtParticipants[0] || "",
+      creditorEmail: eligibleDebtParticipants[1] || eligibleDebtParticipants[0] || "",
+    });
+  }, []);
 
   useEffect(() => {
     selectedGroupIdRef.current = selectedGroupId;
@@ -171,6 +264,7 @@ function SharedExpenses() {
         setGroupDetail(null);
         setGroupForm(createEmptyGroupForm());
         setExpenseForm(createEmptyExpenseForm());
+        setDebtForm(createEmptyDebtForm());
       }
     } catch (err) {
       setError("No se pudieron cargar los grupos compartidos.");
@@ -190,21 +284,14 @@ function SharedExpenses() {
     try {
       const response = await sharedGroupsService.getById(groupId);
       const detail = response.data;
-
-      setGroupDetail(detail);
-      setGroupForm(mapGroupToForm(detail.group));
-      setExpenseForm((prev) => ({
-        ...createEmptyExpenseForm(),
-        paidByEmail:
-          detail.group?.participants?.[0]?.email || prev.paidByEmail || "",
-      }));
+      applyGroupDetailData(detail);
       setError("");
     } catch (err) {
       setError("No se pudo cargar el detalle del grupo.");
     } finally {
       setDetailLoading(false);
     }
-  }, []);
+  }, [applyGroupDetailData]);
 
   useEffect(() => {
     fetchGroups();
@@ -220,6 +307,13 @@ function SharedExpenses() {
       setActivePanel("group");
     }
   }, [selectedGroupId]);
+
+  useEffect(() => {
+    if (activePanel !== "expenses") {
+      setShowMemberPanel(false);
+      setShowDebtPanel(false);
+    }
+  }, [activePanel]);
 
   useEffect(() => {
     if (!pendingExpenseFocus || !groupDetail || !selectedGroupId) return;
@@ -239,6 +333,12 @@ function SharedExpenses() {
     setExpenseForm(createEmptyExpenseForm());
     selectedGroupIdRef.current = "";
     setActivePanel("group");
+    setShowMemberPanel(false);
+    setShowDebtPanel(false);
+    setMemberForm(createEmptyMemberForm());
+    setDebtForm(createEmptyDebtForm());
+    setDebtSettlementForm(createEmptyDebtSettlementForm());
+    setSettlingDebtId("");
     setPendingExpenseFocus(false);
     setError("");
     setSuccess("");
@@ -247,6 +347,9 @@ function SharedExpenses() {
   const handleSelectGroup = (groupId) => {
     setSelectedGroupId(groupId);
     setActivePanel("expenses");
+    setShowMemberPanel(false);
+    setShowDebtPanel(false);
+    setSettlingDebtId("");
     setError("");
     setSuccess("");
   };
@@ -387,8 +490,7 @@ function SharedExpenses() {
         setSuccess("Grupo compartido creado.");
       } else {
         const response = await sharedGroupsService.update(selectedGroupId, payload);
-        setGroupDetail(response.data);
-        setGroupForm(mapGroupToForm(response.data.group));
+        applyGroupDetailData(response.data);
         await fetchGroups(selectedGroupId);
         setSuccess("Grupo actualizado.");
       }
@@ -399,8 +501,171 @@ function SharedExpenses() {
     }
   };
 
+  const handleAddMemberToGroup = async (event) => {
+    event.preventDefault();
+
+    if (!selectedGroupId) return;
+
+    setSavingMember(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const payload = {
+        mode: memberForm.mode,
+        name: memberForm.name.trim(),
+        email: memberForm.email.trim(),
+        historyMode: memberForm.historyMode,
+      };
+
+      const response = await sharedGroupsService.addMember(selectedGroupId, payload);
+      applyGroupDetailData(response.data);
+      setMemberForm(createEmptyMemberForm());
+      setShowMemberPanel(false);
+      setSuccess(
+        payload.historyMode === "all"
+          ? "Miembro agregado y aplicado al historial."
+          : "Miembro agregado para los gastos nuevos."
+      );
+      await fetchGroups(selectedGroupId);
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo sumar el miembro.");
+    } finally {
+      setSavingMember(false);
+    }
+  };
+
   const handleExpenseChange = (field, value) => {
+    if (field === "date" && groupDetail?.group) {
+      const eligibleParticipantEmails = getEligibleParticipantEmails(groupDetail.group, value);
+
+      setExpenseForm((prev) => ({
+        ...prev,
+        date: value,
+        paidByEmail: eligibleParticipantEmails.includes(prev.paidByEmail)
+          ? prev.paidByEmail
+          : eligibleParticipantEmails[0] || "",
+        participantEmails: prev.participantEmails.filter((email) =>
+          eligibleParticipantEmails.includes(email)
+        ).length
+          ? prev.participantEmails.filter((email) => eligibleParticipantEmails.includes(email))
+          : eligibleParticipantEmails,
+      }));
+      return;
+    }
+
     setExpenseForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleToggleExpenseParticipant = (email) => {
+    setExpenseForm((prev) => {
+      const exists = prev.participantEmails.includes(email);
+
+      return {
+        ...prev,
+        participantEmails: exists
+          ? prev.participantEmails.filter((item) => item !== email)
+          : [...prev.participantEmails, email],
+      };
+    });
+  };
+
+  const handleDebtChange = (field, value) => {
+    if (field === "date" && groupDetail?.group) {
+      const eligibleEmails = getEligibleParticipantEmails(groupDetail.group, value);
+      const nextDebtorEmail = eligibleEmails.includes(debtForm.debtorEmail)
+        ? debtForm.debtorEmail
+        : eligibleEmails[0] || "";
+      const nextCreditorEmail =
+        eligibleEmails.includes(debtForm.creditorEmail) &&
+        debtForm.creditorEmail !== nextDebtorEmail
+          ? debtForm.creditorEmail
+          : eligibleEmails.find((email) => email !== nextDebtorEmail) || "";
+
+      setDebtForm((prev) => ({
+        ...prev,
+        date: value,
+        debtorEmail: nextDebtorEmail,
+        creditorEmail: nextCreditorEmail,
+      }));
+      return;
+    }
+
+    if (field === "debtorEmail") {
+      setDebtForm((prev) => ({
+        ...prev,
+        debtorEmail: value,
+        creditorEmail: prev.creditorEmail === value ? "" : prev.creditorEmail,
+      }));
+      return;
+    }
+
+    setDebtForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveDebt = async (event) => {
+    event.preventDefault();
+
+    if (!selectedGroupId) return;
+
+    setSavingDebt(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await sharedGroupsService.createDebt(selectedGroupId, {
+        description: debtForm.description.trim(),
+        amount: Number(debtForm.amount),
+        debtorEmail: debtForm.debtorEmail,
+        creditorEmail: debtForm.creditorEmail,
+        date: debtForm.date,
+        notes: debtForm.notes.trim(),
+      });
+
+      applyGroupDetailData(response.data);
+      setShowDebtPanel(false);
+      setSuccess("Deuda cargada en el grupo.");
+      await fetchGroups(selectedGroupId);
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo cargar la deuda.");
+    } finally {
+      setSavingDebt(false);
+    }
+  };
+
+  const handleStartDebtSettlement = (debtId) => {
+    setSettlingDebtId((current) => (current === debtId ? "" : debtId));
+    setDebtSettlementForm(createEmptyDebtSettlementForm());
+    setError("");
+    setSuccess("");
+  };
+
+  const handleSettleDebt = async (event, debtId) => {
+    event.preventDefault();
+
+    if (!selectedGroupId) return;
+
+    setSavingDebtSettlement(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await sharedGroupsService.settleDebt(selectedGroupId, debtId, {
+        paymentMethod: debtSettlementForm.paymentMethod,
+        date: debtSettlementForm.date,
+        notes: debtSettlementForm.notes.trim(),
+      });
+
+      applyGroupDetailData(response.data);
+      setSettlingDebtId("");
+      setDebtSettlementForm(createEmptyDebtSettlementForm());
+      setSuccess("Deuda marcada como pagada y registrada como egreso.");
+      await fetchGroups(selectedGroupId);
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo cerrar la deuda.");
+    } finally {
+      setSavingDebtSettlement(false);
+    }
   };
 
   const handleSaveExpense = async (event) => {
@@ -418,18 +683,14 @@ function SharedExpenses() {
         paidByEmail: expenseForm.paidByEmail,
         date: expenseForm.date,
         notes: expenseForm.notes.trim(),
+        participantEmails: expenseForm.participantEmails,
       };
 
       const response = await sharedGroupsService.createExpense(selectedGroupId, payload);
-      setGroupDetail({
+      applyGroupDetailData({
         group: response.data.group,
         expenses: response.data.expenses,
         summary: response.data.summary,
-      });
-      setGroupForm(mapGroupToForm(response.data.group));
-      setExpenseForm({
-        ...createEmptyExpenseForm(),
-        paidByEmail: payload.paidByEmail,
       });
       setSuccess("Gasto compartido agregado.");
       await fetchGroups(selectedGroupId);
@@ -446,8 +707,7 @@ function SharedExpenses() {
 
     try {
       const response = await sharedGroupsService.deleteExpense(selectedGroupId, expenseId);
-      setGroupDetail(response.data);
-      setGroupForm(mapGroupToForm(response.data.group));
+      applyGroupDetailData(response.data);
       setSuccess("Gasto eliminado.");
     } catch (err) {
       setError(err.response?.data?.error || "No se pudo eliminar el gasto.");
@@ -469,6 +729,9 @@ function SharedExpenses() {
         setGroupDetail(null);
         setGroupForm(createEmptyGroupForm(groupForm.currency));
         setExpenseForm(createEmptyExpenseForm());
+        setDebtForm(createEmptyDebtForm());
+        setShowDebtPanel(false);
+        setSettlingDebtId("");
         setActivePanel("group");
       }
 
@@ -603,6 +866,33 @@ function SharedExpenses() {
                 <span className={style.panelTag}>{selectedCurrencyMeta.codeLabel}</span>
               ) : null}
 
+              {!isCreating && activePanel === "expenses" ? (
+                <button
+                  type="button"
+                  className={style.secondaryButton}
+                  onClick={() => {
+                    setShowMemberPanel((prev) => !prev);
+                    setShowDebtPanel(false);
+                  }}
+                >
+                  {showMemberPanel ? "Cerrar alta" : "Sumar miembro"}
+                </button>
+              ) : null}
+
+              {!isCreating && activePanel === "expenses" ? (
+                <button
+                  type="button"
+                  className={style.secondaryButton}
+                  onClick={() => {
+                    setShowDebtPanel((prev) => !prev);
+                    setShowMemberPanel(false);
+                    setSettlingDebtId("");
+                  }}
+                >
+                  {showDebtPanel ? "Cerrar deuda" : "Cargar deuda"}
+                </button>
+              ) : null}
+
               {activePanel === "expenses" && selectedGroupId && groupDetail ? (
                 <button
                   type="button"
@@ -615,6 +905,30 @@ function SharedExpenses() {
 
               {detailLoading ? <span className={style.panelTag}>Cargando</span> : null}
             </div>
+          </div>
+
+               <div className={style.panelFooterNav}>
+            <button
+              type="button"
+              className={style.navArrow}
+              onClick={() => setActivePanel("group")}
+              disabled={activePanelIndex <= 0}
+            >
+              ← Configuración
+            </button>
+
+            <p className={style.panelFooterMeta}>
+              Panel {activePanelIndex + 1} de {PANEL_SEQUENCE.length}
+            </p>
+
+            <button
+              type="button"
+              className={style.navArrow}
+              onClick={() => setActivePanel("expenses")}
+              disabled={!canOpenExpenses || activePanelIndex >= PANEL_SEQUENCE.length - 1}
+            >
+              Gastos →
+            </button>
           </div>
 
           <div className={style.panelBody}>
@@ -860,6 +1174,229 @@ function SharedExpenses() {
               </div>
             ) : (
               <>
+                {showMemberPanel ? (
+                  <form className={style.memberPanel} onSubmit={handleAddMemberToGroup}>
+                    <div className={style.cardSectionHead}>
+                      <span className={style.sectionLabel}>Sumar miembro</span>
+                      <p className={style.sectionText}>
+                        Podés vincular una cuenta por email o agregar un invitado sin cuenta.
+                      </p>
+                    </div>
+
+                    <div className={style.splitModes}>
+                      <button
+                        type="button"
+                        className={`${style.modeButton} ${
+                          memberForm.mode === "linked" ? style.modeButtonActive : ""
+                        }`}
+                        onClick={() =>
+                          setMemberForm((prev) => ({ ...prev, mode: "linked" }))
+                        }
+                      >
+                        Con cuenta
+                      </button>
+                      <button
+                        type="button"
+                        className={`${style.modeButton} ${
+                          memberForm.mode === "guest" ? style.modeButtonActive : ""
+                        }`}
+                        onClick={() =>
+                          setMemberForm((prev) => ({ ...prev, mode: "guest" }))
+                        }
+                      >
+                        Invitado
+                      </button>
+                    </div>
+
+                    <div className={style.formGridWide}>
+                      <label className={style.field}>
+                        <span>Nombre</span>
+                        <input
+                          type="text"
+                          className={style.input}
+                          value={memberForm.name}
+                          onChange={(event) =>
+                            setMemberForm((prev) => ({ ...prev, name: event.target.value }))
+                          }
+                          placeholder={
+                            memberForm.mode === "guest"
+                              ? "Nombre del invitado"
+                              : "Alias opcional"
+                          }
+                        />
+                      </label>
+
+                      <label className={style.field}>
+                        <span>Email</span>
+                        <input
+                          type="email"
+                          className={style.input}
+                          value={memberForm.email}
+                          onChange={(event) =>
+                            setMemberForm((prev) => ({ ...prev, email: event.target.value }))
+                          }
+                          placeholder={
+                            memberForm.mode === "guest"
+                              ? "No hace falta email"
+                              : "correo@ejemplo.com"
+                          }
+                          disabled={memberForm.mode === "guest"}
+                        />
+                      </label>
+                    </div>
+
+                    <div className={style.memberHistoryRow}>
+                      <span className={style.sectionLabel}>Alcance del reparto</span>
+                      <div className={style.splitModes}>
+                        <button
+                          type="button"
+                          className={`${style.modeButton} ${
+                            memberForm.historyMode === "future"
+                              ? style.modeButtonActive
+                              : ""
+                          }`}
+                          onClick={() =>
+                            setMemberForm((prev) => ({ ...prev, historyMode: "future" }))
+                          }
+                        >
+                          Desde ahora
+                        </button>
+                        <button
+                          type="button"
+                          className={`${style.modeButton} ${
+                            memberForm.historyMode === "all" ? style.modeButtonActive : ""
+                          }`}
+                          onClick={() =>
+                            setMemberForm((prev) => ({ ...prev, historyMode: "all" }))
+                          }
+                        >
+                          Recalcular historial
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className={style.formActions}>
+                      <button
+                        type="submit"
+                        className={style.primaryButton}
+                        disabled={savingMember}
+                      >
+                        {savingMember ? "Guardando..." : "Agregar miembro"}
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
+
+                {showDebtPanel ? (
+                  <form className={style.debtPanel} onSubmit={handleSaveDebt}>
+                    <div className={style.cardSectionHead}>
+                      <span className={style.sectionLabel}>Cargar deuda</span>
+                      <p className={style.sectionText}>
+                        Registrá quién le debe a quién dentro del grupo y después marcala
+                        como pagada para generar el egreso real.
+                      </p>
+                    </div>
+
+                    <div className={style.formGridWide}>
+                      <label className={style.field}>
+                        <span>Motivo</span>
+                        <input
+                          type="text"
+                          className={style.input}
+                          value={debtForm.description}
+                          onChange={(event) =>
+                            handleDebtChange("description", event.target.value)
+                          }
+                          placeholder="Ej: adelanto, pago prestado, salida"
+                        />
+                      </label>
+
+                      <label className={style.field}>
+                        <span>Monto</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          className={style.input}
+                          value={debtForm.amount}
+                          onChange={(event) => handleDebtChange("amount", event.target.value)}
+                          placeholder={`Monto en ${groupDetail.group.currency}`}
+                        />
+                      </label>
+                    </div>
+
+                    <div className={style.formGridTriple}>
+                      <label className={style.field}>
+                        <span>Debe</span>
+                        <select
+                          className={style.select}
+                          value={debtForm.debtorEmail}
+                          onChange={(event) =>
+                            handleDebtChange("debtorEmail", event.target.value)
+                          }
+                        >
+                          <option value="">Seleccionar</option>
+                          {debtEligibleParticipants.map((participant) => (
+                            <option key={participant.email} value={participant.email}>
+                              {getParticipantDisplayName(participant)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className={style.field}>
+                        <span>A quién</span>
+                        <select
+                          className={style.select}
+                          value={debtForm.creditorEmail}
+                          onChange={(event) =>
+                            handleDebtChange("creditorEmail", event.target.value)
+                          }
+                        >
+                          <option value="">Seleccionar</option>
+                          {debtEligibleParticipants
+                            .filter((participant) => participant.email !== debtForm.debtorEmail)
+                            .map((participant) => (
+                              <option key={participant.email} value={participant.email}>
+                                {getParticipantDisplayName(participant)}
+                              </option>
+                            ))}
+                        </select>
+                      </label>
+
+                      <label className={style.field}>
+                        <span>Fecha</span>
+                        <input
+                          type="date"
+                          className={style.input}
+                          value={debtForm.date}
+                          onChange={(event) => handleDebtChange("date", event.target.value)}
+                        />
+                      </label>
+                    </div>
+
+                    <label className={style.field}>
+                      <span>Notas</span>
+                      <textarea
+                        className={style.textarea}
+                        value={debtForm.notes}
+                        onChange={(event) => handleDebtChange("notes", event.target.value)}
+                        placeholder="Detalle opcional de la deuda"
+                      />
+                    </label>
+
+                    <div className={style.formActions}>
+                      <button
+                        type="submit"
+                        className={style.primaryButton}
+                        disabled={savingDebt}
+                      >
+                        {savingDebt ? "Guardando..." : "Guardar deuda"}
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
+
                 <div ref={expenseSectionRef} className={style.expenseAnchor}>
                   <div className={style.expenseIntro}>
                     <span className={style.sectionLabel}>Flujo del grupo</span>
@@ -910,7 +1447,7 @@ function SharedExpenses() {
                         }
                       >
                         <option value="">Seleccionar participante</option>
-                        {groupDetail.group.participants.map((participant) => (
+                        {expenseEligibleParticipants.map((participant) => (
                           <option key={participant.email} value={participant.email}>
                             {getParticipantDisplayName(participant)}
                             {participant.isGuest ? " · invitado" : ` · ${participant.email}`}
@@ -939,6 +1476,38 @@ function SharedExpenses() {
                       placeholder="Detalle opcional del gasto"
                     />
                   </label>
+
+                  <div className={style.memberPicker}>
+                    <div className={style.cardSectionHead}>
+                      <span className={style.sectionLabel}>Quiénes participan en este gasto</span>
+                      <p className={style.sectionText}>
+                        Elegí los miembros que comparten este gasto. Los que se sumaron después
+                        solo aparecen si ya estaban activos en la fecha elegida.
+                      </p>
+                    </div>
+
+                    <div className={style.memberChipGrid}>
+                      {expenseEligibleParticipants.map((participant) => {
+                        const isActive = expenseForm.participantEmails.includes(
+                          participant.email
+                        );
+
+                        return (
+                          <button
+                            key={participant.email}
+                            type="button"
+                            className={`${style.memberChip} ${
+                              isActive ? style.memberChipActive : ""
+                            }`}
+                            onClick={() => handleToggleExpenseParticipant(participant.email)}
+                          >
+                            <strong>{getParticipantDisplayName(participant)}</strong>
+                            <span>{getParticipantSecondaryText(participant)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
                   <div className={style.formActions}>
                     <button
@@ -992,6 +1561,15 @@ function SharedExpenses() {
                       </div>
 
                       <div className={style.summaryMeta}>
+                        {participant.joinedAt &&
+                        new Date(participant.joinedAt).getTime() >
+                          new Date(groupDetail.group.createdAt).getTime() ? (
+                          <p>
+                            Se sumó el{" "}
+                            {new Date(participant.joinedAt).toLocaleDateString("es-AR")}
+                          </p>
+                        ) : null}
+                        <p>Participa en {participant.expenseCount || 0} gastos</p>
                         <p>
                           Pago real:{" "}
                           {formatMoney(participant.paid, groupDetail.group.currency)}
@@ -1052,6 +1630,145 @@ function SharedExpenses() {
                   )}
                 </div>
 
+                <div className={style.debtListPanel}>
+                  <div className={style.settlementHeader}>
+                    <span className={style.sectionLabel}>Deudas cargadas</span>
+                    <p className={style.sectionText}>
+                      Las deudas abiertas se pueden cerrar con `Ya pagué` y eso genera un
+                      egreso real en la caja del usuario que confirma el pago.
+                    </p>
+                  </div>
+
+                  {(groupDetail.debts || []).length === 0 ? (
+                    <div className={style.emptyInlineBlock}>
+                      <h3>No hay deudas cargadas</h3>
+                      <p>Si alguien quedó debiendo algo, podés registrarlo desde este panel.</p>
+                    </div>
+                  ) : (
+                    <div className={style.debtList}>
+                      {groupDetail.debts.map((debt) => (
+                        <article
+                          key={debt._id}
+                          className={`${style.debtRow} ${
+                            debt.status === "paid" ? style.debtRowPaid : ""
+                          }`}
+                        >
+                          <div>
+                            <p className={style.expenseTitle}>{debt.description}</p>
+                            <p className={style.expenseMeta}>
+                              {debt.debtorName} le debe a {debt.creditorName} ·{" "}
+                              {new Date(debt.date).toLocaleDateString("es-AR")}
+                            </p>
+                            <p className={style.expenseNotes}>{debt.notes || "Sin notas"}</p>
+                            {debt.status === "paid" ? (
+                              <p className={style.debtMeta}>
+                                Pagada el{" "}
+                                {debt.settledAt
+                                  ? new Date(debt.settledAt).toLocaleDateString("es-AR")
+                                  : "-"}{" "}
+                                por {debt.settledByName || debt.settledByEmail || "un miembro"} ·{" "}
+                                {debt.paymentMethod || "sin medio"}
+                              </p>
+                            ) : null}
+                          </div>
+
+                          <div className={style.expenseSide}>
+                            <strong>
+                              {formatMoney(debt.amount, debt.currency)}
+                            </strong>
+                            <span
+                              className={`${style.debtStatus} ${
+                                debt.status === "paid" ? style.debtStatusPaid : ""
+                              }`}
+                            >
+                              {debt.status === "paid" ? "Pagada" : "Pendiente"}
+                            </span>
+                            {debt.status === "open" ? (
+                              <button
+                                type="button"
+                                className={style.secondaryButton}
+                                onClick={() => handleStartDebtSettlement(debt._id)}
+                              >
+                                {settlingDebtId === debt._id ? "Cancelar" : "Ya pagué"}
+                              </button>
+                            ) : null}
+                          </div>
+
+                          {settlingDebtId === debt._id ? (
+                            <form
+                              className={style.debtSettlementForm}
+                              onSubmit={(event) => handleSettleDebt(event, debt._id)}
+                            >
+                              <div className={style.formGridTriple}>
+                                <label className={style.field}>
+                                  <span>Cómo lo pagaste</span>
+                                  <select
+                                    className={style.select}
+                                    value={debtSettlementForm.paymentMethod}
+                                    onChange={(event) =>
+                                      setDebtSettlementForm((prev) => ({
+                                        ...prev,
+                                        paymentMethod: event.target.value,
+                                      }))
+                                    }
+                                  >
+                                    {PAYMENT_METHOD_OPTIONS.map((option) => (
+                                      <option key={option.value} value={option.value}>
+                                        {option.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+
+                                <label className={style.field}>
+                                  <span>Fecha</span>
+                                  <input
+                                    type="date"
+                                    className={style.input}
+                                    value={debtSettlementForm.date}
+                                    onChange={(event) =>
+                                      setDebtSettlementForm((prev) => ({
+                                        ...prev,
+                                        date: event.target.value,
+                                      }))
+                                    }
+                                  />
+                                </label>
+
+                                <label className={style.field}>
+                                  <span>Detalle</span>
+                                  <input
+                                    type="text"
+                                    className={style.input}
+                                    value={debtSettlementForm.notes}
+                                    onChange={(event) =>
+                                      setDebtSettlementForm((prev) => ({
+                                        ...prev,
+                                        notes: event.target.value,
+                                      }))
+                                    }
+                                    placeholder="Opcional"
+                                  />
+                                </label>
+                              </div>
+
+                              <div className={style.formActions}>
+                                <button
+                                  type="submit"
+                                  className={style.primaryButton}
+                                  disabled={savingDebtSettlement}
+                                >
+                                  {savingDebtSettlement ? "Guardando..." : "Confirmar pago"}
+                                </button>
+                              </div>
+                            </form>
+                          ) : null}
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className={style.expenseList}>
                   {(groupDetail.expenses || []).length === 0 ? (
                     <div className={style.emptyInlineBlock}>
@@ -1066,6 +1783,9 @@ function SharedExpenses() {
                           <p className={style.expenseMeta}>
                             Pago: {expense.paidByName || expense.paidByEmail} ·{" "}
                             {new Date(expense.date).toLocaleDateString("es-AR")}
+                          </p>
+                          <p className={style.expenseMeta}>
+                            Participan: {expense.participantEmails?.length || 0} miembros
                           </p>
                           <p className={style.expenseNotes}>{expense.notes || "Sin notas"}</p>
                         </div>

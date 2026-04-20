@@ -23,6 +23,10 @@ const sharedExpenseSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    participantEmails: {
+      type: [String],
+      default: [],
+    },
     description: {
       type: String,
       required: true,

@@ -9,6 +9,7 @@ export const MOVEMENT_TYPE_OPTIONS = [
   { value: "ingreso", label: "Ingreso" },
   { value: "egreso", label: "Egreso" },
   { value: "ahorro", label: "Ahorro" },
+  { value: "deuda", label: "Deuda" },
 ];
 
 export const RECURRENCE_OPTIONS = [
@@ -26,7 +27,7 @@ export const normalizeCurrency = (currency) =>
   currency === "USD" ? "USD" : DEFAULT_CURRENCY;
 
 export const normalizeMovementType = (type) =>
-  ["ingreso", "egreso", "ahorro"].includes(type) ? type : "egreso";
+  ["ingreso", "egreso", "ahorro", "deuda"].includes(type) ? type : "egreso";
 
 export const normalizeMovementMethod = (method) =>
   method === "transferencia" ? "transferencia" : "efectivo";
@@ -46,8 +47,17 @@ export const getMovementTypeMeta = (type) => {
     return { label: "Ahorro", signedAsPositive: false };
   }
 
+  if (normalized === "deuda") {
+    return { label: "Deuda", signedAsPositive: null };
+  }
+
   return { label: "Egreso", signedAsPositive: false };
 };
+
+export const getDebtStatusMeta = (status) =>
+  status === "pagada"
+    ? { label: "Pagada", tone: "paid" }
+    : { label: "Pendiente", tone: "pending" };
 
 export const getMovementMethodMeta = (method) =>
   MOVEMENT_METHOD_OPTIONS.find(
@@ -231,6 +241,13 @@ export const summarizeByType = (movimientos = []) =>
         acc.ingreso += amount;
       } else if (type === "ahorro") {
         acc.ahorro += amount;
+      } else if (type === "deuda") {
+        if (movimiento.deudaEstado === "pagada") {
+          acc.deudaPagada += amount;
+        } else {
+          acc.deudaPendiente += amount;
+          acc.deudaPendienteCount += 1;
+        }
       } else {
         acc.egreso += amount;
       }
@@ -238,7 +255,15 @@ export const summarizeByType = (movimientos = []) =>
       acc.total = acc.ingreso - acc.egreso - acc.ahorro;
       return acc;
     },
-    { ingreso: 0, egreso: 0, ahorro: 0, total: 0 }
+    {
+      ingreso: 0,
+      egreso: 0,
+      ahorro: 0,
+      deudaPendiente: 0,
+      deudaPendienteCount: 0,
+      deudaPagada: 0,
+      total: 0,
+    }
   );
 
 export const getTopCategory = (movimientos = [], tipo = "egreso") => {

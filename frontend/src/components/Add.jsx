@@ -35,6 +35,13 @@ const MODE_CONFIG = {
     recurrente: false,
     tone: "ahorro",
   },
+  deuda: {
+    title: "Deuda",
+    description: "Registra lo que debes ahora y pagalo despues sin tocar la caja hasta ese momento.",
+    tipo: "deuda",
+    recurrente: false,
+    tone: "deuda",
+  },
   "ingreso-fijo": {
     title: "Ingreso fijo",
     description: "Se proyecta automaticamente segun la frecuencia elegida.",
@@ -53,6 +60,7 @@ const MODE_CONFIG = {
 
 const getModeFromMovement = (movement) => {
   if (!movement) return "ingreso";
+  if (movement.tipo === "deuda") return "deuda";
   if (movement.esRecurrente) {
     return movement.tipo === "ingreso" ? "ingreso-fijo" : "egreso-fijo";
   }
@@ -73,6 +81,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
   const [moneda, setMoneda] = useState(normalizeCurrency(defaultCurrency));
   const [medio, setMedio] = useState("efectivo");
   const [frecuencia, setFrecuencia] = useState("mensual");
+  const [deudaAcreedor, setDeudaAcreedor] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -91,6 +100,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
       setMoneda(normalizeCurrency(defaultCurrency));
       setMedio("efectivo");
       setFrecuencia("mensual");
+      setDeudaAcreedor("");
       return;
     }
 
@@ -105,12 +115,14 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
     setMoneda(normalizeCurrency(movementToEdit.moneda));
     setMedio(normalizeMovementMethod(movementToEdit.medio));
     setFrecuencia(movementToEdit.frecuencia || "mensual");
+    setDeudaAcreedor(movementToEdit.deudaAcreedor || "");
   }, [movementToEdit, defaultCurrency]);
 
   const mode = useMemo(
     () => MODE_CONFIG[selectedMode] || MODE_CONFIG.ingreso,
     [selectedMode]
   );
+  const isDebtMode = mode.tipo === "deuda";
 
   const CustomDateInput = forwardRef(({ value, onClick, id }, ref) => (
     <input
@@ -142,6 +154,12 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
       return;
     }
 
+    if (isDebtMode && !deudaAcreedor.trim()) {
+      setError("Indica a quien le debes ese monto.");
+      setLoading(false);
+      return;
+    }
+
     const fechaLocal = new Date(selectedDate);
     fechaLocal.setMinutes(fechaLocal.getMinutes() - fechaLocal.getTimezoneOffset());
     const fechaFormateada = fechaLocal.toISOString().slice(0, 10);
@@ -153,9 +171,10 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
       fecha: fechaFormateada,
       detalle: detalle.trim(),
       moneda: normalizeCurrency(moneda),
-      medio: normalizeMovementMethod(medio),
+      medio: isDebtMode ? undefined : normalizeMovementMethod(medio),
       esRecurrente: mode.recurrente,
       frecuencia: mode.recurrente ? frecuencia : null,
+      deudaAcreedor: isDebtMode ? deudaAcreedor.trim() : "",
     };
 
     try {
@@ -177,6 +196,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
         setDetalle("");
         setSelectedDate(new Date());
         setMedio("efectivo");
+        setDeudaAcreedor("");
       }
 
       if (!only) {
@@ -194,7 +214,9 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
       ? style.formIngreso
       : mode.tone === "egreso"
         ? style.formEgreso
-        : style.formAhorro;
+        : mode.tone === "deuda"
+          ? style.formDeuda
+          : style.formAhorro;
 
   return (
     <div className={style.container}>
@@ -210,7 +232,9 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
         <p className={style.subtitle}>
           {mode.recurrente
             ? "Los movimientos fijos se renderizan automaticamente segun la frecuencia elegida."
-            : "Cada movimiento puede guardarse en pesos o dolares sin mezclar cajas."}
+            : isDebtMode
+              ? "La deuda queda pendiente y recien impacta en caja cuando marques que ya la pagaste."
+              : "Cada movimiento puede guardarse en pesos o dolares sin mezclar cajas."}
         </p>
       </div>
 
@@ -277,7 +301,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
           />
         </div>
 
-        <div className={style.fieldGridTriple}>
+        <div className={isDebtMode ? style.fieldGridDual : style.fieldGridTriple}>
           <div className={style.field}>
             <label className={style.fieldLabel} htmlFor="categoria">
               Categoria
@@ -286,7 +310,11 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
               id="categoria"
               name="categoria"
               className={style.btn}
-              placeholder="Ej: ventas, alquiler, supermercado"
+              placeholder={
+                isDebtMode
+                  ? "Ej: prestamo, tarjeta, adelanto"
+                  : "Ej: ventas, alquiler, supermercado"
+              }
               value={categoria}
               onChange={(event) => setCategoria(event.target.value)}
               required
@@ -307,36 +335,62 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
             />
           </div>
 
-          <div className={style.field}>
-            <div className={style.fieldLabelRow}>
-              <label className={style.fieldLabel}>Medio</label>
-              <span className={style.fieldTag}>
-                {medio === "transferencia" ? "Digital" : "Fisico"}
-              </span>
+          {!isDebtMode && (
+            <div className={style.field}>
+              <div className={style.fieldLabelRow}>
+                <label className={style.fieldLabel}>Medio</label>
+                <span className={style.fieldTag}>
+                  {medio === "transferencia" ? "Digital" : "Fisico"}
+                </span>
+              </div>
+
+              <div
+                className={`${style.methodSwitch} ${
+                  medio === "transferencia"
+                    ? style.methodSwitchTransferencia
+                    : style.methodSwitchEfectivo
+                }`}
+              >
+                {MOVEMENT_METHOD_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`${style.methodOption} ${
+                      medio === option.value ? style.methodOptionActive : ""
+                    }`}
+                    onClick={() => setMedio(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {isDebtMode && (
+          <div className={style.fieldGrid}>
+            <div className={style.field}>
+              <label className={style.fieldLabel} htmlFor="deuda-acreedor">
+                A quien le debes
+              </label>
+              <input
+                id="deuda-acreedor"
+                name="deudaAcreedor"
+                className={style.btn}
+                placeholder="Ej: banco, amigo, proveedor"
+                value={deudaAcreedor}
+                onChange={(event) => setDeudaAcreedor(event.target.value)}
+                required
+              />
             </div>
 
-            <div
-              className={`${style.methodSwitch} ${
-                medio === "transferencia"
-                  ? style.methodSwitchTransferencia
-                  : style.methodSwitchEfectivo
-              }`}
-            >
-              {MOVEMENT_METHOD_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={`${style.methodOption} ${
-                    medio === option.value ? style.methodOptionActive : ""
-                  }`}
-                  onClick={() => setMedio(option.value)}
-                >
-                  {option.label}
-                </button>
-              ))}
+            <div className={`${style.helperBox} ${style.field}`}>
+              La deuda queda visible en el panel principal y despues la podes
+              marcar como pagada desde el detalle mensual.
             </div>
           </div>
-        </div>
+        )}
 
         {mode.recurrente && (
           <div className={style.fieldGrid}>

@@ -22,6 +22,10 @@ const participantSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    joinedAt: {
+      type: Date,
+      default: Date.now,
+    },
     isOwner: {
       type: Boolean,
       default: false,

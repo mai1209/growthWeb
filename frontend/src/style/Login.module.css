@@ -277,6 +277,43 @@ form {
   font-weight: 600;
 }
 
+.successText {
+  margin-top: 0.85rem;
+  color: var(--color-verde);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.helperBlock {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.helperText,
+.helperUrl {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.helperUrl {
+  word-break: break-word;
+}
+
+.linkButton {
+  border: none;
+  background: transparent;
+  color: var(--color-verde);
+  cursor: pointer;
+  padding: 0;
+  font-weight: 700;
+  text-align: left;
+}
+
 .themeButton {
   display: inline-flex;
   align-items: center;
@@ -391,8 +428,8 @@ form {
 
   .containerForm {
     flex-direction: column;
-    padding: 1rem 1rem;
-    gap: 2rem;
+    padding: 1rem;
+    gap: 1.35rem;
   }
 
   form {
@@ -406,11 +443,67 @@ form {
 
   .btn {
     font-size: 0.95rem;
-    padding: 0.6rem 1rem;
+    padding: 0.78rem 1rem;
   }
 
   .containerForm img {
     width: 100%;
-    height: 400px;
+    height: 280px;
+    object-fit: cover;
+    border-radius: 18px;
+  }
+}
+
+@media (max-width: 520px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .authTopbar {
+    padding: 0.75rem 0.75rem 0;
+  }
+
+  .back {
+    border-radius: 22px;
+  }
+
+  .containerForm {
+    padding: 0.85rem;
+    gap: 1rem;
+  }
+
+  .containerForm img {
+    height: 180px;
+    border-radius: 16px;
+  }
+
+  .title {
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .containerInput {
+    margin-bottom: 0.95rem;
+  }
+
+  .containerInput label,
+  .rememberRow,
+  .helperText,
+  .helperUrl {
+    font-size: 0.78rem;
+  }
+
+  .containerInput input {
+    font-size: 15px;
+  }
+
+  .btn {
+    min-height: 44px;
+    font-size: 0.9rem;
+    padding: 0.75rem 0.95rem;
+  }
+
+  .link {
+    align-self: flex-start;
   }
 }

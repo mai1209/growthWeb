@@ -11,7 +11,8 @@
 .sidebar,
 .panel,
 .summaryCard,
-.expenseRow {
+.expenseRow,
+.debtRow {
   border: 1px solid var(--border-color);
   background: var(--panel-background);
   box-shadow: var(--shadow-soft);
@@ -45,9 +46,16 @@
 .heroText,
 .emptyMessage,
 .expenseMeta,
-.expenseNotes {
+.expenseNotes,
+.debtMeta {
   color: var(--color-muted);
   line-height: 1.55;
+}
+
+.sectionText {
+  color: var(--color-muted);
+  line-height: 1.55;
+  margin: 0;
 }
 
 .newGroupButton,
@@ -255,9 +263,11 @@
 }
 
 .groupForm,
-.expenseForm {
+.expenseForm,
+.debtPanel {
  width: 100%;
  display: flex;
+ flex-direction: column;
  gap: 1rem;
 }
 
@@ -270,8 +280,11 @@
 }
 
 .participantBox,
-.splitBox {
-  min-width: 0;
+.splitBox,
+.memberPanel,
+.memberPicker,
+.debtPanel,
+.debtListPanel {
   padding: 1rem;
   border: 1px solid rgba(216, 241, 224, 0.1);
   background:
@@ -281,6 +294,7 @@
   display: grid;
   gap: 1rem;
   align-content: start;
+  width: 100%;
 }
 
 .cardSectionHead {
@@ -308,6 +322,12 @@
   display: flex;
   gap: 0.8rem;
   flex-wrap: nowrap;
+}
+
+.formGridTriple {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
 }
 
 .field {
@@ -394,7 +414,9 @@
 .allocations,
 .expenseList,
 .summaryGrid,
-.settlementList {
+.settlementList,
+.memberChipGrid,
+.debtList {
   display: grid;
   gap: 0.75rem;
 }
@@ -402,11 +424,45 @@
 .participantRow,
 .allocationRow,
 .expenseRow,
-.summaryTop {
+.summaryTop,
+.memberChip,
+.debtRow {
   display: flex;
   justify-content: space-between;
   gap: 0.8rem;
   align-items: center;
+}
+
+.memberChipGrid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.memberChip {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(216, 241, 224, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 16px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--color-text);
+}
+
+.memberChip strong,
+.memberChip span {
+  display: block;
+}
+
+.memberChip span {
+  color: var(--color-muted);
+  font-size: 0.84rem;
+}
+
+.memberChipActive {
+  background:
+    linear-gradient(135deg, rgba(144, 211, 106, 0.18), rgba(255, 163, 108, 0.08)),
+    var(--surface-input);
+  box-shadow: inset 0 0 0 1px rgba(144, 211, 106, 0.28);
 }
 
 .participantRow {
@@ -444,18 +500,39 @@
   gap: 0.65rem;
 }
 
+.memberHistoryRow {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.debtStatus {
+  min-height: 30px;
+  padding: 0.35rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 192, 90, 0.14);
+  color: var(--color-text);
+  font-size: 0.74rem;
+  font-weight: 700;
+  border-radius: 999px;
+}
+
+.debtStatusPaid {
+  background: rgba(59, 203, 35, 0.16);
+}
+
 .modeButton {
   min-height: 42px;
   padding: 0.7rem 0.95rem;
-  border: 1px solid rgba(216, 241, 224, 0.12);
   background: var(--surface-input);
   color: var(--color-muted);
+  border:none;
 }
 
 .modeButtonActive {
   color: var(--color-text);
   background: linear-gradient(135deg, rgba(59, 203, 35, 0.22), rgba(18, 43, 11, 0.92));
-  border-color: rgba(144, 211, 106, 0.3);
 }
 
 .equalNotice,
@@ -490,6 +567,7 @@
 
 .panelFooterNav {
   margin-top: 1.15rem;
+  margin-bottom: 2rem;
   padding-top: 1rem;
   border-top: 1px solid rgba(216, 241, 224, 0.08);
   display: grid;
@@ -623,6 +701,19 @@
     var(--surface-input);
 }
 
+.debtRow {
+  padding: 0.95rem 1rem;
+  background:
+    linear-gradient(135deg, rgba(255, 204, 94, 0.12), rgba(123, 231, 173, 0.06)),
+    var(--surface-input);
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.debtRowPaid {
+  opacity: 0.86;
+}
+
 .expenseTitle {
   margin: 0;
   font-size: 1rem;
@@ -635,6 +726,14 @@
 
 .expenseNotes {
   margin-top: 0.2rem;
+}
+
+.debtSettlementForm {
+  width: 100%;
+  display: grid;
+  gap: 0.8rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(216, 241, 224, 0.08);
 }
 
 .expenseSide {
@@ -687,6 +786,7 @@
 :global(body[data-theme="light"]) .panel,
 :global(body[data-theme="light"]) .summaryCard,
 :global(body[data-theme="light"]) .expenseRow,
+:global(body[data-theme="light"]) .debtRow,
 :global(body[data-theme="light"]) .input,
 :global(body[data-theme="light"]) .select,
 :global(body[data-theme="light"]) .textarea,
@@ -696,11 +796,16 @@
 :global(body[data-theme="light"]) .groupCard,
 :global(body[data-theme="light"]) .participantBox,
 :global(body[data-theme="light"]) .splitBox,
+:global(body[data-theme="light"]) .memberPanel,
+:global(body[data-theme="light"]) .memberPicker,
+:global(body[data-theme="light"]) .debtPanel,
+:global(body[data-theme="light"]) .debtListPanel,
 :global(body[data-theme="light"]) .modeButton,
 :global(body[data-theme="light"]) .expenseIntro,
 :global(body[data-theme="light"]) .settlementPanel,
 :global(body[data-theme="light"]) .settlementRow,
-:global(body[data-theme="light"]) .navArrow {
+:global(body[data-theme="light"]) .navArrow,
+:global(body[data-theme="light"]) .memberChip {
   border-color: rgba(12, 18, 14, 0.14);
 }
 
@@ -776,6 +881,7 @@
   .sidebar,
   .panel {
     padding: 1rem;
+    border-radius: 22px;
   }
 
   .hero {
@@ -791,10 +897,14 @@
     flex-direction: column;
   }
 
+  .formGridTriple {
+    grid-template-columns: 1fr;
+  }
+
   .addParticipantRow,
   .groupCardActions,
   .panelFooterNav {
-    grid-template-columns: 1fr ;
+    grid-template-columns: 1fr;
   }
 
   .allocationRow,
@@ -834,6 +944,51 @@
 
   .hero h1 {
     font-size: 1.15rem;
+  }
+
+  .hero,
+  .sidebar,
+  .panel,
+  .memberPanel,
+  .memberPicker,
+  .debtPanel,
+  .debtListPanel,
+  .settlementPanel {
+    padding: 0.85rem;
+    border-radius: 20px;
+  }
+
+  .panelHeader h2,
+  .sidebarHeader h2 {
+    font-size: 1.05rem;
+  }
+
+  .groupCard,
+  .summaryCard,
+  .expenseRow,
+  .settlementRow,
+  .debtRow,
+  .participantRow,
+  .allocationRow {
+    border-radius: 16px;
+    padding: 0.82rem;
+  }
+
+  .input,
+  .select,
+  .textarea,
+  .secondaryButton,
+  .primaryButton,
+  .jumpButton,
+  .navArrow {
+    min-height: 44px;
+    padding: 0.72rem 0.82rem;
+    font-size: 0.9rem;
+  }
+
+  .memberChip {
+    padding: 0.8rem;
+    border-radius: 14px;
   }
 
   .groupList {

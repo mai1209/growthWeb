@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const ingresoEgresoSchema = new mongoose.Schema({
   tipo: {
     type: String,
-    enum: ['ingreso', 'egreso', 'ahorro'],
+    enum: ['ingreso', 'egreso', 'ahorro', 'deuda'],
     required: true
   },
   monto: {
@@ -31,6 +31,24 @@ const ingresoEgresoSchema = new mongoose.Schema({
     type: String,
     enum: ['efectivo', 'transferencia'],
     default: 'efectivo'
+  },
+  deudaEstado: {
+    type: String,
+    enum: ['pendiente', 'pagada'],
+    default: 'pendiente'
+  },
+  deudaAcreedor: {
+    type: String,
+    default: ''
+  },
+  deudaPagadaAt: {
+    type: Date,
+    default: null
+  },
+  deudaMovimientoPagoId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'IngresoEgreso',
+    default: null
   },
   esRecurrente: {
     type: Boolean,

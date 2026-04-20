@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
-import { FiMoon, FiSun, FiX } from "react-icons/fi";
+import { FiMoon, FiSettings, FiSun, FiX } from "react-icons/fi";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
@@ -104,6 +104,14 @@ function Nav({
                   <img src="/tarea.png" alt="tasklist" />
                   <p>Tareas</p>
                 </NavLink>
+                <NavLink
+                  to="/ajustes"
+                  className={getNavLinkClass}
+                  onClick={onCloseMobileMenu}
+                >
+                  <FiSettings className={style.navIcon} />
+                  <p>Ajustes</p>
+                </NavLink>
               </div>
 
               <div className={style.mobileUserBlock}>
@@ -189,6 +197,10 @@ function Nav({
             <NavLink to="/notas" className={getNavLinkClass} onClick={onCloseMobileMenu}>
               <img src="/tarea.png" alt="tasklist" />
               <p>Tareas</p>
+            </NavLink>
+            <NavLink to="/ajustes" className={getNavLinkClass} onClick={onCloseMobileMenu}>
+              <FiSettings className={style.navIcon} />
+              <p>Ajustes</p>
             </NavLink>
           </div>
         )}

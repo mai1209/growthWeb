@@ -7,7 +7,6 @@ import {
   CURRENCY_OPTIONS,
   filterMovimientosByCurrency,
   formatMoney,
-  getAverageTicket,
   getCurrencyMeta,
   getLatestMovimiento,
   getTopCategory,
@@ -53,10 +52,6 @@ function Dashboard({
     [currencyMovimientos]
   );
 
-  const averageTicket = useMemo(
-    () => getAverageTicket(monthMovimientos),
-    [monthMovimientos]
-  );
   const monthSummary = useMemo(
     () => summarizeByType(monthMovimientos),
     [monthMovimientos]
@@ -138,6 +133,16 @@ function Dashboard({
                   </button>
                   <button
                     type="button"
+                    className={style.debtAction}
+                    onClick={() => {
+                      setShowOnly("deuda");
+                      setIsActionMenuOpen(false);
+                    }}
+                  >
+                    Cargar deuda
+                  </button>
+                  <button
+                    type="button"
                     className={style.fixedIncomeAction}
                     onClick={() => {
                       setShowOnly("ingreso-fijo");
@@ -198,11 +203,6 @@ function Dashboard({
                   : "Todavia no cargaste movimientos"}
               </strong>
             </article>
-
-            <article className={style.insightCard}>
-              <span>Ticket promedio</span>
-              <strong>{formatMoney(averageTicket, currentCurrency)}</strong>
-            </article>
           </div>
         </section>
       </section>
@@ -230,6 +230,16 @@ function Dashboard({
               <span>Balance actual</span>
               <strong>{formatMoney(monthSummary.total, currentCurrency)}</strong>
               <p>Resultado neto del mes con ingresos, egresos y ahorros.</p>
+            </article>
+
+            <article className={style.dashboardInfoStat}>
+              <span>Deuda pendiente</span>
+              <strong>{formatMoney(monthSummary.deudaPendiente, currentCurrency)}</strong>
+              <p>
+                {monthSummary.deudaPendienteCount || 0} deuda
+                {monthSummary.deudaPendienteCount === 1 ? "" : "s"} abierta
+                {monthSummary.deudaPendienteCount === 1 ? "" : "s"} este mes.
+              </p>
             </article>
           </div>
 
@@ -276,9 +286,23 @@ function Dashboard({
             <div className={style.inlineFormHeader}>
               <div>
                 <p className={style.inlineFormEyebrow}>
-                  Cargar {showOnly === "ingreso" ? "ingreso" : "egreso"}
+                  {showOnly === "deuda"
+                    ? "Cargar deuda"
+                    : `Cargar ${
+                        showOnly === "ingreso"
+                          ? "ingreso"
+                          : showOnly === "egreso"
+                            ? "egreso"
+                            : showOnly === "ahorro"
+                              ? "ahorro"
+                              : "movimiento"
+                      }`}
                 </p>
-                <h2>Guarda movimientos en pesos o dolares desde el mismo flujo.</h2>
+                <h2>
+                  {showOnly === "deuda"
+                    ? "Registra lo pendiente ahora y pasalo a egreso real cuando lo pagues."
+                    : "Guarda movimientos en pesos o dolares desde el mismo flujo."}
+                </h2>
               </div>
 
               <button
