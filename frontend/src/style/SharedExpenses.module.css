@@ -52,6 +52,10 @@
   line-height: 1.55;
 }
 
+.heroText{
+  font-size: 0.9rem;
+}
+
 .sectionText {
   color: var(--color-muted);
   line-height: 1.55;
@@ -419,6 +423,10 @@
 .debtList {
   display: grid;
   gap: 0.75rem;
+}
+
+.participantList span{
+  font-size: 0.8rem;
 }
 
 .participantRow,
