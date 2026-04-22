@@ -32,6 +32,15 @@ const createResetTokenPair = () => {
 
 const isStrongEnoughPassword = (value = "") => typeof value === "string" && value.length >= 6;
 
+const serializeProfile = (user) => ({
+  _id: user._id,
+  username: user.username,
+  email: user.email,
+  fullName: user.fullName || user.username || "",
+  phone: user.phone || "",
+  profilePhotoUrl: user.profilePhotoUrl || "",
+});
+
 export const signup = async (req, res) => {
   try {
     const username = req.body.username?.trim();
@@ -214,5 +223,52 @@ export const changePassword = async (req, res) => {
   } catch (err) {
     console.error("Change password error:", err);
     res.status(500).json({ error: "No se pudo cambiar la contraseña" });
+  }
+};
+
+export const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    res.status(200).json(serializeProfile(user));
+  } catch (err) {
+    console.error("Get profile error:", err);
+    res.status(500).json({ error: "No se pudo cargar el perfil" });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const fullName = String(req.body.fullName || "").trim();
+    const phone = String(req.body.phone || "").trim();
+    const profilePhotoUrl = String(req.body.profilePhotoUrl || "").trim();
+
+    if (profilePhotoUrl && !/^https?:\/\/.+/i.test(profilePhotoUrl)) {
+      return res.status(400).json({ error: "La foto de perfil debe ser una URL válida" });
+    }
+
+    user.fullName = fullName;
+    user.phone = phone;
+    user.profilePhotoUrl = profilePhotoUrl;
+
+    await user.save();
+
+    res.status(200).json({
+      message: "Perfil actualizado correctamente",
+      profile: serializeProfile(user),
+    });
+  } catch (err) {
+    console.error("Update profile error:", err);
+    res.status(500).json({ error: "No se pudo actualizar el perfil" });
   }
 };
