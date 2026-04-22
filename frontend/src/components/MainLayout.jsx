@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import Nav from "./Nav";
 import LeftsSite from "./LeftsSite";
 import LeftSideNotas from "./LeftSideNotas";
+import SettingsSidePanel from "./SettingsSidePanel";
 import style from "../style/MainLayout.module.css";
 
 function MainLayout({
@@ -72,6 +73,7 @@ function MainLayout({
         embeddedMobile={isMobile}
       />
     ),
+    "/ajustes": <SettingsSidePanel />,
   };
 
   // 3. Sidebar por defecto: YA NO pasamos 'token={token}'
@@ -109,7 +111,12 @@ function MainLayout({
     setIsMobilePanelOpen(true);
   }, [isMobile]);
 
-  const mobilePanelLabel = location.pathname === "/notas" ? "Panel" : "Dashboard";
+  const mobilePanelLabel =
+    location.pathname === "/notas"
+      ? "Panel"
+      : location.pathname === "/ajustes"
+        ? "Ajustes"
+        : "Dashboard";
 
   return (
     <div className={style.shell}>

@@ -16,6 +16,21 @@ const userSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    fullName: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    phone: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    profilePhotoUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     password: {
       type: String,
       required: [true, 'La contraseña es obligatoria'],

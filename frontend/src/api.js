@@ -104,6 +104,8 @@ export const authService = {
   forgotPassword: (data) => api.post("/api/auth/forgot-password", data),
   resetPassword: (data) => api.post("/api/auth/reset-password", data),
   changePassword: (data) => api.post("/api/auth/change-password", data),
+  getProfile: () => api.get("/api/auth/profile"),
+  updateProfile: (data) => api.put("/api/auth/profile", data),
 };
 
 export default api;
