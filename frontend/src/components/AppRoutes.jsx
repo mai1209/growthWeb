@@ -8,6 +8,7 @@ import Tareas from "./Tareas";
 import MonthlyFilters from "./MonthlyFilters";
 import SharedExpenses from "./SharedExpenses";
 import SettingsPage from "./SettingsPage";
+import MetricsPage from "./MetricsPage";
 
 import LoginPage from "./LoginPage";
 import SignupPage from "./SignupPage";
@@ -167,6 +168,17 @@ function AppRoutes({
               onCurrencyChange={onPanelCurrencyChange}
               onMovementUpdate={onUpdate}
               onEditMovement={setMovementToEdit}
+            />
+          }
+        />
+
+        <Route
+          path="metricas"
+          element={
+            <MetricsPage
+              movimientos={movimientos}
+              currentCurrency={panelCurrency}
+              onCurrencyChange={onPanelCurrencyChange}
             />
           }
         />
