@@ -124,6 +124,11 @@ function SettingsPage() {
       });
 
       setProfile(response.data.profile);
+      window.dispatchEvent(
+        new CustomEvent("growth-profile-updated", {
+          detail: response.data.profile,
+        })
+      );
       setMessage(response.data.message || "Perfil actualizado correctamente");
     } catch (err) {
       setError(err.response?.data?.error || "No se pudo guardar el perfil");
@@ -187,7 +192,13 @@ function SettingsPage() {
           <p>{TAB_META[activeTab].text}</p>
         </div>
         <div className={style.headerIcon}>
-          <ActiveIcon />
+          {profile.profilePhotoUrl ? (
+            <img src={profile.profilePhotoUrl} alt="Foto de perfil" />
+          ) : activeTab === "perfil" ? (
+            <span>{profileInitials}</span>
+          ) : (
+            <ActiveIcon />
+          )}
         </div>
       </div>
 

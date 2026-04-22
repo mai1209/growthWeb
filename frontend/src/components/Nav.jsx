@@ -1,9 +1,20 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
-import { FiMoon, FiPieChart, FiSettings, FiSun, FiX } from "react-icons/fi";
+import { FiMoon, FiPieChart, FiSettings, FiSun, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare } from "react-icons/fi";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { authService } from "../api";
+
+// Definición centralizada de rutas para evitar repetición
+const NAV_LINKS = [
+  { to: "/", label: "Home", icon: <FiHome className={style.navIcon} /> },
+  { to: "/filtros", label: "Filtros", icon: <FiFilter className={style.navIcon} /> },
+  { to: "/compartidos", label: "Compartidos", icon: <FiShare2 className={style.navIcon} /> },
+  { to: "/metricas", label: "Métricas", icon: <FiPieChart className={style.navIcon} /> },
+  { to: "/notas", label: "Tareas", icon: <FiCheckSquare className={style.navIcon} /> },
+  { to: "/ajustes", label: "Ajustes", icon: <FiSettings className={style.navIcon} /> },
+];
 
 function Nav({
   onLogout,
@@ -15,252 +26,159 @@ function Nav({
   onCloseMobilePanel,
   panelContent,
   panelLabel = "Dashboard",
-  theme = "dark",
   onThemeToggle,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  //Buscamos el token directamente aquí para que sea instantáneo
-  const currentToken =
-    localStorage.getItem("token") || sessionStorage.getItem("token");
-  const userData = useMemo(() => {
-    if (!currentToken) return null; // Usamos la variable local
-    try {
-      const decoded = jwtDecode(currentToken);
+  const [profile, setProfile] = useState(null);
 
-      return decoded;
-    } catch (error) {
+  const currentToken = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+  const userData = useMemo(() => {
+    if (!currentToken) return null;
+    try {
+      return jwtDecode(currentToken);
+    } catch {
       return null;
     }
+  }, [currentToken]);
+
+  useEffect(() => {
+    if (!currentToken) {
+      setProfile(null);
+      return;
+    }
+
+    let isMounted = true;
+    const loadProfile = async () => {
+      try {
+        const response = await authService.getProfile();
+        if (isMounted) setProfile(response.data);
+      } catch (error) {
+        if (isMounted) setProfile(null);
+      }
+    };
+
+    const handleProfileUpdate = (event) => setProfile(event.detail || null);
+    
+    loadProfile();
+    window.addEventListener("growth-profile-updated", handleProfileUpdate);
+    return () => {
+      isMounted = false;
+      window.removeEventListener("growth-profile-updated", handleProfileUpdate);
+    };
   }, [currentToken]);
 
   useEffect(() => {
     onCloseMobileMenu?.();
   }, [location.pathname, onCloseMobileMenu]);
 
-  const getNavLinkClass = ({ isActive }) => {
-    return isActive ? `${style.navLink} ${style.activeLink}` : style.navLink;
-  };
+  const displayName = profile?.fullName || userData?.username || "Usuario";
+  const initials = (displayName[0] || "U").toUpperCase();
 
   const handleLogout = () => {
-    onLogout(); // Esto limpia localStorage/sessionStorage en App.js
-    navigate("/"); // Mejor ir a la raíz, AppRoutes se encargará de mostrar Login
+    onLogout();
+    navigate("/");
   };
 
-  const mobileMenu =
-    currentToken && isMobileMenuOpen && typeof document !== "undefined"
-      ? createPortal(
-          <div className={style.mobileMenuShell}>
-            <button
-              type="button"
-              className={style.mobileBackdrop}
-              onClick={onCloseMobileMenu}
-              aria-label="Cerrar menu"
-            />
+  const getNavLinkClass = ({ isActive }) => 
+    isActive ? `${style.navLink} ${style.activeLink}` : style.navLink;
 
-            <div className={style.mobileDrawer}>
-              <div className={style.mobileDrawerHeader}>
-                <div>
-                  <p className={style.drawerEyebrow}>Menu</p>
-                  <h2>{userData?.username || "Usuario"}</h2>
-                </div>
-
-                <button
-                  type="button"
-                  className={style.mobileCloseButton}
-                  onClick={onCloseMobileMenu}
-                  aria-label="Cerrar menu"
-                >
-                  <FiX />
-                </button>
-              </div>
-
-              <div className={style.mobileNavItems}>
-                <NavLink to="/" className={getNavLinkClass} onClick={onCloseMobileMenu}>
-                  <img src="/homedos.png" alt="home" />
-                  <p>Home</p>
-                </NavLink>
-                <NavLink
-                  to="/filtros"
-                  className={getNavLinkClass}
-                  onClick={onCloseMobileMenu}
-                >
-                  <img src="/historial.png" alt="filtros" />
-                  <p>Filtros</p>
-                </NavLink>
-                <NavLink
-                  to="/compartidos"
-                  className={getNavLinkClass}
-                  onClick={onCloseMobileMenu}
-                >
-                  <img src="/lista.png" alt="compartidos" />
-                  <p>Compartidos</p>
-                </NavLink>
-                <NavLink
-                  to="/metricas"
-                  className={getNavLinkClass}
-                  onClick={onCloseMobileMenu}
-                >
-                  <FiPieChart className={style.navIcon} />
-                  <p>Métricas</p>
-                </NavLink>
-                <NavLink
-                  to="/notas"
-                  className={getNavLinkClass}
-                  onClick={onCloseMobileMenu}
-                >
-                  <img src="/tarea.png" alt="tasklist" />
-                  <p>Tareas</p>
-                </NavLink>
-                <NavLink
-                  to="/ajustes"
-                  className={getNavLinkClass}
-                  onClick={onCloseMobileMenu}
-                >
-                  <FiSettings className={style.navIcon} />
-                  <p>Ajustes</p>
-                </NavLink>
-              </div>
-
-              <div className={style.mobileUserBlock}>
-                <p className={style.mobileGreeting}>
-                  Hola, {userData?.username || "Usuario"}.
-                </p>
-                <button type="button" onClick={onThemeToggle} className={style.themeButton}>
-                  <FiSun className={style.themeIcon} />
-                  <span className={style.themeSwitchTrack}>
-                    <span className={style.themeSwitchThumb} />
-                  </span>
-                  <FiMoon className={style.themeIcon} />
-                </button>
-                <button onClick={handleLogout} className={style.logoutButton}>
-                  Cerrar Sesion
-                </button>
-              </div>
-
-            </div>
-          </div>,
-          document.body
-        )
-      : null;
-
-  const mobilePanel =
-    currentToken && isMobilePanelOpen && typeof document !== "undefined"
-      ? createPortal(
-          <div className={style.mobileMenuShell}>
-            <button
-              type="button"
-              className={style.mobileBackdrop}
-              onClick={onCloseMobilePanel}
-              aria-label={`Cerrar ${panelLabel.toLowerCase()}`}
-            />
-
-            <div className={`${style.mobileDrawer} ${style.mobilePanelDrawer}`}>
-              <div className={style.mobileDrawerHeader}>
-                <div>
-                  <p className={style.drawerEyebrow}>{panelLabel}</p>
-                  <h2>{panelLabel === "Dashboard" ? "Resumen lateral" : "Panel de notas"}</h2>
-                </div>
-
-                <button
-                  type="button"
-                  className={style.mobileCloseButton}
-                  onClick={onCloseMobilePanel}
-                  aria-label={`Cerrar ${panelLabel.toLowerCase()}`}
-                >
-                  <FiX />
-                </button>
-              </div>
-
-              {panelContent ? <div className={style.mobileSidebar}>{panelContent}</div> : null}
-            </div>
-          </div>,
-          document.body
-        )
-      : null;
+  // --- COMPONENTES INTERNOS PARA EVITAR REPETICIÓN ---
+  const NavItems = () => (
+    <>
+      {NAV_LINKS.map((link) => (
+        <NavLink key={link.to} to={link.to} className={getNavLinkClass} onClick={onCloseMobileMenu}>
+          {link.icon}
+          <span>{link.label}</span>
+        </NavLink>
+      ))}
+    </>
+  );
 
   return (
     <>
-      <div className={style.container}>
-      <nav className={style.nav}>
-        <div className={style.containerLogo}>
-          <img className={style.logo} src="/logo.png" alt="logo" />
-          <p className={style.nameLogo}>growth</p>
-        </div>
-
-        {currentToken && (
-          <div className={style.navItems}>
-            <NavLink to="/" className={getNavLinkClass} onClick={onCloseMobileMenu}>
-              <img src="/homedos.png" alt="home" />
-              <p>Home</p>
-            </NavLink>
-            <NavLink to="/filtros" className={getNavLinkClass} onClick={onCloseMobileMenu}>
-              <img src="/historial.png" alt="filtros" />
-              <p>Filtros</p>
-            </NavLink>
-            <NavLink to="/compartidos" className={getNavLinkClass} onClick={onCloseMobileMenu}>
-              <img src="/lista.png" alt="compartidos" />
-              <p>Compartidos</p>
-            </NavLink>
-            <NavLink to="/metricas" className={getNavLinkClass} onClick={onCloseMobileMenu}>
-              <FiPieChart className={style.navIcon} />
-              <p>Métricas</p>
-            </NavLink>
-            <NavLink to="/notas" className={getNavLinkClass} onClick={onCloseMobileMenu}>
-              <img src="/tarea.png" alt="tasklist" />
-              <p>Tareas</p>
-            </NavLink>
-            <NavLink to="/ajustes" className={getNavLinkClass} onClick={onCloseMobileMenu}>
-              <FiSettings className={style.navIcon} />
-              <p>Ajustes</p>
-            </NavLink>
+      <header className={style.header}>
+        <nav className={style.nav}>
+          <div className={style.logoSection} onClick={() => navigate("/")}>
+            <img className={style.logo} src="/logo.png" alt="Growth" />
+            <span className={style.brandName}>growth</span>
           </div>
-        )}
 
-        {currentToken && (
-          <div className={style.userActions}>
-            <div className={style.user}>
-              <p>Hola, {userData?.username || "Usuario"}!</p>
+          {currentToken && (
+            <div className={style.desktopNav}>
+              <NavItems />
             </div>
-            <button type="button" onClick={onThemeToggle} className={style.themeButton}>
-              <FiSun className={style.themeIcon} />
-              <span className={style.themeSwitchTrack}>
-                <span className={style.themeSwitchThumb} />
-              </span>
-              <FiMoon className={style.themeIcon} />
-            </button>
-            <button onClick={handleLogout} className={style.logoutButton}>
-              Cerrar Sesión
-            </button>
-          </div>
-        )}
+          )}
 
-        {currentToken && (
-          <div className={style.mobileActions}>
-            <button
-              className={style.panelButton}
-              type="button"
-              onClick={onToggleMobilePanel}
-            >
-              {panelLabel}
-            </button>
+          {currentToken && (
+            <div className={style.actionsSection}>
+              <button onClick={onThemeToggle} className={style.iconAction} title="Cambiar tema">
+                <FiSun className={style.sun} />
+                <FiMoon className={style.moon} />
+              </button>
 
-            <button
-              className={style.menuButton}
-              type="button"
-              onClick={onToggleMobileMenu}
-              aria-label="Abrir menu"
-            >
-              <span className={style.menuBar} />
-              <span className={style.menuBar} />
-              <span className={style.menuBar} />
-            </button>
+              <div className={style.userProfile}>
+                <div className={style.avatar}>
+                  {profile?.profilePhotoUrl ? <img src={profile.profilePhotoUrl} alt="" /> : initials}
+                </div>
+                <span className={style.userName}>{displayName}</span>
+              </div>
+
+              <button onClick={handleLogout} className={style.logoutBtn} title="Cerrar sesión">
+                <FiLogOut />
+              </button>
+
+              {/* Botones Móviles */}
+              <div className={style.mobileButtons}>
+                <button className={style.panelTrigger} onClick={onToggleMobilePanel}>
+                  {panelLabel}
+                </button>
+                <button className={style.burger} onClick={onToggleMobileMenu} aria-label="Menú">
+                  <span />
+                  <span />
+                </button>
+              </div>
+            </div>
+          )}
+        </nav>
+      </header>
+
+      {/* Portals: Solo se renderizan si están abiertos */}
+      {isMobileMenuOpen && createPortal(
+        <div className={style.drawerWrapper}>
+          <div className={style.backdrop} onClick={onCloseMobileMenu} />
+          <div className={style.drawer}>
+            <div className={style.drawerHeader}>
+              <h3>Menú Principal</h3>
+              <button onClick={onCloseMobileMenu}><FiX /></button>
+            </div>
+            <div className={style.drawerContent}>
+              <NavItems />
+              <div className={style.drawerFooter}>
+                <button onClick={handleLogout} className={style.logoutBtnFull}>
+                  <FiLogOut /> Cerrar Sesión
+                </button>
+              </div>
+            </div>
           </div>
-        )}
-      </nav>
-      </div>
-      {mobileMenu}
-      {mobilePanel}
+        </div>,
+        document.body
+      )}
+
+      {isMobilePanelOpen && createPortal(
+        <div className={style.drawerWrapper}>
+          <div className={style.backdrop} onClick={onCloseMobilePanel} />
+          <div className={`${style.drawer} ${style.panelDrawer}`}>
+            <div className={style.drawerHeader}>
+              <h3>{panelLabel}</h3>
+              <button onClick={onCloseMobilePanel}><FiX /></button>
+            </div>
+            <div className={style.panelContent}>{panelContent}</div>
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   );
 }
