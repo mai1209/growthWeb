@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import style from "../style/SharedExpenses.module.css";
 import { sharedGroupsService } from "../api";
 import { CURRENCY_OPTIONS, formatMoney, formatSignedMoney } from "../utils/finance";
+import InputMonto from "./InputMonto";
 
 const SPLIT_OPTIONS = [
   { value: "equal", label: "Todos iguales" },
@@ -78,6 +79,8 @@ const toDateKey = (value) => {
   if (typeof value === "string") return value.slice(0, 10);
   return new Date(value).toISOString().slice(0, 10);
 };
+const toCents = (amount) => Math.round((Number(amount) || 0) * 100);
+const fromCents = (cents) => Number((cents / 100).toFixed(2));
 const getParticipantDisplayName = (participant = {}) =>
   participant.username ||
   (!participant.isGuest && participant.email ? participant.email.split("@")[0] : "") ||
@@ -134,6 +137,87 @@ const buildSettlements = (participants = []) => {
   }
 
   return settlements;
+};
+
+const allocateCentsByWeight = (participantEmails = [], totalAmount = 0, rawWeights = []) => {
+  const totalCents = toCents(totalAmount);
+
+  if (!participantEmails.length || totalCents <= 0) {
+    return [];
+  }
+
+  const weights = rawWeights.map((weight) => Math.max(0, Number(weight) || 0));
+  const totalWeight = weights.reduce((acc, weight) => acc + weight, 0);
+  const effectiveWeights =
+    totalWeight > 0 ? weights : participantEmails.map(() => 1);
+  const effectiveTotalWeight = effectiveWeights.reduce((acc, weight) => acc + weight, 0);
+  const exactShares = effectiveWeights.map((weight) =>
+    (totalCents * weight) / effectiveTotalWeight
+  );
+  const floorShares = exactShares.map(Math.floor);
+  let remainingCents =
+    totalCents - floorShares.reduce((acc, cents) => acc + cents, 0);
+
+  exactShares
+    .map((share, index) => ({
+      index,
+      remainder: share - floorShares[index],
+    }))
+    .sort((a, b) => b.remainder - a.remainder)
+    .forEach(({ index }) => {
+      if (remainingCents <= 0) return;
+      floorShares[index] += 1;
+      remainingCents -= 1;
+    });
+
+  return participantEmails.map((email, index) => ({
+    email,
+    amount: fromCents(floorShares[index]),
+  }));
+};
+
+const buildExpensePreview = (group, expenseForm) => {
+  const amount = Number(expenseForm.amount);
+  const participantEmails = [...new Set(expenseForm.participantEmails || [])];
+
+  if (!group || !amount || Number.isNaN(amount) || amount <= 0 || !participantEmails.length) {
+    return null;
+  }
+
+  const participantsByEmail = new Map(
+    (group.participants || []).map((participant) => [participant.email, participant])
+  );
+  const splitConfigByEmail = new Map(
+    (group.splitConfig || []).map((item) => [item.participantEmail, item])
+  );
+  const rawWeights =
+    group.splitMode === "equal"
+      ? participantEmails.map(() => 1)
+      : participantEmails.map((email) => {
+          const item = splitConfigByEmail.get(email);
+          return group.splitMode === "percentage"
+            ? Number(item?.percentage) || 0
+            : Number(item?.amount) || 0;
+        });
+  const shares = allocateCentsByWeight(participantEmails, amount, rawWeights).map((share) => {
+    const participant = participantsByEmail.get(share.email);
+
+    return {
+      ...share,
+      name: getParticipantDisplayName(participant),
+      isPayer: share.email === expenseForm.paidByEmail,
+    };
+  });
+  const payerShare =
+    shares.find((share) => share.email === expenseForm.paidByEmail)?.amount || 0;
+
+  return {
+    total: amount,
+    count: shares.length,
+    shares,
+    payerShare,
+    payerRecover: Math.max(0, amount - payerShare),
+  };
 };
 
 const mapGroupToForm = (group) => {
@@ -193,6 +277,10 @@ function SharedExpenses() {
     () => buildSettlements(groupDetail?.summary?.participants || []),
     [groupDetail]
   );
+  const settlementTotal = useMemo(
+    () => settlements.reduce((acc, settlement) => acc + (Number(settlement.amount) || 0), 0),
+    [settlements]
+  );
   const expenseEligibleParticipants = useMemo(() => {
     if (!groupDetail?.group) return [];
 
@@ -204,6 +292,10 @@ function SharedExpenses() {
       eligibleEmails.has(participant.email)
     );
   }, [expenseForm.date, groupDetail]);
+  const expensePreview = useMemo(
+    () => buildExpensePreview(groupDetail?.group, expenseForm),
+    [expenseForm, groupDetail]
+  );
   const debtEligibleParticipants = useMemo(() => {
     if (!groupDetail?.group) return [];
 
@@ -686,12 +778,32 @@ function SharedExpenses() {
         participantEmails: expenseForm.participantEmails,
       };
 
+      if (!payload.description) {
+        setError("La descripción del gasto es obligatoria.");
+        setSavingExpense(false);
+        return;
+      }
+
+      if (!payload.amount || Number.isNaN(payload.amount) || payload.amount <= 0) {
+        setError("El monto del gasto debe ser mayor a cero.");
+        setSavingExpense(false);
+        return;
+      }
+
+      if (!payload.paidByEmail) {
+        setError("Selecciona quién pagó el gasto.");
+        setSavingExpense(false);
+        return;
+      }
+
+      if (!payload.participantEmails.length) {
+        setError("Selecciona al menos un participante para repartir el gasto.");
+        setSavingExpense(false);
+        return;
+      }
+
       const response = await sharedGroupsService.createExpense(selectedGroupId, payload);
-      applyGroupDetailData({
-        group: response.data.group,
-        expenses: response.data.expenses,
-        summary: response.data.summary,
-      });
+      applyGroupDetailData(response.data);
       setSuccess("Gasto compartido agregado.");
       await fetchGroups(selectedGroupId);
     } catch (err) {
@@ -1313,13 +1425,10 @@ function SharedExpenses() {
 
                       <label className={style.field}>
                         <span>Monto</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
+                        <InputMonto
                           className={style.input}
                           value={debtForm.amount}
-                          onChange={(event) => handleDebtChange("amount", event.target.value)}
+                          onChange={(value) => handleDebtChange("amount", value)}
                           placeholder={`Monto en ${groupDetail.group.currency}`}
                         />
                       </label>
@@ -1424,13 +1533,10 @@ function SharedExpenses() {
 
                     <label className={style.field}>
                       <span>Monto</span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
+                      <InputMonto
                         className={style.input}
                         value={expenseForm.amount}
-                        onChange={(event) => handleExpenseChange("amount", event.target.value)}
+                        onChange={(value) => handleExpenseChange("amount", value)}
                         placeholder={`Monto en ${groupDetail.group.currency}`}
                       />
                     </label>
@@ -1507,6 +1613,45 @@ function SharedExpenses() {
                         );
                       })}
                     </div>
+
+                    {expensePreview ? (
+                      <div className={style.splitPreview}>
+                        <div>
+                          <span className={style.sectionLabel}>Vista previa del reparto</span>
+                          <p className={style.sectionText}>
+                            {formatMoney(expensePreview.total, groupDetail.group.currency)} se
+                            divide entre {expensePreview.count} miembro
+                            {expensePreview.count === 1 ? "" : "s"}. Al pagador le corresponde{" "}
+                            {formatMoney(expensePreview.payerShare, groupDetail.group.currency)}{" "}
+                            de su propia parte y debería recuperar{" "}
+                            {formatMoney(expensePreview.payerRecover, groupDetail.group.currency)}.
+                          </p>
+                        </div>
+
+                        <div className={style.splitPreviewList}>
+                          {expensePreview.shares.slice(0, 6).map((share) => (
+                            <p key={share.email}>
+                              <strong>{share.name}</strong>
+                              <span>
+                                {formatMoney(share.amount, groupDetail.group.currency)}
+                                {share.isPayer ? " · pagador" : ""}
+                              </span>
+                            </p>
+                          ))}
+                          {expensePreview.shares.length > 6 ? (
+                            <p>
+                              <strong>Otros miembros</strong>
+                              <span>+{expensePreview.shares.length - 6} más</span>
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={style.splitPreviewMuted}>
+                        Cargá un monto y elegí participantes para ver cuánto le toca a cada uno
+                        antes de guardar.
+                      </div>
+                    )}
                   </div>
 
                   <div className={style.formActions}>
@@ -1600,6 +1745,10 @@ function SharedExpenses() {
                     <span className={style.sectionLabel}>Liquidación final</span>
                     <p className={style.sectionText}>
                       Si quisieran cerrar cuentas ahora, estas son las transferencias sugeridas.
+                      Total a transferir:{" "}
+                      {formatMoney(settlementTotal, groupDetail.group.currency)}. No tiene que
+                      coincidir con el total gastado porque se descuenta la parte propia de cada
+                      persona que pagó.
                     </p>
                   </div>
 

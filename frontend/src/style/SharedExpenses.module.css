@@ -465,6 +465,52 @@
   box-shadow: inset 0 0 0 1px rgba(144, 211, 106, 0.28);
 }
 
+.splitPreview,
+.splitPreviewMuted {
+  padding: 0.95rem;
+  border: 1px solid rgba(216, 241, 224, 0.08);
+  background:
+    linear-gradient(135deg, rgba(255, 210, 92, 0.12), rgba(144, 211, 106, 0.08)),
+    var(--surface-input);
+  border-radius: 16px;
+}
+
+.splitPreview {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.splitPreviewMuted {
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.splitPreviewList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.55rem;
+}
+
+.splitPreviewList p {
+  margin: 0;
+  padding: 0.65rem 0.7rem;
+  display: grid;
+  gap: 0.2rem;
+  border: 1px solid rgba(216, 241, 224, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+}
+
+.splitPreviewList strong {
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.splitPreviewList span {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
 .participantRow {
   padding: 0.85rem 0.9rem;
   border: 1px solid rgba(216, 241, 224, 0.08);
@@ -805,7 +851,10 @@
 :global(body[data-theme="light"]) .settlementPanel,
 :global(body[data-theme="light"]) .settlementRow,
 :global(body[data-theme="light"]) .navArrow,
-:global(body[data-theme="light"]) .memberChip {
+:global(body[data-theme="light"]) .memberChip,
+:global(body[data-theme="light"]) .splitPreview,
+:global(body[data-theme="light"]) .splitPreviewMuted,
+:global(body[data-theme="light"]) .splitPreviewList p {
   border-color: rgba(12, 18, 14, 0.14);
 }
 

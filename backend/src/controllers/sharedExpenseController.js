@@ -13,6 +13,8 @@ const normalizeMovementMethod = (value) =>
   value === "transferencia" ? "transferencia" : "efectivo";
 const normalizeSplitMode = (value) =>
   ["equal", "percentage", "amount"].includes(value) ? value : "equal";
+const toCents = (amount) => Math.round((Number(amount) || 0) * 100);
+const fromCents = (cents) => Number((cents / 100).toFixed(2));
 const isGuestAlias = (value = "") => normalizeEmail(value).endsWith("@growth.local");
 const slugifyName = (value = "") =>
   normalizeName(value)
@@ -94,6 +96,7 @@ const serializeExpense = (expense, group) => {
     expense.date || expense.createdAt || new Date(),
     expense.participantEmails || []
   );
+  const shares = buildExpenseShares(group, expense);
 
   return {
     _id: expense._id,
@@ -106,6 +109,14 @@ const serializeExpense = (expense, group) => {
       expense.paidByEmail?.split("@")[0] ||
       "Participante",
     participantEmails,
+    shares: participantEmails.map((email) => ({
+      email,
+      username:
+        participantsByEmail.get(email)?.username ||
+        email.split("@")[0] ||
+        "Participante",
+      amount: shares.get(email) || 0,
+    })),
     amount: expense.amount,
     currency: expense.currency,
     description: expense.description,
@@ -408,6 +419,43 @@ const normalizeExpenseParticipants = (group, expenseDate, rawParticipantEmails =
   return requested.length ? [...new Set(requested)] : eligibleParticipants;
 };
 
+const allocateCentsByWeight = (participantEmails = [], totalAmount = 0, rawWeights = []) => {
+  const totalCents = toCents(totalAmount);
+
+  if (!participantEmails.length || totalCents <= 0) {
+    return new Map();
+  }
+
+  const weights = rawWeights.map((weight) => Math.max(0, Number(weight) || 0));
+  const totalWeight = weights.reduce((acc, weight) => acc + weight, 0);
+  const effectiveWeights =
+    totalWeight > 0 ? weights : participantEmails.map(() => 1);
+  const effectiveTotalWeight = effectiveWeights.reduce((acc, weight) => acc + weight, 0);
+
+  const exactShares = effectiveWeights.map((weight) =>
+    (totalCents * weight) / effectiveTotalWeight
+  );
+  const floorShares = exactShares.map(Math.floor);
+  let remainingCents =
+    totalCents - floorShares.reduce((acc, cents) => acc + cents, 0);
+
+  exactShares
+    .map((share, index) => ({
+      index,
+      remainder: share - floorShares[index],
+    }))
+    .sort((a, b) => b.remainder - a.remainder)
+    .forEach(({ index }) => {
+      if (remainingCents <= 0) return;
+      floorShares[index] += 1;
+      remainingCents -= 1;
+    });
+
+  return new Map(
+    participantEmails.map((email, index) => [email, fromCents(floorShares[index])])
+  );
+};
+
 const buildExpenseShares = (group, expense) => {
   const splitConfigByEmail = new Map(
     (group.splitConfig || []).map((item) => [normalizeEmail(item.participantEmail), item])
@@ -424,9 +472,10 @@ const buildExpenseShares = (group, expense) => {
   }
 
   if (group.splitMode === "equal") {
-    const share = totalAmount / participantEmails.length;
-    return new Map(
-      participantEmails.map((email) => [email, Number(share.toFixed(2))])
+    return allocateCentsByWeight(
+      participantEmails,
+      totalAmount,
+      participantEmails.map(() => 1)
     );
   }
 
@@ -440,14 +489,10 @@ const buildExpenseShares = (group, expense) => {
     return { email, value };
   });
 
-  const totalWeight = weightedValues.reduce((acc, item) => acc + item.value, 0);
-  const fallbackWeight = participantEmails.length ? 100 / participantEmails.length : 0;
-
-  return new Map(
-    weightedValues.map(({ email, value }) => {
-      const normalizedWeight = totalWeight > 0 ? value / totalWeight : fallbackWeight / 100;
-      return [email, Number((totalAmount * normalizedWeight).toFixed(2))];
-    })
+  return allocateCentsByWeight(
+    participantEmails,
+    totalAmount,
+    weightedValues.map((item) => item.value)
   );
 };
 
