@@ -1,33 +1,33 @@
 
  :root {
-  --background-color: #09110d;
-  --surface-1: rgba(14, 25, 19, 0.92);
-  --surface-2: rgba(21, 35, 28, 0.88);
-  --surface-3: rgba(34, 52, 43, 0.74);
-  --surface-card: rgba(17, 29, 22, 0.78);
-  --surface-card-strong: rgba(11, 20, 15, 0.88);
-  --surface-input: rgba(255, 255, 255, 0.03);
-  --surface-hover: rgba(255, 255, 255, 0.04);
-  --nav-background: rgba(7, 13, 10, 0.9);
-  --sidebar-background: linear-gradient(180deg, rgba(7, 13, 10, 0.98), rgba(10, 18, 14, 0.96));
-  --hero-background: linear-gradient(135deg, rgba(18, 32, 24, 0.95), rgba(9, 16, 12, 0.9));
-  --panel-background: linear-gradient(180deg, rgba(17, 29, 22, 0.84), rgba(11, 19, 15, 0.9));
-  --modal-background: rgba(8, 15, 11, 0.92);
-  --drawer-background: linear-gradient(180deg, rgba(8, 15, 11, 0.98), rgba(11, 20, 15, 0.98));
-  --overlay-dark: rgba(0, 0, 0, 0.62);
+  --background-color: #071821;
+  --surface-1: rgba(10, 34, 42, 0.94);
+  --surface-2: rgba(14, 43, 52, 0.9);
+  --surface-3: rgba(26, 60, 69, 0.78);
+  --surface-card: rgba(13, 39, 47, 0.82);
+  --surface-card-strong: rgba(8, 28, 35, 0.92);
+  --surface-input: rgba(255, 255, 255, 0.035);
+  --surface-hover: rgba(0, 237, 100, 0.08);
+  --nav-background: rgba(5, 27, 35, 0.94);
+  --sidebar-background: linear-gradient(180deg, rgba(7, 29, 38, 0.99), rgba(9, 35, 44, 0.98));
+  --hero-background: linear-gradient(135deg, rgba(16, 47, 56, 0.96), rgba(7, 28, 35, 0.92));
+  --panel-background: linear-gradient(180deg, rgba(14, 41, 49, 0.92), rgba(8, 29, 36, 0.96));
+  --modal-background: rgba(7, 26, 33, 0.94);
+  --drawer-background: linear-gradient(180deg, rgba(7, 26, 33, 0.99), rgba(9, 33, 41, 0.99));
+  --overlay-dark: rgba(0, 0, 0, 0.68);
   --page-background:
-    radial-gradient(circle at top right, rgba(131, 199, 117, 0.11), transparent 22rem),
-    radial-gradient(circle at bottom left, rgba(241, 141, 113, 0.09), transparent 20rem),
-    linear-gradient(180deg, rgba(7, 12, 9, 0.96), rgba(9, 17, 13, 0.98));
-  --border-color: rgba(216, 241, 224, 0.12);
-  --color-text: #eef6ef;
-  --color-muted: #95a698;
-  --color-verde: #90d36a;
-  --color-verde-soft: rgba(144, 211, 106, 0.16);
-  --color-rojo: #f18d71;
-  --color-rojo-soft: rgba(241, 141, 113, 0.15);
-  --color-dark-text: #77867a;
-  --shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.28);
+    radial-gradient(circle at top right, rgba(0, 237, 100, 0.12), transparent 22rem),
+    radial-gradient(circle at bottom left, rgba(19, 170, 182, 0.11), transparent 20rem),
+    linear-gradient(180deg, rgba(4, 20, 27, 0.98), rgba(7, 28, 35, 0.99));
+  --border-color: rgba(176, 213, 212, 0.12);
+  --color-text: #ecf6f3;
+  --color-muted: #8ea8a8;
+  --color-verde: #00ed64;
+  --color-verde-soft: rgba(0, 237, 100, 0.16);
+  --color-rojo: #ff8f6b;
+  --color-rojo-soft: rgba(255, 143, 107, 0.15);
+  --color-dark-text: #718a8c;
+  --shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.34);
   --radius-xs: 0;
   --radius-sm: 0;
   --radius-md: 0;
