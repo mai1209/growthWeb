@@ -12,6 +12,15 @@ const TaskSchema = new mongoose.Schema({
     required: [true, 'La meta es obligatoria'],
     trim: true,
   },
+  tipo: {
+    type: String,
+    enum: ['task', 'note'],
+    default: 'task',
+  },
+  contenido: {
+    type: String,
+    default: '',
+  },
   fecha: {
     type: Date,
     required: true,

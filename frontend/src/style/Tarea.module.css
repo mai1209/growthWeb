@@ -303,19 +303,50 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .containerFecha p {
   color: var(--color-muted);
 }
 
-.containerFecha input {
+.containerFecha input,
+.monthInput {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(216, 241, 224, 0.08);
   color: var(--color-text);
   font-size: 16px;
   border-radius: 14px;
   padding: 0.75rem 1rem;
+}
+
+.calendarTrigger {
+  min-height: 48px;
+  padding: 0.75rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid rgba(216, 241, 224, 0.1);
+  background:
+    linear-gradient(135deg, rgba(152, 255, 106, 0.12), rgba(255, 163, 108, 0.08)),
+    var(--surface-input);
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.calendarTriggerIcon,
+.calendarTriggerChevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-verde);
+  flex-shrink: 0;
+}
+
+.calendarTriggerText {
+  white-space: nowrap;
 }
 
 .checkboxWrapper {
@@ -416,6 +447,27 @@
 }
 
 .taskListMode {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.listMonthGroup {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.listMonthHeader span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.listMonthRows {
   display: grid;
   gap: 0.85rem;
 }
@@ -669,6 +721,12 @@
   .viewButton {
     width: 100%;
     text-align: center;
+  }
+
+  .calendarTrigger,
+  .monthInput {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .listActions {

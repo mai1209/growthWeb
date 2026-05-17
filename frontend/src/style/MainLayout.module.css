@@ -5,10 +5,12 @@
 .main {
   display: flex;
   align-items: stretch;
+  min-width: 0;
 }
 
 .sidebar {
   flex: 0 0 auto;
+  min-width: 0;
 }
 
 .content {
@@ -16,10 +18,16 @@
   min-width: 0;
 }
 
+@media (max-width: 1280px) {
+  .main {
+    min-width: 0;
+  }
+}
+
 @media (max-width: 1000px) {
   .main {
     display: block;
-    padding-top: 70px;
+    padding-top: 68px;
   }
 
   .content {

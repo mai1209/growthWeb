@@ -65,6 +65,19 @@ const getMonthRange = (monthValue) => {
   };
 };
 
+const formatMonthHeading = (monthValue) => {
+  const [year, month] = monthValue.split("-").map(Number);
+
+  if (!year || !month) {
+    return "Mes actual";
+  }
+
+  return new Date(year, month - 1, 1).toLocaleDateString("es-AR", {
+    month: "long",
+    year: "numeric",
+  });
+};
+
 const formatDate = (value) => {
   if (!value) return "-";
 
@@ -73,6 +86,41 @@ const formatDate = (value) => {
     month: "short",
     year: "numeric",
   });
+};
+
+const getLocalDayKey = (value) => {
+  const date = new Date(value);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
+};
+
+const formatGroupLabel = (value) => {
+  const date = new Date(value);
+  return `Día · ${date.toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  })}`;
+};
+
+const groupMovimientosByDay = (items) => {
+  const grouped = items.reduce((accumulator, movimiento) => {
+    const key = getLocalDayKey(movimiento.fecha);
+
+    if (!accumulator.has(key)) {
+      accumulator.set(key, []);
+    }
+
+    accumulator.get(key).push(movimiento);
+    return accumulator;
+  }, new Map());
+
+  return [...grouped.entries()].map(([key, movimientosDelGrupo]) => ({
+    key,
+    label: formatGroupLabel(movimientosDelGrupo[0]?.fecha),
+    movimientos: movimientosDelGrupo,
+  }));
 };
 
 function MonthlyFilters({
@@ -101,6 +149,10 @@ function MonthlyFilters({
     [selectedDay]
   );
   const currencyMeta = getCurrencyMeta(currentCurrency);
+  const selectedMonthLabel = useMemo(
+    () => formatMonthHeading(selectedMonth),
+    [selectedMonth]
+  );
 
   const monthMovimientos = useMemo(
     () =>
@@ -185,6 +237,14 @@ function MonthlyFilters({
         )
         .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()),
     [movimientos, currentCurrency, selectedDayDate, selectedMethod, selectedType]
+  );
+  const groupedDayMovimientos = useMemo(
+    () => groupMovimientosByDay(dayMovimientos),
+    [dayMovimientos]
+  );
+  const groupedFilteredMovimientos = useMemo(
+    () => groupMovimientosByDay(filteredMovimientos),
+    [filteredMovimientos]
   );
 
   const clearFilters = () => {
@@ -421,17 +481,25 @@ function MonthlyFilters({
     );
   };
 
+  const renderMovementGroup = (group) => (
+    <section key={group.key} className={style.listGroup}>
+      <div className={style.listGroupHeader}>
+        <span>{group.label}</span>
+      </div>
+
+      <div className={style.listGroupRows}>
+        {group.movimientos.map(renderMovementRow)}
+      </div>
+    </section>
+  );
+
   return (
     <section className={style.container}>
       <div className={style.hero}>
-        <div>
-          <p className={style.kicker}>Filtros avanzados</p>
-          <p className={style.heroText}>
-            Elige un mes, cambia entre pesos y dolares y revisa el detalle completo
-            sin mezclar cajas.
-          </p>
+        <div className={style.heroMonthBlock}>
+          <p className={style.panelKicker}>Mes</p>
+          <h1 className={style.heroMonthTitle}>{selectedMonthLabel}</h1>
         </div>
-
         <div
           className={`${style.currencySwitch} ${
             currentCurrency === "USD" ? style.currencySwitchUsd : style.currencySwitchArs
@@ -601,7 +669,7 @@ function MonthlyFilters({
                 <p>Cambia la fecha del calendario para revisar otra jornada.</p>
               </div>
             ) : (
-              <div className={style.list}>{dayMovimientos.map(renderMovementRow)}</div>
+              <div className={style.list}>{groupedDayMovimientos.map(renderMovementGroup)}</div>
             )}
           </div>
         </section>
@@ -620,7 +688,9 @@ function MonthlyFilters({
                 <p>Cambia el mes o limpia filtros para revisar otra combinacion.</p>
               </div>
             ) : (
-              <div className={style.list}>{filteredMovimientos.map(renderMovementRow)}</div>
+              <div className={style.list}>
+                {groupedFilteredMovimientos.map(renderMovementGroup)}
+              </div>
             )}
           </div>
         </section>

@@ -45,6 +45,8 @@ export const createHabito = async (req, res) => {
   try {
     const {
       meta,
+      tipo,
+      contenido,
       fecha,
       horario,
       urgencia,
@@ -62,6 +64,8 @@ export const createHabito = async (req, res) => {
     const nuevoHabito = new Task({
       user: userId,
       meta,
+      tipo: tipo === "note" ? "note" : "task",
+      contenido,
       fecha: normalizeTaskDate(fecha),
       horario,
       urgencia,
@@ -80,8 +84,10 @@ export const createHabito = async (req, res) => {
 // --- MODIFICA ESTA FUNCIÓN ---
 export const getTasks = async (req, res) => {
   try {
-    const { fecha } = req.query;
+    const { fecha, tipo } = req.query;
     const userId = req.user.id;
+    const typeQuery =
+      tipo === "note" ? { tipo: "note" } : { $or: [{ tipo: "task" }, { tipo: { $exists: false } }] };
 
     const buildTaskState = (task, targetDate) => {
       const taskObj = serializeTask(task);
@@ -93,6 +99,7 @@ export const getTasks = async (req, res) => {
     if (!fecha) {
       const allTasks = await Task.find({
         user: new mongoose.Types.ObjectId(userId),
+        ...typeQuery,
       }).sort({ fecha: 1, horario: 1 });
 
       const allTasksWithState = allTasks.map((task) =>
@@ -117,18 +124,23 @@ const diaActual = diasMap[startDate.getUTCDay()];
     // ✅ DESPUÉS usarlas
     const query = {
       user: new mongoose.Types.ObjectId(userId),
-      $or: [
+      $and: [
+        typeQuery,
         {
-          esRecurrente: false,
-          fecha: {
-            $gte: startDate,
-            $lt: endDate,
-          },
-        },
-        {
-          esRecurrente: true,
-          fecha: { $lt: endDate },
-          diasRepeticion: diaActual,
+          $or: [
+            {
+              esRecurrente: false,
+              fecha: {
+                $gte: startDate,
+                $lt: endDate,
+              },
+            },
+            {
+              esRecurrente: true,
+              fecha: { $lt: endDate },
+              diasRepeticion: diaActual,
+            },
+          ],
         },
       ],
     };
@@ -253,6 +265,8 @@ export const updateTask = async (req, res) => {
     // 3. Extraemos los campos que SÍ queremos permitir que se actualicen
     const {
       meta,
+      tipo,
+      contenido,
       fecha,
       horario,
       urgencia,
@@ -265,6 +279,8 @@ export const updateTask = async (req, res) => {
 
     // 4. Actualizamos el documento que encontramos en la base de datos
     task.meta = meta || task.meta;
+    if (tipo !== undefined) task.tipo = tipo === "note" ? "note" : "task";
+    if (contenido !== undefined) task.contenido = contenido;
     task.fecha = fecha ? normalizeTaskDate(fecha) : task.fecha;
     task.horario = horario || task.horario;
     task.urgencia = urgencia || task.urgencia;

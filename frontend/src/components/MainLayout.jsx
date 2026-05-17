@@ -63,7 +63,7 @@ function MainLayout({
 
   // 2. Mapeo de Sidebars: YA NO pasamos 'token={token}'
   const sidebarMap = {
-    "/notas": (
+    "/tareas": (
       <LeftSideNotas
         onTaskUpdate={onTaskUpdate}
         onUpdate={onUpdate}
@@ -75,6 +75,7 @@ function MainLayout({
     ),
     "/ajustes": <SettingsSidePanel />,
   };
+  const routesWithoutSidebar = new Set(["/notas"]);
 
   // 3. Sidebar por defecto: YA NO pasamos 'token={token}'
   const DefaultSidebar = (
@@ -86,7 +87,11 @@ function MainLayout({
     />
   );
   const CurrentSidebar = sidebarMap[location.pathname];
-  const sidebarContent = currentToken ? (CurrentSidebar || DefaultSidebar) : null;
+  const sidebarContent = currentToken
+    ? routesWithoutSidebar.has(location.pathname)
+      ? null
+      : CurrentSidebar || DefaultSidebar
+    : null;
   const handleCloseMobileMenu = useCallback(() => {
     setIsMobileMenuOpen(false);
   }, []);
@@ -112,8 +117,10 @@ function MainLayout({
   }, [isMobile]);
 
   const mobilePanelLabel =
-    location.pathname === "/notas"
+    location.pathname === "/tareas"
       ? "Panel"
+      : location.pathname === "/notas"
+        ? "Notas"
       : location.pathname === "/ajustes"
         ? "Ajustes"
         : "Dashboard";

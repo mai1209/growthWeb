@@ -64,8 +64,8 @@ api.interceptors.response.use(
 
 // Servicios
 export const taskService = {
-  getAll: () => api.get("/api/task"),
-  getByDate: (fecha) => api.get(`/api/task?fecha=${fecha}`),
+  getAll: (params = {}) => api.get("/api/task", { params }),
+  getByDate: (fecha, params = {}) => api.get("/api/task", { params: { fecha, ...params } }),
   updateStatus: (taskId, data) =>
     api.put(`/api/task/${taskId}/status`, data),
   delete: (taskId) => api.delete(`/api/task/${taskId}`),

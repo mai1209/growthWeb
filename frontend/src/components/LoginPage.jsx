@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 //import axios from "axios";
 import style from "../style/Login.module.css";
 import { FiEye, FiEyeOff, FiMoon, FiSun } from "react-icons/fi";
@@ -14,6 +14,7 @@ function LoginPage({ onAuthSuccess, theme = "dark", onThemeToggle }) {
   const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
 
 const handleSubmit = async (e) => {
@@ -44,7 +45,7 @@ const handleSubmit = async (e) => {
 
     // 4. Éxito: avisamos a App y navegamos
     onAuthSuccess(newToken);
-    navigate("/");
+    navigate(searchParams.get("next") || "/");
     
   } catch (err) {
     console.error("Login error:", err);
@@ -59,6 +60,13 @@ const handleSubmit = async (e) => {
     <div className={style.container}>
       <div className={style.back}>
         <div className={style.authTopbar}>
+          <button
+            type="button"
+            className={style.secondaryTopAction}
+            onClick={() => navigate("/planes")}
+          >
+            Ver planes
+          </button>
           <button
             type="button"
             className={style.themeButton}

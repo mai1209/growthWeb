@@ -34,15 +34,17 @@ export const isTaskVisibleOnDate = (task, targetDateValue = new Date()) => {
 };
 
 export const isTaskCompletedOnDate = (task, targetDateValue = new Date()) => {
+  const targetDate = getTaskTargetDate(targetDateValue);
+
+  if (Array.isArray(task?.completadasEn)) {
+    return task.completadasEn.includes(targetDate);
+  }
+
   if (typeof task?.completada === "boolean") {
     return task.completada;
   }
 
-  const targetDate = getTaskTargetDate(targetDateValue);
-
-  return Array.isArray(task?.completadasEn)
-    ? task.completadasEn.includes(targetDate)
-    : false;
+  return false;
 };
 
 export const filterTasksForDate = (tasks = [], targetDateValue = new Date()) =>

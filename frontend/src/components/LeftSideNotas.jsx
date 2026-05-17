@@ -102,7 +102,7 @@ function LeftSideNotas({
       if (!storedToken) return;
 
       try {
-        const response = await taskService.getAll();
+        const response = await taskService.getAll({ tipo: "task" });
 
         if (!isMounted || !Array.isArray(response.data)) return;
 
@@ -176,7 +176,7 @@ function LeftSideNotas({
         setSuccess("¡Tarea actualizada con éxito!");
       } else {
         // Crear tarea nueva
-        await taskService.create(dataToSend);
+        await taskService.create({ ...dataToSend, tipo: "task" });
 
         setSuccess("¡Hábito/Tarea añadido con éxito!");
       }

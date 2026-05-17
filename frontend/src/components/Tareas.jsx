@@ -1,11 +1,45 @@
-import { useState, useEffect, useMemo } from "react";
+import { forwardRef, useState, useEffect, useMemo } from "react";
 import { taskService } from "../api"; // Importamos el servicio
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Tarea.module.css";
-import resultsStyle from "../style/Results.module.css";
 import { useOutletContext } from "react-router-dom";
 import { filterTasksForDate, getTaskTargetDate, isTaskCompletedOnDate } from "../utils/tasks";
+import { FiCalendar, FiChevronDown } from "react-icons/fi";
+
+const getMonthInputValue = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+};
+
+const formatMonthTitle = (value) => {
+  const [year, month] = value.split("-").map(Number);
+
+  if (!year || !month) return "Mes";
+
+  return new Date(year, month - 1, 1).toLocaleDateString("es-AR", {
+    month: "long",
+    year: "numeric",
+  });
+};
+
+const CalendarButton = forwardRef(({ value, onClick }, ref) => (
+  <button
+    ref={ref}
+    type="button"
+    onClick={onClick}
+    className={style.calendarTrigger}
+  >
+    <span className={style.calendarTriggerIcon}>
+      <FiCalendar />
+    </span>
+    <span className={style.calendarTriggerText}>{value || "Seleccionar fecha"}</span>
+    <FiChevronDown className={style.calendarTriggerChevron} />
+  </button>
+));
+
+CalendarButton.displayName = "CalendarButton";
 
 function Tareas({  refreshKey, onEditClick }) {
   const { isNotesOpen, openNotesPanel } = useOutletContext();
@@ -14,11 +48,65 @@ function Tareas({  refreshKey, onEditClick }) {
   const [showList, setShowList] = useState(false);
   const [error, setError] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedListMonth, setSelectedListMonth] = useState(getMonthInputValue(new Date()));
+  const [updatingTaskIds, setUpdatingTaskIds] = useState([]);
 
   const visibleTasks = useMemo(
     () => filterTasksForDate(tasks, selectedDate),
     [tasks, selectedDate]
   );
+  const listTasks = useMemo(() => {
+    const [year, month] = selectedListMonth.split("-").map(Number);
+    const currentMonthValue = getMonthInputValue(new Date());
+
+    if (!year || !month) {
+      return tasks;
+    }
+
+    if (selectedListMonth > currentMonthValue) {
+      return [];
+    }
+
+    const monthStart = new Date(year, month - 1, 1);
+    const monthEnd = new Date(year, month, 0);
+
+    return tasks
+      .filter((task) => {
+        if (!task?.fecha) {
+          return false;
+        }
+
+        const taskDate = new Date(task.fecha);
+
+        if (task.esRecurrente) {
+          return taskDate <= monthEnd;
+        }
+
+        return (
+          taskDate.getFullYear() === monthStart.getFullYear() &&
+          taskDate.getMonth() === monthStart.getMonth()
+        );
+      })
+      .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+  }, [tasks, selectedListMonth]);
+  const groupedListTasks = useMemo(() => {
+    const grouped = listTasks.reduce((accumulator, task) => {
+      const taskMonth = getMonthInputValue(new Date(task.fecha));
+
+      if (!accumulator.has(taskMonth)) {
+        accumulator.set(taskMonth, []);
+      }
+
+      accumulator.get(taskMonth).push(task);
+      return accumulator;
+    }, new Map());
+
+    return [...grouped.entries()].map(([monthKey, monthTasks]) => ({
+      key: monthKey,
+      label: formatMonthTitle(monthKey),
+      tasks: monthTasks,
+    }));
+  }, [listTasks]);
 
   useEffect(() => {
     let isMounted = true;
@@ -30,7 +118,7 @@ function Tareas({  refreshKey, onEditClick }) {
 
       setLoading(true);
       try {
-        const res = await taskService.getAll();
+        const res = await taskService.getAll({ tipo: "task" });
         if (isMounted) {
           setTasks(res.data);
           setError("");
@@ -47,13 +135,61 @@ function Tareas({  refreshKey, onEditClick }) {
   }, [refreshKey]);
 
   const handleToggleComplete = async (taskId) => {
-    try {
-      const fecha = getTaskTargetDate(selectedDate);
+    const fecha = getTaskTargetDate(selectedDate);
+    const targetTask = tasks.find((task) => task._id === taskId);
 
-      const res = await taskService.updateStatus( taskId, { fecha });
-      setTasks((prev) => prev.map((t) => (t._id === taskId ? res.data : t)));
+    if (!targetTask || updatingTaskIds.includes(taskId)) {
+      return;
+    }
+
+    const previousCompletadasEn = Array.isArray(targetTask.completadasEn)
+      ? targetTask.completadasEn
+      : [];
+    const nextCompletadasEn = previousCompletadasEn.includes(fecha)
+      ? previousCompletadasEn.filter((item) => item !== fecha)
+      : [...previousCompletadasEn, fecha];
+
+    setUpdatingTaskIds((prev) => [...prev, taskId]);
+    setTasks((prev) =>
+      prev.map((task) =>
+        task._id === taskId
+          ? {
+              ...task,
+              completadasEn: nextCompletadasEn,
+            }
+          : task
+      )
+    );
+
+    try {
+      const res = await taskService.updateStatus(taskId, { fecha });
+      setTasks((prev) =>
+        prev.map((task) =>
+          task._id === taskId
+            ? {
+                ...task,
+                ...res.data,
+                completadasEn: Array.isArray(res.data?.completadasEn)
+                  ? res.data.completadasEn
+                  : nextCompletadasEn,
+              }
+            : task
+        )
+      );
     } catch (err) {
+      setTasks((prev) =>
+        prev.map((task) =>
+          task._id === taskId
+            ? {
+                ...task,
+                completadasEn: previousCompletadasEn,
+              }
+            : task
+        )
+      );
       console.error("Error al actualizar estado");
+    } finally {
+      setUpdatingTaskIds((prev) => prev.filter((id) => id !== taskId));
     }
   };
 
@@ -102,6 +238,7 @@ function Tareas({  refreshKey, onEditClick }) {
               <input
                 type="checkbox"
                 checked={completed}
+                disabled={updatingTaskIds.includes(task._id)}
                 onChange={() => handleToggleComplete(task._id)}
               />
               <span className={style.customCheckbox}></span>
@@ -151,42 +288,52 @@ function Tareas({  refreshKey, onEditClick }) {
   const renderListTable = () => {
     if (loading) return <p className={style.emptyMessage}>Cargando tareas...</p>;
     if (error) return <p className={style.errorMessage}>{error}</p>;
-    if (!tasks || tasks.length === 0)
-      return <p className={style.emptyMessage}>No hay tareas para esta fecha.</p>;
+    if (!listTasks || listTasks.length === 0)
+      return <p className={style.emptyMessage}>No hay tareas para este mes.</p>;
 
     return (
       <div className={style.taskListMode}>
-        {tasks.map((t) => {
-          const completed = isTaskCompleted(t);
-
-          return (
-            <div
-              key={t._id}
-              className={`${style.listRow} ${
-                completed ? style.completedListRow : ""
-              }`}
-            >
-              <div className={style.listCopy}>
-                <p className={style.listTitle}>{t.meta}</p>
-                <div className={style.listMetaRow}>
-                  <span className={style.listUrgency}>{t.urgencia || "Normal"}</span>
-                  <span className={style.listState}>
-                    {completed ? "Hecho" : "Pendiente"}
-                  </span>
-                </div>
-              </div>
-
-              <p className={style.listSchedule}>
-                {t.fecha ? t.fecha.slice(0, 10) : "-"} · {t.horario || "--:--"}
-              </p>
-
-              <div className={style.listActions}>
-                <button type="button" onClick={() => handleEditTask(t)}>Editar</button>
-                <button type="button" onClick={() => handleDeleteTask(t._id)}>Eliminar</button>
-              </div>
+        {groupedListTasks.map((group) => (
+          <section key={group.key} className={style.listMonthGroup}>
+            <div className={style.listMonthHeader}>
+              <span>{group.label}</span>
             </div>
-          );
-        })}
+
+            <div className={style.listMonthRows}>
+              {group.tasks.map((t) => {
+                const completed = isTaskCompletedOnDate(t, t.fecha || selectedDate);
+
+                return (
+                  <div
+                    key={t._id}
+                    className={`${style.listRow} ${
+                      completed ? style.completedListRow : ""
+                    }`}
+                  >
+                    <div className={style.listCopy}>
+                      <p className={style.listTitle}>{t.meta}</p>
+                      <div className={style.listMetaRow}>
+                        <span className={style.listUrgency}>{t.urgencia || "Normal"}</span>
+                        <span className={style.listState}>
+                          {completed ? "Hecho" : "Pendiente"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className={style.listSchedule}>
+                      {t.fecha ? t.fecha.slice(0, 10) : "-"} · {t.horario || "--:--"}
+                    </p>
+
+                    <div className={style.listActions}>
+                      <button type="button" onClick={() => handleEditTask(t)}>Editar</button>
+                      <button type="button" onClick={() => handleDeleteTask(t._id)}>Eliminar</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
       </div>
     );
   };
@@ -206,13 +353,20 @@ function Tareas({  refreshKey, onEditClick }) {
       
 
           <div className={style.containerFecha}>
-            <p>Tareas de</p>
-            {!showList && (
+            <p>{showList ? "Ver lista del mes" : "Tareas de"}</p>
+            {!showList ? (
               <DatePicker
                 selected={selectedDate}
                 onChange={handleDateChange}
                 dateFormat="dd-MM-yyyy"
-                className={resultsStyle.datePicker}
+                customInput={<CalendarButton />}
+              />
+            ) : (
+              <input
+                type="month"
+                value={selectedListMonth}
+                onChange={(event) => setSelectedListMonth(event.target.value)}
+                className={style.monthInput}
               />
             )}
           </div>

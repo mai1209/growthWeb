@@ -5,6 +5,7 @@ import MainLayout from "./MainLayout";
 import Dashboard from "./Dashboard";
 import Add from "./Add";
 import Tareas from "./Tareas";
+import TaskStudioPage from "./TaskStudioPage";
 import MonthlyFilters from "./MonthlyFilters";
 import SharedExpenses from "./SharedExpenses";
 import SettingsPage from "./SettingsPage";
@@ -14,6 +15,7 @@ import LoginPage from "./LoginPage";
 import SignupPage from "./SignupPage";
 import ForgotPasswordPage from "./ForgotPasswordPage";
 import ResetPasswordPage from "./ResetPasswordPage";
+import PlansPage from "./PlansPage";
 
 function AppRoutes({
   token,
@@ -71,6 +73,16 @@ function AppRoutes({
           path="/forgot-password"
           element={
             <ForgotPasswordPage
+              theme={theme}
+              onThemeToggle={onThemeToggle}
+            />
+          }
+        />
+
+        <Route
+          path="/planes"
+          element={
+            <PlansPage
               theme={theme}
               onThemeToggle={onThemeToggle}
             />
@@ -149,7 +161,7 @@ function AppRoutes({
 
         {/* Notas / tareas */}
         <Route
-          path="notas"
+          path="tareas"
           element={
             <Tareas
              token={token}
@@ -157,6 +169,11 @@ function AppRoutes({
               onEditClick={setTaskToEdit}
             />
           }
+        />
+
+        <Route
+          path="notas"
+          element={<TaskStudioPage />}
         />
 
         <Route
