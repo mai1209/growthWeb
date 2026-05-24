@@ -32,14 +32,57 @@ const createResetTokenPair = () => {
 
 const isStrongEnoughPassword = (value = "") => typeof value === "string" && value.length >= 6;
 
-const serializeProfile = (user) => ({
-  _id: user._id,
-  username: user.username,
-  email: user.email,
-  fullName: user.fullName || user.username || "",
-  phone: user.phone || "",
-  profilePhotoUrl: user.profilePhotoUrl || "",
-});
+const normalizeBusinessProfile = (business = {}) => {
+  const id = String(business._id || "").trim();
+  const normalized = {
+    name: String(business.name || "").trim(),
+    industry: String(business.industry || "").trim(),
+    logoUrl: String(business.logoUrl || "").trim(),
+    phone: String(business.phone || "").trim(),
+    address: String(business.address || "").trim(),
+  };
+
+  if (/^[a-f\d]{24}$/i.test(id)) {
+    normalized._id = id;
+  }
+
+  return normalized;
+};
+
+const getBusinessProfiles = (user) => {
+  const profiles = Array.isArray(user.businessProfiles)
+    ? user.businessProfiles.map(normalizeBusinessProfile)
+    : [];
+  const legacyBusiness = normalizeBusinessProfile(user.businessProfile || {});
+
+  if (!profiles.length && legacyBusiness.name) {
+    return [{ ...legacyBusiness, _id: "legacy" }];
+  }
+
+  return profiles;
+};
+
+const serializeProfile = (user) => {
+  const businessProfiles = getBusinessProfiles(user);
+  const firstBusiness = businessProfiles[0] || normalizeBusinessProfile(user.businessProfile || {});
+
+  return {
+    _id: user._id,
+    username: user.username,
+    email: user.email,
+    fullName: user.fullName || user.username || "",
+    phone: user.phone || "",
+    profilePhotoUrl: user.profilePhotoUrl || "",
+    businessProfile: {
+      name: firstBusiness.name || "",
+      industry: firstBusiness.industry || "",
+      logoUrl: firstBusiness.logoUrl || "",
+      phone: firstBusiness.phone || "",
+      address: firstBusiness.address || "",
+    },
+    businessProfiles,
+  };
+};
 
 export const signup = async (req, res) => {
   try {
@@ -252,14 +295,38 @@ export const updateProfile = async (req, res) => {
     const fullName = String(req.body.fullName || "").trim();
     const phone = String(req.body.phone || "").trim();
     const profilePhotoUrl = String(req.body.profilePhotoUrl || "").trim();
+    const rawBusinessProfiles = Array.isArray(req.body.businessProfiles)
+      ? req.body.businessProfiles
+      : req.body.businessProfile
+        ? [req.body.businessProfile]
+        : [];
+    const businessProfiles = rawBusinessProfiles
+      .map(normalizeBusinessProfile)
+      .filter((business) =>
+        business.name || business.industry || business.logoUrl || business.phone || business.address
+      );
 
     if (profilePhotoUrl && !/^https?:\/\/.+/i.test(profilePhotoUrl)) {
       return res.status(400).json({ error: "La foto de perfil debe ser una URL válida" });
+    }
+    const invalidLogo = businessProfiles.some(
+      (business) => business.logoUrl && !/^https?:\/\/.+/i.test(business.logoUrl)
+    );
+    if (invalidLogo) {
+      return res.status(400).json({ error: "Los logos de negocio deben ser URLs válidas" });
     }
 
     user.fullName = fullName;
     user.phone = phone;
     user.profilePhotoUrl = profilePhotoUrl;
+    user.businessProfiles = businessProfiles;
+    user.businessProfile = businessProfiles[0] || {
+      name: "",
+      industry: "",
+      logoUrl: "",
+      phone: "",
+      address: "",
+    };
 
     await user.save();
 

@@ -6,6 +6,19 @@ const ALLOWED_CURRENCIES = ["ARS", "USD"];
 const ALLOWED_METHODS = ["efectivo", "transferencia"];
 const ALLOWED_RECURRENCES = ["mensual", "quincenal", "semanal"];
 
+const normalizeWorkspaceValue = (value) => {
+  const workspace = String(value || "").trim();
+  return /^business(?::[a-f\d]{24})?$/i.test(workspace) ? workspace : "personal";
+};
+
+const normalizeWorkspace = (req) =>
+  normalizeWorkspaceValue(req.query.workspace || req.body.workspace || req.headers["x-workspace"]);
+
+const buildWorkspaceQuery = (workspace) =>
+  workspace !== "personal"
+    ? { workspace }
+    : { $or: [{ workspace: "personal" }, { workspace: { $exists: false } }] };
+
 const normalizeMovementDate = (value) => {
   if (!value) {
     const now = new Date();
@@ -67,6 +80,7 @@ export const createIncomeEgress = async (req, res) => {
       deudaAcreedor,
     } = req.body;
     const userId = req.userId; // 🔥 Obtenido del middleware de autenticación
+    const workspace = normalizeWorkspace(req);
 
     // Validaciones
     if (!tipo || !ALLOWED_TYPES.includes(tipo)) {
@@ -109,6 +123,7 @@ export const createIncomeEgress = async (req, res) => {
       deudaMovimientoPagoId: null,
       esRecurrente: tipo === "deuda" ? false : Boolean(esRecurrente),
       frecuencia: tipo === "deuda" ? null : (esRecurrente ? frecuencia : null),
+      workspace,
       usuario: userId // 🔥 Vincular con el usuario
     });
 
@@ -124,6 +139,7 @@ export const getIncomeEgress = async (req, res) => {
   console.log("\n--- INICIANDO BÚSQUEDA DE MOVIMIENTOS ---");
   try {
     const userId = req.userId;
+    const workspace = normalizeWorkspace(req);
     console.log("1. ID de usuario del token (req.userId):", userId);
 
     if (!userId) {
@@ -132,7 +148,10 @@ export const getIncomeEgress = async (req, res) => {
     }
 
     const { fecha } = req.query;
-    const query = { usuario: new mongoose.Types.ObjectId(userId) };
+    const query = {
+      usuario: new mongoose.Types.ObjectId(userId),
+      ...buildWorkspaceQuery(workspace),
+    };
     
     console.log("2. Creando consulta para la base de datos...");
 
@@ -172,13 +191,15 @@ export const getIncomeEgressById = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
+    const workspace = normalizeWorkspace(req);
     
     // --- CORRECCIÓN AQUÍ ---
     // La consulta ahora busca por '_id' y se asegura de que el campo 'usuario'
     // coincida con el 'userId' del usuario que está logueado.
     const movimiento = await IngresoEgresoModel.findOne({ 
       _id: id, 
-      usuario: userId 
+      usuario: userId,
+      ...buildWorkspaceQuery(workspace),
     });
     
     if (!movimiento) {
@@ -199,6 +220,7 @@ export const updateIncomeEgress = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
+    const workspace = normalizeWorkspace(req);
     
     const movimiento = await IngresoEgresoModel.findById(id);
     
@@ -210,6 +232,12 @@ export const updateIncomeEgress = async (req, res) => {
     // Convertimos AMBOS IDs a texto (string) antes de comparar
     if (movimiento.usuario.toString() !== userId.toString()) {
       return res.status(401).json({ error: "No autorizado" });
+    }
+    if (!buildWorkspaceQuery(workspace).$or && movimiento.workspace !== workspace) {
+      return res.status(404).json({ error: "Movimiento no encontrado o no autorizado" });
+    }
+    if (workspace === "personal" && String(movimiento.workspace || "personal").startsWith("business")) {
+      return res.status(404).json({ error: "Movimiento no encontrado o no autorizado" });
     }
     
     const {
@@ -283,11 +311,13 @@ export const deleteIncomeEgress = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
+    const workspace = normalizeWorkspace(req);
     
     // Verificar que el movimiento pertenezca al usuario
     const movimiento = await IngresoEgresoModel.findOne({ 
       _id: id, 
-      usuario: userId 
+      usuario: userId,
+      ...buildWorkspaceQuery(workspace),
     });
     
     if (!movimiento) {
@@ -306,12 +336,14 @@ export const settleDebtMovement = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
+    const workspace = normalizeWorkspace(req);
     const { fecha, medio, detalle } = req.body;
 
     const deuda = await IngresoEgresoModel.findOne({
       _id: id,
       usuario: userId,
       tipo: "deuda",
+      ...buildWorkspaceQuery(workspace),
     });
 
     if (!deuda) {
@@ -342,6 +374,7 @@ export const settleDebtMovement = async (req, res) => {
       medio: paymentMethod,
       esRecurrente: false,
       frecuencia: null,
+      workspace,
       usuario: userId,
     });
 
@@ -367,13 +400,17 @@ export const getAllIncomeEgress = async (req, res) => {
 
   try {
     const userId = req.userId;
+    const workspace = normalizeWorkspace(req);
     console.log("🧠 ID del usuario autenticado:", userId, typeof userId);
 
     if (!userId) {
       return res.status(401).json({ error: "No autorizado." });
     }
 
-    const movimientos = await IngresoEgresoModel.find({ usuario: new mongoose.Types.ObjectId(userId) }).sort({ fecha: -1 });
+    const movimientos = await IngresoEgresoModel.find({
+      usuario: new mongoose.Types.ObjectId(userId),
+      ...buildWorkspaceQuery(workspace),
+    }).sort({ fecha: -1 });
     console.log("✅ Movimientos encontrados:", movimientos.length);
 
     res.status(200).json(movimientos.map(serializeMovimiento));

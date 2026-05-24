@@ -1,14 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  FiAlignCenter,
+  FiAlignLeft,
+  FiAlignRight,
   FiBold,
   FiCalendar,
   FiClock,
+  FiCode,
   FiEdit3,
+  FiHash,
   FiItalic,
   FiList,
+  FiMessageSquare,
+  FiMinus,
   FiPlus,
   FiTrash2,
+  FiType,
   FiUnderline,
+  FiX,
 } from "react-icons/fi";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
@@ -21,6 +30,23 @@ const COLOR_OPTIONS = [
   { value: "color2", label: "Naranja" },
   { value: "color3", label: "Amarillo" },
   { value: "color4", label: "Turquesa" },
+  { value: "color5", label: "Azul" },
+  { value: "color6", label: "Rosa" },
+  { value: "color7", label: "Lila" },
+  { value: "color8", label: "Rojo" },
+  { value: "color9", label: "Gris" },
+  { value: "color10", label: "Blanco" },
+];
+
+const TEXT_COLOR_OPTIONS = [
+  { value: false, label: "Predeterminado", swatch: "#172018" },
+  { value: "#1f2933", label: "Negro", swatch: "#1f2933" },
+  { value: "#2f7d32", label: "Verde", swatch: "#2f7d32" },
+  { value: "#2563eb", label: "Azul", swatch: "#2563eb" },
+  { value: "#9333ea", label: "Violeta", swatch: "#9333ea" },
+  { value: "#db2777", label: "Rosa", swatch: "#db2777" },
+  { value: "#dc2626", label: "Rojo", swatch: "#dc2626" },
+  { value: "#d97706", label: "Naranja", swatch: "#d97706" },
 ];
 const getMonthInputValue = (date = new Date()) => {
   const year = date.getFullYear();
@@ -54,7 +80,7 @@ const initialFormState = {
   color: "color1",
 };
 
-function TaskStudioPage() {
+function TaskStudioPage({ activeWorkspace = "personal" }) {
   const editorRef = useRef(null);
   const quillRef = useRef(null);
   const selectionRef = useRef(null);
@@ -66,11 +92,33 @@ function TaskStudioPage() {
   const [selectedMonth, setSelectedMonth] = useState(getMonthInputValue(new Date()));
   const [selectedDay, setSelectedDay] = useState("");
   const [form, setForm] = useState(initialFormState);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [activeFormats, setActiveFormats] = useState({
+    align: "",
     bold: false,
+    blockquote: false,
+    codeBlock: false,
+    color: "",
+    header: false,
     italic: false,
+    orderedList: false,
+    strike: false,
     underline: false,
-    list: false,
+    bulletList: false,
+  });
+
+  const getFormatState = (formats = {}) => ({
+    align: formats.align || "",
+    bold: Boolean(formats.bold),
+    blockquote: formats.blockquote === true,
+    codeBlock: Boolean(formats["code-block"]),
+    color: formats.color || "",
+    header: formats.header || false,
+    italic: Boolean(formats.italic),
+    orderedList: formats.list === "ordered",
+    strike: Boolean(formats.strike),
+    underline: Boolean(formats.underline),
+    bulletList: formats.list === "bullet",
   });
 
   useEffect(() => {
@@ -79,7 +127,7 @@ function TaskStudioPage() {
     const fetchTasks = async () => {
       setLoading(true);
       try {
-        const response = await taskService.getAll({ tipo: "note" });
+        const response = await taskService.getAll({ tipo: "note", workspace: activeWorkspace });
         if (isMounted) {
           setTasks(Array.isArray(response.data) ? response.data : []);
           setError("");
@@ -99,7 +147,7 @@ function TaskStudioPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [activeWorkspace]);
 
   useEffect(() => {
     if (!editorRef.current || quillRef.current) return undefined;
@@ -120,12 +168,7 @@ function TaskStudioPage() {
       if (!range) return;
 
       const formats = quill.getFormat(range);
-      setActiveFormats({
-        bold: Boolean(formats.bold),
-        italic: Boolean(formats.italic),
-        underline: Boolean(formats.underline),
-        list: formats.list === "bullet",
-      });
+      setActiveFormats(getFormatState(formats));
     };
 
     const handleSelectionChange = (range) => {
@@ -133,12 +176,7 @@ function TaskStudioPage() {
 
       selectionRef.current = range;
       const formats = quill.getFormat(range);
-      setActiveFormats({
-        bold: Boolean(formats.bold),
-        italic: Boolean(formats.italic),
-        underline: Boolean(formats.underline),
-        list: formats.list === "bullet",
-      });
+      setActiveFormats(getFormatState(formats));
     };
 
     quill.on("text-change", handleTextChange);
@@ -190,23 +228,6 @@ function TaskStudioPage() {
       .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
   }, [tasks, selectedMonth, selectedDay]);
 
-  const groupedTasks = useMemo(() => {
-    const grouped = filteredTasks.reduce((accumulator, task) => {
-      const key = getDateInputValue(new Date(task.fecha));
-      if (!accumulator.has(key)) {
-        accumulator.set(key, []);
-      }
-      accumulator.get(key).push(task);
-      return accumulator;
-    }, new Map());
-
-    return [...grouped.entries()].map(([key, values]) => ({
-      key,
-      title: formatGroupTitle(key),
-      tasks: values,
-    }));
-  }, [filteredTasks]);
-
   const handleFieldChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -255,20 +276,98 @@ function TaskStudioPage() {
     quill.format("list", "bullet");
   };
 
+  const toggleOrderedList = () => {
+    if (!quillRef.current) return;
+
+    const quill = quillRef.current;
+    const range = getEditorRange();
+
+    quill.focus();
+
+    if (range) {
+      quill.setSelection(range);
+      selectionRef.current = range;
+      const formats = quill.getFormat(range);
+      quill.format("list", formats.list === "ordered" ? false : "ordered");
+      return;
+    }
+
+    quill.format("list", "ordered");
+  };
+
+  const applyBlockFormat = (format, value = true) => {
+    if (!quillRef.current) return;
+
+    const quill = quillRef.current;
+    const range = getEditorRange();
+
+    quill.focus();
+
+    if (range) {
+      quill.setSelection(range);
+      selectionRef.current = range;
+      const formats = quill.getFormat(range);
+      const activeValue = formats[format];
+      const isActive = value === true ? Boolean(activeValue) : activeValue === value;
+      quill.format(format, isActive ? false : value);
+      return;
+    }
+
+    quill.format(format, value);
+  };
+
+  const applyAlign = (value) => {
+    if (!quillRef.current) return;
+
+    const quill = quillRef.current;
+    const range = getEditorRange();
+
+    quill.focus();
+
+    if (range) {
+      quill.setSelection(range);
+      selectionRef.current = range;
+    }
+
+    quill.format("align", value || false);
+  };
+
+  const applyTextColor = (value) => {
+    if (!quillRef.current) return;
+
+    const quill = quillRef.current;
+    const range = getEditorRange();
+
+    quill.focus();
+
+    if (range) {
+      quill.setSelection(range);
+      selectionRef.current = range;
+    }
+
+    quill.format("color", value || false);
+  };
+
   const resetForm = () => {
     setForm(initialFormState);
     setMessage("");
-    setActiveFormats({
-      bold: false,
-      italic: false,
-      underline: false,
-      list: false,
-    });
+    setActiveFormats(getFormatState());
     selectionRef.current = null;
     if (quillRef.current) {
       quillRef.current.setText("");
       quillRef.current.setSelection(0, 0);
     }
+  };
+
+  const handleNewNote = () => {
+    resetForm();
+    setError("");
+    setIsEditorOpen(true);
+  };
+
+  const handleCloseEditor = () => {
+    setIsEditorOpen(false);
+    resetForm();
   };
 
   const handleEdit = (task) => {
@@ -282,7 +381,7 @@ function TaskStudioPage() {
     });
     setMessage("");
     setError("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setIsEditorOpen(true);
   };
 
   const handleDelete = async (taskId) => {
@@ -292,7 +391,7 @@ function TaskStudioPage() {
       await taskService.delete(taskId);
       setTasks((prev) => prev.filter((task) => task._id !== taskId));
       if (form.id === taskId) {
-        resetForm();
+        handleCloseEditor();
       }
     } catch (deleteError) {
       setError("No se pudo eliminar la nota.");
@@ -313,6 +412,7 @@ function TaskStudioPage() {
 
     const payload = {
       tipo: "note",
+      workspace: activeWorkspace,
       meta: form.meta.trim(),
       contenido: form.contenido,
       fecha: form.fecha,
@@ -335,6 +435,7 @@ function TaskStudioPage() {
 
       setMessage(form.id ? "Nota actualizada." : "Nota creada.");
       resetForm();
+      setIsEditorOpen(false);
     } catch (submitError) {
       setError(submitError.response?.data?.message || "No se pudo guardar la nota.");
     } finally {
@@ -350,16 +451,23 @@ function TaskStudioPage() {
           <h1>Escribí, ordená y filtrá tus notas en una sola pantalla.</h1>
           
         </div>
+        <button type="button" className={style.newNoteButton} onClick={handleNewNote}>
+          <FiPlus />
+          Nueva nota
+        </button>
       </header>
 
       <div className={style.layout}>
-        <aside className={style.listColumn}>
-          <section className={style.listCard}>
+        <section className={style.listCard}>
             <div className={style.editorHeader}>
               <div>
                 <p className={style.cardKicker}>Listado</p>
                 <h2>Notas cargadas</h2>
               </div>
+              <button type="button" className={style.secondaryButton} onClick={handleNewNote}>
+                <FiPlus />
+                Nueva nota
+              </button>
             </div>
 
             <div className={style.filterBar}>
@@ -393,74 +501,105 @@ function TaskStudioPage() {
 
             {loading ? (
               <p className={style.emptyState}>Cargando notas...</p>
-            ) : groupedTasks.length === 0 ? (
+            ) : filteredTasks.length === 0 ? (
               <p className={style.emptyState}>No hay notas para ese filtro.</p>
             ) : (
               <div className={style.groupList}>
-                {groupedTasks.map((group) => (
-                  <section key={group.key} className={style.group}>
-                    <div className={style.groupHeader}>
-                      <span>{group.title}</span>
-                    </div>
+                {filteredTasks.map((task) => {
+                  const preview = stripHtml(task.contenido || "");
+                  const completed = isTaskCompletedOnDate(task, task.fecha);
+                  const taskDate = task.fecha ? new Date(task.fecha) : null;
 
-                    <div className={style.groupRows}>
-                      {group.tasks.map((task) => {
-                        const preview = stripHtml(task.contenido || "");
-                        const completed = isTaskCompletedOnDate(task, task.fecha);
+                  return (
+                    <article
+                      key={task._id}
+                      className={`${style.taskRow} ${style[task.color] || style.color1} ${
+                        completed ? style.taskRowCompleted : ""
+                      }`}
+                    >
+                      <div className={style.taskRowCopy}>
+                        <span className={style.noteDate}>
+                          {taskDate ? formatGroupTitle(getDateInputValue(taskDate)) : "Sin fecha"}
+                        </span>
+                        <h3>{task.meta}</h3>
+                        <p>{preview || "Sin contenido. Podés abrir la nota y escribir el detalle."}</p>
+                        <div className={style.taskMetaRow}>
+                          <span>{String(task.fecha).slice(0, 10)}</span>
+                          <span>{task.horario || "--:--"}</span>
+                        </div>
+                      </div>
 
-                        return (
-                          <article
-                            key={task._id}
-                            className={`${style.taskRow} ${style[task.color] || style.color1} ${
-                              completed ? style.taskRowCompleted : ""
-                            }`}
-                          >
-                            <div className={style.taskRowCopy}>
-                              <h3>{task.meta}</h3>
-                              <p>
-                                {preview || "Sin contenido. Podés abrir la nota y escribir el detalle."}
-                              </p>
-                              <div className={style.taskMetaRow}>
-                                <span>{String(task.fecha).slice(0, 10)}</span>
-                                <span>{task.horario || "--:--"}</span>
-                              </div>
-                            </div>
-
-                            <div className={style.taskRowActions}>
-                              <button type="button" onClick={() => handleEdit(task)}>
-                                <FiEdit3 />
-                                Editar
-                              </button>
-                              <button type="button" onClick={() => handleDelete(task._id)}>
-                                <FiTrash2 />
-                                Eliminar
-                              </button>
-                            </div>
-                          </article>
-                        );
-                      })}
-                    </div>
-                  </section>
-                ))}
+                      <div className={style.taskRowActions}>
+                        <button type="button" onClick={() => handleEdit(task)}>
+                          <FiEdit3 />
+                          Editar
+                        </button>
+                        <button type="button" onClick={() => handleDelete(task._id)}>
+                          <FiTrash2 />
+                          Eliminar
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
-          </section>
-        </aside>
+        </section>
 
-        <section className={style.editorCard}>
+        <div
+          className={`${style.panelBackdrop} ${isEditorOpen ? style.panelBackdropVisible : ""}`}
+          onClick={handleCloseEditor}
+          aria-hidden="true"
+        />
+
+        <section className={`${style.editorCard} ${isEditorOpen ? style.editorCardOpen : ""}`}>
             <div className={style.editorHeader}>
               <div>
                 <p className={style.cardKicker}>Editor</p>
                 <h2>{form.id ? "Editar nota" : "Nueva nota"}</h2>
               </div>
-              {form.id ? (
-                <button type="button" className={style.secondaryButton} onClick={resetForm}>
-                  Limpiar edición
+              <div className={style.editorActions}>
+                {form.id ? (
+                  <button type="button" className={style.secondaryButton} onClick={resetForm}>
+                    Limpiar edición
+                  </button>
+                ) : null}
+                <button type="button" className={style.iconButton} onClick={handleCloseEditor} aria-label="Cerrar panel">
+                  <FiX />
                 </button>
-              ) : null}
+              </div>
             </div>
 
           <form className={style.form} onSubmit={handleSubmit}>
+            <div className={style.noteMetaBar}>
+              <div className={style.noteMetaInfo} aria-label="Fecha y hora de la nota">
+                <span>
+                  <FiCalendar /> {form.fecha}
+                </span>
+                <span>
+                  <FiClock /> {form.horario}
+                </span>
+              </div>
+
+              <div className={style.backgroundPicker}>
+                <span>Fondo</span>
+                <div className={style.colorGrid}>
+                  {COLOR_OPTIONS.map((color) => (
+                    <button
+                      key={color.value}
+                      type="button"
+                      className={`${style.colorOption} ${style[color.value]} ${
+                        form.color === color.value ? style.colorOptionActive : ""
+                      }`}
+                      onClick={() => handleFieldChange("color", color.value)}
+                      aria-label={`Color ${color.label}`}
+                      title={color.label}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <label className={style.field}>
               <span>Título</span>
               <input
@@ -468,98 +607,168 @@ function TaskStudioPage() {
                 value={form.meta}
                 onChange={(event) => handleFieldChange("meta", event.target.value)}
                 placeholder="Ej: Ideas para promociones de junio"
-                className={style.input}
+                className={`${style.input} ${style.titleInput}`}
               />
             </label>
 
-            <div className={style.editorToolbar}>
-              <button
-                type="button"
-                className={`${style.toolbarButton} ${activeFormats.bold ? style.toolbarButtonActive : ""}`}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => applyInlineFormat("bold")}
-                aria-label="Negrita"
-              >
-                <FiBold />
-              </button>
-              <button
-                type="button"
-                className={`${style.toolbarButton} ${activeFormats.italic ? style.toolbarButtonActive : ""}`}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => applyInlineFormat("italic")}
-                aria-label="Itálica"
-              >
-                <FiItalic />
-              </button>
-              <button
-                type="button"
-                className={`${style.toolbarButton} ${activeFormats.underline ? style.toolbarButtonActive : ""}`}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => applyInlineFormat("underline")}
-                aria-label="Subrayado"
-              >
-                <FiUnderline />
-              </button>
-              <button
-                type="button"
-                className={`${style.toolbarButton} ${activeFormats.list ? style.toolbarButtonActive : ""}`}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={toggleBulletList}
-                aria-label="Lista"
-              >
-                <FiList />
-              </button>
-            </div>
+            <div className={style.editorWorkspace}>
+              <aside className={style.editorToolbar} aria-label="Herramientas de texto">
+                <button
+                  type="button"
+                  className={`${style.toolbarButton} ${activeFormats.header === 1 ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyBlockFormat("header", 1)}
+                  aria-label="Título grande"
+                  title="Título grande"
+                >
+                  <FiType />
+                </button>
+                <button
+                  type="button"
+                  className={`${style.toolbarButton} ${activeFormats.header === 2 ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyBlockFormat("header", 2)}
+                  aria-label="Subtítulo"
+                  title="Subtítulo"
+                >
+                  <FiHash />
+                </button>
+                <button
+                  type="button"
+                  className={`${style.toolbarButton} ${activeFormats.bold ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyInlineFormat("bold")}
+                  aria-label="Negrita"
+                  title="Negrita"
+                >
+                  <FiBold />
+                </button>
+                <button
+                  type="button"
+                  className={`${style.toolbarButton} ${activeFormats.italic ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyInlineFormat("italic")}
+                  aria-label="Itálica"
+                  title="Itálica"
+                >
+                  <FiItalic />
+                </button>
+                <button
+                  type="button"
+                  className={`${style.toolbarButton} ${activeFormats.underline ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyInlineFormat("underline")}
+                  aria-label="Subrayado"
+                  title="Subrayado"
+                >
+                  <FiUnderline />
+                </button>
+                <button
+                  type="button"
+                  className={`${style.toolbarButton} ${activeFormats.strike ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyInlineFormat("strike")}
+                  aria-label="Tachado"
+                  title="Tachado"
+                >
+                  <FiMinus />
+                </button>
+                <button
+                  type="button"
+                  className={`${style.toolbarButton} ${activeFormats.bulletList ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={toggleBulletList}
+                  aria-label="Lista con viñetas"
+                  title="Lista con viñetas"
+                >
+                  <FiList />
+                </button>
+                <button
+                  type="button"
+                  className={`${style.toolbarButton} ${activeFormats.orderedList ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={toggleOrderedList}
+                  aria-label="Lista numerada"
+                  title="Lista numerada"
+                >
+                  <span className={style.toolbarText}>1.</span>
+                </button>
+                <button
+                  type="button"
+                  className={`${style.toolbarButton} ${activeFormats.blockquote ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyBlockFormat("blockquote")}
+                  aria-label="Cita"
+                  title="Cita"
+                >
+                  <FiMessageSquare />
+                </button>
+                <button
+                  type="button"
+                  className={`${style.toolbarButton} ${activeFormats.codeBlock ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyBlockFormat("code-block")}
+                  aria-label="Bloque de código"
+                  title="Bloque de código"
+                >
+                  <FiCode />
+                </button>
+                <button
+                  type="button"
+                  className={`${style.toolbarButton} ${activeFormats.align === "" ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyAlign("")}
+                  aria-label="Alinear izquierda"
+                  title="Alinear izquierda"
+                >
+                  <FiAlignLeft />
+                </button>
+                <button
+                  type="button"
+                  className={`${style.toolbarButton} ${activeFormats.align === "center" ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyAlign("center")}
+                  aria-label="Centrar"
+                  title="Centrar"
+                >
+                  <FiAlignCenter />
+                </button>
+                <button
+                  type="button"
+                  className={`${style.toolbarButton} ${activeFormats.align === "right" ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyAlign("right")}
+                  aria-label="Alinear derecha"
+                  title="Alinear derecha"
+                >
+                  <FiAlignRight />
+                </button>
+                <div className={style.textColorGrid} aria-label="Color de texto">
+                  {TEXT_COLOR_OPTIONS.map((color) => {
+                    const isDefault = !color.value && !activeFormats.color;
+                    const isActive = color.value && activeFormats.color === color.value;
 
-            <label className={style.field}>
-              <span>Contenido</span>
-              <div className={style.editorShell}>
-                <div ref={editorRef} className={style.editor} />
-              </div>
-            </label>
+                    return (
+                      <button
+                        key={color.label}
+                        type="button"
+                        className={`${style.textColorOption} ${isDefault || isActive ? style.textColorOptionActive : ""}`}
+                        style={{ backgroundColor: color.swatch }}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => applyTextColor(color.value)}
+                        aria-label={`Texto ${color.label}`}
+                        title={`Texto ${color.label}`}
+                      />
+                    );
+                  })}
+                </div>
+              </aside>
 
-            <div className={style.formGrid}>
-              <label className={style.field}>
-                <span>
-                  <FiCalendar /> Fecha
-                </span>
-                <input
-                  type="date"
-                  value={form.fecha}
-                  onChange={(event) => handleFieldChange("fecha", event.target.value)}
-                  className={style.input}
-                />
+              <label className={`${style.field} ${style.editorField}`}>
+                <div className={`${style.editorShell} ${style.notePaper} ${style[form.color] || style.color1}`}>
+                  <div ref={editorRef} className={style.editor} />
+                </div>
               </label>
-
-              <label className={style.field}>
-                <span>
-                  <FiClock /> Horario
-                </span>
-                <input
-                  type="time"
-                  value={form.horario}
-                  onChange={(event) => handleFieldChange("horario", event.target.value)}
-                  className={style.input}
-                />
-              </label>
-            </div>
-
-            <div className={style.field}>
-              <span>Color de fondo</span>
-              <div className={style.colorGrid}>
-                {COLOR_OPTIONS.map((color) => (
-                  <button
-                    key={color.value}
-                    type="button"
-                    className={`${style.colorOption} ${style[color.value]} ${
-                      form.color === color.value ? style.colorOptionActive : ""
-                    }`}
-                    onClick={() => handleFieldChange("color", color.value)}
-                  >
-                    {color.label}
-                  </button>
-                ))}
-              </div>
             </div>
 
             {error ? <p className={style.errorText}>{error}</p> : null}

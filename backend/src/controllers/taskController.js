@@ -1,6 +1,19 @@
 import Task from "../models/taskModel.js";
 import mongoose from "mongoose";
 
+const normalizeWorkspaceValue = (value) => {
+  const workspace = String(value || "").trim();
+  return /^business(?::[a-f\d]{24})?$/i.test(workspace) ? workspace : "personal";
+};
+
+const normalizeWorkspace = (req) =>
+  normalizeWorkspaceValue(req.query.workspace || req.body.workspace || req.headers["x-workspace"]);
+
+const buildWorkspaceQuery = (workspace) =>
+  workspace !== "personal"
+    ? { workspace }
+    : { $or: [{ workspace: "personal" }, { workspace: { $exists: false } }] };
+
 const normalizeTaskDate = (value) => {
   if (!value) {
     const now = new Date();
@@ -55,6 +68,7 @@ export const createHabito = async (req, res) => {
       diasRepeticion,
     } = req.body;
     const userId = req.user.id;
+    const workspace = normalizeWorkspace(req);
 
     // AÑADE ESTE CONSOLE.LOG
     console.log(
@@ -63,6 +77,7 @@ export const createHabito = async (req, res) => {
 
     const nuevoHabito = new Task({
       user: userId,
+      workspace,
       meta,
       tipo: tipo === "note" ? "note" : "task",
       contenido,
@@ -86,6 +101,8 @@ export const getTasks = async (req, res) => {
   try {
     const { fecha, tipo } = req.query;
     const userId = req.user.id;
+    const workspace = normalizeWorkspace(req);
+    const workspaceQuery = buildWorkspaceQuery(workspace);
     const typeQuery =
       tipo === "note" ? { tipo: "note" } : { $or: [{ tipo: "task" }, { tipo: { $exists: false } }] };
 
@@ -99,6 +116,7 @@ export const getTasks = async (req, res) => {
     if (!fecha) {
       const allTasks = await Task.find({
         user: new mongoose.Types.ObjectId(userId),
+        ...workspaceQuery,
         ...typeQuery,
       }).sort({ fecha: 1, horario: 1 });
 
@@ -125,6 +143,7 @@ const diaActual = diasMap[startDate.getUTCDay()];
     const query = {
       user: new mongoose.Types.ObjectId(userId),
       $and: [
+        workspaceQuery,
         typeQuery,
         {
           $or: [
@@ -170,8 +189,9 @@ res.status(200).json(tasksConEstado);
 export const updateTaskStatus = async (req, res) => {
   try {
     const { fecha } = req.body; // "YYYY-MM-DD"
+    const workspace = normalizeWorkspace(req);
 
-    const task = await Task.findById(req.params.id);
+    const task = await Task.findOne({ _id: req.params.id, ...buildWorkspaceQuery(workspace) });
     if (!task) {
       return res.status(404).json({ message: "Tarea no encontrada" });
     }
@@ -213,8 +233,9 @@ export const updateTaskStatus = async (req, res) => {
 // @access  Private
 export const deleteTask = async (req, res) => {
   try {
+    const workspace = normalizeWorkspace(req);
     // 1. Buscamos la tarea por su ID, que viene en la URL (req.params.id)
-    const task = await Task.findById(req.params.id);
+    const task = await Task.findOne({ _id: req.params.id, ...buildWorkspaceQuery(workspace) });
 
     // Si no se encuentra, devolvemos un error 404
     if (!task) {
@@ -247,8 +268,9 @@ export const deleteTask = async (req, res) => {
 
 export const updateTask = async (req, res) => {
   try {
+    const activeWorkspace = normalizeWorkspace(req);
     // 1. Buscamos la tarea por su ID
-    const task = await Task.findById(req.params.id);
+    const task = await Task.findOne({ _id: req.params.id, ...buildWorkspaceQuery(activeWorkspace) });
 
     if (!task) {
       return res.status(404).json({ message: "Tarea no encontrada" });
@@ -274,12 +296,14 @@ export const updateTask = async (req, res) => {
       esRecurrente,
       diasRepeticion,
       completada,
+      workspace,
     } =
       req.body;
 
     // 4. Actualizamos el documento que encontramos en la base de datos
     task.meta = meta || task.meta;
     if (tipo !== undefined) task.tipo = tipo === "note" ? "note" : "task";
+    if (workspace !== undefined) task.workspace = normalizeWorkspaceValue(workspace);
     if (contenido !== undefined) task.contenido = contenido;
     task.fecha = fecha ? normalizeTaskDate(fecha) : task.fecha;
     task.horario = horario || task.horario;

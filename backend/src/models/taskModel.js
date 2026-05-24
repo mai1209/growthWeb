@@ -17,6 +17,11 @@ const TaskSchema = new mongoose.Schema({
     enum: ['task', 'note'],
     default: 'task',
   },
+  workspace: {
+    type: String,
+    default: 'personal',
+    trim: true,
+  },
   contenido: {
     type: String,
     default: '',

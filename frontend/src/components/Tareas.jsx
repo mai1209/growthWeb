@@ -41,7 +41,7 @@ const CalendarButton = forwardRef(({ value, onClick }, ref) => (
 
 CalendarButton.displayName = "CalendarButton";
 
-function Tareas({  refreshKey, onEditClick }) {
+function Tareas({  refreshKey, onEditClick, activeWorkspace = "personal" }) {
   const { isNotesOpen, openNotesPanel } = useOutletContext();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -118,7 +118,7 @@ function Tareas({  refreshKey, onEditClick }) {
 
       setLoading(true);
       try {
-        const res = await taskService.getAll({ tipo: "task" });
+        const res = await taskService.getAll({ tipo: "task", workspace: activeWorkspace });
         if (isMounted) {
           setTasks(res.data);
           setError("");
@@ -132,7 +132,7 @@ function Tareas({  refreshKey, onEditClick }) {
 
     fetchTasks();
     return () => { isMounted = false; };
-  }, [refreshKey]);
+  }, [refreshKey, activeWorkspace]);
 
   const handleToggleComplete = async (taskId) => {
     const fecha = getTaskTargetDate(selectedDate);

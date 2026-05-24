@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
+  FiBriefcase,
   FiEye,
   FiEyeOff,
   FiKey,
   FiLock,
+  FiPlus,
   FiRefreshCcw,
   FiSave,
   FiUser,
@@ -52,6 +54,14 @@ function SettingsPage() {
     fullName: "",
     phone: "",
     profilePhotoUrl: "",
+    businessProfile: {
+      name: "",
+      industry: "",
+      logoUrl: "",
+      phone: "",
+      address: "",
+    },
+    businessProfiles: [],
   });
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
@@ -68,6 +78,11 @@ function SettingsPage() {
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
 
   const profileInitials = useMemo(() => getInitials(profile), [profile]);
+  const businessProfiles = profile.businessProfiles?.length
+    ? profile.businessProfiles
+    : profile.businessProfile?.name
+      ? [profile.businessProfile]
+      : [];
 
   useEffect(() => {
     let isMounted = true;
@@ -110,6 +125,35 @@ function SettingsPage() {
     setProfile((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleBusinessListChange = (index, field, value) => {
+    setProfile((prev) => ({
+      ...prev,
+      businessProfiles: (prev.businessProfiles || []).map((business, businessIndex) =>
+        businessIndex === index ? { ...business, [field]: value } : business
+      ),
+    }));
+  };
+
+  const handleAddBusiness = () => {
+    setProfile((prev) => ({
+      ...prev,
+      businessProfiles: [
+        ...(prev.businessProfiles?.length
+          ? prev.businessProfiles
+          : prev.businessProfile?.name
+            ? [prev.businessProfile]
+            : []),
+        {
+          name: "",
+          industry: "",
+          logoUrl: "",
+          phone: "",
+          address: "",
+        },
+      ],
+    }));
+  };
+
   const handleProfileSubmit = async (event) => {
     event.preventDefault();
     setError("");
@@ -121,6 +165,8 @@ function SettingsPage() {
         fullName: profile.fullName,
         phone: profile.phone,
         profilePhotoUrl: profile.profilePhotoUrl,
+        businessProfile: profile.businessProfile,
+        businessProfiles: profile.businessProfiles,
       });
 
       setProfile(response.data.profile);
@@ -280,6 +326,117 @@ function SettingsPage() {
           <button type="submit" className={style.saveButton} disabled={profileSaving}>
             <FiSave />
             {profileSaving ? "Guardando..." : "Guardar perfil"}
+          </button>
+        </form>
+      ) : null}
+
+      {activeTab === "perfil" ? (
+        <form className={style.card} onSubmit={handleProfileSubmit}>
+          <div className={style.businessHeader}>
+            <div>
+              <p className={style.kicker}>Negocios</p>
+              <h2>Perfiles de negocio</h2>
+              <p>Agregá los negocios que quieras separar del espacio personal.</p>
+            </div>
+            <button
+              type="button"
+              className={style.secondaryButton}
+              onClick={handleAddBusiness}
+              disabled={profileLoading}
+            >
+              <FiPlus />
+              Agregar negocio
+            </button>
+          </div>
+
+          {businessProfiles.length ? (
+            <div className={style.businessList}>
+              {businessProfiles.map((business, index) => (
+                <div className={style.businessItem} key={business._id || index}>
+                  <div className={style.profileHero}>
+                    <div className={style.avatar}>
+                      {business.logoUrl ? (
+                        <img src={business.logoUrl} alt="Logo del negocio" />
+                      ) : (
+                        <FiBriefcase />
+                      )}
+                    </div>
+                    <div>
+                      <p className={style.kicker}>Negocio {index + 1}</p>
+                      <h2>{business.name || "Nuevo negocio"}</h2>
+                      <p>{business.industry || "Completa los datos para verlo en el nav."}</p>
+                    </div>
+                  </div>
+
+                  <div className={style.formGrid}>
+                    <label className={style.field}>
+                      <span>Nombre del negocio</span>
+                      <input
+                        type="text"
+                        value={business.name || ""}
+                        onChange={(event) => handleBusinessListChange(index, "name", event.target.value)}
+                        placeholder="Ej: Growth Studio"
+                        disabled={profileLoading}
+                      />
+                    </label>
+
+                    <label className={style.field}>
+                      <span>Rubro</span>
+                      <input
+                        type="text"
+                        value={business.industry || ""}
+                        onChange={(event) => handleBusinessListChange(index, "industry", event.target.value)}
+                        placeholder="Ej: Indumentaria, servicios, comercio"
+                        disabled={profileLoading}
+                      />
+                    </label>
+
+                    <label className={style.field}>
+                      <span>Teléfono del negocio</span>
+                      <input
+                        type="tel"
+                        value={business.phone || ""}
+                        onChange={(event) => handleBusinessListChange(index, "phone", event.target.value)}
+                        placeholder="+54 9 ..."
+                        disabled={profileLoading}
+                      />
+                    </label>
+
+                    <label className={style.field}>
+                      <span>Logo URL</span>
+                      <input
+                        type="url"
+                        value={business.logoUrl || ""}
+                        onChange={(event) => handleBusinessListChange(index, "logoUrl", event.target.value)}
+                        placeholder="https://..."
+                        disabled={profileLoading}
+                      />
+                    </label>
+
+                    <label className={style.field}>
+                      <span>Dirección</span>
+                      <input
+                        type="text"
+                        value={business.address || ""}
+                        onChange={(event) => handleBusinessListChange(index, "address", event.target.value)}
+                        placeholder="Local, oficina o ciudad"
+                        disabled={profileLoading}
+                      />
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={style.emptyBusiness}>
+              <FiBriefcase />
+              <p>Todavía no agregaste negocios.</p>
+            </div>
+          )}
+
+          <button type="submit" className={style.saveButton} disabled={profileSaving}>
+            <FiSave />
+            {profileSaving ? "Guardando..." : "Guardar negocios"}
           </button>
         </form>
       ) : null}

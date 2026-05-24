@@ -86,6 +86,10 @@
   gap: 0.7rem;
 }
 
+.profileMenu {
+  position: relative;
+}
+
 .userProfile {
   display: flex;
   align-items: center;
@@ -94,6 +98,8 @@
   background: rgba(255, 255, 255, 0.03);
   border-radius: 50px;
   border: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+  cursor: pointer;
 }
 
 .avatar {
@@ -115,6 +121,10 @@
   object-fit: cover;
 }
 
+.avatar svg {
+  font-size: 0.9rem;
+}
+
 .userName {
   font-size: 0.8rem;
   font-weight: 500;
@@ -122,6 +132,65 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.chevron {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  transition: transform 0.2s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.profileDropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 30;
+  min-width: 210px;
+  padding: 0.45rem;
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: var(--nav-background);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+}
+
+.profileOption {
+  width: 100%;
+  min-height: 42px;
+  padding: 0.42rem 0.55rem;
+  border: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+  font-weight: 700;
+}
+
+.profileOption:hover {
+  background: rgba(59, 203, 35, 0.12);
+}
+
+.profileOption .avatar {
+  width: 30px;
+  height: 30px;
+}
+
+.profileOption > svg {
+  width: 30px;
+  height: 30px;
+  padding: 0.45rem;
+  border-radius: 50%;
+  background: rgba(59, 203, 35, 0.16);
+  color: var(--color-verde);
 }
 
 /* Botones de acción redondos */
@@ -157,7 +226,7 @@
 }
 
 @media (max-width: 1024px) {
-  .desktopNav, .userName, .logoutBtn {
+  .desktopNav, .actionsSection > .profileMenu, .logoutBtn {
     display: none;
   }
   
@@ -242,6 +311,32 @@
   flex-direction: column;
   gap: 0.5rem;
   flex: 1;
+}
+
+.profileMenuMobile {
+  display: block;
+  margin-bottom: 0.55rem;
+}
+
+.profileMenuMobile .userProfile {
+  width: 100%;
+  min-height: 48px;
+  justify-content: flex-start;
+  border-radius: 16px;
+}
+
+.profileMenuMobile .userName {
+  display: inline;
+  max-width: none;
+  flex: 1;
+  text-align: left;
+}
+
+.profileMenuMobile .profileDropdown {
+  position: static;
+  width: 100%;
+  margin-top: 0.45rem;
+  box-shadow: none;
 }
 
 .drawerFooter {

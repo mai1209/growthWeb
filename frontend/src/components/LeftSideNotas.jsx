@@ -23,6 +23,7 @@ function LeftSideNotas({
   taskToEdit,
   setIsNotesOpen,
   refreshKey,
+  activeWorkspace = "personal",
   embeddedMobile = false,
 }) {
   const [isOpen, setIsOpen] = useState(!embeddedMobile);
@@ -102,7 +103,7 @@ function LeftSideNotas({
       if (!storedToken) return;
 
       try {
-        const response = await taskService.getAll({ tipo: "task" });
+        const response = await taskService.getAll({ tipo: "task", workspace: activeWorkspace });
 
         if (!isMounted || !Array.isArray(response.data)) return;
 
@@ -119,7 +120,7 @@ function LeftSideNotas({
     return () => {
       isMounted = false;
     };
-  }, [refreshKey]);
+  }, [refreshKey, activeWorkspace]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -167,6 +168,7 @@ function LeftSideNotas({
 
       const dataToSend = {
         ...formData,
+        workspace: activeWorkspace,
         fecha: fechaFormateada,
       };
 

@@ -33,6 +33,8 @@ function AppRoutes({
   onPanelCurrencyChange,
   theme,
   onThemeToggle,
+  activeWorkspace,
+  onWorkspaceChange,
   ...authProps
 }) {
   /* =====================================================
@@ -125,6 +127,8 @@ function AppRoutes({
             onPanelCurrencyChange={onPanelCurrencyChange}
             theme={theme}
             onThemeToggle={onThemeToggle}
+            activeWorkspace={activeWorkspace}
+            onWorkspaceChange={onWorkspaceChange}
           />
         }
       >
@@ -141,6 +145,7 @@ function AppRoutes({
               movimientos={movimientos}
               currentCurrency={panelCurrency}
               onCurrencyChange={onPanelCurrencyChange}
+              activeWorkspace={activeWorkspace}
               {...authProps}
             />
           }
@@ -167,13 +172,14 @@ function AppRoutes({
              token={token}
               refreshKey={refreshKey}
               onEditClick={setTaskToEdit}
+              activeWorkspace={activeWorkspace}
             />
           }
         />
 
         <Route
           path="notas"
-          element={<TaskStudioPage />}
+          element={<TaskStudioPage activeWorkspace={activeWorkspace} />}
         />
 
         <Route

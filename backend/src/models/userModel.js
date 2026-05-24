@@ -31,6 +31,62 @@ const userSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+    businessProfile: {
+      name: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      industry: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      logoUrl: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      phone: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      address: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+    },
+    businessProfiles: [
+      {
+        name: {
+          type: String,
+          default: "",
+          trim: true,
+        },
+        industry: {
+          type: String,
+          default: "",
+          trim: true,
+        },
+        logoUrl: {
+          type: String,
+          default: "",
+          trim: true,
+        },
+        phone: {
+          type: String,
+          default: "",
+          trim: true,
+        },
+        address: {
+          type: String,
+          default: "",
+          trim: true,
+        },
+      },
+    ],
     password: {
       type: String,
       required: [true, 'La contraseña es obligatoria'],

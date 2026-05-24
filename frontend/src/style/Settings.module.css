@@ -117,6 +117,71 @@
   margin: 0.25rem 0;
 }
 
+.businessHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.businessHeader h2 {
+  margin: 0.25rem 0;
+}
+
+.businessHeader p:last-child {
+  color: var(--color-muted);
+}
+
+.secondaryButton {
+  min-height: 44px;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(216, 241, 224, 0.12);
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: var(--surface-input);
+  color: var(--color-text);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.secondaryButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.businessList {
+  display: grid;
+  gap: 1rem;
+}
+
+.businessItem {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(216, 241, 224, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.emptyBusiness {
+  min-height: 96px;
+  padding: 1rem;
+  border: 1px dashed rgba(216, 241, 224, 0.18);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-muted);
+  background: var(--surface-input);
+}
+
+.emptyBusiness svg {
+  color: var(--color-verde);
+  font-size: 1.3rem;
+}
+
 .formGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -320,6 +385,15 @@
 
   .formGrid {
     grid-template-columns: 1fr;
+  }
+
+  .businessHeader {
+    flex-direction: column;
+  }
+
+  .secondaryButton {
+    width: 100%;
+    justify-content: center;
   }
 }
 

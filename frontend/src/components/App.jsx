@@ -10,6 +10,11 @@ const getStoredCurrency = () =>
   normalizeCurrency(localStorage.getItem("panelCurrency") || DEFAULT_CURRENCY);
 
 const getStoredTheme = () => localStorage.getItem("appTheme") || "light";
+const normalizeWorkspace = (workspace) =>
+  /^business(?::[a-f\d]{24})?$/i.test(String(workspace || "").trim())
+    ? String(workspace).trim()
+    : "personal";
+const getStoredWorkspace = () => normalizeWorkspace(localStorage.getItem("activeWorkspace"));
 
 function App() {
   const [token, setToken] = useState(getStoredToken()); 
@@ -20,6 +25,7 @@ function App() {
   const [movimientos, setMovimientos] = useState([]);
   const [panelCurrency, setPanelCurrency] = useState(getStoredCurrency());
   const [theme, setTheme] = useState(getStoredTheme());
+  const [activeWorkspace, setActiveWorkspace] = useState(getStoredWorkspace());
 
   // 1. CARGA INICIAL: Sincroniza el token apenas abre la app
   useEffect(() => {
@@ -43,7 +49,7 @@ function App() {
 
       try {
         // Usamos el servicio. api.js ya sabe poner el token en los headers
-        const res = await movimientoService.getAll(); 
+        const res = await movimientoService.getAll({ workspace: activeWorkspace }); 
         if (isMounted && res.data) {
           setMovimientos(res.data);
         }
@@ -55,7 +61,7 @@ function App() {
 
     fetchMovimientos();
     return () => { isMounted = false; }; 
-  }, [token, refreshKey, ready]);
+  }, [token, refreshKey, ready, activeWorkspace]);
 
   // 3. SINCRONIZACIÓN ENTRE PESTAÑAS (Opcional pero recomendado)
   useEffect(() => {
@@ -75,6 +81,11 @@ function App() {
     localStorage.setItem("appTheme", theme);
     document.body.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem("activeWorkspace", activeWorkspace);
+    document.body.dataset.workspace = activeWorkspace;
+  }, [activeWorkspace]);
 
   // Manejadores de eventos
   const handleDataUpdate = (updatedItem = null) => {
@@ -112,6 +123,16 @@ function App() {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
+  const handleWorkspaceChange = (workspace) => {
+    const nextWorkspace = normalizeWorkspace(workspace);
+    localStorage.setItem("activeWorkspace", nextWorkspace);
+    document.body.dataset.workspace = nextWorkspace;
+    setActiveWorkspace(nextWorkspace);
+    setTaskToEdit(null);
+    setMovementToEdit(null);
+    setRefreshKey((prev) => prev + 1);
+  };
+
   // 4. PREVENCIÓN DE "PANTALLA EN CERO"
   // Si React no terminó de leer el storage, no renderizamos las rutas todavía.
   // Esto evita que te mande al login por error al recargar (F5).
@@ -133,6 +154,8 @@ function App() {
       onPanelCurrencyChange={setPanelCurrency}
       theme={theme}
       onThemeToggle={handleThemeToggle}
+      activeWorkspace={activeWorkspace}
+      onWorkspaceChange={handleWorkspaceChange}
     />
   );
 }

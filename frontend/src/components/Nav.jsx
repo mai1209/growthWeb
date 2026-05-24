@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
-import { FiMoon, FiPieChart, FiSettings, FiSun, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3 } from "react-icons/fi";
+import { FiBriefcase, FiChevronDown, FiMoon, FiPieChart, FiSettings, FiSun, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3 } from "react-icons/fi";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { authService } from "../api";
@@ -28,10 +28,14 @@ function Nav({
   panelContent,
   panelLabel = "Dashboard",
   onThemeToggle,
+  activeWorkspace = "personal",
+  onWorkspaceChange,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [profile, setProfile] = useState(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef(null);
 
   const currentToken = localStorage.getItem("token") || sessionStorage.getItem("token");
 
@@ -72,10 +76,50 @@ function Nav({
 
   useEffect(() => {
     onCloseMobileMenu?.();
+    setProfileMenuOpen(false);
   }, [location.pathname, onCloseMobileMenu]);
 
-  const displayName = profile?.fullName || userData?.username || "Usuario";
-  const initials = (displayName[0] || "U").toUpperCase();
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const businesses = useMemo(() => {
+    const source = Array.isArray(profile?.businessProfiles) && profile.businessProfiles.length
+      ? profile.businessProfiles
+      : profile?.businessProfile?.name
+        ? [{ ...profile.businessProfile, _id: "legacy" }]
+        : [];
+
+    return source
+      .filter((business) => business?.name)
+      .map((business, index) => ({
+        id: index === 0 || business._id === "legacy" ? "business" : `business:${business._id}`,
+        name: business.name,
+        photo: business.logoUrl || "",
+        type: "business",
+      }));
+  }, [profile]);
+
+  const profileOptions = useMemo(() => [
+    {
+      id: "personal",
+      name: profile?.fullName || userData?.username || "Personal",
+      photo: profile?.profilePhotoUrl || "",
+      type: "personal",
+    },
+    ...businesses,
+  ], [businesses, profile, userData?.username]);
+
+  const activeProfile = profileOptions.find((option) => option.id === activeWorkspace) || profileOptions[0];
+  const displayName = activeProfile.name;
+  const availableProfiles = profileOptions.filter((option) => option.id !== activeProfile.id);
 
   const handleLogout = () => {
     onLogout();
@@ -95,6 +139,71 @@ function Nav({
         </NavLink>
       ))}
     </>
+  );
+
+  const ProfileAvatar = ({ option = activeProfile }) => (
+    <div className={style.avatar}>
+      {option.photo ? (
+        <img src={option.photo} alt="" />
+      ) : option.type === "business" ? (
+        <FiBriefcase />
+      ) : (
+        (option.name[0] || "P").toUpperCase()
+      )}
+    </div>
+  );
+
+  const ProfileDropdown = ({ mobile = false }) => (
+    <div
+      className={`${style.profileMenu} ${mobile ? style.profileMenuMobile : ""}`}
+      ref={mobile ? null : profileMenuRef}
+    >
+      <button
+        type="button"
+        className={style.userProfile}
+        onClick={() => setProfileMenuOpen((prev) => !prev)}
+        aria-expanded={profileMenuOpen}
+      >
+        <ProfileAvatar />
+        <span className={style.userName}>{displayName}</span>
+        <FiChevronDown className={`${style.chevron} ${profileMenuOpen ? style.chevronOpen : ""}`} />
+      </button>
+
+      {profileMenuOpen ? (
+        <div className={style.profileDropdown}>
+          {availableProfiles.length ? (
+            availableProfiles.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                className={style.profileOption}
+                onClick={() => {
+                  onWorkspaceChange?.(option.id);
+                  setProfileMenuOpen(false);
+                  if (mobile) onCloseMobileMenu?.();
+                }}
+              >
+                <ProfileAvatar option={option} />
+                <span>{option.name}</span>
+              </button>
+            ))
+          ) : (
+            <button
+              type="button"
+              className={style.profileOption}
+              onClick={() => {
+                navigate("/ajustes?tab=perfil");
+                setProfileMenuOpen(false);
+                if (mobile) onCloseMobileMenu?.();
+              }}
+            >
+              <FiBriefcase />
+              <span>Agregar negocio</span>
+            </button>
+          )}
+        </div>
+      ) : null}
+    </div>
   );
 
   return (
@@ -119,12 +228,7 @@ function Nav({
                 <FiMoon className={style.moon} />
               </button>
 
-              <div className={style.userProfile}>
-                <div className={style.avatar}>
-                  {profile?.profilePhotoUrl ? <img src={profile.profilePhotoUrl} alt="" /> : initials}
-                </div>
-                <span className={style.userName}>{displayName}</span>
-              </div>
+              <ProfileDropdown />
 
               <button onClick={handleLogout} className={style.logoutBtn} title="Cerrar sesión">
                 <FiLogOut />
@@ -157,6 +261,7 @@ function Nav({
               <button onClick={onCloseMobileMenu}><FiX /></button>
             </div>
             <div className={style.drawerContent}>
+              <ProfileDropdown mobile />
               <NavItems />
               <div className={style.drawerFooter}>
                 <button onClick={handleLogout} className={style.logoutBtnFull}>

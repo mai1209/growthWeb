@@ -32,6 +32,11 @@ const ingresoEgresoSchema = new mongoose.Schema({
     enum: ['efectivo', 'transferencia'],
     default: 'efectivo'
   },
+  workspace: {
+    type: String,
+    default: 'personal',
+    trim: true
+  },
   deudaEstado: {
     type: String,
     enum: ['pendiente', 'pagada'],
@@ -69,6 +74,6 @@ const ingresoEgresoSchema = new mongoose.Schema({
   timestamps: true
 });
 // al final del schema (antes del export)
-ingresoEgresoSchema.index({ usuario: 1, fecha: -1 });
+ingresoEgresoSchema.index({ usuario: 1, workspace: 1, fecha: -1 });
 
 export default mongoose.model('IngresoEgreso', ingresoEgresoSchema);

@@ -17,6 +17,8 @@ function MainLayout({
   onPanelCurrencyChange,
   theme,
   onThemeToggle,
+  activeWorkspace,
+  onWorkspaceChange,
 }) {
   const location = useLocation();
   const [isNotesOpen, setIsNotesOpen] = useState(false);
@@ -69,6 +71,7 @@ function MainLayout({
         onUpdate={onUpdate}
         taskToEdit={taskToEdit}
         refreshKey={refreshKey}
+        activeWorkspace={activeWorkspace}
         setIsNotesOpen={setIsNotesOpen}
         embeddedMobile={isMobile}
       />
@@ -139,6 +142,8 @@ function MainLayout({
         panelLabel={mobilePanelLabel}
         theme={theme}
         onThemeToggle={onThemeToggle}
+        activeWorkspace={activeWorkspace}
+        onWorkspaceChange={onWorkspaceChange}
       />
 
       <main className={style.main}>

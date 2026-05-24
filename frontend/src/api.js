@@ -36,10 +36,15 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token =
     localStorage.getItem("token") || sessionStorage.getItem("token");
+  const storedWorkspace = String(localStorage.getItem("activeWorkspace") || "").trim();
+  const workspace = /^business(?::[a-f\d]{24})?$/i.test(storedWorkspace)
+    ? storedWorkspace
+    : "personal";
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  config.headers["X-Workspace"] = workspace;
 
   return config;
 });
@@ -74,7 +79,7 @@ export const taskService = {
 };
 
 export const movimientoService = {
-  getAll: () => api.get("/api/add"),
+  getAll: (params = {}) => api.get("/api/add", { params }),
   create: (data) => api.post("/api/add", data),
   update: (id, data) => api.put(`/api/add/${id}`, data),
   settleDebt: (id, data) => api.post(`/api/add/${id}/settle-debt`, data),
