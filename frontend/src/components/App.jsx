@@ -20,7 +20,6 @@ function App() {
   const [token, setToken] = useState(getStoredToken()); 
   const [ready, setReady] = useState(false); // Clave para evitar el problema del "cero"
   const [refreshKey, setRefreshKey] = useState(0);
-  const [taskToEdit, setTaskToEdit] = useState(null);
   const [movementToEdit, setMovementToEdit] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
   const [panelCurrency, setPanelCurrency] = useState(getStoredCurrency());
@@ -89,7 +88,6 @@ function App() {
 
   // Manejadores de eventos
   const handleDataUpdate = (updatedItem = null) => {
-    setTaskToEdit(null);
     setMovementToEdit(null);
 
     if (updatedItem?._id && Object.prototype.hasOwnProperty.call(updatedItem, "monto")) {
@@ -128,7 +126,6 @@ function App() {
     localStorage.setItem("activeWorkspace", nextWorkspace);
     document.body.dataset.workspace = nextWorkspace;
     setActiveWorkspace(nextWorkspace);
-    setTaskToEdit(null);
     setMovementToEdit(null);
     setRefreshKey((prev) => prev + 1);
   };
@@ -148,8 +145,6 @@ function App() {
       movimientos={movimientos}
       movementToEdit={movementToEdit}
       setMovementToEdit={setMovementToEdit}
-      taskToEdit={taskToEdit}
-      setTaskToEdit={setTaskToEdit}
       panelCurrency={panelCurrency}
       onPanelCurrencyChange={setPanelCurrency}
       theme={theme}

@@ -1,11 +1,16 @@
-import { forwardRef, useState, useEffect, useMemo } from "react";
+import { forwardRef, useCallback, useState, useEffect, useMemo } from "react";
 import { taskService } from "../api"; // Importamos el servicio
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Tarea.module.css";
-import { useOutletContext } from "react-router-dom";
-import { filterTasksForDate, getTaskTargetDate, isTaskCompletedOnDate } from "../utils/tasks";
-import { FiCalendar, FiChevronDown } from "react-icons/fi";
+import {
+  filterTasksForDate,
+  getTaskDayCode,
+  getTaskRepeatDays,
+  getTaskTargetDate,
+  isTaskCompletedOnDate,
+} from "../utils/tasks";
+import { FiCalendar, FiChevronDown, FiPlus, FiX } from "react-icons/fi";
 
 const getMonthInputValue = (date = new Date()) => {
   const year = date.getFullYear();
@@ -41,8 +46,50 @@ const CalendarButton = forwardRef(({ value, onClick }, ref) => (
 
 CalendarButton.displayName = "CalendarButton";
 
-function Tareas({  refreshKey, onEditClick, activeWorkspace = "personal" }) {
-  const { isNotesOpen, openNotesPanel } = useOutletContext();
+const FormDateButton = forwardRef(({ value, onClick }, ref) => (
+  <button
+    ref={ref}
+    type="button"
+    onClick={onClick}
+    className={style.formDateButton}
+  >
+    <span className={style.formDateIcon}>
+      <FiCalendar />
+    </span>
+    <span className={style.formDateCopy}>
+      <small>Fecha</small>
+      <strong>{value || "Seleccionar fecha"}</strong>
+    </span>
+    <FiChevronDown className={style.formDateChevron} />
+  </button>
+));
+
+FormDateButton.displayName = "FormDateButton";
+
+const initialFormData = {
+  meta: "",
+  fecha: new Date(),
+  horario: "12:00",
+  urgencia: "importante",
+  color: "color1",
+  esRecurrente: false,
+  diasRepeticion: [],
+};
+
+const colorOptions = [
+  "color1",
+  "color2",
+  "color3",
+  "color4",
+  "color5",
+  "color6",
+  "color7",
+  "color8",
+  "color9",
+  "color10",
+];
+
+function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showList, setShowList] = useState(false);
@@ -50,6 +97,13 @@ function Tareas({  refreshKey, onEditClick, activeWorkspace = "personal" }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedListMonth, setSelectedListMonth] = useState(getMonthInputValue(new Date()));
   const [updatingTaskIds, setUpdatingTaskIds] = useState([]);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const [formData, setFormData] = useState(initialFormData);
+  const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState("");
+  const [formSaving, setFormSaving] = useState(false);
+  const [isTaskDatePickerOpen, setIsTaskDatePickerOpen] = useState(false);
 
   const visibleTasks = useMemo(
     () => filterTasksForDate(tasks, selectedDate),
@@ -107,32 +161,34 @@ function Tareas({  refreshKey, onEditClick, activeWorkspace = "personal" }) {
       tasks: monthTasks,
     }));
   }, [listTasks]);
+  const progressTasks = showList ? listTasks : visibleTasks;
+  const completedTasksCount = progressTasks.filter((task) =>
+    isTaskCompletedOnDate(task, showList ? task.fecha || selectedDate : selectedDate)
+  ).length;
+  const pendingTasksCount = Math.max(progressTasks.length - completedTasksCount, 0);
+  const progressPercent = progressTasks.length
+    ? Math.round((completedTasksCount / progressTasks.length) * 100)
+    : 0;
+
+  const fetchTasks = useCallback(async () => {
+    const storedToken = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!storedToken) return;
+
+    setLoading(true);
+    try {
+      const res = await taskService.getAll({ tipo: "task", workspace: activeWorkspace });
+      setTasks(Array.isArray(res.data) ? res.data : []);
+      setError("");
+    } catch (err) {
+      setError("No se pudieron cargar las tareas.");
+    } finally {
+      setLoading(false);
+    }
+  }, [activeWorkspace]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchTasks = async () => {
-      const storedToken = localStorage.getItem("token") || sessionStorage.getItem("token");
-      if (!storedToken) return;
-
-
-      setLoading(true);
-      try {
-        const res = await taskService.getAll({ tipo: "task", workspace: activeWorkspace });
-        if (isMounted) {
-          setTasks(res.data);
-          setError("");
-        }
-      } catch (err) {
-       if (isMounted) setError("No se pudieron cargar las tareas.");
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
     fetchTasks();
-    return () => { isMounted = false; };
-  }, [refreshKey, activeWorkspace]);
+  }, [fetchTasks, refreshKey]);
 
   const handleToggleComplete = async (taskId) => {
     const fecha = getTaskTargetDate(selectedDate);
@@ -206,8 +262,141 @@ function Tareas({  refreshKey, onEditClick, activeWorkspace = "personal" }) {
   };
 
   const handleEditTask = (task) => {
-    onEditClick(task);
-    openNotesPanel?.();
+    const fechaUTC = new Date(task.fecha || new Date());
+    fechaUTC.setMinutes(fechaUTC.getMinutes() + fechaUTC.getTimezoneOffset());
+
+    setEditingTask(task);
+    setFormData({
+      ...initialFormData,
+      ...task,
+      fecha: fechaUTC,
+      diasRepeticion: getTaskRepeatDays(task.diasRepeticion),
+    });
+    setFormError("");
+    setFormSuccess("");
+    setIsTaskModalOpen(true);
+  };
+
+  const handleOpenNewTask = () => {
+    setEditingTask(null);
+    setFormData(initialFormData);
+    setFormError("");
+    setFormSuccess("");
+    setIsTaskDatePickerOpen(false);
+    setIsTaskModalOpen(true);
+  };
+
+  const handleCloseTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setEditingTask(null);
+    setFormData(initialFormData);
+    setFormError("");
+    setFormSuccess("");
+    setIsTaskDatePickerOpen(false);
+  };
+
+  const handleFormChange = (event) => {
+    const { name, value, type, checked } = event.target;
+    if (name === "esRecurrente") {
+      setFormData((prev) => {
+        const currentDays = getTaskRepeatDays(prev.diasRepeticion);
+        const currentDay = getTaskDayCode(prev.fecha);
+
+        return {
+          ...prev,
+          esRecurrente: checked,
+          diasRepeticion: checked
+            ? currentDays.length > 0
+              ? currentDays
+              : currentDay
+                ? [currentDay]
+                : []
+            : [],
+        };
+      });
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleTaskDateChange = (date) => {
+    if (!date) return;
+    setFormData((prev) => ({ ...prev, fecha: date }));
+    setIsTaskDatePickerOpen(false);
+  };
+
+  const handleColorSelect = (color) => {
+    setFormData((prev) => ({ ...prev, color }));
+  };
+
+  const toggleRepeatDay = (dia) => {
+    setFormData((prev) => {
+      const currentDays = getTaskRepeatDays(prev.diasRepeticion);
+
+      return {
+        ...prev,
+        diasRepeticion: currentDays.includes(dia)
+          ? currentDays.filter((item) => item !== dia)
+          : [...currentDays, dia],
+      };
+    });
+  };
+
+  const handleTaskSubmit = async (event) => {
+    event.preventDefault();
+    setFormError("");
+    setFormSuccess("");
+
+    if (!formData.meta.trim()) {
+      setFormError("Escribe el nombre de la tarea.");
+      return;
+    }
+
+    const repeatDays = getTaskRepeatDays(formData.diasRepeticion);
+
+    if (formData.esRecurrente && repeatDays.length === 0) {
+      setFormError("Elige al menos un dia para repetir la tarea.");
+      return;
+    }
+
+    setFormSaving(true);
+
+    try {
+      const fechaLocal = new Date(formData.fecha);
+      fechaLocal.setMinutes(fechaLocal.getMinutes() - fechaLocal.getTimezoneOffset());
+
+      const payload = {
+        ...formData,
+        meta: formData.meta.trim(),
+        tipo: "task",
+        workspace: activeWorkspace,
+        fecha: fechaLocal.toISOString().slice(0, 10),
+        diasRepeticion: formData.esRecurrente ? repeatDays : [],
+      };
+
+      if (editingTask?._id) {
+        await taskService.update(editingTask._id, payload);
+        setFormSuccess("Tarea actualizada.");
+      } else {
+        await taskService.create(payload);
+        setFormSuccess("Tarea creada.");
+      }
+
+      await fetchTasks();
+      onTaskSaved?.();
+
+      setTimeout(() => {
+        handleCloseTaskModal();
+      }, 450);
+    } catch (err) {
+      setFormError(err.response?.data?.message || "No se pudo guardar la tarea.");
+    } finally {
+      setFormSaving(false);
+    }
   };
 
   const isTaskCompleted = (task) => {
@@ -343,13 +532,24 @@ function Tareas({  refreshKey, onEditClick, activeWorkspace = "personal" }) {
   };
 
   return (
-    <div className={`${style.container} ${isNotesOpen ? style.hiddenMobile : ""}`}>
+    <div className={style.container}>
       <div className={style.headerShell}>
         <div className={style.headerCard}>
-          <p className={style.kicker}>Panel de notas</p>
-          <h1 className={style.pageTitle}>
-            {showList ? "Todas las Tareas" : "Mis Tareas de hoy"}
-          </h1>
+          <div className={style.headerTop}>
+            <div>
+              <p className={style.kicker}>Panel de tareas</p>
+              <h1 className={style.pageTitle}>
+                {showList ? "Todas las tareas" : "Mis tareas de hoy"}
+              </h1>
+            </div>
+
+            <div className={style.headerAside}>
+              <button type="button" className={style.newTaskButton} onClick={handleOpenNewTask}>
+                <FiPlus />
+                Nueva tarea
+              </button>
+            </div>
+          </div>
       
 
           <div className={style.containerFecha}>
@@ -391,12 +591,163 @@ function Tareas({  refreshKey, onEditClick, activeWorkspace = "personal" }) {
         </div>
       </div>
 
-      <div
-        className={style.tasksList}
-        style={showList ? { margin: 0, width: "100%" } : {}}
-      >
-        {showList ? renderListTable() : renderContent()}
+      <div className={style.tasksWorkspace}>
+        <div className={style.tasksList}>
+          {showList ? renderListTable() : renderContent()}
+        </div>
+
+        <aside className={style.progressCard} aria-label="Progreso de tareas">
+          <div
+            className={style.progressRing}
+            style={{ "--progress": `${progressPercent}%` }}
+          >
+            <div className={style.progressRingInner}>
+              <strong>{progressPercent}%</strong>
+              <span>hecho</span>
+            </div>
+          </div>
+
+          <div className={style.progressCopy}>
+            <span className={style.progressLabel}>Progreso</span>
+            <div className={style.progressStats}>
+              <p>
+                <strong>{completedTasksCount}</strong>
+                completadas
+              </p>
+              <p>
+                <strong>{pendingTasksCount}</strong>
+                pendientes
+              </p>
+            </div>
+          </div>
+        </aside>
       </div>
+
+      {isTaskModalOpen ? (
+        <div className={style.taskModalOverlay} role="presentation" onMouseDown={handleCloseTaskModal}>
+          <section
+            className={style.taskModal}
+            role="dialog"
+            aria-modal="true"
+            aria-label={editingTask ? "Editar tarea" : "Nueva tarea"}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className={style.taskModalHeader}>
+              <div>
+                <p className={style.kicker}>Tarea</p>
+                <h2>{editingTask ? "Editar tarea" : "Nueva tarea"}</h2>
+              </div>
+              <button type="button" className={style.closeModalButton} onClick={handleCloseTaskModal}>
+                <FiX />
+              </button>
+            </div>
+
+            {formError ? <p className={style.modalError}>{formError}</p> : null}
+            {formSuccess ? <p className={style.modalSuccess}>{formSuccess}</p> : null}
+
+            <form className={style.taskForm} onSubmit={handleTaskSubmit}>
+              <label className={style.formField}>
+                <span>Tarea</span>
+                <input
+                  name="meta"
+                  type="text"
+                  value={formData.meta}
+                  onChange={handleFormChange}
+                  placeholder="Ej: Revisar pedidos"
+                />
+              </label>
+
+              <div className={style.formGrid}>
+                <div className={style.formField}>
+                  <DatePicker
+                    selected={formData.fecha}
+                    onChange={handleTaskDateChange}
+                    dateFormat="dd-MM-yyyy"
+                    customInput={<FormDateButton />}
+                    open={isTaskDatePickerOpen}
+                    onInputClick={() => setIsTaskDatePickerOpen((prev) => !prev)}
+                    onClickOutside={() => setIsTaskDatePickerOpen(false)}
+                    onCalendarClose={() => setIsTaskDatePickerOpen(false)}
+                    shouldCloseOnSelect
+                    popperClassName={style.taskDatepickerPopper}
+                  />
+                </div>
+
+                <label className={style.formField}>
+                  <span>Hora</span>
+                  <input
+                    name="horario"
+                    type="time"
+                    value={formData.horario}
+                    onChange={handleFormChange}
+                  />
+                </label>
+              </div>
+
+              <label className={style.formField}>
+                <span>Prioridad</span>
+                <select name="urgencia" value={formData.urgencia} onChange={handleFormChange}>
+                  <option value="importante">Importante</option>
+                  <option value="urgente">Urgente</option>
+                  <option value="no importante">No importante</option>
+                  <option value="obligaciones">Obligaciones</option>
+                </select>
+              </label>
+
+              <div className={style.formField}>
+                <span>Color</span>
+                <div className={style.taskColorPicker}>
+                  {colorOptions.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      className={`${style.taskColorButton} ${style[color]} ${
+                        formData.color === color ? style.taskColorSelected : ""
+                      }`}
+                      onClick={() => handleColorSelect(color)}
+                      aria-label={`Elegir color ${color}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <label className={style.repeatToggle}>
+                <input
+                  name="esRecurrente"
+                  type="checkbox"
+                  checked={formData.esRecurrente}
+                  onChange={handleFormChange}
+                />
+                <span>Repetir tarea</span>
+              </label>
+
+              {formData.esRecurrente ? (
+                <div className={style.daysPicker}>
+                  {["D", "L", "M", "MI", "J", "V", "S"].map((dia) => (
+                    <label key={dia} className={style.dayChip}>
+                      <input
+                        type="checkbox"
+                        checked={getTaskRepeatDays(formData.diasRepeticion).includes(dia)}
+                        onChange={() => toggleRepeatDay(dia)}
+                      />
+                      <span>{dia}</span>
+                    </label>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className={style.modalActions}>
+                <button type="button" className={style.cancelButton} onClick={handleCloseTaskModal}>
+                  Cancelar
+                </button>
+                <button type="submit" className={style.saveTaskButton} disabled={formSaving}>
+                  {formSaving ? "Guardando..." : editingTask ? "Guardar cambios" : "Crear tarea"}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

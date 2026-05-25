@@ -21,6 +21,135 @@
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
 }
 
+.headerTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.headerAside {
+  display: flex;
+  justify-items: end;
+  justify-content: flex-end;
+}
+
+.newTaskButton {
+  min-height: 46px;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  background: linear-gradient(135deg, rgba(59, 203, 35, 0.94), rgba(24, 84, 15, 0.96));
+  color: var(--color-text);
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(59, 203, 35, 0.16);
+  white-space: nowrap;
+}
+
+.newTaskButton svg {
+  flex: 0 0 auto;
+}
+
+.progressCard {
+  width: 100%;
+  min-height: 220px;
+  padding: 1rem;
+  border-radius: 22px;
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  justify-items: center;
+  gap: 0.95rem;
+
+}
+
+.progressRing {
+  --progress: 0%;
+  width: 106px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    conic-gradient(#67dc46 var(--progress), #111b14 0);
+  box-shadow:
+    0 16px 30px rgba(0, 0, 0, 0.16),
+    inset 0 0 0 1px rgba(17, 27, 20, 0.2);
+}
+
+.progressRingInner {
+  width: 74px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.05rem;
+  background: #ffffff;
+  border: 1px solid rgba(17, 27, 20, 0.14);
+}
+
+.progressRingInner strong {
+  color: #111b14;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.progressRingInner span {
+  color: rgba(17, 27, 20, 0.58);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.progressCopy {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 0.72rem;
+  text-align: center;
+}
+
+.progressLabel {
+  color: var(--color-muted);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.progressStats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.progressStats p {
+  min-height: 56px;
+  margin: 0;
+  padding: 0.62rem 0.68rem;
+  border: 1px solid rgba(216, 241, 224, 0.08);
+  border-radius: 16px;
+  display: grid;
+  gap: 0.08rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.progressStats strong {
+  color: var(--color-text);
+  font-size: 1.18rem;
+  line-height: 1;
+}
+
 .kicker {
   color: var(--color-verde);
   font-size: 0.76rem;
@@ -41,6 +170,13 @@
   filter: invert(1) brightness(1.5);
 
   cursor: pointer;
+}
+
+.tasksWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.42fr);
+  align-items: start;
+  gap: 1rem;
 }
 
 .tasksList {
@@ -113,6 +249,36 @@
 .color4 {
   background: linear-gradient(135deg, #7be7ad, #35c981);
   border-color: rgba(123, 231, 173, 0.3);
+}
+
+.color5 {
+  background: linear-gradient(135deg, #88d8ff, #3f9fe7);
+  border-color: rgba(136, 216, 255, 0.34);
+}
+
+.color6 {
+  background: linear-gradient(135deg, #ffabc9, #ea5e9a);
+  border-color: rgba(255, 171, 201, 0.34);
+}
+
+.color7 {
+  background: linear-gradient(135deg, #c9b6ff, #8b6ee8);
+  border-color: rgba(201, 182, 255, 0.34);
+}
+
+.color8 {
+  background: linear-gradient(135deg, #ff8d8d, #e05252);
+  border-color: rgba(255, 141, 141, 0.34);
+}
+
+.color9 {
+  background: linear-gradient(135deg, #c7d2df, #8e9baa);
+  border-color: rgba(199, 210, 223, 0.34);
+}
+
+.color10 {
+  background: linear-gradient(135deg, #fbfbf2, #dfe6d4);
+  border-color: rgba(251, 251, 242, 0.5);
 }
 
 /* Texto de fila para asegurar contraste cuando la fila tiene fondo de color */
@@ -209,54 +375,64 @@
   transform: scale(1.1);
 }
 
+:global(.react-datepicker-popper) {
+  z-index: 2600 !important;
+}
+
 :global(.react-datepicker) {
   font-family: inherit !important;
-  background-color: var(--background-color) !important;
-  border: 1px solid var(--color-text) !important;
-  border-radius: 4px !important;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 250, 244, 0.98)) !important;
+  border: 1px solid rgba(18, 24, 20, 0.1) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 24px 55px rgba(0, 0, 0, 0.2) !important;
 }
 
 /* Triángulo que apunta al campo de fecha */
 :global(.react-datepicker__triangle) {
-  border-bottom-color: var(--background-color) !important;
+  display: none;
 }
 :global(.react-datepicker__triangle::before) {
-  border-bottom-color: var(--color-text) !important;
+  display: none;
 }
 
 /* Cabecera (donde va el mes y las flechas) */
 :global(.react-datepicker__header) {
-  background-color: transparent !important;
-  border-bottom: 1px solid var(--color-text) !important;
-  padding-top: 12px !important;
+  background: transparent !important;
+  border-bottom: 1px solid rgba(18, 24, 20, 0.08) !important;
+  padding: 14px 12px 8px !important;
 }
 
 /* Color del texto del mes (ej: "Septiembre 2025") */
 :global(.react-datepicker__current-month) {
-  color: var(--color-text) !important;
-  font-size: 1.1rem !important;
-  font-weight: 600 !important;
+  color: #111813 !important;
+  font-size: 0.96rem !important;
+  font-weight: 800 !important;
 }
 
 /* Estilo de las flechas de navegación */
 :global(.react-datepicker__navigation-arrow) {
-  border-color: var(--color-text) !important;
+  border-color: #111813 !important;
 }
 :global(
   .react-datepicker__navigation:hover .react-datepicker__navigation-arrow
 ) {
-  border-color: var(--color-text) !important; /* mantener sutil */
+  border-color: #3b7f26 !important;
 }
 
 /* Días de la semana (Lu, Ma, Mi...) */
 :global(.react-datepicker__day-name) {
-  color: var(--color-dark-text) !important;
-  font-weight: 600 !important;
+  color: rgba(18, 24, 20, 0.54) !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase;
 }
 
 /* Estilo para todos los días (los números) */
 :global(.react-datepicker__day) {
-  color: var(--color-text) !important;
+  color: #111813 !important;
+  border-radius: 999px !important;
   transition:
     background-color 0.15s,
     color 0.15s;
@@ -264,21 +440,19 @@
 
 /* Día al pasar el mouse por encima */
 :global(.react-datepicker__day:hover) {
-  background-color: rgba(0, 0, 0, 0.06) !important;
-  color: var(--color-text) !important;
-  border-radius: 50% !important;
+  background-color: rgba(144, 211, 106, 0.16) !important;
+  color: #111813 !important;
 }
 
 :global(.react-datepicker__day--selected) {
-  background-color: var(--color-accent, #3498db) !important;
-  color: white !important;
-  border-radius: 50% !important;
-  font-weight: bold !important;
+  background: linear-gradient(135deg, #9cfb43, #5dc72d) !important;
+  color: #111813 !important;
+  font-weight: 900 !important;
 }
 
 :global(.react-datepicker__day--today) {
-  font-weight: 700;
-  color: var(--color-accent, #3498db) !important;
+  font-weight: 900;
+  color: #2d7d1c !important;
 }
 
 :global(.react-datepicker__day--outside-month) {
@@ -586,6 +760,335 @@
   cursor: pointer;
 }
 
+.taskModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2300;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(5, 8, 6, 0.64);
+  backdrop-filter: blur(7px);
+}
+
+.taskModal {
+  width: min(640px, 100%);
+  max-height: min(760px, calc(100vh - 2rem));
+  overflow: auto;
+  padding: 1.2rem;
+  border-radius: 24px;
+  border: 1px solid rgba(216, 241, 224, 0.12);
+  background: var(--panel-background);
+  color: var(--color-text);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.34);
+}
+
+.taskModalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.taskModalHeader h2 {
+  margin: 0.25rem 0 0;
+  font-size: 1.45rem;
+}
+
+.closeModalButton {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid rgba(216, 241, 224, 0.12);
+  display: grid;
+  place-items: center;
+  background: var(--surface-input);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.taskForm {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.formField {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.formField > span {
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.formField input:not([type="checkbox"]),
+.formField select,
+.formControl {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 0.95rem;
+  border: 1px solid rgba(216, 241, 224, 0.14);
+  border-radius: 16px;
+  background: var(--surface-input);
+  color: var(--color-text);
+  outline: none;
+  font-size: 0.95rem;
+}
+
+.formField input:focus,
+.formField select:focus,
+.formControl:focus {
+  border-color: rgba(144, 211, 106, 0.48);
+  box-shadow: 0 0 0 3px rgba(144, 211, 106, 0.15);
+}
+
+.formDateButton {
+  width: 100%;
+  min-height: 58px;
+  padding: 0.6rem 0.72rem;
+  border: 1px solid rgba(216, 241, 224, 0.14);
+  border-radius: 18px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.72rem;
+  background:
+    linear-gradient(135deg, rgba(144, 211, 106, 0.12), rgba(255, 255, 255, 0.04)),
+    var(--surface-input);
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.formDateButton:hover,
+.formDateButton:focus-visible {
+  border-color: rgba(144, 211, 106, 0.48);
+  box-shadow: 0 0 0 3px rgba(144, 211, 106, 0.14);
+  outline: none;
+}
+
+.formDateIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(144, 211, 106, 0.14);
+  color: var(--color-verde);
+}
+
+.formDateCopy {
+  min-width: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.formDateCopy small {
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.formDateCopy strong {
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 0.98rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.formDateChevron {
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.taskDatepickerPopper {
+  padding-top: 0.45rem;
+}
+
+.taskDatepickerPopper :global(.react-datepicker) {
+  min-width: 286px;
+}
+
+.taskColorPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.taskColorButton {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  padding: 0;
+}
+
+.taskColorSelected {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.9),
+    0 0 0 5px rgba(59, 203, 35, 0.24);
+}
+
+.repeatToggle {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--color-text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.repeatToggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: #3bcb23;
+}
+
+.daysPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dayChip {
+  cursor: pointer;
+}
+
+.dayChip input {
+  display: none;
+}
+
+.dayChip span {
+  min-width: 42px;
+  min-height: 38px;
+  padding: 0 0.65rem;
+  border: 1px solid rgba(216, 241, 224, 0.14);
+  border-radius: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-input);
+  color: var(--color-text);
+  font-weight: 800;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.dayChip input:checked + span {
+  background: linear-gradient(135deg, #9cfb43, #5dc72d);
+  border-color: rgba(156, 251, 67, 0.6);
+  color: #101711;
+  box-shadow:
+    inset 0 0 0 2px rgba(16, 23, 17, 0.12),
+    0 8px 18px rgba(93, 199, 45, 0.22);
+  transform: translateY(-1px);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.2rem;
+}
+
+.cancelButton,
+.saveTaskButton {
+  min-height: 46px;
+  padding: 0 1rem;
+  border-radius: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cancelButton {
+  border: 1px solid rgba(216, 241, 224, 0.14);
+  background: var(--surface-input);
+  color: var(--color-text);
+}
+
+.saveTaskButton {
+  border: none;
+  background: linear-gradient(135deg, rgba(59, 203, 35, 0.94), rgba(24, 84, 15, 0.96));
+  color: var(--color-text);
+}
+
+.saveTaskButton:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+}
+
+.modalError,
+.modalSuccess {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 15px;
+  font-size: 0.9rem;
+}
+
+.modalError {
+  color: #ffb1a2;
+  background: rgba(241, 141, 113, 0.12);
+  border: 1px solid rgba(241, 141, 113, 0.22);
+}
+
+.modalSuccess {
+  color: #c8efb5;
+  background: rgba(59, 203, 35, 0.12);
+  border: 1px solid rgba(144, 211, 106, 0.22);
+}
+
+:global(body[data-theme="light"]) .taskModal,
+:global(body[data-theme="light"]) .closeModalButton,
+:global(body[data-theme="light"]) .formField input:not([type="checkbox"]),
+:global(body[data-theme="light"]) .formField select,
+:global(body[data-theme="light"]) .formControl,
+:global(body[data-theme="light"]) .cancelButton,
+:global(body[data-theme="light"]) .dayChip span {
+  border-color: rgba(12, 18, 14, 0.16);
+}
+
+:global(body[data-theme="light"]) .formField input:not([type="checkbox"]),
+:global(body[data-theme="light"]) .formField select,
+:global(body[data-theme="light"]) .formControl,
+:global(body[data-theme="light"]) .cancelButton,
+:global(body[data-theme="light"]) .closeModalButton,
+:global(body[data-theme="light"]) .dayChip span {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 246, 0.96));
+}
+
+:global(body[data-theme="light"]) .dayChip input:checked + span {
+  background: linear-gradient(135deg, #79dc5c, #3bcb23);
+  border-color: rgba(32, 123, 35, 0.72);
+  color: #0f1a10;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.36),
+    0 8px 18px rgba(59, 203, 35, 0.28);
+}
+
 @media (max-width: 1000px) {
   .container {
     margin-top: 0;
@@ -600,6 +1103,16 @@
   .headerCard {
     padding: 1rem;
     border-radius: 22px;
+  }
+
+  .headerTop {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .headerAside {
+    width: 100%;
+    justify-content: stretch;
   }
 
   .hiddenMobile {
@@ -620,7 +1133,11 @@
     height: auto;
     min-height: 0;
     overflow: visible;
-    margin: 1rem 0 0;
+    margin: 0;
+  }
+
+  .tasksWorkspace {
+    grid-template-columns: 1fr;
   }
 
   .taskMeta {
@@ -721,6 +1238,53 @@
   .viewButton {
     width: 100%;
     text-align: center;
+  }
+
+  .newTaskButton {
+    width: 100%;
+  }
+
+  .progressCard {
+    grid-template-columns: 92px minmax(0, 1fr);
+    justify-items: stretch;
+    min-height: 118px;
+    padding: 0.75rem;
+  }
+
+  .progressRing {
+    width: 92px;
+  }
+
+  .progressRingInner {
+    width: 64px;
+  }
+
+  .progressStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .taskModalOverlay {
+    align-items: end;
+    padding: 0.75rem;
+  }
+
+  .taskModal {
+    max-height: calc(100vh - 1.5rem);
+    border-radius: 22px;
+    padding: 1rem;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .modalActions {
+    flex-direction: column-reverse;
+  }
+
+  .cancelButton,
+  .saveTaskButton {
+    width: 100%;
   }
 
   .calendarTrigger,

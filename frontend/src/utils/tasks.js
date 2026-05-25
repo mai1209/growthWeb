@@ -4,6 +4,20 @@ const DAY_CODES = ["D", "L", "M", "MI", "J", "V", "S"];
 
 export const getTaskTargetDate = (value = new Date()) => getIsoDate(value);
 
+const normalizeDayCode = (value) => String(value || "").trim().toUpperCase();
+
+export const getTaskRepeatDays = (diasRepeticion) => {
+  if (Array.isArray(diasRepeticion)) {
+    return diasRepeticion.map(normalizeDayCode).filter(Boolean);
+  }
+
+  if (typeof diasRepeticion === "string") {
+    return diasRepeticion.split(",").map(normalizeDayCode).filter(Boolean);
+  }
+
+  return [];
+};
+
 export const getTaskDayCode = (value = new Date()) => {
   const date = new Date(value);
 
@@ -23,10 +37,11 @@ export const isTaskVisibleOnDate = (task, targetDateValue = new Date()) => {
   }
 
   if (task?.esRecurrente) {
+    const repeatDays = getTaskRepeatDays(task.diasRepeticion);
+
     return (
       taskDate <= targetDate &&
-      Array.isArray(task.diasRepeticion) &&
-      task.diasRepeticion.includes(getTaskDayCode(targetDateValue))
+      repeatDays.includes(getTaskDayCode(targetDateValue))
     );
   }
 

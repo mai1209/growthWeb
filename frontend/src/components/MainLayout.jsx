@@ -2,14 +2,11 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import Nav from "./Nav";
 import LeftsSite from "./LeftsSite";
-import LeftSideNotas from "./LeftSideNotas";
 import SettingsSidePanel from "./SettingsSidePanel";
 import style from "../style/MainLayout.module.css";
 
 function MainLayout({
   onLogout,
-  taskToEdit,
-  onTaskUpdate,
   refreshKey,
   onUpdate,
   movimientos,
@@ -21,7 +18,6 @@ function MainLayout({
   onWorkspaceChange,
 }) {
   const location = useLocation();
-  const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(
@@ -32,13 +28,13 @@ function MainLayout({
   const currentToken = localStorage.getItem("token") || sessionStorage.getItem("token");
 
   useEffect(() => {
-    if ((isNotesOpen || isMobileMenuOpen || isMobilePanelOpen) && isMobile) {
+    if ((isMobileMenuOpen || isMobilePanelOpen) && isMobile) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
     }
     return () => (document.body.style.overflow = "");
-  }, [isMobile, isMobileMenuOpen, isMobilePanelOpen, isNotesOpen]);
+  }, [isMobile, isMobileMenuOpen, isMobilePanelOpen]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 1000px)");
@@ -65,20 +61,9 @@ function MainLayout({
 
   // 2. Mapeo de Sidebars: YA NO pasamos 'token={token}'
   const sidebarMap = {
-    "/tareas": (
-      <LeftSideNotas
-        onTaskUpdate={onTaskUpdate}
-        onUpdate={onUpdate}
-        taskToEdit={taskToEdit}
-        refreshKey={refreshKey}
-        activeWorkspace={activeWorkspace}
-        setIsNotesOpen={setIsNotesOpen}
-        embeddedMobile={isMobile}
-      />
-    ),
     "/ajustes": <SettingsSidePanel />,
   };
-  const routesWithoutSidebar = new Set(["/notas"]);
+  const routesWithDefaultSidebar = new Set(["/", "/filtros"]);
 
   // 3. Sidebar por defecto: YA NO pasamos 'token={token}'
   const DefaultSidebar = (
@@ -91,9 +76,7 @@ function MainLayout({
   );
   const CurrentSidebar = sidebarMap[location.pathname];
   const sidebarContent = currentToken
-    ? routesWithoutSidebar.has(location.pathname)
-      ? null
-      : CurrentSidebar || DefaultSidebar
+    ? CurrentSidebar || (routesWithDefaultSidebar.has(location.pathname) ? DefaultSidebar : null)
     : null;
   const handleCloseMobileMenu = useCallback(() => {
     setIsMobileMenuOpen(false);
@@ -113,17 +96,9 @@ function MainLayout({
     setIsMobilePanelOpen((prev) => !prev);
   }, []);
 
-  const handleOpenNotesPanel = useCallback(() => {
-    if (!isMobile) return;
-    setIsMobileMenuOpen(false);
-    setIsMobilePanelOpen(true);
-  }, [isMobile]);
-
   const mobilePanelLabel =
-    location.pathname === "/tareas"
-      ? "Panel"
-      : location.pathname === "/notas"
-        ? "Notas"
+    location.pathname === "/notas"
+      ? "Notas"
       : location.pathname === "/ajustes"
         ? "Ajustes"
         : "Dashboard";
@@ -152,13 +127,7 @@ function MainLayout({
         ) : null}
 
         <div className={style.content}>
-          <Outlet
-            context={{
-              isNotesOpen,
-              setIsNotesOpen,
-              openNotesPanel: handleOpenNotesPanel,
-            }}
-          />
+          <Outlet />
         </div>
       </main>
     </div>

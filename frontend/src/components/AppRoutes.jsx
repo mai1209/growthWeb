@@ -22,9 +22,6 @@ function AppRoutes({
   onAuthSuccess,
   onLogout,
   movimientos,
-  taskToEdit,
-  setTaskToEdit,
-  onTaskUpdate,
   onUpdate,
   movementToEdit,
   setMovementToEdit,
@@ -119,8 +116,6 @@ function AppRoutes({
            token={token}
             onLogout={onLogout}
             movimientos={movimientos}
-            taskToEdit={taskToEdit}
-            onTaskUpdate={onTaskUpdate}
             refreshKey={refreshKey}
             onUpdate={onUpdate}
             panelCurrency={panelCurrency}
@@ -169,9 +164,8 @@ function AppRoutes({
           path="tareas"
           element={
             <Tareas
-             token={token}
               refreshKey={refreshKey}
-              onEditClick={setTaskToEdit}
+              onTaskSaved={onUpdate}
               activeWorkspace={activeWorkspace}
             />
           }
