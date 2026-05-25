@@ -23,15 +23,22 @@
 
 .headerTop {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 1.2rem;
+}
+
+.headerCopy {
+  display: grid;
+  min-width: 0;
 }
 
 .headerAside {
   display: flex;
-  justify-items: end;
+  align-items: center;
   justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 .newTaskButton {
@@ -43,7 +50,11 @@
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
-  background: linear-gradient(135deg, rgba(59, 203, 35, 0.94), rgba(24, 84, 15, 0.96));
+  background: linear-gradient(
+    135deg,
+    rgba(59, 203, 35, 0.94),
+    rgba(24, 84, 15, 0.96)
+  );
   color: var(--color-text);
   font-weight: 800;
   cursor: pointer;
@@ -65,7 +76,6 @@
   align-items: center;
   justify-items: center;
   gap: 0.95rem;
-
 }
 
 .progressRing {
@@ -75,8 +85,7 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background:
-    conic-gradient(#67dc46 var(--progress), #111b14 0);
+  background: conic-gradient(#67dc46 var(--progress), #111b14 0);
   box-shadow:
     0 16px 30px rgba(0, 0, 0, 0.16),
     inset 0 0 0 1px rgba(17, 27, 20, 0.2);
@@ -161,10 +170,8 @@
 .pageTitle {
   font-size: 2rem;
   line-height: 1.1;
-  margin: 0.9rem 0;
+  margin: 0;
 }
-
-
 
 .datePicker::-webkit-calendar-picker-indicator {
   filter: invert(1) brightness(1.5);
@@ -200,7 +207,11 @@
 }
 
 .completed.taskCard {
-  background: linear-gradient(135deg, rgba(22, 32, 28, 0.96), rgba(12, 18, 15, 0.98)) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(22, 32, 28, 0.96),
+    rgba(12, 18, 15, 0.98)
+  ) !important;
   border-color: rgba(116, 149, 128, 0.24);
   box-shadow:
     inset 0 0 0 2px rgba(144, 211, 106, 0.28),
@@ -382,8 +393,11 @@
 :global(.react-datepicker) {
   font-family: inherit !important;
   overflow: hidden;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 250, 244, 0.98)) !important;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(246, 250, 244, 0.98)
+  ) !important;
   border: 1px solid rgba(18, 24, 20, 0.1) !important;
   border-radius: 18px !important;
   box-shadow: 0 24px 55px rgba(0, 0, 0, 0.2) !important;
@@ -474,14 +488,20 @@
   cursor: pointer;
 }
 .containerFecha {
-  display: flex;
+  width: fit-content;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
   flex-wrap: wrap;
-}
+  margin: 1rem 0;
+gap: 1rem;}
 
 .containerFecha p {
+  margin: 0;
   color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .containerFecha input,
@@ -495,13 +515,11 @@
 }
 
 .calendarTrigger {
-  min-height: 48px;
-  padding: 0.75rem 0.95rem;
-  border-radius: 14px;
+  min-height: 40px;
+  padding: 0.58rem 0.8rem;
+  border-radius: 13px;
   border: 1px solid rgba(216, 241, 224, 0.1);
-  background:
-    linear-gradient(135deg, rgba(152, 255, 106, 0.12), rgba(255, 163, 108, 0.08)),
-    var(--surface-input);
+  background: var(--surface-input);
   color: var(--color-text);
   display: inline-flex;
   align-items: center;
@@ -560,14 +578,12 @@
   top: -0.2rem;
 }
 
-.lista {
-  display: flex;
-  margin-top: 1rem;
-}
-
 .taskCard {
   display: grid;
-  grid-template-columns: auto minmax(0, 1.9fr) minmax(122px, 0.72fr) minmax(130px, 0.82fr) auto;
+  grid-template-columns: auto minmax(0, 1.9fr) minmax(122px, 0.72fr) minmax(
+      130px,
+      0.82fr
+    ) auto;
   align-items: center;
   border-radius: 22px;
   padding: 1rem 1.1rem;
@@ -584,17 +600,20 @@
 }
 
 .viewButton {
+  min-height: 46px;
   border-radius: 14px;
-  padding: 0.8rem 1rem;
-  background: linear-gradient(135deg, rgba(59, 203, 35, 0.24), rgba(18, 43, 11, 0.92));
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.055);
   color: var(--color-text);
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
-  border: none;
+  border: 1px solid rgba(103, 220, 70, 0.62);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.035);
+  white-space: nowrap;
 }
 
 .viewButtonAlt {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.055);
 }
 
 .emptyMessage,
@@ -652,15 +671,15 @@
 
 .listRow {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.9fr) auto;
-  gap: 1rem;
+  grid-template-columns: auto minmax(0, 1.7fr) minmax(140px, 0.85fr) auto;
+  gap: 1.05rem;
   align-items: center;
-  padding: 1rem;
+  min-height: 92px;
+  padding: 1rem 1.1rem;
   border-radius: 22px;
   border: 1px solid rgba(216, 241, 224, 0.08);
-  background:
-    linear-gradient(135deg, rgba(152, 255, 106, 0.1), rgba(255, 163, 108, 0.08)),
-    var(--surface-card);
+  color: #111813;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.16);
 }
 
 .listTitle {
@@ -670,11 +689,25 @@
   line-height: 1.25;
 }
 
-.listMeta,
 .listSchedule {
+  display: grid;
+  gap: 0.18rem;
   color: rgba(18, 24, 20, 0.72);
   font-size: 0.88rem;
   line-height: 1.45;
+}
+
+.listSchedule span {
+  color: rgba(18, 24, 20, 0.52);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.listSchedule p {
+  margin: 0;
+  font-weight: 800;
 }
 
 .listMetaRow {
@@ -729,7 +762,11 @@
 }
 
 .completedListRow {
-  background: linear-gradient(135deg, rgba(22, 32, 28, 0.96), rgba(12, 18, 15, 0.98));
+  background: linear-gradient(
+    135deg,
+    rgba(22, 32, 28, 0.96),
+    rgba(12, 18, 15, 0.98)
+  );
   border-color: rgba(116, 149, 128, 0.24);
 }
 
@@ -739,25 +776,35 @@
   color: rgba(238, 246, 239, 0.92);
 }
 
-.completedListRow .listMeta,
-.completedListRow .listSchedule {
+.completedListRow .listSchedule,
+.completedListRow .listSchedule span,
+.completedListRow .listSchedule p {
   color: rgba(238, 246, 239, 0.72);
   text-decoration: line-through;
+}
+
+.completedListRow .listActions button {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(238, 246, 239, 0.16);
+  color: rgba(238, 246, 239, 0.92);
 }
 
 .listActions {
   display: flex;
   gap: 0.6rem;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .listActions button {
-  border: 1px solid rgba(216, 241, 224, 0.1);
+  min-height: 40px;
+  border: 1px solid rgba(17, 24, 20, 0.1);
   border-radius: 14px;
   padding: 0.65rem 0.9rem;
-  background: var(--surface-hover);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.72);
+  color: #111813;
   cursor: pointer;
+  font-weight: 800;
 }
 
 .taskModalOverlay {
@@ -865,7 +912,11 @@
   align-items: center;
   gap: 0.72rem;
   background:
-    linear-gradient(135deg, rgba(144, 211, 106, 0.12), rgba(255, 255, 255, 0.04)),
+    linear-gradient(
+      135deg,
+      rgba(144, 211, 106, 0.12),
+      rgba(255, 255, 255, 0.04)
+    ),
     var(--surface-input);
   color: var(--color-text);
   cursor: pointer;
@@ -995,7 +1046,11 @@
   background: var(--surface-input);
   color: var(--color-text);
   font-weight: 800;
-  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease;
 }
 
 .dayChip input:checked + span {
@@ -1032,7 +1087,11 @@
 
 .saveTaskButton {
   border: none;
-  background: linear-gradient(135deg, rgba(59, 203, 35, 0.94), rgba(24, 84, 15, 0.96));
+  background: linear-gradient(
+    135deg,
+    rgba(59, 203, 35, 0.94),
+    rgba(24, 84, 15, 0.96)
+  );
   color: var(--color-text);
 }
 
@@ -1077,7 +1136,11 @@
 :global(body[data-theme="light"]) .cancelButton,
 :global(body[data-theme="light"]) .closeModalButton,
 :global(body[data-theme="light"]) .dayChip span {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 246, 0.96));
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(248, 250, 246, 0.96)
+  );
 }
 
 :global(body[data-theme="light"]) .dayChip input:checked + span {
@@ -1087,6 +1150,12 @@
   box-shadow:
     inset 0 0 0 2px rgba(255, 255, 255, 0.36),
     0 8px 18px rgba(59, 203, 35, 0.28);
+}
+
+:global(body[data-theme="light"]) .containerFecha,
+:global(body[data-theme="light"]) .viewButton {
+  background: rgba(245, 248, 244, 0.92);
+  border-color: rgba(49, 143, 42, 0.42);
 }
 
 @media (max-width: 1000px) {
@@ -1115,6 +1184,11 @@
     justify-content: stretch;
   }
 
+  .headerAside .viewButton,
+  .headerAside .newTaskButton {
+    flex: 1 1 180px;
+  }
+
   .hiddenMobile {
     display: none;
   }
@@ -1127,7 +1201,6 @@
   .pageTitle {
     font-size: 1.35rem;
   }
-
 
   .tasksList {
     height: auto;
@@ -1187,9 +1260,14 @@
   }
 
   .listRow {
-    grid-template-columns: 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
     border-radius: 22px;
     padding: 0.9rem;
+  }
+
+  .listSchedule,
+  .listActions {
+    grid-column: 2;
   }
 
   .listActions {

@@ -218,6 +218,32 @@
   font-weight: 900;
 }
 
+.textSizeGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.24rem;
+  padding: 0.2rem 0;
+}
+
+.textSizeButton {
+  width: 40px;
+  min-height: 28px;
+  border: 1px solid rgba(17, 24, 20, 0.1);
+  border-radius: 10px;
+  background: transparent;
+  color: #172018;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.textSizeButtonActive,
+.textSizeButton:hover {
+  background: rgba(144, 211, 106, 0.18);
+  border-color: rgba(75, 143, 58, 0.34);
+  color: #27591f;
+}
+
 .textColorGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -309,7 +335,6 @@
 }
 
 .secondaryButton {
-  border: 1px solid rgba(144, 211, 106, 0.24);
   background: linear-gradient(135deg, rgba(144, 211, 106, 0.18), rgba(29, 57, 25, 0.9));
   color: #f7fff9;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
@@ -327,7 +352,6 @@
 .newNoteButton {
   flex: 0 0 auto;
   padding: 0.8rem 1rem;
-  border: 1px solid rgba(144, 211, 106, 0.32);
   background: linear-gradient(135deg, rgba(144, 211, 106, 0.95), rgba(52, 132, 67, 0.98));
   color: #ffffff;
   font-weight: 800;
@@ -355,6 +379,87 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.65rem;
+}
+
+.noteCalendarFilter {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(216, 241, 224, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.noteCalendarButton {
+  position: relative;
+  flex: 1 1 260px;
+  min-height: 58px;
+  padding: 0.6rem 3rem 0.6rem 0.85rem;
+  border: 1px solid rgba(144, 211, 106, 0.28);
+  border-radius: 15px;
+  display: grid;
+  align-content: center;
+  gap: 0.16rem;
+  background: var(--surface-input);
+  color: var(--color-text);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.noteCalendarButton > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.noteCalendarButton strong {
+  color: var(--color-text);
+  font-size: 0.98rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.noteCalendarChevron {
+  position: absolute;
+  top: 50%;
+  right: 0.85rem;
+  width: 22px;
+  height: 22px;
+  padding: 0.18rem;
+  border-radius: 999px;
+  color: var(--color-verde);
+  background: rgba(144, 211, 106, 0.14);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.noteCalendarButton input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.monthViewButton {
+  flex: 0 0 auto;
+  min-height: 58px;
+  padding: 0 1rem;
+  border: 1px solid rgba(103, 220, 70, 0.55);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--color-text);
+  cursor: pointer;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .colorGrid {
@@ -485,12 +590,35 @@
 
 
 .groupList {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+}
+
+.noteDayGroup {
+  display: grid;
+  gap: 0.72rem;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.groupHeader::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: rgba(216, 241, 224, 0.1);
+}
+
+.noteDayGrid {
   display: flex;
   align-items: stretch;
   align-content: flex-start;
   gap: 0.9rem;
   flex-wrap: wrap;
-  width: 100%;
 }
 
 .groupHeader span,
@@ -503,6 +631,10 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.groupHeader span {
+  color: var(--color-text);
 }
 
 .taskRow {
@@ -681,6 +813,10 @@
   border-color: rgba(12, 18, 14, 0.12);
 }
 
+:global(body[data-theme="light"]) .textSizeButton {
+  border-color: rgba(12, 18, 14, 0.12);
+}
+
 :global(body[data-theme="light"]) .secondaryButton {
   color: #ffffff;
 }
@@ -725,11 +861,21 @@
     grid-template-columns: 1fr;
   }
 
+  .noteCalendarFilter {
+    flex-direction: column;
+  }
+
+  .noteCalendarButton,
+  .monthViewButton {
+    width: 100%;
+  }
+
   .listCard {
     min-height: calc(100vh - 210px);
   }
 
-  .groupList {
+  .groupList,
+  .noteDayGrid {
     gap: 0.75rem;
   }
 
@@ -776,6 +922,14 @@
     height: 38px;
     min-height: 38px;
   }
+
+  .textSizeGrid {
+    grid-template-columns: repeat(3, 34px);
+  }
+
+  .textSizeButton {
+    width: 34px;
+  }
 }
 
 @media (max-width: 520px) {
@@ -794,7 +948,7 @@
     border-radius: 0;
   }
 
-  .header h1,
+  .header ,
   .editorHeader h2 {
     font-size: 1.15rem;
   }

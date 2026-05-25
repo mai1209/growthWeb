@@ -62,13 +62,6 @@ const handleSubmit = async (e) => {
         <div className={style.authTopbar}>
           <button
             type="button"
-            className={style.secondaryTopAction}
-            onClick={() => navigate("/planes")}
-          >
-            Ver planes
-          </button>
-          <button
-            type="button"
             className={style.themeButton}
             onClick={onThemeToggle}
             aria-label={theme === "dark" ? "Activar tema claro" : "Activar tema oscuro"}

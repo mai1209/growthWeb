@@ -282,7 +282,6 @@ function Dashboard({
           <div className={style.dashboardInfoHeader}>
             <div>
               <p className={style.eyebrow}>Panel de movimientos</p>
-              <h2>Detalle rápido del período</h2>
             </div>
             <span className={style.dashboardInfoBadge}>
               {currencyMeta.codeLabel}

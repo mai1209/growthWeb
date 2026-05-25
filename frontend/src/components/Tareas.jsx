@@ -190,8 +190,16 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
     fetchTasks();
   }, [fetchTasks, refreshKey]);
 
-  const handleToggleComplete = async (taskId) => {
-    const fecha = getTaskTargetDate(selectedDate);
+  const getStatusDate = (value) => {
+    if (typeof value === "string") {
+      return value.slice(0, 10);
+    }
+
+    return getTaskTargetDate(value);
+  };
+
+  const handleToggleCompleteForDate = async (taskId, dateValue = selectedDate) => {
+    const fecha = getStatusDate(dateValue);
     const targetTask = tasks.find((task) => task._id === taskId);
 
     if (!targetTask || updatingTaskIds.includes(taskId)) {
@@ -247,6 +255,10 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
     } finally {
       setUpdatingTaskIds((prev) => prev.filter((id) => id !== taskId));
     }
+  };
+
+  const handleToggleComplete = (taskId) => {
+    handleToggleCompleteForDate(taskId, selectedDate);
   };
 
   const handleDeleteTask = async (taskId) => {
@@ -495,10 +507,20 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                 return (
                   <div
                     key={t._id}
-                    className={`${style.listRow} ${
+                    className={`${style.listRow} ${style[t.color] || style.color1} ${
                       completed ? style.completedListRow : ""
                     }`}
                   >
+                    <label className={style.checkboxWrapper}>
+                      <input
+                        type="checkbox"
+                        checked={completed}
+                        disabled={updatingTaskIds.includes(t._id)}
+                        onChange={() => handleToggleCompleteForDate(t._id, t.fecha || selectedDate)}
+                      />
+                      <span className={style.customCheckbox}></span>
+                    </label>
+
                     <div className={style.listCopy}>
                       <p className={style.listTitle}>{t.meta}</p>
                       <div className={style.listMetaRow}>
@@ -509,9 +531,10 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                       </div>
                     </div>
 
-                    <p className={style.listSchedule}>
-                      {t.fecha ? t.fecha.slice(0, 10) : "-"} · {t.horario || "--:--"}
-                    </p>
+                    <div className={style.listSchedule}>
+                      <span>Fecha</span>
+                      <p>{t.fecha ? t.fecha.slice(0, 10) : "-"} · {t.horario || "--:--"}</p>
+                    </div>
 
                     <div className={style.listActions}>
                       <button type="button" onClick={() => handleEditTask(t)}>Editar</button>
@@ -536,57 +559,56 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
       <div className={style.headerShell}>
         <div className={style.headerCard}>
           <div className={style.headerTop}>
-            <div>
+            <div className={style.headerCopy}>
               <p className={style.kicker}>Panel de tareas</p>
               <h1 className={style.pageTitle}>
-                {showList ? "Todas las tareas" : "Mis tareas de hoy"}
+                {showList ? "Todas las tareas" : ""}
               </h1>
+
+              <div className={style.containerFecha}>
+                <p>{showList ? "Ver lista del mes" : "Tareas de"}</p>
+                {!showList ? (
+                  <DatePicker
+                    selected={selectedDate}
+                    onChange={handleDateChange}
+                    dateFormat="dd-MM-yyyy"
+                    customInput={<CalendarButton />}
+                  />
+                ) : (
+                  <input
+                    type="month"
+                    value={selectedListMonth}
+                    onChange={(event) => setSelectedListMonth(event.target.value)}
+                    className={style.monthInput}
+                  />
+                )}
+              </div>
             </div>
 
             <div className={style.headerAside}>
+              {!showList ? (
+                <button
+                  type="button"
+                  onClick={() => setShowList(true)}
+                  className={`${style.viewButton} ${style.viewButtonAlt}`}
+                >
+                  Ver tareas en lista
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowList(false)}
+                  className={style.viewButton}
+                >
+                  Volver a la vista diaria
+                </button>
+              )}
+
               <button type="button" className={style.newTaskButton} onClick={handleOpenNewTask}>
                 <FiPlus />
                 Nueva tarea
               </button>
             </div>
-          </div>
-      
-
-          <div className={style.containerFecha}>
-            <p>{showList ? "Ver lista del mes" : "Tareas de"}</p>
-            {!showList ? (
-              <DatePicker
-                selected={selectedDate}
-                onChange={handleDateChange}
-                dateFormat="dd-MM-yyyy"
-                customInput={<CalendarButton />}
-              />
-            ) : (
-              <input
-                type="month"
-                value={selectedListMonth}
-                onChange={(event) => setSelectedListMonth(event.target.value)}
-                className={style.monthInput}
-              />
-            )}
-          </div>
-
-          <div className={style.lista}>
-            {!showList ? (
-              <button
-                onClick={() => setShowList(true)}
-                className={`${style.viewButton} ${style.viewButtonAlt}`}
-              >
-                Ver tareas en lista
-              </button>
-            ) : (
-              <button
-                onClick={() => setShowList(false)}
-                className={style.viewButton}
-              >
-                Volver a la vista diaria
-              </button>
-            )}
           </div>
         </div>
       </div>

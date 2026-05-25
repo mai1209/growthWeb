@@ -40,6 +40,8 @@ function LeftSite({
     () => summarizeByType(monthMovimientos),
     [monthMovimientos]
   );
+  const monthResultLabel =
+    monthSummary.total > 0 ? "Mes positivo" : monthSummary.total < 0 ? "Mes en rojo" : "Mes equilibrado";
 
   const hideableMoney = (amount) =>
     areTotalsVisible ? formatMoney(amount, currentCurrency) : "••••";
@@ -47,34 +49,30 @@ function LeftSite({
   return (
     <aside className={style.container}>
       <div className={style.panel}>
-       
-
-      
-
         <div className={style.balanceCard}>
-           <div className={style.headerBlock}>
-          <p className={style.eyebrow}>Panel de control</p>
-          <h2 >Tu caja en {currencyMeta.label.toLowerCase()}</h2>
-         
-        </div>
-          <div>
+          <div className={style.headerBlock}>
+            <p className={style.eyebrow}>Panel de control</p>
+            <h2>Tu caja en {currencyMeta.label.toLowerCase()}</h2>
+          </div>
+
+          <div className={style.balanceBody}>
             <p className={style.balanceLabel}>Saldo acumulado</p>
             <p className={style.balanceValue}>
               {hideableMoney(historicalSummary.total)}
             </p>
-            <p className={style.balanceHint}>
-              {currencyMovimientos.length} movimientos guardados en{" "}
-              {currencyMeta.codeLabel}
-            </p>
+         
           </div>
 
-          <button
-            type="button"
-            onClick={() => setAreTotalsVisible((prev) => !prev)}
-            className={style.visibilityButton}
-          >
-            {areTotalsVisible ? "Ocultar" : "Mostrar"}
-          </button>
+          <div className={style.balanceFooter}>
+            <span className={style.statusPill}>{monthResultLabel}</span>
+            <button
+              type="button"
+              onClick={() => setAreTotalsVisible((prev) => !prev)}
+              className={style.visibilityButton}
+            >
+              {areTotalsVisible ? "Ocultar" : "Mostrar"}
+            </button>
+          </div>
         </div>
 
           <div
@@ -98,6 +96,16 @@ function LeftSite({
         </div>
 
         <div className={style.statGrid}>
+          <article className={`${style.statCard} ${style.statMovimientos}`}>
+            <span>Movimientos del mes</span>
+            <strong>{monthMovimientos.length}</strong>
+          </article>
+
+          <article className={`${style.statCard} ${style.statTotal}`}>
+            <span>Resultado mensual</span>
+            <strong>{hideableMoney(monthSummary.total)}</strong>
+          </article>
+
           <article className={`${style.statCard} ${style.statIngreso}`}>
             <span>Ingresos del mes</span>
             <strong>{hideableMoney(monthSummary.ingreso)}</strong>
@@ -106,11 +114,6 @@ function LeftSite({
           <article className={`${style.statCard} ${style.statEgreso}`}>
             <span>Egresos del mes</span>
             <strong>{hideableMoney(monthSummary.egreso)}</strong>
-          </article>
-
-          <article className={`${style.statCard} ${style.statTotal}`}>
-            <span>Resultado mensual</span>
-            <strong>{hideableMoney(monthSummary.total)}</strong>
           </article>
 
           <article className={`${style.statCard} ${style.statAhorro}`}>

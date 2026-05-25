@@ -63,7 +63,7 @@ function MainLayout({
   const sidebarMap = {
     "/ajustes": <SettingsSidePanel />,
   };
-  const routesWithDefaultSidebar = new Set(["/", "/filtros"]);
+  const routesWithDefaultSidebar = new Set(["/"]);
 
   // 3. Sidebar por defecto: YA NO pasamos 'token={token}'
   const DefaultSidebar = (

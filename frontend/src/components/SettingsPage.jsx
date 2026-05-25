@@ -25,11 +25,6 @@ const TAB_META = {
     text: "Actualiza tu clave desde la sesión iniciada.",
     icon: FiLock,
   },
-  recuperar: {
-    title: "Recuperar contraseña",
-    text: "Genera un enlace para restablecer la contraseña desde fuera del login.",
-    icon: FiRefreshCcw,
-  },
 };
 
 const getInitials = (profile) => {

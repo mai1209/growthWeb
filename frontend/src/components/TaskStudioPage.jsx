@@ -5,6 +5,8 @@ import {
   FiAlignRight,
   FiBold,
   FiCalendar,
+  FiChevronDown,
+  FiCheckSquare,
   FiClock,
   FiCode,
   FiEdit3,
@@ -61,29 +63,115 @@ const getDateInputValue = (date = new Date()) => {
   return `${year}-${month}-${day}`;
 };
 
-const formatGroupTitle = (value) =>
-  new Date(value).toLocaleDateString("es-AR", {
+const getTimeInputValue = (date = new Date()) => {
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+};
+
+const getLocalDateFromValue = (value) => {
+  if (!value) return null;
+
+  if (typeof value === "string") {
+    const matched = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+    if (matched) {
+      const [, year, month, day] = matched;
+      return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatShortDate = (value) =>
+  getLocalDateFromValue(value)?.toLocaleDateString("es-AR", {
     day: "2-digit",
+    month: "2-digit",
+  }) || "--/--";
+
+const formatMonthLabel = (value) => {
+  const [year, month] = String(value || "").split("-").map(Number);
+
+  if (!year || !month) return "Mes";
+
+  return new Date(year, month - 1, 1).toLocaleDateString("es-AR", {
     month: "long",
     year: "numeric",
   });
+};
+
+const formatDayGroupLabel = (value) => {
+  const date = getLocalDateFromValue(value);
+
+  if (!date) return "Día · Sin fecha";
+
+  return `Día · ${date.toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  })}`;
+};
+
+const formatTime = (value) => {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleTimeString("es-AR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+};
+
+const getNoteCardTime = (task) => {
+  if (task?.horario && task.horario !== "12:00") {
+    return task.horario;
+  }
+
+  return formatTime(task?.createdAt || task?.updatedAt) || task?.horario || "--:--";
+};
 
 const stripHtml = (value = "") =>
   value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
-const initialFormState = {
+const groupNotesByDay = (items = []) => {
+  const grouped = items.reduce((accumulator, task) => {
+    const key = getDateInputValue(getLocalDateFromValue(task.fecha) || new Date());
+
+    if (!accumulator.has(key)) {
+      accumulator.set(key, []);
+    }
+
+    accumulator.get(key).push(task);
+    return accumulator;
+  }, new Map());
+
+  return [...grouped.entries()].map(([key, notes]) => ({
+    key,
+    label: formatDayGroupLabel(key),
+    notes,
+  }));
+};
+
+const buildInitialFormState = () => ({
   id: null,
   meta: "",
   contenido: "",
   fecha: getDateInputValue(new Date()),
-  horario: "12:00",
+  horario: getTimeInputValue(new Date()),
   color: "color1",
-};
+});
 
 function TaskStudioPage({ activeWorkspace = "personal" }) {
   const editorRef = useRef(null);
   const quillRef = useRef(null);
   const selectionRef = useRef(null);
+  const calendarInputRef = useRef(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -91,7 +179,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const [message, setMessage] = useState("");
   const [selectedMonth, setSelectedMonth] = useState(getMonthInputValue(new Date()));
   const [selectedDay, setSelectedDay] = useState("");
-  const [form, setForm] = useState(initialFormState);
+  const [form, setForm] = useState(buildInitialFormState);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [activeFormats, setActiveFormats] = useState({
     align: "",
@@ -102,7 +190,9 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     header: false,
     italic: false,
     orderedList: false,
+    checkList: false,
     strike: false,
+    size: "",
     underline: false,
     bulletList: false,
   });
@@ -116,7 +206,9 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     header: formats.header || false,
     italic: Boolean(formats.italic),
     orderedList: formats.list === "ordered",
+    checkList: formats.list === "checked" || formats.list === "unchecked",
     strike: Boolean(formats.strike),
+    size: formats.size || "",
     underline: Boolean(formats.underline),
     bulletList: formats.list === "bullet",
   });
@@ -214,7 +306,9 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       .filter((task) => {
         if (!task?.fecha) return false;
 
-        const taskDate = new Date(task.fecha);
+        const taskDate = getLocalDateFromValue(task.fecha);
+        if (!taskDate) return false;
+
         const matchesMonth =
           taskDate.getFullYear() === monthStart.getFullYear() &&
           taskDate.getMonth() === monthStart.getMonth();
@@ -225,11 +319,31 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
 
         return getDateInputValue(taskDate) === selectedDay;
       })
-      .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+      .sort((a, b) => {
+        const aTime = getLocalDateFromValue(a.fecha)?.getTime() || 0;
+        const bTime = getLocalDateFromValue(b.fecha)?.getTime() || 0;
+        return bTime - aTime;
+      });
   }, [tasks, selectedMonth, selectedDay]);
+
+  const groupedNotes = useMemo(() => groupNotesByDay(filteredTasks), [filteredTasks]);
 
   const handleFieldChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleOpenCalendar = () => {
+    const input = calendarInputRef.current;
+
+    if (!input) return;
+
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+      return;
+    }
+
+    input.focus();
+    input.click();
   };
 
   const getEditorRange = () => {
@@ -295,6 +409,28 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     quill.format("list", "ordered");
   };
 
+  const toggleCheckList = () => {
+    if (!quillRef.current) return;
+
+    const quill = quillRef.current;
+    const range = getEditorRange();
+
+    quill.focus();
+
+    if (range) {
+      quill.setSelection(range);
+      selectionRef.current = range;
+      const formats = quill.getFormat(range);
+      quill.format(
+        "list",
+        formats.list === "checked" || formats.list === "unchecked" ? false : "checked"
+      );
+      return;
+    }
+
+    quill.format("list", "checked");
+  };
+
   const applyBlockFormat = (format, value = true) => {
     if (!quillRef.current) return;
 
@@ -348,8 +484,24 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     quill.format("color", value || false);
   };
 
+  const applyTextSize = (value) => {
+    if (!quillRef.current) return;
+
+    const quill = quillRef.current;
+    const range = getEditorRange();
+
+    quill.focus();
+
+    if (range) {
+      quill.setSelection(range);
+      selectionRef.current = range;
+    }
+
+    quill.format("size", value || false);
+  };
+
   const resetForm = () => {
-    setForm(initialFormState);
+    setForm(buildInitialFormState());
     setMessage("");
     setActiveFormats(getFormatState());
     selectionRef.current = null;
@@ -445,24 +597,13 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
 
   return (
     <section className={style.page}>
-      <header className={style.header}>
-        <div>
-          <p className={style.kicker}>Ruta de notas</p>
-          <h1>Escribí, ordená y filtrá tus notas en una sola pantalla.</h1>
-          
-        </div>
-        <button type="button" className={style.newNoteButton} onClick={handleNewNote}>
-          <FiPlus />
-          Nueva nota
-        </button>
-      </header>
+   
 
       <div className={style.layout}>
         <section className={style.listCard}>
             <div className={style.editorHeader}>
               <div>
                 <p className={style.cardKicker}>Listado</p>
-                <h2>Notas cargadas</h2>
               </div>
               <button type="button" className={style.secondaryButton} onClick={handleNewNote}>
                 <FiPlus />
@@ -470,33 +611,47 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
               </button>
             </div>
 
-            <div className={style.filterBar}>
-              <label className={style.field}>
-                <span>Mes</span>
+            <div className={style.noteCalendarFilter}>
+              <div
+                className={style.noteCalendarButton}
+                role="button"
+                tabIndex={0}
+                onClick={handleOpenCalendar}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    handleOpenCalendar();
+                  }
+                }}
+              >
+                <span>
+                  <FiCalendar />
+                  Calendario
+                </span>
+                <strong>{selectedDay || formatMonthLabel(selectedMonth)}</strong>
+                <FiChevronDown className={style.noteCalendarChevron} />
                 <input
-                  type="month"
-                  value={selectedMonth}
+                  ref={calendarInputRef}
+                  type="date"
+                  tabIndex={-1}
+                  value={selectedDay}
                   onChange={(event) => {
-                    setSelectedMonth(event.target.value);
-                    if (selectedDay && !event.target.value.startsWith(selectedDay.slice(0, 7))) {
-                      setSelectedDay("");
+                    const value = event.target.value;
+                    setSelectedDay(value);
+                    if (value) {
+                      setSelectedMonth(value.slice(0, 7));
                     }
                   }}
-                  className={style.input}
                 />
-              </label>
+              </div>
 
-              <label className={style.field}>
-                <span>Día dentro del mes</span>
-                <input
-                  type="date"
-                  value={selectedDay}
-                  onChange={(event) => setSelectedDay(event.target.value)}
-                  min={`${selectedMonth}-01`}
-                  max={`${selectedMonth}-31`}
-                  className={style.input}
-                />
-              </label>
+              <button
+                type="button"
+                className={style.monthViewButton}
+                onClick={() => setSelectedDay("")}
+              >
+                Ver mes completo
+              </button>
             </div>
 
             {loading ? (
@@ -505,43 +660,47 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
               <p className={style.emptyState}>No hay notas para ese filtro.</p>
             ) : (
               <div className={style.groupList}>
-                {filteredTasks.map((task) => {
-                  const preview = stripHtml(task.contenido || "");
-                  const completed = isTaskCompletedOnDate(task, task.fecha);
-                  const taskDate = task.fecha ? new Date(task.fecha) : null;
+                {groupedNotes.map((group) => (
+                  <section key={group.key} className={style.noteDayGroup}>
+                    <div className={style.groupHeader}>
+                      <span>{group.label}</span>
+                    </div>
 
-                  return (
-                    <article
-                      key={task._id}
-                      className={`${style.taskRow} ${style[task.color] || style.color1} ${
-                        completed ? style.taskRowCompleted : ""
-                      }`}
-                    >
-                      <div className={style.taskRowCopy}>
-                        <span className={style.noteDate}>
-                          {taskDate ? formatGroupTitle(getDateInputValue(taskDate)) : "Sin fecha"}
-                        </span>
-                        <h3>{task.meta}</h3>
-                        <p>{preview || "Sin contenido. Podés abrir la nota y escribir el detalle."}</p>
-                        <div className={style.taskMetaRow}>
-                          <span>{String(task.fecha).slice(0, 10)}</span>
-                          <span>{task.horario || "--:--"}</span>
-                        </div>
-                      </div>
+                    <div className={style.noteDayGrid}>
+                      {group.notes.map((task) => {
+                        const preview = stripHtml(task.contenido || "");
+                        const completed = isTaskCompletedOnDate(task, task.fecha);
+                        const noteDateLabel = `${formatShortDate(task.fecha)} · ${getNoteCardTime(task)}`;
 
-                      <div className={style.taskRowActions}>
-                        <button type="button" onClick={() => handleEdit(task)}>
-                          <FiEdit3 />
-                          Editar
-                        </button>
-                        <button type="button" onClick={() => handleDelete(task._id)}>
-                          <FiTrash2 />
-                          Eliminar
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })}
+                        return (
+                          <article
+                            key={task._id}
+                            className={`${style.taskRow} ${style[task.color] || style.color1} ${
+                              completed ? style.taskRowCompleted : ""
+                            }`}
+                          >
+                            <div className={style.taskRowCopy}>
+                              <span className={style.noteDate}>{noteDateLabel}</span>
+                              <h3>{task.meta}</h3>
+                              <p>{preview || "Sin contenido. Podés abrir la nota y escribir el detalle."}</p>
+                            </div>
+
+                            <div className={style.taskRowActions}>
+                              <button type="button" onClick={() => handleEdit(task)}>
+                                <FiEdit3 />
+                                Editar
+                              </button>
+                              <button type="button" onClick={() => handleDelete(task._id)}>
+                                <FiTrash2 />
+                                Eliminar
+                              </button>
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ))}
               </div>
             )}
         </section>
@@ -633,6 +792,27 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 >
                   <FiHash />
                 </button>
+                <div className={style.textSizeGrid} aria-label="Tamaño de texto">
+                  {[
+                    { label: "S", value: "small", title: "Texto chico" },
+                    { label: "M", value: "", title: "Texto normal" },
+                    { label: "L", value: "large", title: "Texto grande" },
+                  ].map((size) => (
+                    <button
+                      key={size.label}
+                      type="button"
+                      className={`${style.textSizeButton} ${
+                        activeFormats.size === size.value ? style.textSizeButtonActive : ""
+                      }`}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => applyTextSize(size.value)}
+                      aria-label={size.title}
+                      title={size.title}
+                    >
+                      {size.label}
+                    </button>
+                  ))}
+                </div>
                 <button
                   type="button"
                   className={`${style.toolbarButton} ${activeFormats.bold ? style.toolbarButtonActive : ""}`}
@@ -692,6 +872,16 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   title="Lista numerada"
                 >
                   <span className={style.toolbarText}>1.</span>
+                </button>
+                <button
+                  type="button"
+                  className={`${style.toolbarButton} ${activeFormats.checkList ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={toggleCheckList}
+                  aria-label="Lista con check"
+                  title="Lista con check"
+                >
+                  <FiCheckSquare />
                 </button>
                 <button
                   type="button"

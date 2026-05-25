@@ -4,7 +4,6 @@ import {
   CURRENCY_OPTIONS,
   filterMovimientosByCurrency,
   formatMoney,
-  getCurrencyMeta,
   getMovementTypeMeta,
   normalizeCurrency,
   summarizeByType,
@@ -196,7 +195,6 @@ function MetricsPage({
   const [selectedMonth, setSelectedMonth] = useState(getMonthInputValue(new Date()));
   const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
   const currency = normalizeCurrency(currentCurrency);
-  const currencyMeta = getCurrencyMeta(currency);
 
   const availableYears = useMemo(() => {
     const years = new Set([new Date().getFullYear()]);
@@ -259,6 +257,24 @@ function MetricsPage({
       }));
   }, [periodMovimientos]);
 
+  const incomeCategoryItems = useMemo(() => {
+    const buckets = periodMovimientos.reduce((acc, movimiento) => {
+      if (movimiento.tipo !== "ingreso") return acc;
+      const category = movimiento.categoria?.trim() || "Sin categoria";
+      acc[category] = (acc[category] || 0) + (Number(movimiento.monto) || 0);
+      return acc;
+    }, {});
+
+    return Object.entries(buckets)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([label, value], index) => ({
+        label,
+        value: Number(value.toFixed(2)),
+        color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+      }));
+  }, [periodMovimientos]);
+
   const monthlyBuckets = useMemo(
     () => buildMonthlyBuckets(periodMovimientos, range.from, range.to),
     [periodMovimientos, range.from, range.to]
@@ -278,11 +294,7 @@ function MetricsPage({
       <div className={style.hero}>
         <div>
           <p className={style.kicker}>Métricas</p>
-          <h1>Gráficos para leer tu caja sin perderte en listas.</h1>
-          <p>
-            Revisá composición de ingresos, egresos, ahorro, deuda pendiente y evolución
-            por período en {currencyMeta.label.toLowerCase()}.
-          </p>
+       
         </div>
 
         <div
@@ -339,10 +351,10 @@ function MetricsPage({
           </label>
         )}
 
-        <article>
-          <span>Período activo</span>
+        <div className={style.period}>
+          <p>Período activo</p>
           <strong>{range.label}</strong>
-        </article>
+        </div>
       </div>
 
       <div className={style.summaryGrid}>
@@ -374,6 +386,13 @@ function MetricsPage({
           subtitle="Ingresos, gastos, ahorro y deuda"
           items={typeItems}
           emptyLabel="No hay movimientos en este corte."
+        />
+
+        <DonutChart
+          title="Ingresos por categoría"
+          subtitle="De dónde entró la plata"
+          items={incomeCategoryItems}
+          emptyLabel="No hay ingresos para graficar."
         />
 
         <DonutChart

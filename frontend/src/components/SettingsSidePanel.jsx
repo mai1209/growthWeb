@@ -1,4 +1,4 @@
-import { FiKey, FiLock, FiRefreshCcw, FiUser } from "react-icons/fi";
+import { FiKey, FiLock, FiUser } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 import style from "../style/SettingsSidePanel.module.css";
 
@@ -14,12 +14,6 @@ const OPTIONS = [
     label: "Cambiar contraseña",
     description: "Actualiza tu clave desde la sesión.",
     icon: FiLock,
-  },
-  {
-    to: "/ajustes?tab=recuperar",
-    label: "Recuperar contraseña",
-    description: "Genera un enlace de recuperación.",
-    icon: FiRefreshCcw,
   },
 ];
 
