@@ -16,13 +16,11 @@ const resolveBaseURL = () => {
   if (typeof window !== "undefined") {
     const { hostname } = window.location;
 
-    // En producción sobre Vercel usamos mismo dominio y dejamos que /api
-    // resuelva al backend del mismo deploy.
-    if (hostname !== "localhost" && hostname !== "127.0.0.1") {
-      return "";
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return envBaseURL || "http://localhost:3000";
     }
 
-    return envBaseURL || "http://localhost:3000";
+    return envBaseURL;
   }
 
   return envBaseURL;
