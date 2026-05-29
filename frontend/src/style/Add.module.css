@@ -64,7 +64,7 @@
 
 .formIngreso {
   background:
-    linear-gradient(135deg, rgba(144, 211, 106, 0.18), rgba(52, 88, 37, 0.08)),
+    linear-gradient(135deg, rgba(144, 211, 106, 0.44), rgba(52, 88, 37, 0.08)),
     var(--panel-background);
   border-color: rgba(144, 211, 106, 0.24);
   box-shadow:

@@ -70,7 +70,7 @@
 }
 
 .activeLink {
-  background: linear-gradient(135deg, #3bcb23 0%, #122c0c 100%);
+  background: #2f6f35;
   color: white !important;
   box-shadow: 0 4px 15px rgba(59, 203, 35, 0.2);
 }

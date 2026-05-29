@@ -222,21 +222,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
     <div className={style.container}>
       {loading && <div className={style.spinner}></div>}
 
-      <div className={style.titleRow}>
-        <div>
-          <p className={style.kicker}>Movimientos</p>
-          <h2 className={style.title}>
-            {isEditing ? "Editar movimiento" : `Cargar ${mode.title.toLowerCase()}`}
-          </h2>
-        </div>
-        <p className={style.subtitle}>
-          {mode.recurrente
-            ? "Los movimientos fijos se renderizan automaticamente segun la frecuencia elegida."
-            : isDebtMode
-              ? "La deuda queda pendiente y recien impacta en caja cuando marques que ya la pagaste."
-              : "Cada movimiento puede guardarse en pesos o dolares sin mezclar cajas."}
-        </p>
-      </div>
+  
 
       {!only && !isEditing && (
         <div className={style.modeSelector}>

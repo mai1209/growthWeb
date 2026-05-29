@@ -127,24 +127,7 @@ function LeftSite({
           </article>
         </div>
 
-        <section className={style.section}>
-          <div className={style.sectionTitle}>
-            <h3>Accesos rapidos</h3>
-            <p>Movete entre caja y notas sin perder contexto.</p>
-          </div>
-
-          <div className={style.quickActions}>
-            <button type="button" onClick={() => navigate("/")}>
-              Ver resumen
-            </button>
-            <button type="button" onClick={() => navigate("/add")}>
-              Cargar movimiento
-            </button>
-            <button type="button" onClick={() => navigate("/notas")}>
-              Ir a notas
-            </button>
-          </div>
-        </section>
+     
       </div>
     </aside>
   );

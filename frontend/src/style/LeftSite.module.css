@@ -2,8 +2,6 @@
   width: 350px;
   min-height: calc(100vh - 78px);
   padding: 1rem;
-  background: var(--sidebar-background);
-  border-right: 1px solid rgba(216, 241, 224, 0.08);
 }
 
 .panel {
@@ -43,7 +41,7 @@
 .statCard span {
   margin: 0;
   color: #9fdc84;
-  font-size: 0.72rem;
+  font-size: 0.5rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -181,7 +179,6 @@
 }
 
 .statCard {
-  min-height: 98px;
   padding: 0.85rem;
   display: grid;
   align-content: space-between;
@@ -260,9 +257,7 @@
   background: rgba(159, 220, 132, 0.1);
 }
 
-:global(body[data-theme="light"]) .container {
-  border-right-color: rgba(22, 41, 31, 0.08);
-}
+
 
 :global(body[data-theme="light"]) .balanceCard,
 :global(body[data-theme="light"]) .section,
@@ -312,7 +307,6 @@
     min-height: auto;
     padding: 0.85rem 0.85rem 0;
     border-right: none;
-    background: transparent;
   }
 
   .panel {

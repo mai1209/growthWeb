@@ -4,16 +4,12 @@ import Add from "./Add";
 import { FiX } from "react-icons/fi";
 import style from "../style/App.module.css";
 import {
-  CURRENCY_OPTIONS,
   filterMovimientosByCurrency,
   formatMoney,
   formatSignedMoney,
   getCurrencyMeta,
-  getLatestMovimiento,
   getMovementMethodMeta,
   getMovementTypeMeta,
-  getTopCategory,
-  isSameMonth,
 } from "../utils/finance";
 
 const DASHBOARD_PERIODS = [
@@ -116,32 +112,6 @@ function Dashboard({
   const [showOnly, setShowOnly] = useState(null);
   const [selectedPeriod, setSelectedPeriod] = useState("day");
 
-  const currencyMovimientos = useMemo(
-    () => filterMovimientosByCurrency(movimientos, currentCurrency),
-    [movimientos, currentCurrency],
-  );
-
-  const monthMovimientos = useMemo(
-    () =>
-      currencyMovimientos.filter((movimiento) => isSameMonth(movimiento.fecha)),
-    [currencyMovimientos],
-  );
-
-  const topExpense = useMemo(
-    () => getTopCategory(monthMovimientos, "egreso"),
-    [monthMovimientos],
-  );
-
-  const topIncome = useMemo(
-    () => getTopCategory(monthMovimientos, "ingreso"),
-    [monthMovimientos],
-  );
-
-  const latestMovimiento = useMemo(
-    () => getLatestMovimiento(currencyMovimientos),
-    [currencyMovimientos],
-  );
-
   const periodRange = useMemo(
     () => getPeriodRange(selectedPeriod),
     [selectedPeriod],
@@ -171,108 +141,56 @@ function Dashboard({
             <div className={style.quickActions}>
               <button
                 type="button"
+                className={style.fixedIncomeAction}
+                onClick={() => setShowOnly("ingreso-fijo")}
+              >
+                <img className={style.quickActionIcon} src="dinerofijo.png" alt="" />
+                <span>Ingreso fijo</span>
+              </button>
+
+              <button
+                type="button"
                 className={style.incomeAction}
                 onClick={() => setShowOnly("ingreso")}
               >
-                Nuevo ingreso
-              </button>
-              <button
-                type="button"
-                className={style.expenseAction}
-                onClick={() => setShowOnly("egreso")}
-              >
-                Nuevo egreso
+                <img className={style.quickActionIcon} src="ingreso-50.png" alt="" />
+                <span>Nuevo ingreso</span>
               </button>
               <button
                 type="button"
                 className={style.savingsAction}
                 onClick={() => setShowOnly("ahorro")}
               >
-                Nuevo ahorro
+                <img className={style.quickActionIcon} src="bolsa-de-dinero.png" alt="" />
+                <span>Nuevo ahorro</span>
               </button>
               <button
                 type="button"
                 className={style.debtAction}
                 onClick={() => setShowOnly("deuda")}
               >
-                Cargar deuda
+                <img className={style.quickActionIcon} src="cargardeuda.png" alt="" />
+                <span>Cargar deuda</span>
               </button>
-              <button
-                type="button"
-                className={style.fixedIncomeAction}
-                onClick={() => setShowOnly("ingreso-fijo")}
-              >
-                Ingreso fijo
-              </button>
+
               <button
                 type="button"
                 className={style.fixedExpenseAction}
                 onClick={() => setShowOnly("egreso-fijo")}
               >
-                Gasto fijo
+                <img className={style.quickActionIcon} src="deuda.png" alt="" />
+                <span>Gasto fijo</span>
+              </button>
+
+              <button
+                type="button"
+                className={style.expenseAction}
+                onClick={() => setShowOnly("egreso")}
+              >
+                <img className={style.quickActionIcon} src="gastos-50.png" alt="" />
+                <span>Nuevo egreso</span>
               </button>
             </div>
-
-            <div
-              className={`${style.currencySwitch} ${
-                currentCurrency === "USD"
-                  ? style.currencySwitchUsd
-                  : style.currencySwitchArs
-              }`}
-            >
-              {CURRENCY_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={`${style.currencyButton} ${
-                    currentCurrency === option.value
-                      ? style.currencyButtonActive
-                      : ""
-                  }`}
-                  onClick={() => onCurrencyChange?.(option.value)}
-                >
-                  {option.codeLabel}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className={style.insightsSection}>
-          <div className={style.insightsHeader}>
-            <h2>Lo mas relevante de este mes en {currencyMeta.codeLabel}</h2>
-          </div>
-
-          <div className={style.insightsGrid}>
-            <article className={style.insightCard}>
-              <span>Categoria con mayor egreso</span>
-              <strong>
-                {topExpense
-                  ? `${topExpense.categoria} · ${formatMoney(topExpense.monto, currentCurrency)}`
-                  : "Sin egresos este mes"}
-              </strong>
-            </article>
-
-            <article className={style.insightCard}>
-              <span>Categoria con mayor ingreso</span>
-              <strong>
-                {topIncome
-                  ? `${topIncome.categoria} · ${formatMoney(topIncome.monto, currentCurrency)}`
-                  : "Sin ingresos este mes"}
-              </strong>
-            </article>
-
-            <article className={style.insightCard}>
-              <span>Ultimo movimiento</span>
-              <strong>
-                {latestMovimiento
-                  ? `${latestMovimiento.categoria} · ${formatMoney(
-                      latestMovimiento.monto,
-                      currentCurrency,
-                    )}`
-                  : "Todavia no cargaste movimientos"}
-              </strong>
-            </article>
           </div>
         </section>
       </section>
@@ -293,11 +211,10 @@ function Dashboard({
               <button
                 key={period.value}
                 type="button"
-                className={`${style.dashboardPeriodButton} ${
-                  selectedPeriod === period.value
-                    ? style.dashboardPeriodButtonActive
-                    : ""
-                }`}
+                className={`${style.dashboardPeriodButton} ${selectedPeriod === period.value
+                  ? style.dashboardPeriodButtonActive
+                  : ""
+                  }`}
                 onClick={() => setSelectedPeriod(period.value)}
               >
                 {period.label}
@@ -336,10 +253,10 @@ function Dashboard({
                           typeMeta.signedAsPositive === null
                             ? formatMoney(movimiento.monto, currentCurrency)
                             : formatSignedMoney(
-                                movimiento.monto,
-                                currentCurrency,
-                                typeMeta.signedAsPositive,
-                              );
+                              movimiento.monto,
+                              currentCurrency,
+                              typeMeta.signedAsPositive,
+                            );
                         const toneClass =
                           movimiento.tipo === "ingreso"
                             ? style.dashboardIncomeRow
@@ -458,21 +375,16 @@ function Dashboard({
                 <p className={style.inlineFormEyebrow}>
                   {showOnly === "deuda"
                     ? "Cargar deuda"
-                    : `Cargar ${
-                        showOnly === "ingreso"
-                          ? "ingreso"
-                          : showOnly === "egreso"
-                            ? "egreso"
-                            : showOnly === "ahorro"
-                              ? "ahorro"
-                              : "movimiento"
-                      }`}
+                    : `Cargar ${showOnly === "ingreso"
+                      ? "nuevo ingreso"
+                      : showOnly === "egreso"
+                        ? "nuevo egreso"
+                        : showOnly === "ahorro"
+                          ? "ahorro"
+                          : "movimiento fijo"
+                    }`}
                 </p>
-                <h2>
-                  {showOnly === "deuda"
-                    ? "Registra lo pendiente ahora y pasalo a egreso real cuando lo pagues."
-                    : "Guarda movimientos en pesos o dolares desde el mismo flujo."}
-                </h2>
+             
               </div>
 
               <button

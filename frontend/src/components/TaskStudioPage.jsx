@@ -38,6 +38,7 @@ const COLOR_OPTIONS = [
   { value: "color8", label: "Rojo" },
   { value: "color9", label: "Gris" },
   { value: "color10", label: "Blanco" },
+  { value: "color11", label: "Negro" },
 ];
 
 const TEXT_COLOR_OPTIONS = [
@@ -675,9 +676,20 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                         return (
                           <article
                             key={task._id}
+                            role="button"
+                            tabIndex={0}
                             className={`${style.taskRow} ${style[task.color] || style.color1} ${
                               completed ? style.taskRowCompleted : ""
                             }`}
+                            onClick={() => handleEdit(task)}
+                            onKeyDown={(event) => {
+                              if (event.target !== event.currentTarget) return;
+
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                handleEdit(task);
+                              }
+                            }}
                           >
                             <div className={style.taskRowCopy}>
                               <span className={style.noteDate}>{noteDateLabel}</span>
@@ -686,11 +698,23 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                             </div>
 
                             <div className={style.taskRowActions}>
-                              <button type="button" onClick={() => handleEdit(task)}>
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleEdit(task);
+                                }}
+                              >
                                 <FiEdit3 />
                                 Editar
                               </button>
-                              <button type="button" onClick={() => handleDelete(task._id)}>
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleDelete(task._id);
+                                }}
+                              >
                                 <FiTrash2 />
                                 Eliminar
                               </button>
@@ -715,14 +739,10 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
             <div className={style.editorHeader}>
               <div>
                 <p className={style.cardKicker}>Editor</p>
-                <h2>{form.id ? "Editar nota" : "Nueva nota"}</h2>
+                <h2>{form.id ? "" : "Nueva nota"}</h2>
               </div>
               <div className={style.editorActions}>
-                {form.id ? (
-                  <button type="button" className={style.secondaryButton} onClick={resetForm}>
-                    Limpiar edición
-                  </button>
-                ) : null}
+              
                 <button type="button" className={style.iconButton} onClick={handleCloseEditor} aria-label="Cerrar panel">
                   <FiX />
                 </button>
