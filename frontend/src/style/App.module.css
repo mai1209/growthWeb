@@ -119,7 +119,6 @@
   min-height: calc(100vh - 78px);
   padding: 1rem 1rem 1.5rem;
   color: var(--color-text);
-  background: var(--page-background);
 }
 
 .overviewCard {
