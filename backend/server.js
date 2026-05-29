@@ -61,11 +61,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Conexión a DB (lazy para serverless)
+// Conexión a DB lazy para serverless
 let dbReady = false;
 
 app.use(async (req, res, next) => {
-  // No conectar para health/debug
+  // No conectar DB para health/debug
   if (req.path === "/api/health" || req.path === "/api/debug") {
     return next();
   }
@@ -75,11 +75,31 @@ app.use(async (req, res, next) => {
       await connectDB();
       dbReady = true;
     }
-    next();
+
+    return next();
   } catch (error) {
     console.error("DB connection error:", error);
-    return res.status(500).json({ error: "Database connection failed" });
+    return res.status(500).json({
+      error: "Database connection failed",
+    });
   }
+});
+
+// Health check
+app.get("/api/health", (req, res) => {
+  return res.status(200).json({
+    ok: true,
+    message: "Backend funcionando",
+  });
+});
+
+// Debug simple
+app.get("/api/debug", (req, res) => {
+  return res.status(200).json({
+    ok: true,
+    env: process.env.NODE_ENV,
+    vercel: process.env.VERCEL,
+  });
 });
 
 // Rutas API
@@ -88,15 +108,22 @@ app.use("/api/auth", authRoutes);
 app.use("/api/task", taskRoutes);
 app.use("/api/shared-groups", sharedExpenseRoutes);
 
-// Health check
-app.get("/api/health", (req, res) => {
-  res.json({ ok: true });
+// Ruta fallback para API inexistente
+app.use("/api", (req, res) => {
+  return res.status(404).json({
+    error: "Ruta API no encontrada",
+    path: req.originalUrl,
+    method: req.method,
+  });
 });
 
 // Solo para desarrollo local
 if (process.env.VERCEL !== "1") {
   const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 }
 
 export default app;
