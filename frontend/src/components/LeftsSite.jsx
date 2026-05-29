@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+//import { useNavigate } from "react-router-dom";
 import style from "../style/LeftSite.module.css";
 import {
   CURRENCY_OPTIONS,
@@ -11,25 +11,30 @@ import {
 } from "../utils/finance";
 
 function LeftSite({
-  refreshKey,
+  
   movimientos = [],
   currentCurrency,
   onCurrencyChange,
 }) {
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
   const [areTotalsVisible, setAreTotalsVisible] = useState(true);
 
   const currencyMeta = getCurrencyMeta(currentCurrency);
 
-  const currencyMovimientos = useMemo(
-    () => filterMovimientosByCurrency(movimientos, currentCurrency),
-    [movimientos, currentCurrency]
-  );
+  const currencyMovimientos = useMemo(() => {
+  const result = filterMovimientosByCurrency(movimientos, currentCurrency);
+  return Array.isArray(result) ? result : [];
+}, [movimientos, currentCurrency]);
 
-  const monthMovimientos = useMemo(
-    () => currencyMovimientos.filter((movimiento) => isSameMonth(movimiento.fecha)),
-    [currencyMovimientos]
+  const monthMovimientos = useMemo(() => {
+  const safeMovimientos = Array.isArray(currencyMovimientos)
+    ? currencyMovimientos
+    : [];
+
+  return safeMovimientos.filter((movimiento) =>
+    isSameMonth(movimiento.fecha)
   );
+}, [currencyMovimientos]);
 
   const historicalSummary = useMemo(
     () => summarizeByType(currencyMovimientos),

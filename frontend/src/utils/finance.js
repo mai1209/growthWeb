@@ -218,18 +218,18 @@ export const expandMovimientos = (
   });
 };
 
-export const filterMovimientosByCurrency = (
-  movimientos = [],
-  currency,
-  options = {}
-) =>
-  expandMovimientos(
-    movimientos.filter(
-      (movimiento) =>
-        normalizeCurrency(movimiento.moneda) === normalizeCurrency(currency)
-    ),
-    options
-  );
+export const filterMovimientosByCurrency = (movimientos = [], currency) => {
+  const safeMovimientos = Array.isArray(movimientos) ? movimientos : [];
+  const safeCurrency = normalizeCurrency(currency);
+
+  return safeMovimientos.filter((movimiento) => {
+    const movimientoCurrency = normalizeCurrency(
+      movimiento?.currency || movimiento?.moneda
+    );
+
+    return movimientoCurrency === safeCurrency;
+  });
+};
 
 export const summarizeByType = (movimientos = []) =>
   movimientos.reduce(
