@@ -224,8 +224,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.65rem;
-  min-height: 64px;
-  padding: 0.85rem 0.95rem;
+  padding: 0.7rem 0.95rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   color: var(--color-text);
@@ -255,8 +254,8 @@
 
 .quickActionIcon {
   flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   margin: 0;
   object-fit: contain;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.16));
@@ -659,6 +658,7 @@
 .promoCard {
   display: flex;
   flex-direction: column;
+  height: 100%;
   gap: 0.9rem;
   padding: 0.9rem;
   border-radius: 24px;

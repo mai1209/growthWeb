@@ -11,8 +11,8 @@
 .listCard {
   border: 1px solid var(--border-color);
   background: var(--panel-background);
-  box-shadow: var(--shadow-soft);
-  border-radius: 24px;
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-2xl);
 }
 .header {
   padding: 1.35rem;
@@ -24,10 +24,11 @@
 
 .kicker,
 .cardKicker {
-  color: var(--color-verde);
-  font-size: 0.68rem;
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
 }
 
 
@@ -55,6 +56,29 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.listTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0.3rem 0 0;
+  font-size: 1.35rem;
+  letter-spacing: -0.01em;
+}
+
+.listCount {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 0.5rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--accent-border);
+  background: var(--accent-surface);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .form {
@@ -170,22 +194,29 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 
 .editorWorkspace {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  gap: 0.7rem;
+  align-items: flex-start;
+  gap: 0;
+  min-width: 0;
 }
 
 .editorToolbar {
+  position: sticky;
+  top: 76px;
+  z-index: 4;
   display: flex;
-  flex: 0 0 48px;
+  flex: 0 0 auto;
+  flex-direction: row;
   align-self: flex-start;
-  gap: 0.28rem;
-  max-height: calc(100vh - 5.5rem);
-  padding: 0.3rem;
-  border-radius: 16px;
-  border: 1px solid rgba(17, 24, 20, 0.1);
-  background: #ffffff;
-  box-shadow: 0 14px 34px rgba(17, 24, 20, 0.08);
+  gap: 0.3rem;
   width: 100%;
+  max-height: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: 0.7rem;
+  padding: 0.4rem;
+  background: #ffffff;
 }
 
 .toolbarButton {
@@ -221,16 +252,13 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 
 .textSizeGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(3, 34px);
   gap: 0.24rem;
   padding: 0.2rem 0;
-  width: 40px;
-  height: 40px;
-  margin-right: 90px;
 }
 
 .textSizeButton {
-  width: 40px;
+  width: 34px;
   min-height: 28px;
   border: 1px solid rgba(17, 24, 20, 0.1);
   border-radius: 10px;
@@ -272,6 +300,7 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 .editorField {
   flex: 1 1 auto;
   min-width: 0;
+  width: 100%;
 }
 
 .editorShell {
@@ -339,13 +368,16 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .secondaryButton {
-  background:#2f6f35;
-  color: #f7fff9;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: transparent;
+  box-shadow: var(--shadow-xs);
 }
 
 .secondaryButton:hover {
   transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .ghostButton {
@@ -378,6 +410,45 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   gap: 0.65rem;
 }
 
+.unsavedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.7rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(217, 119, 6, 0.34);
+  background: rgba(217, 119, 6, 0.12);
+  color: #b45309;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.unsavedDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #d97706;
+}
+
+:global(body[data-theme="dark"]) .unsavedBadge {
+  border-color: rgba(255, 184, 92, 0.34);
+  background: rgba(255, 184, 92, 0.14);
+  color: #ffce8a;
+}
+
+:global(body[data-theme="dark"]) .unsavedDot {
+  background: #ffb84c;
+}
+
+@media (max-width: 520px) {
+  .unsavedBadge {
+    padding: 0.28rem 0.55rem;
+    font-size: 0.68rem;
+  }
+}
+
 .formGrid,
 .filterBar {
   display: grid;
@@ -391,9 +462,9 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.75rem;
-  border: 1px solid rgba(216, 241, 224, 0.1);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--surface-input);
 }
 
 .noteCalendarButton {
@@ -401,8 +472,8 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   flex: 1 1 260px;
   min-height: 58px;
   padding: 0.6rem 3rem 0.6rem 0.85rem;
-  border: 1px solid rgba(144, 211, 106, 0.28);
-  border-radius: 15px;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-md);
   display: grid;
   align-content: center;
   gap: 0.16rem;
@@ -457,13 +528,19 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   flex: 0 0 auto;
   min-height: 58px;
   padding: 0 1rem;
-  border: 1px solid rgba(103, 220, 70, 0.55);
-  border-radius: 15px;
-  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-input);
   color: var(--color-text);
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.monthViewButton:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-surface);
 }
 
 .colorGrid {
@@ -583,7 +660,17 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
-  background: linear-gradient(135deg, rgba(59, 203, 35, 0.28), rgba(18, 43, 11, 0.92));
+  padding: 0 1.2rem;
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 800;
+  box-shadow: var(--shadow-xs);
+}
+
+.saveButton:hover:not(:disabled) {
+  filter: brightness(1.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .errorText {
@@ -598,14 +685,16 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 
 
 .groupList {
-  display: grid;
-  gap: 1rem;
   width: 100%;
+  column-width: 300px;
+  column-gap: 1.1rem;
 }
 
 .noteDayGroup {
   display: grid;
   gap: 0.72rem;
+  margin-bottom: 1.1rem;
+  break-inside: avoid;
 }
 
 .groupHeader {
@@ -622,11 +711,8 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .noteDayGrid {
-  display: flex;
-  align-items: stretch;
-  align-content: flex-start;
-  gap: 0.9rem;
-  flex-wrap: wrap;
+  display: grid;
+  gap: 0.75rem;
 }
 
 .groupHeader span,
@@ -647,17 +733,16 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 
 .taskRow {
   display: flex;
-  flex: 0 1 250px;
   flex-direction: column;
   justify-content: space-between;
   gap: 0.85rem;
-  width: 250px;
-  min-height: 220px;
-  padding: 0.95rem;
-  border-radius: 16px;
+  width: 100%;
+  min-height: 0;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
   border: 1px solid rgba(216, 241, 224, 0.08);
   color: #121814;
-  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
@@ -738,6 +823,8 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   cursor: pointer;
   font-size: 0.82rem;
   font-weight: 700;
+  background: rgba(255, 255, 255, 0.72);
+  color: #121814;
 }
 
 .taskRow.color11 {
@@ -799,11 +886,11 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 50;
+  z-index: 3000;
   width: 100vw;
   height: 100vh;
   overflow-y: auto;
-  padding: clamp(4.6rem, 7.5vh, 5.6rem) clamp(0.65rem, 1.6vw, 1.25rem) 0.9rem;
+  padding: 0 clamp(0.65rem, 1.6vw, 1.25rem) 0.9rem;
   border-radius: 0;
   background: #ffffff;
   color: #172018;
@@ -829,9 +916,12 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 .editorCard .editorHeader {
   position: sticky;
   top: 0;
-  z-index: 1;
-  padding: 0.2rem 0 0.45rem;
+  z-index: 8;
+  min-height: 76px;
+  padding: 0.8rem 0 0.7rem;
+  align-items: center;
   background: #ffffff;
+  box-shadow: 0 14px 22px rgba(255, 255, 255, 0.86);
 }
 
 .editorCard .form {
@@ -839,18 +929,246 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .editorCard .editor {
-  min-height: clamp(300px, calc(100vh - 315px), 560px);
+  min-height: clamp(360px, calc(100vh - 360px), 620px);
 }
 
 .editorCard .editor :global(.ql-editor) {
-  min-height: clamp(300px, calc(100vh - 315px), 560px);
+  min-height: clamp(360px, calc(100vh - 360px), 620px);
+}
+
+.notePagesBar {
+  position: sticky;
+  top: 76px;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.35rem 0 0.3rem;
+  background: #ffffff;
+}
+
+.notePageTabs {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.notePageTab,
+.addPageButton {
+  min-height: 38px;
+  border: 1px solid rgba(17, 24, 20, 0.12);
+  border-radius: 999px;
+  background: rgba(17, 24, 20, 0.045);
+  color: #172018;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.notePageTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex: 0 0 auto;
+  padding: 0.35rem 0.75rem 0.35rem 0.42rem;
+}
+
+.notePageTab span {
+  display: inline-grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 999px;
+  background: rgba(47, 111, 53, 0.14);
+  color: #2f6f35;
+  font-size: 0.7rem;
+}
+
+.notePageTabActive {
+  border-color: rgba(47, 111, 53, 0.34);
+  background: rgba(47, 111, 53, 0.12);
+  color: #1f4f25;
+}
+
+/* ===== Editor: cuerpo en dos columnas (páginas | editor) ===== */
+.editorBody {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.1rem;
+  width: 100%;
+}
+
+.pagesColumn {
+  position: sticky;
+  top: 76px;
+  z-index: 6;
+  flex: 0 0 200px;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.7rem;
+  border: 1px solid rgba(17, 24, 20, 0.08);
+  border-radius: var(--radius-lg);
+  background: #ffffff;
+  box-shadow: var(--shadow-sm);
+}
+
+.pagesColumnTitle {
+  margin: 0 0 0.1rem;
+  padding: 0 0.1rem;
+  color: #637267;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pagesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 52vh;
+  overflow-y: auto;
+}
+
+.notePageItem {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.22rem;
+  border: 1px solid rgba(17, 24, 20, 0.1);
+  border-radius: var(--radius-md);
+  background: rgba(17, 24, 20, 0.025);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.notePageItemActive {
+  border-color: var(--accent-border);
+  background: var(--accent-surface);
+}
+
+.notePageSelect {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.45rem;
+  border: none;
+  background: transparent;
+  color: #172018;
+  cursor: pointer;
+  font-weight: 700;
+  text-align: left;
+}
+
+.notePageNumber {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-sm);
+  background: rgba(47, 111, 53, 0.12);
+  color: #2f6f35;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.notePageItemActive .notePageNumber {
+  background: rgba(47, 111, 53, 0.2);
+}
+
+.notePageName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.86rem;
+}
+
+.notePageItemActions {
+  display: flex;
+  align-items: center;
+  gap: 0.08rem;
+  flex: 0 0 auto;
+}
+
+.notePageActionButton {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: #5b6b60;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.notePageActionButton svg {
+  width: 15px;
+  height: 15px;
+}
+
+.notePageActionButton:hover {
+  background: rgba(17, 24, 20, 0.06);
+  color: #172018;
+}
+
+.notePageDeleteButton:hover:not(:disabled) {
+  background: var(--color-rojo-soft);
+  color: #c0432e;
+}
+
+.notePageActionButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.notePageRenameInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  color: #172018;
+  font-size: 0.86rem;
+  font-weight: 700;
+  outline: none;
+}
+
+.notePageRenameInput:focus {
+  box-shadow: var(--ring-accent);
+}
+
+.addPageButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px dashed var(--accent-border);
+  border-radius: var(--radius-md);
+  background: var(--accent-surface);
+  color: #2f6f35;
+}
+
+.addPageButton:hover {
+  background: var(--color-verde-soft);
 }
 
 :global(body[data-theme="light"]) .header,
 :global(body[data-theme="light"]) .editorCard,
 :global(body[data-theme="light"]) .listCard,
 :global(body[data-theme="light"]) .editor,
-:global(body[data-theme="light"]) .editorToolbar,
+
 :global(body[data-theme="light"]) .input,
 :global(body[data-theme="light"]) .select,
 :global(body[data-theme="light"]) .ghostButton,
@@ -876,13 +1194,127 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 
 :global(body[data-theme="dark"]) .editorCard,
 :global(body[data-theme="dark"]) .editorCard .editorHeader {
-  background: #ffffff;
-  color: #172018;
+  background: #071821;
+  color: #ecf6f3;
 }
 
 :global(body[data-theme="dark"]) .editorCard .field span,
 :global(body[data-theme="dark"]) .editorCard .cardKicker {
-  color: #52735b;
+  color: #8edc93;
+}
+
+:global(body[data-theme="dark"]) .editorCard .input {
+  border-color: rgba(216, 241, 224, 0.12);
+  background: rgba(255, 255, 255, 0.055);
+  color: #ecf6f3;
+}
+
+:global(body[data-theme="dark"]) .editorCard .editorHeader,
+:global(body[data-theme="dark"]) .notePagesBar {
+  background: #071821;
+  box-shadow: 0 14px 22px rgba(7, 24, 33, 0.88);
+}
+
+:global(body[data-theme="dark"]) .noteMetaInfo,
+:global(body[data-theme="dark"]) .backgroundPicker > span {
+  color: #9ab0aa;
+}
+
+:global(body[data-theme="dark"]) .noteMetaInfo span {
+  border-color: rgba(216, 241, 224, 0.1);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+:global(body[data-theme="dark"]) .editorToolbar {
+  background: #071821;
+}
+
+:global(body[data-theme="dark"]) .toolbarButton,
+:global(body[data-theme="dark"]) .textSizeButton {
+  border-color: rgba(216, 241, 224, 0.14);
+  background: rgba(255, 255, 255, 0.055);
+  color: #ecf6f3;
+}
+
+:global(body[data-theme="dark"]) .toolbarButton:hover,
+:global(body[data-theme="dark"]) .toolbarButtonActive,
+:global(body[data-theme="dark"]) .textSizeButton:hover,
+:global(body[data-theme="dark"]) .textSizeButtonActive {
+  background: rgba(144, 211, 106, 0.16);
+  border-color: rgba(144, 211, 106, 0.34);
+  color: #dff8d8;
+}
+
+:global(body[data-theme="dark"]) .notePageTab,
+:global(body[data-theme="dark"]) .addPageButton {
+  border-color: rgba(216, 241, 224, 0.14);
+  background: rgba(255, 255, 255, 0.07);
+  color: #ecf6f3;
+}
+
+:global(body[data-theme="dark"]) .notePageTab span {
+  background: rgba(144, 211, 106, 0.14);
+  color: #a8ec93;
+}
+
+:global(body[data-theme="dark"]) .notePageTabActive {
+  border-color: rgba(144, 211, 106, 0.4);
+  background: rgba(144, 211, 106, 0.16);
+}
+
+:global(body[data-theme="dark"]) .pagesColumn {
+  border-color: rgba(216, 241, 224, 0.12);
+  background: #071821;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.22);
+}
+
+:global(body[data-theme="dark"]) .pagesColumnTitle {
+  color: #9ab0aa;
+}
+
+:global(body[data-theme="dark"]) .notePageItem {
+  border-color: rgba(216, 241, 224, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+:global(body[data-theme="dark"]) .notePageItemActive {
+  border-color: rgba(144, 211, 106, 0.4);
+  background: rgba(144, 211, 106, 0.14);
+}
+
+:global(body[data-theme="dark"]) .notePageSelect {
+  color: #ecf6f3;
+}
+
+:global(body[data-theme="dark"]) .notePageNumber {
+  background: rgba(144, 211, 106, 0.16);
+  color: #a8ec93;
+}
+
+:global(body[data-theme="dark"]) .notePageActionButton {
+  color: #9ab0aa;
+}
+
+:global(body[data-theme="dark"]) .notePageActionButton:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ecf6f3;
+}
+
+:global(body[data-theme="dark"]) .notePageDeleteButton:hover:not(:disabled) {
+  background: rgba(255, 143, 107, 0.18);
+  color: #ffb1a2;
+}
+
+:global(body[data-theme="dark"]) .notePageRenameInput {
+  border-color: rgba(144, 211, 106, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ecf6f3;
+}
+
+:global(body[data-theme="dark"]) .addPageButton {
+  border-color: rgba(144, 211, 106, 0.34);
+  background: rgba(144, 211, 106, 0.12);
+  color: #a8ec93;
 }
 
 @media (min-width: 980px) {
@@ -892,9 +1324,12 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 @media (max-width: 1100px) {
+  .groupList {
+    column-width: 280px;
+  }
+
   .taskRow {
-    flex-basis: 220px;
-    width: 220px;
+    width: 100%;
   }
 }
 
@@ -927,20 +1362,18 @@ border: 1px solid rgba(255, 255, 255, 0.12);
     min-height: calc(100vh - 210px);
   }
 
-  .groupList,
   .noteDayGrid {
     gap: 0.75rem;
   }
 
   .taskRow {
-    flex-basis: calc(50% - 0.4rem);
-    width: calc(50% - 0.4rem);
+    width: 100%;
     min-width: 0;
   }
 
   .editorCard {
     width: 100vw;
-    padding: 4.4rem 0.75rem 0.75rem;
+    padding: 0 0.75rem 0.75rem;
   }
 
   .noteMetaBar {
@@ -954,19 +1387,51 @@ border: 1px solid rgba(255, 255, 255, 0.12);
     width: 100%;
   }
 
+  .editorBody {
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .pagesColumn {
+    position: static;
+    top: auto;
+    flex: none;
+    width: 100%;
+    padding: 0.6rem 0.7rem;
+  }
+
+  .pagesList {
+    flex-direction: row;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.15rem;
+  }
+
+  .notePageItem {
+    flex: 0 0 auto;
+  }
+
+  .notePageName {
+    max-width: 120px;
+  }
+
   .editorWorkspace {
-    gap: 0.55rem;
+    flex-direction: column;
+    gap: 0;
   }
 
   .editorToolbar {
-    position: static;
+    position: sticky;
+    top: 76px;
     flex: 0 0 auto;
+    flex-direction: row;
     max-height: none;
     padding: 0.25rem;
-    width: 100vw;
-    border-radius: 1px solid red;
-
-
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: 16px;
   }
 
   .toolbarButton {
@@ -997,7 +1462,7 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   }
 
   .editorCard {
-    padding: 4.2rem 0.65rem 0.65rem;
+    padding: 0 0.65rem 0.65rem;
     border-radius: 0;
   }
 
@@ -1013,6 +1478,10 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 
   .editorActions {
     justify-content: space-between;
+  }
+
+  .editorToolbar {
+    top: 124px;
   }
 
   .taskRow {

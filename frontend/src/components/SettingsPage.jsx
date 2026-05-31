@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   FiBriefcase,
+  FiChevronDown,
   FiEye,
   FiEyeOff,
   FiKey,
@@ -9,6 +10,7 @@ import {
   FiPlus,
   FiRefreshCcw,
   FiSave,
+  FiTrash2,
   FiUser,
 } from "react-icons/fi";
 import { authService } from "../api";
@@ -71,6 +73,8 @@ function SettingsPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
+  const [openPersonal, setOpenPersonal] = useState(true);
+  const [openBusiness, setOpenBusiness] = useState(() => new Set());
 
   const profileInitials = useMemo(() => getInitials(profile), [profile]);
   const businessProfiles = profile.businessProfiles?.length
@@ -130,6 +134,7 @@ function SettingsPage() {
   };
 
   const handleAddBusiness = () => {
+    const newIndex = businessProfiles.length;
     setProfile((prev) => ({
       ...prev,
       businessProfiles: [
@@ -147,6 +152,49 @@ function SettingsPage() {
         },
       ],
     }));
+    setOpenBusiness((prev) => new Set(prev).add(newIndex));
+  };
+
+  const toggleBusiness = (index) => {
+    setOpenBusiness((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  };
+
+  const handleRemoveBusiness = (index) => {
+    const target = businessProfiles[index];
+    const hasData =
+      target &&
+      (target.name || target.industry || target.logoUrl || target.phone || target.address);
+
+    if (hasData && !window.confirm("¿Eliminar este negocio? Se quitará al guardar los cambios.")) {
+      return;
+    }
+
+    setProfile((prev) => {
+      const base = prev.businessProfiles?.length
+        ? prev.businessProfiles
+        : prev.businessProfile?.name
+          ? [prev.businessProfile]
+          : [];
+
+      return { ...prev, businessProfiles: base.filter((_, i) => i !== index) };
+    });
+
+    setOpenBusiness((prev) => {
+      const next = new Set();
+      prev.forEach((i) => {
+        if (i < index) next.add(i);
+        else if (i > index) next.add(i - 1);
+      });
+      return next;
+    });
   };
 
   const handleProfileSubmit = async (event) => {
@@ -226,23 +274,7 @@ function SettingsPage() {
 
   return (
     <section className={style.container}>
-      <div className={style.header}>
-        <div>
-          <p className={style.kicker}>Ajustes</p>
-          <h1>{TAB_META[activeTab].title}</h1>
-          <p>{TAB_META[activeTab].text}</p>
-        </div>
-        <div className={style.headerIcon}>
-          {profile.profilePhotoUrl ? (
-            <img src={profile.profilePhotoUrl} alt="Foto de perfil" />
-          ) : activeTab === "perfil" ? (
-            <span>{profileInitials}</span>
-          ) : (
-            <ActiveIcon />
-          )}
-        </div>
-      </div>
-
+ 
       <div className={style.mobileTabs}>
         {Object.entries(TAB_META).map(([key, tab]) => {
           const Icon = tab.icon;
@@ -263,70 +295,81 @@ function SettingsPage() {
 
       {activeTab === "perfil" ? (
         <form className={style.card} onSubmit={handleProfileSubmit}>
-          <div className={style.profileHero}>
-            <div className={style.avatar}>
-              {profile.profilePhotoUrl ? (
-                <img src={profile.profilePhotoUrl} alt="Foto de perfil" />
-              ) : (
-                <span>{profileInitials}</span>
-              )}
+          {/* ===== Perfil personal ===== */}
+          <div className={`${style.accordion} ${openPersonal ? style.accordionOpen : ""}`}>
+            <div className={style.accordionHead}>
+              <button
+                type="button"
+                className={style.accordionToggle}
+                onClick={() => setOpenPersonal((prev) => !prev)}
+                aria-expanded={openPersonal}
+              >
+                <span className={style.accordionAvatar}>
+                  {profile.profilePhotoUrl ? (
+                    <img src={profile.profilePhotoUrl} alt="Foto de perfil" />
+                  ) : (
+                    <span>{profileInitials}</span>
+                  )}
+                </span>
+                <span className={style.accordionInfo}>
+                  <span className={style.accordionLabel}>Perfil personal</span>
+                  <strong className={style.accordionName}>
+                    {profile.fullName || profile.username || "Tu perfil"}
+                  </strong>
+                  <small className={style.accordionSub}>
+                    {profile.email || "Email de ingreso"}
+                  </small>
+                </span>
+                <FiChevronDown className={style.accordionChevron} />
+              </button>
             </div>
-            <div>
-              <p className={style.kicker}>Perfil</p>
-              <h2>{profile.fullName || profile.username || "Tu perfil"}</h2>
-              <p>{profile.email || "Email de ingreso"}</p>
+
+            <div className={style.accordionBody}>
+              <div className={style.accordionBodyInner}>
+                <div className={style.formGrid}>
+                  <label className={style.field}>
+                    <span>Nombre completo</span>
+                    <input
+                      type="text"
+                      value={profile.fullName}
+                      onChange={(event) => handleProfileChange("fullName", event.target.value)}
+                      placeholder="Nombre para mostrar"
+                      disabled={profileLoading}
+                    />
+                  </label>
+
+                  <label className={style.field}>
+                    <span>Email de ingreso</span>
+                    <input type="email" value={profile.email} disabled />
+                  </label>
+
+                  <label className={style.field}>
+                    <span>Teléfono</span>
+                    <input
+                      type="tel"
+                      value={profile.phone}
+                      onChange={(event) => handleProfileChange("phone", event.target.value)}
+                      placeholder="+54 9 ..."
+                      disabled={profileLoading}
+                    />
+                  </label>
+
+                  <label className={style.field}>
+                    <span>Foto de perfil URL</span>
+                    <input
+                      type="url"
+                      value={profile.profilePhotoUrl}
+                      onChange={(event) => handleProfileChange("profilePhotoUrl", event.target.value)}
+                      placeholder="https://..."
+                      disabled={profileLoading}
+                    />
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className={style.formGrid}>
-            <label className={style.field}>
-              <span>Nombre completo</span>
-              <input
-                type="text"
-                value={profile.fullName}
-                onChange={(event) => handleProfileChange("fullName", event.target.value)}
-                placeholder="Nombre para mostrar"
-                disabled={profileLoading}
-              />
-            </label>
-
-            <label className={style.field}>
-              <span>Email de ingreso</span>
-              <input type="email" value={profile.email} disabled />
-            </label>
-
-            <label className={style.field}>
-              <span>Teléfono</span>
-              <input
-                type="tel"
-                value={profile.phone}
-                onChange={(event) => handleProfileChange("phone", event.target.value)}
-                placeholder="+54 9 ..."
-                disabled={profileLoading}
-              />
-            </label>
-
-            <label className={style.field}>
-              <span>Foto de perfil URL</span>
-              <input
-                type="url"
-                value={profile.profilePhotoUrl}
-                onChange={(event) => handleProfileChange("profilePhotoUrl", event.target.value)}
-                placeholder="https://..."
-                disabled={profileLoading}
-              />
-            </label>
-          </div>
-
-          <button type="submit" className={style.saveButton} disabled={profileSaving}>
-            <FiSave />
-            {profileSaving ? "Guardando..." : "Guardar perfil"}
-          </button>
-        </form>
-      ) : null}
-
-      {activeTab === "perfil" ? (
-        <form className={style.card} onSubmit={handleProfileSubmit}>
+          {/* ===== Negocios ===== */}
           <div className={style.businessHeader}>
             <div>
               <p className={style.kicker}>Negocios</p>
@@ -346,81 +389,113 @@ function SettingsPage() {
 
           {businessProfiles.length ? (
             <div className={style.businessList}>
-              {businessProfiles.map((business, index) => (
-                <div className={style.businessItem} key={business._id || index}>
-                  <div className={style.profileHero}>
-                    <div className={style.avatar}>
-                      {business.logoUrl ? (
-                        <img src={business.logoUrl} alt="Logo del negocio" />
-                      ) : (
-                        <FiBriefcase />
-                      )}
+              {businessProfiles.map((business, index) => {
+                const isOpen = openBusiness.has(index);
+
+                return (
+                  <div
+                    key={business._id || index}
+                    className={`${style.accordion} ${isOpen ? style.accordionOpen : ""}`}
+                  >
+                    <div className={style.accordionHead}>
+                      <button
+                        type="button"
+                        className={style.accordionToggle}
+                        onClick={() => toggleBusiness(index)}
+                        aria-expanded={isOpen}
+                      >
+                        <span className={style.accordionAvatar}>
+                          {business.logoUrl ? (
+                            <img src={business.logoUrl} alt="Logo del negocio" />
+                          ) : (
+                            <FiBriefcase />
+                          )}
+                        </span>
+                        <span className={style.accordionInfo}>
+                          <span className={style.accordionLabel}>Negocio {index + 1}</span>
+                          <strong className={style.accordionName}>
+                            {business.name || "Nuevo negocio"}
+                          </strong>
+                          <small className={style.accordionSub}>
+                            {business.industry || "Sin rubro definido"}
+                          </small>
+                        </span>
+                        <FiChevronDown className={style.accordionChevron} />
+                      </button>
+                      <button
+                        type="button"
+                        className={style.accordionDelete}
+                        onClick={() => handleRemoveBusiness(index)}
+                        aria-label="Eliminar negocio"
+                        title="Eliminar negocio"
+                      >
+                        <FiTrash2 />
+                      </button>
                     </div>
-                    <div>
-                      <p className={style.kicker}>Negocio {index + 1}</p>
-                      <h2>{business.name || "Nuevo negocio"}</h2>
-                      <p>{business.industry || "Completa los datos para verlo en el nav."}</p>
+
+                    <div className={style.accordionBody}>
+                      <div className={style.accordionBodyInner}>
+                        <div className={style.formGrid}>
+                          <label className={style.field}>
+                            <span>Nombre del negocio</span>
+                            <input
+                              type="text"
+                              value={business.name || ""}
+                              onChange={(event) => handleBusinessListChange(index, "name", event.target.value)}
+                              placeholder="Ej: Growth Studio"
+                              disabled={profileLoading}
+                            />
+                          </label>
+
+                          <label className={style.field}>
+                            <span>Rubro</span>
+                            <input
+                              type="text"
+                              value={business.industry || ""}
+                              onChange={(event) => handleBusinessListChange(index, "industry", event.target.value)}
+                              placeholder="Ej: Indumentaria, servicios, comercio"
+                              disabled={profileLoading}
+                            />
+                          </label>
+
+                          <label className={style.field}>
+                            <span>Teléfono del negocio</span>
+                            <input
+                              type="tel"
+                              value={business.phone || ""}
+                              onChange={(event) => handleBusinessListChange(index, "phone", event.target.value)}
+                              placeholder="+54 9 ..."
+                              disabled={profileLoading}
+                            />
+                          </label>
+
+                          <label className={style.field}>
+                            <span>Logo URL</span>
+                            <input
+                              type="url"
+                              value={business.logoUrl || ""}
+                              onChange={(event) => handleBusinessListChange(index, "logoUrl", event.target.value)}
+                              placeholder="https://..."
+                              disabled={profileLoading}
+                            />
+                          </label>
+
+                          <label className={style.field}>
+                            <span>Dirección</span>
+                            <input
+                              type="text"
+                              value={business.address || ""}
+                              onChange={(event) => handleBusinessListChange(index, "address", event.target.value)}
+                              placeholder="Local, oficina o ciudad"
+                              disabled={profileLoading}
+                            />
+                          </label>
+                        </div>
+                      </div>
                     </div>
                   </div>
-
-                  <div className={style.formGrid}>
-                    <label className={style.field}>
-                      <span>Nombre del negocio</span>
-                      <input
-                        type="text"
-                        value={business.name || ""}
-                        onChange={(event) => handleBusinessListChange(index, "name", event.target.value)}
-                        placeholder="Ej: Growth Studio"
-                        disabled={profileLoading}
-                      />
-                    </label>
-
-                    <label className={style.field}>
-                      <span>Rubro</span>
-                      <input
-                        type="text"
-                        value={business.industry || ""}
-                        onChange={(event) => handleBusinessListChange(index, "industry", event.target.value)}
-                        placeholder="Ej: Indumentaria, servicios, comercio"
-                        disabled={profileLoading}
-                      />
-                    </label>
-
-                    <label className={style.field}>
-                      <span>Teléfono del negocio</span>
-                      <input
-                        type="tel"
-                        value={business.phone || ""}
-                        onChange={(event) => handleBusinessListChange(index, "phone", event.target.value)}
-                        placeholder="+54 9 ..."
-                        disabled={profileLoading}
-                      />
-                    </label>
-
-                    <label className={style.field}>
-                      <span>Logo URL</span>
-                      <input
-                        type="url"
-                        value={business.logoUrl || ""}
-                        onChange={(event) => handleBusinessListChange(index, "logoUrl", event.target.value)}
-                        placeholder="https://..."
-                        disabled={profileLoading}
-                      />
-                    </label>
-
-                    <label className={style.field}>
-                      <span>Dirección</span>
-                      <input
-                        type="text"
-                        value={business.address || ""}
-                        onChange={(event) => handleBusinessListChange(index, "address", event.target.value)}
-                        placeholder="Local, oficina o ciudad"
-                        disabled={profileLoading}
-                      />
-                    </label>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className={style.emptyBusiness}>
@@ -431,7 +506,7 @@ function SettingsPage() {
 
           <button type="submit" className={style.saveButton} disabled={profileSaving}>
             <FiSave />
-            {profileSaving ? "Guardando..." : "Guardar negocios"}
+            {profileSaving ? "Guardando..." : "Guardar cambios"}
           </button>
         </form>
       ) : null}

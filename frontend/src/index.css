@@ -16,8 +16,8 @@
   --drawer-background: linear-gradient(180deg, rgba(7, 26, 33, 0.99), rgba(9, 33, 41, 0.99));
   --overlay-dark: rgba(0, 0, 0, 0.68);
   --page-background:
-    radial-gradient(circle at top right, rgba(0, 237, 100, 0.12), transparent 22rem),
-    radial-gradient(circle at bottom left, rgba(19, 170, 182, 0.11), transparent 20rem),
+    radial-gradient(circle at top right, rgba(0, 237, 100, 0.08), transparent 24rem),
+    radial-gradient(circle at bottom left, rgba(19, 170, 182, 0.07), transparent 22rem),
     linear-gradient(180deg, rgba(4, 20, 27, 0.98), rgba(7, 28, 35, 0.99));
   --border-color: rgba(176, 213, 212, 0.12);
   --color-text: #ecf6f3;
@@ -27,13 +27,31 @@
   --color-rojo: #ff8f6b;
   --color-rojo-soft: rgba(255, 143, 107, 0.15);
   --color-dark-text: #718a8c;
-  --shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.34);
-  --radius-xs: 0;
-  --radius-sm: 0;
-  --radius-md: 0;
-  --radius-lg: 0;
-  --radius-xl: 0;
-  --radius-2xl: 0;
+
+  /* Acentos sobre superficie (verde como acento, no como fondo) */
+  --accent: var(--color-verde);
+  --accent-contrast: #04140b;
+  --accent-surface: rgba(0, 237, 100, 0.10);
+  --accent-border: rgba(0, 237, 100, 0.30);
+
+  /* Escala de elevación en capas */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --shadow-sm: 0 6px 16px rgba(0, 0, 0, 0.26);
+  --shadow-md: 0 14px 34px rgba(0, 0, 0, 0.30);
+  --shadow-soft: 0 22px 54px rgba(0, 0, 0, 0.32);
+  --ring-accent: 0 0 0 3px rgba(0, 237, 100, 0.18);
+
+  /* Transiciones */
+  --transition-fast: 0.16s ease;
+  --transition-base: 0.22s ease;
+
+  /* Escala de radios consistente */
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-2xl: 28px;
   --radius-pill: 999px;
 }
 
@@ -54,8 +72,8 @@ body[data-theme="light"] {
   --drawer-background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(245, 248, 242, 0.99));
   --overlay-dark: rgba(11, 20, 15, 0.16);
   --page-background:
-    radial-gradient(circle at top right, rgba(144, 211, 106, 0.16), transparent 20rem),
-    radial-gradient(circle at bottom left, rgba(241, 141, 113, 0.12), transparent 18rem),
+    radial-gradient(circle at top right, rgba(144, 211, 106, 0.11), transparent 22rem),
+    radial-gradient(circle at bottom left, rgba(241, 141, 113, 0.08), transparent 20rem),
     linear-gradient(180deg, #f8fbf5, #eef3eb 60%, #ebf0e8);
   --border-color: rgba(22, 41, 31, 0.12);
   --color-text: #16241d;
@@ -65,7 +83,17 @@ body[data-theme="light"] {
   --color-rojo: #ba5f50;
   --color-rojo-soft: rgba(186, 95, 80, 0.14);
   --color-dark-text: #7a8a80;
+
+  --accent: var(--color-verde);
+  --accent-contrast: #ffffff;
+  --accent-surface: rgba(61, 140, 68, 0.10);
+  --accent-border: rgba(61, 140, 68, 0.28);
+
+  --shadow-xs: 0 1px 2px rgba(21, 33, 24, 0.08);
+  --shadow-sm: 0 6px 16px rgba(21, 33, 24, 0.08);
+  --shadow-md: 0 14px 30px rgba(21, 33, 24, 0.10);
   --shadow-soft: 0 20px 46px rgba(21, 33, 24, 0.12);
+  --ring-accent: 0 0 0 3px rgba(61, 140, 68, 0.16);
 }
 
 *,

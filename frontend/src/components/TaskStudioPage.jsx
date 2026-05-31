@@ -9,7 +9,9 @@ import {
   FiCheckSquare,
   FiClock,
   FiCode,
+  FiEdit2,
   FiEdit3,
+  FiFilePlus,
   FiHash,
   FiItalic,
   FiList,
@@ -140,6 +142,59 @@ const getNoteCardTime = (task) => {
 const stripHtml = (value = "") =>
   value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
+const escapeHtml = (value = "") =>
+  String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+const createNotePage = (index = 0, contenido = "") => ({
+  title: `Página ${index + 1}`,
+  contenido,
+});
+
+const parseNotePages = (contenido = "") => {
+  if (!contenido.includes('data-note-page="true"')) {
+    return [createNotePage(0, contenido)];
+  }
+
+  const parser = new DOMParser();
+  const documentContent = parser.parseFromString(contenido, "text/html");
+  const pageNodes = Array.from(documentContent.querySelectorAll('[data-note-page="true"]'));
+
+  if (!pageNodes.length) {
+    return [createNotePage(0, contenido)];
+  }
+
+  return pageNodes.map((pageNode, index) => {
+    const contentNode = pageNode.querySelector("[data-note-page-content]");
+
+    return {
+      title: pageNode.getAttribute("data-page-title") || `Página ${index + 1}`,
+      contenido: contentNode?.innerHTML || pageNode.innerHTML || "",
+    };
+  });
+};
+
+const serializeNotePages = (pages = []) => {
+  const normalizedPages = pages.length ? pages : [createNotePage()];
+
+  if (normalizedPages.length === 1) {
+    return normalizedPages[0].contenido;
+  }
+
+  return normalizedPages
+    .map(
+      (page, index) => `
+        <section data-note-page="true" data-page-title="${escapeHtml(page.title || `Página ${index + 1}`)}">
+          <div data-note-page-content="true">${page.contenido || ""}</div>
+        </section>
+      `
+    )
+    .join("");
+};
+
 const groupNotesByDay = (items = []) => {
   const grouped = items.reduce((accumulator, task) => {
     const key = getDateInputValue(getLocalDateFromValue(task.fecha) || new Date());
@@ -173,6 +228,9 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const quillRef = useRef(null);
   const selectionRef = useRef(null);
   const calendarInputRef = useRef(null);
+  const activeNotePageIndexRef = useRef(0);
+  const isDirtyRef = useRef(false);
+  const historyTrapRef = useRef(false);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -181,7 +239,12 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const [selectedMonth, setSelectedMonth] = useState(getMonthInputValue(new Date()));
   const [selectedDay, setSelectedDay] = useState("");
   const [form, setForm] = useState(buildInitialFormState);
+  const [notePages, setNotePages] = useState([createNotePage()]);
+  const [activeNotePageIndex, setActiveNotePageIndex] = useState(0);
+  const [editingPageIndex, setEditingPageIndex] = useState(null);
+  const [editingTitle, setEditingTitle] = useState("");
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const [activeFormats, setActiveFormats] = useState({
     align: "",
     bold: false,
@@ -213,6 +276,26 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     underline: Boolean(formats.underline),
     bulletList: formats.list === "bullet",
   });
+
+  const markDirty = () => {
+    isDirtyRef.current = true;
+    setIsDirty(true);
+  };
+
+  const clearDirty = () => {
+    isDirtyRef.current = false;
+    setIsDirty(false);
+  };
+
+  // Al cerrar/guardar consumimos la entrada extra de historial que metimos
+  // al abrir el editor (para que el botón "atrás" no quede trabado).
+  const consumeHistoryTrap = () => {
+    if (!historyTrapRef.current) return;
+    historyTrapRef.current = false;
+    setTimeout(() => {
+      window.history.back();
+    }, 0);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -253,9 +336,17 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       },
     });
 
-    const handleTextChange = () => {
+    const handleTextChange = (delta, oldDelta, source) => {
       const html = quill.root.innerHTML === "<p><br></p>" ? "" : quill.root.innerHTML;
+      if (source === "user") {
+        markDirty();
+      }
       setForm((prev) => (prev.contenido === html ? prev : { ...prev, contenido: html }));
+      setNotePages((prev) =>
+        prev.map((page, index) =>
+          index === activeNotePageIndexRef.current ? { ...page, contenido: html } : page
+        )
+      );
 
       const range = quill.getSelection();
       if (!range) return;
@@ -282,6 +373,54 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       quillRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    activeNotePageIndexRef.current = activeNotePageIndex;
+  }, [activeNotePageIndex]);
+
+  // Aviso del navegador al recargar / cerrar pestaña con cambios sin guardar.
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (isEditorOpen && isDirtyRef.current) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isEditorOpen]);
+
+  // Guarda contra el botón "atrás" del navegador dentro de la app:
+  // al abrir el editor metemos una entrada de historial; si vuelven atrás
+  // con cambios sin guardar, pedimos confirmación antes de dejar salir.
+  useEffect(() => {
+    if (!isEditorOpen) return undefined;
+
+    window.history.pushState(null, "", window.location.href);
+    historyTrapRef.current = true;
+
+    const handlePopState = () => {
+      if (isDirtyRef.current) {
+        const leave = window.confirm(
+          "Tenés cambios sin guardar en la nota. Si salís se pierden.\n\n¿Salir igual sin actualizar?"
+        );
+
+        if (!leave) {
+          // Se queda: re-armamos la trampa para mantenerlo en la nota.
+          window.history.pushState(null, "", window.location.href);
+          return;
+        }
+      }
+
+      historyTrapRef.current = false;
+      window.removeEventListener("popstate", handlePopState);
+      window.history.back();
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [isEditorOpen]);
 
   useEffect(() => {
     if (!quillRef.current) return;
@@ -331,6 +470,122 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
 
   const handleFieldChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+    markDirty();
+  };
+
+  const getCurrentEditorHtml = () => {
+    if (!quillRef.current) return form.contenido;
+
+    return quillRef.current.root.innerHTML === "<p><br></p>" ? "" : quillRef.current.root.innerHTML;
+  };
+
+  const syncCurrentPage = () => {
+    const currentHtml = getCurrentEditorHtml();
+
+    setNotePages((prev) =>
+      prev.map((page, index) =>
+        index === activeNotePageIndexRef.current ? { ...page, contenido: currentHtml } : page
+      )
+    );
+
+    return currentHtml;
+  };
+
+  const handleSelectPage = (index) => {
+    const currentHtml = syncCurrentPage();
+
+    setNotePages((prev) =>
+      prev.map((page, pageIndex) =>
+        pageIndex === activeNotePageIndexRef.current ? { ...page, contenido: currentHtml } : page
+      )
+    );
+    activeNotePageIndexRef.current = index;
+    setActiveNotePageIndex(index);
+    setForm((prev) => ({ ...prev, contenido: notePages[index]?.contenido || "" }));
+    selectionRef.current = null;
+  };
+
+  const handleAddPage = () => {
+    const currentHtml = syncCurrentPage();
+    const nextPage = createNotePage(notePages.length);
+    const nextPages = notePages.map((page, index) =>
+      index === activeNotePageIndexRef.current ? { ...page, contenido: currentHtml } : page
+    );
+    const nextIndex = nextPages.length;
+
+    setNotePages([...nextPages, nextPage]);
+    activeNotePageIndexRef.current = nextIndex;
+    setActiveNotePageIndex(nextIndex);
+    setForm((prev) => ({ ...prev, contenido: "" }));
+    selectionRef.current = null;
+    markDirty();
+  };
+
+  const getPageLabel = (page, index) => {
+    const title = page?.title || "";
+    if (!title || /^Página\s+\d+$/i.test(title)) {
+      return `Página ${index + 1}`;
+    }
+    return title;
+  };
+
+  const startRename = (index) => {
+    setEditingPageIndex(index);
+    setEditingTitle(getPageLabel(notePages[index], index));
+  };
+
+  const cancelRename = () => {
+    setEditingPageIndex(null);
+    setEditingTitle("");
+  };
+
+  const commitRename = (index) => {
+    const value = editingTitle.trim();
+    setNotePages((prev) =>
+      prev.map((page, pageIndex) =>
+        pageIndex === index ? { ...page, title: value || `Página ${pageIndex + 1}` } : page
+      )
+    );
+    setEditingPageIndex(null);
+    setEditingTitle("");
+    markDirty();
+  };
+
+  const handleDeletePage = (index) => {
+    if (notePages.length <= 1) return;
+
+    const targetHtml =
+      index === activeNotePageIndexRef.current
+        ? getCurrentEditorHtml()
+        : notePages[index]?.contenido || "";
+
+    if (stripHtml(targetHtml) && !window.confirm("¿Eliminar esta página y su contenido?")) {
+      return;
+    }
+
+    const currentHtml = getCurrentEditorHtml();
+    const synced = notePages.map((page, pageIndex) =>
+      pageIndex === activeNotePageIndexRef.current ? { ...page, contenido: currentHtml } : page
+    );
+    const nextPages = synced.filter((_, pageIndex) => pageIndex !== index);
+
+    let nextActive = activeNotePageIndexRef.current;
+    if (index === activeNotePageIndexRef.current) {
+      nextActive = Math.max(0, index - 1);
+    } else if (index < activeNotePageIndexRef.current) {
+      nextActive = activeNotePageIndexRef.current - 1;
+    }
+    nextActive = Math.min(nextActive, nextPages.length - 1);
+
+    activeNotePageIndexRef.current = nextActive;
+    setNotePages(nextPages);
+    setActiveNotePageIndex(nextActive);
+    setForm((prev) => ({ ...prev, contenido: nextPages[nextActive]?.contenido || "" }));
+    if (editingPageIndex !== null) {
+      cancelRename();
+    }
+    selectionRef.current = null;
+    markDirty();
   };
 
   const handleOpenCalendar = () => {
@@ -350,6 +605,9 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const getEditorRange = () => {
     if (!quillRef.current) return null;
 
+    // Toda acción del toolbar (negrita, color, listas, alineación...) pasa por
+    // acá, así que aprovechamos para marcar la nota como "con cambios".
+    markDirty();
     return quillRef.current.getSelection() || selectionRef.current;
   };
 
@@ -503,6 +761,9 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
 
   const resetForm = () => {
     setForm(buildInitialFormState());
+    setNotePages([createNotePage()]);
+    setActiveNotePageIndex(0);
+    activeNotePageIndexRef.current = 0;
     setMessage("");
     setActiveFormats(getFormatState());
     selectionRef.current = null;
@@ -514,26 +775,43 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
 
   const handleNewNote = () => {
     resetForm();
+    clearDirty();
     setError("");
     setIsEditorOpen(true);
   };
 
   const handleCloseEditor = () => {
+    if (
+      isDirtyRef.current &&
+      !window.confirm(
+        "Tenés cambios sin guardar en la nota. Si cerrás se pierden.\n\n¿Cerrar igual sin actualizar?"
+      )
+    ) {
+      return;
+    }
+
+    clearDirty();
     setIsEditorOpen(false);
     resetForm();
+    consumeHistoryTrap();
   };
 
   const handleEdit = (task) => {
+    const pages = parseNotePages(task.contenido || "");
+    activeNotePageIndexRef.current = 0;
+    setNotePages(pages);
+    setActiveNotePageIndex(0);
     setForm({
       id: task._id,
       meta: task.meta || "",
-      contenido: task.contenido || "",
+      contenido: pages[0]?.contenido || "",
       fecha: task.fecha ? String(task.fecha).slice(0, 10) : getDateInputValue(new Date()),
       horario: task.horario || "12:00",
       color: task.color || "color1",
     });
     setMessage("");
     setError("");
+    clearDirty();
     setIsEditorOpen(true);
   };
 
@@ -544,6 +822,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       await taskService.delete(taskId);
       setTasks((prev) => prev.filter((task) => task._id !== taskId));
       if (form.id === taskId) {
+        clearDirty();
         handleCloseEditor();
       }
     } catch (deleteError) {
@@ -567,7 +846,11 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       tipo: "note",
       workspace: activeWorkspace,
       meta: form.meta.trim(),
-      contenido: form.contenido,
+      contenido: serializeNotePages(
+        notePages.map((page, index) =>
+          index === activeNotePageIndexRef.current ? { ...page, contenido: getCurrentEditorHtml() } : page
+        )
+      ),
       fecha: form.fecha,
       horario: form.horario,
       color: form.color,
@@ -587,8 +870,10 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       );
 
       setMessage(form.id ? "Nota actualizada." : "Nota creada.");
+      clearDirty();
       resetForm();
       setIsEditorOpen(false);
+      consumeHistoryTrap();
     } catch (submitError) {
       setError(submitError.response?.data?.message || "No se pudo guardar la nota.");
     } finally {
@@ -604,7 +889,13 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
         <section className={style.listCard}>
             <div className={style.editorHeader}>
               <div>
-                <p className={style.cardKicker}>Listado</p>
+                <p className={style.cardKicker}>Notas</p>
+                <h2 className={style.listTitle}>
+                  Tus notas
+                  {filteredTasks.length ? (
+                    <span className={style.listCount}>{filteredTasks.length}</span>
+                  ) : null}
+                </h2>
               </div>
               <button type="button" className={style.secondaryButton} onClick={handleNewNote}>
                 <FiPlus />
@@ -739,17 +1030,31 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
             <div className={style.editorHeader}>
               <div>
                 <p className={style.cardKicker}>Editor</p>
-                <h2>{form.id ? "" : "Nueva nota"}</h2>
+                <h2>{form.id ? form.meta || "Editar nota" : "Nueva nota"}</h2>
               </div>
               <div className={style.editorActions}>
-              
+                {isDirty ? (
+                  <span className={style.unsavedBadge}>
+                    <span className={style.unsavedDot} />
+                    Sin guardar
+                  </span>
+                ) : null}
+                <button
+                  type="submit"
+                  form="note-editor-form"
+                  className={style.saveButton}
+                  disabled={saving}
+                >
+                  <FiPlus />
+                  {saving ? "Guardando..." : form.id ? "Actualizar nota" : "Guardar nota"}
+                </button>
                 <button type="button" className={style.iconButton} onClick={handleCloseEditor} aria-label="Cerrar panel">
                   <FiX />
                 </button>
               </div>
             </div>
 
-          <form className={style.form} onSubmit={handleSubmit}>
+          <form id="note-editor-form" className={style.form} onSubmit={handleSubmit}>
             <div className={style.noteMetaBar}>
               <div className={style.noteMetaInfo} aria-label="Fecha y hora de la nota">
                 <span>
@@ -790,7 +1095,90 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
               />
             </label>
 
-            <div className={style.editorWorkspace}>
+            <div className={style.editorBody}>
+              <aside className={style.pagesColumn} aria-label="Páginas de la nota">
+                <p className={style.pagesColumnTitle}>Páginas</p>
+                <div className={style.pagesList}>
+                  {notePages.map((page, index) => {
+                    const isActive = index === activeNotePageIndex;
+                    const isEditing = editingPageIndex === index;
+
+                    return (
+                      <div
+                        key={`page-${index}`}
+                        className={`${style.notePageItem} ${isActive ? style.notePageItemActive : ""}`}
+                      >
+                        {isEditing ? (
+                          <input
+                            className={style.notePageRenameInput}
+                            value={editingTitle}
+                            autoFocus
+                            onChange={(event) => setEditingTitle(event.target.value)}
+                            onBlur={() => commitRename(index)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                commitRename(index);
+                              }
+                              if (event.key === "Escape") {
+                                event.preventDefault();
+                                cancelRename();
+                              }
+                            }}
+                          />
+                        ) : (
+                          <button
+                            type="button"
+                            className={style.notePageSelect}
+                            onClick={() => handleSelectPage(index)}
+                            onDoubleClick={() => startRename(index)}
+                            title={getPageLabel(page, index)}
+                          >
+                            <span className={style.notePageNumber}>{index + 1}</span>
+                            <span className={style.notePageName}>{getPageLabel(page, index)}</span>
+                          </button>
+                        )}
+
+                        {!isEditing ? (
+                          <div className={style.notePageItemActions}>
+                            <button
+                              type="button"
+                              className={style.notePageActionButton}
+                              onClick={() => startRename(index)}
+                              aria-label="Renombrar página"
+                              title="Renombrar"
+                            >
+                              <FiEdit2 />
+                            </button>
+                            <button
+                              type="button"
+                              className={`${style.notePageActionButton} ${style.notePageDeleteButton}`}
+                              onClick={() => handleDeletePage(index)}
+                              disabled={notePages.length <= 1}
+                              aria-label="Eliminar página"
+                              title={notePages.length <= 1 ? "No podés eliminar la única página" : "Eliminar página"}
+                            >
+                              <FiTrash2 />
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  className={style.addPageButton}
+                  onClick={handleAddPage}
+                  aria-label="Agregar página"
+                  title="Agregar página"
+                >
+                  <FiFilePlus />
+                  Agregar página
+                </button>
+              </aside>
+
+              <div className={style.editorWorkspace}>
               <aside className={style.editorToolbar} aria-label="Herramientas de texto">
                 <button
                   type="button"
@@ -979,15 +1367,12 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   <div ref={editorRef} className={style.editor} />
                 </div>
               </label>
+              </div>
             </div>
 
             {error ? <p className={style.errorText}>{error}</p> : null}
             {message ? <p className={style.successText}>{message}</p> : null}
 
-            <button type="submit" className={style.saveButton} disabled={saving}>
-              <FiPlus />
-              {saving ? "Guardando..." : form.id ? "Actualizar nota" : "Guardar nota"}
-            </button>
           </form>
         </section>
       </div>
