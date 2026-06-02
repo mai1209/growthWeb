@@ -43,7 +43,6 @@ const getInitials = (profile) => {
 function SettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = TAB_META[searchParams.get("tab")] ? searchParams.get("tab") : "perfil";
-  const ActiveIcon = TAB_META[activeTab].icon;
 
   const [profile, setProfile] = useState({
     username: "",

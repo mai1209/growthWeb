@@ -114,39 +114,6 @@ const formatMonthTitle = (value) => {
   return label.charAt(0).toUpperCase() + label.slice(1);
 };
 
-const formatDayGroupLabel = (value) => {
-  const date = getLocalDateFromValue(value);
-
-  if (!date) return "Sin fecha";
-
-  const weekday = date.toLocaleDateString("es-AR", { weekday: "long" });
-  const capitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
-
-  return `${capitalized} ${date.getDate()}`;
-};
-
-const formatTime = (value) => {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return date.toLocaleTimeString("es-AR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-};
-
-const getNoteCardTime = (task) => {
-  if (task?.horario && task.horario !== "12:00") {
-    return task.horario;
-  }
-
-  return formatTime(task?.createdAt || task?.updatedAt) || task?.horario || "--:--";
-};
-
 const stripHtml = (value = "") =>
   value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
@@ -201,25 +168,6 @@ const serializeNotePages = (pages = []) => {
       `
     )
     .join("");
-};
-
-const groupNotesByDay = (items = []) => {
-  const grouped = items.reduce((accumulator, task) => {
-    const key = getDateInputValue(getLocalDateFromValue(task.fecha) || new Date());
-
-    if (!accumulator.has(key)) {
-      accumulator.set(key, []);
-    }
-
-    accumulator.get(key).push(task);
-    return accumulator;
-  }, new Map());
-
-  return [...grouped.entries()].map(([key, notes]) => ({
-    key,
-    label: formatDayGroupLabel(key),
-    notes,
-  }));
 };
 
 const buildInitialFormState = () => ({
