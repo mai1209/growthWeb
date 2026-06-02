@@ -5,13 +5,16 @@ import {
   FiAlignRight,
   FiBold,
   FiCalendar,
-  FiChevronDown,
+  FiChevronLeft,
+  FiChevronRight,
   FiCheckSquare,
   FiClock,
   FiCode,
   FiEdit2,
-  FiEdit3,
   FiFilePlus,
+  FiFileText,
+  FiFolder,
+  FiFolderPlus,
   FiHash,
   FiItalic,
   FiList,
@@ -26,7 +29,6 @@ import {
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
 import { taskService } from "../api";
-import { isTaskCompletedOnDate } from "../utils/tasks";
 import style from "../style/TaskStudio.module.css";
 
 const COLOR_OPTIONS = [
@@ -53,6 +55,8 @@ const TEXT_COLOR_OPTIONS = [
   { value: "#dc2626", label: "Rojo", swatch: "#dc2626" },
   { value: "#d97706", label: "Naranja", swatch: "#d97706" },
 ];
+const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
 const getMonthInputValue = (date = new Date()) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -105,16 +109,20 @@ const formatMonthLabel = (value) => {
   });
 };
 
+const formatMonthTitle = (value) => {
+  const label = formatMonthLabel(value);
+  return label.charAt(0).toUpperCase() + label.slice(1);
+};
+
 const formatDayGroupLabel = (value) => {
   const date = getLocalDateFromValue(value);
 
-  if (!date) return "Día · Sin fecha";
+  if (!date) return "Sin fecha";
 
-  return `Día · ${date.toLocaleDateString("es-AR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  })}`;
+  const weekday = date.toLocaleDateString("es-AR", { weekday: "long" });
+  const capitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+
+  return `${capitalized} ${date.getDate()}`;
 };
 
 const formatTime = (value) => {
@@ -221,13 +229,65 @@ const buildInitialFormState = () => ({
   fecha: getDateInputValue(new Date()),
   horario: getTimeInputValue(new Date()),
   color: "color1",
+  carpeta: "",
 });
+
+const ALL_FOLDERS = "__all__";
+
+const getFoldersStorageKey = (workspace) => `growth-note-folders:${workspace || "personal"}`;
+
+const readStoredFolders = (workspace) => {
+  try {
+    const raw = localStorage.getItem(getFoldersStorageKey(workspace));
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((name) => typeof name === "string" && name.trim()) : [];
+  } catch {
+    return [];
+  }
+};
+
+const groupNotesForBoard = (notes = []) => {
+  const sorted = [...notes].sort((a, b) => {
+    const aTime = getLocalDateFromValue(a.fecha)?.getTime() || 0;
+    const bTime = getLocalDateFromValue(b.fecha)?.getTime() || 0;
+    return bTime - aTime;
+  });
+
+  const now = new Date();
+  const cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+  const recent = [];
+  const byMonth = new Map();
+
+  sorted.forEach((note) => {
+    const date = getLocalDateFromValue(note.fecha) || now;
+    if (date >= cutoff) {
+      recent.push(note);
+    } else {
+      const key = getMonthInputValue(date);
+      if (!byMonth.has(key)) byMonth.set(key, []);
+      byMonth.get(key).push(note);
+    }
+  });
+
+  const groups = [];
+  if (recent.length) {
+    groups.push({ key: "recent", label: "Últimos 30 días", notes: recent });
+  }
+  [...byMonth.keys()]
+    .sort()
+    .reverse()
+    .forEach((key) => {
+      groups.push({ key, label: formatMonthTitle(key), notes: byMonth.get(key) });
+    });
+
+  return groups;
+};
 
 function TaskStudioPage({ activeWorkspace = "personal" }) {
   const editorRef = useRef(null);
   const quillRef = useRef(null);
   const selectionRef = useRef(null);
-  const calendarInputRef = useRef(null);
+  const monthInputRef = useRef(null);
   const activeNotePageIndexRef = useRef(0);
   const isDirtyRef = useRef(false);
   const historyTrapRef = useRef(false);
@@ -237,7 +297,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [selectedMonth, setSelectedMonth] = useState(getMonthInputValue(new Date()));
-  const [selectedDay, setSelectedDay] = useState("");
   const [form, setForm] = useState(buildInitialFormState);
   const [notePages, setNotePages] = useState([createNotePage()]);
   const [activeNotePageIndex, setActiveNotePageIndex] = useState(0);
@@ -245,6 +304,12 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const [editingTitle, setEditingTitle] = useState("");
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [view, setView] = useState("notes");
+  const [activeFolder, setActiveFolder] = useState(ALL_FOLDERS);
+  const [customFolders, setCustomFolders] = useState(() => readStoredFolders(activeWorkspace));
+  const [isCompact, setIsCompact] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= 760 : false
+  );
   const [activeFormats, setActiveFormats] = useState({
     align: "",
     bold: false,
@@ -378,6 +443,28 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     activeNotePageIndexRef.current = activeNotePageIndex;
   }, [activeNotePageIndex]);
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const handleChange = (event) => setIsCompact(event.matches);
+
+    handleChange(mediaQuery);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
+    setCustomFolders(readStoredFolders(activeWorkspace));
+    setActiveFolder(ALL_FOLDERS);
+  }, [activeWorkspace]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(getFoldersStorageKey(activeWorkspace), JSON.stringify(customFolders));
+    } catch {
+      /* almacenamiento no disponible */
+    }
+  }, [customFolders, activeWorkspace]);
+
   // Aviso del navegador al recargar / cerrar pestaña con cambios sin guardar.
   useEffect(() => {
     const handleBeforeUnload = (event) => {
@@ -449,24 +536,71 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
         const taskDate = getLocalDateFromValue(task.fecha);
         if (!taskDate) return false;
 
-        const matchesMonth =
+        return (
           taskDate.getFullYear() === monthStart.getFullYear() &&
-          taskDate.getMonth() === monthStart.getMonth();
-
-        if (!matchesMonth) return false;
-
-        if (!selectedDay) return true;
-
-        return getDateInputValue(taskDate) === selectedDay;
+          taskDate.getMonth() === monthStart.getMonth()
+        );
       })
       .sort((a, b) => {
         const aTime = getLocalDateFromValue(a.fecha)?.getTime() || 0;
         const bTime = getLocalDateFromValue(b.fecha)?.getTime() || 0;
         return bTime - aTime;
       });
-  }, [tasks, selectedMonth, selectedDay]);
+  }, [tasks, selectedMonth]);
 
-  const groupedNotes = useMemo(() => groupNotesByDay(filteredTasks), [filteredTasks]);
+  const notesByDay = useMemo(() => {
+    const map = new Map();
+    filteredTasks.forEach((task) => {
+      const key = getDateInputValue(getLocalDateFromValue(task.fecha) || new Date());
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(task);
+    });
+    return map;
+  }, [filteredTasks]);
+
+  const monthMatrix = useMemo(() => {
+    const [year, month] = selectedMonth.split("-").map(Number);
+    if (!year || !month) return [];
+
+    const firstOfMonth = new Date(year, month - 1, 1);
+    const startOffset = (firstOfMonth.getDay() + 6) % 7; // semana arranca lunes
+    const lastDay = new Date(year, month, 0).getDate();
+    const totalCells = Math.ceil((startOffset + lastDay) / 7) * 7;
+
+    return Array.from({ length: totalCells }, (_, index) =>
+      new Date(year, month - 1, 1 - startOffset + index)
+    );
+  }, [selectedMonth]);
+
+  const monthIndex = Number(selectedMonth.split("-")[1]) - 1;
+  const todayKey = getDateInputValue(new Date());
+  const effectiveView = isCompact ? "notes" : view;
+
+  const folderCounts = useMemo(() => {
+    const counts = new Map();
+    tasks.forEach((task) => {
+      const folder = (task.carpeta || "").trim();
+      if (folder) counts.set(folder, (counts.get(folder) || 0) + 1);
+    });
+    return counts;
+  }, [tasks]);
+
+  const folders = useMemo(() => {
+    const set = new Set(customFolders.filter(Boolean));
+    folderCounts.forEach((_, folder) => set.add(folder));
+    return [...set].sort((a, b) => a.localeCompare(b, "es"));
+  }, [customFolders, folderCounts]);
+
+  const boardTasks = useMemo(() => {
+    const base =
+      activeFolder === ALL_FOLDERS
+        ? tasks
+        : tasks.filter((task) => (task.carpeta || "").trim() === activeFolder);
+
+    return base;
+  }, [tasks, activeFolder]);
+
+  const boardGroups = useMemo(() => groupNotesForBoard(boardTasks), [boardTasks]);
 
   const handleFieldChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -588,8 +722,19 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     markDirty();
   };
 
-  const handleOpenCalendar = () => {
-    const input = calendarInputRef.current;
+  const shiftMonth = (delta) => {
+    const [year, month] = selectedMonth.split("-").map(Number);
+    setSelectedMonth(getMonthInputValue(new Date(year, month - 1 + delta, 1)));
+  };
+
+  const goToCurrentMonth = () => {
+    setSelectedMonth(getMonthInputValue(new Date()));
+  };
+
+  const isCurrentMonth = selectedMonth === getMonthInputValue(new Date());
+
+  const openMonthPicker = () => {
+    const input = monthInputRef.current;
 
     if (!input) return;
 
@@ -600,6 +745,27 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
 
     input.focus();
     input.click();
+  };
+
+  const handleCreateFolder = () => {
+    const name = window.prompt("Nombre de la carpeta")?.trim();
+    if (!name) return;
+
+    setCustomFolders((prev) => (prev.includes(name) ? prev : [...prev, name]));
+    setActiveFolder(name);
+  };
+
+  const handleDeleteFolder = (name) => {
+    setCustomFolders((prev) => prev.filter((folder) => folder !== name));
+    setActiveFolder((current) => (current === name ? ALL_FOLDERS : current));
+  };
+
+  const handleCreateFolderInEditor = () => {
+    const name = window.prompt("Nombre de la carpeta")?.trim();
+    if (!name) return;
+
+    setCustomFolders((prev) => (prev.includes(name) ? prev : [...prev, name]));
+    handleFieldChange("carpeta", name);
   };
 
   const getEditorRange = () => {
@@ -773,9 +939,19 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     }
   };
 
-  const handleNewNote = () => {
+  const handleNewNote = (dateValue) => {
     resetForm();
     clearDirty();
+    const defaults = {};
+    if (typeof dateValue === "string" && dateValue) {
+      defaults.fecha = dateValue;
+    }
+    if (activeFolder !== ALL_FOLDERS) {
+      defaults.carpeta = activeFolder;
+    }
+    if (Object.keys(defaults).length) {
+      setForm((prev) => ({ ...prev, ...defaults }));
+    }
     setError("");
     setIsEditorOpen(true);
   };
@@ -808,6 +984,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       fecha: task.fecha ? String(task.fecha).slice(0, 10) : getDateInputValue(new Date()),
       horario: task.horario || "12:00",
       color: task.color || "color1",
+      carpeta: task.carpeta || "",
     });
     setMessage("");
     setError("");
@@ -854,6 +1031,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       fecha: form.fecha,
       horario: form.horario,
       color: form.color,
+      carpeta: form.carpeta || "",
     };
 
     try {
@@ -892,130 +1070,312 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 <p className={style.cardKicker}>Notas</p>
                 <h2 className={style.listTitle}>
                   Tus notas
-                  {filteredTasks.length ? (
-                    <span className={style.listCount}>{filteredTasks.length}</span>
+                  {boardTasks.length ? (
+                    <span className={style.listCount}>{boardTasks.length}</span>
                   ) : null}
                 </h2>
               </div>
-              <button type="button" className={style.secondaryButton} onClick={handleNewNote}>
-                <FiPlus />
-                Nueva nota
-              </button>
+              <div className={style.listHeaderActions}>
+                {!isCompact ? (
+                  <div className={style.viewToggle} role="tablist" aria-label="Vista de notas">
+                    <button
+                      type="button"
+                      className={`${style.viewToggleButton} ${view === "notes" ? style.viewToggleButtonActive : ""}`}
+                      onClick={() => setView("notes")}
+                      aria-pressed={view === "notes"}
+                    >
+                      <FiFileText />
+                      Notas
+                    </button>
+                    <button
+                      type="button"
+                      className={`${style.viewToggleButton} ${view === "calendar" ? style.viewToggleButtonActive : ""}`}
+                      onClick={() => setView("calendar")}
+                      aria-pressed={view === "calendar"}
+                    >
+                      <FiCalendar />
+                      Calendario
+                    </button>
+                  </div>
+                ) : null}
+                <button type="button" className={style.secondaryButton} onClick={() => handleNewNote()}>
+                  <FiPlus />
+                  Nueva nota
+                </button>
+              </div>
             </div>
 
-            <div className={style.noteCalendarFilter}>
-              <div
-                className={style.noteCalendarButton}
-                role="button"
-                tabIndex={0}
-                onClick={handleOpenCalendar}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    handleOpenCalendar();
-                  }
-                }}
-              >
-                <span>
-                  <FiCalendar />
-                  Calendario
-                </span>
-                <strong>{selectedDay || formatMonthLabel(selectedMonth)}</strong>
-                <FiChevronDown className={style.noteCalendarChevron} />
-                <input
-                  ref={calendarInputRef}
-                  type="date"
-                  tabIndex={-1}
-                  value={selectedDay}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    setSelectedDay(value);
-                    if (value) {
-                      setSelectedMonth(value.slice(0, 7));
+            {effectiveView === "calendar" ? (
+              <div className={style.monthNav}>
+                <button
+                  type="button"
+                  className={style.monthNavArrow}
+                  onClick={() => shiftMonth(-1)}
+                  aria-label="Mes anterior"
+                  title="Mes anterior"
+                >
+                  <FiChevronLeft />
+                </button>
+
+                <div
+                  className={style.monthNavLabel}
+                  role="button"
+                  tabIndex={0}
+                  onClick={openMonthPicker}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openMonthPicker();
                     }
                   }}
-                />
-              </div>
+                  title="Elegir mes"
+                >
+                  <FiCalendar />
+                  <strong>{formatMonthTitle(selectedMonth)}</strong>
+                  <span className={style.monthNavCount}>
+                    {filteredTasks.length} {filteredTasks.length === 1 ? "nota" : "notas"}
+                  </span>
+                  <input
+                    ref={monthInputRef}
+                    type="month"
+                    tabIndex={-1}
+                    value={selectedMonth}
+                    onChange={(event) => {
+                      if (event.target.value) {
+                        setSelectedMonth(event.target.value);
+                      }
+                    }}
+                  />
+                </div>
 
-              <button
-                type="button"
-                className={style.monthViewButton}
-                onClick={() => setSelectedDay("")}
-              >
-                Ver mes completo
-              </button>
-            </div>
+                <button
+                  type="button"
+                  className={style.monthNavArrow}
+                  onClick={() => shiftMonth(1)}
+                  aria-label="Mes siguiente"
+                  title="Mes siguiente"
+                >
+                  <FiChevronRight />
+                </button>
+
+                {!isCurrentMonth ? (
+                  <button
+                    type="button"
+                    className={style.monthTodayButton}
+                    onClick={goToCurrentMonth}
+                  >
+                    Hoy
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
 
             {loading ? (
               <p className={style.emptyState}>Cargando notas...</p>
-            ) : filteredTasks.length === 0 ? (
-              <p className={style.emptyState}>No hay notas para ese filtro.</p>
+            ) : effectiveView === "calendar" ? (
+              <div className={style.calendar}>
+                <div className={style.calendarWeekdays}>
+                  {WEEKDAYS.map((weekday) => (
+                    <span key={weekday}>{weekday}</span>
+                  ))}
+                </div>
+
+                <div className={style.calendarGrid}>
+                  {monthMatrix.map((day) => {
+                    const dayKey = getDateInputValue(day);
+                    const dayNotes = notesByDay.get(dayKey) || [];
+                    const inMonth = day.getMonth() === monthIndex;
+                    const isToday = dayKey === todayKey;
+
+                    return (
+                      <div
+                        key={dayKey}
+                        className={`${style.calendarCell} ${!inMonth ? style.calendarCellMuted : ""} ${
+                          isToday ? style.calendarCellToday : ""
+                        }`}
+                      >
+                        <div className={style.calendarCellHeader}>
+                          {inMonth ? (
+                            <span className={style.calendarCellDay}>{day.getDate()}</span>
+                          ) : (
+                            <button
+                              type="button"
+                              className={style.calendarCellDay}
+                              onClick={() => setSelectedMonth(getMonthInputValue(day))}
+                              title="Ir a este mes"
+                            >
+                              {day.getDate()}
+                            </button>
+                          )}
+                          {inMonth ? (
+                            <button
+                              type="button"
+                              className={style.calendarCellAdd}
+                              onClick={() => handleNewNote(dayKey)}
+                              aria-label="Nueva nota este día"
+                              title="Nueva nota"
+                            >
+                              <FiPlus />
+                            </button>
+                          ) : null}
+                        </div>
+
+                        <div className={style.calendarCellNotes}>
+                          {dayNotes.map((task) => {
+                            const preview = stripHtml(task.contenido || "");
+
+                            return (
+                              <button
+                                key={task._id}
+                                type="button"
+                                className={`${style.calendarNote} ${style[task.color] || style.color1}`}
+                                onClick={() => handleEdit(task)}
+                                title={task.meta}
+                              >
+                                <strong>{task.meta || "Sin título"}</strong>
+                                {preview ? <span>{preview}</span> : null}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             ) : (
-              <div className={style.groupList}>
-                {groupedNotes.map((group) => (
-                  <section key={group.key} className={style.noteDayGroup}>
-                    <div className={style.groupHeader}>
-                      <span>{group.label}</span>
-                    </div>
+              <div className={style.notesLayout}>
+                <aside className={style.folderSidebar} aria-label="Carpetas">
+                  <div className={style.folderSidebarTop}>
+                    <span className={style.folderSidebarTitle}>Carpetas</span>
+                    <button
+                      type="button"
+                      className={style.folderAddIcon}
+                      onClick={handleCreateFolder}
+                      aria-label="Nueva carpeta"
+                      title="Nueva carpeta"
+                    >
+                      <FiFolderPlus />
+                    </button>
+                  </div>
 
-                    <div className={style.noteDayGrid}>
-                      {group.notes.map((task) => {
-                        const preview = stripHtml(task.contenido || "");
-                        const completed = isTaskCompletedOnDate(task, task.fecha);
-                        const noteDateLabel = `${formatShortDate(task.fecha)} · ${getNoteCardTime(task)}`;
+                  <div className={style.folderList}>
+                    <button
+                      type="button"
+                      className={`${style.folderItem} ${activeFolder === ALL_FOLDERS ? style.folderItemActive : ""}`}
+                      onClick={() => setActiveFolder(ALL_FOLDERS)}
+                    >
+                      <FiFolder />
+                      <span className={style.folderItemName}>Todas</span>
+                      <span className={style.folderItemCount}>{tasks.length}</span>
+                    </button>
 
-                        return (
-                          <article
-                            key={task._id}
-                            role="button"
-                            tabIndex={0}
-                            className={`${style.taskRow} ${style[task.color] || style.color1} ${
-                              completed ? style.taskRowCompleted : ""
-                            }`}
-                            onClick={() => handleEdit(task)}
-                            onKeyDown={(event) => {
-                              if (event.target !== event.currentTarget) return;
+                    {folders.map((folder) => {
+                      const count = folderCounts.get(folder) || 0;
+                      const isActive = activeFolder === folder;
 
-                              if (event.key === "Enter" || event.key === " ") {
-                                event.preventDefault();
-                                handleEdit(task);
-                              }
-                            }}
+                      return (
+                        <div
+                          key={folder}
+                          className={`${style.folderItem} ${isActive ? style.folderItemActive : ""}`}
+                        >
+                          <button
+                            type="button"
+                            className={style.folderItemMain}
+                            onClick={() => setActiveFolder(folder)}
                           >
-                            <div className={style.taskRowCopy}>
-                              <span className={style.noteDate}>{noteDateLabel}</span>
-                              <h3>{task.meta}</h3>
-                              <p>{preview || "Sin contenido. Podés abrir la nota y escribir el detalle."}</p>
-                            </div>
+                            <FiFolder />
+                            <span className={style.folderItemName}>{folder}</span>
+                            <span className={style.folderItemCount}>{count}</span>
+                          </button>
+                          {count === 0 ? (
+                            <button
+                              type="button"
+                              className={style.folderItemDelete}
+                              onClick={() => handleDeleteFolder(folder)}
+                              aria-label={`Eliminar carpeta ${folder}`}
+                              title="Eliminar carpeta vacía"
+                            >
+                              <FiX />
+                            </button>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </aside>
 
-                            <div className={style.taskRowActions}>
-                              <button
-                                type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  handleEdit(task);
-                                }}
-                              >
-                                <FiEdit3 />
-                                Editar
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  handleDelete(task._id);
-                                }}
-                              >
-                                <FiTrash2 />
-                                Eliminar
-                              </button>
-                            </div>
-                          </article>
-                        );
-                      })}
+                <div className={style.notesBoardWrap}>
+                  {boardTasks.length === 0 ? (
+                    <p className={style.emptyState}>
+                      {activeFolder === ALL_FOLDERS
+                        ? "Todavía no tenés notas. Creá la primera con “Nueva nota”."
+                        : `La carpeta “${activeFolder}” está vacía.`}
+                    </p>
+                  ) : (
+                    <div className={style.notesBoard}>
+                      {boardGroups.map((group) => (
+                        <section key={group.key} className={style.boardGroup}>
+                          <div className={style.boardGroupHeader}>
+                            <span className={style.boardGroupTitle}>{group.label}</span>
+                            <span className={style.boardGroupCount}>{group.notes.length}</span>
+                          </div>
+
+                          <div className={style.boardGrid}>
+                            {group.notes.map((task) => {
+                              const preview = stripHtml(task.contenido || "");
+
+                              return (
+                                <article
+                                  key={task._id}
+                                  role="button"
+                                  tabIndex={0}
+                                  className={`${style.noteCard} ${style[task.color] || style.color1}`}
+                                  onClick={() => handleEdit(task)}
+                                  onKeyDown={(event) => {
+                                    if (event.target !== event.currentTarget) return;
+                                    if (event.key === "Enter" || event.key === " ") {
+                                      event.preventDefault();
+                                      handleEdit(task);
+                                    }
+                                  }}
+                                  title={task.meta}
+                                >
+                                  <button
+                                    type="button"
+                                    className={style.noteCardDelete}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      handleDelete(task._id);
+                                    }}
+                                    aria-label="Eliminar nota"
+                                    title="Eliminar nota"
+                                  >
+                                    <FiTrash2 />
+                                  </button>
+
+                                  <div className={style.noteCardBody}>
+                                    <strong>{task.meta || "Sin título"}</strong>
+                                    <p>{preview || "Sin contenido"}</p>
+                                  </div>
+                                  <div className={style.noteCardFooter}>
+                                    <span>{formatShortDate(task.fecha)}</span>
+                                    {task.carpeta ? (
+                                      <span className={style.noteCardFolder}>
+                                        <FiFolder />
+                                        {task.carpeta}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </article>
+                              );
+                            })}
+                          </div>
+                        </section>
+                      ))}
                     </div>
-                  </section>
-                ))}
+                  )}
+                </div>
               </div>
             )}
         </section>
@@ -1062,6 +1422,33 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 </span>
                 <span>
                   <FiClock /> {form.horario}
+                </span>
+                <span className={style.noteFolderSelect}>
+                  <FiFolder />
+                  <select
+                    value={form.carpeta || ""}
+                    onChange={(event) => handleFieldChange("carpeta", event.target.value)}
+                    aria-label="Carpeta de la nota"
+                  >
+                    <option value="">Sin carpeta</option>
+                    {(form.carpeta && !folders.includes(form.carpeta)
+                      ? [form.carpeta, ...folders]
+                      : folders
+                    ).map((folder) => (
+                      <option key={folder} value={folder}>
+                        {folder}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className={style.noteFolderAdd}
+                    onClick={handleCreateFolderInEditor}
+                    aria-label="Nueva carpeta"
+                    title="Nueva carpeta"
+                  >
+                    <FiFolderPlus />
+                  </button>
                 </span>
               </div>
 

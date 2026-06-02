@@ -22,6 +22,11 @@ const TaskSchema = new mongoose.Schema({
     default: 'personal',
     trim: true,
   },
+  carpeta: {
+    type: String,
+    default: '',
+    trim: true,
+  },
   contenido: {
     type: String,
     default: '',

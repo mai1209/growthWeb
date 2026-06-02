@@ -66,6 +66,7 @@ export const createHabito = async (req, res) => {
       color,
       esRecurrente,
       diasRepeticion,
+      carpeta,
     } = req.body;
     const userId = req.user.id;
     const workspace = normalizeWorkspace(req);
@@ -87,6 +88,7 @@ export const createHabito = async (req, res) => {
       color,
       esRecurrente,
       diasRepeticion: esRecurrente ? diasRepeticion : [],
+      carpeta: typeof carpeta === "string" ? carpeta.trim() : "",
     });
     const habitoGuardado = await nuevoHabito.save();
     res.status(201).json(serializeTask(habitoGuardado));
@@ -297,6 +299,7 @@ export const updateTask = async (req, res) => {
       diasRepeticion,
       completada,
       workspace,
+      carpeta,
     } =
       req.body;
 
@@ -315,6 +318,7 @@ export const updateTask = async (req, res) => {
       task.diasRepeticion = task.esRecurrente ? diasRepeticion : [];
     }
     if (completada !== undefined) task.completada = completada;
+    if (carpeta !== undefined) task.carpeta = typeof carpeta === "string" ? carpeta.trim() : "";
 
     // 5. Guardamos el documento actualizado (esto SIEMPRE ejecuta las validaciones del modelo)
     const updatedTask = await task.save();

@@ -14,6 +14,7 @@
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius-2xl);
 }
+
 .header {
   padding: 1.35rem;
   display: flex;
@@ -106,7 +107,6 @@
 .input,
 .select,
 .ghostButton,
-.secondaryButton,
 .newNoteButton,
 .iconButton,
 .saveButton,
@@ -115,11 +115,11 @@
   min-height: 46px;
   border-radius: 12px;
   border: none;
-background: rgba(255, 255, 255, 0.08);
-backdrop-filter: blur(14px);
--webkit-backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 
-border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--color-text);
 }
 
@@ -184,7 +184,7 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   gap: 0.65rem;
 }
 
-.backgroundPicker > span {
+.backgroundPicker>span {
   color: #637267;
   font-size: 0.68rem;
   font-weight: 800;
@@ -351,34 +351,18 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 0 0 3px rgba(144, 211, 106, 0.12);
 }
 
-.secondaryButton,
 .ghostButton {
-  padding: 0.75rem 1rem;
   font-weight: 700;
   cursor: pointer;
 }
 
-.secondaryButton,
 .newNoteButton,
 .iconButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.48rem;
 }
 
-.secondaryButton {
-  background: var(--accent);
-  color: var(--accent-contrast);
-  border-color: transparent;
-  box-shadow: var(--shadow-xs);
-}
-
-.secondaryButton:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.05);
-  box-shadow: var(--shadow-sm);
-}
 
 .ghostButton {
   background: var(--surface-input);
@@ -456,66 +440,93 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   gap: 0.65rem;
 }
 
-.noteCalendarFilter {
+/* ===== Navegador de mes ===== */
+.monthNav {
   display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.75rem;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   background: var(--surface-input);
 }
 
-.noteCalendarButton {
-  position: relative;
-  flex: 1 1 260px;
-  min-height: 58px;
-  padding: 0.6rem 3rem 0.6rem 0.85rem;
-  border: 1px solid var(--accent-border);
-  border-radius: var(--radius-md);
+.monthNavArrow {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
   display: grid;
-  align-content: center;
-  gap: 0.16rem;
-  background: var(--surface-input);
+  place-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+}
+
+.monthNavArrow svg {
+  width: 18px;
+  height: 18px;
+}
+
+.monthNavArrow:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-surface);
+  color: var(--accent);
+}
+
+.monthNavLabel {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 42px;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-md);
   color: var(--color-text);
   cursor: pointer;
   overflow: hidden;
+  transition: background var(--transition-fast);
 }
 
-.noteCalendarButton > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.38rem;
-  color: var(--color-muted);
-  font-size: 0.7rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.monthNavLabel:hover {
+  background: var(--surface-hover);
 }
 
-.noteCalendarButton strong {
-  color: var(--color-text);
-  font-size: 0.98rem;
+.monthNavLabel>svg {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+
+.monthNavLabel strong {
+  font-size: 1.05rem;
   font-weight: 800;
   text-transform: capitalize;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.noteCalendarChevron {
-  position: absolute;
-  top: 50%;
-  right: 0.85rem;
-  width: 22px;
-  height: 22px;
-  padding: 0.18rem;
-  border-radius: 999px;
-  color: var(--color-verde);
-  background: rgba(144, 211, 106, 0.14);
-  transform: translateY(-50%);
-  pointer-events: none;
+.monthNavCount {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 0.22rem 0.65rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--accent-border);
+  background: var(--accent-surface);
+  color: var(--accent);
+  font-size: 0.74rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
-.noteCalendarButton input {
+.monthNavLabel input {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -524,23 +535,749 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   pointer-events: none;
 }
 
-.monthViewButton {
+.monthTodayButton {
   flex: 0 0 auto;
-  min-height: 58px;
-  padding: 0 1rem;
+  min-height: 42px;
+  padding: 0 1.1rem;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-md);
+  background: var(--accent-surface);
+  color: var(--accent);
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition-fast);
+}
+
+.monthTodayButton:hover {
+  background: var(--color-verde-soft);
+}
+
+/* ===== Toggle de vista (Calendario / Lista) ===== */
+.listHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.viewToggle {
+  display: inline-flex;
+  gap: 0.2rem;
+  padding: 0.25rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   background: var(--surface-input);
-  color: var(--color-text);
-  cursor: pointer;
-  font-weight: 700;
-  white-space: nowrap;
-  transition: border-color var(--transition-fast), background var(--transition-fast);
 }
 
-.monthViewButton:hover {
+.viewToggleButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.8rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.viewToggleButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.viewToggleButton:hover {
+  color: var(--color-text);
+}
+
+.viewToggleButtonActive,
+.viewToggleButtonActive:hover {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+/* ===== Vista calendario ===== */
+.calendar {
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.calendarWeekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+}
+
+.calendarWeekdays span {
+  padding-bottom: 0.1rem;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+}
+
+.calendarCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 104px;
+  padding: 0.45rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+
+.calendarCellMuted {
+  background: transparent;
+  opacity: 0.5;
+}
+
+.calendarCellToday {
+  border-color: var(--accent-border);
+  box-shadow: inset 0 0 0 1px var(--accent-border);
+}
+
+.calendarCellHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 22px;
+}
+
+.calendarCellDay {
+  min-width: 24px;
+  height: 22px;
+  padding: 0 0.35rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.calendarCellDay:hover {
+  background: var(--surface-hover);
+  color: var(--accent);
+}
+
+.calendarCellToday .calendarCellDay {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 0.3rem;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.calendarCellAdd {
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+}
+
+.calendarCellAdd svg {
+  width: 15px;
+  height: 15px;
+}
+
+.calendarCell:hover .calendarCellAdd {
+  opacity: 1;
+}
+
+.calendarCellAdd:hover {
+  background: var(--accent-surface);
+  color: var(--accent);
+}
+
+.calendarCellNotes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.calendarNote {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.4rem 0.5rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  color: #121814;
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: transform var(--transition-fast);
+}
+
+.calendarNote:hover {
+  transform: translateY(-1px);
+}
+
+.calendarNote strong {
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendarNote span {
+  display: -webkit-box;
+  overflow: hidden;
+  color: rgba(17, 24, 20, 0.65);
+  font-size: 0.7rem;
+  line-height: 1.3;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.calendarNote.color11 {
+  color: #f7fff9;
+}
+
+.calendarNote.color11 span {
+  color: rgba(247, 255, 249, 0.7);
+}
+
+/* ===== Barra de carpetas ===== */
+.folderBar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.folderChip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-pill);
+  background: var(--surface-input);
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  overflow: hidden;
+  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+}
+
+button.folderChip {
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+}
+
+.folderChip:hover {
+  color: var(--color-text);
+  border-color: var(--accent-border);
+}
+
+.folderChipActive {
   border-color: var(--accent-border);
   background: var(--accent-surface);
+  color: var(--accent);
+}
+
+.folderChipMain {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.7rem 0.45rem 0.85rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.folderChipDelete {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  align-self: stretch;
+  padding: 0 0.45rem 0 0.05rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.folderChipDelete:hover {
+  opacity: 1;
+  color: var(--color-rojo);
+}
+
+.folderChip svg,
+.folderChipMain svg,
+.folderAdd svg {
+  width: 15px;
+  height: 15px;
+}
+
+.folderCount {
+  font-size: 0.72rem;
+  font-weight: 800;
+  opacity: 0.75;
+}
+
+.folderAdd {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px dashed var(--accent-border);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.folderAdd:hover {
+  background: var(--accent-surface);
+}
+
+/* ===== Tablero de notas (estilo Apple Notes) ===== */
+.notesBoard {
+  display: grid;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.boardGroup {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.boardGroupHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.boardGroupHeader::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: var(--border-color);
+}
+
+.boardGroupTitle {
+  color: var(--color-text);
+  font-size: 0.98rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.boardGroupCount {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 0.42rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--accent-border);
+  background: var(--accent-surface);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.boardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 240px));
+  justify-content: start;
+  gap: 0.9rem;
+}
+
+.noteCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 150px;
+  padding: 0.95rem;
+  border: 1px solid rgba(216, 241, 224, 0.08);
+  border-radius: var(--radius-lg);
+  color: #121814;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.noteCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.noteCardBody {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.noteCardBody strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.95rem;
+  font-weight: 700;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.noteCardBody p {
+  margin: 0;
+  display: -webkit-box;
+  overflow: hidden;
+  color: rgba(17, 24, 20, 0.7);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+.noteCardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: rgba(17, 24, 20, 0.55);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.noteCardFolder {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 58%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.noteCardFolder svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+}
+
+.noteCard.color11 {
+  color: #f7fff9;
+}
+
+.noteCard.color11 .noteCardBody p,
+.noteCard.color11 .noteCardFooter {
+  color: rgba(247, 255, 249, 0.7);
+}
+
+/* Papelera en la tarjeta de nota */
+.noteCardDelete {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.7);
+  color: #b0392a;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition-fast), background var(--transition-fast);
+}
+
+.noteCard:hover .noteCardDelete,
+.noteCard:focus-within .noteCardDelete {
+  opacity: 1;
+}
+
+.noteCardDelete:hover {
+  background: #ffffff;
+}
+
+.noteCardDelete svg {
+  width: 15px;
+  height: 15px;
+}
+
+.noteCard.color11 .noteCardDelete {
+  background: rgba(0, 0, 0, 0.35);
+  color: #ffb1a2;
+}
+
+/* ===== Vista Notas: layout con sidebar de carpetas a la izquierda ===== */
+.notesLayout {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.1rem;
+  width: 100%;
+}
+
+.folderSidebar {
+  position: sticky;
+  top: 84px;
+  flex: 0 0 224px;
+  width: 224px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+
+.folderSidebarTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.2rem 0.15rem;
+}
+
+.folderSidebarTitle {
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.folderAddIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.folderAddIcon:hover {
+  background: var(--accent-surface);
+  border-color: var(--accent-border);
+}
+
+.folderAddIcon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.folderList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  max-height: calc(100vh - 230px);
+  overflow-y: auto;
+}
+
+.folderItem {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  overflow: hidden;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+button.folderItem {
+  gap: 0.55rem;
+  padding: 0.55rem 0.7rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+}
+
+.folderItem:hover {
+  background: var(--surface-hover);
+}
+
+.folderItemActive {
+  background: var(--accent-surface);
+  color: var(--accent);
+}
+
+.folderItem>svg,
+.folderItemMain>svg {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+}
+
+.folderItemMain {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0.4rem 0.55rem 0.7rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.folderItemName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.folderItemCount {
+  flex: 0 0 auto;
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.folderItemActive .folderItemCount {
+  color: var(--accent);
+}
+
+.folderItemDelete {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  flex: 0 0 auto;
+  align-self: stretch;
+  padding: 0 0.5rem 0 0.1rem;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.folderItemDelete:hover {
+  opacity: 1;
+  color: var(--color-rojo);
+}
+
+.folderItemDelete svg {
+  width: 14px;
+  height: 14px;
+}
+
+.notesBoardWrap {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ===== Selector de carpeta en el editor ===== */
+.noteFolderSelect {
+  gap: 0.3rem;
+}
+
+.noteFolderSelect select {
+  max-width: 150px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+}
+
+.noteFolderSelect>svg {
+  width: 14px;
+  height: 14px;
+}
+
+.noteFolderAdd {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.noteFolderAdd:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.noteFolderAdd svg {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 1000px) {
+
+  .calendar,
+  .calendarWeekdays,
+  .calendarGrid {
+    gap: 0.35rem;
+  }
+
+  .calendarCell {
+    min-height: 92px;
+    padding: 0.35rem;
+  }
+
+  .calendarWeekdays span {
+    font-size: 0.64rem;
+  }
+
+  .calendarNote {
+    padding: 0.3rem 0.4rem;
+  }
+
+  .calendarNote span {
+    -webkit-line-clamp: 1;
+  }
 }
 
 .colorGrid {
@@ -685,71 +1422,105 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 
 
 .groupList {
+  display: grid;
+  gap: 1.5rem;
   width: 100%;
-  column-width: 300px;
-  column-gap: 1.1rem;
 }
 
 .noteDayGroup {
   display: grid;
-  gap: 0.72rem;
-  margin-bottom: 1.1rem;
-  break-inside: avoid;
+  gap: 0.85rem;
+  border-radius: var(--radius-lg);
+}
+
+.noteDayGroupFocus {
+  animation: dayFocusPulse 1.8s ease;
+}
+
+@keyframes dayFocusPulse {
+
+  0%,
+  30% {
+    background: var(--accent-surface);
+    box-shadow: 0 0 0 8px var(--accent-surface);
+  }
+
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0 8px transparent;
+  }
 }
 
 .groupHeader {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.6rem;
 }
 
 .groupHeader::after {
   content: "";
   height: 1px;
   flex: 1;
-  background: rgba(216, 241, 224, 0.1);
+  background: var(--border-color);
 }
 
 .noteDayGrid {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 
-.groupHeader span,
+.groupHeaderDay {
+  color: var(--color-text);
+  font-size: 0.98rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.groupHeaderCount {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 0.42rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--accent-border);
+  background: var(--accent-surface);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
 .noteDate {
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
-  color: rgba(17, 24, 20, 0.68);
-  font-size: 0.76rem;
+  color: rgba(17, 24, 20, 0.58);
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.groupHeader span {
-  color: var(--color-text);
+  letter-spacing: 0.06em;
 }
 
 .taskRow {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 0.85rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
   width: 100%;
   min-height: 0;
-  padding: 1rem;
+  padding: 0.8rem 1rem;
   border-radius: var(--radius-lg);
   border: 1px solid rgba(216, 241, 224, 0.08);
   color: #121814;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-xs);
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
 .taskRow:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.16);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .taskRow:focus-visible {
@@ -761,30 +1532,29 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   opacity: 0.82;
 }
 
+.taskRowCopy {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.18rem;
+}
+
 .taskRowCopy h3,
 .taskRowCopy p {
   margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .taskRowCopy h3 {
-  display: -webkit-box;
-  overflow: hidden;
-  margin-top: 0.45rem;
-  font-size: 0.95rem;
+  font-size: 0.98rem;
   font-weight: 700;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 
 .taskRowCopy p {
-  margin-top: 0.42rem;
-  display: -webkit-box;
-  overflow: hidden;
-  color: rgba(17, 24, 20, 0.72);
-  font-size: 0.86rem;
-  line-height: 1.45;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
+  color: rgba(17, 24, 20, 0.7);
+  font-size: 0.84rem;
 }
 
 .taskMetaRow {
@@ -807,24 +1577,28 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .taskRowActions {
+  flex: 0 0 auto;
   display: flex;
-  gap: 0.45rem;
-  flex-wrap: wrap;
+  gap: 0.4rem;
 }
 
 .taskRowActions button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
-  flex: 1 1 78px;
+  gap: 0.4rem;
   min-height: 38px;
-  padding: 0.55rem 0.65rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-md);
   cursor: pointer;
   font-size: 0.82rem;
   font-weight: 700;
   background: rgba(255, 255, 255, 0.72);
   color: #121814;
+}
+
+.taskRowActions button:hover {
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .taskRow.color11 {
@@ -1164,6 +1938,19 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   background: var(--color-verde-soft);
 }
 
+.secondaryButton {
+  border: none;
+  background-color: var(--accent);
+  padding: 0.7rem;
+  border-radius: 8px;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  cursor: pointer;
+
+}
+
+
 :global(body[data-theme="light"]) .header,
 :global(body[data-theme="light"]) .editorCard,
 :global(body[data-theme="light"]) .listCard,
@@ -1216,7 +2003,7 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 :global(body[data-theme="dark"]) .noteMetaInfo,
-:global(body[data-theme="dark"]) .backgroundPicker > span {
+:global(body[data-theme="dark"]) .backgroundPicker>span {
   color: #9ab0aa;
 }
 
@@ -1324,10 +2111,6 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 @media (max-width: 1100px) {
-  .groupList {
-    column-width: 280px;
-  }
-
   .taskRow {
     width: 100%;
   }
@@ -1349,13 +2132,13 @@ border: 1px solid rgba(255, 255, 255, 0.12);
     grid-template-columns: 1fr;
   }
 
-  .noteCalendarFilter {
-    flex-direction: column;
+  .monthNav {
+    gap: 0.45rem;
+    padding: 0.45rem;
   }
 
-  .noteCalendarButton,
-  .monthViewButton {
-    width: 100%;
+  .monthNavLabel {
+    padding: 0.4rem 0.6rem;
   }
 
   .listCard {
@@ -1363,12 +2146,60 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   }
 
   .noteDayGrid {
-    gap: 0.75rem;
+    gap: 0.6rem;
+  }
+
+  .boardGrid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .notesLayout {
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .folderSidebar {
+    position: static;
+    top: auto;
+    flex: none;
+    width: 100%;
+    padding: 0.6rem 0.7rem;
+  }
+
+  .folderList {
+    flex-direction: row;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .folderItem,
+  button.folderItem {
+    flex: 0 0 auto;
+  }
+
+  .folderItemName {
+    max-width: 130px;
+  }
+
+  .noteCardDelete {
+    opacity: 1;
   }
 
   .taskRow {
     width: 100%;
     min-width: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.7rem;
+  }
+
+  .taskRowActions {
+    width: 100%;
+  }
+
+  .taskRowActions button {
+    flex: 1;
   }
 
   .editorCard {
@@ -1466,7 +2297,7 @@ border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 0;
   }
 
-  .header ,
+  .header,
   .editorHeader h2 {
     font-size: 1.15rem;
   }
@@ -1487,5 +2318,26 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   .taskRow {
     flex-basis: 100%;
     width: 100%;
+  }
+
+  .noteDayGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .boardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .monthNavCount {
+    display: none;
+  }
+
+  .monthNavArrow {
+    width: 38px;
+    height: 38px;
+  }
+
+  .monthTodayButton {
+    padding: 0 0.8rem;
   }
 }

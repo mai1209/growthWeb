@@ -2,8 +2,14 @@
 
 # dependencies
 /node_modules
+node_modules/
+**/node_modules/
 /.pnp
 .pnp.js
+
+# caches de build
+.eslintcache
+**/.cache/
 
 # testing
 /coverage
