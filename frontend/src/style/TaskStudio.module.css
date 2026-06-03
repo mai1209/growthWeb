@@ -280,6 +280,150 @@
   color: #27591f;
 }
 
+/* Control numérico de tamaño de letra (px), estilo Word */
+.fontSizeControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid rgba(17, 24, 20, 0.12);
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.fontSizeStep {
+  width: 26px;
+  height: 28px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #2f6f35;
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fontSizeStep:hover {
+  background: rgba(144, 211, 106, 0.18);
+}
+
+.fontSizeInput {
+  width: 38px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #172018;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.fontSizeInput::-webkit-outer-spin-button,
+.fontSizeInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.fontSizeInput:focus {
+  outline: none;
+  background: rgba(144, 211, 106, 0.12);
+}
+
+.fontSizeUnit {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #637267;
+  padding-right: 2px;
+}
+
+/* Panel "Insertar": flechas/símbolos y tablas (debajo de la barra) */
+.insertPanel {
+  width: 100%;
+  margin-bottom: 0.7rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(17, 24, 20, 0.12);
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: var(--shadow-xs, 0 6px 16px rgba(0, 0, 0, 0.06));
+}
+
+.insertPanelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.insertMenuLabel {
+  margin: 0 0 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #637267;
+}
+
+.symbolGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(38px, 1fr));
+  gap: 0.3rem;
+  margin-bottom: 0.8rem;
+}
+
+.symbolButton {
+  height: 38px;
+  border: 1px solid rgba(17, 24, 20, 0.1);
+  border-radius: 9px;
+  background: #ffffff;
+  color: #172018;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.symbolButton:hover {
+  background: rgba(144, 211, 106, 0.18);
+  border-color: rgba(75, 143, 58, 0.34);
+}
+
+.tableSizes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 90px));
+  gap: 0.35rem;
+}
+
+.tableSizeButton {
+  height: 32px;
+  border: 1px solid rgba(17, 24, 20, 0.1);
+  border-radius: 9px;
+  background: #ffffff;
+  color: #172018;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tableSizeButton:hover {
+  background: rgba(144, 211, 106, 0.18);
+  border-color: rgba(75, 143, 58, 0.34);
+}
+
+/* Tablas dentro del editor */
+.editor :global(.ql-editor table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
+.editor :global(.ql-editor td) {
+  border: 1px solid rgba(17, 24, 20, 0.25);
+  padding: 0.4rem 0.55rem;
+  min-width: 2.5rem;
+}
+
 .textColorGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -356,6 +500,149 @@
   box-shadow: 0 0 0 3px rgba(144, 211, 106, 0.12);
 }
 
+/* ===== Tipografía estilo Notion para lectura/estudio ===== */
+.editor :global(.ql-editor) {
+  font-size: 1.02rem;
+  letter-spacing: 0.005em;
+}
+
+.editor :global(.ql-editor h1) {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 0.7em 0 0.3em;
+  letter-spacing: -0.01em;
+}
+
+.editor :global(.ql-editor h2) {
+  font-size: 1.32rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0.6em 0 0.25em;
+}
+
+.editor :global(.ql-editor p) {
+  margin-bottom: 0.55em;
+}
+
+.editor :global(.ql-editor blockquote) {
+  border-left: 3px solid rgba(47, 111, 53, 0.4);
+  padding-left: 0.9rem;
+  color: #41514a;
+  font-style: italic;
+}
+
+/* Tamaños de texto (S / M / L) garantizados, por si otra regla los pisa.
+   Forzamos el color de texto normal: el tamaño chico NO cambia el color. */
+.editor :global(.ql-editor .ql-size-small) {
+  font-size: 0.86em !important;
+}
+
+.editor :global(.ql-editor span.ql-size-small:not([style*="color"])) {
+  color: #172018;
+}
+
+.editor :global(.ql-editor .ql-size-large) {
+  font-size: 1.5em !important;
+}
+
+.editor :global(.ql-editor .ql-size-huge) {
+  font-size: 2.3em !important;
+}
+
+/* En modo foco: columna de lectura centrada y más aire, como Notion.
+   El ancho es regulable con el control S/M/L/Full (data-sheet). */
+.editorExpanded .editor :global(.ql-editor) {
+  margin-inline: auto;
+  font-size: 1.08rem;
+  line-height: 1.7;
+  padding: 1.6rem 1.25rem 3rem;
+}
+
+/* ===== Ancho de la hoja regulable (S / M / L / Full) =====
+   Vista normal: regula el ancho de la columna (header + formulario). */
+.editorCard[data-sheet="narrow"] .editorHeader,
+.editorCard[data-sheet="narrow"] .form {
+  width: min(960px, 100%);
+}
+
+.editorCard[data-sheet="medium"] .editorHeader,
+.editorCard[data-sheet="medium"] .form {
+  width: min(1240px, 100%);
+}
+
+.editorCard[data-sheet="wide"] .editorHeader,
+.editorCard[data-sheet="wide"] .form {
+  width: min(1600px, 100%);
+}
+
+.editorCard[data-sheet="full"] .editorHeader,
+.editorCard[data-sheet="full"] .form {
+  width: 100%;
+}
+
+/* Modo foco: la columna ocupa todo y se regula la hoja de lectura (.ql-editor). */
+.editorCard.editorExpanded .editorHeader,
+.editorCard.editorExpanded .form {
+  width: 100%;
+}
+
+.editorCard.editorExpanded[data-sheet="narrow"] .editor :global(.ql-editor) {
+  max-width: 680px;
+}
+
+.editorCard.editorExpanded[data-sheet="medium"] .editor :global(.ql-editor) {
+  max-width: 900px;
+}
+
+.editorCard.editorExpanded[data-sheet="wide"] .editor :global(.ql-editor) {
+  max-width: 1200px;
+}
+
+.editorCard.editorExpanded[data-sheet="full"] .editor :global(.ql-editor) {
+  max-width: 100%;
+}
+
+/* Control de ancho de hoja (solo visible en modo foco) */
+.widthControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid rgba(17, 24, 20, 0.12);
+  background: var(--surface-input, rgba(0, 0, 0, 0.04));
+}
+
+.widthButton {
+  min-width: 30px;
+  height: 28px;
+  padding: 0 0.45rem;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.widthButton:hover {
+  background: rgba(144, 211, 106, 0.16);
+}
+
+.widthButtonActive {
+  background: #2f6f35;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .widthControl {
+    display: none;
+  }
+}
+
 .ghostButton {
   font-weight: 700;
   cursor: pointer;
@@ -397,6 +684,101 @@
   display: flex;
   align-items: center;
   gap: 0.65rem;
+}
+
+.wordCount {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.iconButtonActive {
+  border-color: rgba(47, 111, 53, 0.5);
+  background: rgba(144, 211, 106, 0.16);
+  color: #2f6f35;
+}
+
+.iconButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ===== Panel de índice (tabla de contenidos) ===== */
+.outlinePanel {
+  width: 100%;
+  margin-bottom: 0.7rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(17, 24, 20, 0.12);
+  border-radius: 14px;
+  background: var(--surface-input, #ffffff);
+  box-shadow: var(--shadow-xs, 0 6px 16px rgba(0, 0, 0, 0.06));
+}
+
+.outlinePanelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.outlineTitle {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent, #2f6f35);
+}
+
+.outlineClose {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.outlineClose:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.outlineList {
+  display: grid;
+  gap: 0.15rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.outlineItem {
+  text-align: left;
+  padding: 0.4rem 0.55rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background var(--transition-fast, 0.15s ease);
+}
+
+.outlineItem:hover {
+  background: rgba(144, 211, 106, 0.14);
+}
+
+.outlineItemSub {
+  padding-left: 1.4rem;
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: var(--color-muted);
 }
 
 .unsavedBadge {
@@ -2464,5 +2846,404 @@ button.folderItem {
 
   .monthTodayButton {
     padding: 0 0.8rem;
+  }
+}
+
+/* ===== Resaltador (marcador) ===== */
+.highlightSwatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: #fff2a8;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.highlightButton.toolbarButtonActive .highlightSwatch {
+  box-shadow: 0 0 0 2px rgba(47, 111, 53, 0.5);
+}
+
+/* Badge con el número de tarjetas sobre el botón del editor */
+.iconButton {
+  position: relative;
+}
+
+.iconBadge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #2f6f35;
+  color: #ffffff;
+  font-size: 0.66rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* ===== Flashcards: overlay y modales ===== */
+.fcOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(8, 14, 10, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.fcModal {
+  width: min(560px, 100%);
+  max-height: 86vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.2rem;
+  border-radius: 20px;
+  background: var(--surface-card, #ffffff);
+  color: var(--color-text);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35);
+}
+
+.fcModalHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.fcModalHead h3 {
+  margin: 0.1rem 0 0;
+  font-size: 1.2rem;
+}
+
+.fcField {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.fcField span {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.fcField textarea {
+  min-height: 70px;
+  resize: vertical;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(17, 24, 20, 0.18);
+  background: var(--surface-input, #ffffff);
+  color: var(--color-text);
+  font-size: 16px;
+  line-height: 1.5;
+  font-family: inherit;
+}
+
+.fcField textarea:focus {
+  outline: none;
+  border-color: rgba(144, 211, 106, 0.55);
+  box-shadow: 0 0 0 3px rgba(144, 211, 106, 0.16);
+}
+
+.fcActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.fcEmpty {
+  margin: 0;
+  padding: 1.2rem;
+  border-radius: 14px;
+  background: var(--surface-input, rgba(0, 0, 0, 0.04));
+  color: var(--color-muted);
+  line-height: 1.55;
+  text-align: center;
+}
+
+.fcStudyButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 50px;
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(144, 211, 106, 0.95), rgba(52, 132, 67, 0.98));
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 14px 28px rgba(13, 56, 20, 0.22);
+}
+
+.fcOverlayElevated {
+  z-index: 4200;
+}
+
+.fcScopeTabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem;
+  padding: 0.25rem;
+  border-radius: 12px;
+  border: 1px solid rgba(17, 24, 20, 0.12);
+  background: var(--surface-input, rgba(0, 0, 0, 0.04));
+}
+
+.fcScopeTab {
+  min-height: 38px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.fcScopeTabActive {
+  background: #2f6f35;
+  color: #ffffff;
+}
+
+.fcNewButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 46px;
+  border: 1px dashed rgba(47, 111, 53, 0.5);
+  border-radius: 12px;
+  background: rgba(144, 211, 106, 0.1);
+  color: #2f6f35;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fcNewButton:hover {
+  background: rgba(144, 211, 106, 0.18);
+}
+
+.fcList {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.fcRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(17, 24, 20, 0.1);
+  background: var(--surface-input, rgba(0, 0, 0, 0.02));
+}
+
+.fcRowText {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.fcRowText strong {
+  font-size: 0.95rem;
+}
+
+.fcRowText span {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.fcRowText small {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.fcDueNow {
+  color: var(--accent, #2f6f35) !important;
+  font-weight: 800 !important;
+}
+
+.fcUpToDate {
+  display: grid;
+  gap: 0.3rem;
+  justify-items: center;
+  text-align: center;
+  padding: 1rem;
+  border-radius: 14px;
+  background: rgba(144, 211, 106, 0.12);
+  border: 1px solid rgba(75, 143, 58, 0.25);
+}
+
+.fcUpToDate strong {
+  font-size: 1.05rem;
+}
+
+.fcUpToDate span {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.fcStudyGhost {
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid rgba(75, 143, 58, 0.4);
+  border-radius: 10px;
+  background: transparent;
+  color: #2f6f35;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.fcStudyGhost:hover {
+  background: rgba(144, 211, 106, 0.18);
+}
+
+.fcDelete {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: #c0492f;
+  cursor: pointer;
+}
+
+.fcDelete:hover {
+  background: rgba(192, 73, 47, 0.12);
+}
+
+/* ===== Sesión de repaso (flip card) ===== */
+.fcStudyModal {
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fcStudyTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.fcStudyTop .iconButton {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #ffffff;
+}
+
+.fcCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  width: 100%;
+  min-height: 300px;
+  padding: 2rem 1.5rem;
+  border: none;
+  border-radius: 22px;
+  background: #ffffff;
+  color: #172018;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease;
+}
+
+.fcCard:hover {
+  transform: translateY(-2px);
+}
+
+.fcCardFlipped {
+  background: linear-gradient(160deg, #eaf7e6, #ffffff);
+}
+
+.fcCardLabel {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent, #2f6f35);
+}
+
+.fcCardText {
+  margin: 0;
+  font-size: 1.3rem;
+  line-height: 1.45;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.fcCardHint {
+  font-size: 0.8rem;
+  color: #7f8b80;
+}
+
+.fcGrade {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+
+.fcAgain,
+.fcKnown {
+  min-height: 52px;
+  border: none;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.fcAgain {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.fcKnown {
+  background: linear-gradient(135deg, rgba(144, 211, 106, 0.95), rgba(52, 132, 67, 0.98));
+  color: #ffffff;
+}
+
+@media (max-width: 520px) {
+  .fcCardText {
+    font-size: 1.12rem;
+  }
+
+  .fcCard {
+    min-height: 240px;
+    padding: 1.5rem 1.1rem;
   }
 }

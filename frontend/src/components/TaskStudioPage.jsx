@@ -17,6 +17,8 @@ import {
   FiFolderPlus,
   FiHash,
   FiItalic,
+  FiLayers,
+  FiBookOpen,
   FiList,
   FiMaximize2,
   FiMinimize2,
@@ -33,6 +35,15 @@ import "quill/dist/quill.snow.css";
 import { taskService } from "../api";
 import style from "../style/TaskStudio.module.css";
 
+// Habilita tamaño de fuente por píxeles (ej. "16px") en vez de small/large.
+const SizeStyle = Quill.import("attributors/style/size");
+SizeStyle.whitelist = null; // permitir cualquier valor en px
+Quill.register(SizeStyle, true);
+
+const MIN_FONT_PX = 8;
+const MAX_FONT_PX = 96;
+const DEFAULT_FONT_PX = 16;
+
 const COLOR_OPTIONS = [
   { value: "color1", label: "Verde" },
   { value: "color2", label: "Naranja" },
@@ -46,6 +57,25 @@ const COLOR_OPTIONS = [
   { value: "color10", label: "Blanco" },
   { value: "color11", label: "Negro" },
 ];
+
+const SHEET_WIDTH_OPTIONS = [
+  { value: "narrow", label: "S", title: "Hoja angosta" },
+  { value: "medium", label: "M", title: "Hoja media" },
+  { value: "wide", label: "L", title: "Hoja ancha" },
+  { value: "full", label: "Full", title: "Ancho completo" },
+];
+
+const SHEET_WIDTH_VALUES = SHEET_WIDTH_OPTIONS.map((option) => option.value);
+const SHEET_WIDTH_STORAGE_KEY = "growth-note-sheet-width";
+
+const readStoredSheetWidth = () => {
+  try {
+    const stored = localStorage.getItem(SHEET_WIDTH_STORAGE_KEY);
+    return SHEET_WIDTH_VALUES.includes(stored) ? stored : "wide";
+  } catch {
+    return "wide";
+  }
+};
 
 const TEXT_COLOR_OPTIONS = [
   { value: false, label: "Predeterminado", swatch: "#172018" },
@@ -180,6 +210,7 @@ const buildInitialFormState = () => ({
   horario: getTimeInputValue(new Date()),
   color: "color1",
   carpeta: "",
+  flashcards: [],
 });
 
 const ALL_FOLDERS = "__all__";
@@ -193,6 +224,40 @@ const readStoredFolders = (workspace) => {
     return Array.isArray(parsed) ? parsed.filter((name) => typeof name === "string" && name.trim()) : [];
   } catch {
     return [];
+  }
+};
+
+const createFlashcardId = () =>
+  `fc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+
+// Repaso espaciado (Leitner): días hasta el próximo repaso según la "caja".
+const SR_INTERVALS = [0, 1, 3, 7, 16];
+const MAX_BOX = SR_INTERVALS.length - 1;
+
+const todayKey = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+    now.getDate()
+  ).padStart(2, "0")}`;
+};
+
+const dateKeyInDays = (days) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
+};
+
+const isCardDue = (card) => !card?.due || card.due <= todayKey();
+
+const formatDueLabel = (card) => {
+  if (isCardDue(card)) return "Para repasar hoy";
+  try {
+    const [, m, d] = card.due.split("-").map(Number);
+    return `Próximo repaso: ${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}`;
+  } catch {
+    return "";
   }
 };
 
@@ -233,6 +298,20 @@ const groupNotesForBoard = (notes = []) => {
   return groups;
 };
 
+// Contador de palabras / tiempo de lectura + índice (títulos) de la nota.
+const computeEditorMeta = (instance) => {
+  const text = instance.getText().trim();
+  const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+  const stats = { words, minutes: words ? Math.max(1, Math.ceil(words / 200)) : 0 };
+  const nodes = instance.root.querySelectorAll("h1, h2");
+  const outline = Array.from(nodes).map((node, index) => ({
+    id: index,
+    text: (node.textContent || "").trim() || "Sin título",
+    level: node.tagName === "H1" ? 1 : 2,
+  }));
+  return { stats, outline };
+};
+
 function TaskStudioPage({ activeWorkspace = "personal" }) {
   const editorRef = useRef(null);
   const quillRef = useRef(null);
@@ -241,6 +320,14 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const activeNotePageIndexRef = useRef(0);
   const isDirtyRef = useRef(false);
   const historyTrapRef = useRef(false);
+  const autoCapEnabledRef = useRef(true);
+  const [autoCapEnabled, setAutoCapEnabled] = useState(() => {
+    try {
+      return localStorage.getItem("growth-note-autocap") !== "off";
+    } catch {
+      return true;
+    }
+  });
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -254,7 +341,20 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const [editingTitle, setEditingTitle] = useState("");
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isEditorExpanded, setIsEditorExpanded] = useState(false);
+  const [sheetWidth, setSheetWidth] = useState(readStoredSheetWidth);
+  const [editorStats, setEditorStats] = useState({ words: 0, minutes: 0 });
+  const [outline, setOutline] = useState([]);
+  const [showOutline, setShowOutline] = useState(false);
+  const [isCardFormOpen, setIsCardFormOpen] = useState(false);
+  const [isDeckOpen, setIsDeckOpen] = useState(false);
+  const [deckScope, setDeckScope] = useState("all");
+  const [cardForm, setCardForm] = useState({ front: "", back: "" });
+  const [isStudyOpen, setIsStudyOpen] = useState(false);
+  const [studyDeck, setStudyDeck] = useState([]);
+  const [studyIndex, setStudyIndex] = useState(0);
+  const [studyFlipped, setStudyFlipped] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [sizeInput, setSizeInput] = useState(DEFAULT_FONT_PX);
   const [view, setView] = useState("notes");
   const [activeFolder, setActiveFolder] = useState(ALL_FOLDERS);
   const [customFolders, setCustomFolders] = useState(() => readStoredFolders(activeWorkspace));
@@ -281,6 +381,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     align: formats.align || "",
     bold: Boolean(formats.bold),
     blockquote: formats.blockquote === true,
+    background: Boolean(formats.background),
     codeBlock: Boolean(formats["code-block"]),
     color: formats.color || "",
     header: formats.header || false,
@@ -355,8 +456,16 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     // Capitalización automática del teclado en móvil.
     quill.root.setAttribute("autocapitalize", "sentences");
 
+    // Calcula contador de palabras/tiempo de lectura e índice (títulos) de la nota.
+    const refreshEditorMeta = (instance) => {
+      const { stats, outline: nextOutline } = computeEditorMeta(instance);
+      setEditorStats(stats);
+      setOutline(nextOutline);
+    };
+
     // Capitaliza la primera letra de cada oración mientras escribís (también en desktop).
     const autoCapitalizeSentence = (delta) => {
+      if (!autoCapEnabledRef.current) return;
       if (!delta || !Array.isArray(delta.ops)) return;
 
       let index = 0;
@@ -403,6 +512,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
           index === activeNotePageIndexRef.current ? { ...page, contenido: html } : page
         )
       );
+
+      refreshEditorMeta(quill);
 
       const range = quill.getSelection();
       if (!range) return;
@@ -455,6 +566,35 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       /* almacenamiento no disponible */
     }
   }, [customFolders, activeWorkspace]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SHEET_WIDTH_STORAGE_KEY, sheetWidth);
+    } catch {
+      /* almacenamiento no disponible */
+    }
+  }, [sheetWidth]);
+
+  useEffect(() => {
+    autoCapEnabledRef.current = autoCapEnabled;
+    if (quillRef.current) {
+      quillRef.current.root.setAttribute(
+        "autocapitalize",
+        autoCapEnabled ? "sentences" : "off"
+      );
+    }
+    try {
+      localStorage.setItem("growth-note-autocap", autoCapEnabled ? "on" : "off");
+    } catch {
+      /* almacenamiento no disponible */
+    }
+  }, [autoCapEnabled]);
+
+  // Refleja en el input el tamaño del texto donde está el cursor/selección.
+  useEffect(() => {
+    const px = parseInt(activeFormats.size, 10);
+    setSizeInput(px || DEFAULT_FONT_PX);
+  }, [activeFormats.size]);
 
   // Aviso del navegador al recargar / cerrar pestaña con cambios sin guardar.
   useEffect(() => {
@@ -510,11 +650,24 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
 
     if (!form.contenido) {
       quillRef.current.setText("");
+      const empty = computeEditorMeta(quillRef.current);
+      setEditorStats(empty.stats);
+      setOutline(empty.outline);
       return;
     }
 
     quillRef.current.clipboard.dangerouslyPasteHTML(form.contenido);
+    const meta = computeEditorMeta(quillRef.current);
+    setEditorStats(meta.stats);
+    setOutline(meta.outline);
   }, [form.contenido]);
+
+  const scrollToHeading = (index) => {
+    const quill = quillRef.current;
+    if (!quill) return;
+    const nodes = quill.root.querySelectorAll("h1, h2");
+    nodes[index]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const filteredTasks = useMemo(() => {
     const [year, month] = selectedMonth.split("-").map(Number);
@@ -900,8 +1053,12 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     quill.format("color", value || false);
   };
 
-  const applyTextSize = (value) => {
+  // Aplica un tamaño de fuente en píxeles (a la selección o al cursor).
+  const applySizePx = (px) => {
     if (!quillRef.current) return;
+
+    const clamped = Math.min(MAX_FONT_PX, Math.max(MIN_FONT_PX, Number(px) || DEFAULT_FONT_PX));
+    setSizeInput(clamped);
 
     const quill = quillRef.current;
     const range = getEditorRange();
@@ -913,7 +1070,162 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       selectionRef.current = range;
     }
 
-    quill.format("size", value || false);
+    // 16px es el tamaño base: si lo eligen, quitamos el formato para que quede "normal".
+    quill.format("size", clamped === DEFAULT_FONT_PX ? false : `${clamped}px`);
+  };
+
+  const stepFontSize = (delta) => {
+    applySizePx((Number(sizeInput) || DEFAULT_FONT_PX) + delta);
+  };
+
+  const commitSizeInput = () => {
+    const value = Number(sizeInput);
+    if (!value || Number.isNaN(value)) {
+      setSizeInput(DEFAULT_FONT_PX);
+      return;
+    }
+    applySizePx(value);
+  };
+
+  // Resalta (o quita) la selección con color marcador.
+  const toggleHighlight = () => {
+    if (!quillRef.current) return;
+
+    const quill = quillRef.current;
+    const range = getEditorRange();
+
+    quill.focus();
+
+    if (range) {
+      quill.setSelection(range);
+      selectionRef.current = range;
+      const formats = quill.getFormat(range);
+      quill.format("background", formats.background ? false : "#fff2a8");
+      return;
+    }
+
+    quill.format("background", "#fff2a8");
+  };
+
+  // Devuelve el texto seleccionado en el editor (para crear flashcards).
+  const getSelectedText = () => {
+    const quill = quillRef.current;
+    if (!quill) return "";
+    const range = quill.getSelection() || selectionRef.current;
+    if (!range || range.length === 0) return "";
+    return quill.getText(range.index, range.length).trim();
+  };
+
+  const openCardForm = () => {
+    const selected = getSelectedText();
+    setCardForm({ front: "", back: selected });
+    setIsCardFormOpen(true);
+  };
+
+  // Tarjetas de la nota abierta (fuente viva, incluye cambios sin guardar).
+  const noteCards = form.flashcards || [];
+
+  // Todas las tarjetas de todas las notas (para el repaso global), con su origen.
+  const allCards = useMemo(() => {
+    const list = [];
+    tasks.forEach((task) => {
+      const cards = (form.id === task._id ? form.flashcards : task.flashcards) || [];
+      cards.forEach((card) => list.push({ ...card, noteId: task._id, noteTitle: task.meta }));
+    });
+    if (!form.id) {
+      (form.flashcards || []).forEach((card) =>
+        list.push({ ...card, noteId: null, noteTitle: form.meta || "Nota nueva" })
+      );
+    }
+    return list;
+  }, [tasks, form.id, form.flashcards, form.meta]);
+
+  const visibleDeckCards = deckScope === "note" ? noteCards : allCards;
+  const visibleDueCards = visibleDeckCards.filter(isCardDue);
+  const dueCountAll = allCards.filter(isCardDue).length;
+  const dueCountNote = noteCards.filter(isCardDue).length;
+
+  // Guarda el array de tarjetas de una nota: estado local + servidor.
+  const persistNoteCards = async (noteId, nextCards) => {
+    if (form.id === noteId || !noteId) {
+      setForm((prev) => ({ ...prev, flashcards: nextCards }));
+    }
+    if (!noteId) {
+      markDirty();
+      return;
+    }
+    setTasks((prev) =>
+      prev.map((task) => (task._id === noteId ? { ...task, flashcards: nextCards } : task))
+    );
+    try {
+      await taskService.update(noteId, { flashcards: nextCards });
+    } catch {
+      setError("No se pudieron guardar las flashcards en el servidor.");
+    }
+  };
+
+  const cardsForNote = (noteId) =>
+    (form.id === noteId ? form.flashcards : tasks.find((task) => task._id === noteId)?.flashcards) ||
+    [];
+
+  const handleSaveFlashcard = (event) => {
+    event.preventDefault();
+    const front = cardForm.front.trim();
+    const back = cardForm.back.trim();
+    if (!front || !back) return;
+
+    const newCard = {
+      id: createFlashcardId(),
+      front,
+      back,
+      box: 0,
+      due: todayKey(),
+      createdAt: new Date().toISOString(),
+    };
+    persistNoteCards(form.id, [newCard, ...(form.flashcards || [])]);
+    setCardForm({ front: "", back: "" });
+    setIsCardFormOpen(false);
+    setMessage("Flashcard creada.");
+  };
+
+  const handleDeleteFlashcard = (card) => {
+    const noteId = card.noteId || form.id;
+    const nextCards = cardsForNote(noteId).filter((item) => item.id !== card.id);
+    persistNoteCards(noteId, nextCards);
+  };
+
+  const startStudy = (cards) => {
+    const source = cards && cards.length ? cards : allCards;
+    if (source.length === 0) return;
+    // Mazo ordenado por "caja" (lo menos sabido primero), fijo durante la sesión.
+    const deck = [...source].sort((a, b) => (a.box || 0) - (b.box || 0));
+    setStudyDeck(deck);
+    setStudyIndex(0);
+    setStudyFlipped(false);
+    setIsDeckOpen(false);
+    setIsStudyOpen(true);
+  };
+
+  const handleGradeCard = (known) => {
+    const current = studyDeck[studyIndex];
+    if (current) {
+      const noteId = current.noteId || form.id;
+      const newBox = known ? Math.min((current.box || 0) + 1, MAX_BOX) : 0;
+      const due = dateKeyInDays(known ? SR_INTERVALS[newBox] : 0);
+      const nextCards = cardsForNote(noteId).map((card) =>
+        card.id === current.id ? { ...card, box: newBox, due } : card
+      );
+      persistNoteCards(noteId, nextCards);
+    }
+
+    if (studyIndex + 1 >= studyDeck.length) {
+      setIsStudyOpen(false);
+      setMessage("¡Repaso terminado! 🎉");
+      return;
+    }
+
+    setStudyIndex((prev) => prev + 1);
+    setStudyFlipped(false);
   };
 
   const resetForm = () => {
@@ -977,6 +1289,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       horario: task.horario || "12:00",
       color: task.color || "color1",
       carpeta: task.carpeta || "",
+      flashcards: Array.isArray(task.flashcards) ? task.flashcards : [],
     });
     setMessage("");
     setError("");
@@ -1024,6 +1337,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       horario: form.horario,
       color: form.color,
       carpeta: form.carpeta || "",
+      flashcards: form.flashcards || [],
     };
 
     try {
@@ -1090,6 +1404,18 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     </button>
                   </div>
                 ) : null}
+                <button
+                  type="button"
+                  className={style.secondaryButton}
+                  onClick={() => {
+                    setDeckScope("all");
+                    setIsDeckOpen(true);
+                  }}
+                  title="Tus flashcards de repaso"
+                >
+                  <FiBookOpen />
+                  Repaso{dueCountAll ? ` (${dueCountAll})` : ""}
+                </button>
                 <button type="button" className={style.secondaryButton} onClick={() => handleNewNote()}>
                   <FiPlus />
                   Nueva nota
@@ -1382,6 +1708,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
           className={`${style.editorCard} ${isEditorOpen ? style.editorCardOpen : ""} ${
             isEditorExpanded ? style.editorExpanded : ""
           }`}
+          data-sheet={sheetWidth}
         >
             <div className={style.editorHeader}>
               <div>
@@ -1389,6 +1716,58 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 <h2>{form.id ? form.meta || "Editar nota" : "Nueva nota"}</h2>
               </div>
               <div className={style.editorActions}>
+                <span className={style.wordCount} title="Palabras y tiempo de lectura">
+                  {editorStats.words} palabra{editorStats.words === 1 ? "" : "s"}
+                  {editorStats.minutes ? ` · ${editorStats.minutes} min` : ""}
+                </span>
+                <button
+                  type="button"
+                  className={`${style.iconButton} ${showOutline ? style.iconButtonActive : ""}`}
+                  onClick={() => setShowOutline((prev) => !prev)}
+                  aria-label="Índice de la nota"
+                  title="Índice"
+                  disabled={outline.length === 0}
+                >
+                  <FiList />
+                </button>
+                <div className={style.widthControl} role="group" aria-label="Ancho de la hoja">
+                  {SHEET_WIDTH_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={`${style.widthButton} ${sheetWidth === opt.value ? style.widthButtonActive : ""}`}
+                      onClick={() => setSheetWidth(opt.value)}
+                      title={opt.title}
+                      aria-pressed={sheetWidth === opt.value}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className={style.iconButton}
+                  onClick={() => {
+                    setDeckScope("note");
+                    setIsDeckOpen(true);
+                  }}
+                  aria-label="Flashcards de esta nota"
+                  title="Flashcards de esta nota"
+                >
+                  <FiLayers />
+                  {dueCountNote ? (
+                    <span className={style.iconBadge}>{dueCountNote}</span>
+                  ) : null}
+                </button>
+                <button
+                  type="button"
+                  className={`${style.iconButton} ${isEditorExpanded ? style.iconButtonActive : ""}`}
+                  onClick={() => setIsEditorExpanded((prev) => !prev)}
+                  aria-label="Modo foco"
+                  title="Modo foco"
+                >
+                  {isEditorExpanded ? <FiMinimize2 /> : <FiMaximize2 />}
+                </button>
                 {isDirty ? (
                   <span className={style.unsavedBadge}>
                     <span className={style.unsavedDot} />
@@ -1583,26 +1962,45 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 >
                   <FiHash />
                 </button>
-                <div className={style.textSizeGrid} aria-label="Tamaño de texto">
-                  {[
-                    { label: "S", value: "small", title: "Texto chico" },
-                    { label: "M", value: "", title: "Texto normal" },
-                    { label: "L", value: "large", title: "Texto grande" },
-                  ].map((size) => (
-                    <button
-                      key={size.label}
-                      type="button"
-                      className={`${style.textSizeButton} ${
-                        activeFormats.size === size.value ? style.textSizeButtonActive : ""
-                      }`}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => applyTextSize(size.value)}
-                      aria-label={size.title}
-                      title={size.title}
-                    >
-                      {size.label}
-                    </button>
-                  ))}
+                <div className={style.fontSizeControl} aria-label="Tamaño de letra">
+                  <button
+                    type="button"
+                    className={style.fontSizeStep}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => stepFontSize(-1)}
+                    aria-label="Achicar letra"
+                    title="Achicar letra"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    className={style.fontSizeInput}
+                    value={sizeInput}
+                    min={MIN_FONT_PX}
+                    max={MAX_FONT_PX}
+                    onChange={(event) => setSizeInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        commitSizeInput();
+                      }
+                    }}
+                    onBlur={commitSizeInput}
+                    aria-label="Tamaño de letra en píxeles"
+                    title="Tamaño de letra (px)"
+                  />
+                  <span className={style.fontSizeUnit}>px</span>
+                  <button
+                    type="button"
+                    className={style.fontSizeStep}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => stepFontSize(1)}
+                    aria-label="Agrandar letra"
+                    title="Agrandar letra"
+                  >
+                    +
+                  </button>
                 </div>
                 <button
                   type="button"
@@ -1696,6 +2094,31 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 </button>
                 <button
                   type="button"
+                  className={`${style.toolbarButton} ${style.highlightButton} ${activeFormats.background ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={toggleHighlight}
+                  aria-label="Resaltar"
+                  title="Resaltar (marcador)"
+                >
+                  <span className={style.highlightSwatch} />
+                </button>
+                <button
+                  type="button"
+                  className={`${style.toolbarButton} ${autoCapEnabled ? style.toolbarButtonActive : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => setAutoCapEnabled((prev) => !prev)}
+                  aria-pressed={autoCapEnabled}
+                  aria-label="Mayúscula automática"
+                  title={
+                    autoCapEnabled
+                      ? "Mayúscula automática: activada (tocá para escribir en minúscula)"
+                      : "Mayúscula automática: desactivada"
+                  }
+                >
+                  <span className={style.toolbarText}>Aa</span>
+                </button>
+                <button
+                  type="button"
                   className={`${style.toolbarButton} ${activeFormats.align === "" ? style.toolbarButtonActive : ""}`}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => applyAlign("")}
@@ -1745,6 +2168,34 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 </div>
               </aside>
 
+              {showOutline && outline.length > 0 ? (
+                <div className={style.outlinePanel}>
+                  <div className={style.outlinePanelHead}>
+                    <p className={style.outlineTitle}>Índice</p>
+                    <button
+                      type="button"
+                      className={style.outlineClose}
+                      onClick={() => setShowOutline(false)}
+                      aria-label="Cerrar índice"
+                    >
+                      <FiX />
+                    </button>
+                  </div>
+                  <div className={style.outlineList}>
+                    {outline.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className={`${style.outlineItem} ${item.level === 2 ? style.outlineItemSub : ""}`}
+                        onClick={() => scrollToHeading(item.id)}
+                      >
+                        {item.text}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               <div className={`${style.field} ${style.editorField}`}>
                 <div className={`${style.editorShell} ${style.notePaper} ${style[form.color] || style.color1}`}>
                   <button
@@ -1769,6 +2220,221 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
           </form>
         </section>
       </div>
+
+      {isCardFormOpen ? (
+        <div className={`${style.fcOverlay} ${style.fcOverlayElevated}`} onClick={() => setIsCardFormOpen(false)}>
+          <form
+            className={style.fcModal}
+            onClick={(event) => event.stopPropagation()}
+            onSubmit={handleSaveFlashcard}
+          >
+            <div className={style.fcModalHead}>
+              <div>
+                <p className={style.cardKicker}>Flashcard</p>
+                <h3>Nueva tarjeta de repaso</h3>
+              </div>
+              <button
+                type="button"
+                className={style.iconButton}
+                onClick={() => setIsCardFormOpen(false)}
+                aria-label="Cerrar"
+              >
+                <FiX />
+              </button>
+            </div>
+            <label className={style.fcField}>
+              <span>Pregunta (frente)</span>
+              <textarea
+                value={cardForm.front}
+                onChange={(event) => setCardForm((prev) => ({ ...prev, front: event.target.value }))}
+                placeholder="¿Qué querés recordar?"
+                autoFocus
+              />
+            </label>
+            <label className={style.fcField}>
+              <span>Respuesta (dorso)</span>
+              <textarea
+                value={cardForm.back}
+                onChange={(event) => setCardForm((prev) => ({ ...prev, back: event.target.value }))}
+                placeholder="La respuesta, definición o concepto"
+              />
+            </label>
+            <div className={style.fcActions}>
+              <button type="button" className={style.ghostButton} onClick={() => setIsCardFormOpen(false)}>
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className={style.saveButton}
+                disabled={!cardForm.front.trim() || !cardForm.back.trim()}
+              >
+                <FiPlus />
+                Guardar tarjeta
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
+
+      {isDeckOpen ? (
+        <div className={style.fcOverlay} onClick={() => setIsDeckOpen(false)}>
+          <div className={style.fcModal} onClick={(event) => event.stopPropagation()}>
+            <div className={style.fcModalHead}>
+              <div>
+                <p className={style.cardKicker}>Repaso</p>
+                <h3>
+                  {deckScope === "note"
+                    ? "Tarjetas de esta nota"
+                    : "Todas tus flashcards"}{" "}
+                  ({visibleDeckCards.length})
+                </h3>
+              </div>
+              <button
+                type="button"
+                className={style.iconButton}
+                onClick={() => setIsDeckOpen(false)}
+                aria-label="Cerrar"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            {form.id ? (
+              <div className={style.fcScopeTabs}>
+                <button
+                  type="button"
+                  className={`${style.fcScopeTab} ${deckScope === "note" ? style.fcScopeTabActive : ""}`}
+                  onClick={() => setDeckScope("note")}
+                >
+                  Esta nota ({noteCards.length})
+                </button>
+                <button
+                  type="button"
+                  className={`${style.fcScopeTab} ${deckScope === "all" ? style.fcScopeTabActive : ""}`}
+                  onClick={() => setDeckScope("all")}
+                >
+                  Todas ({allCards.length})
+                </button>
+              </div>
+            ) : null}
+
+            {isEditorOpen ? (
+              <button type="button" className={style.fcNewButton} onClick={openCardForm}>
+                <FiPlus />
+                Nueva tarjeta {getSelectedText() ? "(de la selección)" : ""}
+              </button>
+            ) : null}
+
+            {visibleDeckCards.length === 0 ? (
+              <p className={style.fcEmpty}>
+                {deckScope === "note"
+                  ? "Esta nota todavía no tiene tarjetas. Seleccioná texto y tocá “Nueva tarjeta” para crear una desde tus apuntes."
+                  : "Todavía no tenés tarjetas. Abrí una nota, seleccioná texto y creá una flashcard."}
+              </p>
+            ) : (
+              <>
+                {visibleDueCards.length > 0 ? (
+                  <button
+                    type="button"
+                    className={style.fcStudyButton}
+                    onClick={() => startStudy(visibleDueCards)}
+                  >
+                    <FiBookOpen />
+                    Repasar {visibleDueCards.length} para hoy
+                  </button>
+                ) : (
+                  <div className={style.fcUpToDate}>
+                    <strong>¡Estás al día! 🎉</strong>
+                    <span>No hay tarjetas para repasar hoy.</span>
+                    <button
+                      type="button"
+                      className={style.fcStudyGhost}
+                      onClick={() => startStudy(visibleDeckCards)}
+                    >
+                      Repasar todas igual ({visibleDeckCards.length})
+                    </button>
+                  </div>
+                )}
+                <div className={style.fcList}>
+                  {visibleDeckCards.map((card) => (
+                    <div key={card.id} className={style.fcRow}>
+                      <div className={style.fcRowText}>
+                        <strong>{card.front}</strong>
+                        <span>{card.back}</span>
+                        <small className={isCardDue(card) ? style.fcDueNow : ""}>
+                          {formatDueLabel(card)}
+                          {deckScope === "all" && card.noteTitle ? ` · ${card.noteTitle}` : ""}
+                        </small>
+                      </div>
+                      <button
+                        type="button"
+                        className={style.fcDelete}
+                        onClick={() => handleDeleteFlashcard(card)}
+                        aria-label="Eliminar tarjeta"
+                      >
+                        <FiTrash2 />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {isStudyOpen && studyDeck[studyIndex] ? (
+        <div className={style.fcOverlay}>
+          <div className={style.fcStudyModal}>
+            <div className={style.fcStudyTop}>
+              <span>
+                {studyIndex + 1} / {studyDeck.length}
+              </span>
+              <button
+                type="button"
+                className={style.iconButton}
+                onClick={() => setIsStudyOpen(false)}
+                aria-label="Salir del repaso"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <button
+              type="button"
+              className={`${style.fcCard} ${studyFlipped ? style.fcCardFlipped : ""}`}
+              onClick={() => setStudyFlipped((prev) => !prev)}
+            >
+              <span className={style.fcCardLabel}>{studyFlipped ? "Respuesta" : "Pregunta"}</span>
+              <p className={style.fcCardText}>
+                {studyFlipped ? studyDeck[studyIndex].back : studyDeck[studyIndex].front}
+              </p>
+              {!studyFlipped ? (
+                <span className={style.fcCardHint}>Tocá la tarjeta para ver la respuesta</span>
+              ) : null}
+            </button>
+
+            {studyFlipped ? (
+              <div className={style.fcGrade}>
+                <button type="button" className={style.fcAgain} onClick={() => handleGradeCard(false)}>
+                  Otra vez
+                </button>
+                <button type="button" className={style.fcKnown} onClick={() => handleGradeCard(true)}>
+                  Lo sé
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className={style.fcStudyButton}
+                onClick={() => setStudyFlipped(true)}
+              >
+                Mostrar respuesta
+              </button>
+            )}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

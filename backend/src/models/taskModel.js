@@ -31,6 +31,20 @@ const TaskSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  flashcards: {
+    type: [
+      {
+        id: { type: String },
+        front: { type: String, default: '' },
+        back: { type: String, default: '' },
+        box: { type: Number, default: 0 },
+        due: { type: String, default: '' },
+        createdAt: { type: String },
+        _id: false,
+      },
+    ],
+    default: [],
+  },
   fecha: {
     type: Date,
     required: true,
