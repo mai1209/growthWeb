@@ -559,7 +559,7 @@
   }
 
   .inputMonto {
-    font-size: 1.45rem;
+    font-size: 1.45rem !important;
     min-height: 62px;
   }
 
@@ -641,7 +641,7 @@
   }
 
   .inputMonto {
-    font-size: 1.25rem;
+    font-size: 1.25rem !important;
     min-height: 56px;
     padding: 0.72rem 0.85rem;
   }

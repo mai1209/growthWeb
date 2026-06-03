@@ -128,3 +128,18 @@ code {
 :global(.react-datepicker__input-container input) {
   font-size: 16px;
 }
+
+/*
+ * iOS hace zoom automático al enfocar un campo con letra < 16px.
+ * Forzamos >=16px en móvil para que no se agrande la pantalla al tocar
+ * inputs, selects, textareas ni el editor de Notas (Quill).
+ * El monto (.inputMonto) se mantiene grande con su propia regla !important.
+ */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select,
+  :global(.ql-editor) {
+    font-size: 16px !important;
+  }
+}
