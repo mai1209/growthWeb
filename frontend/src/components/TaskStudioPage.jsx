@@ -18,6 +18,8 @@ import {
   FiHash,
   FiItalic,
   FiList,
+  FiMaximize2,
+  FiMinimize2,
   FiMessageSquare,
   FiMinus,
   FiPlus,
@@ -251,6 +253,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const [editingPageIndex, setEditingPageIndex] = useState(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isEditorExpanded, setIsEditorExpanded] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [view, setView] = useState("notes");
   const [activeFolder, setActiveFolder] = useState(ALL_FOLDERS);
@@ -349,11 +352,51 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       },
     });
 
+    // Capitalización automática del teclado en móvil.
+    quill.root.setAttribute("autocapitalize", "sentences");
+
+    // Capitaliza la primera letra de cada oración mientras escribís (también en desktop).
+    const autoCapitalizeSentence = (delta) => {
+      if (!delta || !Array.isArray(delta.ops)) return;
+
+      let index = 0;
+      let inserted = null;
+      for (const op of delta.ops) {
+        if (typeof op.retain === "number") {
+          index += op.retain;
+        } else if (op.delete) {
+          return;
+        } else if (typeof op.insert === "string") {
+          if (op.insert.length !== 1) return; // solo un caracter tipeado (no pegado)
+          inserted = op.insert;
+          break;
+        } else {
+          return;
+        }
+      }
+
+      if (inserted === null) return;
+
+      const upper = inserted.toUpperCase();
+      if (upper === inserted) return; // no es una letra que se pueda capitalizar
+
+      const before = quill.getText(0, index).replace(/[^\S\n]+$/, "");
+      const isSentenceStart = before === "" || /[.!?\n]$/.test(before);
+      if (!isSentenceStart) return;
+
+      const format = quill.getFormat(index, 1);
+      quill.deleteText(index, 1, "silent");
+      quill.insertText(index, upper, format, "silent");
+      quill.setSelection(index + 1, 0, "silent");
+    };
+
     const handleTextChange = (delta, oldDelta, source) => {
-      const html = quill.root.innerHTML === "<p><br></p>" ? "" : quill.root.innerHTML;
       if (source === "user") {
         markDirty();
+        autoCapitalizeSentence(delta);
       }
+
+      const html = quill.root.innerHTML === "<p><br></p>" ? "" : quill.root.innerHTML;
       setForm((prev) => (prev.contenido === html ? prev : { ...prev, contenido: html }));
       setNotePages((prev) =>
         prev.map((page, index) =>
@@ -916,6 +959,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
 
     clearDirty();
     setIsEditorOpen(false);
+    setIsEditorExpanded(false);
     resetForm();
     consumeHistoryTrap();
   };
@@ -1334,7 +1378,11 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
           aria-hidden="true"
         />
 
-        <section className={`${style.editorCard} ${isEditorOpen ? style.editorCardOpen : ""}`}>
+        <section
+          className={`${style.editorCard} ${isEditorOpen ? style.editorCardOpen : ""} ${
+            isEditorExpanded ? style.editorExpanded : ""
+          }`}
+        >
             <div className={style.editorHeader}>
               <div>
                 <p className={style.cardKicker}>Editor</p>
@@ -1419,7 +1467,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
               </div>
             </div>
 
-            <label className={style.field}>
+            <label className={`${style.field} ${style.titleField}`}>
               <span>Título</span>
               <input
                 type="text"
@@ -1697,11 +1745,21 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 </div>
               </aside>
 
-              <label className={`${style.field} ${style.editorField}`}>
+              <div className={`${style.field} ${style.editorField}`}>
                 <div className={`${style.editorShell} ${style.notePaper} ${style[form.color] || style.color1}`}>
+                  <button
+                    type="button"
+                    className={style.expandButton}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => setIsEditorExpanded((prev) => !prev)}
+                    aria-label={isEditorExpanded ? "Achicar área de escritura" : "Expandir área de escritura"}
+                    title={isEditorExpanded ? "Achicar" : "Expandir"}
+                  >
+                    {isEditorExpanded ? <FiMinimize2 /> : <FiMaximize2 />}
+                  </button>
                   <div ref={editorRef} className={style.editor} />
                 </div>
-              </label>
+              </div>
               </div>
             </div>
 

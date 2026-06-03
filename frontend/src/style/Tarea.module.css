@@ -181,7 +181,7 @@
 
 .tasksWorkspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.42fr);
+  grid-template-columns: minmax(250px, 0.38fr) minmax(0, 1fr);
   align-items: start;
   gap: 1rem;
 }
@@ -220,11 +220,9 @@
 
 .taskActions {
   display: flex;
-  justify-content: center;
   align-items: center;
-  padding: 0.7rem 1rem;
-  border-radius: 0;
-  gap: 10px;
+  gap: 0.25rem;
+  padding: 0;
 }
 
 .taskActions p {
@@ -298,19 +296,18 @@
 }
 
 .taskMeta {
-  white-space: nowrap;
+  display: -webkit-box;
   overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 300px;
-  font-size: 1rem;
+  font-size: 0.98rem;
   font-weight: 700;
   color: #121814;
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .taskDate {
-  margin-top: 0.28rem;
-  color: rgba(18, 24, 20, 0.76);
-  font-size: 0.83rem;
+  margin-top: 0;
 }
 
 /* Columna título */
@@ -322,21 +319,9 @@
   align-items: flex-start;
   gap: 0.32rem;
 }
-/* Columna urgencia */
+/* Chip de prioridad/urgencia */
 .taskUrgency {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  width: fit-content;
-  padding: 0.45rem 0.82rem;
-  border-radius: 999px;
-  background: rgba(17, 24, 21, 0.14);
-  color: #111813;
-  font-size: 0.8rem;
   text-transform: capitalize;
-  font-weight: 700;
-  letter-spacing: 0.01em;
 }
 
 /* Columna horario */
@@ -360,8 +345,8 @@
 
 /* Columna acciones */
 .taskActions {
-  min-width: 92px;
-  justify-content: center;
+  align-self: start;
+  justify-content: flex-end;
 }
 
 .taskUrgency::first-letter {
@@ -375,15 +360,20 @@
 .deleteButton {
   position: relative;
   z-index: 2;
-  background-color: transparent;
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  background-color: rgba(17, 24, 21, 0.08);
   border: none;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.7rem;
-  padding: 5px;
+  padding: 0;
+  transition: background var(--transition-fast);
 }
 
 .deleteButton:hover {
-  transform: scale(1.1);
+  background-color: rgba(17, 24, 21, 0.18);
 }
 
 :global(.react-datepicker-popper) {
@@ -474,17 +464,29 @@
 }
 
 .editButton {
-  background: none;
-  border: none;
   position: relative;
   z-index: 2;
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(17, 24, 21, 0.08);
+  border: none;
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  padding: 0;
+  transition: background var(--transition-fast);
+}
+
+.editButton:hover {
+  background: rgba(17, 24, 21, 0.18);
 }
 
 .ButtonImg {
-  width: 25px;
+  width: 16px;
+  height: 16px;
   filter: brightness(0) saturate(100%);
-  margin-top: 4px;
+  margin-top: 0;
   cursor: pointer;
 }
 .containerFecha {
@@ -544,8 +546,9 @@ gap: 1rem;}
 .checkboxWrapper {
   display: flex;
   align-items: center;
+  align-self: start;
   cursor: pointer;
-  padding: 0 1rem;
+  padding: 0 0.3rem 0 0.1rem;
 }
 
 /* ocultamos el input real */
@@ -580,19 +583,54 @@ gap: 1rem;}
 
 .taskCard {
   display: grid;
-  grid-template-columns: auto minmax(0, 1.9fr) minmax(122px, 0.72fr) minmax(
-      130px,
-      0.82fr
-    ) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  border-radius: 22px;
-  padding: 1rem 1.1rem;
+  border-radius: var(--radius-xl);
+  padding: 0.85rem 1rem;
   border: 1px solid rgba(216, 241, 224, 0.08);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-sm);
   color: #111813;
-  gap: 1.15rem;
+  gap: 0.9rem;
   position: relative;
-  min-height: 92px;
+  min-height: 0;
+}
+
+.taskBody {
+  min-width: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.taskMetaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.taskChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 26px;
+  padding: 0.25rem 0.62rem;
+  border-radius: var(--radius-pill);
+  background: rgba(17, 24, 21, 0.12);
+  color: rgba(17, 24, 20, 0.82);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.taskChip svg {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  opacity: 0.8;
+}
+
+.taskSchedule {
+  text-transform: capitalize;
 }
 
 .hiddenMobile {
@@ -899,6 +937,51 @@ gap: 1rem;}
 .formControl:focus {
   border-color: rgba(144, 211, 106, 0.48);
   box-shadow: 0 0 0 3px rgba(144, 211, 106, 0.15);
+}
+
+/* ===== Selector de momento del día ===== */
+.momentoGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.momentoButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 42px;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid rgba(216, 241, 224, 0.14);
+  border-radius: var(--radius-pill);
+  background: var(--surface-input);
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+}
+
+.momentoButton svg {
+  width: 15px;
+  height: 15px;
+}
+
+.momentoButton:hover {
+  color: var(--color-text);
+  border-color: var(--accent-border);
+}
+
+.momentoButtonActive,
+.momentoButtonActive:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-surface);
+  color: var(--accent);
+}
+
+.momentoTimeInput {
+  margin-top: 0.55rem;
+  max-width: 200px;
 }
 
 .formDateButton {
@@ -1237,26 +1320,20 @@ gap: 1rem;}
   }
 
   .taskCard {
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 0.8rem;
-    border-radius: 22px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.65rem;
+    border-radius: var(--radius-lg);
     min-height: unset;
-    padding: 0.9rem;
-  }
-
-  .taskInfoBlock,
-  .taskDetails,
-  .taskActions {
-    grid-column: 2;
+    padding: 0.8rem 0.85rem;
   }
 
   .taskActions {
-    justify-content: flex-start;
+    align-self: start;
     padding: 0;
   }
 
   .checkboxWrapper {
-    padding: 0 0.5rem;
+    padding: 0 0.3rem;
   }
 
   .listRow {
@@ -1313,13 +1390,26 @@ gap: 1rem;}
     gap: 0.45rem;
   }
 
-  .viewButton {
-    width: 100%;
-    text-align: center;
+  .headerAside {
+    flex-wrap: nowrap;
+    gap: 0.5rem;
   }
 
-  .newTaskButton {
-    width: 100%;
+  .headerAside .viewButton,
+  .headerAside .newTaskButton {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+    min-height: 48px;
+    padding: 0.55rem 0.5rem;
+    font-size: 0.82rem;
+    line-height: 1.15;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .newTaskButton svg {
+    flex: 0 0 auto;
   }
 
   .progressCard {

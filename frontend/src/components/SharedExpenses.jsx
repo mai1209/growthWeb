@@ -14,8 +14,6 @@ const PAYMENT_METHOD_OPTIONS = [
   { value: "transferencia", label: "Transferencia" },
 ];
 
-const PANEL_SEQUENCE = ["group", "expenses"];
-
 const todayInput = () => new Date().toISOString().slice(0, 10);
 const slugifyName = (value = "") =>
   value
@@ -246,6 +244,7 @@ function SharedExpenses() {
   const [groupForm, setGroupForm] = useState(createEmptyGroupForm());
   const [expenseForm, setExpenseForm] = useState(createEmptyExpenseForm());
   const [activePanel, setActivePanel] = useState("group");
+  const [expenseTab, setExpenseTab] = useState("add");
   const [showMemberPanel, setShowMemberPanel] = useState(false);
   const [showDebtPanel, setShowDebtPanel] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -439,6 +438,7 @@ function SharedExpenses() {
   const handleSelectGroup = (groupId) => {
     setSelectedGroupId(groupId);
     setActivePanel("expenses");
+    setExpenseTab("add");
     setShowMemberPanel(false);
     setShowDebtPanel(false);
     setSettlingDebtId("");
@@ -854,15 +854,7 @@ function SharedExpenses() {
     }
   };
 
-  const handleGoToExpenseForm = () => {
-    expenseSectionRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  };
-
   const canOpenExpenses = Boolean(selectedGroupId && groupDetail);
-  const activePanelIndex = PANEL_SEQUENCE.indexOf(activePanel);
 
   const panelTitle =
     activePanel === "group"
@@ -1005,41 +997,31 @@ function SharedExpenses() {
                 </button>
               ) : null}
 
-              {activePanel === "expenses" && selectedGroupId && groupDetail ? (
-                <button
-                  type="button"
-                  className={style.jumpButton}
-                  onClick={handleGoToExpenseForm}
-                >
-                  Ir a cargar gasto
-                </button>
-              ) : null}
-
               {detailLoading ? <span className={style.panelTag}>Cargando</span> : null}
             </div>
           </div>
 
-               <div className={style.panelFooterNav}>
+          <div className={style.stepSwitch}>
             <button
               type="button"
-              className={style.navArrow}
+              className={`${style.stepButton} ${
+                activePanel === "group" ? style.stepButtonActive : ""
+              }`}
               onClick={() => setActivePanel("group")}
-              disabled={activePanelIndex <= 0}
             >
-              ← Configuración
+              <span className={style.stepIndex}>1</span>
+              {isCreating ? "Crear grupo" : "Configuración"}
             </button>
-
-            <p className={style.panelFooterMeta}>
-              Panel {activePanelIndex + 1} de {PANEL_SEQUENCE.length}
-            </p>
-
             <button
               type="button"
-              className={style.navArrow}
-              onClick={() => setActivePanel("expenses")}
-              disabled={!canOpenExpenses || activePanelIndex >= PANEL_SEQUENCE.length - 1}
+              className={`${style.stepButton} ${
+                activePanel === "expenses" ? style.stepButtonActive : ""
+              }`}
+              onClick={() => canOpenExpenses && setActivePanel("expenses")}
+              disabled={!canOpenExpenses}
             >
-              Gastos →
+              <span className={style.stepIndex}>2</span>
+              Gastos y balances
             </button>
           </div>
 
@@ -1506,6 +1488,37 @@ function SharedExpenses() {
                   </form>
                 ) : null}
 
+                <div className={style.subTabs}>
+                  <button
+                    type="button"
+                    className={`${style.subTab} ${
+                      expenseTab === "add" ? style.subTabActive : ""
+                    }`}
+                    onClick={() => setExpenseTab("add")}
+                  >
+                    Cargar gasto
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.subTab} ${
+                      expenseTab === "balances" ? style.subTabActive : ""
+                    }`}
+                    onClick={() => setExpenseTab("balances")}
+                  >
+                    Balances
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.subTab} ${
+                      expenseTab === "history" ? style.subTabActive : ""
+                    }`}
+                    onClick={() => setExpenseTab("history")}
+                  >
+                    Movimientos
+                  </button>
+                </div>
+
+                {expenseTab === "add" ? (
                 <div ref={expenseSectionRef} className={style.expenseAnchor}>
                   <div className={style.expenseIntro}>
                     <span className={style.sectionLabel}>Flujo del grupo</span>
@@ -1515,7 +1528,9 @@ function SharedExpenses() {
                     </p>
                   </div>
                 </div>
+                ) : null}
 
+                {expenseTab === "add" ? (
                 <form className={style.expenseForm} onSubmit={handleSaveExpense}>
                   <div className={style.formGridWide}>
                     <label className={style.field}>
@@ -1664,7 +1679,10 @@ function SharedExpenses() {
                     </button>
                   </div>
                 </form>
+                ) : null}
 
+                {expenseTab === "balances" ? (
+                <>
                 <div className={style.summaryGrid}>
                   <article className={`${style.summaryCard} ${style.totalCard}`}>
                     <span>Total del grupo</span>
@@ -1778,7 +1796,11 @@ function SharedExpenses() {
                     </div>
                   )}
                 </div>
+                </>
+                ) : null}
 
+                {expenseTab === "history" ? (
+                <>
                 <div className={style.debtListPanel}>
                   <div className={style.settlementHeader}>
                     <span className={style.sectionLabel}>Deudas cargadas</span>
@@ -1955,32 +1977,10 @@ function SharedExpenses() {
                     ))
                   )}
                 </div>
+                </>
+                ) : null}
               </>
             )}
-          </div>
-
-          <div className={style.panelFooterNav}>
-            <button
-              type="button"
-              className={style.navArrow}
-              onClick={() => setActivePanel("group")}
-              disabled={activePanelIndex <= 0}
-            >
-              ← Configuración
-            </button>
-
-            <p className={style.panelFooterMeta}>
-              Panel {activePanelIndex + 1} de {PANEL_SEQUENCE.length}
-            </p>
-
-            <button
-              type="button"
-              className={style.navArrow}
-              onClick={() => setActivePanel("expenses")}
-              disabled={!canOpenExpenses || activePanelIndex >= PANEL_SEQUENCE.length - 1}
-            >
-              Gastos →
-            </button>
           </div>
         </section>
       </div>

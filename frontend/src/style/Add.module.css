@@ -4,6 +4,52 @@
   position: relative;
 }
 
+/* Vista de página completa (ruta /add), no dentro del modal del Home */
+.containerPage {
+  padding: 0.25rem 0.9rem 1.25rem;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+@media (max-width: 520px) {
+  .containerPage {
+    padding: 0.25rem 0.85rem 1.5rem;
+  }
+}
+
+.editTopBar {
+  margin-bottom: 0.85rem;
+  padding-top: 0.1rem;
+}
+
+.editBackButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 42px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--color-text);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition-fast), background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.editBackButton:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-surface);
+  color: var(--accent);
+}
+
+.editBackButton svg {
+  width: 16px;
+  height: 16px;
+}
+
 .titleRow {
   display: flex;
   justify-content: space-between;

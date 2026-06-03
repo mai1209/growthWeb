@@ -1,14 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Add from "./Add";
-import { FiX } from "react-icons/fi";
+import { FiArrowDownRight, FiArrowUpRight, FiX } from "react-icons/fi";
 import style from "../style/App.module.css";
 import {
   filterMovimientosByCurrency,
   formatMoney,
   formatSignedMoney,
   getCurrencyMeta,
-  getMovementMethodMeta,
   getMovementTypeMeta,
 } from "../utils/finance";
 
@@ -45,7 +44,6 @@ const formatDashboardDate = (value) =>
   new Date(value).toLocaleDateString("es-AR", {
     day: "2-digit",
     month: "short",
-    year: "numeric",
   });
 
 const getLocalDayKey = (value) => {
@@ -245,10 +243,6 @@ function Dashboard({
                     <div className={style.dashboardMovementGroupRows}>
                       {group.movimientos.map((movimiento) => {
                         const typeMeta = getMovementTypeMeta(movimiento.tipo);
-                        const methodMeta = getMovementMethodMeta(
-                          movimiento.medio,
-                        );
-                        const isDebt = movimiento.tipo === "deuda";
                         const amountLabel =
                           typeMeta.signedAsPositive === null
                             ? formatMoney(movimiento.monto, currentCurrency)
@@ -265,63 +259,45 @@ function Dashboard({
                               : movimiento.tipo === "deuda"
                                 ? style.dashboardDebtRow
                                 : style.dashboardExpenseRow;
+                        const isPositive = amountLabel.trim().startsWith("+");
+                        const amountTone = amountLabel.trim().startsWith("-")
+                          ? style.dashboardAmountNegative
+                          : isPositive
+                            ? style.dashboardAmountPositive
+                            : "";
 
                         return (
-                          <article
+                          <Link
                             key={movimiento._id}
+                            to="/filtros"
                             className={`${style.dashboardMovementRow} ${toneClass}`}
                           >
-                            <div className={style.dashboardMovementMain}>
-                              <div>
-                                <p className={style.dashboardMovementCategory}>
-                                  {movimiento.categoria}
-                                </p>
-                                <p className={style.dashboardMovementDetail}>
-                                  {movimiento.detalle || "Sin detalle"}
-                                </p>
-                              </div>
+                            <span className={style.dashboardMovementIcon}>
+                              {isPositive ? <FiArrowUpRight /> : <FiArrowDownRight />}
+                            </span>
 
-                              <div className={style.dashboardMovementBadges}>
-                                <span className={style.dashboardBadge}>
+                            <div className={style.dashboardMovementMain}>
+                              <p className={style.dashboardMovementCategory}>
+                                {movimiento.categoria}
+                              </p>
+                              <p className={style.dashboardMovementDetail}>
+                                {movimiento.detalle || "Sin detalle"}
+                              </p>
+                              <div className={style.dashboardMovementFooter}>
+                                <span className={style.dashboardMovementTypeTag}>
                                   {typeMeta.label}
                                 </span>
-                                {isDebt && movimiento.deudaEstado ? (
-                                  <span className={style.dashboardBadge}>
-                                    {movimiento.deudaEstado === "pagada"
-                                      ? "Pagada"
-                                      : "Pendiente"}
-                                  </span>
-                                ) : null}
-                                {!(
-                                  isDebt && movimiento.deudaEstado !== "pagada"
-                                ) ? (
-                                  <span className={style.dashboardBadge}>
-                                    {methodMeta.label}
-                                  </span>
-                                ) : null}
-                                <span className={style.dashboardBadge}>
-                                  {currencyMeta.codeLabel}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className={style.dashboardMovementMeta}>
-                              <div className={style.dashboardMovementInfo}>
-                                <span>
+                                <span className={style.dashboardMovementDate}>
                                   {formatDashboardDate(movimiento.fecha)}
                                 </span>
-                                <span>
-                                  {movimiento.isVirtualOccurrence
-                                    ? "Renderizado automatico"
-                                    : "Movimiento manual"}
-                                </span>
+                                <strong
+                                  className={`${style.dashboardMovementAmount} ${amountTone}`}
+                                >
+                                  {amountLabel}
+                                </strong>
                               </div>
-
-                              <strong className={style.dashboardMovementAmount}>
-                                {amountLabel}
-                              </strong>
                             </div>
-                          </article>
+                          </Link>
                         );
                       })}
                     </div>
@@ -331,18 +307,6 @@ function Dashboard({
             )}
           </div>
 
-          <div className={style.dashboardInfoActions}>
-            <Link to="/filtros" className={style.dashboardPrimaryLink}>
-              Abrir filtros avanzados
-            </Link>
-            <button
-              type="button"
-              className={style.dashboardGhostButton}
-              onClick={() => setShowOnly("ingreso")}
-            >
-              Cargar ingreso rapido
-            </button>
-          </div>
         </section>
 
         <aside className={style.promoSidebar}>

@@ -10,7 +10,17 @@ import {
   getTaskTargetDate,
   isTaskCompletedOnDate,
 } from "../utils/tasks";
-import { FiCalendar, FiChevronDown, FiPlus, FiX } from "react-icons/fi";
+import {
+  FiCalendar,
+  FiChevronDown,
+  FiClock,
+  FiMinus,
+  FiMoon,
+  FiPlus,
+  FiSun,
+  FiSunrise,
+  FiX,
+} from "react-icons/fi";
 
 const getMonthInputValue = (date = new Date()) => {
   const year = date.getFullYear();
@@ -66,10 +76,28 @@ const FormDateButton = forwardRef(({ value, onClick }, ref) => (
 
 FormDateButton.displayName = "FormDateButton";
 
+const MOMENTO_OPTIONS = [
+  { value: "manana", label: "Mañana", horario: "Mañana", Icon: FiSunrise },
+  { value: "tarde", label: "Tarde", horario: "Tarde", Icon: FiSun },
+  { value: "noche", label: "Noche", horario: "Noche", Icon: FiMoon },
+  { value: "indiferente", label: "Indiferente", horario: "", Icon: FiMinus },
+];
+
+const isExactTime = (horario) => /^\d{2}:\d{2}$/.test(String(horario || ""));
+
+const deriveMomento = (horario) => {
+  if (!horario) return "indiferente";
+  if (horario === "Mañana") return "manana";
+  if (horario === "Tarde") return "tarde";
+  if (horario === "Noche") return "noche";
+  return isExactTime(horario) ? "exacta" : "indiferente";
+};
+
 const initialFormData = {
   meta: "",
   fecha: new Date(),
-  horario: "12:00",
+  horario: "",
+  momento: "indiferente",
   urgencia: "importante",
   color: "color1",
   esRecurrente: false,
@@ -282,6 +310,7 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
       ...initialFormData,
       ...task,
       fecha: fechaUTC,
+      momento: deriveMomento(task.horario),
       diasRepeticion: getTaskRepeatDays(task.diasRepeticion),
     });
     setFormError("");
@@ -343,6 +372,21 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
 
   const handleColorSelect = (color) => {
     setFormData((prev) => ({ ...prev, color }));
+  };
+
+  const handleMomentoSelect = (value) => {
+    setFormData((prev) => {
+      if (value === "exacta") {
+        return {
+          ...prev,
+          momento: "exacta",
+          horario: isExactTime(prev.horario) ? prev.horario : "09:00",
+        };
+      }
+
+      const option = MOMENTO_OPTIONS.find((item) => item.value === value);
+      return { ...prev, momento: value, horario: option ? option.horario : "" };
+    });
   };
 
   const toggleRepeatDay = (dia) => {
@@ -445,20 +489,21 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
               <span className={style.customCheckbox}></span>
             </label>
 
-            <div className={style.taskHeader}>
+            <div className={style.taskBody}>
               <p className={style.taskMeta}>{task.meta}</p>
-              <p className={style.taskDate}>
-                {task.fecha ? task.fecha.slice(0, 10) : "-"}
-              </p>
-            </div>
-
-            <div className={style.taskInfoBlock}>
-              <p className={style.taskUrgency}>{task.urgencia || "Normal"}</p>
-            </div>
-
-            <div className={style.taskDetails}>
-              <span className={style.taskDetailsLabel}>Horario</span>
-              <p>{task.horario || "Sin horario"}</p>
+              <div className={style.taskMetaRow}>
+                <span className={`${style.taskChip} ${style.taskDate}`}>
+                  <FiCalendar />
+                  {task.fecha ? task.fecha.slice(0, 10) : "-"}
+                </span>
+                <span className={`${style.taskChip} ${style.taskUrgency}`}>
+                  {task.urgencia || "Normal"}
+                </span>
+                <span className={`${style.taskChip} ${style.taskSchedule}`}>
+                  <FiClock />
+                  {task.horario || "Sin horario"}
+                </span>
+              </div>
             </div>
 
             <div className={style.taskActions}>
@@ -614,10 +659,6 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
       </div>
 
       <div className={style.tasksWorkspace}>
-        <div className={style.tasksList}>
-          {showList ? renderListTable() : renderContent()}
-        </div>
-
         <aside className={style.progressCard} aria-label="Progreso de tareas">
           <div
             className={style.progressRing}
@@ -643,6 +684,10 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
             </div>
           </div>
         </aside>
+
+        <div className={style.tasksList}>
+          {showList ? renderListTable() : renderContent()}
+        </div>
       </div>
 
       {isTaskModalOpen ? (
@@ -679,31 +724,58 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                 />
               </label>
 
-              <div className={style.formGrid}>
-                <div className={style.formField}>
-                  <DatePicker
-                    selected={formData.fecha}
-                    onChange={handleTaskDateChange}
-                    dateFormat="dd-MM-yyyy"
-                    customInput={<FormDateButton />}
-                    open={isTaskDatePickerOpen}
-                    onInputClick={() => setIsTaskDatePickerOpen((prev) => !prev)}
-                    onClickOutside={() => setIsTaskDatePickerOpen(false)}
-                    onCalendarClose={() => setIsTaskDatePickerOpen(false)}
-                    shouldCloseOnSelect
-                    popperClassName={style.taskDatepickerPopper}
-                  />
+              <div className={style.formField}>
+                <DatePicker
+                  selected={formData.fecha}
+                  onChange={handleTaskDateChange}
+                  dateFormat="dd-MM-yyyy"
+                  customInput={<FormDateButton />}
+                  open={isTaskDatePickerOpen}
+                  onInputClick={() => setIsTaskDatePickerOpen((prev) => !prev)}
+                  onClickOutside={() => setIsTaskDatePickerOpen(false)}
+                  onCalendarClose={() => setIsTaskDatePickerOpen(false)}
+                  shouldCloseOnSelect
+                  popperClassName={style.taskDatepickerPopper}
+                />
+              </div>
+
+              <div className={style.formField}>
+                <span>Momento</span>
+                <div className={style.momentoGrid}>
+                  {MOMENTO_OPTIONS.map(({ value, label, Icon }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={`${style.momentoButton} ${
+                        formData.momento === value ? style.momentoButtonActive : ""
+                      }`}
+                      onClick={() => handleMomentoSelect(value)}
+                    >
+                      <Icon />
+                      {label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className={`${style.momentoButton} ${
+                      formData.momento === "exacta" ? style.momentoButtonActive : ""
+                    }`}
+                    onClick={() => handleMomentoSelect("exacta")}
+                  >
+                    <FiClock />
+                    Hora exacta
+                  </button>
                 </div>
 
-                <label className={style.formField}>
-                  <span>Hora</span>
+                {formData.momento === "exacta" ? (
                   <input
+                    className={style.momentoTimeInput}
                     name="horario"
                     type="time"
-                    value={formData.horario}
+                    value={isExactTime(formData.horario) ? formData.horario : ""}
                     onChange={handleFormChange}
                   />
-                </label>
+                ) : null}
               </div>
 
               <label className={style.formField}>

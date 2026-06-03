@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FiArrowDownRight, FiArrowUpRight, FiCheck, FiChevronDown } from "react-icons/fi";
 import style from "../style/MonthlyFilters.module.css";
 import { movimientoService } from "../api";
 import {
@@ -10,7 +11,6 @@ import {
   getDebtStatusMeta,
   formatMoney,
   formatSignedMoney,
-  getCurrencyMeta,
   getMovementMethodMeta,
   getMovementTypeMeta,
   summarizeByType,
@@ -137,6 +137,10 @@ function MonthlyFilters({
   const [selectedType, setSelectedType] = useState("all");
   const [selectedRecurrence, setSelectedRecurrence] = useState("all");
   const [selectedMethod, setSelectedMethod] = useState("all");
+  const [openPicker, setOpenPicker] = useState(null);
+
+  const getOptionLabel = (options, value) =>
+    options.find((option) => option.value === value)?.label || "Todos";
   const [settleMovementId, setSettleMovementId] = useState(null);
   const [settleDate, setSettleDate] = useState(getDayInputValue(new Date()));
   const [settleMethod, setSettleMethod] = useState("efectivo");
@@ -148,7 +152,6 @@ function MonthlyFilters({
     () => getDateFromInputValue(selectedDay),
     [selectedDay]
   );
-  const currencyMeta = getCurrencyMeta(currentCurrency);
   const selectedMonthLabel = useMemo(
     () => formatMonthHeading(selectedMonth),
     [selectedMonth]
@@ -331,11 +334,21 @@ function MonthlyFilters({
             currentCurrency,
             typeMeta.signedAsPositive
           );
+    const isPositive = amountLabel.trim().startsWith("+");
+    const amountTone = amountLabel.trim().startsWith("-")
+      ? style.amountNegative
+      : isPositive
+        ? style.amountPositive
+        : "";
 
     return (
       <article key={movimiento._id} className={`${style.row} ${toneClass}`}>
-        <div className={style.rowMain}>
-          <div>
+        <div className={style.rowHead}>
+          <span className={style.rowIcon}>
+            {isPositive ? <FiArrowUpRight /> : <FiArrowDownRight />}
+          </span>
+
+          <div className={style.rowText}>
             <p className={style.rowCategory}>{movimiento.categoria}</p>
             <p className={style.rowDetail}>
               {movimiento.detalle || "Sin detalle"}
@@ -345,74 +358,72 @@ function MonthlyFilters({
             ) : null}
           </div>
 
-          <div className={style.rowBadges}>
-            <span className={style.badge}>{typeMeta.label}</span>
-            {isDebt ? (
-              <span
-                className={
-                  debtStatusMeta.tone === "paid"
-                    ? style.badgeNeutral
-                    : style.badgeWarning
-                }
+          <div className={style.rowActions}>
+            {isPendingDebt ? (
+              <button
+                type="button"
+                className={style.payDebtButton}
+                onClick={() => handleStartSettleDebt(movimiento)}
               >
-                {debtStatusMeta.label}
-              </span>
+                Ya lo pague
+              </button>
             ) : null}
-            {!isPendingDebt ? (
-              <span className={style.badge}>{methodMeta.label}</span>
-            ) : null}
-            <span className={style.badge}>{currencyMeta.codeLabel}</span>
-            {movimiento.esRecurrente ? (
-              <span className={style.badgeAccent}>Fijo {movimiento.frecuencia}</span>
-            ) : null}
+            <button
+              type="button"
+              className={style.actionButton}
+              onClick={() => handleEditMovimiento(movimiento)}
+              aria-label="Editar movimiento"
+            >
+              <img src="/edit.png" alt="edit" />
+            </button>
+            <button
+              type="button"
+              className={style.actionButton}
+              onClick={() => handleDeleteMovimiento(movimiento)}
+              aria-label="Eliminar movimiento"
+            >
+              <img src="/trush.png" alt="delete" />
+            </button>
           </div>
         </div>
 
-        <div className={style.rowMeta}>
-          <div className={style.rowInfo}>
-            <span>{formatDate(movimiento.fecha)}</span>
-            <span>
-              {isDebt
-                ? movimiento.deudaEstado === "pagada"
-                  ? `Pagada ${formatDate(movimiento.deudaPagadaAt)}`
-                  : "Pendiente de pago"
-                : movimiento.isVirtualOccurrence
-                  ? "Renderizado automatico"
-                  : "Movimiento manual"}
+        <div className={style.rowBadges}>
+          <span className={style.badge}>{typeMeta.label}</span>
+          {isDebt ? (
+            <span
+              className={
+                debtStatusMeta.tone === "paid"
+                  ? style.badgeNeutral
+                  : style.badgeWarning
+              }
+            >
+              {debtStatusMeta.label}
             </span>
-          </div>
+          ) : null}
+          {!isPendingDebt ? (
+            <span className={style.badge}>{methodMeta.label}</span>
+          ) : null}
+          {movimiento.esRecurrente ? (
+            <span className={style.badgeAccent}>Fijo {movimiento.frecuencia}</span>
+          ) : null}
+        </div>
 
-          <div className={style.rowSide}>
-            <strong className={style.rowAmount}>{amountLabel}</strong>
+        <div className={style.rowFooter}>
+          <span className={style.rowDate}>
+            {formatDate(movimiento.fecha)}
+            {" · "}
+            {isDebt
+              ? movimiento.deudaEstado === "pagada"
+                ? `Pagada ${formatDate(movimiento.deudaPagadaAt)}`
+                : "Pendiente de pago"
+              : movimiento.isVirtualOccurrence
+                ? "Automático"
+                : "Manual"}
+          </span>
 
-            <div className={style.rowActions}>
-              {isPendingDebt ? (
-                <button
-                  type="button"
-                  className={style.payDebtButton}
-                  onClick={() => handleStartSettleDebt(movimiento)}
-                >
-                  Ya lo pague
-                </button>
-              ) : null}
-              <button
-                type="button"
-                className={style.actionButton}
-                onClick={() => handleEditMovimiento(movimiento)}
-                aria-label="Editar movimiento"
-              >
-                <img src="/edit.png" alt="edit" />
-              </button>
-              <button
-                type="button"
-                className={style.actionButton}
-                onClick={() => handleDeleteMovimiento(movimiento)}
-                aria-label="Eliminar movimiento"
-              >
-                <img src="/trush.png" alt="delete" />
-              </button>
-            </div>
-          </div>
+          <strong className={`${style.rowAmount} ${amountTone}`}>
+            {amountLabel}
+          </strong>
         </div>
 
         {isSettlingThis ? (
@@ -544,90 +555,126 @@ function MonthlyFilters({
           />
         </div>
 
-        <div className={style.filterField}>
-          <label htmlFor="type-filter">Tipo</label>
-          <select
-            id="type-filter"
-            value={selectedType}
-            onChange={(event) => setSelectedType(event.target.value)}
-            className={style.select}
-          >
-            {TYPE_FILTERS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <div className={style.filterPickers}>
+          <div className={style.filterField}>
+            <label>Tipo</label>
+            <button
+              type="button"
+              className={style.filterTrigger}
+              onClick={() => setOpenPicker("type")}
+            >
+              <span>{getOptionLabel(TYPE_FILTERS, selectedType)}</span>
+              <FiChevronDown />
+            </button>
+          </div>
 
-        <div className={style.filterField}>
-          <label htmlFor="recurrence-filter">Origen</label>
-          <select
-            id="recurrence-filter"
-            value={selectedRecurrence}
-            onChange={(event) => setSelectedRecurrence(event.target.value)}
-            className={style.select}
-          >
-            {RECURRENCE_FILTERS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className={style.filterField}>
+            <label>Origen</label>
+            <button
+              type="button"
+              className={style.filterTrigger}
+              onClick={() => setOpenPicker("recurrence")}
+            >
+              <span>{getOptionLabel(RECURRENCE_FILTERS, selectedRecurrence)}</span>
+              <FiChevronDown />
+            </button>
+          </div>
 
-        <div className={style.filterField}>
-          <label htmlFor="method-filter">Medio</label>
-          <select
-            id="method-filter"
-            value={selectedMethod}
-            onChange={(event) => setSelectedMethod(event.target.value)}
-            className={style.select}
-          >
-            {METHOD_FILTERS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className={style.filterField}>
+            <label>Medio</label>
+            <button
+              type="button"
+              className={style.filterTrigger}
+              onClick={() => setOpenPicker("method")}
+            >
+              <span>{getOptionLabel(METHOD_FILTERS, selectedMethod)}</span>
+              <FiChevronDown />
+            </button>
+          </div>
 
-        <div className={style.filterActions}>
           <button type="button" className={style.clearButton} onClick={clearFilters}>
             Limpiar filtros
           </button>
         </div>
       </div>
 
+      {openPicker ? (
+        <div
+          className={style.sheetOverlay}
+          role="presentation"
+          onClick={() => setOpenPicker(null)}
+        >
+          <div className={style.sheet} onClick={(event) => event.stopPropagation()}>
+            <span className={style.sheetHandle} />
+            <p className={style.sheetTitle}>
+              {openPicker === "type"
+                ? "Tipo"
+                : openPicker === "recurrence"
+                  ? "Origen"
+                  : "Medio"}
+            </p>
+            <div className={style.sheetOptions}>
+              {(openPicker === "type"
+                ? TYPE_FILTERS
+                : openPicker === "recurrence"
+                  ? RECURRENCE_FILTERS
+                  : METHOD_FILTERS
+              ).map((option) => {
+                const currentValue =
+                  openPicker === "type"
+                    ? selectedType
+                    : openPicker === "recurrence"
+                      ? selectedRecurrence
+                      : selectedMethod;
+                const isActive = option.value === currentValue;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`${style.sheetOption} ${isActive ? style.sheetOptionActive : ""}`}
+                    onClick={() => {
+                      if (openPicker === "type") setSelectedType(option.value);
+                      else if (openPicker === "recurrence") setSelectedRecurrence(option.value);
+                      else setSelectedMethod(option.value);
+                      setOpenPicker(null);
+                    }}
+                  >
+                    <span>{option.label}</span>
+                    {isActive ? <FiCheck /> : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className={style.summaryStrip}>
      
 
-        <article className={style.summaryCard}>
+        <article className={`${style.summaryCard} ${style.summaryIncome}`}>
           <span>Ingresos</span>
           <strong>{formatMoney(filteredSummary.ingreso, currentCurrency)}</strong>
-          <p>Entradas visibles con los filtros actuales.</p>
         </article>
 
-        <article className={style.summaryCard}>
+        <article className={`${style.summaryCard} ${style.summaryExpense}`}>
           <span>Egresos</span>
           <strong>{formatMoney(filteredSummary.egreso, currentCurrency)}</strong>
-          <p>Salidas encontradas en este corte.</p>
         </article>
 
-        <article className={style.summaryCard}>
+        <article className={`${style.summaryCard} ${style.summarySavings}`}>
           <span>Ahorros</span>
           <strong>{formatMoney(filteredSummary.ahorro, currentCurrency)}</strong>
-          <p>Monto separado para reserva u objetivos.</p>
         </article>
 
-        <article className={style.summaryCard}>
+        <article className={`${style.summaryCard} ${style.summaryDebt}`}>
           <span>Deuda pendiente</span>
           <strong>{formatMoney(filteredSummary.deudaPendiente, currentCurrency)}</strong>
-          <p>
-            {filteredSummary.deudaPendienteCount || 0} registro
-            {filteredSummary.deudaPendienteCount === 1 ? "" : "s"} pendiente
-            {filteredSummary.deudaPendienteCount === 1 ? "" : "s"} en este corte.
-          </p>
+          <small className={style.summaryHint}>
+            {filteredSummary.deudaPendienteCount || 0} pendiente
+            {filteredSummary.deudaPendienteCount === 1 ? "" : "s"}
+          </small>
         </article>
       </div>
 

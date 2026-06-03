@@ -467,12 +467,27 @@
   }
 
   .summaryGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
   }
 
   .statCard {
-    padding: 0.85rem;
+    padding: 0.8rem;
     border-radius: 18px;
+    gap: 0.3rem;
+  }
+
+  .statCard span {
+    font-size: 0.78rem;
+  }
+
+  .statCard strong {
+    font-size: 1.05rem;
+  }
+
+  .statCard p {
+    font-size: 0.72rem;
+    line-height: 1.3;
   }
 
   .donut {

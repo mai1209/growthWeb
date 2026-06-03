@@ -27,17 +27,11 @@
 @media (max-width: 1000px) {
   .main {
     display: block;
-    padding-top: 68px;
+    padding-top: 0;
   }
 
   .content {
     width: 100%;
     min-width: 0;
-  }
-}
-
-@media (max-width: 520px) {
-  .main {
-    padding-top: 64px;
   }
 }

@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FiArrowLeft } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Add.module.css";
@@ -219,10 +220,24 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
           : style.formAhorro;
 
   return (
-    <div className={style.container}>
+    <div className={`${style.container} ${!only ? style.containerPage : ""}`}>
       {loading && <div className={style.spinner}></div>}
 
-  
+      {isEditing && (
+        <div className={style.editTopBar}>
+          <button
+            type="button"
+            className={style.editBackButton}
+            onClick={() => {
+              onMovementAdded?.();
+              navigate(-1);
+            }}
+          >
+            <FiArrowLeft />
+            Volver
+          </button>
+        </div>
+      )}
 
       {!only && !isEditing && (
         <div className={style.modeSelector}>
@@ -245,7 +260,6 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
         <div className={style.formHeader}>
           <div>
             <p className={style.formEyebrow}>{mode.title}</p>
-            <h3>{mode.description}</h3>
           </div>
 
           <div
