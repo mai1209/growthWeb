@@ -641,6 +641,15 @@
   .widthControl {
     display: none;
   }
+
+  /* En celular el header del editor va apretado: ocultamos lo accesorio. */
+  .wordCount {
+    display: none;
+  }
+
+  .outlineButton {
+    display: none;
+  }
 }
 
 .ghostButton {

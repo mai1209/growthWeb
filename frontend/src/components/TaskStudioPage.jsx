@@ -1722,7 +1722,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 </span>
                 <button
                   type="button"
-                  className={`${style.iconButton} ${showOutline ? style.iconButtonActive : ""}`}
+                  className={`${style.iconButton} ${style.outlineButton} ${showOutline ? style.iconButtonActive : ""}`}
                   onClick={() => setShowOutline((prev) => !prev)}
                   aria-label="Índice de la nota"
                   title="Índice"
