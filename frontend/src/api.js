@@ -57,9 +57,15 @@ api.interceptors.response.use(
       requestUrl.includes("/api/auth/signup");
 
     if (error.response?.status === 401 && !isAuthRequest) {
+      const hadToken = Boolean(
+        localStorage.getItem("token") || sessionStorage.getItem("token")
+      );
       localStorage.removeItem("token");
       sessionStorage.removeItem("token");
-      window.location.href = "/";
+      // Solo redirigimos (con aviso) si había una sesión activa que expiró.
+      if (hadToken && typeof window !== "undefined") {
+        window.location.href = "/login?expired=1";
+      }
     }
     return Promise.reject(error);
   }

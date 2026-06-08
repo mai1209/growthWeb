@@ -8,13 +8,14 @@ import { authService } from "../api";
 function LoginPage({ onAuthSuccess, theme = "dark", onThemeToggle }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false); // ✅ nuevo
+  const [rememberMe, setRememberMe] = useState(true); // por defecto recordar 30 días
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const sessionExpired = searchParams.get("expired") === "1";
 
 
 const handleSubmit = async (e) => {
@@ -78,6 +79,12 @@ const handleSubmit = async (e) => {
 
           <form onSubmit={handleSubmit}>
             <p className={style.title}>Iniciar sesión</p>
+
+            {sessionExpired && !error ? (
+              <p className={style.infoNote}>
+                Tu sesión expiró. Iniciá sesión de nuevo para seguir.
+              </p>
+            ) : null}
 
             <div className={style.containerInput}>
               <label>Email</label>

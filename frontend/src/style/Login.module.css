@@ -293,6 +293,17 @@ form {
   font-weight: 600;
 }
 
+.infoNote {
+  margin: 0.2rem 0 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  background: rgba(255, 196, 0, 0.14);
+  border: 1px solid rgba(255, 196, 0, 0.35);
+  color: #8a6d00;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
 .successText {
   margin-top: 0.85rem;
   color: var(--color-verde);
