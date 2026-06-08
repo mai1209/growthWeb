@@ -3063,6 +3063,47 @@ button.folderItem {
   gap: 0.55rem;
 }
 
+/* Grupos por nota en la vista "Todas" */
+.fcGroup {
+  margin-bottom: 1rem;
+}
+
+.fcGroupHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(17, 24, 20, 0.12);
+}
+
+.fcGroupHead strong {
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fcGroupStudy {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid rgba(75, 143, 58, 0.4);
+  border-radius: 10px;
+  background: rgba(144, 211, 106, 0.12);
+  color: #2f6f35;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fcGroupStudy:hover {
+  background: rgba(144, 211, 106, 0.22);
+}
+
 .fcRow {
   display: flex;
   align-items: flex-start;

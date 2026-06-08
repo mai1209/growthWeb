@@ -1148,6 +1148,21 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const dueCountAll = allCards.filter(isCardDue).length;
   const dueCountNote = noteCards.filter(isCardDue).length;
 
+  // Tarjetas agrupadas por nota (para la vista "Todas" separada por nota).
+  const cardsByNote = useMemo(() => {
+    const groups = new Map();
+    allCards.forEach((card) => {
+      const key = card.noteId || "__none__";
+      if (!groups.has(key)) {
+        groups.set(key, { noteId: card.noteId, noteTitle: card.noteTitle || "Sin nota", cards: [] });
+      }
+      groups.get(key).cards.push(card);
+    });
+    return Array.from(groups.values()).sort((a, b) =>
+      a.noteTitle.localeCompare(b.noteTitle)
+    );
+  }, [allCards]);
+
   // Guarda el array de tarjetas de una nota: estado local + servidor.
   const persistNoteCards = async (noteId, nextCards) => {
     if (form.id === noteId || !noteId) {
@@ -2384,28 +2399,69 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     </button>
                   </div>
                 )}
-                <div className={style.fcList}>
-                  {visibleDeckCards.map((card) => (
-                    <div key={card.id} className={style.fcRow}>
-                      <div className={style.fcRowText}>
-                        <strong>{card.front}</strong>
-                        <span>{card.back}</span>
-                        <small className={isCardDue(card) ? style.fcDueNow : ""}>
-                          {formatDueLabel(card)}
-                          {deckScope === "all" && card.noteTitle ? ` · ${card.noteTitle}` : ""}
-                        </small>
+                {deckScope === "all" ? (
+                  cardsByNote.map((group) => {
+                    const groupDue = group.cards.filter(isCardDue);
+                    return (
+                      <div key={group.noteId || "__none__"} className={style.fcGroup}>
+                        <div className={style.fcGroupHead}>
+                          <strong>{group.noteTitle}</strong>
+                          <button
+                            type="button"
+                            className={style.fcGroupStudy}
+                            onClick={() => startStudy(groupDue.length ? groupDue : group.cards)}
+                          >
+                            <FiBookOpen />
+                            Repasar{groupDue.length ? ` (${groupDue.length})` : ""}
+                          </button>
+                        </div>
+                        <div className={style.fcList}>
+                          {group.cards.map((card) => (
+                            <div key={card.id} className={style.fcRow}>
+                              <div className={style.fcRowText}>
+                                <strong>{card.front}</strong>
+                                <span>{card.back}</span>
+                                <small className={isCardDue(card) ? style.fcDueNow : ""}>
+                                  {formatDueLabel(card)}
+                                </small>
+                              </div>
+                              <button
+                                type="button"
+                                className={style.fcDelete}
+                                onClick={() => handleDeleteFlashcard(card)}
+                                aria-label="Eliminar tarjeta"
+                              >
+                                <FiTrash2 />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <button
-                        type="button"
-                        className={style.fcDelete}
-                        onClick={() => handleDeleteFlashcard(card)}
-                        aria-label="Eliminar tarjeta"
-                      >
-                        <FiTrash2 />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    );
+                  })
+                ) : (
+                  <div className={style.fcList}>
+                    {visibleDeckCards.map((card) => (
+                      <div key={card.id} className={style.fcRow}>
+                        <div className={style.fcRowText}>
+                          <strong>{card.front}</strong>
+                          <span>{card.back}</span>
+                          <small className={isCardDue(card) ? style.fcDueNow : ""}>
+                            {formatDueLabel(card)}
+                          </small>
+                        </div>
+                        <button
+                          type="button"
+                          className={style.fcDelete}
+                          onClick={() => handleDeleteFlashcard(card)}
+                          aria-label="Eliminar tarjeta"
+                        >
+                          <FiTrash2 />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </div>
