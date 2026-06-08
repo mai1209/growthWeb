@@ -1228,6 +1228,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
 
   const handleGradeCard = (known) => {
     const current = studyDeck[studyIndex];
+    let deck = studyDeck;
+
     if (current) {
       const noteId = current.noteId || form.id;
       const newBox = known ? Math.min((current.box || 0) + 1, MAX_BOX) : 0;
@@ -1236,11 +1238,17 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
         card.id === current.id ? { ...card, box: newBox, due } : card
       );
       persistNoteCards(noteId, nextCards);
+
+      // "Otra vez": re-encolamos la tarjeta al final para volver a verla.
+      if (!known) {
+        deck = [...studyDeck, current];
+        setStudyDeck(deck);
+      }
     }
 
-    if (studyIndex + 1 >= studyDeck.length) {
+    if (studyIndex + 1 >= deck.length) {
       setIsStudyOpen(false);
-      setMessage("¡Repaso terminado! 🎉");
+      setMessage("¡Repaso terminado!");
       return;
     }
 
@@ -2365,7 +2373,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   </button>
                 ) : (
                   <div className={style.fcUpToDate}>
-                    <strong>¡Estás al día! 🎉</strong>
+                    <strong>¡Estás al día!</strong>
                     <span>No hay tarjetas para repasar hoy.</span>
                     <button
                       type="button"
