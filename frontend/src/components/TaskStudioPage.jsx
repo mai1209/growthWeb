@@ -234,7 +234,7 @@ const createFlashcardId = () =>
 const SR_INTERVALS = [0, 1, 3, 7, 16];
 const MAX_BOX = SR_INTERVALS.length - 1;
 
-const todayKey = () => {
+const getTodayKey = () => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
     now.getDate()
@@ -249,7 +249,7 @@ const dateKeyInDays = (days) => {
   ).padStart(2, "0")}`;
 };
 
-const isCardDue = (card) => !card?.due || card.due <= todayKey();
+const isCardDue = (card) => !card?.due || card.due <= getTodayKey();
 
 const formatDueLabel = (card) => {
   if (isCardDue(card)) return "Para repasar hoy";
@@ -1190,7 +1190,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       front,
       back,
       box: 0,
-      due: todayKey(),
+      due: getTodayKey(),
       createdAt: new Date().toISOString(),
     };
 
