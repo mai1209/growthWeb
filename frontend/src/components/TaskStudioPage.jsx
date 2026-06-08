@@ -349,6 +349,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const [isDeckOpen, setIsDeckOpen] = useState(false);
   const [deckScope, setDeckScope] = useState("all");
   const [cardForm, setCardForm] = useState({ front: "", back: "" });
+  const [cardSaving, setCardSaving] = useState(false);
+  const [cardError, setCardError] = useState("");
   const [isStudyOpen, setIsStudyOpen] = useState(false);
   const [studyDeck, setStudyDeck] = useState([]);
   const [studyIndex, setStudyIndex] = useState(0);
@@ -1119,6 +1121,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const openCardForm = () => {
     const selected = getSelectedText();
     setCardForm({ front: "", back: selected });
+    setCardError("");
     setIsCardFormOpen(true);
   };
 
@@ -1151,16 +1154,18 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       setForm((prev) => ({ ...prev, flashcards: nextCards }));
     }
     if (!noteId) {
+      // Nota sin guardar: las tarjetas se guardarán al guardar la nota.
       markDirty();
-      return;
+      return true;
     }
     setTasks((prev) =>
       prev.map((task) => (task._id === noteId ? { ...task, flashcards: nextCards } : task))
     );
     try {
       await taskService.update(noteId, { flashcards: nextCards });
+      return true;
     } catch {
-      setError("No se pudieron guardar las flashcards en el servidor.");
+      return false;
     }
   };
 
@@ -1168,11 +1173,17 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     (form.id === noteId ? form.flashcards : tasks.find((task) => task._id === noteId)?.flashcards) ||
     [];
 
-  const handleSaveFlashcard = (event) => {
+  const handleSaveFlashcard = async (event) => {
     event.preventDefault();
     const front = cardForm.front.trim();
     const back = cardForm.back.trim();
-    if (!front || !back) return;
+    if (!front || !back) {
+      setCardError("Completá la pregunta y la respuesta.");
+      return;
+    }
+
+    setCardError("");
+    setCardSaving(true);
 
     const newCard = {
       id: createFlashcardId(),
@@ -1182,10 +1193,19 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       due: todayKey(),
       createdAt: new Date().toISOString(),
     };
-    persistNoteCards(form.id, [newCard, ...(form.flashcards || [])]);
-    setCardForm({ front: "", back: "" });
-    setIsCardFormOpen(false);
-    setMessage("Flashcard creada.");
+
+    const ok = await persistNoteCards(form.id, [newCard, ...(form.flashcards || [])]);
+    setCardSaving(false);
+
+    if (ok) {
+      setCardForm({ front: "", back: "" });
+      setIsCardFormOpen(false);
+      setMessage("Flashcard creada.");
+    } else {
+      setCardError(
+        "No se pudo guardar la tarjeta. Revisá tu conexión o cerrá sesión y volvé a entrar."
+      );
+    }
   };
 
   const handleDeleteFlashcard = (card) => {
@@ -2259,6 +2279,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 placeholder="La respuesta, definición o concepto"
               />
             </label>
+            {cardError ? <p className={style.fcCardError}>{cardError}</p> : null}
             <div className={style.fcActions}>
               <button type="button" className={style.ghostButton} onClick={() => setIsCardFormOpen(false)}>
                 Cancelar
@@ -2266,10 +2287,10 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
               <button
                 type="submit"
                 className={style.saveButton}
-                disabled={!cardForm.front.trim() || !cardForm.back.trim()}
+                disabled={cardSaving || !cardForm.front.trim() || !cardForm.back.trim()}
               >
                 <FiPlus />
-                Guardar tarjeta
+                {cardSaving ? "Guardando..." : "Guardar tarjeta"}
               </button>
             </div>
           </form>

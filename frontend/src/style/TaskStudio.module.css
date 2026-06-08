@@ -2971,6 +2971,17 @@ button.folderItem {
   gap: 0.6rem;
 }
 
+.fcCardError {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  background: rgba(192, 73, 47, 0.12);
+  border: 1px solid rgba(192, 73, 47, 0.35);
+  color: #c0492f;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .fcEmpty {
   margin: 0;
   padding: 1.2rem;
