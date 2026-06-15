@@ -369,14 +369,17 @@
   height: 10px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
+  /* Lado izquierdo recto: la barra arranca justo al ras, sin "espacio" redondeado */
+  border-radius: 0 999px 999px 0;
 }
 
 .categoryBarTrack span {
   display: block;
   height: 100%;
   min-width: 4px;
-  border-radius: inherit;
+  margin: 0; /* anula el margin-left heredado de .categoryRow span (el "espacio" de 8px) */
+  /* Relleno pegado al inicio (izquierda recta, derecha redondeada) */
+  border-radius: 0 999px 999px 0;
 }
 
 .emptyText {

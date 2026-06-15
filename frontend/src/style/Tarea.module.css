@@ -1481,3 +1481,304 @@ gap: 1rem;}
     min-height: 28px;
   }
 }
+
+/* ===== Switcher de vistas (Día / Calendario / Historial) ===== */
+.viewSwitch {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--border-color);
+}
+
+.viewSwitchButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.viewSwitchButton:hover {
+  color: var(--color-text);
+}
+
+.viewSwitchActive {
+  background: #2f6f35;
+  color: #ffffff;
+}
+
+/* Botón "Nueva tarea": misma forma/tamaño que las vistas, pero como acción */
+.viewSwitchAction {
+  background: linear-gradient(135deg, #9cfb43, #5dc72d);
+  color: #0e2a12;
+}
+
+.viewSwitchAction:hover {
+  color: #0e2a12;
+  filter: brightness(1.05);
+}
+
+.viewSubtitle {
+  margin: 0.4rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+/* ===== Vista Calendario ===== */
+.calendarMode {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.calendarNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.calendarNav span {
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.calendarNav button {
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.calendarNav button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.calendarWeekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.4rem;
+}
+
+.calendarWeekdays span {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.4rem;
+}
+
+.calendarCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  min-height: 72px;
+  padding: 0.45rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.calendarCell:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--accent-border);
+}
+
+.calendarCellMuted {
+  opacity: 0.4;
+}
+
+.calendarCellToday {
+  border-color: #2f6f35;
+  box-shadow: inset 0 0 0 1px #2f6f35;
+}
+
+.calendarDayNumber {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.calendarDots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+}
+
+.calendarDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+}
+
+.calendarDotDone {
+  opacity: 0.35;
+}
+
+.calendarMore {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+/* ===== Vista Historial ===== */
+.historyMode {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.historyControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.historyPeriods {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+}
+
+.historyPeriodButton {
+  padding: 0.45rem 0.85rem;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.historyPeriodActive {
+  background: #2f6f35;
+  color: #ffffff;
+}
+
+.historyNav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.historyNav span {
+  min-width: 9rem;
+  text-align: center;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.historyNav button {
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.historyStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.historyStat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.9rem;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.historyStat strong {
+  font-size: 1.4rem;
+}
+
+.historyStat span {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+.historyChart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  height: 180px;
+  padding: 0.5rem;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.03);
+  overflow-x: auto;
+}
+
+.historyBar {
+  flex: 1 0 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  height: 100%;
+}
+
+.historyBarTrack {
+  flex: 1;
+  width: 100%;
+  max-width: 26px;
+  display: flex;
+  align-items: flex-end;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.historyBarFill {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #9cfb43, #5dc72d);
+}
+
+.historyBarLabel {
+  font-size: 0.66rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+}

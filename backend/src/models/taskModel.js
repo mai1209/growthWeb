@@ -75,11 +75,23 @@ completadasEn: {
   esRecurrente: {
     type: Boolean,
     default: false, // Por defecto, las tareas no son recurrentes
-  },  
-  
+  },
+
+  // 🔗 ID del evento vinculado en Google Calendar (sincronización Web → Calendar)
+  googleEventId: {
+    type: String,
+    default: "",
+  },
+
 }, {
   timestamps: true,
 });
+
+// 🔗 Evita tareas duplicadas para el mismo evento de Google (solo cuando googleEventId no está vacío)
+TaskSchema.index(
+  { user: 1, googleEventId: 1 },
+  { unique: true, partialFilterExpression: { googleEventId: { $gt: "" } } }
+);
 
 const Task = mongoose.model('Task', TaskSchema);
 export default Task;

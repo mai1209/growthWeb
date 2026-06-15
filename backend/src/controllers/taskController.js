@@ -1,5 +1,6 @@
 import Task from "../models/taskModel.js";
 import mongoose from "mongoose";
+import { syncTaskToGoogle, deleteTaskFromGoogle } from "../utils/googleCalendar.js";
 
 const normalizeWorkspaceValue = (value) => {
   const workspace = String(value || "").trim();
@@ -93,6 +94,13 @@ export const createHabito = async (req, res) => {
       flashcards: Array.isArray(flashcards) ? flashcards : [],
     });
     const habitoGuardado = await nuevoHabito.save();
+
+    // 🔗 Sincroniza con Google Calendar (si falla, la tarea igual queda guardada)
+    const googleEventId = await syncTaskToGoogle(userId, habitoGuardado);
+    if (googleEventId) {
+      habitoGuardado.googleEventId = googleEventId;
+    }
+
     res.status(201).json(serializeTask(habitoGuardado));
   } catch (error) {
     console.error(error);
@@ -251,6 +259,9 @@ export const deleteTask = async (req, res) => {
       return res.status(401).json({ message: "Usuario no autorizado" });
     }
 
+    // 🔗 Borramos también el evento vinculado en Google Calendar (si existe)
+    await deleteTaskFromGoogle(req.user.id, task);
+
     // 3. Si todo está bien, eliminamos la tarea de la base de datos
     await Task.findByIdAndDelete(req.params.id);
 
@@ -326,6 +337,12 @@ export const updateTask = async (req, res) => {
 
     // 5. Guardamos el documento actualizado (esto SIEMPRE ejecuta las validaciones del modelo)
     const updatedTask = await task.save();
+
+    // 🔗 Sincroniza el cambio con Google Calendar (crea o actualiza el evento)
+    const googleEventId = await syncTaskToGoogle(req.user.id, updatedTask);
+    if (googleEventId) {
+      updatedTask.googleEventId = googleEventId;
+    }
 
     res.status(200).json(serializeTask(updatedTask));
   } catch (error) {

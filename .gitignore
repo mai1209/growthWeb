@@ -19,6 +19,10 @@ node_modules/
 
 # misc
 .DS_Store
+
+# variables de entorno con secretos (NO subir al repo)
+.env
+**/.env
 .env.local
 .env.development.local
 .env.test.local

@@ -2,10 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   FiBriefcase,
+  FiCalendar,
+  FiCheckCircle,
   FiChevronDown,
   FiEye,
   FiEyeOff,
   FiKey,
+  FiLink,
   FiLock,
   FiPlus,
   FiRefreshCcw,
@@ -13,7 +16,7 @@ import {
   FiTrash2,
   FiUser,
 } from "react-icons/fi";
-import { authService } from "../api";
+import { authService, googleService } from "../api";
 import style from "../style/Settings.module.css";
 
 const TAB_META = {
@@ -26,6 +29,11 @@ const TAB_META = {
     title: "Cambiar contraseña",
     text: "Actualiza tu clave desde la sesión iniciada.",
     icon: FiLock,
+  },
+  integraciones: {
+    title: "Integraciones",
+    text: "Conectá servicios externos como Google Calendar.",
+    icon: FiLink,
   },
 };
 
@@ -74,6 +82,14 @@ function SettingsPage() {
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
   const [openPersonal, setOpenPersonal] = useState(true);
   const [openBusiness, setOpenBusiness] = useState(() => new Set());
+  const [google, setGoogle] = useState({
+    connected: false,
+    email: "",
+    connectedAt: null,
+  });
+  const [googleLoading, setGoogleLoading] = useState(true);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const [googleSyncing, setGoogleSyncing] = useState(false);
 
   const profileInitials = useMemo(() => getInitials(profile), [profile]);
   const businessProfiles = profile.businessProfiles?.length
@@ -111,6 +127,128 @@ function SettingsPage() {
       isMounted = false;
     };
   }, []);
+
+  // Carga el estado de conexión con Google Calendar
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadGoogleStatus = async () => {
+      setGoogleLoading(true);
+      try {
+        const response = await googleService.getStatus();
+        if (isMounted) {
+          setGoogle({
+            connected: Boolean(response.data?.connected),
+            email: response.data?.email || "",
+            connectedAt: response.data?.connectedAt || null,
+          });
+        }
+      } catch (err) {
+        // Si falla el estado no rompemos la página de Ajustes
+        if (isMounted) {
+          setGoogle({ connected: false, email: "", connectedAt: null });
+        }
+      } finally {
+        if (isMounted) {
+          setGoogleLoading(false);
+        }
+      }
+    };
+
+    loadGoogleStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Lee el resultado del redirect de Google (?google=connected|cancelled|error)
+  useEffect(() => {
+    const googleResult = searchParams.get("google");
+    if (!googleResult) return;
+
+    if (googleResult === "connected") {
+      setMessage("Google Calendar se conectó correctamente.");
+      googleService
+        .getStatus()
+        .then((response) =>
+          setGoogle({
+            connected: Boolean(response.data?.connected),
+            email: response.data?.email || "",
+            connectedAt: response.data?.connectedAt || null,
+          })
+        )
+        .catch(() => {});
+    } else if (googleResult === "cancelled") {
+      setError("Cancelaste la conexión con Google.");
+    } else if (googleResult === "error") {
+      setError("No se pudo conectar con Google. Intentá de nuevo.");
+    }
+
+    // Limpia el parámetro de la URL para que el mensaje no quede pegado
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("google");
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const handleConnectGoogle = async () => {
+    setError("");
+    setMessage("");
+    setGoogleBusy(true);
+    try {
+      const response = await googleService.getAuthUrl();
+      const url = response.data?.url;
+      if (!url) {
+        throw new Error("No se recibió la URL de Google");
+      }
+      // Redirige al consentimiento de Google
+      window.location.href = url;
+    } catch (err) {
+      setError(
+        err.response?.data?.error ||
+          "No se pudo iniciar la conexión con Google."
+      );
+      setGoogleBusy(false);
+    }
+  };
+
+  const handleSyncGoogle = async () => {
+    setError("");
+    setMessage("");
+    setGoogleSyncing(true);
+    try {
+      const response = await googleService.sync();
+      const { created = 0, updated = 0 } = response.data || {};
+      setMessage(
+        `Sincronización lista: ${created} nueva${created === 1 ? "" : "s"} y ${updated} actualizada${updated === 1 ? "" : "s"} desde Google Calendar.`
+      );
+    } catch (err) {
+      setError(
+        err.response?.data?.error || "No se pudo sincronizar con Google."
+      );
+    } finally {
+      setGoogleSyncing(false);
+    }
+  };
+
+  const handleDisconnectGoogle = async () => {
+    if (!window.confirm("¿Desconectar Google Calendar?")) return;
+
+    setError("");
+    setMessage("");
+    setGoogleBusy(true);
+    try {
+      await googleService.disconnect();
+      setGoogle({ connected: false, email: "", connectedAt: null });
+      setMessage("Google Calendar se desconectó.");
+    } catch (err) {
+      setError(
+        err.response?.data?.error || "No se pudo desconectar Google."
+      );
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
 
   const handleTabChange = (tab) => {
     setSearchParams({ tab });
@@ -606,6 +744,70 @@ function SettingsPage() {
               <a href={resetUrl}>{resetUrl}</a>
             </div>
           ) : null}
+        </section>
+      ) : null}
+
+      {activeTab === "integraciones" ? (
+        <section className={style.card}>
+          <div className={style.googleBox}>
+            <div className={style.googleInfo}>
+              <FiCalendar />
+              <div>
+                <h2>Google Calendar</h2>
+                {googleLoading ? (
+                  <p>Cargando estado de la conexión...</p>
+                ) : google.connected ? (
+                  <p className={style.googleConnected}>
+                    <FiCheckCircle /> Conectado
+                    {google.email ? ` como ${google.email}` : ""}
+                  </p>
+                ) : (
+                  <p>
+                    Conectá tu cuenta de Google para sincronizar tus notas y
+                    eventos entre Growth y Google Calendar.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {!googleLoading ? (
+              <div className={style.googleActions}>
+                {google.connected ? (
+                  <>
+                    <button
+                      type="button"
+                      className={style.saveButton}
+                      onClick={handleSyncGoogle}
+                      disabled={googleSyncing}
+                    >
+                      <FiRefreshCcw />
+                      {googleSyncing ? "Sincronizando..." : "Sincronizar"}
+                    </button>
+
+                    <button
+                      type="button"
+                      className={style.ghostButton}
+                      onClick={handleDisconnectGoogle}
+                      disabled={googleBusy}
+                    >
+                      <FiTrash2 />
+                      {googleBusy ? "Desconectando..." : "Desconectar"}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    className={style.saveButton}
+                    onClick={handleConnectGoogle}
+                    disabled={googleBusy}
+                  >
+                    <FiLink />
+                    {googleBusy ? "Conectando..." : "Conectar Google Calendar"}
+                  </button>
+                )}
+              </div>
+            ) : null}
+          </div>
         </section>
       ) : null}
 

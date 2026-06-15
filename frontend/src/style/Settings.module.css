@@ -502,6 +502,88 @@
   flex: 0 0 auto;
 }
 
+/* ===== Card de Google Calendar (Integraciones) ===== */
+.googleBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.2rem;
+  border: 1px solid var(--border-color);
+  background: var(--surface-input);
+  border-radius: var(--radius-xl);
+}
+
+.googleInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.googleInfo > svg {
+  width: 26px;
+  height: 26px;
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.googleInfo h2 {
+  margin: 0 0 0.15rem;
+  font-size: 1.2rem;
+}
+
+.googleInfo p {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.googleInfo .googleConnected {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.googleConnected svg {
+  flex: 0 0 auto;
+}
+
+.googleActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 0 0 auto;
+}
+
+.ghostButton {
+  min-height: 44px;
+  padding: 0.7rem 1.05rem;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-muted);
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.16s ease, background 0.16s ease;
+}
+
+.ghostButton:hover:not(:disabled) {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ghostButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .resetLinkBox {
   display: grid;
   gap: 0.4rem;

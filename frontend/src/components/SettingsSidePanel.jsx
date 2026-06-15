@@ -1,4 +1,4 @@
-import { FiKey, FiLock, FiUser } from "react-icons/fi";
+import { FiKey, FiLink, FiLock, FiUser } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 import style from "../style/SettingsSidePanel.module.css";
 
@@ -14,6 +14,12 @@ const OPTIONS = [
     label: "Cambiar contraseña",
     description: "Actualiza tu clave desde la sesión.",
     icon: FiLock,
+  },
+  {
+    to: "/ajustes?tab=integraciones",
+    label: "Integraciones",
+    description: "Conectá Google Calendar.",
+    icon: FiLink,
   },
 ];
 

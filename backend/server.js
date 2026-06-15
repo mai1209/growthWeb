@@ -8,6 +8,7 @@ import ingresoEgresoRoutes from "./src/routes/ingresoEgresoRoutes.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import taskRoutes from "./src/routes/taskRoutes.js";
 import sharedExpenseRoutes from "./src/routes/sharedExpenseRoutes.js";
+import googleRoutes from "./src/routes/googleRoutes.js";
 
 dotenv.config();
 
@@ -107,6 +108,7 @@ app.use("/api/add", ingresoEgresoRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/task", taskRoutes);
 app.use("/api/shared-groups", sharedExpenseRoutes);
+app.use("/api/google", googleRoutes);
 
 // Ruta fallback para API inexistente
 app.use("/api", (req, res) => {

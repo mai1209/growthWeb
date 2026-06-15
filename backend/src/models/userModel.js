@@ -102,6 +102,43 @@ const userSchema = new mongoose.Schema(
       default: null,
       select: false,
     },
+    // 🔗 Integración con Google Calendar
+    google: {
+      connected: {
+        type: Boolean,
+        default: false,
+      },
+      email: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      accessToken: {
+        type: String,
+        default: "",
+        select: false,
+      },
+      refreshToken: {
+        type: String,
+        default: "",
+        select: false,
+      },
+      expiryDate: {
+        type: Number, // timestamp en ms en que expira el accessToken
+        default: 0,
+        select: false,
+      },
+      // Token para sincronización incremental (Calendar → web), se usa en la Fase 3
+      syncToken: {
+        type: String,
+        default: "",
+        select: false,
+      },
+      connectedAt: {
+        type: Date,
+        default: null,
+      },
+    },
   },
   { timestamps: true }
 );

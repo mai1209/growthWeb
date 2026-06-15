@@ -371,7 +371,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 .dayPanel,
@@ -464,7 +464,9 @@
 .row {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 0.7rem;
+  min-height: 9.5rem;
   padding: 0.9rem 1rem;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);

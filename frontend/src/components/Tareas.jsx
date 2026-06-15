@@ -9,11 +9,17 @@ import {
   getTaskRepeatDays,
   getTaskTargetDate,
   isTaskCompletedOnDate,
+  summarizeTasksForDate,
 } from "../utils/tasks";
 import {
+  FiBarChart2,
   FiCalendar,
   FiChevronDown,
+  FiChevronLeft,
+  FiChevronRight,
   FiClock,
+  FiGrid,
+  FiList,
   FiMinus,
   FiMoon,
   FiPlus,
@@ -21,23 +27,6 @@ import {
   FiSunrise,
   FiX,
 } from "react-icons/fi";
-
-const getMonthInputValue = (date = new Date()) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-};
-
-const formatMonthTitle = (value) => {
-  const [year, month] = value.split("-").map(Number);
-
-  if (!year || !month) return "Mes";
-
-  return new Date(year, month - 1, 1).toLocaleDateString("es-AR", {
-    month: "long",
-    year: "numeric",
-  });
-};
 
 const CalendarButton = forwardRef(({ value, onClick }, ref) => (
   <button
@@ -117,13 +106,153 @@ const colorOptions = [
   "color10",
 ];
 
+// ===== Helpers de Calendario / Historial =====
+const WEEKDAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+const HISTORY_PERIODS = [
+  { value: "day", label: "Día" },
+  { value: "week", label: "Semana" },
+  { value: "month", label: "Mes" },
+  { value: "year", label: "Año" },
+];
+
+const startOfDay = (value) => {
+  const date = new Date(value);
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+const addDays = (value, amount) => {
+  const date = new Date(value);
+  date.setDate(date.getDate() + amount);
+  return date;
+};
+
+// Lunes = 0 ... Domingo = 6
+const mondayIndex = (date) => (date.getDay() + 6) % 7;
+
+const isSameDay = (a, b) =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
+// 42 celdas (6 semanas) para la grilla del mes
+const buildMonthGrid = (refDate) => {
+  const year = refDate.getFullYear();
+  const month = refDate.getMonth();
+  const first = new Date(year, month, 1);
+  const start = addDays(first, -mondayIndex(first));
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = addDays(start, index);
+    return { date, inMonth: date.getMonth() === month };
+  });
+};
+
+const getPeriodRange = (period, refDate) => {
+  const day = startOfDay(refDate);
+
+  if (period === "day") return { from: day, to: day };
+
+  if (period === "week") {
+    const from = addDays(day, -mondayIndex(day));
+    return { from, to: addDays(from, 6) };
+  }
+
+  if (period === "year") {
+    return {
+      from: new Date(day.getFullYear(), 0, 1),
+      to: new Date(day.getFullYear(), 11, 31),
+    };
+  }
+
+  // month
+  return {
+    from: new Date(day.getFullYear(), day.getMonth(), 1),
+    to: new Date(day.getFullYear(), day.getMonth() + 1, 0),
+  };
+};
+
+const eachDayInRange = (from, to) => {
+  const days = [];
+  let current = startOfDay(from);
+  const end = startOfDay(to);
+
+  while (current <= end) {
+    days.push(current);
+    current = addDays(current, 1);
+  }
+
+  return days;
+};
+
+const shiftPeriod = (period, refDate, direction) => {
+  const date = new Date(refDate);
+
+  if (period === "day") date.setDate(date.getDate() + direction);
+  else if (period === "week") date.setDate(date.getDate() + direction * 7);
+  else if (period === "month") date.setMonth(date.getMonth() + direction);
+  else date.setFullYear(date.getFullYear() + direction);
+
+  return date;
+};
+
+const formatPeriodLabel = (period, refDate) => {
+  const { from, to } = getPeriodRange(period, refDate);
+
+  if (period === "day") {
+    return from.toLocaleDateString("es-AR", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  }
+
+  if (period === "year") return String(refDate.getFullYear());
+
+  if (period === "month") {
+    return from.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+  }
+
+  const opts = { day: "2-digit", month: "short" };
+  return `${from.toLocaleDateString("es-AR", opts)} – ${to.toLocaleDateString("es-AR", opts)}`;
+};
+
+// Rendimiento del período: solo cuenta días hasta hoy
+const summarizePeriod = (tasks, from, to) => {
+  const today = startOfDay(new Date());
+  const days = eachDayInRange(from, to).filter((day) => day <= today);
+
+  let total = 0;
+  let done = 0;
+
+  const perUnit = days.map((day) => {
+    const summary = summarizeTasksForDate(tasks, day);
+    total += summary.total;
+    done += summary.completed;
+    return { day, ...summary };
+  });
+
+  return {
+    total,
+    done,
+    pending: Math.max(total - done, 0),
+    percent: total ? Math.round((done / total) * 100) : 0,
+    perUnit,
+  };
+};
+
 function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showList, setShowList] = useState(false);
+  // Vista activa: "day" (diaria) | "calendar" (calendario) | "history" (historial)
+  const [viewMode, setViewMode] = useState("day");
   const [error, setError] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedListMonth, setSelectedListMonth] = useState(getMonthInputValue(new Date()));
+  const [calendarRef, setCalendarRef] = useState(new Date()); // mes que muestra el calendario
+  const [historyPeriod, setHistoryPeriod] = useState("month"); // día/semana/mes/año
+  const [historyRef, setHistoryRef] = useState(new Date()); // período de referencia del historial
   const [updatingTaskIds, setUpdatingTaskIds] = useState([]);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
@@ -137,66 +266,46 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
     () => filterTasksForDate(tasks, selectedDate),
     [tasks, selectedDate]
   );
-  const listTasks = useMemo(() => {
-    const [year, month] = selectedListMonth.split("-").map(Number);
-    const currentMonthValue = getMonthInputValue(new Date());
+  // Grilla del mes para la vista calendario
+  const calendarCells = useMemo(() => buildMonthGrid(calendarRef), [calendarRef]);
 
-    if (!year || !month) {
-      return tasks;
-    }
+  // Rango y rendimiento del historial (según día/semana/mes/año)
+  const periodRange = useMemo(
+    () => getPeriodRange(historyPeriod, historyRef),
+    [historyPeriod, historyRef]
+  );
+  const historySummary = useMemo(
+    () => summarizePeriod(tasks, periodRange.from, periodRange.to),
+    [tasks, periodRange]
+  );
 
-    if (selectedListMonth > currentMonthValue) {
-      return [];
-    }
+  // Resumen del día seleccionado (vista diaria) — normalizado a { total, done, pending, percent }
+  const daySummary = useMemo(() => {
+    const s = summarizeTasksForDate(tasks, selectedDate);
+    return {
+      total: s.total,
+      done: s.completed,
+      pending: s.pending,
+      percent: s.total ? Math.round((s.completed / s.total) * 100) : 0,
+    };
+  }, [tasks, selectedDate]);
 
-    const monthStart = new Date(year, month - 1, 1);
-    const monthEnd = new Date(year, month, 0);
+  // Resumen del mes que muestra el calendario
+  const calendarMonthSummary = useMemo(() => {
+    const { from, to } = getPeriodRange("month", calendarRef);
+    return summarizePeriod(tasks, from, to);
+  }, [tasks, calendarRef]);
 
-    return tasks
-      .filter((task) => {
-        if (!task?.fecha) {
-          return false;
-        }
-
-        const taskDate = new Date(task.fecha);
-
-        if (task.esRecurrente) {
-          return taskDate <= monthEnd;
-        }
-
-        return (
-          taskDate.getFullYear() === monthStart.getFullYear() &&
-          taskDate.getMonth() === monthStart.getMonth()
-        );
-      })
-      .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
-  }, [tasks, selectedListMonth]);
-  const groupedListTasks = useMemo(() => {
-    const grouped = listTasks.reduce((accumulator, task) => {
-      const taskMonth = getMonthInputValue(new Date(task.fecha));
-
-      if (!accumulator.has(taskMonth)) {
-        accumulator.set(taskMonth, []);
-      }
-
-      accumulator.get(taskMonth).push(task);
-      return accumulator;
-    }, new Map());
-
-    return [...grouped.entries()].map(([monthKey, monthTasks]) => ({
-      key: monthKey,
-      label: formatMonthTitle(monthKey),
-      tasks: monthTasks,
-    }));
-  }, [listTasks]);
-  const progressTasks = showList ? listTasks : visibleTasks;
-  const completedTasksCount = progressTasks.filter((task) =>
-    isTaskCompletedOnDate(task, showList ? task.fecha || selectedDate : selectedDate)
-  ).length;
-  const pendingTasksCount = Math.max(progressTasks.length - completedTasksCount, 0);
-  const progressPercent = progressTasks.length
-    ? Math.round((completedTasksCount / progressTasks.length) * 100)
-    : 0;
+  // El anillo de progreso refleja la vista activa
+  const activeSummary =
+    viewMode === "history"
+      ? historySummary
+      : viewMode === "calendar"
+        ? calendarMonthSummary
+        : daySummary;
+  const completedTasksCount = activeSummary.done;
+  const pendingTasksCount = activeSummary.pending;
+  const progressPercent = activeSummary.percent;
 
   const fetchTasks = useCallback(async () => {
     const storedToken = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -318,9 +427,15 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
     setIsTaskModalOpen(true);
   };
 
-  const handleOpenNewTask = () => {
+  const handleOpenNewTask = (presetDate) => {
+    // Si viene una fecha válida (ej. desde el calendario), la pre-cargamos
+    const fecha =
+      presetDate instanceof Date && !Number.isNaN(presetDate.getTime())
+        ? new Date(presetDate)
+        : new Date();
+
     setEditingTask(null);
-    setFormData(initialFormData);
+    setFormData({ ...initialFormData, fecha });
     setFormError("");
     setFormSuccess("");
     setIsTaskDatePickerOpen(false);
@@ -531,66 +646,195 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
     });
   };
 
-  const renderListTable = () => {
+  const renderCalendar = () => {
     if (loading) return <p className={style.emptyMessage}>Cargando tareas...</p>;
     if (error) return <p className={style.errorMessage}>{error}</p>;
-    if (!listTasks || listTasks.length === 0)
-      return <p className={style.emptyMessage}>No hay tareas para este mes.</p>;
+
+    const today = new Date();
 
     return (
-      <div className={style.taskListMode}>
-        {groupedListTasks.map((group) => (
-          <section key={group.key} className={style.listMonthGroup}>
-            <div className={style.listMonthHeader}>
-              <span>{group.label}</span>
-            </div>
+      <div className={style.calendarMode}>
+        <div className={style.calendarNav}>
+          <button
+            type="button"
+            onClick={() => setCalendarRef((prev) => shiftPeriod("month", prev, -1))}
+            aria-label="Mes anterior"
+          >
+            <FiChevronLeft />
+          </button>
+          <span>
+            {calendarRef.toLocaleDateString("es-AR", { month: "long", year: "numeric" })}
+          </span>
+          <button
+            type="button"
+            onClick={() => setCalendarRef((prev) => shiftPeriod("month", prev, 1))}
+            aria-label="Mes siguiente"
+          >
+            <FiChevronRight />
+          </button>
+        </div>
 
-            <div className={style.listMonthRows}>
-              {group.tasks.map((t) => {
-                const completed = isTaskCompletedOnDate(t, t.fecha || selectedDate);
+        <div className={style.calendarWeekdays}>
+          {WEEKDAY_LABELS.map((d) => (
+            <span key={d}>{d}</span>
+          ))}
+        </div>
 
-                return (
-                  <div
-                    key={t._id}
-                    className={`${style.listRow} ${style[t.color] || style.color1} ${
-                      completed ? style.completedListRow : ""
-                    }`}
-                  >
-                    <label className={style.checkboxWrapper}>
-                      <input
-                        type="checkbox"
-                        checked={completed}
-                        disabled={updatingTaskIds.includes(t._id)}
-                        onChange={() => handleToggleCompleteForDate(t._id, t.fecha || selectedDate)}
+        <div className={style.calendarGrid}>
+          {calendarCells.map(({ date, inMonth }, index) => {
+            const dayTasks = filterTasksForDate(tasks, date);
+            const isToday = isSameDay(date, today);
+
+            return (
+              <button
+                type="button"
+                key={index}
+                className={`${style.calendarCell} ${inMonth ? "" : style.calendarCellMuted} ${
+                  isToday ? style.calendarCellToday : ""
+                }`}
+                onClick={() => {
+                  setSelectedDate(date);
+                  handleOpenNewTask(date);
+                }}
+                title={`${dayTasks.length} tarea(s) · clic para agregar`}
+              >
+                <span className={style.calendarDayNumber}>{date.getDate()}</span>
+                <span className={style.calendarDots}>
+                  {dayTasks.slice(0, 4).map((t) => {
+                    const done = isTaskCompletedOnDate(t, date);
+                    return (
+                      <span
+                        key={t._id}
+                        className={`${style.calendarDot} ${style[t.color] || style.color1} ${
+                          done ? style.calendarDotDone : ""
+                        }`}
                       />
-                      <span className={style.customCheckbox}></span>
-                    </label>
+                    );
+                  })}
+                  {dayTasks.length > 4 ? (
+                    <span className={style.calendarMore}>+{dayTasks.length - 4}</span>
+                  ) : null}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
-                    <div className={style.listCopy}>
-                      <p className={style.listTitle}>{t.meta}</p>
-                      <div className={style.listMetaRow}>
-                        <span className={style.listUrgency}>{t.urgencia || "Normal"}</span>
-                        <span className={style.listState}>
-                          {completed ? "Hecho" : "Pendiente"}
-                        </span>
-                      </div>
-                    </div>
+  const buildHistoryBuckets = () => {
+    if (historyPeriod === "year") {
+      const months = Array.from({ length: 12 }, (_, m) => ({
+        label: new Date(2000, m, 1).toLocaleDateString("es-AR", { month: "short" }),
+        total: 0,
+        done: 0,
+      }));
+      historySummary.perUnit.forEach((u) => {
+        const m = u.day.getMonth();
+        months[m].total += u.total;
+        months[m].done += u.completed;
+      });
+      return months.map((b) => ({
+        ...b,
+        percent: b.total ? Math.round((b.done / b.total) * 100) : 0,
+      }));
+    }
 
-                    <div className={style.listSchedule}>
-                      <span>Fecha</span>
-                      <p>{t.fecha ? t.fecha.slice(0, 10) : "-"} · {t.horario || "--:--"}</p>
-                    </div>
+    return historySummary.perUnit.map((u) => ({
+      label:
+        historyPeriod === "week"
+          ? WEEKDAY_LABELS[mondayIndex(u.day)]
+          : String(u.day.getDate()),
+      total: u.total,
+      done: u.completed,
+      percent: u.total ? Math.round((u.completed / u.total) * 100) : 0,
+    }));
+  };
 
-                    <div className={style.listActions}>
-                      <button type="button" onClick={() => handleEditTask(t)}>Editar</button>
-                      <button type="button" onClick={() => handleDeleteTask(t._id)}>Eliminar</button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        ))}
+  const renderHistory = () => {
+    if (loading) return <p className={style.emptyMessage}>Cargando tareas...</p>;
+    if (error) return <p className={style.errorMessage}>{error}</p>;
+
+    const buckets = buildHistoryBuckets();
+
+    return (
+      <div className={style.historyMode}>
+        <div className={style.historyControls}>
+          <div className={style.historyPeriods}>
+            {HISTORY_PERIODS.map((p) => (
+              <button
+                key={p.value}
+                type="button"
+                className={`${style.historyPeriodButton} ${
+                  historyPeriod === p.value ? style.historyPeriodActive : ""
+                }`}
+                onClick={() => setHistoryPeriod(p.value)}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          <div className={style.historyNav}>
+            <button
+              type="button"
+              onClick={() => setHistoryRef((prev) => shiftPeriod(historyPeriod, prev, -1))}
+              aria-label="Período anterior"
+            >
+              <FiChevronLeft />
+            </button>
+            <span>{formatPeriodLabel(historyPeriod, historyRef)}</span>
+            <button
+              type="button"
+              onClick={() => setHistoryRef((prev) => shiftPeriod(historyPeriod, prev, 1))}
+              aria-label="Período siguiente"
+            >
+              <FiChevronRight />
+            </button>
+          </div>
+        </div>
+
+        <div className={style.historyStats}>
+          <div className={style.historyStat}>
+            <strong>{historySummary.percent}%</strong>
+            <span>rendimiento</span>
+          </div>
+          <div className={style.historyStat}>
+            <strong>{historySummary.total}</strong>
+            <span>tareas</span>
+          </div>
+          <div className={style.historyStat}>
+            <strong>{historySummary.done}</strong>
+            <span>hechas</span>
+          </div>
+          <div className={style.historyStat}>
+            <strong>{historySummary.pending}</strong>
+            <span>pendientes</span>
+          </div>
+        </div>
+
+        {historySummary.total === 0 ? (
+          <p className={style.emptyMessage}>No hay tareas en este período.</p>
+        ) : (
+          <div className={style.historyChart}>
+            {buckets.map((b, index) => (
+              <div
+                key={index}
+                className={style.historyBar}
+                title={`${b.label}: ${b.done}/${b.total} (${b.percent}%)`}
+              >
+                <div className={style.historyBarTrack}>
+                  <div
+                    className={style.historyBarFill}
+                    style={{ height: `${b.percent}%` }}
+                  />
+                </div>
+                <span className={style.historyBarLabel}>{b.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
@@ -607,52 +851,74 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
             <div className={style.headerCopy}>
               <p className={style.kicker}>Panel de tareas</p>
               <h1 className={style.pageTitle}>
-                {showList ? "Todas las tareas" : ""}
+                {viewMode === "calendar"
+                  ? "Calendario"
+                  : viewMode === "history"
+                    ? "Historial"
+                    : ""}
               </h1>
 
-              <div className={style.containerFecha}>
-                <p>{showList ? "Ver lista del mes" : "Tareas de"}</p>
-                {!showList ? (
+              {viewMode === "day" ? (
+                <div className={style.containerFecha}>
+                  <p>Tareas de</p>
                   <DatePicker
                     selected={selectedDate}
                     onChange={handleDateChange}
                     dateFormat="dd-MM-yyyy"
                     customInput={<CalendarButton />}
                   />
-                ) : (
-                  <input
-                    type="month"
-                    value={selectedListMonth}
-                    onChange={(event) => setSelectedListMonth(event.target.value)}
-                    className={style.monthInput}
-                  />
-                )}
-              </div>
+                </div>
+              ) : (
+                <p className={style.viewSubtitle}>
+                  {viewMode === "calendar"
+                    ? "Tocá un día para ver sus tareas"
+                    : "Tu rendimiento por día, semana, mes o año"}
+                </p>
+              )}
             </div>
 
             <div className={style.headerAside}>
-              {!showList ? (
+              <div className={style.viewSwitch}>
                 <button
                   type="button"
-                  onClick={() => setShowList(true)}
-                  className={`${style.viewButton} ${style.viewButtonAlt}`}
+                  className={`${style.viewSwitchButton} ${
+                    viewMode === "day" ? style.viewSwitchActive : ""
+                  }`}
+                  onClick={() => setViewMode("day")}
                 >
-                  Ver tareas en lista
+                  <FiList />
+                  Día
                 </button>
-              ) : (
                 <button
                   type="button"
-                  onClick={() => setShowList(false)}
-                  className={style.viewButton}
+                  className={`${style.viewSwitchButton} ${
+                    viewMode === "calendar" ? style.viewSwitchActive : ""
+                  }`}
+                  onClick={() => setViewMode("calendar")}
                 >
-                  Volver a la vista diaria
+                  <FiGrid />
+                  Calendario
                 </button>
-              )}
+                <button
+                  type="button"
+                  className={`${style.viewSwitchButton} ${
+                    viewMode === "history" ? style.viewSwitchActive : ""
+                  }`}
+                  onClick={() => setViewMode("history")}
+                >
+                  <FiBarChart2 />
+                  Historial
+                </button>
 
-              <button type="button" className={style.newTaskButton} onClick={handleOpenNewTask}>
-                <FiPlus />
-                Nueva tarea
-              </button>
+                <button
+                  type="button"
+                  className={`${style.viewSwitchButton} ${style.viewSwitchAction}`}
+                  onClick={() => handleOpenNewTask()}
+                >
+                  <FiPlus />
+                  Nueva tarea
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -686,7 +952,11 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
         </aside>
 
         <div className={style.tasksList}>
-          {showList ? renderListTable() : renderContent()}
+          {viewMode === "calendar"
+            ? renderCalendar()
+            : viewMode === "history"
+              ? renderHistory()
+              : renderContent()}
         </div>
       </div>
 

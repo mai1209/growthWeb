@@ -105,6 +105,16 @@ export const sharedGroupsService = {
     api.delete(`/api/shared-groups/${groupId}/expenses/${expenseId}`),
 };
 
+export const googleService = {
+  // Estado de la conexión con Google Calendar del usuario logueado
+  getStatus: () => api.get("/api/google/status"),
+  // Devuelve { url } para mandar al usuario al consentimiento de Google
+  getAuthUrl: () => api.get("/api/google/auth"),
+  // Trae los eventos de Google y los refleja como tareas (Calendar → Web)
+  sync: () => api.post("/api/google/sync"),
+  disconnect: () => api.post("/api/google/disconnect"),
+};
+
 export const authService = {
   login: (credentials) =>
     api.post("/api/auth/login", credentials),

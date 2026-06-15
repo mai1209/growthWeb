@@ -218,16 +218,29 @@ export const expandMovimientos = (
   });
 };
 
-export const filterMovimientosByCurrency = (movimientos = [], currency) => {
+export const filterMovimientosByCurrency = (movimientos = [], currency, range = null) => {
   const safeMovimientos = Array.isArray(movimientos) ? movimientos : [];
   const safeCurrency = normalizeCurrency(currency);
+
+  // Rango de fechas opcional (Hoy / Mensual / Anual). Se compara a nivel de día.
+  const fromTime = range?.from ? new Date(range.from).setHours(0, 0, 0, 0) : null;
+  const toTime = range?.to ? new Date(range.to).setHours(23, 59, 59, 999) : null;
 
   return safeMovimientos.filter((movimiento) => {
     const movimientoCurrency = normalizeCurrency(
       movimiento?.currency || movimiento?.moneda
     );
 
-    return movimientoCurrency === safeCurrency;
+    if (movimientoCurrency !== safeCurrency) return false;
+
+    if (fromTime !== null || toTime !== null) {
+      const t = new Date(movimiento?.fecha).getTime();
+      if (Number.isNaN(t)) return false;
+      if (fromTime !== null && t < fromTime) return false;
+      if (toTime !== null && t > toTime) return false;
+    }
+
+    return true;
   });
 };
 

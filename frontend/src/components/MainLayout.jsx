@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import Nav from "./Nav";
 import LeftsSite from "./LeftsSite";
 import SettingsSidePanel from "./SettingsSidePanel";
+import { googleService } from "../api";
 import style from "../style/MainLayout.module.css";
 
 function MainLayout({
@@ -26,6 +27,22 @@ function MainLayout({
 
   // 1. Obtenemos el token localmente para decidir si mostrar el sidebar
   const currentToken = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+  // 🔗 Sincronización automática Google Calendar → Web al abrir la app (fire-and-forget).
+  // Si el usuario no conectó Google, el backend responde 400 y lo ignoramos.
+  useEffect(() => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) return;
+    googleService
+      .sync()
+      .then((res) => {
+        const { created = 0, updated = 0 } = res?.data || {};
+        // Si entró algo nuevo desde Google, refrescamos las vistas (tareas, etc.)
+        if (created + updated > 0) onUpdate?.();
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if ((isMobileMenuOpen || isMobilePanelOpen) && isMobile) {
