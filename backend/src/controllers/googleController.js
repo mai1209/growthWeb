@@ -1,6 +1,5 @@
 // /controllers/googleController.js
 import jwt from "jsonwebtoken";
-import { google } from "googleapis";
 import User from "../models/userModel.js";
 import {
   buildConsentUrl,
@@ -87,11 +86,13 @@ export const handleCallback = async (req, res) => {
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
 
-    // Email de la cuenta de Google conectada (solo para mostrarlo en Ajustes)
+    // Email de la cuenta de Google conectada (solo para mostrarlo en Ajustes).
+    // Pedimos el userinfo con una request autenticada directa (sin paquetes extra).
     let googleEmail = "";
     try {
-      const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
-      const profile = await oauth2.userinfo.get();
+      const profile = await oauth2Client.request({
+        url: "https://www.googleapis.com/oauth2/v2/userinfo",
+      });
       googleEmail = profile.data?.email || "";
     } catch (profileError) {
       console.warn("No se pudo leer el email de Google:", profileError.message);

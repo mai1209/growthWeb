@@ -50,8 +50,15 @@ const handleSubmit = async (e) => {
     
   } catch (err) {
     console.error("Login error:", err);
-    // Usamos el mensaje que viene del backend o uno genérico
-    setError(err.response?.data?.error || "Error al iniciar sesión");
+    // Extraemos SIEMPRE un string (evita el crash de React si el backend o
+    // Vercel devuelven un objeto de error como { code, message }).
+    const data = err.response?.data;
+    const message =
+      (typeof data?.error === "string" && data.error) ||
+      (typeof data?.message === "string" && data.message) ||
+      (typeof data === "string" && data) ||
+      "Error al iniciar sesión";
+    setError(message);
   } finally {
     setLoading(false);
   }

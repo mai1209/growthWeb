@@ -1,6 +1,8 @@
 // /utils/googleClient.js
 // Helper central para la integración con Google Calendar.
-import { google } from "googleapis";
+// Usamos paquetes livianos (no el meta-paquete "googleapis" de ~200MB que
+// rompe las funciones serverless de Vercel).
+import { OAuth2Client } from "google-auth-library";
 
 // Scopes que pedimos en el consentimiento:
 // - calendar.events: crear/leer/editar/borrar eventos (las dos direcciones de sync)
@@ -28,7 +30,7 @@ const assertEnv = () => {
 export const createOAuthClient = () => {
   assertEnv();
 
-  return new google.auth.OAuth2(
+  return new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
     process.env.GOOGLE_REDIRECT_URI

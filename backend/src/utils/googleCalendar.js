@@ -1,7 +1,7 @@
 // /utils/googleCalendar.js
 // Sincronización Web → Google Calendar (Fase 2).
 // Regla de oro: si algo de Google falla, NO debe romper el guardado de la tarea.
-import { google } from "googleapis";
+import { calendar } from "@googleapis/calendar";
 import User from "../models/userModel.js";
 import { getAuthorizedClient } from "./googleClient.js";
 
@@ -82,7 +82,7 @@ const getCalendarForUser = (user) => {
     }
   });
 
-  return google.calendar({ version: "v3", auth: oauth2Client });
+  return calendar({ version: "v3", auth: oauth2Client });
 };
 
 // Carga el usuario con los tokens (que son select:false en el modelo).
