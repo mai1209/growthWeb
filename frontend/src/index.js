@@ -2,6 +2,7 @@
   import ReactDOM from 'react-dom/client';
   import './index.css';
   import App from './components/App.jsx';
+  import ErrorBoundary from './components/ErrorBoundary.jsx';
   import reportWebVitals from './reportWebVitals.js';
   import { BrowserRouter } from 'react-router-dom';
 
@@ -11,7 +12,9 @@
     <React.StrictMode>
 
         <BrowserRouter>
-          <App />
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
         </BrowserRouter>
 
     </React.StrictMode>
