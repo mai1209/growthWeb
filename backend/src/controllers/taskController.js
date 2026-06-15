@@ -1,6 +1,19 @@
 import Task from "../models/taskModel.js";
 import mongoose from "mongoose";
-import { syncTaskToGoogle, deleteTaskFromGoogle } from "../utils/googleCalendar.js";
+
+// Carga perezosa de la sincronización con Google. Si el módulo (o sus paquetes)
+// no se puede cargar en el entorno serverless, NO rompe el resto de la API.
+let googleSyncModule;
+const loadGoogleSync = async () => {
+  if (googleSyncModule !== undefined) return googleSyncModule;
+  try {
+    googleSyncModule = await import("../utils/googleCalendar.js");
+  } catch (error) {
+    console.warn("googleCalendar no disponible:", error.message);
+    googleSyncModule = null;
+  }
+  return googleSyncModule;
+};
 
 const normalizeWorkspaceValue = (value) => {
   const workspace = String(value || "").trim();
@@ -96,7 +109,8 @@ export const createHabito = async (req, res) => {
     const habitoGuardado = await nuevoHabito.save();
 
     // 🔗 Sincroniza con Google Calendar (si falla, la tarea igual queda guardada)
-    const googleEventId = await syncTaskToGoogle(userId, habitoGuardado);
+    const g = await loadGoogleSync();
+    const googleEventId = g ? await g.syncTaskToGoogle(userId, habitoGuardado) : null;
     if (googleEventId) {
       habitoGuardado.googleEventId = googleEventId;
     }
@@ -260,7 +274,8 @@ export const deleteTask = async (req, res) => {
     }
 
     // 🔗 Borramos también el evento vinculado en Google Calendar (si existe)
-    await deleteTaskFromGoogle(req.user.id, task);
+    const g = await loadGoogleSync();
+    if (g) await g.deleteTaskFromGoogle(req.user.id, task);
 
     // 3. Si todo está bien, eliminamos la tarea de la base de datos
     await Task.findByIdAndDelete(req.params.id);
@@ -339,7 +354,8 @@ export const updateTask = async (req, res) => {
     const updatedTask = await task.save();
 
     // 🔗 Sincroniza el cambio con Google Calendar (crea o actualiza el evento)
-    const googleEventId = await syncTaskToGoogle(req.user.id, updatedTask);
+    const g = await loadGoogleSync();
+    const googleEventId = g ? await g.syncTaskToGoogle(req.user.id, updatedTask) : null;
     if (googleEventId) {
       updatedTask.googleEventId = googleEventId;
     }
