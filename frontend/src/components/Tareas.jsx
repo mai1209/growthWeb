@@ -255,6 +255,7 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
   const [historyRef, setHistoryRef] = useState(new Date()); // período de referencia del historial
   const [updatingTaskIds, setUpdatingTaskIds] = useState([]);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [dayActionDate, setDayActionDate] = useState(null); // día tocado en el calendario
   const [editingTask, setEditingTask] = useState(null);
   const [formData, setFormData] = useState(initialFormData);
   const [formError, setFormError] = useState("");
@@ -692,11 +693,8 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                 className={`${style.calendarCell} ${inMonth ? "" : style.calendarCellMuted} ${
                   isToday ? style.calendarCellToday : ""
                 }`}
-                onClick={() => {
-                  setSelectedDate(date);
-                  handleOpenNewTask(date);
-                }}
-                title={`${dayTasks.length} tarea(s) · clic para agregar`}
+                onClick={() => setDayActionDate(date)}
+                title={`${dayTasks.length} tarea(s)`}
               >
                 <span className={style.calendarDayNumber}>{date.getDate()}</span>
                 <span className={style.calendarDots}>
@@ -959,6 +957,63 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
               : renderContent()}
         </div>
       </div>
+
+      {dayActionDate ? (
+        <div
+          className={style.taskModalOverlay}
+          role="presentation"
+          onMouseDown={() => setDayActionDate(null)}
+        >
+          <section
+            className={style.dayActionSheet}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Acción del día"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className={style.dayActionHeader}>
+              <p className={style.kicker}>Día seleccionado</p>
+              <h2>
+                {dayActionDate.toLocaleDateString("es-AR", {
+                  weekday: "long",
+                  day: "2-digit",
+                  month: "long",
+                })}
+              </h2>
+            </div>
+
+            <div className={style.dayActionButtons}>
+              <button
+                type="button"
+                className={style.dayActionPrimary}
+                onClick={() => {
+                  const date = dayActionDate;
+                  setDayActionDate(null);
+                  setSelectedDate(date);
+                  handleOpenNewTask(date);
+                }}
+              >
+                <FiPlus />
+                Crear tarea
+              </button>
+
+              <button
+                type="button"
+                className={style.dayActionSecondary}
+                onClick={() => {
+                  const date = dayActionDate;
+                  setDayActionDate(null);
+                  setSelectedDate(date);
+                  setViewMode("day");
+                }}
+              >
+                <FiList />
+                Ver tareas del día
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       {isTaskModalOpen ? (
         <div className={style.taskModalOverlay} role="presentation" onMouseDown={handleCloseTaskModal}>
