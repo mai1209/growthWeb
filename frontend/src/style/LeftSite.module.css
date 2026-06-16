@@ -26,20 +26,37 @@
 }
 
 .balanceCard {
+  position: relative;
   display: grid;
   gap: 1rem;
   padding: 1rem;
-
 }
 
 .headerBlock {
   display: grid;
   gap: 0.25rem;
+  padding-right: 2.5rem; /* espacio para el ojito de la esquina */
 }
 
 .eyebrow,
 .balanceLabel,
 .sectionTitle h3,
+.statClickable {
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+}
+
+.statClickable:hover {
+  transform: translateY(-2px);
+  border-color: rgba(159, 220, 132, 0.45);
+  background: rgba(159, 220, 132, 0.08);
+}
+
+.statClickable:focus-visible {
+  outline: 2px solid rgba(159, 220, 132, 0.6);
+  outline-offset: 2px;
+}
+
 .statCard span {
   margin: 0;
   color: #9fdc84;
@@ -98,14 +115,23 @@
 }
 
 .visibilityButton {
-  min-height: 36px;
-  padding: 0.42rem 0.72rem;
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
   border: 1px solid rgba(216, 241, 224, 0.12);
-  border-radius: 999px;
+  border-radius: 50%;
   background: rgba(255, 255, 255, 0.05);
   color: var(--color-text);
   cursor: pointer;
-  font-weight: 800;
+}
+
+.visibilityButton svg {
+  width: 18px;
+  height: 18px;
 }
 
 .currencySwitch {

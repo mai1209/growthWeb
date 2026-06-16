@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { FiArrowDownRight, FiArrowUpRight, FiCheck, FiChevronDown } from "react-icons/fi";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { FiArrowDownRight, FiArrowUpRight, FiCheck, FiChevronDown, FiFilter } from "react-icons/fi";
 import style from "../style/MonthlyFilters.module.css";
 import { movimientoService } from "../api";
 import {
@@ -131,6 +131,7 @@ function MonthlyFilters({
   onEditMovement,
 }) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedMonth, setSelectedMonth] = useState(getMonthInputValue(new Date()));
   const [selectedDay, setSelectedDay] = useState(getDayInputValue(new Date()));
   const [searchTerm, setSearchTerm] = useState("");
@@ -138,6 +139,23 @@ function MonthlyFilters({
   const [selectedRecurrence, setSelectedRecurrence] = useState("all");
   const [selectedMethod, setSelectedMethod] = useState("all");
   const [openPicker, setOpenPicker] = useState(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Si llegás desde el Home con ?tipo=ingreso/egreso/ahorro/deuda, aplicamos ese filtro
+  // y abrimos el panel. Después limpiamos el query para que no se "pegue".
+  useEffect(() => {
+    const tipo = searchParams.get("tipo");
+    if (!tipo) return;
+
+    if (TYPE_FILTERS.some((option) => option.value === tipo)) {
+      setSelectedType(tipo);
+      setFiltersOpen(true);
+    }
+
+    const next = new URLSearchParams(searchParams);
+    next.delete("tipo");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const getOptionLabel = (options, value) =>
     options.find((option) => option.value === value)?.label || "Todos";
@@ -511,26 +529,38 @@ function MonthlyFilters({
           <p className={style.panelKicker}>Mes</p>
           <h1 className={style.heroMonthTitle}>{selectedMonthLabel}</h1>
         </div>
-        <div
-          className={`${style.currencySwitch} ${
-            currentCurrency === "USD" ? style.currencySwitchUsd : style.currencySwitchArs
-          }`}
-        >
-          {CURRENCY_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={`${style.currencyButton} ${
-                currentCurrency === option.value ? style.currencyButtonActive : ""
-              }`}
-              onClick={() => onCurrencyChange?.(option.value)}
-            >
-              {option.codeLabel}
-            </button>
-          ))}
+        <div className={style.heroActions}>
+          <div
+            className={`${style.currencySwitch} ${
+              currentCurrency === "USD" ? style.currencySwitchUsd : style.currencySwitchArs
+            }`}
+          >
+            {CURRENCY_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={`${style.currencyButton} ${
+                  currentCurrency === option.value ? style.currencyButtonActive : ""
+                }`}
+                onClick={() => onCurrencyChange?.(option.value)}
+              >
+                {option.codeLabel}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className={`${style.filterToggle} ${filtersOpen ? style.filterToggleActive : ""}`}
+            onClick={() => setFiltersOpen((prev) => !prev)}
+          >
+            <FiFilter />
+            Filtrar
+          </button>
         </div>
       </div>
 
+      {filtersOpen ? (
       <div className={style.filtersPanel}>
         <div className={style.filterField}>
           <label htmlFor="month-filter">Mes</label>
@@ -597,6 +627,7 @@ function MonthlyFilters({
           </button>
         </div>
       </div>
+      ) : null}
 
       {openPicker ? (
         <div

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-//import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import style from "../style/LeftSite.module.css";
 import {
   CURRENCY_OPTIONS,
@@ -16,8 +17,20 @@ function LeftSite({
   currentCurrency,
   onCurrencyChange,
 }) {
-  //const navigate = useNavigate();
+  const navigate = useNavigate();
   const [areTotalsVisible, setAreTotalsVisible] = useState(true);
+
+  // Lleva a la página de Filtros con el tipo aplicado (o sin filtro si tipo es null)
+  const goToFilter = (tipo) => {
+    navigate(tipo ? `/filtros?tipo=${tipo}` : "/filtros");
+  };
+
+  const handleCardKeyDown = (event, tipo) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      goToFilter(tipo);
+    }
+  };
 
   const currencyMeta = getCurrencyMeta(currentCurrency);
 
@@ -54,37 +67,11 @@ function LeftSite({
   return (
     <aside className={style.container}>
       <div className={style.panel}>
-        <div className={style.balanceCard}>
-          <div className={style.headerBlock}>
-            <p className={style.eyebrow}>Panel de control</p>
-            <h2>Tu caja en {currencyMeta.label.toLowerCase()}</h2>
-          </div>
-
-          <div className={style.balanceBody}>
-            <p className={style.balanceLabel}>Saldo acumulado</p>
-            <p className={style.balanceValue}>
-              {hideableMoney(historicalSummary.total)}
-            </p>
-         
-          </div>
-
-          <div className={style.balanceFooter}>
-            <span className={style.statusPill}>{monthResultLabel}</span>
-            <button
-              type="button"
-              onClick={() => setAreTotalsVisible((prev) => !prev)}
-              className={style.visibilityButton}
-            >
-              {areTotalsVisible ? "Ocultar" : "Mostrar"}
-            </button>
-          </div>
-        </div>
-
-          <div
-            className={`${style.currencySwitch} ${
-              currentCurrency === "USD" ? style.currencySwitchUsd : style.currencySwitchArs
-            }`}
-          >
+        <div
+          className={`${style.currencySwitch} ${
+            currentCurrency === "USD" ? style.currencySwitchUsd : style.currencySwitchArs
+          }`}
+        >
           {CURRENCY_OPTIONS.map((option) => (
             <button
               key={option.value}
@@ -100,33 +87,97 @@ function LeftSite({
           ))}
         </div>
 
+        <div className={style.balanceCard}>
+          <button
+            type="button"
+            onClick={() => setAreTotalsVisible((prev) => !prev)}
+            className={style.visibilityButton}
+            aria-label={areTotalsVisible ? "Ocultar saldo" : "Mostrar saldo"}
+            title={areTotalsVisible ? "Ocultar saldo" : "Mostrar saldo"}
+          >
+            {areTotalsVisible ? <FiEye /> : <FiEyeOff />}
+          </button>
+
+          <div className={style.headerBlock}>
+            <p className={style.eyebrow}>Panel de control</p>
+            <h2>Tu caja en {currencyMeta.label.toLowerCase()}</h2>
+          </div>
+
+          <div className={style.balanceBody}>
+            <p className={style.balanceLabel}>Saldo</p>
+            <p className={style.balanceValue}>
+              {hideableMoney(historicalSummary.total)}
+            </p>
+          </div>
+
+          <div className={style.balanceFooter}>
+            <span className={style.statusPill}>{monthResultLabel}</span>
+          </div>
+        </div>
+
         <div className={style.statGrid}>
-          <article className={`${style.statCard} ${style.statMovimientos}`}>
+          <article
+            className={`${style.statCard} ${style.statMovimientos} ${style.statClickable}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => goToFilter(null)}
+            onKeyDown={(event) => handleCardKeyDown(event, null)}
+          >
             <span>Movimientos del mes</span>
             <strong>{monthMovimientos.length}</strong>
           </article>
 
-          <article className={`${style.statCard} ${style.statTotal}`}>
+          <article
+            className={`${style.statCard} ${style.statTotal} ${style.statClickable}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => goToFilter(null)}
+            onKeyDown={(event) => handleCardKeyDown(event, null)}
+          >
             <span>Resultado mensual</span>
             <strong>{hideableMoney(monthSummary.total)}</strong>
           </article>
 
-          <article className={`${style.statCard} ${style.statIngreso}`}>
+          <article
+            className={`${style.statCard} ${style.statIngreso} ${style.statClickable}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => goToFilter("ingreso")}
+            onKeyDown={(event) => handleCardKeyDown(event, "ingreso")}
+          >
             <span>Ingresos del mes</span>
             <strong>{hideableMoney(monthSummary.ingreso)}</strong>
           </article>
 
-          <article className={`${style.statCard} ${style.statEgreso}`}>
+          <article
+            className={`${style.statCard} ${style.statEgreso} ${style.statClickable}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => goToFilter("egreso")}
+            onKeyDown={(event) => handleCardKeyDown(event, "egreso")}
+          >
             <span>Egresos del mes</span>
             <strong>{hideableMoney(monthSummary.egreso)}</strong>
           </article>
 
-          <article className={`${style.statCard} ${style.statAhorro}`}>
+          <article
+            className={`${style.statCard} ${style.statAhorro} ${style.statClickable}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => goToFilter("ahorro")}
+            onKeyDown={(event) => handleCardKeyDown(event, "ahorro")}
+          >
             <span>Ahorro del mes</span>
             <strong>{hideableMoney(monthSummary.ahorro)}</strong>
           </article>
 
-          <article className={`${style.statCard} ${style.statDeuda}`}>
+          <article
+            className={`${style.statCard} ${style.statDeuda} ${style.statClickable}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => goToFilter("deuda")}
+            onKeyDown={(event) => handleCardKeyDown(event, "deuda")}
+          >
             <span>Deuda pendiente</span>
             <strong>{hideableMoney(historicalSummary.deudaPendiente)}</strong>
           </article>

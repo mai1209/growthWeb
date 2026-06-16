@@ -263,8 +263,11 @@ function SharedExpenses() {
   const selectedGroupIdRef = useRef("");
   const expenseSectionRef = useRef(null);
   const [pendingExpenseFocus, setPendingExpenseFocus] = useState(false);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
 
   const isCreating = !selectedGroupId;
+  // Vista principal (cards de grupos) cuando no hay grupo seleccionado ni se está creando
+  const showLanding = !selectedGroupId && !isCreatingNew;
   const participants = groupForm.participants || [];
   const selectedCurrencyMeta = useMemo(
     () =>
@@ -343,10 +346,12 @@ function SharedExpenses() {
 
       setGroups(nextGroups);
 
+      // Al entrar (sin preferido) NO auto-seleccionamos el primer grupo:
+      // quedamos en la pantalla principal con la lista de cards.
       const nextSelectedId =
         preferredGroupId !== undefined
           ? preferredGroupId
-          : selectedGroupIdRef.current || nextGroups[0]?._id || "";
+          : selectedGroupIdRef.current || "";
 
       if (nextSelectedId) {
         setSelectedGroupId(nextSelectedId);
@@ -419,6 +424,7 @@ function SharedExpenses() {
 
   const handleStartNewGroup = () => {
     setSelectedGroupId("");
+    setIsCreatingNew(true);
     setGroupDetail(null);
     setGroupForm(createEmptyGroupForm(groupForm.currency));
     setExpenseForm(createEmptyExpenseForm());
@@ -435,8 +441,22 @@ function SharedExpenses() {
     setSuccess("");
   };
 
+  // Volver a la pantalla principal (las cards de grupos)
+  const handleBackToGroups = () => {
+    setSelectedGroupId("");
+    setIsCreatingNew(false);
+    setGroupDetail(null);
+    selectedGroupIdRef.current = "";
+    setActivePanel("group");
+    setShowMemberPanel(false);
+    setShowDebtPanel(false);
+    setError("");
+    setSuccess("");
+  };
+
   const handleSelectGroup = (groupId) => {
     setSelectedGroupId(groupId);
+    setIsCreatingNew(false);
     setActivePanel("expenses");
     setExpenseTab("add");
     setShowMemberPanel(false);
@@ -584,6 +604,7 @@ function SharedExpenses() {
         const response = await sharedGroupsService.update(selectedGroupId, payload);
         applyGroupDetailData(response.data);
         await fetchGroups(selectedGroupId);
+        setActivePanel("expenses"); // tras guardar la config, vamos a Gastos y balances
         setSuccess("Grupo actualizado.");
       }
     } catch (err) {
@@ -838,6 +859,7 @@ function SharedExpenses() {
       if (selectedGroupIdRef.current === groupId) {
         selectedGroupIdRef.current = "";
         setSelectedGroupId("");
+        setIsCreatingNew(false);
         setGroupDetail(null);
         setGroupForm(createEmptyGroupForm(groupForm.currency));
         setExpenseForm(createEmptyExpenseForm());
@@ -881,83 +903,69 @@ function SharedExpenses() {
           </p>
         </div>
 
-        <button type="button" className={style.newGroupButton} onClick={handleStartNewGroup}>
-          Nuevo grupo
-        </button>
+        <div className={style.heroActions}>
+          {showLanding ? (
+            <button type="button" className={style.newGroupButton} onClick={handleStartNewGroup}>
+              Nuevo grupo
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={style.secondaryButton}
+              onClick={handleBackToGroups}
+            >
+              ← Grupos
+            </button>
+          )}
+        </div>
       </div>
 
       {error ? <p className={style.feedbackError}>{error}</p> : null}
       {success ? <p className={style.feedbackSuccess}>{success}</p> : null}
 
-      <div className={style.layout}>
-        <aside className={`${style.sidebar} ${style.groupShelf}`}>
-          <div className={style.sidebarHeaderRow}>
-            <div className={style.sidebarHeader}>
-              <p className={style.sidebarKicker}>Panel</p>
-              <h2>Grupos creados</h2>
-            </div>
+      {showLanding ? (
+        <div className={style.groupGrid}>
+          <button
+            type="button"
+            className={style.createTile}
+            onClick={handleStartNewGroup}
+          >
+            <span className={style.createTilePlus}>+</span>
+            <span>Crear grupo</span>
+          </button>
 
-            <button
-              type="button"
-              className={style.secondaryButton}
-              onClick={handleStartNewGroup}
-            >
-              Nuevo
-            </button>
-          </div>
-
-          <p className={style.sidebarText}>
-            Crea grupos separados para viajes, noches, socios o períodos distintos.
-          </p>
-
-          <div className={style.groupList}>
-            {loading ? (
-              <p className={style.emptyMessage}>Cargando grupos...</p>
-            ) : groups.length === 0 ? (
-              <p className={style.emptyMessage}>
-                Todavía no hay grupos. Crea uno para empezar a compartir gastos.
-              </p>
-            ) : (
-              groups.map((group) => (
-                <article
-                  key={group._id}
-                  className={`${style.groupCard} ${
-                    selectedGroupId === group._id ? style.groupCardActive : ""
-                  }`}
+          {loading ? (
+            <p className={style.emptyMessage}>Cargando grupos...</p>
+          ) : groups.length === 0 ? (
+            <p className={style.emptyMessage}>
+              Todavía no hay grupos. Crea uno para empezar a compartir gastos.
+            </p>
+          ) : (
+            groups.map((group) => (
+              <article key={group._id} className={style.groupGridCard}>
+                <button
+                  type="button"
+                  className={style.groupGridButton}
+                  onClick={() => handleSelectGroup(group._id)}
                 >
-                  <button
-                    type="button"
-                    className={style.groupCardButton}
-                    onClick={() => handleSelectGroup(group._id)}
-                  >
-                    <strong>{group.name}</strong>
-                    <span>
-                      {group.participants?.length || 0} participantes · {group.currency}
-                    </span>
-                  </button>
+                  <strong>{group.name}</strong>
+                  <span>
+                    {group.participants?.length || 0} participantes · {group.currency}
+                  </span>
+                </button>
 
-                  <div className={style.groupCardActions}>
-                    <button
-                      type="button"
-                      className={style.secondaryButton}
-                      onClick={() => handleSelectGroup(group._id)}
-                    >
-                      Abrir
-                    </button>
-                    <button
-                      type="button"
-                      className={style.deleteInlineButton}
-                      onClick={() => handleDeleteGroup(group._id)}
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </article>
-              ))
-            )}
-          </div>
-        </aside>
-
+                <button
+                  type="button"
+                  className={style.deleteInlineButton}
+                  onClick={() => handleDeleteGroup(group._id)}
+                >
+                  Eliminar
+                </button>
+              </article>
+            ))
+          )}
+        </div>
+      ) : (
         <section className={`${style.panel} ${style.workspacePanel}`}>
           <div className={style.panelHeader}>
             <div>
@@ -980,20 +988,6 @@ function SharedExpenses() {
                   }}
                 >
                   {showMemberPanel ? "Cerrar alta" : "Sumar miembro"}
-                </button>
-              ) : null}
-
-              {!isCreating && activePanel === "expenses" ? (
-                <button
-                  type="button"
-                  className={style.secondaryButton}
-                  onClick={() => {
-                    setShowDebtPanel((prev) => !prev);
-                    setShowMemberPanel(false);
-                    setSettlingDebtId("");
-                  }}
-                >
-                  {showDebtPanel ? "Cerrar deuda" : "Cargar deuda"}
                 </button>
               ) : null}
 
@@ -1070,10 +1064,6 @@ function SharedExpenses() {
                     <div className={style.participantBox}>
                       <div className={style.cardSectionHead}>
                         <span className={style.sectionLabel}>Participantes del grupo</span>
-                        <p className={style.sectionText}>
-                          Vincula por email a quienes ya usan la app. Si alguien no tiene
-                          cuenta, podés cargarlo como invitado solo con nombre.
-                        </p>
                       </div>
 
                       <div className={style.splitModes}>
@@ -1623,7 +1613,7 @@ function SharedExpenses() {
                             onClick={() => handleToggleExpenseParticipant(participant.email)}
                           >
                             <strong>{getParticipantDisplayName(participant)}</strong>
-                            <span>{getParticipantSecondaryText(participant)}</span>
+                            <span className={style.chipDot} />
                           </button>
                         );
                       })}
@@ -1803,11 +1793,25 @@ function SharedExpenses() {
                 <>
                 <div className={style.debtListPanel}>
                   <div className={style.settlementHeader}>
-                    <span className={style.sectionLabel}>Deudas cargadas</span>
-                    <p className={style.sectionText}>
-                      Las deudas abiertas se pueden cerrar con `Ya pagué` y eso genera un
-                      egreso real en la caja del usuario que confirma el pago.
-                    </p>
+                    <div>
+                      <span className={style.sectionLabel}>Deudas cargadas</span>
+                      <p className={style.sectionText}>
+                        Las deudas abiertas se pueden cerrar con `Ya pagué` y eso genera un
+                        egreso real en la caja del usuario que confirma el pago.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className={style.secondaryButton}
+                      onClick={() => {
+                        setShowDebtPanel((prev) => !prev);
+                        setShowMemberPanel(false);
+                        setSettlingDebtId("");
+                      }}
+                    >
+                      {showDebtPanel ? "Cerrar deuda" : "Cargar deuda"}
+                    </button>
                   </div>
 
                   {(groupDetail.debts || []).length === 0 ? (
@@ -1983,7 +1987,7 @@ function SharedExpenses() {
             )}
           </div>
         </section>
-      </div>
+      )}
     </section>
   );
 }

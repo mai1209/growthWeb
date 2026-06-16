@@ -1,13 +1,10 @@
 .container {
-  display: grid;
-  gap: 1rem;
   padding: 2rem;
   min-height: calc(100vh - 78px);
   color: var(--color-text);
   background: var(--page-background);
 }
 
-.hero,
 .sidebar,
 .panel,
 .summaryCard,
@@ -19,12 +16,112 @@
   border-radius: 24px;
 }
 
+/* Hero sin fondo: el texto queda sobre el fondo de la página */
 .hero {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
   align-items: flex-start;
-  padding: 1.4rem;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  height: fit-content;
+  padding-bottom: 2rem;
+}
+
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
+/* Pantalla principal: grilla de cards de grupos */
+.groupGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.groupGridCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color);
+  background: var(--panel-background);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+
+.groupGridCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-border);
+}
+
+.groupGridButton {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-start;
+  text-align: left;
+  padding: 1.1rem 1.1rem 0.6rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.groupGridButton strong {
+  font-size: 1.05rem;
+}
+
+.groupGridButton span {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
+.groupGridCard .deleteInlineButton {
+  margin: 0 0.7rem 0.7rem auto;
+}
+
+/* Tile de "Crear grupo" */
+.createTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 120px;
+  border: 1px dashed var(--accent-border);
+  border-radius: 18px;
+  background: var(--accent-surface);
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+
+.createTile:hover {
+  transform: translateY(-2px);
+  background: rgba(159, 220, 132, 0.16);
+}
+
+.createTilePlus {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(159, 220, 132, 0.18);
+  font-size: 1.5rem;
+  line-height: 1;
 }
 
 .kicker,
@@ -447,6 +544,9 @@
 
 .memberChip {
   width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   padding: 0.9rem 1rem;
   border: 1px solid rgba(216, 241, 224, 0.08);
   background: rgba(255, 255, 255, 0.02);
@@ -454,6 +554,22 @@
   text-align: left;
   cursor: pointer;
   color: var(--color-text);
+}
+
+/* Círculo indicador: solo borde negro (sin seleccionar) / relleno negro (seleccionado) */
+.chipDot {
+  flex: 0 0 auto;
+  margin-left: auto; /* lo empuja a la derecha */
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #5dc72d; /* desactivado: borde verde */
+  background: transparent;
+}
+
+.memberChipActive .chipDot {
+  background: #000;
+  border-color: #000;
 }
 
 .memberChip strong,
@@ -467,10 +583,13 @@
 }
 
 .memberChipActive {
-  background:
-    linear-gradient(135deg, rgba(144, 211, 106, 0.18), rgba(255, 163, 108, 0.08)),
-    var(--surface-input);
-  box-shadow: inset 0 0 0 1px rgba(144, 211, 106, 0.28);
+  background: linear-gradient(135deg, #9cfb43, #5dc72d);
+  border-color: #5dc72d;
+  box-shadow: inset 0 0 0 1px rgba(156, 251, 67, 0.55);
+}
+
+.memberChipActive strong {
+  color: #0e2a12;
 }
 
 .splitPreview,
@@ -587,6 +706,34 @@
 .modeButtonActive {
   color: var(--color-text);
   background: linear-gradient(135deg, rgba(59, 203, 35, 0.22), rgba(18, 43, 11, 0.92));
+}
+
+/* Toggles dentro de "Sumar miembro" (Con cuenta/Invitado y Desde ahora/Recalcular):
+   mismo estilo que los chips de miembros → verde brillante + círculo negro a la derecha */
+.memberPanel .modeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.memberPanel .modeButton::after {
+  content: "";
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #5dc72d; /* desactivado: borde verde */
+  background: transparent;
+}
+
+.memberPanel .modeButtonActive {
+  background: linear-gradient(135deg, #9cfb43, #5dc72d);
+  color: #0e2a12;
+}
+
+.memberPanel .modeButtonActive::after {
+  background: #000;
+  border-color: #000;
 }
 
 .equalNotice,
@@ -718,16 +865,19 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 0.4rem;
   padding: 0.3rem;
-  border-radius: 14px;
+  border-radius: 16px;
   border: 1px solid rgba(216, 241, 224, 0.1);
   background: var(--surface-input);
 }
 
 .subTab {
-  min-height: 42px;
-  padding: 0.55rem 0.5rem;
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 0.7rem;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   background: transparent;
   color: var(--color-muted);
   font-weight: 700;
@@ -737,9 +887,8 @@
 }
 
 .subTabActive {
-  background: var(--surface-hover);
-  color: var(--color-text);
-  box-shadow: inset 0 0 0 1px rgba(216, 241, 224, 0.12);
+  background: var(--accent, #2f6f35);
+  color: var(--accent-contrast, #ffffff);
 }
 
 .summaryGrid {
@@ -808,8 +957,24 @@
 }
 
 .settlementHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.settlementHeader > div {
+  flex: 1 1 auto;
+  min-width: 0;
   display: grid;
   gap: 0.2rem;
+}
+
+.settlementHeader .secondaryButton {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 120px;
+  white-space: nowrap;
 }
 
 .settlementRow {
@@ -922,7 +1087,6 @@
   color: var(--color-muted);
 }
 
-:global(body[data-theme="light"]) .hero,
 :global(body[data-theme="light"]) .sidebar,
 :global(body[data-theme="light"]) .panel,
 :global(body[data-theme="light"]) .summaryCard,
