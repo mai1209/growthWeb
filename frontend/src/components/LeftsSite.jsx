@@ -67,51 +67,51 @@ function LeftSite({
   return (
     <aside className={style.container}>
       <div className={style.panel}>
-        <div
-          className={`${style.currencySwitch} ${
-            currentCurrency === "USD" ? style.currencySwitchUsd : style.currencySwitchArs
-          }`}
-        >
-          {CURRENCY_OPTIONS.map((option) => (
+        <div className={style.controlCard}>
+          <div className={style.currencyTabs}>
+            {CURRENCY_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={`${style.currencyTab} ${
+                  option.value === currentCurrency
+                    ? style.currencyTabActive
+                    : style.currencyTabInactive
+                }`}
+                onClick={() => onCurrencyChange?.(option.value)}
+              >
+                <span>{option.codeLabel}</span>
+                <small>{option.label}</small>
+              </button>
+            ))}
+          </div>
+
+          <div className={style.balanceCard}>
             <button
-              key={option.value}
               type="button"
-              className={`${style.currencyButton} ${
-                option.value === currentCurrency ? style.currencyButtonActive : ""
-              }`}
-              onClick={() => onCurrencyChange?.(option.value)}
+              onClick={() => setAreTotalsVisible((prev) => !prev)}
+              className={style.visibilityButton}
+              aria-label={areTotalsVisible ? "Ocultar saldo" : "Mostrar saldo"}
+              title={areTotalsVisible ? "Ocultar saldo" : "Mostrar saldo"}
             >
-              <span>{option.codeLabel}</span>
-              <small>{option.label}</small>
+              {areTotalsVisible ? <FiEye /> : <FiEyeOff />}
             </button>
-          ))}
-        </div>
 
-        <div className={style.balanceCard}>
-          <button
-            type="button"
-            onClick={() => setAreTotalsVisible((prev) => !prev)}
-            className={style.visibilityButton}
-            aria-label={areTotalsVisible ? "Ocultar saldo" : "Mostrar saldo"}
-            title={areTotalsVisible ? "Ocultar saldo" : "Mostrar saldo"}
-          >
-            {areTotalsVisible ? <FiEye /> : <FiEyeOff />}
-          </button>
+            <div className={style.headerBlock}>
+              <p className={style.eyebrow}>Resumen</p>
+              <h2>Dashboard {currencyMeta.codeLabel}</h2>
+            </div>
 
-          <div className={style.headerBlock}>
-            <p className={style.eyebrow}>Panel de control</p>
-            <h2>Tu caja en {currencyMeta.label.toLowerCase()}</h2>
-          </div>
+            <div className={style.balanceBody}>
+              <p className={style.balanceLabel}>Saldo</p>
+              <p className={style.balanceValue}>
+                {hideableMoney(historicalSummary.total)}
+              </p>
+            </div>
 
-          <div className={style.balanceBody}>
-            <p className={style.balanceLabel}>Saldo</p>
-            <p className={style.balanceValue}>
-              {hideableMoney(historicalSummary.total)}
-            </p>
-          </div>
-
-          <div className={style.balanceFooter}>
-            <span className={style.statusPill}>{monthResultLabel}</span>
+            <div className={style.balanceFooter}>
+              <span className={style.statusPill}>{monthResultLabel}</span>
+            </div>
           </div>
         </div>
 

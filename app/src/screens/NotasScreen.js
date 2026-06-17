@@ -1,0 +1,331 @@
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  RefreshControl,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { taskService } from "../api";
+import { useTheme } from "../theme";
+import {
+  notePreview,
+  getNoteColor,
+  groupNotesForBoard,
+  formatShortDate,
+} from "../utils/notes";
+import NoteEditorModal from "../components/NoteEditorModal";
+
+const ALL_FOLDERS = "__all__";
+
+export default function NotasScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [activeNote, setActiveNote] = useState(null);
+  const [folder, setFolder] = useState(ALL_FOLDERS);
+
+  const fetchNotes = useCallback(async () => {
+    try {
+      const res = await taskService.getAll({ tipo: "note" });
+      const list = Array.isArray(res.data) ? res.data : res.data?.tasks || [];
+      setNotes(list);
+    } catch {
+      // noop
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
+
+  const folders = useMemo(() => {
+    const set = new Set();
+    notes.forEach((n) => {
+      if (n.carpeta && n.carpeta.trim()) set.add(n.carpeta.trim());
+    });
+    return Array.from(set).sort();
+  }, [notes]);
+
+  const visibleNotes = useMemo(
+    () => (folder === ALL_FOLDERS ? notes : notes.filter((n) => (n.carpeta || "").trim() === folder)),
+    [notes, folder]
+  );
+
+  const groups = useMemo(() => groupNotesForBoard(visibleNotes), [visibleNotes]);
+
+  const openNew = () => {
+    setActiveNote(null);
+    setEditorOpen(true);
+  };
+  const openNote = (note) => {
+    setActiveNote(note);
+    setEditorOpen(true);
+  };
+
+  return (
+    <SafeAreaView style={styles.safe} edges={[]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.kicker}>NOTAS</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>Tus notas</Text>
+            <View style={styles.countBadge}>
+              <Text style={styles.countText}>{notes.length}</Text>
+            </View>
+          </View>
+        </View>
+        <TouchableOpacity style={styles.newBtn} onPress={openNew}>
+          <Ionicons name="add" size={18} color="#fff" />
+          <Text style={styles.newBtnText}>Nueva nota</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Carpetas */}
+      {folders.length > 0 && (
+        <View style={styles.folderRowWrap}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.folderRow}
+          >
+            {[{ key: ALL_FOLDERS, label: "Todas" }, ...folders.map((f) => ({ key: f, label: f }))].map(
+              (f) => {
+                const active = folder === f.key;
+                return (
+                  <TouchableOpacity
+                    key={f.key}
+                    style={[styles.folderChip, active && styles.folderChipActive]}
+                    onPress={() => setFolder(f.key)}
+                  >
+                    <Text style={[styles.folderChipText, active && styles.folderChipTextActive]}>
+                      {f.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }
+            )}
+          </ScrollView>
+        </View>
+      )}
+
+      {loading ? (
+        <ActivityIndicator color={colors.green} style={{ marginTop: 30 }} />
+      ) : (
+        <ScrollView
+          contentContainerStyle={{ padding: 16, paddingTop: 8, paddingBottom: 90 }}
+          refreshControl={
+            <RefreshControl refreshing={false} onRefresh={fetchNotes} tintColor={colors.green} />
+          }
+        >
+          {visibleNotes.length === 0 ? (
+            <Text style={styles.empty}>
+              {folder === ALL_FOLDERS
+                ? 'Todavía no tenés notas. Creá la primera con "Nueva nota".'
+                : `La carpeta "${folder}" está vacía.`}
+            </Text>
+          ) : (
+            groups.map((g) => (
+              <View key={g.key} style={{ marginBottom: 18 }}>
+                <View style={styles.groupHeader}>
+                  <Text style={styles.groupTitle}>{g.label}</Text>
+                  <View style={styles.groupCount}>
+                    <Text style={styles.groupCountText}>{g.notes.length}</Text>
+                  </View>
+                  <View style={styles.groupLine} />
+                </View>
+
+                <View style={styles.grid}>
+                  {g.notes.map((n) => {
+                    const palette = getNoteColor(n.color);
+                    const preview = notePreview(n.contenido, 120);
+                    return (
+                      <TouchableOpacity
+                        key={n._id}
+                        style={[styles.card, { backgroundColor: palette.bg }]}
+                        activeOpacity={0.85}
+                        onPress={() => openNote(n)}
+                      >
+                        <Text style={[styles.cardTitle, { color: palette.text }]} numberOfLines={2}>
+                          {n.meta || "Sin título"}
+                        </Text>
+                        <Text
+                          style={[styles.cardPreview, { color: palette.text, opacity: 0.7 }]}
+                          numberOfLines={4}
+                        >
+                          {preview || "Sin contenido"}
+                        </Text>
+                        <View style={styles.cardFooter}>
+                          <Text style={[styles.cardDate, { color: palette.text, opacity: 0.6 }]}>
+                            {formatShortDate(n.fecha)}
+                          </Text>
+                          {n.carpeta ? (
+                            <View style={styles.cardFolder}>
+                              <Ionicons
+                                name="folder-outline"
+                                size={11}
+                                color={palette.text}
+                                style={{ opacity: 0.6 }}
+                              />
+                              <Text
+                                style={[styles.cardFolderText, { color: palette.text, opacity: 0.6 }]}
+                                numberOfLines={1}
+                              >
+                                {n.carpeta}
+                              </Text>
+                            </View>
+                          ) : null}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                  {/* relleno si el grupo tiene cantidad impar, para mantener 2 columnas */}
+                  {g.notes.length % 2 === 1 && <View style={[styles.card, styles.cardGhost]} />}
+                </View>
+              </View>
+            ))
+          )}
+        </ScrollView>
+      )}
+
+      <TouchableOpacity style={styles.fab} onPress={openNew}>
+        <Ionicons name="add" size={28} color="#fff" />
+      </TouchableOpacity>
+
+      <NoteEditorModal
+        visible={editorOpen}
+        note={activeNote}
+        folders={folders}
+        onClose={() => setEditorOpen(false)}
+        onSaved={fetchNotes}
+        onDeleted={fetchNotes}
+      />
+    </SafeAreaView>
+  );
+}
+
+const makeStyles = (colors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.bg },
+  header: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+    gap: 10,
+  },
+  kicker: {
+    color: colors.greenDark,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+  },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 3 },
+  title: { color: colors.text, fontSize: 22, fontWeight: "800" },
+  countBadge: {
+    minWidth: 24,
+    height: 22,
+    paddingHorizontal: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.greenBorder,
+    backgroundColor: colors.greenSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  countText: { color: colors.greenDark, fontSize: 12, fontWeight: "800" },
+  newBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: colors.greenBright,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    marginTop: 4,
+  },
+  newBtnText: { color: "#fff", fontWeight: "800", fontSize: 13 },
+
+  folderRowWrap: { paddingBottom: 4 },
+  folderRow: { paddingHorizontal: 16, gap: 8, paddingVertical: 4 },
+  folderChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.card,
+  },
+  folderChipActive: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
+  folderChipText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
+  folderChipTextActive: { color: colors.greenDark },
+
+  empty: { color: colors.muted, textAlign: "center", marginTop: 30, lineHeight: 21 },
+
+  groupHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
+  groupTitle: { color: colors.text, fontSize: 15, fontWeight: "800", textTransform: "capitalize" },
+  groupCount: {
+    minWidth: 22,
+    height: 20,
+    paddingHorizontal: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.greenBorder,
+    backgroundColor: colors.greenSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  groupCountText: { color: colors.greenDark, fontSize: 11, fontWeight: "800" },
+  groupLine: { flex: 1, height: 1, backgroundColor: colors.cardBorder },
+
+  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
+  card: {
+    width: "48%",
+    minHeight: 130,
+    borderRadius: 14,
+    padding: 13,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.05)",
+  },
+  cardGhost: { backgroundColor: "transparent", borderColor: "transparent", minHeight: 0 },
+  cardTitle: { fontSize: 15, fontWeight: "800" },
+  cardPreview: { fontSize: 13, lineHeight: 18, marginTop: 6, flex: 1 },
+  cardFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 6,
+    marginTop: 10,
+  },
+  cardDate: { fontSize: 11, fontWeight: "700" },
+  cardFolder: { flexDirection: "row", alignItems: "center", gap: 3, flexShrink: 1 },
+  cardFolderText: { fontSize: 11, fontWeight: "700" },
+
+  fab: {
+    position: "absolute",
+    right: 18,
+    bottom: 18,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.greenBright,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+});

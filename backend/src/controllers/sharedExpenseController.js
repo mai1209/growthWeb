@@ -954,3 +954,81 @@ export const deleteSharedExpense = async (req, res) => {
     res.status(500).json({ error: "Error al eliminar gasto compartido" });
   }
 };
+
+export const updateSharedExpense = async (req, res) => {
+  try {
+    const group = await getSharedGroupOrFail(req.params.id, req.user);
+
+    if (!group) {
+      return res.status(404).json({ error: "Grupo compartido no encontrado" });
+    }
+
+    const expense = await SharedExpense.findOne({
+      _id: req.params.expenseId,
+      group: group._id,
+    });
+
+    if (!expense) {
+      return res.status(404).json({ error: "Gasto compartido no encontrado" });
+    }
+
+    if (
+      expense.createdBy.toString() !== req.user._id.toString() &&
+      group.owner.toString() !== req.user._id.toString()
+    ) {
+      return res.status(403).json({ error: "No autorizado para editar este gasto" });
+    }
+
+    const description = req.body.description?.trim();
+    const amount = Number(req.body.amount);
+    const paidByEmail = normalizeEmail(req.body.paidByEmail || "");
+    const expenseDate = normalizeCalendarDate(req.body.date);
+    const participant = group.participants.find(
+      (item) => item.email === paidByEmail
+    );
+
+    if (!description) {
+      return res.status(400).json({ error: "La descripcion es obligatoria" });
+    }
+
+    if (!amount || Number.isNaN(amount) || amount <= 0) {
+      return res.status(400).json({ error: "El monto debe ser mayor a cero" });
+    }
+
+    if (!participant) {
+      return res.status(400).json({ error: "El pagador debe pertenecer al grupo" });
+    }
+
+    if (!isParticipantActiveForDate(participant, expenseDate)) {
+      return res.status(400).json({ error: "Ese pagador todavía no estaba activo en esa fecha" });
+    }
+
+    const participantEmails = normalizeExpenseParticipants(
+      group,
+      expenseDate,
+      req.body.participantEmails || []
+    );
+
+    if (!participantEmails.length) {
+      return res.status(400).json({ error: "Selecciona al menos un miembro para repartir el gasto" });
+    }
+
+    expense.paidByUser = participant.user || null;
+    expense.paidByEmail = paidByEmail;
+    expense.participantEmails = participantEmails;
+    expense.description = description;
+    expense.amount = amount;
+    expense.date = expenseDate;
+    expense.notes = req.body.notes?.trim() || "";
+
+    await expense.save();
+
+    res.status(200).json({
+      expense: serializeExpense(expense, group),
+      ...(await buildGroupDetailResponse(group)),
+    });
+  } catch (error) {
+    console.error("Error al editar gasto compartido:", error);
+    res.status(500).json({ error: "Error al editar gasto compartido" });
+  }
+};

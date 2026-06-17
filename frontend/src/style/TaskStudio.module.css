@@ -3308,3 +3308,21 @@ button.folderItem {
     padding: 1.5rem 1.1rem;
   }
 }
+/* Mobile: que el editor de notas no se desborde y el header acomode los botones */
+@media (max-width: 640px) {
+  .editorCard {
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .editorCard .editorHeader,
+  .editorCard .form {
+    width: 100%;
+  }
+
+  .editorActions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.4rem;
+  }
+}

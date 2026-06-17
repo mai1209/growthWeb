@@ -809,9 +809,20 @@
     align-items: flex-start;
   }
 
-  .currencySwitch {
+  .heroActions {
     width: 100%;
+    flex-wrap: nowrap;
+  }
+
+  /* ARS/USD y "Filtrar" en la misma fila */
+  .currencySwitch {
+    flex: 1;
     min-width: 0;
+    width: auto;
+  }
+
+  .filterToggle {
+    flex: 0 0 auto;
   }
 
   .filtersPanel,

@@ -10,6 +10,7 @@ import {
   getSharedGroupDetail,
   getSharedGroups,
   settleSharedDebt,
+  updateSharedExpense,
   updateSharedGroup,
 } from "../controllers/sharedExpenseController.js";
 
@@ -22,6 +23,7 @@ router.put("/:id", requireAuth, updateSharedGroup);
 router.post("/:id/members", requireAuth, addSharedGroupMember);
 router.delete("/:id", requireAuth, deleteSharedGroup);
 router.post("/:id/expenses", requireAuth, createSharedExpense);
+router.put("/:id/expenses/:expenseId", requireAuth, updateSharedExpense);
 router.delete("/:id/expenses/:expenseId", requireAuth, deleteSharedExpense);
 router.post("/:id/debts", requireAuth, createSharedDebt);
 router.post("/:id/debts/:debtId/settle", requireAuth, settleSharedDebt);

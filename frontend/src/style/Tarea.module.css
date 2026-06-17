@@ -1842,3 +1842,74 @@ gap: 1rem;}
   border-color: var(--accent-border);
   background: rgba(255, 255, 255, 0.09);
 }
+
+/* Mobile: el switcher de vistas (Día/Calendario/Historial/Nueva tarea)
+   pasa a grilla 2x2 a todo el ancho para que no se corte */
+@media (max-width: 640px) {
+  .headerAside {
+    width: 100%;
+  }
+
+  .viewSwitch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: 0.3rem;
+  }
+
+  .viewSwitchButton {
+    justify-content: center;
+    padding: 0.55rem 0.45rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Responsive del Historial en mobile: que nada se salga de la pantalla */
+@media (max-width: 640px) {
+  .container {
+    overflow-x: hidden;
+  }
+
+  /* Sin min-width:0 los contenedores toman el ancho del contenido (el gráfico) y desbordan */
+  .tasksWorkspace,
+  .tasksList,
+  .historyMode,
+  .historyControls,
+  .historyStats {
+    min-width: 0;
+  }
+
+  .historyStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .historyControls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .historyPeriods {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* El gráfico scrollea horizontal DENTRO de su caja, no empuja la página */
+  .historyChart {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .historyBar {
+    flex: 0 0 22px;
+  }
+
+  /* La etiqueta del período no fuerza el ancho */
+  .historyNav span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
