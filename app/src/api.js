@@ -45,6 +45,8 @@ export const authService = {
   getProfile: () => api.get("/api/auth/profile"),
   updateProfile: (data) => api.put("/api/auth/profile", data),
   changePassword: (data) => api.post("/api/auth/change-password", data),
+  forgotPassword: (data) => api.post("/api/auth/forgot-password", data),
+  deleteAccount: () => api.delete("/api/auth/account"),
 };
 
 export const googleService = {

@@ -37,6 +37,79 @@ export default function AjustesScreen({ navigation }) {
     ]);
   };
 
+  const confirmDeleteAccount = () => {
+    Alert.alert(
+      "Eliminar cuenta",
+      "Se borrarán tu cuenta y todos tus datos (movimientos, tareas, notas y los grupos que creaste) de forma permanente. Esta acción no se puede deshacer.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar mi cuenta",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await authService.deleteAccount();
+              Alert.alert("Cuenta eliminada", "Tu cuenta y tus datos fueron eliminados.");
+              logout();
+            } catch {
+              Alert.alert("Error", "No se pudo eliminar la cuenta. Probá de nuevo.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const recoverPassword = async () => {
+    try {
+      const res = await authService.getProfile();
+      const email = res.data?.email;
+      if (!email) throw new Error("no email");
+      await authService.forgotPassword({ email });
+      Alert.alert("Email enviado", `Te enviamos un enlace a ${email} para restablecer tu contraseña.`);
+    } catch {
+      Alert.alert("Error", "No se pudo enviar el email de recuperación. Probá de nuevo.");
+    }
+  };
+
+  const SUPPORT_ROWS = [
+    {
+      key: "soporte",
+      label: "Ayuda y soporte",
+      desc: "Escribinos por email",
+      icon: "help-buoy-outline",
+      action: () => Linking.openURL("mailto:soporte@growthmanager.app?subject=Soporte%20Growth%20Manager"),
+    },
+    {
+      key: "recover",
+      label: "Recuperar contraseña",
+      desc: "Te enviamos un email para restablecerla",
+      icon: "key-outline",
+      action: recoverPassword,
+    },
+    {
+      key: "privacy",
+      label: "Política de privacidad",
+      desc: "",
+      icon: "shield-checkmark-outline",
+      action: () => Linking.openURL("https://www.growthmanager.app/privacidad.html"),
+    },
+    {
+      key: "terms",
+      label: "Términos y condiciones",
+      desc: "",
+      icon: "document-text-outline",
+      action: () => Linking.openURL("https://www.growthmanager.app/terminos.html"),
+    },
+    {
+      key: "review",
+      label: "Calificar la app",
+      desc: "Dejanos tu reseña en App Store",
+      icon: "star-outline",
+      action: () => Linking.openURL("https://apps.apple.com/app/id6781464707?action=write-review"),
+    },
+  ];
+
   return (
     <View style={[styles.safe, { paddingBottom: insets.bottom }]}>
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
@@ -68,10 +141,37 @@ export default function AjustesScreen({ navigation }) {
           ))}
         </View>
 
+        <Text style={styles.sectionLabel}>Soporte y legal</Text>
+        <View style={styles.card}>
+          {SUPPORT_ROWS.map((r, i) => (
+            <TouchableOpacity
+              key={r.key}
+              style={[styles.row, i < SUPPORT_ROWS.length - 1 && styles.rowBorder]}
+              onPress={r.action}
+            >
+              <View style={styles.rowIcon}>
+                <Ionicons name={r.icon} size={20} color={colors.greenDark} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowLabel}>{r.label}</Text>
+                {r.desc ? <Text style={styles.rowDesc}>{r.desc}</Text> : null}
+              </View>
+              <Ionicons name="open-outline" size={18} color={colors.muted} />
+            </TouchableOpacity>
+          ))}
+        </View>
+
         <TouchableOpacity style={styles.logoutBtn} onPress={confirmLogout}>
           <Ionicons name="log-out-outline" size={20} color={colors.red} />
           <Text style={styles.logoutText}>Cerrar sesión</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity style={styles.deleteBtn} onPress={confirmDeleteAccount}>
+          <Ionicons name="trash-outline" size={18} color={colors.red} />
+          <Text style={styles.deleteText}>Eliminar cuenta</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.version}>Growth Manager · versión 1.0.0</Text>
       </ScrollView>
 
       <PerfilModal visible={section === "perfil"} onClose={() => setSection(null)} colors={colors} styles={styles} />
@@ -368,6 +468,17 @@ const makeStyles = (colors) =>
     },
     rowLabel: { color: colors.text, fontSize: 15, fontWeight: "800" },
     rowDesc: { color: colors.muted, fontSize: 13, marginTop: 2 },
+    sectionLabel: {
+      color: colors.muted,
+      fontSize: 12,
+      fontWeight: "800",
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+      marginTop: 22,
+      marginBottom: 10,
+      marginLeft: 4,
+    },
+    version: { color: colors.muted, fontSize: 12, textAlign: "center", marginTop: 18, opacity: 0.8 },
 
     logoutBtn: {
       flexDirection: "row",
@@ -382,6 +493,15 @@ const makeStyles = (colors) =>
       backgroundColor: colors.card,
     },
     logoutText: { color: colors.red, fontWeight: "800", fontSize: 15 },
+    deleteBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 7,
+      marginTop: 10,
+      paddingVertical: 12,
+    },
+    deleteText: { color: colors.red, fontWeight: "700", fontSize: 14 },
 
     overlay: { flex: 1, backgroundColor: "rgba(11,20,15,0.4)", justifyContent: "flex-end" },
     sheet: {

@@ -1,5 +1,10 @@
 import { createHash, randomBytes } from "crypto";
 import User from "../models/userModel.js";
+import Task from "../models/taskModel.js";
+import IngresoEgreso from "../models/ingresoEgresoModel.js";
+import SharedGroup from "../models/sharedGroupModel.js";
+import SharedExpense from "../models/sharedExpenseModel.js";
+import SharedDebt from "../models/sharedDebtModel.js";
 import { generateToken } from "../utils/jwt.js";
 
 const RESET_TOKEN_MINUTES = 60;
@@ -337,5 +342,38 @@ export const updateProfile = async (req, res) => {
   } catch (err) {
     console.error("Update profile error:", err);
     res.status(500).json({ error: "No se pudo actualizar el perfil" });
+  }
+};
+
+export const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    // Grupos compartidos que creó el usuario (con sus gastos y deudas)
+    const ownedGroups = await SharedGroup.find({ owner: userId }).select("_id");
+    const groupIds = ownedGroups.map((group) => group._id);
+
+    if (groupIds.length > 0) {
+      await SharedExpense.deleteMany({ group: { $in: groupIds } });
+      await SharedDebt.deleteMany({ group: { $in: groupIds } });
+      await SharedGroup.deleteMany({ _id: { $in: groupIds } });
+    }
+
+    // Datos personales del usuario
+    await Task.deleteMany({ user: userId });
+    await IngresoEgreso.deleteMany({ usuario: userId });
+
+    // Finalmente, la cuenta
+    await User.findByIdAndDelete(userId);
+
+    res.status(200).json({ message: "Cuenta eliminada correctamente" });
+  } catch (err) {
+    console.error("Delete account error:", err);
+    res.status(500).json({ error: "No se pudo eliminar la cuenta" });
   }
 };
