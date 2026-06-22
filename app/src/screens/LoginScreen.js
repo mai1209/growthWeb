@@ -118,7 +118,7 @@ const makeStyles = (colors) => StyleSheet.create({
     color: colors.text,
     fontSize: 16,
   },
-  error: { color: colors.expense, marginTop: 12 },
+  error: { color: colors.red, marginTop: 12 },
   button: {
     marginTop: 22,
     backgroundColor: colors.greenBright,

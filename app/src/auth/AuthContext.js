@@ -15,10 +15,10 @@ export const AuthProvider = ({ children }) => {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    getToken().then((stored) => {
-      setTokenState(stored || null);
-      setReady(true);
-    });
+    getToken()
+      .then((stored) => setTokenState(stored || null))
+      .catch(() => setTokenState(null))
+      .finally(() => setReady(true));
     // Si la API detecta 401, cerramos sesión
     setUnauthorizedHandler(() => setTokenState(null));
   }, []);

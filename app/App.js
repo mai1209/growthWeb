@@ -7,6 +7,7 @@ import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from "rea
 import { Ionicons } from "@expo/vector-icons";
 import { AuthProvider, useAuth } from "./src/auth/AuthContext";
 import { ThemeProvider, useTheme } from "./src/theme";
+import ErrorBoundary from "./src/components/ErrorBoundary";
 import LoginScreen from "./src/screens/LoginScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import TareasScreen from "./src/screens/TareasScreen";
@@ -144,13 +145,15 @@ function ThemedApp() {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <ThemedApp />
-        </AuthProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ThemedApp />
+          </AuthProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 
