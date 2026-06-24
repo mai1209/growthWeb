@@ -68,6 +68,8 @@ const createEmptyDebtSettlementForm = () => ({
   paymentMethod: "efectivo",
   date: todayInput(),
   notes: "",
+  mode: "full", // full | partial
+  amount: "",
 });
 
 const normalizeEmail = (value = "") => value.trim().toLowerCase();
@@ -758,21 +760,44 @@ function SharedExpenses() {
 
     if (!selectedGroupId) return;
 
+    const debt = (groupDetail.debts || []).find((d) => d._id === debtId);
+    const remaining =
+      debt?.remaining != null ? Number(debt.remaining) : Number(debt?.amount) || 0;
+
+    const payload = {
+      paymentMethod: debtSettlementForm.paymentMethod,
+      date: debtSettlementForm.date,
+      notes: debtSettlementForm.notes.trim(),
+    };
+
+    if (debtSettlementForm.mode === "partial") {
+      const amt = Number(debtSettlementForm.amount);
+      if (!debtSettlementForm.amount || Number.isNaN(amt) || amt <= 0) {
+        setError("Ingresá el monto a pagar.");
+        return;
+      }
+      if (amt > remaining + 0.001) {
+        setError(`No podés pagar más de lo que resta (${formatMoney(remaining, debt?.currency)}).`);
+        return;
+      }
+      payload.amount = amt;
+    }
+
     setSavingDebtSettlement(true);
     setError("");
     setSuccess("");
 
     try {
-      const response = await sharedGroupsService.settleDebt(selectedGroupId, debtId, {
-        paymentMethod: debtSettlementForm.paymentMethod,
-        date: debtSettlementForm.date,
-        notes: debtSettlementForm.notes.trim(),
-      });
+      const response = await sharedGroupsService.settleDebt(selectedGroupId, debtId, payload);
 
       applyGroupDetailData(response.data);
       setSettlingDebtId("");
       setDebtSettlementForm(createEmptyDebtSettlementForm());
-      setSuccess("Deuda marcada como pagada y registrada como egreso.");
+      setSuccess(
+        debtSettlementForm.mode === "partial"
+          ? "Pago parcial registrado como egreso."
+          : "Deuda marcada como pagada y registrada como egreso."
+      );
       await fetchGroups(selectedGroupId);
     } catch (err) {
       setError(err.response?.data?.error || "No se pudo cerrar la deuda.");
@@ -1844,6 +1869,14 @@ function SharedExpenses() {
                                 por {debt.settledByName || debt.settledByEmail || "un miembro"} ·{" "}
                                 {debt.paymentMethod || "sin medio"}
                               </p>
+                            ) : Number(debt.paidAmount) > 0 ? (
+                              <p className={style.debtMeta}>
+                                Pagado {formatMoney(debt.paidAmount, debt.currency)} · resta{" "}
+                                {formatMoney(
+                                  debt.remaining ?? debt.amount - debt.paidAmount,
+                                  debt.currency
+                                )}
+                              </p>
                             ) : null}
                           </div>
 
@@ -1856,7 +1889,11 @@ function SharedExpenses() {
                                 debt.status === "paid" ? style.debtStatusPaid : ""
                               }`}
                             >
-                              {debt.status === "paid" ? "Pagada" : "Pendiente"}
+                              {debt.status === "paid"
+                                ? "Pagada"
+                                : Number(debt.paidAmount) > 0
+                                ? "Parcial"
+                                : "Pendiente"}
                             </span>
                             {debt.status === "open" ? (
                               <button
@@ -1874,6 +1911,51 @@ function SharedExpenses() {
                               className={style.debtSettlementForm}
                               onSubmit={(event) => handleSettleDebt(event, debt._id)}
                             >
+                              <div className={style.formGridTriple}>
+                                <label className={style.field}>
+                                  <span>¿Cuánto pagás?</span>
+                                  <select
+                                    className={style.select}
+                                    value={debtSettlementForm.mode}
+                                    onChange={(event) =>
+                                      setDebtSettlementForm((prev) => ({
+                                        ...prev,
+                                        mode: event.target.value,
+                                      }))
+                                    }
+                                  >
+                                    <option value="full">Todo</option>
+                                    <option value="partial">Una parte</option>
+                                  </select>
+                                </label>
+
+                                {debtSettlementForm.mode === "partial" ? (
+                                  <label className={style.field}>
+                                    <span>
+                                      Monto (resta{" "}
+                                      {formatMoney(
+                                        debt.remaining ?? debt.amount - (debt.paidAmount || 0),
+                                        debt.currency
+                                      )}
+                                      )
+                                    </span>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="0.01"
+                                      className={style.input}
+                                      value={debtSettlementForm.amount}
+                                      onChange={(event) =>
+                                        setDebtSettlementForm((prev) => ({
+                                          ...prev,
+                                          amount: event.target.value,
+                                        }))
+                                      }
+                                    />
+                                  </label>
+                                ) : null}
+                              </div>
+
                               <div className={style.formGridTriple}>
                                 <label className={style.field}>
                                   <span>Cómo lo pagaste</span>

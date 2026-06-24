@@ -145,6 +145,8 @@ const serializeDebt = (debt, group) => {
     creditorName: creditor?.username || debt.creditorEmail?.split("@")[0] || "Participante",
     description: debt.description,
     amount: debt.amount,
+    paidAmount: Number(debt.paidAmount) || 0,
+    remaining: Number(((debt.amount || 0) - (Number(debt.paidAmount) || 0)).toFixed(2)),
     currency: debt.currency,
     date: debt.date,
     notes: debt.notes,
@@ -796,35 +798,57 @@ export const settleSharedDebt = async (req, res) => {
 
     const paymentMethod = normalizeMovementMethod(req.body.paymentMethod || req.body.medio);
     const settledAt = normalizeCalendarDate(req.body.date);
-    const debtor = (group.participants || []).find(
-      (participant) => participant.email === normalizeEmail(debt.debtorEmail)
-    );
     const creditor = (group.participants || []).find(
       (participant) => participant.email === normalizeEmail(debt.creditorEmail)
     );
 
+    // Pago total o parcial
+    const alreadyPaid = Number(debt.paidAmount) || 0;
+    const remaining = Number((debt.amount - alreadyPaid).toFixed(2));
+
+    let payNow = remaining;
+    if (req.body.amount !== undefined && req.body.amount !== null && req.body.amount !== "") {
+      const requested = Number(req.body.amount);
+      if (Number.isNaN(requested) || requested <= 0) {
+        return res.status(400).json({ error: "El monto a pagar debe ser mayor a cero" });
+      }
+      payNow = Math.min(requested, remaining);
+    }
+    payNow = Number(payNow.toFixed(2));
+
+    if (payNow <= 0) {
+      return res.status(400).json({ error: "No queda saldo pendiente en esta deuda" });
+    }
+
+    const newPaid = Number((alreadyPaid + payNow).toFixed(2));
+    const isFull = newPaid >= debt.amount - 0.001;
+
     const movimiento = await IngresoEgresoModel.create({
       tipo: "egreso",
-      monto: debt.amount,
+      monto: payNow,
       moneda: debt.currency,
       categoria: "Deuda compartida",
       fecha: settledAt,
       detalle:
         req.body.notes?.trim() ||
-        `Pago de deuda a ${creditor?.username || debt.creditorEmail} en ${group.name}: ${debt.description}`,
+        `Pago${isFull ? "" : " parcial"} de deuda a ${creditor?.username || debt.creditorEmail} en ${group.name}: ${debt.description}`,
       medio: paymentMethod,
       esRecurrente: false,
       frecuencia: null,
       usuario: req.userId,
     });
 
-    debt.status = "paid";
+    debt.paidAmount = newPaid;
     debt.paymentMethod = paymentMethod;
-    debt.settledAt = settledAt;
-    debt.settledByUser = req.user._id;
-    debt.settledByEmail = normalizeEmail(req.user.email);
     debt.movementId = movimiento._id;
     debt.notes = debt.notes || req.body.notes?.trim() || "";
+
+    if (isFull) {
+      debt.status = "paid";
+      debt.settledAt = settledAt;
+      debt.settledByUser = req.user._id;
+      debt.settledByEmail = normalizeEmail(req.user.email);
+    }
 
     await debt.save();
 

@@ -27,15 +27,23 @@ export default function SettleDebtModal({ visible, groupId, debt, onClose, onSav
   const { colors, isDark } = useTheme();
   const styles = makeStyles(colors);
   const [paymentMethod, setPaymentMethod] = useState("efectivo");
+  const [payMode, setPayMode] = useState("full"); // full | partial
+  const [amount, setAmount] = useState("");
   const [date, setDate] = useState(new Date());
   const [showDate, setShowDate] = useState(false);
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const remaining =
+    debt?.remaining != null ? Number(debt.remaining) : Number(debt?.amount) || 0;
+  const paidSoFar = Number(debt?.paidAmount) || 0;
+
   useEffect(() => {
     if (visible) {
       setPaymentMethod("efectivo");
+      setPayMode("full");
+      setAmount("");
       setDate(new Date());
       setNotes("");
       setError("");
@@ -46,13 +54,20 @@ export default function SettleDebtModal({ visible, groupId, debt, onClose, onSav
   const handleSave = async () => {
     if (!debt) return;
     setError("");
+    const payload = { paymentMethod, date: toYMD(date), notes: notes.trim() };
+    if (payMode === "partial") {
+      const amt = parseFloat(amount);
+      if (!amount || Number.isNaN(amt) || amt <= 0) {
+        return setError("Ingresá el monto a pagar.");
+      }
+      if (amt > remaining + 0.001) {
+        return setError(`No podés pagar más de lo que resta (${formatMoney(remaining, debt.currency)}).`);
+      }
+      payload.amount = amt;
+    }
     setSaving(true);
     try {
-      await sharedGroupsService.settleDebt(groupId, debt._id, {
-        paymentMethod,
-        date: toYMD(date),
-        notes: notes.trim(),
-      });
+      await sharedGroupsService.settleDebt(groupId, debt._id, payload);
       onSaved?.();
       onClose?.();
     } catch (err) {
@@ -83,8 +98,42 @@ export default function SettleDebtModal({ visible, groupId, debt, onClose, onSav
                 <Text style={styles.debtAmount}>
                   {formatMoney(debt.amount, debt.currency)}
                 </Text>
+                {paidSoFar > 0 ? (
+                  <Text style={styles.debtRemaining}>
+                    Pagado {formatMoney(paidSoFar, debt.currency)} · resta{" "}
+                    {formatMoney(remaining, debt.currency)}
+                  </Text>
+                ) : null}
               </View>
             ) : null}
+
+            <Text style={styles.label}>¿Cuánto pagás?</Text>
+            <View style={styles.row}>
+              {[
+                { v: "full", l: "Todo" },
+                { v: "partial", l: "Una parte" },
+              ].map((m) => (
+                <TouchableOpacity
+                  key={m.v}
+                  style={[styles.toggle, payMode === m.v && styles.toggleActive]}
+                  onPress={() => setPayMode(m.v)}
+                >
+                  <Text style={[styles.toggleText, payMode === m.v && styles.toggleTextActive]}>
+                    {m.l}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {payMode === "partial" && (
+              <TextInput
+                style={[styles.input, { marginTop: 8 }]}
+                value={amount}
+                onChangeText={setAmount}
+                keyboardType="decimal-pad"
+                placeholder={`Monto (resta ${formatMoney(remaining, debt?.currency)})`}
+                placeholderTextColor={colors.muted}
+              />
+            )}
 
             <Text style={styles.label}>¿Cómo lo pagaste?</Text>
             <View style={styles.row}>
@@ -174,6 +223,7 @@ const makeStyles = (colors) => StyleSheet.create({
   debtTitle: { color: colors.text, fontSize: 16, fontWeight: "800" },
   debtMeta: { color: colors.muted, fontSize: 13, marginTop: 3 },
   debtAmount: { color: colors.text, fontSize: 18, fontWeight: "900", marginTop: 6 },
+  debtRemaining: { color: colors.greenDark, fontSize: 13, fontWeight: "700", marginTop: 4 },
   label: {
     color: colors.muted,
     fontSize: 12,

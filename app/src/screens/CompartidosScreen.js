@@ -316,6 +316,11 @@ export default function CompartidosScreen() {
                                 {d.settledByName ? ` por ${d.settledByName}` : ""}
                                 {d.paymentMethod ? ` · ${d.paymentMethod}` : ""}
                               </Text>
+                            ) : Number(d.paidAmount) > 0 ? (
+                              <Text style={styles.debtPartial}>
+                                Pagado {formatMoney(d.paidAmount, currency)} · resta{" "}
+                                {formatMoney(d.remaining ?? d.amount - d.paidAmount, currency)}
+                              </Text>
                             ) : null}
                           </View>
                           <View style={{ alignItems: "flex-end" }}>
@@ -332,7 +337,11 @@ export default function CompartidosScreen() {
                                   { color: d.status === "paid" ? colors.greenDark : "#9a6a16" },
                                 ]}
                               >
-                                {d.status === "paid" ? "Pagada" : "Pendiente"}
+                                {d.status === "paid"
+                                  ? "Pagada"
+                                  : Number(d.paidAmount) > 0
+                                  ? "Parcial"
+                                  : "Pendiente"}
                               </Text>
                             </View>
                           </View>
@@ -600,6 +609,7 @@ const makeStyles = (colors) => StyleSheet.create({
   debtTop: { flexDirection: "row", gap: 12 },
   debtTitle: { color: colors.text, fontSize: 15, fontWeight: "700" },
   debtMeta: { color: colors.muted, fontSize: 13, marginTop: 3 },
+  debtPartial: { color: colors.greenDark, fontSize: 13, fontWeight: "700", marginTop: 3 },
   debtAmount: { color: colors.text, fontWeight: "800", fontSize: 15 },
   statusBadge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, marginTop: 6 },
   badgePaid: { backgroundColor: colors.greenSoft },
