@@ -23,7 +23,7 @@
       "dest": "/frontend/static/$1"
     },
     {
-      "src": "/(.*\\.(png|jpg|jpeg|webp|gif|svg|ico|json|txt|xml|css|js|map|woff|woff2|ttf|otf))",
+      "src": "/(.*\\.(html|png|jpg|jpeg|webp|gif|svg|ico|json|txt|xml|css|js|map|woff|woff2|ttf|otf))",
       "dest": "/frontend/$1"
     },
     {
