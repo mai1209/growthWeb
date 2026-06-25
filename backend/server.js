@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 import connectDB from "./src/config/db.js";
 
 import ingresoEgresoRoutes from "./src/routes/ingresoEgresoRoutes.js";
@@ -12,6 +13,27 @@ import sharedExpenseRoutes from "./src/routes/sharedExpenseRoutes.js";
 dotenv.config();
 
 const app = express();
+
+// En Vercel los pedidos pasan por un proxy: necesario para leer la IP real
+app.set("trust proxy", 1);
+
+// Límite estricto para login/registro/recuperación (anti fuerza bruta)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10, // 10 intentos por IP en esa ventana
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiados intentos. Probá de nuevo en unos minutos." },
+});
+
+// Límite general de la API (anti abuso/spam)
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300, // 300 pedidos por IP cada 15 min
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiados pedidos. Esperá un momento e intentá otra vez." },
+});
 
 const resolveAllowedOrigins = () => {
   const rawOrigins = [
@@ -103,6 +125,15 @@ app.get("/api/debug", (req, res) => {
 });
 
 // Rutas API
+// Límite estricto en las rutas sensibles (antes de las rutas de auth)
+app.use(
+  ["/api/auth/login", "/api/auth/signup", "/api/auth/forgot-password", "/api/auth/reset-password"],
+  authLimiter
+);
+
+// Límite general para toda la API
+app.use("/api", apiLimiter);
+
 app.use("/api/add", ingresoEgresoRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/task", taskRoutes);
