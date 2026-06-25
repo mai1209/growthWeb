@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { NavigationContainer, DefaultTheme, DarkTheme, useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import * as SplashScreen from "expo-splash-screen";
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AuthProvider, useAuth } from "./src/auth/AuthContext";
@@ -19,6 +21,9 @@ import AjustesScreen from "./src/screens/AjustesScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+// Evita que el splash se oculte solo; lo ocultamos cuando la app montó
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function TopBar() {
   const { colors, isDark, toggleTheme } = useTheme();
@@ -144,6 +149,12 @@ function ThemedApp() {
 }
 
 export default function App() {
+  useEffect(() => {
+    // Oculta el splash apenas la app montó (clave: si no, queda pegado)
+    const t = setTimeout(() => SplashScreen.hideAsync().catch(() => {}), 200);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
