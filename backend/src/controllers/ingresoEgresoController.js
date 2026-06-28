@@ -362,15 +362,36 @@ export const settleDebtMovement = async (req, res) => {
     const paymentMethod = normalizeMovementMethod(medio);
     const acreedor = String(deuda.deudaAcreedor || "").trim();
 
+    // Pago total o parcial
+    const alreadyPaid = Number(deuda.deudaPagado) || 0;
+    const remaining = Number((deuda.monto - alreadyPaid).toFixed(2));
+
+    let payNow = remaining;
+    if (req.body.amount !== undefined && req.body.amount !== null && req.body.amount !== "") {
+      const requested = Number(req.body.amount);
+      if (Number.isNaN(requested) || requested <= 0) {
+        return res.status(400).json({ error: "El monto a pagar debe ser mayor a cero" });
+      }
+      payNow = Math.min(requested, remaining);
+    }
+    payNow = Number(payNow.toFixed(2));
+
+    if (payNow <= 0) {
+      return res.status(400).json({ error: "No queda saldo pendiente en esta deuda" });
+    }
+
+    const newPaid = Number((alreadyPaid + payNow).toFixed(2));
+    const isFull = newPaid >= deuda.monto - 0.001;
+
     const paymentMovement = await IngresoEgresoModel.create({
       tipo: "egreso",
-      monto: deuda.monto,
+      monto: payNow,
       moneda: deuda.moneda || "ARS",
       categoria: "Pago de deuda",
       fecha: paymentDate,
       detalle:
         String(detalle || "").trim() ||
-        `Pago de deuda${acreedor ? ` a ${acreedor}` : ""}${deuda.categoria ? ` · ${deuda.categoria}` : ""}`,
+        `Pago${isFull ? "" : " parcial"} de deuda${acreedor ? ` a ${acreedor}` : ""}${deuda.categoria ? ` · ${deuda.categoria}` : ""}`,
       medio: paymentMethod,
       esRecurrente: false,
       frecuencia: null,
@@ -378,10 +399,13 @@ export const settleDebtMovement = async (req, res) => {
       usuario: userId,
     });
 
-    deuda.deudaEstado = "pagada";
-    deuda.deudaPagadaAt = paymentDate;
+    deuda.deudaPagado = newPaid;
     deuda.deudaMovimientoPagoId = paymentMovement._id;
     deuda.medio = paymentMethod;
+    if (isFull) {
+      deuda.deudaEstado = "pagada";
+      deuda.deudaPagadaAt = paymentDate;
+    }
 
     const deudaActualizada = await deuda.save();
 

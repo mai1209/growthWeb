@@ -15,6 +15,7 @@ import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { movimientoService } from "../api";
 import MovementFormModal from "../components/MovementFormModal";
+import SettlePersonalDebtModal from "../components/SettlePersonalDebtModal";
 import { statAccents, useTheme } from "../theme";
 import {
   CURRENCY_OPTIONS,
@@ -46,6 +47,7 @@ export default function FiltrosScreen() {
   const [search, setSearch] = useState("");
   const [type, setType] = useState("all");
   const [editMov, setEditMov] = useState(null);
+  const [settleDebt, setSettleDebt] = useState(null);
 
   const handleDelete = (mov) => {
     Alert.alert("Eliminar movimiento", `¿Borrar "${mov.categoria || "movimiento"}"?`, [
@@ -238,15 +240,42 @@ export default function FiltrosScreen() {
           )}
           renderItem={({ item }) => {
             const meta = getMovementTypeMeta(item.tipo);
+            const isDebt = item.tipo === "deuda";
+            const isPendingDebt = isDebt && item.deudaEstado !== "pagada";
+            const debtPaid = Number(item.deudaPagado) || 0;
+            const debtRemaining = (Number(item.monto) || 0) - debtPaid;
+            const isPartialDebt = isPendingDebt && debtPaid > 0;
             return (
               <View style={styles.movCard}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.movTitle}>{item.categoria || "Sin categoría"}</Text>
                   {item.detalle ? <Text style={styles.movDetail}>{item.detalle}</Text> : null}
+                  {isDebt && item.deudaAcreedor ? (
+                    <Text style={styles.movDetail}>Acreedor: {item.deudaAcreedor}</Text>
+                  ) : null}
+                  {isPendingDebt ? (
+                    <Text style={styles.debtRemaining}>
+                      {isPartialDebt
+                        ? `Pagado ${formatMoney(debtPaid, currency)} · resta ${formatMoney(debtRemaining, currency)}`
+                        : "Pendiente de pago"}
+                    </Text>
+                  ) : null}
                   <View style={styles.movChips}>
                     <Text style={[styles.movChip, { color: meta.color }]}>{meta.label}</Text>
+                    {isPartialDebt ? (
+                      <Text style={[styles.movChip, { color: colors.greenDark }]}>Parcial</Text>
+                    ) : null}
                     {item.medio ? <Text style={styles.movChip}>{item.medio}</Text> : null}
                   </View>
+                  {isPendingDebt ? (
+                    <TouchableOpacity
+                      style={styles.payDebtBtn}
+                      onPress={() => setSettleDebt(item)}
+                    >
+                      <Ionicons name="checkmark-circle-outline" size={15} color={colors.greenDark} />
+                      <Text style={styles.payDebtText}>Ya lo pagué</Text>
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
                 <View style={styles.movRight}>
                   <Text style={[styles.movAmount, { color: meta.color }]}>
@@ -272,6 +301,13 @@ export default function FiltrosScreen() {
         editMovement={editMov}
         defaultCurrency={currency}
         onClose={() => setEditMov(null)}
+        onSaved={fetchData}
+      />
+
+      <SettlePersonalDebtModal
+        visible={Boolean(settleDebt)}
+        debt={settleDebt}
+        onClose={() => setSettleDebt(null)}
         onSaved={fetchData}
       />
     </SafeAreaView>
@@ -397,4 +433,19 @@ const makeStyles = (colors) => StyleSheet.create({
   movRight: { alignItems: "flex-end", gap: 8 },
   movAmount: { fontSize: 15, fontWeight: "800" },
   movActions: { flexDirection: "row", gap: 14 },
+  debtRemaining: { color: colors.greenDark, fontSize: 12.5, fontWeight: "700", marginTop: 4 },
+  payDebtBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 5,
+    marginTop: 10,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.greenBorder,
+    backgroundColor: colors.greenSoft,
+  },
+  payDebtText: { color: colors.greenDark, fontWeight: "800", fontSize: 13 },
 });

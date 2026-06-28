@@ -42,6 +42,11 @@ const ingresoEgresoSchema = new mongoose.Schema({
     enum: ['pendiente', 'pagada'],
     default: 'pendiente'
   },
+  deudaPagado: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   deudaAcreedor: {
     type: String,
     default: ''

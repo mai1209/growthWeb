@@ -163,6 +163,8 @@ function MonthlyFilters({
   const [settleDate, setSettleDate] = useState(getDayInputValue(new Date()));
   const [settleMethod, setSettleMethod] = useState("efectivo");
   const [settleDetail, setSettleDetail] = useState("");
+  const [settleMode, setSettleMode] = useState("full"); // full | partial
+  const [settleAmount, setSettleAmount] = useState("");
   const [settlingId, setSettlingId] = useState(null);
 
   const { from, to } = useMemo(() => getMonthRange(selectedMonth), [selectedMonth]);
@@ -304,6 +306,8 @@ function MonthlyFilters({
         ? `Pago de deuda a ${movimiento.deudaAcreedor}`
         : "Pago de deuda"
     );
+    setSettleMode("full");
+    setSettleAmount("");
   };
 
   const handleConfirmSettleDebt = async (movimiento) => {
@@ -311,15 +315,35 @@ function MonthlyFilters({
 
     if (!movementId) return;
 
+    const alreadyPaid = Number(movimiento.deudaPagado) || 0;
+    const remaining = Number(movimiento.monto) - alreadyPaid;
+
+    const payload = {
+      fecha: settleDate,
+      medio: settleMethod,
+      detalle: settleDetail.trim(),
+    };
+
+    if (settleMode === "partial") {
+      const amt = Number(settleAmount);
+      if (!settleAmount || Number.isNaN(amt) || amt <= 0) {
+        alert("Ingresá un monto válido a pagar.");
+        return;
+      }
+      if (amt > remaining + 0.001) {
+        alert(`El monto no puede superar lo que resta (${formatMoney(remaining, currentCurrency)}).`);
+        return;
+      }
+      payload.amount = amt;
+    }
+
     try {
       setSettlingId(movementId);
-      await movimientoService.settleDebt(movementId, {
-        fecha: settleDate,
-        medio: settleMethod,
-        detalle: settleDetail.trim(),
-      });
+      await movimientoService.settleDebt(movementId, payload);
       setSettleMovementId(null);
       setSettleDetail("");
+      setSettleAmount("");
+      setSettleMode("full");
       onMovementUpdate?.();
     } catch (error) {
       alert(error.response?.data?.error || "No se pudo marcar la deuda como pagada");
@@ -334,6 +358,9 @@ function MonthlyFilters({
     const debtStatusMeta = getDebtStatusMeta(movimiento.deudaEstado);
     const isDebt = movimiento.tipo === "deuda";
     const isPendingDebt = isDebt && movimiento.deudaEstado !== "pagada";
+    const debtPaid = Number(movimiento.deudaPagado) || 0;
+    const debtRemaining = Number(movimiento.monto) - debtPaid;
+    const isPartialDebt = isPendingDebt && debtPaid > 0;
     const toneClass =
       movimiento.tipo === "ingreso"
         ? style.incomeRow
@@ -415,7 +442,7 @@ function MonthlyFilters({
                   : style.badgeWarning
               }
             >
-              {debtStatusMeta.label}
+              {isPartialDebt ? "Parcial" : debtStatusMeta.label}
             </span>
           ) : null}
           {!isPendingDebt ? (
@@ -433,7 +460,9 @@ function MonthlyFilters({
             {isDebt
               ? movimiento.deudaEstado === "pagada"
                 ? `Pagada ${formatDate(movimiento.deudaPagadaAt)}`
-                : "Pendiente de pago"
+                : isPartialDebt
+                  ? `Pagado ${formatMoney(debtPaid, currentCurrency)} · resta ${formatMoney(debtRemaining, currentCurrency)}`
+                  : "Pendiente de pago"
               : movimiento.isVirtualOccurrence
                 ? "Automático"
                 : "Manual"}
@@ -447,6 +476,35 @@ function MonthlyFilters({
         {isSettlingThis ? (
           <div className={style.settlePanel}>
             <div className={style.settleGrid}>
+              <div className={style.filterField}>
+                <label htmlFor={`settle-mode-${movementId}`}>¿Cuánto pagás?</label>
+                <select
+                  id={`settle-mode-${movementId}`}
+                  value={settleMode}
+                  onChange={(event) => setSettleMode(event.target.value)}
+                  className={style.select}
+                >
+                  <option value="full">Todo (resta {formatMoney(debtRemaining, currentCurrency)})</option>
+                  <option value="partial">Una parte</option>
+                </select>
+              </div>
+
+              {settleMode === "partial" ? (
+                <div className={style.filterField}>
+                  <label htmlFor={`settle-amount-${movementId}`}>Monto a pagar</label>
+                  <input
+                    id={`settle-amount-${movementId}`}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={settleAmount}
+                    onChange={(event) => setSettleAmount(event.target.value)}
+                    className={style.input}
+                    placeholder={`Máx ${formatMoney(debtRemaining, currentCurrency)}`}
+                  />
+                </div>
+              ) : null}
+
               <div className={style.filterField}>
                 <label htmlFor={`settle-date-${movementId}`}>Fecha de pago</label>
                 <input

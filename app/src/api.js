@@ -69,6 +69,7 @@ export const movimientoService = {
   create: (data) => api.post("/api/add", data),
   update: (id, data) => api.put(`/api/add/${id}`, data),
   delete: (id) => api.delete(`/api/add/${id}`),
+  settleDebt: (id, data) => api.post(`/api/add/${id}/settle-debt`, data),
 };
 
 export const sharedGroupsService = {
