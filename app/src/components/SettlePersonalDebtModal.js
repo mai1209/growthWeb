@@ -7,30 +7,17 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Platform,
 } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { movimientoService } from "../api";
 import { useTheme } from "../theme";
 import { formatMoney } from "../utils/finance";
 
-const pad = (n) => String(n).padStart(2, "0");
-const toYMD = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-
-const METHODS = [
-  { v: "efectivo", l: "Efectivo" },
-  { v: "transferencia", l: "Transferencia" },
-];
-
 export default function SettlePersonalDebtModal({ visible, debt, onClose, onSaved }) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const styles = makeStyles(colors);
-  const [paymentMethod, setPaymentMethod] = useState("efectivo");
   const [payMode, setPayMode] = useState("full"); // full | partial
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(new Date());
-  const [showDate, setShowDate] = useState(false);
   const [detalle, setDetalle] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -42,10 +29,8 @@ export default function SettlePersonalDebtModal({ visible, debt, onClose, onSave
 
   useEffect(() => {
     if (visible) {
-      setPaymentMethod("efectivo");
       setPayMode("full");
       setAmount("");
-      setDate(new Date());
       setDetalle(
         debt?.deudaAcreedor ? `Pago de deuda a ${debt.deudaAcreedor}` : "Pago de deuda"
       );
@@ -57,7 +42,7 @@ export default function SettlePersonalDebtModal({ visible, debt, onClose, onSave
   const handleSave = async () => {
     if (!debt) return;
     setError("");
-    const payload = { fecha: toYMD(date), medio: paymentMethod, detalle: detalle.trim() };
+    const payload = { detalle: detalle.trim() };
     if (payMode === "partial") {
       const amt = parseFloat(amount);
       if (!amount || Number.isNaN(amt) || amt <= 0) {
@@ -130,40 +115,9 @@ export default function SettlePersonalDebtModal({ visible, debt, onClose, onSave
                 value={amount}
                 onChangeText={setAmount}
                 keyboardType="decimal-pad"
-                placeholder={`Monto (resta ${formatMoney(remaining, currency)})`}
+                placeholder={`Monto (máx ${formatMoney(remaining, currency)})`}
                 placeholderTextColor={colors.muted}
-              />
-            )}
-
-            <Text style={styles.label}>¿Cómo lo pagaste?</Text>
-            <View style={styles.row}>
-              {METHODS.map((m) => (
-                <TouchableOpacity
-                  key={m.v}
-                  style={[styles.toggle, paymentMethod === m.v && styles.toggleActive]}
-                  onPress={() => setPaymentMethod(m.v)}
-                >
-                  <Text style={[styles.toggleText, paymentMethod === m.v && styles.toggleTextActive]}>
-                    {m.l}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={styles.label}>Fecha</Text>
-            <TouchableOpacity style={styles.input} onPress={() => setShowDate(true)}>
-              <Text style={{ color: colors.text, fontSize: 16 }}>{toYMD(date)}</Text>
-            </TouchableOpacity>
-            {showDate && (
-              <DateTimePicker
-                value={date}
-                mode="date"
-                display={Platform.OS === "ios" ? "inline" : "default"}
-                themeVariant={isDark ? "dark" : "light"}
-                onChange={(e, sel) => {
-                  if (Platform.OS !== "ios") setShowDate(false);
-                  if (sel) setDate(sel);
-                }}
+                autoFocus
               />
             )}
 
@@ -176,10 +130,6 @@ export default function SettlePersonalDebtModal({ visible, debt, onClose, onSave
               placeholderTextColor={colors.muted}
             />
 
-            <Text style={styles.hint}>
-              Al confirmar se genera un egreso real en tu caja por el monto pagado.
-            </Text>
-
             {error ? <Text style={styles.error}>{error}</Text> : null}
 
             <TouchableOpacity
@@ -187,7 +137,7 @@ export default function SettlePersonalDebtModal({ visible, debt, onClose, onSave
               onPress={handleSave}
               disabled={saving}
             >
-              {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveText}>Confirmar pago</Text>}
+              {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveText}>Aceptar</Text>}
             </TouchableOpacity>
           </View>
         </View>

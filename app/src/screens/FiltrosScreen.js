@@ -273,7 +273,7 @@ export default function FiltrosScreen() {
                       onPress={() => setSettleDebt(item)}
                     >
                       <Ionicons name="checkmark-circle-outline" size={15} color={colors.greenDark} />
-                      <Text style={styles.payDebtText}>Ya lo pagué</Text>
+                      <Text style={styles.payDebtText}>Pagar</Text>
                     </TouchableOpacity>
                   ) : null}
                 </View>

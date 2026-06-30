@@ -716,6 +716,65 @@
   justify-content: flex-end;
 }
 
+.settleOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.settleModal {
+  width: 100%;
+  max-width: 360px;
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.4rem;
+  border-radius: 18px;
+  border: 1px solid rgba(216, 241, 224, 0.12);
+  background: var(--color-surface, #121a14);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+.settleModalTitle {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.settleModalSub {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.modeRow {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.modeBtn {
+  flex: 1;
+  min-height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(216, 241, 224, 0.14);
+  background: var(--surface-input);
+  color: var(--color-muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.modeBtnActive {
+  border-color: var(--color-accent, #4ade80);
+  color: var(--color-accent, #4ade80);
+  background:
+    linear-gradient(135deg, rgba(74, 222, 128, 0.18), rgba(74, 222, 128, 0.06)),
+    var(--surface-input);
+}
+
 .actionButton img {
   width: 16px;
   height: 16px;

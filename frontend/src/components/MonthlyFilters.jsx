@@ -410,7 +410,7 @@ function MonthlyFilters({
                 className={style.payDebtButton}
                 onClick={() => handleStartSettleDebt(movimiento)}
               >
-                Ya lo pague
+                Pagar
               </button>
             ) : null}
             <button
@@ -474,93 +474,74 @@ function MonthlyFilters({
         </div>
 
         {isSettlingThis ? (
-          <div className={style.settlePanel}>
-            <div className={style.settleGrid}>
-              <div className={style.filterField}>
-                <label htmlFor={`settle-mode-${movementId}`}>¿Cuánto pagás?</label>
-                <select
-                  id={`settle-mode-${movementId}`}
-                  value={settleMode}
-                  onChange={(event) => setSettleMode(event.target.value)}
-                  className={style.select}
+          <div
+            className={style.settleOverlay}
+            onClick={() => setSettleMovementId(null)}
+          >
+            <div
+              className={style.settleModal}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h4 className={style.settleModalTitle}>Pagar deuda</h4>
+              <p className={style.settleModalSub}>
+                {movimiento.categoria} · resta {formatMoney(debtRemaining, currentCurrency)}
+              </p>
+
+              <div className={style.modeRow}>
+                <button
+                  type="button"
+                  className={`${style.modeBtn} ${settleMode === "full" ? style.modeBtnActive : ""}`}
+                  onClick={() => setSettleMode("full")}
                 >
-                  <option value="full">Todo (resta {formatMoney(debtRemaining, currentCurrency)})</option>
-                  <option value="partial">Una parte</option>
-                </select>
+                  Todo
+                </button>
+                <button
+                  type="button"
+                  className={`${style.modeBtn} ${settleMode === "partial" ? style.modeBtnActive : ""}`}
+                  onClick={() => setSettleMode("partial")}
+                >
+                  Una parte
+                </button>
               </div>
 
               {settleMode === "partial" ? (
-                <div className={style.filterField}>
-                  <label htmlFor={`settle-amount-${movementId}`}>Monto a pagar</label>
-                  <input
-                    id={`settle-amount-${movementId}`}
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={settleAmount}
-                    onChange={(event) => setSettleAmount(event.target.value)}
-                    className={style.input}
-                    placeholder={`Máx ${formatMoney(debtRemaining, currentCurrency)}`}
-                  />
-                </div>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={settleAmount}
+                  onChange={(event) => setSettleAmount(event.target.value)}
+                  className={style.input}
+                  placeholder={`Monto (máx ${formatMoney(debtRemaining, currentCurrency)})`}
+                  autoFocus
+                />
               ) : null}
 
-              <div className={style.filterField}>
-                <label htmlFor={`settle-date-${movementId}`}>Fecha de pago</label>
-                <input
-                  id={`settle-date-${movementId}`}
-                  type="date"
-                  value={settleDate}
-                  onChange={(event) => setSettleDate(event.target.value)}
-                  className={style.input}
-                />
-              </div>
+              <input
+                type="text"
+                value={settleDetail}
+                onChange={(event) => setSettleDetail(event.target.value)}
+                className={style.input}
+                placeholder="Detalle (opcional)"
+              />
 
-              <div className={style.filterField}>
-                <label htmlFor={`settle-method-${movementId}`}>Como lo pagaste</label>
-                <select
-                  id={`settle-method-${movementId}`}
-                  value={settleMethod}
-                  onChange={(event) => setSettleMethod(event.target.value)}
-                  className={style.select}
+              <div className={style.settleActions}>
+                <button
+                  type="button"
+                  className={style.cancelDebtButton}
+                  onClick={() => setSettleMovementId(null)}
                 >
-                  {MOVEMENT_METHOD_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className={style.confirmDebtButton}
+                  onClick={() => handleConfirmSettleDebt(movimiento)}
+                  disabled={settlingId === movementId}
+                >
+                  {settlingId === movementId ? "..." : "Aceptar"}
+                </button>
               </div>
-
-              <div className={`${style.filterField} ${style.searchField}`}>
-                <label htmlFor={`settle-detail-${movementId}`}>Detalle del pago</label>
-                <input
-                  id={`settle-detail-${movementId}`}
-                  type="text"
-                  value={settleDetail}
-                  onChange={(event) => setSettleDetail(event.target.value)}
-                  className={style.input}
-                  placeholder="Referencia del pago"
-                />
-              </div>
-            </div>
-
-            <div className={style.settleActions}>
-              <button
-                type="button"
-                className={style.confirmDebtButton}
-                onClick={() => handleConfirmSettleDebt(movimiento)}
-                disabled={settlingId === movementId}
-              >
-                {settlingId === movementId ? "Guardando..." : "Confirmar pago"}
-              </button>
-              <button
-                type="button"
-                className={style.cancelDebtButton}
-                onClick={() => setSettleMovementId(null)}
-              >
-                Cancelar
-              </button>
             </div>
           </div>
         ) : null}
