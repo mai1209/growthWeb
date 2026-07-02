@@ -170,7 +170,6 @@ export default function PomodoroPage() {
     <div className={style.page}>
       <header className={style.header}>
         <h1>Pomodoro</h1>
-        <p>Enfocate en bloques, descansá entre medio y anotá en qué estás trabajando.</p>
       </header>
 
       <div className={style.grid}>
