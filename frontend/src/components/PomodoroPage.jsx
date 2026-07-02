@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FiPause, FiPlay, FiRotateCcw, FiSkipForward } from "react-icons/fi";
 import style from "../style/Pomodoro.module.css";
 
 const MODES = [
@@ -190,6 +191,12 @@ export default function PomodoroPage() {
 
           <div className={style.ringWrap}>
             <svg className={style.ring} viewBox="0 0 300 300">
+              <defs>
+                <linearGradient id="pomoGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="var(--color-verde)" />
+                  <stop offset="100%" stopColor="#13aab6" />
+                </linearGradient>
+              </defs>
               <circle className={style.ringTrack} cx="150" cy="150" r={R} />
               <circle
                 className={style.ringProgress}
@@ -206,13 +213,26 @@ export default function PomodoroPage() {
 
           <div className={style.controls}>
             <button type="button" className={style.primaryBtn} onClick={toggleRun}>
+              {running ? <FiPause /> : <FiPlay />}
               {running ? "Pausar" : "Iniciar"}
             </button>
-            <button type="button" className={style.secondaryBtn} onClick={reset}>
-              Reiniciar
+            <button
+              type="button"
+              className={style.secondaryBtn}
+              onClick={reset}
+              title="Reiniciar"
+              aria-label="Reiniciar"
+            >
+              <FiRotateCcw size={20} />
             </button>
-            <button type="button" className={style.secondaryBtn} onClick={handleComplete}>
-              Saltar
+            <button
+              type="button"
+              className={style.secondaryBtn}
+              onClick={handleComplete}
+              title="Saltar"
+              aria-label="Saltar"
+            >
+              <FiSkipForward size={20} />
             </button>
           </div>
 
