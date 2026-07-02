@@ -309,6 +309,23 @@ export default function PomodoroPage() {
           <p className={style.counter}>
             Pomodoros completados hoy: <strong>{completed}</strong>
           </p>
+
+          <div className={style.settings}>
+            {MODES.map((m) => (
+              <div key={m.key} className={style.settingField}>
+                <label>{m.label} (min)</label>
+                <div className={style.stepper}>
+                  <button type="button" onClick={() => changeDuration(m.key, -1)}>
+                    −
+                  </button>
+                  <span>{durations[m.key]}</span>
+                  <button type="button" onClick={() => changeDuration(m.key, 1)}>
+                    +
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* Notas */}
@@ -374,24 +391,6 @@ export default function PomodoroPage() {
             </div>
 
             <div className={style.modalBody}>
-              <p className={style.sectionTitle}>Tiempo (minutos)</p>
-              <div className={style.durationRow}>
-                {MODES.map((m) => (
-                  <div key={m.key} className={style.settingField}>
-                    <label>{m.label}</label>
-                    <div className={style.stepper}>
-                      <button type="button" onClick={() => changeDuration(m.key, -1)}>
-                        −
-                      </button>
-                      <span>{durations[m.key]}</span>
-                      <button type="button" onClick={() => changeDuration(m.key, 1)}>
-                        +
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
               <div className={style.settingRow}>
                 <span>Descanso largo cada</span>
                 <div className={style.stepperInline}>

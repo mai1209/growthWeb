@@ -227,6 +227,15 @@
   font-size: 1.15rem;
 }
 
+.settings {
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+}
+
 /* ---- Modal de ajustes ---- */
 .overlay {
   position: fixed;
