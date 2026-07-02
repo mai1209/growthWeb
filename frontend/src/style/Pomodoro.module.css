@@ -264,17 +264,14 @@
 }
 
 .noteForm {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.6rem;
+  position: relative;
   margin-bottom: 1.1rem;
 }
 
 .noteInput {
   width: 100%;
   min-width: 0;
-  padding: 0.8rem 1rem;
+  padding: 0.85rem 3.4rem 0.85rem 1rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   background: var(--surface-input);
@@ -289,15 +286,20 @@
 }
 
 .addBtn {
-  flex: 0 0 auto;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
   border: none;
   background: var(--accent);
   color: var(--accent-contrast);
   font-weight: 800;
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   line-height: 1;
   cursor: pointer;
   transition: var(--transition-fast);
@@ -305,6 +307,7 @@
 
 .addBtn:hover {
   filter: brightness(1.05);
+  transform: translateY(-50%) scale(1.05);
 }
 
 .noteList {
