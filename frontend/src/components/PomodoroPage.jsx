@@ -17,12 +17,13 @@ const DEFAULT_SETTINGS = {
   short: 5,
   long: 15,
   longBreakInterval: 4,
-  autoStartBreaks: false,
-  autoStartPomodoros: false,
+  autoStartBreaks: true,
+  autoStartPomodoros: true,
   soundOn: true,
   alarmSound: "campana",
   alarmRepeat: 1,
   notificationsOn: false,
+  v: 2,
 };
 
 const todayKey = () => new Date().toISOString().slice(0, 10);
@@ -114,10 +115,17 @@ const fmt = (secs) => {
 };
 
 export default function PomodoroPage() {
-  const [settings, setSettings] = useState(() => ({
-    ...DEFAULT_SETTINGS,
-    ...loadJSON(SETTINGS_KEY, {}),
-  }));
+  const [settings, setSettings] = useState(() => {
+    const saved = loadJSON(SETTINGS_KEY, {});
+    const merged = { ...DEFAULT_SETTINGS, ...saved };
+    // Migración: activar auto-inicio por defecto una sola vez para quienes ya tenían ajustes
+    if (saved.v !== 2) {
+      merged.autoStartBreaks = true;
+      merged.autoStartPomodoros = true;
+      merged.v = 2;
+    }
+    return merged;
+  });
   const [mode, setMode] = useState("focus");
   const [running, setRunning] = useState(false);
   const [remaining, setRemaining] = useState(settings.focus * 60);
