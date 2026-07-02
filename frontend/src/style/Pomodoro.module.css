@@ -361,6 +361,47 @@
   font-variant-numeric: tabular-nums;
 }
 
+.soundPicker {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.soundBtn {
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-input);
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.soundBtnActive {
+  border-color: var(--accent-border);
+  color: var(--accent);
+  background: var(--accent-surface);
+}
+
+.testBtn {
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-surface);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.testBtn:hover {
+  background: var(--accent);
+  color: #04140b;
+}
+
 .switch {
   position: relative;
   width: 46px;

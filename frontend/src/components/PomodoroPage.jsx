@@ -20,6 +20,7 @@ const DEFAULT_SETTINGS = {
   autoStartBreaks: false,
   autoStartPomodoros: false,
   soundOn: true,
+  alarmSound: "campana",
   alarmRepeat: 1,
   notificationsOn: false,
 };
@@ -35,28 +36,75 @@ const loadJSON = (key, fallback) => {
   }
 };
 
-const beep = () => {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = "sine";
-    osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.9);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.9);
-  } catch {
-    // sin audio disponible, no pasa nada
-  }
+const SOUNDS = [
+  { key: "campana", label: "Campana" },
+  { key: "digital", label: "Digital" },
+  { key: "alarma", label: "Alarma" },
+];
+
+let audioCtx = null;
+const getCtx = () => {
+  if (typeof window === "undefined") return null;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  if (!audioCtx) audioCtx = new AC();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
 };
 
-const playAlarm = (times) => {
+const tone = (ctx, { freq, start, dur, type = "sine", gain = 0.5 }) => {
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  osc.connect(g);
+  g.connect(ctx.destination);
+  const t0 = ctx.currentTime + start;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(gain, t0 + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.05);
+};
+
+const SOUND_PLAYERS = {
+  digital: (ctx, off) => {
+    [0, 0.18, 0.36].forEach((t) =>
+      tone(ctx, { freq: 1046, start: off + t, dur: 0.14, type: "square", gain: 0.55 })
+    );
+  },
+  campana: (ctx, off) => {
+    [
+      [660, 0.6],
+      [990, 0.5],
+      [1320, 0.34],
+      [1980, 0.2],
+    ].forEach(([f, g]) => tone(ctx, { freq: f, start: off, dur: 1.5, type: "sine", gain: g }));
+  },
+  alarma: (ctx, off) => {
+    for (let i = 0; i < 6; i += 1) {
+      tone(ctx, {
+        freq: i % 2 === 0 ? 880 : 1108,
+        start: off + i * 0.16,
+        dur: 0.14,
+        type: "sawtooth",
+        gain: 0.55,
+      });
+    }
+  },
+};
+
+const playSound = (type, times) => {
+  const ctx = getCtx();
+  if (!ctx) return;
+  const player = SOUND_PLAYERS[type] || SOUND_PLAYERS.campana;
   const n = Math.max(1, Number(times) || 1);
-  for (let i = 0; i < n; i += 1) setTimeout(beep, i * 1000);
+  const gap = type === "campana" ? 1.7 : type === "alarma" ? 1.1 : 0.7;
+  try {
+    for (let i = 0; i < n; i += 1) player(ctx, i * gap);
+  } catch {
+    // navegador sin audio o bloqueado
+  }
 };
 
 const fmt = (secs) => {
@@ -110,7 +158,7 @@ export default function PomodoroPage() {
   }, []);
 
   const handleComplete = useCallback(() => {
-    if (settings.soundOn) playAlarm(settings.alarmRepeat);
+    if (settings.soundOn) playSound(settings.alarmSound, settings.alarmRepeat);
     if (settings.notificationsOn) notify(mode);
     targetRef.current = null;
 
@@ -444,18 +492,52 @@ export default function PomodoroPage() {
               </div>
 
               {settings.soundOn ? (
-                <div className={style.settingRow}>
-                  <span>Repetir sonido</span>
-                  <div className={style.stepperInline}>
-                    <button type="button" onClick={() => changeAlarmRepeat(-1)}>
-                      −
-                    </button>
-                    <span>{settings.alarmRepeat}×</span>
-                    <button type="button" onClick={() => changeAlarmRepeat(1)}>
-                      +
+                <>
+                  <div className={style.settingRow}>
+                    <span>Tipo de sonido</span>
+                    <div className={style.soundPicker}>
+                      {SOUNDS.map((s) => (
+                        <button
+                          key={s.key}
+                          type="button"
+                          className={`${style.soundBtn} ${
+                            settings.alarmSound === s.key ? style.soundBtnActive : ""
+                          }`}
+                          onClick={() => {
+                            setField("alarmSound", s.key);
+                            playSound(s.key, 1);
+                          }}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={style.settingRow}>
+                    <span>Repetir sonido</span>
+                    <div className={style.stepperInline}>
+                      <button type="button" onClick={() => changeAlarmRepeat(-1)}>
+                        −
+                      </button>
+                      <span>{settings.alarmRepeat}×</span>
+                      <button type="button" onClick={() => changeAlarmRepeat(1)}>
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={style.settingRow}>
+                    <span>Probar sonido</span>
+                    <button
+                      type="button"
+                      className={style.testBtn}
+                      onClick={() => playSound(settings.alarmSound, settings.alarmRepeat)}
+                    >
+                      ▶ Probar
                     </button>
                   </div>
-                </div>
+                </>
               ) : null}
 
               <div className={style.settingRow}>
