@@ -17,6 +17,7 @@ import FiltrosScreen from "./src/screens/FiltrosScreen";
 import MetricasScreen from "./src/screens/MetricasScreen";
 import CompartidosScreen from "./src/screens/CompartidosScreen";
 import NotasScreen from "./src/screens/NotasScreen";
+import PomodoroScreen from "./src/screens/PomodoroScreen";
 import AjustesScreen from "./src/screens/AjustesScreen";
 
 const Stack = createNativeStackNavigator();
@@ -55,6 +56,7 @@ const TAB_ICONS = {
   Metricas: "stats-chart",
   Compartidos: "people",
   Notas: "document-text",
+  Pomodoro: "timer",
 };
 
 function MainTabs() {
@@ -90,6 +92,7 @@ function MainTabs() {
         <Tab.Screen name="Metricas" component={MetricasScreen} options={{ tabBarLabel: "Métricas" }} />
         <Tab.Screen name="Compartidos" component={CompartidosScreen} />
         <Tab.Screen name="Notas" component={NotasScreen} />
+        <Tab.Screen name="Pomodoro" component={PomodoroScreen} />
         {/* Filtros queda accesible desde el resumen del Home, sin botón en la barra */}
         <Tab.Screen
           name="Filtros"

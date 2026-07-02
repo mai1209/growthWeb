@@ -10,6 +10,7 @@ import MonthlyFilters from "./MonthlyFilters";
 import SharedExpenses from "./SharedExpenses";
 import SettingsPage from "./SettingsPage";
 import MetricsPage from "./MetricsPage";
+import PomodoroPage from "./PomodoroPage";
 
 import LoginPage from "./LoginPage";
 import SignupPage from "./SignupPage";
@@ -201,6 +202,7 @@ function AppRoutes({
         />
 
         <Route path="compartidos" element={<SharedExpenses />} />
+        <Route path="pomodoro" element={<PomodoroPage />} />
         <Route path="ajustes" element={<SettingsPage />} />
 
         {/* Cualquier otra ruta privada → dashboard */}
