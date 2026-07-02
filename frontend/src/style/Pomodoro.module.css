@@ -128,7 +128,7 @@
   stroke: url(#pomoGrad);
   stroke-width: 9;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 5px var(--accent-surface));
+  filter: drop-shadow(0 0 8px rgba(16, 210, 95, 0.55));
   transition: stroke-dashoffset 0.4s linear;
 }
 
@@ -334,7 +334,7 @@
   align-items: center;
   gap: 0.4rem;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   background: var(--surface-input);
   overflow: hidden;
 }
@@ -414,7 +414,7 @@
   align-items: center;
   justify-content: space-between;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   background: var(--surface-input);
   overflow: hidden;
 }
@@ -456,7 +456,7 @@
   width: 100%;
   min-width: 0;
   padding: 0.85rem 3.4rem 0.85rem 1rem;
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   border: 1px solid var(--border-color);
   background: var(--surface-input);
   color: var(--color-text);
@@ -480,7 +480,7 @@
   place-items: center;
   border-radius: 50%;
   border: none;
-  background: var(--accent);
+  background: #16241d;
   color: #ffffff;
   font-weight: 800;
   font-size: 1.35rem;
@@ -489,12 +489,8 @@
   transition: var(--transition-fast);
 }
 
-:global(body[data-theme="light"]) .addBtn {
-  color: #04140b;
-}
-
 .addBtn:hover {
-  filter: brightness(1.05);
+  filter: brightness(1.4);
   transform: translateY(-50%) scale(1.05);
 }
 
