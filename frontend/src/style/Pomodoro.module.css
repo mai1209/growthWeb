@@ -154,12 +154,16 @@
   border-radius: var(--radius-pill);
   border: none;
   background: linear-gradient(135deg, var(--color-verde), #12a89a);
-  color: #04140b;
+  color: #ffffff;
   font-weight: 800;
   font-size: 1.05rem;
   cursor: pointer;
   box-shadow: 0 10px 24px -8px var(--accent);
   transition: var(--transition-fast);
+}
+
+:global(body[data-theme="light"]) .primaryBtn {
+  color: #04140b;
 }
 
 .primaryBtn:hover {
@@ -294,12 +298,16 @@
   border-radius: 50%;
   border: none;
   background: var(--accent);
-  color: var(--accent-contrast);
+  color: #ffffff;
   font-weight: 800;
   font-size: 1.35rem;
   line-height: 1;
   cursor: pointer;
   transition: var(--transition-fast);
+}
+
+:global(body[data-theme="light"]) .addBtn {
+  color: #04140b;
 }
 
 .addBtn:hover {
