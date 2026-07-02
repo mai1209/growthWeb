@@ -40,17 +40,14 @@
 
 .timerCard,
 .notesCard {
-  border: 1px solid var(--border-color);
-  background:
-    radial-gradient(circle at 50% 0%, var(--accent-surface), transparent 60%),
-    var(--surface-card);
-  border-radius: var(--radius-2xl);
-  padding: 2rem 1.75rem;
-  box-shadow: var(--shadow-md);
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 1.5rem 0.5rem;
+  min-width: 0;
 }
 
 .notesCard {
-  background: var(--surface-card);
   display: flex;
   flex-direction: column;
 }
