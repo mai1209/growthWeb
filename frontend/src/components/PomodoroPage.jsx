@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FiPause, FiPlay, FiRotateCcw, FiSkipForward } from "react-icons/fi";
+import { FiPause, FiPlay, FiRotateCcw, FiSettings, FiSkipForward, FiX } from "react-icons/fi";
 import style from "../style/Pomodoro.module.css";
 
 const MODES = [
@@ -11,6 +11,18 @@ const MODES = [
 const SETTINGS_KEY = "gm_pomodoro_settings";
 const NOTES_KEY = "gm_pomodoro_notes";
 const COUNT_KEY = "gm_pomodoro_count";
+
+const DEFAULT_SETTINGS = {
+  focus: 25,
+  short: 5,
+  long: 15,
+  longBreakInterval: 4,
+  autoStartBreaks: false,
+  autoStartPomodoros: false,
+  soundOn: true,
+  alarmRepeat: 1,
+  notificationsOn: false,
+};
 
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
@@ -42,6 +54,11 @@ const beep = () => {
   }
 };
 
+const playAlarm = (times) => {
+  const n = Math.max(1, Number(times) || 1);
+  for (let i = 0; i < n; i += 1) setTimeout(beep, i * 1000);
+};
+
 const fmt = (secs) => {
   const m = Math.floor(secs / 60);
   const s = secs % 60;
@@ -49,31 +66,29 @@ const fmt = (secs) => {
 };
 
 export default function PomodoroPage() {
-  const [durations, setDurations] = useState(() => {
-    const saved = loadJSON(SETTINGS_KEY, null);
-    return {
-      focus: saved?.focus || 25,
-      short: saved?.short || 5,
-      long: saved?.long || 15,
-    };
-  });
+  const [settings, setSettings] = useState(() => ({
+    ...DEFAULT_SETTINGS,
+    ...loadJSON(SETTINGS_KEY, {}),
+  }));
   const [mode, setMode] = useState("focus");
   const [running, setRunning] = useState(false);
-  const [remaining, setRemaining] = useState(durations.focus * 60);
+  const [remaining, setRemaining] = useState(settings.focus * 60);
   const [notes, setNotes] = useState(() => loadJSON(NOTES_KEY, []));
   const [noteText, setNoteText] = useState("");
   const [completed, setCompleted] = useState(() => {
     const saved = loadJSON(COUNT_KEY, null);
     return saved && saved.date === todayKey() ? saved.count : 0;
   });
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
+  const durations = { focus: settings.focus, short: settings.short, long: settings.long };
   const targetRef = useRef(null);
   const totalSecs = durations[mode] * 60;
 
   // Persistencia
   useEffect(() => {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(durations));
-  }, [durations]);
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  }, [settings]);
   useEffect(() => {
     localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
   }, [notes]);
@@ -81,21 +96,40 @@ export default function PomodoroPage() {
     localStorage.setItem(COUNT_KEY, JSON.stringify({ date: todayKey(), count: completed }));
   }, [completed]);
 
-  const handleComplete = useCallback(() => {
-    beep();
-    setRunning(false);
-    targetRef.current = null;
-    if (mode === "focus") {
-      setCompleted((c) => c + 1);
-      // cada 4 enfoques, descanso largo
-      const next = (completed + 1) % 4 === 0 ? "long" : "short";
-      setMode(next);
-      setRemaining(durations[next] * 60);
-    } else {
-      setMode("focus");
-      setRemaining(durations.focus * 60);
+  const notify = useCallback((finishedMode) => {
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    const body =
+      finishedMode === "focus"
+        ? "¡Bloque de enfoque completado! Tomate un descanso."
+        : "Descanso terminado. ¡A enfocarse!";
+    try {
+      new Notification("Pomodoro · Growth Manager", { body });
+    } catch {
+      // algunos navegadores requieren service worker; lo ignoramos
     }
-  }, [mode, completed, durations]);
+  }, []);
+
+  const handleComplete = useCallback(() => {
+    if (settings.soundOn) playAlarm(settings.alarmRepeat);
+    if (settings.notificationsOn) notify(mode);
+    targetRef.current = null;
+
+    let next;
+    let autostart;
+    if (mode === "focus") {
+      const newCount = completed + 1;
+      setCompleted(newCount);
+      const interval = Math.max(1, settings.longBreakInterval);
+      next = newCount % interval === 0 ? "long" : "short";
+      autostart = settings.autoStartBreaks;
+    } else {
+      next = "focus";
+      autostart = settings.autoStartPomodoros;
+    }
+    setMode(next);
+    setRemaining(durations[next] * 60);
+    setRunning(autostart);
+  }, [mode, completed, settings, notify]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Tick por timestamp (preciso aunque el tab se ralentice)
   useEffect(() => {
@@ -124,7 +158,6 @@ export default function PomodoroPage() {
 
   const toggleRun = () => {
     if (running) {
-      // pausar: guardo lo que resta
       targetRef.current = null;
       setRunning(false);
     } else {
@@ -139,13 +172,42 @@ export default function PomodoroPage() {
     setRemaining(durations[mode] * 60);
   };
 
+  const setField = (key, value) => setSettings((s) => ({ ...s, [key]: value }));
+
   const changeDuration = (key, delta) => {
-    setDurations((d) => {
-      const val = Math.min(90, Math.max(1, d[key] + delta));
-      const next = { ...d, [key]: val };
-      if (key === mode && !running) setRemaining(val * 60);
-      return next;
+    setSettings((s) => {
+      const val = Math.min(90, Math.max(1, s[key] + delta));
+      if (key === mode && !running) {
+        targetRef.current = null;
+        setRemaining(val * 60);
+      }
+      return { ...s, [key]: val };
     });
+  };
+
+  const changeInterval = (delta) =>
+    setSettings((s) => ({
+      ...s,
+      longBreakInterval: Math.min(12, Math.max(1, s.longBreakInterval + delta)),
+    }));
+
+  const changeAlarmRepeat = (delta) =>
+    setSettings((s) => ({ ...s, alarmRepeat: Math.min(5, Math.max(1, s.alarmRepeat + delta)) }));
+
+  const toggleNotifications = async () => {
+    if (!settings.notificationsOn) {
+      if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
+        try {
+          const perm = await Notification.requestPermission();
+          if (perm !== "granted") return;
+        } catch {
+          return;
+        }
+      }
+      setField("notificationsOn", true);
+    } else {
+      setField("notificationsOn", false);
+    }
   };
 
   const addNote = (e) => {
@@ -170,6 +232,15 @@ export default function PomodoroPage() {
     <div className={style.page}>
       <header className={style.header}>
         <h1>Pomodoro</h1>
+        <button
+          type="button"
+          className={style.gearBtn}
+          onClick={() => setSettingsOpen(true)}
+          title="Ajustes"
+          aria-label="Ajustes"
+        >
+          <FiSettings size={20} />
+        </button>
       </header>
 
       <div className={style.grid}>
@@ -238,23 +309,6 @@ export default function PomodoroPage() {
           <p className={style.counter}>
             Pomodoros completados hoy: <strong>{completed}</strong>
           </p>
-
-          <div className={style.settings}>
-            {MODES.map((m) => (
-              <div key={m.key} className={style.settingField}>
-                <label>{m.label} (min)</label>
-                <div className={style.stepper}>
-                  <button type="button" onClick={() => changeDuration(m.key, -1)}>
-                    −
-                  </button>
-                  <span>{durations[m.key]}</span>
-                  <button type="button" onClick={() => changeDuration(m.key, 1)}>
-                    +
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
         </section>
 
         {/* Notas */}
@@ -302,6 +356,125 @@ export default function PomodoroPage() {
           )}
         </section>
       </div>
+
+      {/* Modal de Ajustes */}
+      {settingsOpen ? (
+        <div className={style.overlay} onClick={() => setSettingsOpen(false)}>
+          <div className={style.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={style.modalHead}>
+              <h3>Ajustes</h3>
+              <button
+                type="button"
+                className={style.modalClose}
+                onClick={() => setSettingsOpen(false)}
+                aria-label="Cerrar"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+
+            <div className={style.modalBody}>
+              <p className={style.sectionTitle}>Tiempo (minutos)</p>
+              <div className={style.durationRow}>
+                {MODES.map((m) => (
+                  <div key={m.key} className={style.settingField}>
+                    <label>{m.label}</label>
+                    <div className={style.stepper}>
+                      <button type="button" onClick={() => changeDuration(m.key, -1)}>
+                        −
+                      </button>
+                      <span>{durations[m.key]}</span>
+                      <button type="button" onClick={() => changeDuration(m.key, 1)}>
+                        +
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className={style.settingRow}>
+                <span>Descanso largo cada</span>
+                <div className={style.stepperInline}>
+                  <button type="button" onClick={() => changeInterval(-1)}>
+                    −
+                  </button>
+                  <span>{settings.longBreakInterval}</span>
+                  <button type="button" onClick={() => changeInterval(1)}>
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className={style.settingRow}>
+                <span>Auto-iniciar descansos</span>
+                <button
+                  type="button"
+                  className={`${style.switch} ${settings.autoStartBreaks ? style.switchOn : ""}`}
+                  onClick={() => setField("autoStartBreaks", !settings.autoStartBreaks)}
+                  role="switch"
+                  aria-checked={settings.autoStartBreaks}
+                >
+                  <span className={style.switchKnob} />
+                </button>
+              </div>
+
+              <div className={style.settingRow}>
+                <span>Auto-iniciar pomodoros</span>
+                <button
+                  type="button"
+                  className={`${style.switch} ${settings.autoStartPomodoros ? style.switchOn : ""}`}
+                  onClick={() => setField("autoStartPomodoros", !settings.autoStartPomodoros)}
+                  role="switch"
+                  aria-checked={settings.autoStartPomodoros}
+                >
+                  <span className={style.switchKnob} />
+                </button>
+              </div>
+
+              <div className={style.settingRow}>
+                <span>Sonido al terminar</span>
+                <button
+                  type="button"
+                  className={`${style.switch} ${settings.soundOn ? style.switchOn : ""}`}
+                  onClick={() => setField("soundOn", !settings.soundOn)}
+                  role="switch"
+                  aria-checked={settings.soundOn}
+                >
+                  <span className={style.switchKnob} />
+                </button>
+              </div>
+
+              {settings.soundOn ? (
+                <div className={style.settingRow}>
+                  <span>Repetir sonido</span>
+                  <div className={style.stepperInline}>
+                    <button type="button" onClick={() => changeAlarmRepeat(-1)}>
+                      −
+                    </button>
+                    <span>{settings.alarmRepeat}×</span>
+                    <button type="button" onClick={() => changeAlarmRepeat(1)}>
+                      +
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className={style.settingRow}>
+                <span>Notificaciones del navegador</span>
+                <button
+                  type="button"
+                  className={`${style.switch} ${settings.notificationsOn ? style.switchOn : ""}`}
+                  onClick={toggleNotifications}
+                  role="switch"
+                  aria-checked={settings.notificationsOn}
+                >
+                  <span className={style.switchKnob} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
