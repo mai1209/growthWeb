@@ -17,12 +17,15 @@ const app = express();
 // En Vercel los pedidos pasan por un proxy: necesario para leer la IP real
 app.set("trust proxy", 1);
 
-// Límite estricto para login/registro/recuperación (anti fuerza bruta)
+// Límite estricto para login/registro/recuperación (anti fuerza bruta).
+// Solo cuentan los intentos FALLIDOS: un login exitoso no gasta cupo,
+// así un usuario normal (o varios dispositivos) nunca queda bloqueado.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 10, // 10 intentos por IP en esa ventana
+  max: 20, // 20 intentos fallidos por IP en esa ventana
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true, // los 2xx no cuentan
   message: { error: "Demasiados intentos. Probá de nuevo en unos minutos." },
 });
 
