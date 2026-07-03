@@ -334,9 +334,9 @@ const makeStyles = (colors) => StyleSheet.create({
     padding: 4,
   },
   curBtn: { paddingVertical: 7, paddingHorizontal: 14, borderRadius: 9 },
-  curBtnActive: { backgroundColor: colors.greenSoft },
+  curBtnActive: { backgroundColor: colors.segActive },
   curText: { color: colors.muted, fontWeight: "800", fontSize: 13 },
-  curTextActive: { color: colors.greenDark },
+  curTextActive: { color: colors.segActiveText },
   filterToggle: {
     flexDirection: "row",
     alignItems: "center",

@@ -17,6 +17,9 @@ export const lightColors = {
   greenBorder: "rgba(61, 140, 68, 0.28)",
   greenBright: "#3bcb23",
   greenBright2: "#5dc72d",
+  // Verde vivo de la web (botón Iniciar / anillo del Pomodoro) para ítems seleccionados
+  segActive: "#14d95f",
+  segActiveText: "#04140b",
   red: "#ba5f50",
   redSoft: "rgba(186, 95, 80, 0.14)",
 };
@@ -35,6 +38,9 @@ export const darkColors = {
   greenBorder: "rgba(106, 191, 113, 0.34)",
   greenBright: "#3bcb23",
   greenBright2: "#5dc72d",
+  // Verde vivo de la web (botón Iniciar / anillo del Pomodoro) para ítems seleccionados
+  segActive: "#14d95f",
+  segActiveText: "#04140b",
   red: "#e58a78",
   redSoft: "rgba(229, 138, 120, 0.18)",
 };

@@ -323,9 +323,9 @@ const makeStyles = (colors) =>
       borderColor: colors.cardBorder,
       backgroundColor: colors.card,
     },
-    modeBtnActive: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
+    modeBtnActive: { backgroundColor: colors.segActive, borderColor: colors.segActive },
     modeText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
-    modeTextActive: { color: colors.greenDark },
+    modeTextActive: { color: colors.segActiveText, fontWeight: "800" },
     ringWrap: {
       width: 230,
       height: 230,

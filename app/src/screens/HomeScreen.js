@@ -317,9 +317,9 @@ const makeStyles = (colors) => StyleSheet.create({
     paddingVertical: 9,
     borderRadius: 10,
   },
-  segmentActive: { backgroundColor: colors.greenSoft },
+  segmentActive: { backgroundColor: colors.segActive },
   segmentText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
-  segmentTextActive: { color: colors.greenDark },
+  segmentTextActive: { color: colors.segActiveText, fontWeight: "800" },
 
   sectionLabel: {
     color: colors.muted,

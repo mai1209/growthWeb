@@ -251,9 +251,9 @@ const makeStyles = (colors) => StyleSheet.create({
     padding: 5,
   },
   switchBtn: { flex: 1, alignItems: "center", paddingVertical: 9, borderRadius: 10 },
-  switchActive: { backgroundColor: colors.greenDark },
+  switchActive: { backgroundColor: colors.segActive },
   switchText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
-  switchTextActive: { color: "#fff" },
+  switchTextActive: { color: colors.segActiveText, fontWeight: "800" },
   dayNav: {
     flexDirection: "row",
     alignItems: "center",
