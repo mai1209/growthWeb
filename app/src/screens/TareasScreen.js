@@ -196,7 +196,7 @@ export default function TareasScreen() {
                   </View>
 
                   <TouchableOpacity onPress={() => handleDelete(item)} hitSlop={8}>
-                    <Ionicons name="trash-outline" size={20} color={colors.red} />
+                    <Ionicons name="trash-outline" size={20} color={colors.text} />
                   </TouchableOpacity>
                 </View>
               );
