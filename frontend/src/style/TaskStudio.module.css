@@ -1275,11 +1275,20 @@ button.folderChip {
   display: grid;
   gap: 1.5rem;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .boardGroup {
   display: grid;
   gap: 0.85rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.boardGrid {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .boardGroupHeader {
@@ -2634,7 +2643,8 @@ button.folderItem {
   }
 
   .boardGrid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    max-width: 100%;
   }
 
   .notesLayout {
@@ -2823,7 +2833,7 @@ button.folderItem {
   }
 
   .boardGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 0.6rem;
   }
 
