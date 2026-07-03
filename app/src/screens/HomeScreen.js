@@ -149,12 +149,10 @@ export default function HomeScreen() {
 
 
   const quickActions = [
-    { key: "ingreso-fijo", label: "Ingreso fijo", icon: "repeat-outline", bg: "#2f9e3a" },
     { key: "ingreso", label: "Nuevo ingreso", icon: "arrow-down-circle-outline", bg: "#35b53a" },
-    { key: "ahorro", label: "Nuevo ahorro", icon: "wallet-outline", bg: "#2bb888" },
-    { key: "deuda", label: "Cargar deuda", icon: "person-outline", bg: "#d6a92e" },
-    { key: "egreso-fijo", label: "Gasto fijo", icon: "repeat-outline", bg: "#d9774a" },
     { key: "egreso", label: "Nuevo egreso", icon: "arrow-up-circle-outline", bg: "#e0654f" },
+    { key: "ingreso-fijo", label: "Ingreso fijo", icon: "repeat-outline", bg: "#2f9e3a" },
+    { key: "egreso-fijo", label: "Gasto fijo", icon: "repeat-outline", bg: "#d9774a" },
   ];
 
   const stats = [

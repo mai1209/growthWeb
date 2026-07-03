@@ -133,7 +133,6 @@ function MonthlyFilters({
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedMonth, setSelectedMonth] = useState(getMonthInputValue(new Date()));
-  const [selectedDay, setSelectedDay] = useState(getDayInputValue(new Date()));
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedRecurrence, setSelectedRecurrence] = useState("all");
@@ -168,10 +167,6 @@ function MonthlyFilters({
   const [settlingId, setSettlingId] = useState(null);
 
   const { from, to } = useMemo(() => getMonthRange(selectedMonth), [selectedMonth]);
-  const selectedDayDate = useMemo(
-    () => getDateFromInputValue(selectedDay),
-    [selectedDay]
-  );
   const selectedMonthLabel = useMemo(
     () => formatMonthHeading(selectedMonth),
     [selectedMonth]
@@ -241,29 +236,6 @@ function MonthlyFilters({
   const filteredSummary = useMemo(
     () => summarizeByType(filteredMovimientos),
     [filteredMovimientos]
-  );
-  const dayMovimientos = useMemo(
-    () =>
-      filterMovimientosByCurrency(movimientos, currentCurrency, {
-        from: selectedDayDate,
-        to: selectedDayDate,
-      })
-        .filter((movimiento) =>
-          selectedType === "all" ? true : movimiento.tipo === selectedType
-        )
-        .filter((movimiento) =>
-          selectedMethod === "all"
-            ? true
-            : movimiento.tipo === "deuda" && movimiento.deudaEstado !== "pagada"
-              ? false
-              : movimiento.medio === selectedMethod
-        )
-        .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()),
-    [movimientos, currentCurrency, selectedDayDate, selectedMethod, selectedType]
-  );
-  const groupedDayMovimientos = useMemo(
-    () => groupMovimientosByDay(dayMovimientos),
-    [dayMovimientos]
   );
   const groupedFilteredMovimientos = useMemo(
     () => groupMovimientosByDay(filteredMovimientos),
@@ -749,53 +721,10 @@ function MonthlyFilters({
       </div>
 
       <div className={style.detailsLayout}>
-        <section className={style.dayPanel}>
-          <div className={style.panelHeader}>
-            <p className={style.panelKicker}>Filtra por dia</p>
-            <h2>Movimientos del dia</h2>
-          </div>
-
-          <div className={style.dayFilterBar}>
-            <div className={style.filterField}>
-              <label htmlFor="day-filter">Fecha</label>
-              <input
-                id="day-filter"
-                type="date"
-                value={selectedDay}
-                onChange={(event) => setSelectedDay(event.target.value)}
-                className={style.input}
-              />
-            </div>
-
-            <article className={style.daySummaryCard}>
-              <span>Total del dia</span>
-              <strong>
-                {formatMoney(
-                  summarizeByType(dayMovimientos).total,
-                  currentCurrency
-                )}
-              </strong>
-              <p>{formatDate(selectedDayDate)}</p>
-            </article>
-          </div>
-
-          <div className={style.listShell}>
-            {dayMovimientos.length === 0 ? (
-              <div className={style.emptyState}>
-                <h3>No hay movimientos para ese dia</h3>
-                <p>Cambia la fecha del calendario para revisar otra jornada.</p>
-              </div>
-            ) : (
-              <div className={style.list}>{groupedDayMovimientos.map(renderMovementGroup)}</div>
-            )}
-          </div>
-        </section>
-
         <section className={style.listPanel}>
           <div className={style.panelHeader}>
             <p className={style.panelKicker}>Detalle del mes</p>
             <h2>Movimientos encontrados</h2>
-           
           </div>
 
           <div className={style.listShell}>

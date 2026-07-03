@@ -9,6 +9,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Svg, { Circle, G } from "react-native-svg";
 import { movimientoService } from "../api";
 import { statAccents, useTheme } from "../theme";
 import {
@@ -26,6 +27,14 @@ const PERIOD_OPTIONS = [
   { value: "year", label: "Año" },
 ];
 
+const TYPE_COLORS = {
+  ingreso: "#9cfb43",
+  egreso: "#ff915c",
+  ahorro: "#58eba4",
+  deuda: "#ffd55c",
+};
+const CATEGORY_COLORS = ["#9cfb43", "#ff915c", "#58eba4", "#ffd55c", "#69a7ff", "#f070b8"];
+
 const getPeriodRange = (period) => {
   const now = new Date();
   const y = now.getFullYear();
@@ -35,9 +44,53 @@ const getPeriodRange = (period) => {
   }
   const back = period === "quarter" ? 2 : period === "semester" ? 5 : 0;
   const from = new Date(y, m - back, 1);
-  const to = new Date(y, m + 1, 0); // último día del mes actual
+  const to = new Date(y, m + 1, 0);
   return { from, to };
 };
+
+// Donut con react-native-svg (segmentos por strokeDasharray)
+function Donut({ items, size = 132, stroke = 22, colors }) {
+  const data = items.filter((i) => i.value > 0);
+  const total = data.reduce((a, i) => a + i.value, 0);
+  const r = (size - stroke) / 2;
+  const cx = size / 2;
+  const circ = 2 * Math.PI * r;
+  let acc = 0;
+  return (
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+      <Svg width={size} height={size}>
+        <G rotation={-90} origin={`${cx}, ${cx}`}>
+          {total === 0 ? (
+            <Circle cx={cx} cy={cx} r={r} stroke={colors.cardBorder} strokeWidth={stroke} fill="none" />
+          ) : (
+            data.map((it, idx) => {
+              const len = (it.value / total) * circ;
+              const el = (
+                <Circle
+                  key={idx}
+                  cx={cx}
+                  cy={cx}
+                  r={r}
+                  stroke={it.color}
+                  strokeWidth={stroke}
+                  fill="none"
+                  strokeDasharray={`${len} ${circ - len}`}
+                  strokeDashoffset={-acc}
+                />
+              );
+              acc += len;
+              return el;
+            })
+          )}
+        </G>
+      </Svg>
+      <View style={{ position: "absolute", alignItems: "center" }}>
+        <Text style={{ color: colors.text, fontSize: 20, fontWeight: "900" }}>{data.length}</Text>
+        <Text style={{ color: colors.muted, fontSize: 11 }}>rubros</Text>
+      </View>
+    </View>
+  );
+}
 
 export default function MetricasScreen() {
   const { colors } = useTheme();
@@ -64,35 +117,40 @@ export default function MetricasScreen() {
     fetchData();
   }, [fetchData]);
 
-  const { summary, distribution, topEgresos, topIngresos } = useMemo(() => {
+  const { summary, typeItems, expenseCats, incomeCats } = useMemo(() => {
     const { from, to } = getPeriodRange(period);
     const periodMovs = filterMovimientosByCurrency(movimientos, currency, { from, to });
     const sum = summarizeByType(periodMovs);
 
-    const dist = [
-      { key: "ingreso", label: "Ingresos", value: sum.ingreso, accent: statAccents.ingreso },
-      { key: "egreso", label: "Egresos", value: sum.egreso, accent: statAccents.egreso },
-      { key: "ahorro", label: "Ahorros", value: sum.ahorro, accent: statAccents.ahorro },
+    const types = [
+      { label: "Ingresos", value: sum.ingreso, color: TYPE_COLORS.ingreso },
+      { label: "Egresos", value: sum.egreso, color: TYPE_COLORS.egreso },
+      { label: "Ahorros", value: sum.ahorro, color: TYPE_COLORS.ahorro },
+      { label: "Deuda pend.", value: sum.deudaPendiente, color: TYPE_COLORS.deuda },
     ];
 
     const groupBy = (tipo) => {
       const map = new Map();
       periodMovs.forEach((m) => {
         if (normalizeMovementType(m.tipo) !== tipo) return;
-        const cat = m.categoria || "Sin categoría";
+        const cat = m.categoria?.trim() || "Sin categoría";
         map.set(cat, (map.get(cat) || 0) + (Number(m.monto) || 0));
       });
       return [...map.entries()]
-        .map(([categoria, total]) => ({ categoria, total }))
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 5);
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .map(([label, value], i) => ({
+          label,
+          value: Number(value.toFixed(2)),
+          color: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
+        }));
     };
 
     return {
       summary: sum,
-      distribution: dist,
-      topEgresos: groupBy("egreso"),
-      topIngresos: groupBy("ingreso"),
+      typeItems: types,
+      expenseCats: groupBy("egreso"),
+      incomeCats: groupBy("ingreso"),
     };
   }, [movimientos, currency, period]);
 
@@ -103,33 +161,41 @@ export default function MetricasScreen() {
     { label: "Deuda pend.", value: formatMoney(summary.deudaPendiente, currency), accent: statAccents.deuda },
   ];
 
-  const distMax = Math.max(...distribution.map((d) => d.value), 0);
-  const distEmpty = distMax <= 0;
-
-  const renderRankRows = (rows, accent) => {
-    if (!rows.length) {
-      return <Text style={styles.muted}>Sin datos en este período.</Text>;
-    }
-    const top = rows[0].total || 1;
-    return rows.map((r) => {
-      const pct = top > 0 ? Math.min((r.total / top) * 100, 100) : 0;
-      return (
-        <View key={r.categoria} style={styles.barRow}>
-          <View style={styles.barHead}>
-            <Text style={styles.barLabel} numberOfLines={1}>{r.categoria}</Text>
-            <Text style={styles.barValue}>{formatMoney(r.total, currency)}</Text>
-          </View>
-          <View style={styles.track}>
-            <View style={[styles.fill, { width: `${pct}%`, backgroundColor: accent }]} />
-          </View>
+  const renderChart = (title, items, emptyLabel) => {
+    const total = items.reduce((a, i) => a + i.value, 0);
+    const data = items.filter((i) => i.value > 0);
+    return (
+      <>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        <View style={styles.card}>
+          {total === 0 ? (
+            <Text style={styles.muted}>{emptyLabel}</Text>
+          ) : (
+            <View style={styles.chartLayout}>
+              <Donut items={items} colors={colors} />
+              <View style={styles.legend}>
+                {data.map((it) => (
+                  <View key={it.label} style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: it.color }]} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.legendLabel} numberOfLines={1}>
+                        {it.label}
+                      </Text>
+                      <Text style={styles.legendAmt}>{formatMoney(it.value, currency)}</Text>
+                    </View>
+                    <Text style={styles.legendPct}>{((it.value / total) * 100).toFixed(0)}%</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
         </View>
-      );
-    });
+      </>
+    );
   };
 
   return (
     <SafeAreaView style={styles.safe} edges={[]}>
-      {/* A. Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Métricas</Text>
       </View>
@@ -145,7 +211,7 @@ export default function MetricasScreen() {
         >
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          {/* B. Switch de moneda */}
+          {/* Moneda + período */}
           <View style={styles.controls}>
             <View style={styles.currencySwitch}>
               {CURRENCY_OPTIONS.map((opt) => {
@@ -162,7 +228,6 @@ export default function MetricasScreen() {
               })}
             </View>
 
-            {/* C. Switch de período */}
             <View style={styles.periodRow}>
               {PERIOD_OPTIONS.map((p) => (
                 <TouchableOpacity
@@ -178,7 +243,7 @@ export default function MetricasScreen() {
             </View>
           </View>
 
-          {/* E. Totales */}
+          {/* Totales */}
           <View style={styles.summaryGrid}>
             {summaryCards.map((c) => (
               <View key={c.label} style={styles.summaryCard}>
@@ -189,129 +254,92 @@ export default function MetricasScreen() {
             ))}
           </View>
 
-          {/* F. Distribución */}
-          <Text style={styles.sectionTitle}>Distribución</Text>
-          <View style={styles.card}>
-            {distEmpty ? (
-              <Text style={styles.muted}>Sin datos en este período.</Text>
-            ) : (
-              distribution.map((d) => {
-                const pct = distMax > 0 ? Math.min((d.value / distMax) * 100, 100) : 0;
-                return (
-                  <View key={d.key} style={styles.barRow}>
-                    <View style={styles.barHead}>
-                      <Text style={styles.barLabel}>{d.label}</Text>
-                      <Text style={styles.barValue}>{formatMoney(d.value, currency)}</Text>
-                    </View>
-                    <View style={styles.track}>
-                      <View style={[styles.fill, { width: `${pct}%`, backgroundColor: d.accent }]} />
-                    </View>
-                  </View>
-                );
-              })
-            )}
-          </View>
-
-          {/* G. Mayores egresos */}
-          <Text style={styles.sectionTitle}>Mayores egresos</Text>
-          <View style={styles.card}>{renderRankRows(topEgresos, statAccents.egreso)}</View>
-
-          {/* H. Mayores ingresos */}
-          <Text style={styles.sectionTitle}>Mayores ingresos</Text>
-          <View style={styles.card}>{renderRankRows(topIngresos, statAccents.ingreso)}</View>
+          {/* Donuts */}
+          {renderChart("Distribución por tipo", typeItems, "Sin datos en este período.")}
+          {renderChart("Egresos por categoría", expenseCats, "Sin egresos en este período.")}
+          {renderChart("Ingresos por categoría", incomeCats, "Sin ingresos en este período.")}
         </ScrollView>
       )}
     </SafeAreaView>
   );
 }
 
-const makeStyles = (colors) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
+const makeStyles = (colors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 12 },
+    title: { color: colors.text, fontSize: 20, fontWeight: "800" },
+    content: { padding: 16, paddingBottom: 30, gap: 12 },
+    error: { color: colors.red },
 
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 12,
-  },
-  title: { color: colors.text, fontSize: 20, fontWeight: "800" },
+    controls: { gap: 10 },
+    currencySwitch: {
+      flexDirection: "row",
+      gap: 4,
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 12,
+      padding: 4,
+      alignSelf: "flex-start",
+    },
+    curBtn: { paddingVertical: 7, paddingHorizontal: 14, borderRadius: 9 },
+    curBtnActive: { backgroundColor: colors.greenSoft },
+    curText: { color: colors.muted, fontWeight: "800", fontSize: 13 },
+    curTextActive: { color: colors.greenDark },
 
-  content: { padding: 16, paddingBottom: 30, gap: 12 },
-  error: { color: colors.red },
+    periodRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    periodChip: {
+      paddingVertical: 8,
+      paddingHorizontal: 13,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.bg,
+    },
+    periodChipActive: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
+    periodChipText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
+    periodChipTextActive: { color: colors.greenDark },
 
-  controls: { gap: 10 },
-  currencySwitch: {
-    flexDirection: "row",
-    gap: 4,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 12,
-    padding: 4,
-    alignSelf: "flex-start",
-  },
-  curBtn: { paddingVertical: 7, paddingHorizontal: 14, borderRadius: 9 },
-  curBtnActive: { backgroundColor: colors.greenSoft },
-  curText: { color: colors.muted, fontWeight: "800", fontSize: 13 },
-  curTextActive: { color: colors.greenDark },
+    summaryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+    summaryCard: {
+      width: "48%",
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 16,
+      paddingVertical: 12,
+      paddingLeft: 16,
+      paddingRight: 12,
+      overflow: "hidden",
+    },
+    sumBar: { position: "absolute", left: 0, top: 0, bottom: 0, width: 5 },
+    sumLabel: { color: colors.muted, fontSize: 11, fontWeight: "800", textTransform: "uppercase" },
+    sumValue: { color: colors.text, fontSize: 16, fontWeight: "800", marginTop: 5 },
 
-  periodRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  periodChip: {
-    paddingVertical: 8,
-    paddingHorizontal: 13,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.bg,
-  },
-  periodChipActive: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
-  periodChipText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
-  periodChipTextActive: { color: colors.greenDark },
+    sectionTitle: {
+      color: colors.muted,
+      fontSize: 12,
+      fontWeight: "800",
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+      marginTop: 6,
+    },
 
-  summaryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  summaryCard: {
-    width: "48%",
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingLeft: 16,
-    paddingRight: 12,
-    overflow: "hidden",
-  },
-  sumBar: { position: "absolute", left: 0, top: 0, bottom: 0, width: 5 },
-  sumLabel: { color: colors.muted, fontSize: 11, fontWeight: "800", textTransform: "uppercase" },
-  sumValue: { color: colors.text, fontSize: 16, fontWeight: "800", marginTop: 5 },
+    card: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 16,
+      padding: 14,
+    },
+    muted: { color: colors.muted, fontSize: 13 },
 
-  sectionTitle: {
-    color: colors.muted,
-    fontSize: 12,
-    fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginTop: 6,
-  },
-
-  card: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 16,
-    padding: 14,
-    gap: 12,
-  },
-  muted: { color: colors.muted, fontSize: 13 },
-
-  barRow: { gap: 6 },
-  barHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
-  barLabel: { flex: 1, color: colors.text, fontSize: 14, fontWeight: "700" },
-  barValue: { color: colors.muted, fontSize: 13, fontWeight: "700" },
-  track: {
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: "#d7e0d6",
-    overflow: "hidden",
-  },
-  fill: { height: 8, borderRadius: 999 },
-});
+    chartLayout: { flexDirection: "row", alignItems: "center", gap: 14 },
+    legend: { flex: 1, gap: 9 },
+    legendItem: { flexDirection: "row", alignItems: "center", gap: 8 },
+    legendDot: { width: 11, height: 11, borderRadius: 3 },
+    legendLabel: { color: colors.text, fontSize: 13, fontWeight: "700" },
+    legendAmt: { color: colors.muted, fontSize: 11, marginTop: 1 },
+    legendPct: { color: colors.text, fontSize: 13, fontWeight: "800" },
+  });
