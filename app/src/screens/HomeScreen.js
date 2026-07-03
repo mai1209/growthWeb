@@ -26,7 +26,7 @@ import {
 } from "../utils/finance";
 
 // Geometría del marco verde tipo "pestaña": contorno + relleno de la pestaña activa
-const TAB_H = 48; // alto de la zona de pestañas
+const TAB_H = 40; // alto de la zona de pestañas
 const buildFramePaths = (W, H, activeLeft) => {
   if (!W || !H) return { fill: "", outline: "" };
   const L = 1;
@@ -202,10 +202,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.kicker}>Resumen</Text>
-            <Text style={styles.balanceTitle}>Dashboard {currencyMeta.codeLabel}</Text>
-
-            <Text style={styles.balanceLabel}>Saldo</Text>
+            <Text style={styles.balanceLabel}>{currencyMeta.codeLabel}</Text>
             {loading ? (
               <ActivityIndicator color={colors.green} style={{ alignSelf: "flex-start", marginTop: 6 }} />
             ) : (
@@ -224,14 +221,14 @@ export default function HomeScreen() {
                   onPress={() => setModalMode(a.key)}
                   activeOpacity={0.85}
                 >
-                  <Ionicons name={a.icon} size={20} color="#fff" />
+                  <Ionicons name={a.icon} size={18} color="#fff" />
                   <Text style={styles.quickLabel}>{a.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
             {/* Movimientos del mes (clickeables → Filtros filtrado) */}
-            <Text style={styles.sectionLabel}>Este mes</Text>
+            <Text style={styles.sectionLabel}>Resumen</Text>
             <View style={styles.statGrid}>
               {stats.map((s) => (
                 <TouchableOpacity
@@ -277,7 +274,7 @@ const makeStyles = (colors) => StyleSheet.create({
   // Pestañas ARS / USD lado a lado dentro del marco
   tabRow: { flexDirection: "row", height: TAB_H },
   tabHalf: { flex: 1, alignItems: "center", justifyContent: "center" },
-  tabCode: { fontWeight: "900", fontSize: 16 },
+  tabCode: { fontWeight: "700", fontSize: 13, letterSpacing: 0.3 },
   tabCodeFront: { color: colors.greenBright }, // seleccionada: solo texto verde
   tabCodeBehind: { color: colors.text },
   tabLbl: { fontSize: 11, fontWeight: "700", marginTop: 1 },
@@ -287,7 +284,7 @@ const makeStyles = (colors) => StyleSheet.create({
   sectionLabel: {
     color: colors.muted,
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: "600",
     letterSpacing: 0.5,
     textTransform: "uppercase",
     marginTop: 20,
@@ -337,12 +334,12 @@ const makeStyles = (colors) => StyleSheet.create({
     width: "48%",
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingVertical: 16,
-    paddingHorizontal: 14,
-    borderRadius: 16,
+    gap: 7,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 14,
   },
-  quickLabel: { color: "#fff", fontWeight: "800", fontSize: 14, flexShrink: 1 },
+  quickLabel: { color: "#fff", fontWeight: "600", fontSize: 13, flexShrink: 1 },
 
   statGrid: { gap: 10 },
   statCard: {
