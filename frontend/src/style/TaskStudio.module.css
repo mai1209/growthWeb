@@ -1,9 +1,12 @@
 .page {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   padding: 1.4rem 1.5rem 2rem;
   color: var(--color-text);
   min-height: 100vh;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .header,
@@ -37,6 +40,8 @@
 .layout {
   display: flex;
   align-items: stretch;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .editorCard,
@@ -49,6 +54,8 @@
 
 .listCard {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: calc(100vh - 150px);
 }
 
