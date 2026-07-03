@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { movimientoService } from "../api";
@@ -67,7 +70,10 @@ export default function SettlePersonalDebtModal({ visible, debt, onClose, onSave
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
         <View style={styles.sheet}>
           <View style={styles.header}>
             <Text style={styles.title}>Pagar deuda</Text>
@@ -76,7 +82,12 @@ export default function SettlePersonalDebtModal({ visible, debt, onClose, onSave
             </TouchableOpacity>
           </View>
 
-          <View style={styles.body}>
+          <ScrollView
+            contentContainerStyle={styles.body}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
+            showsVerticalScrollIndicator={false}
+          >
             {debt ? (
               <View style={styles.debtSummary}>
                 <Text style={styles.debtTitle}>{debt.categoria || "Deuda"}</Text>
@@ -139,9 +150,9 @@ export default function SettlePersonalDebtModal({ visible, debt, onClose, onSave
             >
               {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveText}>Aceptar</Text>}
             </TouchableOpacity>
-          </View>
+          </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -153,6 +164,7 @@ const makeStyles = (colors) => StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 8,
+    maxHeight: "92%",
   },
   header: {
     flexDirection: "row",

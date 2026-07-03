@@ -219,6 +219,7 @@ export default function FiltrosScreen() {
         <SectionList
           sections={sections}
           keyExtractor={(item) => item._id}
+          stickySectionHeadersEnabled={false}
           contentContainerStyle={{ padding: 16, paddingTop: 8, paddingBottom: 30 }}
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={fetchData} tintColor={colors.green} />
@@ -407,8 +408,9 @@ const makeStyles = (colors) => StyleSheet.create({
     fontWeight: "800",
     textTransform: "uppercase",
     letterSpacing: 0.5,
-    marginTop: 10,
-    marginBottom: 8,
+    backgroundColor: colors.bg,
+    paddingTop: 14,
+    paddingBottom: 8,
   },
   movCard: {
     flexDirection: "row",

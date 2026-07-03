@@ -190,7 +190,12 @@ export default function NoteEditorModal({ visible, note, folders = [], onClose, 
 
             {/* Fondo */}
             <Text style={styles.fieldLabel}>Fondo</Text>
-            <View style={styles.colorGrid}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.colorRow}
+            >
               {NOTE_COLOR_KEYS.map((key) => {
                 const c = getNoteColor(key);
                 const active = color === key;
@@ -204,7 +209,7 @@ export default function NoteEditorModal({ visible, note, folders = [], onClose, 
                   </TouchableOpacity>
                 );
               })}
-            </View>
+            </ScrollView>
 
             {/* Título */}
             <Text style={styles.fieldLabel}>Título</Text>
@@ -320,7 +325,7 @@ const makeStyles = (colors) =>
       marginTop: 18,
       marginBottom: 9,
     },
-    colorGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+    colorRow: { flexDirection: "row", gap: 10, paddingVertical: 2, paddingRight: 8 },
     colorDot: {
       width: 30,
       height: 30,
