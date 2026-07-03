@@ -17,7 +17,6 @@ import { statAccents, useTheme } from "../theme";
 import MovementFormModal from "../components/MovementFormModal";
 import HistoryModal from "../components/HistoryModal";
 import {
-  CURRENCY_OPTIONS,
   filterMovimientosByCurrency,
   formatMoney,
   getCurrencyMeta,
@@ -25,47 +24,67 @@ import {
   summarizeByType,
 } from "../utils/finance";
 
-// Geometría del marco verde tipo "pestaña": contorno + relleno de la pestaña activa
+// Geometría del marco verde tipo "pestaña": contorno con la pestaña activa
+// sobresaliendo hacia arriba. Generalizado a N pestañas de igual ancho.
 const TAB_H = 40; // alto de la zona de pestañas
-const buildFramePaths = (W, H, activeLeft) => {
-  if (!W || !H) return { fill: "", outline: "" };
+const buildFramePaths = (W, H, activeIndex, count) => {
+  if (!W || !H || !count) return { fill: "", outline: "" };
   const L = 1;
   const R = W - 1;
   const T = 1;
   const B = H - 1;
-  const mid = W / 2;
   const bodyTop = T + TAB_H;
-  const rT = 14; // esquinas superiores de la pestaña
-  const rB = 22; // esquinas del cuerpo
-  const rBase = 12; // curva donde la pestaña se une al cuerpo
+  const rT = 11; // esquinas superiores de la pestaña
+  const rB = 20; // esquinas del cuerpo
+  const rBase = 8; // curva donde la pestaña se une al cuerpo
+  const seg = (R - L) / count;
+  const xa = L + activeIndex * seg; // borde izquierdo de la pestaña activa
+  const xb = L + (activeIndex + 1) * seg; // borde derecho de la pestaña activa
+  const atLeft = activeIndex === 0;
+  const atRight = activeIndex === count - 1;
 
-  if (!activeLeft) {
-    // Pestaña activa a la DERECHA (USD)
-    const fill =
-      `M ${mid} ${bodyTop} L ${mid} ${T + rT} Q ${mid} ${T} ${mid + rT} ${T} ` +
-      `L ${R - rT} ${T} Q ${R} ${T} ${R} ${T + rT} L ${R} ${bodyTop} Z`;
-    const outline =
-      `M ${L} ${bodyTop + rB} Q ${L} ${bodyTop} ${L + rB} ${bodyTop} ` +
-      `L ${mid - rBase} ${bodyTop} Q ${mid} ${bodyTop} ${mid} ${bodyTop - rBase} ` +
-      `L ${mid} ${T + rT} Q ${mid} ${T} ${mid + rT} ${T} ` +
-      `L ${R - rT} ${T} Q ${R} ${T} ${R} ${T + rT} ` +
-      `L ${R} ${B - rB} Q ${R} ${B} ${R - rB} ${B} ` +
-      `L ${L + rB} ${B} Q ${L} ${B} ${L} ${B - rB} Z`;
-    return { fill, outline };
+  // --- Contorno (sentido horario) ---
+  let d = "";
+  if (atLeft) {
+    d += `M ${L} ${T + rT} Q ${L} ${T} ${L + rT} ${T} `;
+  } else {
+    d += `M ${L} ${bodyTop + rB} Q ${L} ${bodyTop} ${L + rB} ${bodyTop} `;
+    d += `L ${xa - rBase} ${bodyTop} Q ${xa} ${bodyTop} ${xa} ${bodyTop - rBase} `;
+    d += `L ${xa} ${T + rT} Q ${xa} ${T} ${xa + rT} ${T} `;
   }
 
-  // Pestaña activa a la IZQUIERDA (ARS)
+  if (atRight) {
+    d += `L ${R - rT} ${T} Q ${R} ${T} ${R} ${T + rT} `;
+  } else {
+    d += `L ${xb - rT} ${T} Q ${xb} ${T} ${xb} ${T + rT} `;
+    d += `L ${xb} ${bodyTop - rBase} Q ${xb} ${bodyTop} ${xb + rBase} ${bodyTop} `;
+    d += `L ${R - rB} ${bodyTop} Q ${R} ${bodyTop} ${R} ${bodyTop + rB} `;
+  }
+
+  d += `L ${R} ${B - rB} Q ${R} ${B} ${R - rB} ${B} `;
+  d += `L ${L + rB} ${B} Q ${L} ${B} ${L} ${B - rB} `;
+  d += atLeft ? `L ${L} ${T + rT} Z` : `L ${L} ${bodyTop + rB} Z`;
+
+  const fL = atLeft ? L : xa;
+  const fR = atRight ? R : xb;
   const fill =
-    `M ${L} ${bodyTop} L ${L} ${T + rT} Q ${L} ${T} ${L + rT} ${T} ` +
-    `L ${mid - rT} ${T} Q ${mid} ${T} ${mid} ${T + rT} L ${mid} ${bodyTop} Z`;
-  const outline =
-    `M ${L} ${T + rT} Q ${L} ${T} ${L + rT} ${T} ` +
-    `L ${mid - rT} ${T} Q ${mid} ${T} ${mid} ${T + rT} ` +
-    `L ${mid} ${bodyTop - rBase} Q ${mid} ${bodyTop} ${mid + rBase} ${bodyTop} ` +
-    `L ${R - rB} ${bodyTop} Q ${R} ${bodyTop} ${R} ${bodyTop + rB} ` +
-    `L ${R} ${B - rB} Q ${R} ${B} ${R - rB} ${B} ` +
-    `L ${L + rB} ${B} Q ${L} ${B} ${L} ${B - rB} Z`;
-  return { fill, outline };
+    `M ${fL} ${bodyTop} L ${fL} ${T + rT} Q ${fL} ${T} ${fL + rT} ${T} ` +
+    `L ${fR - rT} ${T} Q ${fR} ${T} ${fR} ${T + rT} L ${fR} ${bodyTop} Z`;
+
+  return { fill, outline: d };
+};
+
+const HOME_TABS = [
+  { key: "ARS", label: "ARS" },
+  { key: "USD", label: "USD" },
+  { key: "deuda", label: "Deudas" },
+  { key: "ahorro", label: "Ahorros" },
+];
+
+const fmtDate = (value) => {
+  const s = String(value || "").slice(0, 10);
+  const [y, m, d] = s.split("-");
+  return y && m && d ? `${d}/${m}/${y}` : s;
 };
 
 export default function HomeScreen() {
@@ -76,10 +95,13 @@ export default function HomeScreen() {
   const [movimientos, setMovimientos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [currency, setCurrency] = useState("ARS");
+  const [tab, setTab] = useState("ARS");
   const [visible, setVisible] = useState(true);
   const [modalMode, setModalMode] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
+
+  const isCurrency = tab === "ARS" || tab === "USD";
+  const currency = isCurrency ? tab : "ARS";
 
   const goToFilter = (tipo) =>
     navigation.navigate("Filtros", { tipo: tipo || "all", currency, nonce: Date.now() });
@@ -110,11 +132,20 @@ export default function HomeScreen() {
     };
   }, [movimientos, currency]);
 
+  // Movimientos del tipo activo (deuda / ahorro), más recientes primero
+  const typeMovs = useMemo(() => {
+    if (isCurrency) return [];
+    return movimientos
+      .filter((m) => m.tipo === tab)
+      .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+  }, [movimientos, tab, isCurrency]);
+
   const currencyMeta = getCurrencyMeta(currency);
   const money = (amount) => (visible ? formatMoney(amount, currency) : "••••");
+  const moneyOf = (amount, mon) => (visible ? formatMoney(amount, mon || "ARS") : "••••");
 
-  const activeLeft = currency === CURRENCY_OPTIONS[0].value;
-  const { fill: frameFill, outline: frameOutline } = buildFramePaths(frame.w, frame.h, activeLeft);
+  const activeIndex = HOME_TABS.findIndex((t) => t.key === tab);
+  const { outline: frameOutline } = buildFramePaths(frame.w, frame.h, activeIndex, HOME_TABS.length);
 
 
   const quickActions = [
@@ -168,17 +199,17 @@ export default function HomeScreen() {
           ) : null}
 
           <View style={styles.tabRow}>
-            {CURRENCY_OPTIONS.map((opt) => {
-              const active = opt.value === currency;
+            {HOME_TABS.map((t) => {
+              const active = t.key === tab;
               return (
                 <TouchableOpacity
-                  key={opt.value}
+                  key={t.key}
                   style={styles.tabHalf}
-                  onPress={() => setCurrency(opt.value)}
+                  onPress={() => setTab(t.key)}
                   activeOpacity={0.9}
                 >
                   <Text style={[styles.tabCode, active ? styles.tabCodeFront : styles.tabCodeBehind]}>
-                    {opt.codeLabel}
+                    {t.label}
                   </Text>
                 </TouchableOpacity>
               );
@@ -202,47 +233,126 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.balanceLabel}>{currencyMeta.codeLabel}</Text>
-            {loading ? (
-              <ActivityIndicator color={colors.green} style={{ alignSelf: "flex-start", marginTop: 6 }} />
+            {isCurrency ? (
+              <>
+                <Text style={styles.balanceLabel}>{currencyMeta.codeLabel}</Text>
+                {loading ? (
+                  <ActivityIndicator color={colors.green} style={{ alignSelf: "flex-start", marginTop: 6 }} />
+                ) : (
+                  <Text style={styles.balanceValue}>{money(historical.total)}</Text>
+                )}
+
+                {error ? <Text style={styles.error}>{error}</Text> : null}
+
+                {/* Accesos rápidos */}
+                <Text style={styles.sectionLabel}>Cargar movimiento</Text>
+                <View style={styles.quickGrid}>
+                  {quickActions.map((a) => (
+                    <TouchableOpacity
+                      key={a.key}
+                      style={[styles.quickBtn, { backgroundColor: a.bg }]}
+                      onPress={() => setModalMode(a.key)}
+                      activeOpacity={0.85}
+                    >
+                      <Ionicons name={a.icon} size={18} color="#fff" />
+                      <Text style={styles.quickLabel}>{a.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Movimientos del mes (clickeables → Filtros filtrado) */}
+                <Text style={styles.sectionLabel}>Resumen</Text>
+                <View style={styles.statGrid}>
+                  {stats.map((s) => (
+                    <TouchableOpacity
+                      key={s.label}
+                      style={styles.statCard}
+                      activeOpacity={0.7}
+                      onPress={() => goToFilter(s.tipo)}
+                    >
+                      <View style={[styles.statBar, { backgroundColor: s.accent }]} />
+                      <Text style={styles.statLabel}>{s.label}</Text>
+                      <Text style={styles.statValue}>{s.value}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
             ) : (
-              <Text style={styles.balanceValue}>{money(historical.total)}</Text>
-            )}
+              <>
+                <Text style={styles.balanceLabel}>{tab === "deuda" ? "Deudas" : "Ahorros"}</Text>
+                <Text style={styles.balanceSub}>
+                  {typeMovs.length} {typeMovs.length === 1 ? "movimiento" : "movimientos"}
+                </Text>
 
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-
-            {/* Accesos rápidos */}
-            <Text style={styles.sectionLabel}>Cargar movimiento</Text>
-            <View style={styles.quickGrid}>
-              {quickActions.map((a) => (
+                {/* Botón rápido para cargar del tipo activo */}
                 <TouchableOpacity
-                  key={a.key}
-                  style={[styles.quickBtn, { backgroundColor: a.bg }]}
-                  onPress={() => setModalMode(a.key)}
+                  style={[styles.addTypeBtn, { backgroundColor: tab === "deuda" ? "#d6a92e" : "#2bb888" }]}
+                  onPress={() => setModalMode(tab)}
                   activeOpacity={0.85}
                 >
-                  <Ionicons name={a.icon} size={18} color="#fff" />
-                  <Text style={styles.quickLabel}>{a.label}</Text>
+                  <Ionicons name={tab === "deuda" ? "person-outline" : "wallet-outline"} size={18} color="#fff" />
+                  <Text style={styles.quickLabel}>
+                    {tab === "deuda" ? "Cargar deuda" : "Nuevo ahorro"}
+                  </Text>
                 </TouchableOpacity>
-              ))}
-            </View>
 
-            {/* Movimientos del mes (clickeables → Filtros filtrado) */}
-            <Text style={styles.sectionLabel}>Resumen</Text>
-            <View style={styles.statGrid}>
-              {stats.map((s) => (
-                <TouchableOpacity
-                  key={s.label}
-                  style={styles.statCard}
-                  activeOpacity={0.7}
-                  onPress={() => goToFilter(s.tipo)}
-                >
-                  <View style={[styles.statBar, { backgroundColor: s.accent }]} />
-                  <Text style={styles.statLabel}>{s.label}</Text>
-                  <Text style={styles.statValue}>{s.value}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                <Text style={styles.sectionLabel}>Movimientos</Text>
+                {loading ? (
+                  <ActivityIndicator color={colors.green} style={{ alignSelf: "flex-start", marginTop: 6 }} />
+                ) : error ? (
+                  <Text style={styles.error}>{error}</Text>
+                ) : typeMovs.length === 0 ? (
+                  <Text style={styles.emptyText}>
+                    No hay {tab === "deuda" ? "deudas" : "ahorros"} cargados todavía.
+                  </Text>
+                ) : (
+                  <View style={styles.statGrid}>
+                    {typeMovs.map((m) => {
+                      const isPaid = m.tipo === "deuda" && m.deudaEstado === "pagada";
+                      const isPartial =
+                        m.tipo === "deuda" && !isPaid && Number(m.deudaPagado) > 0;
+                      return (
+                        <TouchableOpacity
+                          key={m._id}
+                          style={styles.movRow}
+                          activeOpacity={0.7}
+                          onPress={() => goToFilter(tab)}
+                        >
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.movTitle} numberOfLines={1}>
+                              {m.categoria || "Sin categoría"}
+                            </Text>
+                            {m.deudaAcreedor ? (
+                              <Text style={styles.movSub} numberOfLines={1}>
+                                Acreedor: {m.deudaAcreedor}
+                              </Text>
+                            ) : m.detalle ? (
+                              <Text style={styles.movSub} numberOfLines={1}>
+                                {m.detalle}
+                              </Text>
+                            ) : null}
+                            <View style={styles.movMetaRow}>
+                              <Text style={styles.movDate}>{fmtDate(m.fecha)}</Text>
+                              {m.tipo === "deuda" ? (
+                                <Text
+                                  style={[
+                                    styles.movChip,
+                                    { color: isPaid ? colors.greenDark : isPartial ? colors.greenDark : "#d6a92e" },
+                                  ]}
+                                >
+                                  {isPaid ? "Pagada" : isPartial ? "Parcial" : "Pendiente"}
+                                </Text>
+                              ) : null}
+                            </View>
+                          </View>
+                          <Text style={styles.movAmount}>{moneyOf(m.monto, m.moneda)}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+              </>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -371,4 +481,34 @@ const makeStyles = (colors) => StyleSheet.create({
     textTransform: "uppercase",
   },
   statValue: { color: colors.text, fontSize: 17, fontWeight: "800", textAlign: "right" },
+
+  balanceSub: { color: colors.muted, fontSize: 13, marginTop: 4 },
+  addTypeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 7,
+    marginTop: 14,
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+  },
+  emptyText: { color: colors.muted, fontSize: 14, marginTop: 4 },
+  movRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: colors.cardSoft,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  movTitle: { color: colors.text, fontSize: 14, fontWeight: "700" },
+  movSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  movMetaRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4 },
+  movDate: { color: colors.muted, fontSize: 11 },
+  movChip: { fontSize: 11, fontWeight: "800" },
+  movAmount: { color: colors.text, fontSize: 15, fontWeight: "800" },
 });
