@@ -9,7 +9,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.growthmanager.mobile",
-      "buildNumber": "8",
+      "buildNumber": "10",
       "config": {
         "usesNonExemptEncryption": false
       }
