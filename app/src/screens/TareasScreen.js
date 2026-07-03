@@ -30,6 +30,7 @@ export default function TareasScreen() {
   const [busyIds, setBusyIds] = useState([]);
   const [viewMode, setViewMode] = useState("day"); // day | calendar | history
   const [formDate, setFormDate] = useState(null);
+  const [editTask, setEditTask] = useState(null);
 
   const fetchTasks = useCallback(async () => {
     setError("");
@@ -98,13 +99,14 @@ export default function TareasScreen() {
       "¿Qué querés hacer?",
       [
         { text: "Ver tareas del día", onPress: () => { setSelectedDate(date); setViewMode("day"); } },
-        { text: "Crear tarea", onPress: () => { setFormDate(date); setShowForm(true); } },
+        { text: "Crear tarea", onPress: () => { setEditTask(null); setFormDate(date); setShowForm(true); } },
         { text: "Cancelar", style: "cancel" },
       ]
     );
   };
 
   const openNewTask = () => {
+    setEditTask(null);
     setFormDate(selectedDate);
     setShowForm(true);
   };
@@ -195,9 +197,20 @@ export default function TareasScreen() {
                     </View>
                   </View>
 
-                  <TouchableOpacity onPress={() => handleDelete(item)} hitSlop={8}>
-                    <Ionicons name="trash-outline" size={20} color={colors.text} />
-                  </TouchableOpacity>
+                  <View style={styles.cardActions}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setEditTask(item);
+                        setShowForm(true);
+                      }}
+                      hitSlop={8}
+                    >
+                      <Ionicons name="pencil" size={19} color={colors.text} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDelete(item)} hitSlop={8}>
+                      <Ionicons name="trash-outline" size={20} color={colors.text} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               );
             }}
@@ -213,7 +226,11 @@ export default function TareasScreen() {
       <TaskFormModal
         visible={showForm}
         defaultDate={formDate || selectedDate}
-        onClose={() => setShowForm(false)}
+        editTask={editTask}
+        onClose={() => {
+          setShowForm(false);
+          setEditTask(null);
+        }}
         onSaved={fetchTasks}
       />
     </SafeAreaView>
@@ -325,6 +342,7 @@ const makeStyles = (colors) => StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  cardActions: { flexDirection: "row", alignItems: "center", gap: 14 },
   cardTitle: { color: colors.text, fontSize: 16, fontWeight: "700" },
   cardTitleDone: { textDecorationLine: "line-through", color: colors.muted },
   metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 5 },

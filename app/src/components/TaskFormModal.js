@@ -42,7 +42,7 @@ const DAYS = ["D", "L", "M", "MI", "J", "V", "S"];
 const pad = (n) => String(n).padStart(2, "0");
 const toYMD = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-export default function TaskFormModal({ visible, defaultDate, onClose, onSaved }) {
+export default function TaskFormModal({ visible, defaultDate, editTask = null, onClose, onSaved }) {
   const { colors, isDark } = useTheme();
   const styles = makeStyles(colors);
   const [meta, setMeta] = useState("");
@@ -60,7 +60,29 @@ export default function TaskFormModal({ visible, defaultDate, onClose, onSaved }
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (visible) {
+    if (!visible) return;
+    if (editTask) {
+      // Precargar para edición
+      setMeta(editTask.meta || "");
+      setFecha(new Date(`${String(editTask.fecha).slice(0, 10)}T12:00:00`));
+      const horario = editTask.horario || "";
+      if (/^\d{1,2}:\d{2}$/.test(horario)) {
+        const [h, m] = horario.split(":").map(Number);
+        const t = new Date();
+        t.setHours(h, m, 0, 0);
+        setExactTime(t);
+        setUseExact(true);
+        setMomento("");
+      } else {
+        setMomento(horario);
+        setUseExact(false);
+        setExactTime(new Date());
+      }
+      setUrgencia(editTask.urgencia || "importante");
+      setColor(editTask.color || "color1");
+      setEsRecurrente(Boolean(editTask.esRecurrente));
+      setDias(Array.isArray(editTask.diasRepeticion) ? editTask.diasRepeticion : []);
+    } else {
       setMeta("");
       setFecha(defaultDate || new Date());
       setMomento("");
@@ -70,10 +92,10 @@ export default function TaskFormModal({ visible, defaultDate, onClose, onSaved }
       setColor("color1");
       setEsRecurrente(false);
       setDias([]);
-      setError("");
-      setSaving(false);
     }
-  }, [visible, defaultDate]);
+    setError("");
+    setSaving(false);
+  }, [visible, defaultDate, editTask]);
 
   const toggleDay = (d) =>
     setDias((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]));
@@ -89,10 +111,9 @@ export default function TaskFormModal({ visible, defaultDate, onClose, onSaved }
       const horario = useExact
         ? `${pad(exactTime.getHours())}:${pad(exactTime.getMinutes())}`
         : momento;
-      await taskService.create({
+      const payload = {
         meta: meta.trim(),
         tipo: "task",
-        contenido: "",
         fecha: toYMD(fecha),
         horario,
         urgencia,
@@ -100,7 +121,12 @@ export default function TaskFormModal({ visible, defaultDate, onClose, onSaved }
         esRecurrente,
         diasRepeticion: esRecurrente ? dias : [],
         workspace: "personal",
-      });
+      };
+      if (editTask) {
+        await taskService.update(editTask._id, payload);
+      } else {
+        await taskService.create({ ...payload, contenido: "" });
+      }
       onSaved?.();
       onClose?.();
     } catch (err) {
@@ -115,7 +141,7 @@ export default function TaskFormModal({ visible, defaultDate, onClose, onSaved }
       <View style={styles.overlay}>
         <View style={styles.sheet}>
           <View style={styles.header}>
-            <Text style={styles.title}>Nueva tarea</Text>
+            <Text style={styles.title}>{editTask ? "Editar tarea" : "Nueva tarea"}</Text>
             <TouchableOpacity onPress={onClose} hitSlop={10}>
               <Ionicons name="close" size={24} color={colors.muted} />
             </TouchableOpacity>
@@ -262,7 +288,11 @@ export default function TaskFormModal({ visible, defaultDate, onClose, onSaved }
               onPress={handleSave}
               disabled={saving}
             >
-              {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveText}>Crear tarea</Text>}
+              {saving ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.saveText}>{editTask ? "Guardar cambios" : "Crear tarea"}</Text>
+              )}
             </TouchableOpacity>
           </ScrollView>
         </View>
