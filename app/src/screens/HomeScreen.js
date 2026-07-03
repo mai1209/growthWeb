@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import Svg, { Path } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
 import { movimientoService } from "../api";
 import { statAccents, useTheme } from "../theme";
@@ -23,56 +22,6 @@ import {
   isSameMonth,
   summarizeByType,
 } from "../utils/finance";
-
-// Geometría del marco verde tipo "pestaña": contorno con la pestaña activa
-// sobresaliendo hacia arriba. Generalizado a N pestañas de igual ancho.
-const TAB_H = 40; // alto de la zona de pestañas
-const buildFramePaths = (W, H, activeIndex, count) => {
-  if (!W || !H || !count) return { fill: "", outline: "" };
-  const L = 1;
-  const R = W - 1;
-  const T = 1;
-  const B = H - 1;
-  const bodyTop = T + TAB_H;
-  const rT = 11; // esquinas superiores de la pestaña
-  const rB = 20; // esquinas del cuerpo
-  const rBase = 8; // curva donde la pestaña se une al cuerpo
-  const seg = (R - L) / count;
-  const xa = L + activeIndex * seg; // borde izquierdo de la pestaña activa
-  const xb = L + (activeIndex + 1) * seg; // borde derecho de la pestaña activa
-  const atLeft = activeIndex === 0;
-  const atRight = activeIndex === count - 1;
-
-  // --- Contorno (sentido horario) ---
-  let d = "";
-  if (atLeft) {
-    d += `M ${L} ${T + rT} Q ${L} ${T} ${L + rT} ${T} `;
-  } else {
-    d += `M ${L} ${bodyTop + rB} Q ${L} ${bodyTop} ${L + rB} ${bodyTop} `;
-    d += `L ${xa - rBase} ${bodyTop} Q ${xa} ${bodyTop} ${xa} ${bodyTop - rBase} `;
-    d += `L ${xa} ${T + rT} Q ${xa} ${T} ${xa + rT} ${T} `;
-  }
-
-  if (atRight) {
-    d += `L ${R - rT} ${T} Q ${R} ${T} ${R} ${T + rT} `;
-  } else {
-    d += `L ${xb - rT} ${T} Q ${xb} ${T} ${xb} ${T + rT} `;
-    d += `L ${xb} ${bodyTop - rBase} Q ${xb} ${bodyTop} ${xb + rBase} ${bodyTop} `;
-    d += `L ${R - rB} ${bodyTop} Q ${R} ${bodyTop} ${R} ${bodyTop + rB} `;
-  }
-
-  d += `L ${R} ${B - rB} Q ${R} ${B} ${R - rB} ${B} `;
-  d += `L ${L + rB} ${B} Q ${L} ${B} ${L} ${B - rB} `;
-  d += atLeft ? `L ${L} ${T + rT} Z` : `L ${L} ${bodyTop + rB} Z`;
-
-  const fL = atLeft ? L : xa;
-  const fR = atRight ? R : xb;
-  const fill =
-    `M ${fL} ${bodyTop} L ${fL} ${T + rT} Q ${fL} ${T} ${fL + rT} ${T} ` +
-    `L ${fR - rT} ${T} Q ${fR} ${T} ${fR} ${T + rT} L ${fR} ${bodyTop} Z`;
-
-  return { fill, outline: d };
-};
 
 const HOME_TABS = [
   { key: "ARS", label: "ARS" },
@@ -91,7 +40,6 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
   const navigation = useNavigation();
-  const [frame, setFrame] = useState({ w: 0, h: 0 });
   const [movimientos, setMovimientos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -144,10 +92,6 @@ export default function HomeScreen() {
   const money = (amount) => (visible ? formatMoney(amount, currency) : "••••");
   const moneyOf = (amount, mon) => (visible ? formatMoney(amount, mon || "ARS") : "••••");
 
-  const activeIndex = HOME_TABS.findIndex((t) => t.key === tab);
-  const { outline: frameOutline } = buildFramePaths(frame.w, frame.h, activeIndex, HOME_TABS.length);
-
-
   const quickActions = [
     { key: "ingreso", label: "Nuevo ingreso", icon: "arrow-down-circle-outline", bg: "#35b53a" },
     { key: "egreso", label: "Nuevo egreso", icon: "arrow-up-circle-outline", bg: "#e0654f" },
@@ -172,41 +116,19 @@ export default function HomeScreen() {
           <RefreshControl refreshing={false} onRefresh={fetchData} tintColor={colors.green} />
         }
       >
-        {/* Marco verde tipo pestaña: solo la activa pintada, el resto contorno */}
-        <View
-          style={styles.cardStack}
-          onLayout={(e) =>
-            setFrame({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })
-          }
-        >
-          {frame.w > 0 ? (
-            <Svg
-              width={frame.w}
-              height={frame.h}
-              style={StyleSheet.absoluteFill}
-              pointerEvents="none"
-            >
-              <Path
-                d={frameOutline}
-                stroke={colors.greenBright}
-                strokeWidth={2}
-                fill="none"
-                strokeLinejoin="round"
-              />
-            </Svg>
-          ) : null}
-
-          <View style={styles.tabRow}>
+        {/* Selector segmentado ARS · USD · Deudas · Ahorros */}
+        <View style={styles.cardStack}>
+          <View style={styles.segmentRow}>
             {HOME_TABS.map((t) => {
               const active = t.key === tab;
               return (
                 <TouchableOpacity
                   key={t.key}
-                  style={styles.tabHalf}
+                  style={[styles.segment, active && styles.segmentActive]}
                   onPress={() => setTab(t.key)}
-                  activeOpacity={0.9}
+                  activeOpacity={0.85}
                 >
-                  <Text style={[styles.tabCode, active ? styles.tabCodeFront : styles.tabCodeBehind]}>
+                  <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
                     {t.label}
                   </Text>
                 </TouchableOpacity>
@@ -379,15 +301,25 @@ const makeStyles = (colors) => StyleSheet.create({
 
   cardStack: { position: "relative" },
 
-  // Pestañas ARS / USD lado a lado dentro del marco
-  tabRow: { flexDirection: "row", height: TAB_H },
-  tabHalf: { flex: 1, alignItems: "center", justifyContent: "center" },
-  tabCode: { fontWeight: "700", fontSize: 13, letterSpacing: 0.3 },
-  tabCodeFront: { color: colors.greenBright }, // seleccionada: solo texto verde
-  tabCodeBehind: { color: colors.text },
-  tabLbl: { fontSize: 11, fontWeight: "700", marginTop: 1 },
-  tabLblFront: { color: colors.green },
-  tabLblBehind: { color: colors.muted },
+  // Selector segmentado tipo píldora (mismo lenguaje que Filtros/Métricas)
+  segmentRow: {
+    flexDirection: "row",
+    gap: 4,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 14,
+    padding: 4,
+  },
+  segment: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 9,
+    borderRadius: 10,
+  },
+  segmentActive: { backgroundColor: colors.greenSoft },
+  segmentText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
+  segmentTextActive: { color: colors.greenDark },
 
   sectionLabel: {
     color: colors.muted,
@@ -399,12 +331,12 @@ const makeStyles = (colors) => StyleSheet.create({
     marginBottom: 10,
   },
 
-  // El cuerpo va transparente: el "card" es solo el contorno verde del SVG
-  cardBody: { position: "relative", paddingHorizontal: 18, paddingTop: 12, paddingBottom: 18 },
+  // Contenido flotando, sin marco
+  cardBody: { position: "relative", paddingHorizontal: 2, paddingTop: 16, paddingBottom: 8 },
   cardActions: {
     position: "absolute",
-    top: 12,
-    right: 14,
+    top: 16,
+    right: 2,
     flexDirection: "row",
     gap: 8,
     zIndex: 2,

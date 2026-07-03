@@ -211,29 +211,32 @@ export default function FiltrosScreen() {
         </View>
       )}
 
+      {/* Cards de resultados FIJAS (no scrollean) */}
+      <View style={styles.summaryWrap}>
+        <View style={styles.summaryGrid}>
+          {summaryCards.map((c) => (
+            <View key={c.label} style={styles.summaryCard}>
+              <View style={[styles.sumBar, { backgroundColor: c.accent }]} />
+              <Text style={styles.sumLabel}>{c.label}</Text>
+              <Text style={styles.sumValue}>{c.value}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
       {loading ? (
         <ActivityIndicator color={colors.green} style={{ marginTop: 30 }} />
       ) : error ? (
         <Text style={styles.error}>{error}</Text>
       ) : (
         <SectionList
+          style={{ flex: 1 }}
           sections={sections}
           keyExtractor={(item) => item._id}
           stickySectionHeadersEnabled={false}
           contentContainerStyle={{ padding: 16, paddingTop: 8, paddingBottom: 30 }}
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={fetchData} tintColor={colors.green} />
-          }
-          ListHeaderComponent={
-            <View style={styles.summaryGrid}>
-              {summaryCards.map((c) => (
-                <View key={c.label} style={styles.summaryCard}>
-                  <View style={[styles.sumBar, { backgroundColor: c.accent }]} />
-                  <Text style={styles.sumLabel}>{c.label}</Text>
-                  <Text style={styles.sumValue}>{c.value}</Text>
-                </View>
-              ))}
-            </View>
           }
           ListEmptyComponent={<Text style={styles.empty}>No hay movimientos para mostrar.</Text>}
           renderSectionHeader={({ section }) => (
@@ -273,8 +276,8 @@ export default function FiltrosScreen() {
                       style={styles.payDebtBtn}
                       onPress={() => setSettleDebt(item)}
                     >
-                      <Ionicons name="checkmark-circle-outline" size={15} color={colors.greenDark} />
-                      <Text style={styles.payDebtText}>Pagar</Text>
+                      <Ionicons name="cash-outline" size={15} color="#3a2d05" />
+                      <Text style={styles.payDebtText}>Pagar deuda</Text>
                     </TouchableOpacity>
                   ) : null}
                 </View>
@@ -386,7 +389,8 @@ const makeStyles = (colors) => StyleSheet.create({
   error: { color: colors.red, padding: 16 },
   empty: { color: colors.muted, padding: 16, textAlign: "center" },
 
-  summaryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 12 },
+  summaryWrap: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 6 },
+  summaryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   summaryCard: {
     width: "48%",
     backgroundColor: colors.card,
@@ -445,9 +449,7 @@ const makeStyles = (colors) => StyleSheet.create({
     paddingVertical: 7,
     paddingHorizontal: 12,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.greenBorder,
-    backgroundColor: colors.greenSoft,
+    backgroundColor: "#e0b32e",
   },
-  payDebtText: { color: colors.greenDark, fontWeight: "800", fontSize: 13 },
+  payDebtText: { color: "#3a2d05", fontWeight: "800", fontSize: 13 },
 });
