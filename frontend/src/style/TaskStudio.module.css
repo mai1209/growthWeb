@@ -2602,6 +2602,7 @@ button.folderItem {
 @media (max-width: 760px) {
   .page {
     padding: 1rem 1rem 7rem;
+    overflow-x: hidden;
   }
 
   .header {
@@ -2749,6 +2750,7 @@ button.folderItem {
 @media (max-width: 520px) {
   .page {
     padding: 0.75rem 0.75rem 6rem;
+    overflow-x: hidden;
   }
 
   .header,
@@ -2769,6 +2771,7 @@ button.folderItem {
   .editorHeader {
     flex-direction: row;
     align-items: center;
+    flex-wrap: wrap;
     gap: 0.5rem;
   }
 
@@ -2839,8 +2842,10 @@ button.folderItem {
   }
 
   .listHeaderActions {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     width: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .listHeaderActions .secondaryButton {
