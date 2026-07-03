@@ -162,7 +162,9 @@ export default function PomodoroScreen() {
   const deleteNote = (id) => setNotes((n) => n.filter((it) => it.id !== id));
 
   // Anillo
-  const R = 120;
+  const R = 98;
+  const RING = 230;
+  const RC = RING / 2;
   const CIRC = 2 * Math.PI * R;
   const progress = totalSecs > 0 ? remaining / totalSecs : 0;
   const dashOffset = CIRC * (1 - progress);
@@ -194,26 +196,26 @@ export default function PomodoroScreen() {
 
         {/* Anillo + tiempo */}
         <View style={styles.ringWrap}>
-          <Svg width={280} height={280} style={StyleSheet.absoluteFill}>
+          <Svg width={RING} height={RING} style={StyleSheet.absoluteFill}>
             <Circle
-              cx={140}
-              cy={140}
+              cx={RC}
+              cy={RC}
               r={R}
               stroke={colors.greenSoft}
-              strokeWidth={12}
+              strokeWidth={11}
               fill="none"
             />
             <Circle
-              cx={140}
-              cy={140}
+              cx={RC}
+              cy={RC}
               r={R}
               stroke={colors.greenBright}
-              strokeWidth={12}
+              strokeWidth={11}
               fill="none"
               strokeLinecap="round"
               strokeDasharray={CIRC}
               strokeDashoffset={dashOffset}
-              transform={`rotate(-90 140 140)`}
+              transform={`rotate(-90 ${RC} ${RC})`}
             />
           </Svg>
           <Text style={styles.time}>{fmt(remaining)}</Text>
@@ -325,14 +327,14 @@ const makeStyles = (colors) =>
     modeText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
     modeTextActive: { color: colors.greenDark },
     ringWrap: {
-      width: 280,
-      height: 280,
+      width: 230,
+      height: 230,
       alignSelf: "center",
-      marginTop: 24,
+      marginTop: 20,
       alignItems: "center",
       justifyContent: "center",
     },
-    time: { color: colors.text, fontSize: 58, fontWeight: "800", fontVariant: ["tabular-nums"] },
+    time: { color: colors.text, fontSize: 46, fontWeight: "800", fontVariant: ["tabular-nums"] },
     timeLabel: {
       color: colors.muted,
       fontSize: 13,
