@@ -24,14 +24,14 @@ export const lightColors = {
   redSoft: "rgba(186, 95, 80, 0.14)",
 };
 
-// Paleta del tema OSCURO
+// Paleta del tema OSCURO (copiada de la web: index.css :root)
 export const darkColors = {
-  bg: "#10150f",
-  card: "#1a211a",
-  cardSoft: "#161c16",
-  cardBorder: "rgba(255, 255, 255, 0.12)",
-  text: "#e7efe4",
-  muted: "#9bab9d",
+  bg: "#071821", // --background-color de la web (teal oscuro, no negro)
+  card: "#0d2831", // ~ --surface-card
+  cardSoft: "#0a2028", // superficie apenas recesada
+  cardBorder: "rgba(176, 213, 212, 0.12)", // --border-color
+  text: "#ecf6f3", // --color-text
+  muted: "#8ea8a8", // --color-muted
   green: "#6abf71",
   greenDark: "#8fd896",
   greenSoft: "rgba(106, 191, 113, 0.16)",

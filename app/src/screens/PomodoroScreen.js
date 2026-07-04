@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   Vibration,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -36,6 +37,10 @@ export default function PomodoroScreen() {
   const styles = makeStyles(colors);
 
   const [durations, setDurations] = useState({ focus: 25, short: 5, long: 15 });
+  const [longBreakInterval, setLongBreakInterval] = useState(4);
+  const [autoStartBreaks, setAutoStartBreaks] = useState(true);
+  const [autoStartPomodoros, setAutoStartPomodoros] = useState(true);
+  const [vibrateOn, setVibrateOn] = useState(true);
   const [mode, setMode] = useState("focus");
   const [running, setRunning] = useState(false);
   const [remaining, setRemaining] = useState(25 * 60);
@@ -43,6 +48,7 @@ export default function PomodoroScreen() {
   const [noteText, setNoteText] = useState("");
   const [completed, setCompleted] = useState(0);
   const [hydrated, setHydrated] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const targetRef = useRef(null);
   const totalSecs = durations[mode] * 60;
@@ -60,6 +66,10 @@ export default function PomodoroScreen() {
           const d = JSON.parse(s);
           setDurations({ focus: d.focus || 25, short: d.short || 5, long: d.long || 15 });
           setRemaining((d.focus || 25) * 60);
+          setLongBreakInterval(d.longBreakInterval || 4);
+          setAutoStartBreaks(d.autoStartBreaks !== undefined ? d.autoStartBreaks : true);
+          setAutoStartPomodoros(d.autoStartPomodoros !== undefined ? d.autoStartPomodoros : true);
+          setVibrateOn(d.vibrateOn !== undefined ? d.vibrateOn : true);
         }
         if (n) setNotes(JSON.parse(n));
         if (c) {
@@ -74,10 +84,18 @@ export default function PomodoroScreen() {
     })();
   }, []);
 
-  // Persistir
+  // Persistir (duraciones + configuración)
   useEffect(() => {
-    if (hydrated) SecureStore.setItemAsync(SETTINGS_KEY, JSON.stringify(durations)).catch(() => {});
-  }, [durations, hydrated]);
+    if (!hydrated) return;
+    const payload = {
+      ...durations,
+      longBreakInterval,
+      autoStartBreaks,
+      autoStartPomodoros,
+      vibrateOn,
+    };
+    SecureStore.setItemAsync(SETTINGS_KEY, JSON.stringify(payload)).catch(() => {});
+  }, [durations, longBreakInterval, autoStartBreaks, autoStartPomodoros, vibrateOn, hydrated]);
   useEffect(() => {
     if (hydrated) SecureStore.setItemAsync(NOTES_KEY, JSON.stringify(notes)).catch(() => {});
   }, [notes, hydrated]);
@@ -89,19 +107,24 @@ export default function PomodoroScreen() {
   }, [completed, hydrated]);
 
   const handleComplete = useCallback(() => {
-    Vibration.vibrate(600);
-    setRunning(false);
+    if (vibrateOn) Vibration.vibrate([0, 400, 150, 400]);
     targetRef.current = null;
+    let next;
+    let autostart;
     if (mode === "focus") {
-      const next = (completed + 1) % 4 === 0 ? "long" : "short";
-      setCompleted((c) => c + 1);
-      setMode(next);
-      setRemaining(durations[next] * 60);
+      const newCount = completed + 1;
+      setCompleted(newCount);
+      const interval = Math.max(1, longBreakInterval);
+      next = newCount % interval === 0 ? "long" : "short";
+      autostart = autoStartBreaks;
     } else {
-      setMode("focus");
-      setRemaining(durations.focus * 60);
+      next = "focus";
+      autostart = autoStartPomodoros;
     }
-  }, [mode, completed, durations]);
+    setMode(next);
+    setRemaining(durations[next] * 60);
+    setRunning(autostart);
+  }, [mode, completed, durations, longBreakInterval, autoStartBreaks, autoStartPomodoros, vibrateOn]);
 
   // Tick por timestamp
   useEffect(() => {
@@ -174,8 +197,13 @@ export default function PomodoroScreen() {
     <SafeAreaView style={styles.safe} edges={[]}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <Text style={styles.kicker}>POMODORO</Text>
-          <Text style={styles.title}>Enfoque</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.kicker}>POMODORO</Text>
+            <Text style={styles.title}>Enfoque</Text>
+          </View>
+          <TouchableOpacity style={styles.gearBtn} onPress={() => setSettingsOpen(true)} hitSlop={8}>
+            <Ionicons name="settings-outline" size={20} color={colors.muted} />
+          </TouchableOpacity>
         </View>
 
         {/* Modos */}
@@ -298,7 +326,84 @@ export default function PomodoroScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Modal de ajustes */}
+      <Modal visible={settingsOpen} animationType="slide" transparent onRequestClose={() => setSettingsOpen(false)}>
+        <View style={styles.overlay}>
+          <View style={styles.sheet}>
+            <View style={styles.sheetHead}>
+              <Text style={styles.sheetTitle}>Ajustes</Text>
+              <TouchableOpacity onPress={() => setSettingsOpen(false)} hitSlop={10}>
+                <Ionicons name="close" size={24} color={colors.muted} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.settingRow}>
+              <Text style={styles.settingRowLabel}>Descanso largo cada</Text>
+              <View style={styles.stepperInline}>
+                <TouchableOpacity
+                  style={styles.stepBtn}
+                  onPress={() => setLongBreakInterval((v) => Math.max(1, v - 1))}
+                >
+                  <Text style={styles.stepSign}>−</Text>
+                </TouchableOpacity>
+                <Text style={styles.stepVal}>{longBreakInterval}</Text>
+                <TouchableOpacity
+                  style={styles.stepBtn}
+                  onPress={() => setLongBreakInterval((v) => Math.min(12, v + 1))}
+                >
+                  <Text style={styles.stepSign}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.settingRow}>
+              <Text style={styles.settingRowLabel}>Auto-iniciar descansos</Text>
+              <Switch value={autoStartBreaks} onToggle={() => setAutoStartBreaks((v) => !v)} colors={colors} />
+            </View>
+
+            <View style={styles.settingRow}>
+              <Text style={styles.settingRowLabel}>Auto-iniciar pomodoros</Text>
+              <Switch value={autoStartPomodoros} onToggle={() => setAutoStartPomodoros((v) => !v)} colors={colors} />
+            </View>
+
+            <View style={styles.settingRow}>
+              <Text style={styles.settingRowLabel}>Vibrar al terminar</Text>
+              <Switch value={vibrateOn} onToggle={() => setVibrateOn((v) => !v)} colors={colors} />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
+  );
+}
+
+// Interruptor simple (sin dependencias)
+function Switch({ value, onToggle, colors }) {
+  return (
+    <TouchableOpacity
+      onPress={onToggle}
+      activeOpacity={0.8}
+      style={{
+        width: 46,
+        height: 27,
+        borderRadius: 999,
+        padding: 3,
+        backgroundColor: value ? colors.segActive : colors.cardSoft,
+        borderWidth: 1,
+        borderColor: value ? colors.segActive : colors.cardBorder,
+        alignItems: value ? "flex-end" : "flex-start",
+      }}
+    >
+      <View
+        style={{
+          width: 19,
+          height: 19,
+          borderRadius: 999,
+          backgroundColor: "#fff",
+        }}
+      />
+    </TouchableOpacity>
   );
 }
 
@@ -306,7 +411,17 @@ const makeStyles = (colors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.bg },
     scroll: { padding: 16, paddingBottom: 100 },
-    header: { marginBottom: 12 },
+    header: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
+    gearBtn: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     kicker: {
       color: colors.green,
       fontSize: 12,
@@ -431,4 +546,40 @@ const makeStyles = (colors) =>
     },
     noteTextItem: { flex: 1, color: colors.text, fontSize: 15 },
     noteDone: { textDecorationLine: "line-through", color: colors.muted },
+
+    // Modal de ajustes
+    overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },
+    sheet: {
+      backgroundColor: colors.bg,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      paddingHorizontal: 20,
+      paddingTop: 10,
+      paddingBottom: 34,
+    },
+    sheetHead: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: 12,
+    },
+    sheetTitle: { color: colors.text, fontSize: 20, fontWeight: "800" },
+    settingRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+      paddingVertical: 14,
+      borderTopWidth: 1,
+      borderTopColor: colors.cardBorder,
+    },
+    settingRowLabel: { color: colors.text, fontSize: 15, fontWeight: "600", flex: 1 },
+    stepperInline: {
+      flexDirection: "row",
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 10,
+      backgroundColor: colors.card,
+    },
   });
