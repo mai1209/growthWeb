@@ -14,6 +14,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { taskService } from "../api";
 import { useTheme } from "../theme";
+import ColorPickerModal from "./ColorPickerModal";
 
 const MOMENTOS = [
   { value: "Mañana", label: "Mañana", icon: "sunny-outline" },
@@ -58,14 +59,24 @@ export default function TaskFormModal({ visible, defaultDate, editTask = null, o
   const [dias, setDias] = useState([]);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [showAllColors, setShowAllColors] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
-  // Pocos colores a la vista; el resto detrás del "+" (color10 blanco no se lee)
+  // Pocos colores a la vista + "+" que abre el selector libre (color10 blanco no se lee)
   const allColorKeys = Object.keys(TASK_COLORS).filter((k) => k !== "color10");
   const baseColors = allColorKeys.slice(0, 5);
-  const visibleColors = baseColors.includes(color)
-    ? baseColors
-    : [...baseColors.slice(0, 4), color];
+  const isCustom = typeof color === "string" && color.startsWith("#");
+  const visibleColors =
+    !isCustom && !baseColors.includes(color)
+      ? [...baseColors.slice(0, 4), color]
+      : baseColors;
+  // Tilde oscura sobre colores claros, blanca sobre oscuros
+  const checkColorFor = (hex) => {
+    const m = /^#([0-9a-f]{6})$/i.exec(hex || "");
+    if (!m) return "#16241d";
+    const n = parseInt(m[1], 16);
+    const lum = 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255);
+    return lum > 150 ? "#16241d" : "#ffffff";
+  };
 
   useEffect(() => {
     if (!visible) return;
@@ -103,7 +114,7 @@ export default function TaskFormModal({ visible, defaultDate, editTask = null, o
     }
     setError("");
     setSaving(false);
-    setShowAllColors(false);
+    setPickerOpen(false);
   }, [visible, defaultDate, editTask]);
 
   const toggleDay = (d) =>
@@ -261,45 +272,28 @@ export default function TaskFormModal({ visible, defaultDate, editTask = null, o
                     ]}
                     onPress={() => setColor(key)}
                   >
-                    {active && <Ionicons name="checkmark" size={15} color="#16241d" />}
+                    {active && (
+                      <Ionicons name="checkmark" size={15} color={checkColorFor(TASK_COLORS[key])} />
+                    )}
                   </TouchableOpacity>
                 );
               })}
-              <TouchableOpacity
-                style={[styles.colorMore, showAllColors && styles.colorMoreActive]}
-                onPress={() => setShowAllColors((v) => !v)}
-              >
-                <Ionicons
-                  name={showAllColors ? "chevron-up" : "add"}
-                  size={18}
-                  color={showAllColors ? colors.greenDark : colors.muted}
-                />
+
+              {/* Color libre elegido con el picker */}
+              {isCustom && (
+                <TouchableOpacity
+                  style={[styles.colorDot, { backgroundColor: color }, styles.colorDotActive]}
+                  onPress={() => setPickerOpen(true)}
+                >
+                  <Ionicons name="checkmark" size={15} color={checkColorFor(color)} />
+                </TouchableOpacity>
+              )}
+
+              {/* "+" abre el selector completo (cuadrado + barra de matiz) */}
+              <TouchableOpacity style={styles.colorMore} onPress={() => setPickerOpen(true)}>
+                <Ionicons name="add" size={18} color={colors.muted} />
               </TouchableOpacity>
             </View>
-
-            {showAllColors && (
-              <View style={styles.colorGridAll}>
-                {allColorKeys.map((key) => {
-                  const active = color === key;
-                  return (
-                    <TouchableOpacity
-                      key={key}
-                      style={[
-                        styles.colorDot,
-                        { backgroundColor: TASK_COLORS[key] },
-                        active && styles.colorDotActive,
-                      ]}
-                      onPress={() => {
-                        setColor(key);
-                        setShowAllColors(false);
-                      }}
-                    >
-                      {active && <Ionicons name="checkmark" size={15} color="#16241d" />}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            )}
 
             <TouchableOpacity
               style={styles.repeatRow}
@@ -343,6 +337,13 @@ export default function TaskFormModal({ visible, defaultDate, editTask = null, o
           </ScrollView>
         </View>
       </View>
+
+      <ColorPickerModal
+        visible={pickerOpen}
+        initialColor={isCustom ? color : TASK_COLORS[color]}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(hex) => setColor(hex)}
+      />
     </Modal>
   );
 }
@@ -427,18 +428,6 @@ const makeStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.card,
     alignItems: "center",
     justifyContent: "center",
-  },
-  colorMoreActive: { borderStyle: "solid", borderColor: colors.greenBorder, backgroundColor: colors.greenSoft },
-  colorGridAll: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginTop: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 14,
-    backgroundColor: colors.card,
   },
   repeatRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 18 },
   repeatText: { color: colors.text, fontSize: 15, fontWeight: "700" },

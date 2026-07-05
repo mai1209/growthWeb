@@ -174,7 +174,9 @@ export default function TareasScreen() {
             ListEmptyComponent={<Text style={styles.empty}>No hay tareas para este día.</Text>}
             renderItem={({ item }) => {
               const done = isTaskCompletedOnDate(item, selectedDate);
-              const accent = TASK_COLORS[item.color] || TASK_COLORS.color1;
+              const accent =
+                TASK_COLORS[item.color] ||
+                (item.color?.startsWith?.("#") ? item.color : TASK_COLORS.color1);
               return (
                 <View style={[styles.card, { backgroundColor: done ? colors.cardSoft : accent }]}>
                   <TouchableOpacity

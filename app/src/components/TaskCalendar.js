@@ -62,7 +62,11 @@ export default function TaskCalendar({ tasks, onDayPress }) {
                           key={t._id}
                           style={[
                             styles.dot,
-                            { backgroundColor: TASK_COLORS[t.color] || TASK_COLORS.color1 },
+                            {
+                              backgroundColor:
+                                TASK_COLORS[t.color] ||
+                                (t.color?.startsWith?.("#") ? t.color : TASK_COLORS.color1),
+                            },
                             done && { opacity: 0.35 },
                           ]}
                         />

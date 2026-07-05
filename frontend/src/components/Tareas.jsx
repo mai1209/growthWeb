@@ -594,6 +594,9 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
             className={`${style.taskCard} ${
               completed ? style.completed : ""
             } ${style[task.color] || style.color1}`}
+            style={
+              task.color?.startsWith?.("#") ? { background: task.color } : undefined
+            }
           >
             <label className={style.checkboxWrapper}>
               <input
@@ -706,6 +709,9 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                         className={`${style.calendarDot} ${style[t.color] || style.color1} ${
                           done ? style.calendarDotDone : ""
                         }`}
+                        style={
+                          t.color?.startsWith?.("#") ? { background: t.color } : undefined
+                        }
                       />
                     );
                   })}
