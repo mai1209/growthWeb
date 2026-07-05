@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from "react-native-svg";
 import { movimientoService } from "../api";
 import { statAccents, useTheme } from "../theme";
 import MovementFormModal from "../components/MovementFormModal";
@@ -140,30 +141,55 @@ export default function HomeScreen() {
         }
       >
         <View style={styles.cardBody}>
-            <View style={styles.cardActions}>
-              <TouchableOpacity style={styles.iconBtn} onPress={() => goToFilter(null)} hitSlop={6}>
-                <Ionicons name="funnel-outline" size={18} color={colors.text} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.iconBtn} onPress={() => setShowHistory(true)} hitSlop={6}>
-                <Ionicons name="time-outline" size={19} color={colors.text} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.iconBtn} onPress={() => setVisible((v) => !v)} hitSlop={6}>
-                <Ionicons
-                  name={visible ? "eye-outline" : "eye-off-outline"}
-                  size={19}
-                  color={colors.text}
-                />
-              </TouchableOpacity>
-            </View>
-
             {isCurrency ? (
               <>
-                <Text style={styles.balanceLabel}>{currencyMeta.codeLabel}</Text>
-                {loading ? (
-                  <ActivityIndicator color={colors.green} style={{ alignSelf: "flex-start", marginTop: 6 }} />
-                ) : (
-                  <Text style={styles.balanceValue}>{money(historical.total)}</Text>
-                )}
+                {/* Tarjeta de saldo estilo credit card */}
+                <View style={styles.balanceCard}>
+                  <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+                    <Defs>
+                      <LinearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
+                        <Stop offset="0" stopColor="#0f4a38" />
+                        <Stop offset="0.5" stopColor="#0c333c" />
+                        <Stop offset="1" stopColor="#081c24" />
+                      </LinearGradient>
+                    </Defs>
+                    <Rect width="100%" height="100%" rx="24" fill="url(#cardGrad)" />
+                    {/* Detalles decorativos, sutiles */}
+                    <Circle cx="88%" cy="8%" r="86" fill="rgba(20, 217, 95, 0.10)" />
+                    <Circle cx="104%" cy="70%" r="58" fill="rgba(19, 170, 182, 0.12)" />
+                    <Circle cx="12%" cy="112%" r="60" fill="rgba(20, 217, 95, 0.06)" />
+                  </Svg>
+
+                  <View style={styles.bcTop}>
+                    <Text style={styles.bcKicker}>Saldo total</Text>
+                    <View style={styles.bcIcons}>
+                      <TouchableOpacity style={styles.bcIconBtn} onPress={() => goToFilter(null)} hitSlop={6}>
+                        <Ionicons name="funnel-outline" size={16} color="#ecf6f3" />
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.bcIconBtn} onPress={() => setShowHistory(true)} hitSlop={6}>
+                        <Ionicons name="time-outline" size={17} color="#ecf6f3" />
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.bcIconBtn} onPress={() => setVisible((v) => !v)} hitSlop={6}>
+                        <Ionicons
+                          name={visible ? "eye-outline" : "eye-off-outline"}
+                          size={17}
+                          color="#ecf6f3"
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {loading ? (
+                    <ActivityIndicator color="#14d95f" style={{ alignSelf: "flex-start", marginVertical: 14 }} />
+                  ) : (
+                    <Text style={styles.bcBalance}>{money(historical.total)}</Text>
+                  )}
+
+                  <View style={styles.bcFooter}>
+                    <Text style={styles.bcBrand}>GROWTH</Text>
+                    <Text style={styles.bcCurrency}>{currencyMeta.codeLabel}</Text>
+                  </View>
+                </View>
 
                 {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -177,7 +203,7 @@ export default function HomeScreen() {
                       onPress={() => setModalMode(a.key)}
                       activeOpacity={0.85}
                     >
-                      <Ionicons name={a.icon} size={18} color="#fff" />
+                      <Ionicons name={a.icon} size={16} color="#fff" />
                       <Text style={styles.quickLabel}>{a.label}</Text>
                     </TouchableOpacity>
                   ))}
@@ -202,6 +228,16 @@ export default function HomeScreen() {
               </>
             ) : (
               <>
+                <View style={styles.cardActions}>
+                  <TouchableOpacity style={styles.iconBtn} onPress={() => setVisible((v) => !v)} hitSlop={6}>
+                    <Ionicons
+                      name={visible ? "eye-outline" : "eye-off-outline"}
+                      size={19}
+                      color={colors.text}
+                    />
+                  </TouchableOpacity>
+                </View>
+
                 <Text style={styles.balanceLabel}>{tab === "deuda" ? "Deudas" : "Ahorros"}</Text>
                 <Text style={styles.balanceSub}>
                   {typeMovs.length} {typeMovs.length === 1 ? "movimiento" : "movimientos"}
@@ -372,17 +408,60 @@ const makeStyles = (colors) => StyleSheet.create({
   balanceValue: { color: colors.text, fontSize: 34, fontWeight: "900", marginTop: 4 },
   error: { color: colors.red, marginTop: 4 },
 
-  quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  // ===== Tarjeta de saldo (estilo credit card) =====
+  balanceCard: {
+    borderRadius: 24,
+    padding: 18,
+    minHeight: 172,
+    justifyContent: "space-between",
+    overflow: "hidden",
+  },
+  bcTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  bcKicker: {
+    color: "rgba(236, 246, 243, 0.65)",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  bcIcons: { flexDirection: "row", gap: 8 },
+  bcIconBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "rgba(236, 246, 243, 0.22)",
+    backgroundColor: "rgba(255, 255, 255, 0.07)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bcBalance: {
+    color: "#ffffff",
+    fontSize: 36,
+    fontWeight: "900",
+    letterSpacing: -0.5,
+    fontVariant: ["tabular-nums"],
+  },
+  bcFooter: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  bcBrand: { color: "#14d95f", fontSize: 13, fontWeight: "900", letterSpacing: 2 },
+  bcCurrency: {
+    color: "rgba(236, 246, 243, 0.85)",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+  },
+
+  quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   quickBtn: {
     width: "48%",
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
-    paddingVertical: 12,
+    gap: 6,
+    paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 14,
+    borderRadius: 12,
   },
-  quickLabel: { color: "#fff", fontWeight: "600", fontSize: 13, flexShrink: 1 },
+  quickLabel: { color: "#fff", fontWeight: "600", fontSize: 12.5, flexShrink: 1 },
 
   statGrid: { gap: 10 },
   statCard: {
