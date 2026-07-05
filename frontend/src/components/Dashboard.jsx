@@ -147,30 +147,19 @@ function Dashboard({
               </button>
               <button
                 type="button"
-                className={style.fixedIncomeAction}
-                onClick={() => setShowOnly("ingreso-fijo")}
-              >
-                <img className={style.quickActionIcon} src="dinerofijo.png" alt="" />
-                <span>Ingreso fijo</span>
-              </button>
-
-
-              <button
-                type="button"
-                className={style.savingsAction}
-                onClick={() => setShowOnly("ahorro")}
-              >
-                <img className={style.quickActionIcon} src="bolsa-de-dinero.png" alt="" />
-                <span>Nuevo ahorro</span>
-              </button>
-
-              <button
-                type="button"
                 className={style.expenseAction}
                 onClick={() => setShowOnly("egreso")}
               >
                 <img className={style.quickActionIcon} src="gastos-50.png" alt="" />
                 <span>Nuevo egreso</span>
+              </button>
+              <button
+                type="button"
+                className={style.fixedIncomeAction}
+                onClick={() => setShowOnly("ingreso-fijo")}
+              >
+                <img className={style.quickActionIcon} src="dinerofijo.png" alt="" />
+                <span>Ingreso fijo</span>
               </button>
               <button
                 type="button"
@@ -180,18 +169,6 @@ function Dashboard({
                 <img className={style.quickActionIcon} src="deuda.png" alt="" />
                 <span>Gasto fijo</span>
               </button>
-              <button
-                type="button"
-                className={style.debtAction}
-                onClick={() => setShowOnly("deuda")}
-              >
-                <img className={style.quickActionIcon} src="cargardeuda.png" alt="" />
-                <span>Cargar deuda</span>
-              </button>
-
-
-
-
             </div>
           </div>
         </section>

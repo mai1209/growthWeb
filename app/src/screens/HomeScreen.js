@@ -194,7 +194,6 @@ export default function HomeScreen() {
                   )}
 
                   <View style={styles.bcFooter}>
-                    <Text style={styles.bcBrand}>GROWTH</Text>
                     <Text style={styles.bcCurrency}>{currencyMeta.codeLabel}</Text>
                   </View>
                 </View>
@@ -451,8 +450,7 @@ const makeStyles = (colors) => StyleSheet.create({
     letterSpacing: -0.5,
     fontVariant: ["tabular-nums"],
   },
-  bcFooter: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  bcBrand: { color: "#14d95f", fontSize: 13, fontWeight: "900", letterSpacing: 2 },
+  bcFooter: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end" },
   bcCurrency: {
     color: "rgba(236, 246, 243, 0.85)",
     fontSize: 14,

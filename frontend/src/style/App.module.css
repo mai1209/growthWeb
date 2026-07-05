@@ -215,20 +215,22 @@
 .quickActions {
   display: grid;
   flex: 1;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
 }
 
 .quickActions button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  gap: 0.45rem;
+  min-height: 42px;
+  padding: 0.45rem 0.7rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
+  border-radius: 12px;
   color: var(--color-text);
-  font-weight: 700;
+  font-weight: 600;
+  font-size: 0.88rem;
   text-align: center;
   cursor: pointer;
   box-shadow:
@@ -254,8 +256,8 @@
 
 .quickActionIcon {
   flex: 0 0 auto;
-  width: 20px;
-  height: 20px;
+  width: 17px;
+  height: 17px;
   margin: 0;
   object-fit: contain;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.16));
@@ -1006,22 +1008,21 @@
   }
 
   .quickActions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.6rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
   }
 
   .quickActions button {
-    min-height: 72px;
-    flex-direction: column;
-    padding: 0.5rem 0.3rem;
-    gap: 0.3rem;
-    border-radius: 18px;
+    min-height: 44px;
+    padding: 0.55rem 0.6rem;
+    gap: 0.35rem;
+    border-radius: 12px;
   }
 
   .quickActions button span {
     display: block;
-    font-size: 0.68rem;
-    font-weight: 700;
+    font-size: 0.8rem;
+    font-weight: 600;
     line-height: 1.1;
   }
 

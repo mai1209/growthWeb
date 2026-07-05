@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import style from "../style/LeftSite.module.css";
 import {
-  CURRENCY_OPTIONS,
   filterMovimientosByCurrency,
   formatMoney,
   getCurrencyMeta,
@@ -11,14 +10,45 @@ import {
   summarizeByType,
 } from "../utils/finance";
 
+const HOME_TABS = [
+  { key: "ARS", label: "ARS" },
+  { key: "USD", label: "USD" },
+  { key: "deuda", label: "Deudas" },
+  { key: "ahorro", label: "Ahorros" },
+];
+
+const fmtShortDate = (value) => {
+  const parts = String(value || "").slice(0, 10).split("-");
+  return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : "";
+};
+
 function LeftSite({
-  
+
   movimientos = [],
   currentCurrency,
   onCurrencyChange,
 }) {
   const navigate = useNavigate();
   const [areTotalsVisible, setAreTotalsVisible] = useState(true);
+  const [viewTab, setViewTab] = useState("money"); // money | deuda | ahorro
+
+  const activeTabKey = viewTab === "money" ? currentCurrency : viewTab;
+  const handleTabClick = (key) => {
+    if (key === "ARS" || key === "USD") {
+      setViewTab("money");
+      onCurrencyChange?.(key);
+    } else {
+      setViewTab(key);
+    }
+  };
+
+  // Movimientos del tipo activo (deuda / ahorro), más recientes primero
+  const typeMovs = useMemo(() => {
+    if (viewTab === "money") return [];
+    return movimientos
+      .filter((m) => m.tipo === viewTab)
+      .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+  }, [movimientos, viewTab]);
 
   // Lleva a la página de Filtros con el tipo aplicado (o sin filtro si tipo es null)
   const goToFilter = (tipo) => {
@@ -67,54 +97,116 @@ function LeftSite({
   return (
     <aside className={style.container}>
       <div className={style.panel}>
-        <div className={style.controlCard}>
-          <div className={style.currencyTabs}>
-            {CURRENCY_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={`${style.currencyTab} ${
-                  option.value === currentCurrency
-                    ? style.currencyTabActive
-                    : style.currencyTabInactive
-                }`}
-                onClick={() => onCurrencyChange?.(option.value)}
-              >
-                <span>{option.codeLabel}</span>
-                <small>{option.label}</small>
-              </button>
-            ))}
-          </div>
-
-          <div className={style.balanceCard}>
+        {/* Pestañas ARS · USD · Deudas · Ahorros (como la app) */}
+        <div className={style.segmentTabs}>
+          {HOME_TABS.map((t) => (
             <button
+              key={t.key}
               type="button"
-              onClick={() => setAreTotalsVisible((prev) => !prev)}
-              className={style.visibilityButton}
-              aria-label={areTotalsVisible ? "Ocultar saldo" : "Mostrar saldo"}
-              title={areTotalsVisible ? "Ocultar saldo" : "Mostrar saldo"}
+              className={`${style.segmentTab} ${
+                t.key === activeTabKey ? style.segmentTabActive : ""
+              }`}
+              onClick={() => handleTabClick(t.key)}
             >
-              {areTotalsVisible ? <FiEye /> : <FiEyeOff />}
+              {t.label}
             </button>
-
-            <div className={style.headerBlock}>
-              <p className={style.eyebrow}>Resumen</p>
-              <h2>Dashboard {currencyMeta.codeLabel}</h2>
-            </div>
-
-            <div className={style.balanceBody}>
-              <p className={style.balanceLabel}>Saldo</p>
-              <p className={style.balanceValue}>
-                {hideableMoney(historicalSummary.total)}
-              </p>
-            </div>
-
-            <div className={style.balanceFooter}>
-              <span className={style.statusPill}>{monthResultLabel}</span>
-            </div>
-          </div>
+          ))}
         </div>
 
+        {viewTab === "money" ? (
+          /* Tarjeta de saldo estilo credit card */
+          <div className={style.creditCard}>
+            <div className={style.ccTop}>
+              <p className={style.ccKicker}>Saldo total</p>
+              <button
+                type="button"
+                onClick={() => setAreTotalsVisible((prev) => !prev)}
+                className={style.ccEye}
+                aria-label={areTotalsVisible ? "Ocultar saldo" : "Mostrar saldo"}
+                title={areTotalsVisible ? "Ocultar saldo" : "Mostrar saldo"}
+              >
+                {areTotalsVisible ? <FiEye /> : <FiEyeOff />}
+              </button>
+            </div>
+
+            <p className={style.ccBalance}>{hideableMoney(historicalSummary.total)}</p>
+
+            <div className={style.ccFooter}>
+              <span className={style.statusPill}>{monthResultLabel}</span>
+              <span className={style.ccCurrency}>{currencyMeta.codeLabel}</span>
+            </div>
+          </div>
+        ) : (
+          /* Lista de deudas / ahorros (como la app) */
+          <div className={style.typePanel}>
+            <div className={style.typeHead}>
+              <div>
+                <h2 className={style.typeTitle}>{viewTab === "deuda" ? "Deudas" : "Ahorros"}</h2>
+                <p className={style.typeCount}>
+                  {typeMovs.length} {typeMovs.length === 1 ? "movimiento" : "movimientos"}
+                </p>
+              </div>
+              <button
+                type="button"
+                className={style.typeAdd}
+                onClick={() => navigate("/add")}
+              >
+                {viewTab === "deuda" ? "Cargar deuda" : "Nuevo ahorro"}
+              </button>
+            </div>
+
+            {typeMovs.length === 0 ? (
+              <p className={style.typeEmpty}>
+                No hay {viewTab === "deuda" ? "deudas" : "ahorros"} cargados todavía.
+              </p>
+            ) : (
+              <div className={style.typeList}>
+                {typeMovs.map((m) => {
+                  const isPaid = m.tipo === "deuda" && m.deudaEstado === "pagada";
+                  const isPartial = m.tipo === "deuda" && !isPaid && Number(m.deudaPagado) > 0;
+                  return (
+                    <button
+                      key={m._id}
+                      type="button"
+                      className={style.typeItem}
+                      onClick={() => goToFilter(viewTab)}
+                    >
+                      <span className={style.typeItemMain}>
+                        <strong>{m.categoria || "Sin categoría"}</strong>
+                        {m.deudaAcreedor ? (
+                          <small>Acreedor: {m.deudaAcreedor}</small>
+                        ) : m.detalle ? (
+                          <small>{m.detalle}</small>
+                        ) : null}
+                        <span className={style.typeItemMeta}>
+                          {fmtShortDate(m.fecha)}
+                          {m.tipo === "deuda" ? (
+                            <i
+                              className={`${style.typeChip} ${
+                                isPaid
+                                  ? style.typeChipPaid
+                                  : isPartial
+                                    ? style.typeChipPartial
+                                    : style.typeChipPending
+                              }`}
+                            >
+                              {isPaid ? "Pagada" : isPartial ? "Parcial" : "Pendiente"}
+                            </i>
+                          ) : null}
+                        </span>
+                      </span>
+                      <strong className={style.typeItemAmount}>
+                        {areTotalsVisible ? formatMoney(m.monto, m.moneda || "ARS") : "••••"}
+                      </strong>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {viewTab === "money" ? (
         <div className={style.statGrid}>
           <article
             className={`${style.statCard} ${style.statMovimientos} ${style.statClickable}`}
@@ -182,8 +274,7 @@ function LeftSite({
             <strong>{hideableMoney(historicalSummary.deudaPendiente)}</strong>
           </article>
         </div>
-
-     
+        ) : null}
       </div>
     </aside>
   );

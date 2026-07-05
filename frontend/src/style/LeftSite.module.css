@@ -32,6 +32,253 @@
   padding: 1rem;
 }
 
+/* ===== Pestañas segmentadas (como la app) ===== */
+.segmentTabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.3rem;
+  padding: 0.3rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.segmentTab {
+  border: none;
+  background: transparent;
+  min-height: 40px;
+  border-radius: 12px;
+  color: var(--color-muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.segmentTab:hover {
+  color: var(--color-text);
+}
+
+.segmentTabActive,
+.segmentTabActive:hover {
+  background: #14d95f;
+  color: #04140b;
+}
+
+/* ===== Tarjeta de saldo estilo credit card ===== */
+.creditCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 172px;
+  padding: 1.15rem;
+  border-radius: 24px;
+  border: 1px solid rgba(216, 241, 224, 0.1);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 0%, rgba(20, 217, 95, 0.14), transparent 42%),
+    radial-gradient(circle at 106% 76%, rgba(19, 170, 182, 0.16), transparent 40%),
+    radial-gradient(circle at 8% 110%, rgba(20, 217, 95, 0.08), transparent 38%),
+    linear-gradient(135deg, #0f4a38, #0c333c 52%, #081c24);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+}
+
+.ccTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ccKicker {
+  margin: 0;
+  color: rgba(236, 246, 243, 0.65);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ccEye {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(236, 246, 243, 0.22);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  color: #ecf6f3;
+  cursor: pointer;
+  transition: background 0.16s ease;
+}
+
+.ccEye:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.ccEye svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ccBalance {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.75rem, 2.8vw, 2.25rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.ccFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ccCurrency {
+  color: rgba(236, 246, 243, 0.85);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+/* ===== Panel de deudas / ahorros ===== */
+.typePanel {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.typeHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.typeTitle {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.15rem;
+}
+
+.typeCount {
+  margin: 0.15rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.typeAdd {
+  border: none;
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  background: #14d95f;
+  color: #04140b;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.typeEmpty {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+}
+
+.typeList {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+.typeItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+
+.typeItem:hover {
+  border-color: rgba(20, 217, 95, 0.4);
+  background: rgba(20, 217, 95, 0.06);
+}
+
+.typeItemMain {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.typeItemMain strong {
+  color: var(--color-text);
+  font-size: 0.9rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.typeItemMain small {
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.typeItemMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+}
+
+.typeChip {
+  font-style: normal;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+}
+
+.typeChipPending {
+  background: rgba(201, 162, 58, 0.18);
+  color: #e0b32e;
+}
+
+.typeChipPartial {
+  background: rgba(20, 217, 95, 0.14);
+  color: #14d95f;
+}
+
+.typeChipPaid {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-muted);
+}
+
+.typeItemAmount {
+  color: var(--color-text);
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+
 /* Panel de control con pestañas de moneda conectadas (estilo Inicio/Portfolio) */
 .controlCard {
   position: relative;
@@ -375,6 +622,25 @@
 }
 
 
+
+:global(body[data-theme="light"]) .segmentTabs {
+  border-color: rgba(12, 18, 14, 0.14);
+  background: rgba(255, 255, 255, 0.75);
+}
+
+:global(body[data-theme="light"]) .typePanel {
+  border-color: rgba(12, 18, 14, 0.14);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+:global(body[data-theme="light"]) .typeItem {
+  border-color: rgba(12, 18, 14, 0.12);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+:global(body[data-theme="light"]) .typeChipPaid {
+  background: rgba(12, 18, 14, 0.08);
+}
 
 :global(body[data-theme="light"]) .balanceCard,
 :global(body[data-theme="light"]) .section,
