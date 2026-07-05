@@ -13,7 +13,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import * as SecureStore from "expo-secure-store";
+import { useAudioPlayer, setAudioModeAsync } from "expo-audio";
 import { useTheme } from "../theme";
+
+const ALARM = require("../../assets/pomodoro-alarm.wav");
 
 const MODES = [
   { key: "focus", label: "Enfoque", def: 25 },
@@ -40,6 +43,7 @@ export default function PomodoroScreen() {
   const [longBreakInterval, setLongBreakInterval] = useState(4);
   const [autoStartBreaks, setAutoStartBreaks] = useState(true);
   const [autoStartPomodoros, setAutoStartPomodoros] = useState(true);
+  const [soundOn, setSoundOn] = useState(true);
   const [vibrateOn, setVibrateOn] = useState(true);
   const [mode, setMode] = useState("focus");
   const [running, setRunning] = useState(false);
@@ -52,6 +56,12 @@ export default function PomodoroScreen() {
 
   const targetRef = useRef(null);
   const totalSecs = durations[mode] * 60;
+
+  // Reproductor de la alarma (suena aunque el teléfono esté en silencio)
+  const alarm = useAudioPlayer(ALARM);
+  useEffect(() => {
+    setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
+  }, []);
 
   // Cargar guardado
   useEffect(() => {
@@ -69,6 +79,7 @@ export default function PomodoroScreen() {
           setLongBreakInterval(d.longBreakInterval || 4);
           setAutoStartBreaks(d.autoStartBreaks !== undefined ? d.autoStartBreaks : true);
           setAutoStartPomodoros(d.autoStartPomodoros !== undefined ? d.autoStartPomodoros : true);
+          setSoundOn(d.soundOn !== undefined ? d.soundOn : true);
           setVibrateOn(d.vibrateOn !== undefined ? d.vibrateOn : true);
         }
         if (n) setNotes(JSON.parse(n));
@@ -92,10 +103,11 @@ export default function PomodoroScreen() {
       longBreakInterval,
       autoStartBreaks,
       autoStartPomodoros,
+      soundOn,
       vibrateOn,
     };
     SecureStore.setItemAsync(SETTINGS_KEY, JSON.stringify(payload)).catch(() => {});
-  }, [durations, longBreakInterval, autoStartBreaks, autoStartPomodoros, vibrateOn, hydrated]);
+  }, [durations, longBreakInterval, autoStartBreaks, autoStartPomodoros, soundOn, vibrateOn, hydrated]);
   useEffect(() => {
     if (hydrated) SecureStore.setItemAsync(NOTES_KEY, JSON.stringify(notes)).catch(() => {});
   }, [notes, hydrated]);
@@ -107,6 +119,14 @@ export default function PomodoroScreen() {
   }, [completed, hydrated]);
 
   const handleComplete = useCallback(() => {
+    if (soundOn) {
+      try {
+        alarm.seekTo(0);
+        alarm.play();
+      } catch {
+        // audio no disponible
+      }
+    }
     if (vibrateOn) Vibration.vibrate([0, 400, 150, 400]);
     targetRef.current = null;
     let next;
@@ -124,7 +144,7 @@ export default function PomodoroScreen() {
     setMode(next);
     setRemaining(durations[next] * 60);
     setRunning(autostart);
-  }, [mode, completed, durations, longBreakInterval, autoStartBreaks, autoStartPomodoros, vibrateOn]);
+  }, [mode, completed, durations, longBreakInterval, autoStartBreaks, autoStartPomodoros, soundOn, vibrateOn, alarm]);
 
   // Tick por timestamp
   useEffect(() => {
@@ -365,6 +385,26 @@ export default function PomodoroScreen() {
             <View style={styles.settingRow}>
               <Text style={styles.settingRowLabel}>Auto-iniciar pomodoros</Text>
               <Switch value={autoStartPomodoros} onToggle={() => setAutoStartPomodoros((v) => !v)} colors={colors} />
+            </View>
+
+            <View style={styles.settingRow}>
+              <Text style={styles.settingRowLabel}>Sonido al terminar</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                {soundOn ? (
+                  <TouchableOpacity
+                    onPress={() => {
+                      try {
+                        alarm.seekTo(0);
+                        alarm.play();
+                      } catch {}
+                    }}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="volume-high-outline" size={20} color={colors.greenDark} />
+                  </TouchableOpacity>
+                ) : null}
+                <Switch value={soundOn} onToggle={() => setSoundOn((v) => !v)} colors={colors} />
+              </View>
             </View>
 
             <View style={styles.settingRow}>
