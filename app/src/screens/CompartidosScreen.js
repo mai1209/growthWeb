@@ -520,9 +520,9 @@ const makeStyles = (colors) => StyleSheet.create({
     borderColor: colors.cardBorder,
     backgroundColor: colors.card,
   },
-  tabActive: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
+  tabActive: { backgroundColor: colors.segActive, borderColor: colors.segActive },
   tabText: { color: colors.muted, fontWeight: "700" },
-  tabTextActive: { color: colors.greenDark },
+  tabTextActive: { color: colors.segActiveText, fontWeight: "800" },
 
   totalCard: {
     backgroundColor: colors.greenSoft,

@@ -110,33 +110,36 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={[]}>
+      {/* Selector segmentado FIJO — ARS · USD · Deudas · Ahorros */}
+      <View style={styles.fixedHeader}>
+        <View style={styles.segmentRow}>
+          {HOME_TABS.map((t) => {
+            const active = t.key === tab;
+            return (
+              <TouchableOpacity
+                key={t.key}
+                style={[styles.segment, active && styles.segmentActive]}
+                onPress={() => setTab(t.key)}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
+                  {t.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
       <ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={false} onRefresh={fetchData} tintColor={colors.green} />
         }
       >
-        {/* Selector segmentado ARS · USD · Deudas · Ahorros */}
-        <View style={styles.cardStack}>
-          <View style={styles.segmentRow}>
-            {HOME_TABS.map((t) => {
-              const active = t.key === tab;
-              return (
-                <TouchableOpacity
-                  key={t.key}
-                  style={[styles.segment, active && styles.segmentActive]}
-                  onPress={() => setTab(t.key)}
-                  activeOpacity={0.85}
-                >
-                  <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
-                    {t.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          <View style={styles.cardBody}>
+        <View style={styles.cardBody}>
             <View style={styles.cardActions}>
               <TouchableOpacity style={styles.iconBtn} onPress={() => goToFilter(null)} hitSlop={6}>
                 <Ionicons name="funnel-outline" size={18} color={colors.text} />
@@ -274,7 +277,6 @@ export default function HomeScreen() {
               </>
             )}
           </View>
-        </View>
       </ScrollView>
 
       <MovementFormModal
@@ -297,8 +299,9 @@ export default function HomeScreen() {
 
 const makeStyles = (colors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: 16, paddingBottom: 28 },
+  content: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 28 },
 
+  fixedHeader: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10, backgroundColor: colors.bg },
   cardStack: { position: "relative" },
 
   // Selector segmentado tipo píldora (mismo lenguaje que Filtros/Métricas)
@@ -332,11 +335,11 @@ const makeStyles = (colors) => StyleSheet.create({
   },
 
   // Contenido flotando, sin marco
-  cardBody: { position: "relative", paddingHorizontal: 2, paddingTop: 16, paddingBottom: 8 },
+  cardBody: { position: "relative", paddingTop: 10, paddingBottom: 8 },
   cardActions: {
     position: "absolute",
-    top: 16,
-    right: 2,
+    top: 10,
+    right: 0,
     flexDirection: "row",
     gap: 8,
     zIndex: 2,

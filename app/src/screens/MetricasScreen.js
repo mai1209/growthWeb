@@ -196,52 +196,53 @@ export default function MetricasScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={[]}>
-      <View style={styles.header}>
+      {/* Header + switches FIJOS */}
+      <View style={styles.fixedHeader}>
         <Text style={styles.title}>Métricas</Text>
+        <View style={styles.controls}>
+          <View style={styles.currencySwitch}>
+            {CURRENCY_OPTIONS.map((opt) => {
+              const active = opt.value === currency;
+              return (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[styles.curBtn, active && styles.curBtnActive]}
+                  onPress={() => setCurrency(opt.value)}
+                >
+                  <Text style={[styles.curText, active && styles.curTextActive]}>{opt.codeLabel}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <View style={styles.periodRow}>
+            {PERIOD_OPTIONS.map((p) => (
+              <TouchableOpacity
+                key={p.value}
+                style={[styles.periodChip, period === p.value && styles.periodChipActive]}
+                onPress={() => setPeriod(p.value)}
+              >
+                <Text style={[styles.periodChipText, period === p.value && styles.periodChipTextActive]}>
+                  {p.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
       </View>
 
       {loading ? (
         <ActivityIndicator color={colors.green} style={{ marginTop: 30 }} />
       ) : (
         <ScrollView
+          style={{ flex: 1 }}
           contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={fetchData} tintColor={colors.green} />
           }
         >
           {error ? <Text style={styles.error}>{error}</Text> : null}
-
-          {/* Moneda + período */}
-          <View style={styles.controls}>
-            <View style={styles.currencySwitch}>
-              {CURRENCY_OPTIONS.map((opt) => {
-                const active = opt.value === currency;
-                return (
-                  <TouchableOpacity
-                    key={opt.value}
-                    style={[styles.curBtn, active && styles.curBtnActive]}
-                    onPress={() => setCurrency(opt.value)}
-                  >
-                    <Text style={[styles.curText, active && styles.curTextActive]}>{opt.codeLabel}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <View style={styles.periodRow}>
-              {PERIOD_OPTIONS.map((p) => (
-                <TouchableOpacity
-                  key={p.value}
-                  style={[styles.periodChip, period === p.value && styles.periodChipActive]}
-                  onPress={() => setPeriod(p.value)}
-                >
-                  <Text style={[styles.periodChipText, period === p.value && styles.periodChipTextActive]}>
-                    {p.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
 
           {/* Totales */}
           <View style={styles.summaryGrid}>
@@ -267,9 +268,15 @@ export default function MetricasScreen() {
 const makeStyles = (colors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.bg },
-    header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 12 },
+    fixedHeader: {
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 12,
+      gap: 12,
+      backgroundColor: colors.bg,
+    },
     title: { color: colors.text, fontSize: 20, fontWeight: "800" },
-    content: { padding: 16, paddingBottom: 30, gap: 12 },
+    content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 30, gap: 12 },
     error: { color: colors.red },
 
     controls: { gap: 10 },
