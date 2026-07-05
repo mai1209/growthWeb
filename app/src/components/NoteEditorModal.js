@@ -64,6 +64,7 @@ export default function NoteEditorModal({ visible, note, folders = [], onClose, 
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
+  const [showAllColors, setShowAllColors] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -74,9 +75,17 @@ export default function NoteEditorModal({ visible, note, folders = [], onClose, 
       setDate(parseYMD(note?.fecha));
       setError("");
       setSaving(false);
+      setShowAllColors(false);
       setEditorKey((k) => k + 1); // remonta el editor con el contenido nuevo
     }
   }, [visible, note]);
+
+  // Pocos colores a la vista; el resto detrás del "+". Si el elegido no está
+  // entre los visibles, ocupa el último lugar para que siempre se vea.
+  const baseColors = NOTE_COLOR_KEYS.slice(0, 5);
+  const visibleColors = baseColors.includes(color)
+    ? baseColors
+    : [...baseColors.slice(0, 4), color];
 
   const handleSave = async () => {
     if (!meta.trim()) return setError("El título es obligatorio.");
@@ -188,15 +197,10 @@ export default function NoteEditorModal({ visible, note, folders = [], onClose, 
               </View>
             </View>
 
-            {/* Fondo */}
+            {/* Fondo: pocos colores + "+" que despliega la paleta completa */}
             <Text style={styles.fieldLabel}>Fondo</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.colorRow}
-            >
-              {NOTE_COLOR_KEYS.map((key) => {
+            <View style={styles.colorRow}>
+              {visibleColors.map((key) => {
                 const c = getNoteColor(key);
                 const active = color === key;
                 return (
@@ -209,7 +213,38 @@ export default function NoteEditorModal({ visible, note, folders = [], onClose, 
                   </TouchableOpacity>
                 );
               })}
-            </ScrollView>
+              <TouchableOpacity
+                style={[styles.colorMore, showAllColors && styles.colorMoreActive]}
+                onPress={() => setShowAllColors((v) => !v)}
+              >
+                <Ionicons
+                  name={showAllColors ? "chevron-up" : "add"}
+                  size={18}
+                  color={showAllColors ? colors.greenDark : colors.muted}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {showAllColors && (
+              <View style={styles.colorGridAll}>
+                {NOTE_COLOR_KEYS.map((key) => {
+                  const c = getNoteColor(key);
+                  const active = color === key;
+                  return (
+                    <TouchableOpacity
+                      key={key}
+                      onPress={() => {
+                        setColor(key);
+                        setShowAllColors(false);
+                      }}
+                      style={[styles.colorDot, { backgroundColor: c.bg }, active && styles.colorDotActive]}
+                    >
+                      {active && <Ionicons name="checkmark" size={15} color={c.text} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
 
             {/* Título */}
             <Text style={styles.fieldLabel}>Título</Text>
@@ -325,17 +360,40 @@ const makeStyles = (colors) =>
       marginTop: 18,
       marginBottom: 9,
     },
-    colorRow: { flexDirection: "row", gap: 10, paddingVertical: 2, paddingRight: 8 },
+    colorRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 2 },
     colorDot: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
-      borderWidth: 2,
+      width: 34,
+      height: 34,
+      borderRadius: 11,
+      borderWidth: 1.5,
       borderColor: "rgba(17,24,20,0.14)",
       alignItems: "center",
       justifyContent: "center",
     },
-    colorDotActive: { borderColor: colors.text, transform: [{ scale: 1.08 }] },
+    colorDotActive: { borderWidth: 2.5, borderColor: colors.greenBright, transform: [{ scale: 1.06 }] },
+    colorMore: {
+      width: 34,
+      height: 34,
+      borderRadius: 11,
+      borderWidth: 1.5,
+      borderStyle: "dashed",
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    colorMoreActive: { borderStyle: "solid", borderColor: colors.greenBorder, backgroundColor: colors.greenSoft },
+    colorGridAll: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 10,
+      marginTop: 10,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 14,
+      backgroundColor: colors.card,
+    },
 
     titleInput: {
       color: colors.text,
