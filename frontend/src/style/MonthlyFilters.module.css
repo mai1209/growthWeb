@@ -1,10 +1,17 @@
 .container {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.15rem;
   padding: 2rem;
   min-height: calc(100vh - 78px);
   color: var(--color-text);
   background: var(--page-background);
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.container > * {
+  min-width: 0;
 }
 
 .filtersPanel,

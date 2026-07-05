@@ -305,6 +305,25 @@
   border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
+.drawerHeader button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.drawerHeader button:hover {
+  color: var(--color-text);
+  background: var(--surface-hover);
+}
+
 .drawerContent {
   padding: 1rem;
   display: flex;

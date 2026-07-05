@@ -3,6 +3,7 @@ import {
   View,
   Text,
   SectionList,
+  ScrollView,
   TextInput,
   TouchableOpacity,
   StyleSheet,
@@ -177,7 +178,7 @@ export default function FiltrosScreen() {
         </View>
       </View>
 
-      {/* Panel de filtros */}
+      {/* Panel de filtros: búsqueda + chips en una línea */}
       {filtersOpen && (
         <View style={styles.filtersPanel}>
           <View style={styles.searchBox}>
@@ -189,8 +190,18 @@ export default function FiltrosScreen() {
               placeholder="Categoría, detalle o tipo"
               placeholderTextColor={colors.muted}
             />
+            {search ? (
+              <TouchableOpacity onPress={() => setSearch("")} hitSlop={8}>
+                <Ionicons name="close-circle" size={16} color={colors.muted} />
+              </TouchableOpacity>
+            ) : null}
           </View>
-          <View style={styles.typeRow}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.typeRow}
+          >
             {TYPE_FILTERS.map((t) => (
               <TouchableOpacity
                 key={t.value}
@@ -202,26 +213,36 @@ export default function FiltrosScreen() {
                 </Text>
               </TouchableOpacity>
             ))}
-          </View>
-          {(search || type !== "all") && (
-            <TouchableOpacity onPress={() => { setSearch(""); setType("all"); }}>
-              <Text style={styles.clear}>Limpiar filtros</Text>
-            </TouchableOpacity>
-          )}
+            {(search || type !== "all") && (
+              <TouchableOpacity
+                style={styles.clearChip}
+                onPress={() => { setSearch(""); setType("all"); }}
+              >
+                <Ionicons name="close" size={13} color={colors.red} />
+                <Text style={styles.clearChipText}>Limpiar</Text>
+              </TouchableOpacity>
+            )}
+          </ScrollView>
         </View>
       )}
 
-      {/* Cards de resultados FIJAS (no scrollean) */}
+      {/* Totales del mes: fila compacta deslizable, FIJA */}
       <View style={styles.summaryWrap}>
-        <View style={styles.summaryGrid}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.summaryRow}
+        >
           {summaryCards.map((c) => (
             <View key={c.label} style={styles.summaryCard}>
-              <View style={[styles.sumBar, { backgroundColor: c.accent }]} />
-              <Text style={styles.sumLabel}>{c.label}</Text>
+              <View style={styles.sumHead}>
+                <View style={[styles.sumDot, { backgroundColor: c.accent }]} />
+                <Text style={styles.sumLabel}>{c.label}</Text>
+              </View>
               <Text style={styles.sumValue}>{c.value}</Text>
             </View>
           ))}
-        </View>
+        </ScrollView>
       </View>
 
       {loading ? (
@@ -251,6 +272,7 @@ export default function FiltrosScreen() {
             const isPartialDebt = isPendingDebt && debtPaid > 0;
             return (
               <View style={styles.movCard}>
+                <View style={[styles.movBar, { backgroundColor: meta.color }]} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.movTitle}>{item.categoria || "Sin categoría"}</Text>
                   {item.detalle ? <Text style={styles.movDetail}>{item.detalle}</Text> : null}
@@ -372,39 +394,49 @@ const makeStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.bg,
   },
   searchInput: { flex: 1, paddingVertical: 10, color: colors.text, fontSize: 15 },
-  typeRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  typeRow: { flexDirection: "row", gap: 8, paddingRight: 8 },
   typeChip: {
     paddingVertical: 8,
-    paddingHorizontal: 13,
+    paddingHorizontal: 14,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     backgroundColor: colors.bg,
   },
-  typeChipActive: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
+  typeChipActive: { backgroundColor: colors.segActive, borderColor: colors.segActive },
   typeChipText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
-  typeChipTextActive: { color: colors.greenDark },
-  clear: { color: colors.greenDark, fontWeight: "700", fontSize: 13 },
+  typeChipTextActive: { color: colors.segActiveText, fontWeight: "800" },
+  clearChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.redSoft,
+    backgroundColor: colors.redSoft,
+  },
+  clearChipText: { color: colors.red, fontWeight: "700", fontSize: 13 },
 
   error: { color: colors.red, padding: 16 },
   empty: { color: colors.muted, padding: 16, textAlign: "center" },
 
-  summaryWrap: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 6 },
-  summaryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  summaryWrap: { paddingTop: 10, paddingBottom: 4 },
+  summaryRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16 },
   summaryCard: {
-    width: "48%",
+    minWidth: 128,
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingLeft: 16,
-    paddingRight: 12,
-    overflow: "hidden",
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
-  sumBar: { position: "absolute", left: 0, top: 0, bottom: 0, width: 5 },
-  sumLabel: { color: colors.muted, fontSize: 11, fontWeight: "800", textTransform: "uppercase" },
-  sumValue: { color: colors.text, fontSize: 16, fontWeight: "800", marginTop: 5 },
+  sumHead: { flexDirection: "row", alignItems: "center", gap: 6 },
+  sumDot: { width: 7, height: 7, borderRadius: 4 },
+  sumLabel: { color: colors.muted, fontSize: 10.5, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.4 },
+  sumValue: { color: colors.text, fontSize: 15, fontWeight: "800", marginTop: 5, fontVariant: ["tabular-nums"] },
 
   dayHeader: {
     color: colors.muted,
@@ -424,9 +456,13 @@ const makeStyles = (colors) => StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 14,
-    padding: 13,
+    paddingVertical: 12,
+    paddingRight: 13,
+    paddingLeft: 16,
     marginBottom: 8,
+    overflow: "hidden",
   },
+  movBar: { position: "absolute", left: 0, top: 0, bottom: 0, width: 4 },
   movTitle: { color: colors.text, fontSize: 15, fontWeight: "700" },
   movDetail: { color: colors.muted, fontSize: 13, marginTop: 2 },
   movChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 },
