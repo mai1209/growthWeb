@@ -480,6 +480,7 @@
 
 .listGroup {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.55rem;
 }
 
@@ -500,6 +501,7 @@
 
 .listGroupRows {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.85rem;
 }
 
