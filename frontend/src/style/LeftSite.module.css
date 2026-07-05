@@ -279,6 +279,33 @@
   white-space: nowrap;
 }
 
+/* ===== Publicidad chica del panel lateral ===== */
+.sideAd {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sideAdLabel {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sideAd img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+}
+
 /* Panel de control con pestañas de moneda conectadas (estilo Inicio/Portfolio) */
 .controlCard {
   position: relative;
@@ -622,6 +649,11 @@
 }
 
 
+
+:global(body[data-theme="light"]) .sideAd {
+  border-color: rgba(12, 18, 14, 0.14);
+  background: rgba(255, 255, 255, 0.75);
+}
 
 :global(body[data-theme="light"]) .segmentTabs {
   border-color: rgba(12, 18, 14, 0.14);

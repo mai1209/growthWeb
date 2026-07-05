@@ -399,7 +399,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) 280px;
   gap: 0.5rem;
-  align-items: start;
+  align-items: stretch; /* el panel de movimientos acompaña la altura de la publicidad */
   margin-top: 0.5rem;
 }
 
@@ -410,6 +410,8 @@
 .dashboardInfoCard {
   display: grid;
   gap: 1rem;
+  align-content: start;
+  height: 100%;
   padding: 1.2rem;
   border-radius: 24px;
   border: 1px solid var(--border-color);

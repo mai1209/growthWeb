@@ -275,6 +275,12 @@ function LeftSite({
           </article>
         </div>
         ) : null}
+
+        {/* Publicidad chica para llenar el espacio libre del panel */}
+        <section className={style.sideAd}>
+          <p className={style.sideAdLabel}>Espacio publicitario</p>
+          <img src="/publicidad.jpg" alt="publicidad" />
+        </section>
       </div>
     </aside>
   );
