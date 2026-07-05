@@ -46,6 +46,7 @@ export default function HomeScreen() {
   const [error, setError] = useState("");
   const [tab, setTab] = useState("ARS");
   const [visible, setVisible] = useState(true);
+  const [cardSize, setCardSize] = useState({ w: 0, h: 0 });
   const [modalMode, setModalMode] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -144,21 +145,28 @@ export default function HomeScreen() {
             {isCurrency ? (
               <>
                 {/* Tarjeta de saldo estilo credit card */}
-                <View style={styles.balanceCard}>
-                  <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
-                    <Defs>
-                      <LinearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
-                        <Stop offset="0" stopColor="#0f4a38" />
-                        <Stop offset="0.5" stopColor="#0c333c" />
-                        <Stop offset="1" stopColor="#081c24" />
-                      </LinearGradient>
-                    </Defs>
-                    <Rect width="100%" height="100%" rx="24" fill="url(#cardGrad)" />
-                    {/* Detalles decorativos, sutiles */}
-                    <Circle cx="88%" cy="8%" r="86" fill="rgba(20, 217, 95, 0.10)" />
-                    <Circle cx="104%" cy="70%" r="58" fill="rgba(19, 170, 182, 0.12)" />
-                    <Circle cx="12%" cy="112%" r="60" fill="rgba(20, 217, 95, 0.06)" />
-                  </Svg>
+                <View
+                  style={styles.balanceCard}
+                  onLayout={(e) =>
+                    setCardSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })
+                  }
+                >
+                  {cardSize.w > 0 ? (
+                    <Svg width={cardSize.w} height={cardSize.h} style={StyleSheet.absoluteFill}>
+                      <Defs>
+                        <LinearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
+                          <Stop offset="0" stopColor="#0f4a38" />
+                          <Stop offset="0.5" stopColor="#0c333c" />
+                          <Stop offset="1" stopColor="#081c24" />
+                        </LinearGradient>
+                      </Defs>
+                      <Rect width={cardSize.w} height={cardSize.h} rx={24} fill="url(#cardGrad)" />
+                      {/* Detalles decorativos, sutiles */}
+                      <Circle cx={cardSize.w * 0.88} cy={cardSize.h * 0.08} r={80} fill="rgba(20, 217, 95, 0.10)" />
+                      <Circle cx={cardSize.w * 1.02} cy={cardSize.h * 0.72} r={56} fill="rgba(19, 170, 182, 0.12)" />
+                      <Circle cx={cardSize.w * 0.1} cy={cardSize.h * 1.1} r={60} fill="rgba(20, 217, 95, 0.06)" />
+                    </Svg>
+                  ) : null}
 
                   <View style={styles.bcTop}>
                     <Text style={styles.bcKicker}>Saldo total</Text>
@@ -415,6 +423,7 @@ const makeStyles = (colors) => StyleSheet.create({
     minHeight: 172,
     justifyContent: "space-between",
     overflow: "hidden",
+    backgroundColor: "#0c333c", // respaldo hasta que el SVG mida la tarjeta
   },
   bcTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   bcKicker: {
