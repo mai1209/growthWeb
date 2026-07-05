@@ -58,6 +58,14 @@ export default function TaskFormModal({ visible, defaultDate, editTask = null, o
   const [dias, setDias] = useState([]);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showAllColors, setShowAllColors] = useState(false);
+
+  // Pocos colores a la vista; el resto detrás del "+" (color10 blanco no se lee)
+  const allColorKeys = Object.keys(TASK_COLORS).filter((k) => k !== "color10");
+  const baseColors = allColorKeys.slice(0, 5);
+  const visibleColors = baseColors.includes(color)
+    ? baseColors
+    : [...baseColors.slice(0, 4), color];
 
   useEffect(() => {
     if (!visible) return;
@@ -95,6 +103,7 @@ export default function TaskFormModal({ visible, defaultDate, editTask = null, o
     }
     setError("");
     setSaving(false);
+    setShowAllColors(false);
   }, [visible, defaultDate, editTask]);
 
   const toggleDay = (d) =>
@@ -240,20 +249,57 @@ export default function TaskFormModal({ visible, defaultDate, editTask = null, o
 
             <Text style={styles.label}>Color</Text>
             <View style={styles.colorRow}>
-              {Object.entries(TASK_COLORS)
-                .filter(([key]) => key !== "color10") // el blanco no se lee con texto blanco
-                .map(([key, val]) => (
+              {visibleColors.map((key) => {
+                const active = color === key;
+                return (
                   <TouchableOpacity
                     key={key}
                     style={[
                       styles.colorDot,
-                      { backgroundColor: val },
-                      color === key && styles.colorDotActive,
+                      { backgroundColor: TASK_COLORS[key] },
+                      active && styles.colorDotActive,
                     ]}
                     onPress={() => setColor(key)}
-                  />
-                ))}
+                  >
+                    {active && <Ionicons name="checkmark" size={15} color="#16241d" />}
+                  </TouchableOpacity>
+                );
+              })}
+              <TouchableOpacity
+                style={[styles.colorMore, showAllColors && styles.colorMoreActive]}
+                onPress={() => setShowAllColors((v) => !v)}
+              >
+                <Ionicons
+                  name={showAllColors ? "chevron-up" : "add"}
+                  size={18}
+                  color={showAllColors ? colors.greenDark : colors.muted}
+                />
+              </TouchableOpacity>
             </View>
+
+            {showAllColors && (
+              <View style={styles.colorGridAll}>
+                {allColorKeys.map((key) => {
+                  const active = color === key;
+                  return (
+                    <TouchableOpacity
+                      key={key}
+                      style={[
+                        styles.colorDot,
+                        { backgroundColor: TASK_COLORS[key] },
+                        active && styles.colorDotActive,
+                      ]}
+                      onPress={() => {
+                        setColor(key);
+                        setShowAllColors(false);
+                      }}
+                    >
+                      {active && <Ionicons name="checkmark" size={15} color="#16241d" />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
 
             <TouchableOpacity
               style={styles.repeatRow}
@@ -362,9 +408,38 @@ const makeStyles = (colors) => StyleSheet.create({
   chipActive: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
   chipText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
   chipTextActive: { color: colors.greenDark },
-  colorRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  colorDot: { width: 30, height: 30, borderRadius: 15 },
-  colorDotActive: { borderWidth: 3, borderColor: colors.text },
+  colorRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  colorDot: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  colorDotActive: { borderWidth: 2.5, borderColor: colors.greenBright, transform: [{ scale: 1.06 }] },
+  colorMore: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.card,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  colorMoreActive: { borderStyle: "solid", borderColor: colors.greenBorder, backgroundColor: colors.greenSoft },
+  colorGridAll: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 14,
+    backgroundColor: colors.card,
+  },
   repeatRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 18 },
   repeatText: { color: colors.text, fontSize: 15, fontWeight: "700" },
   error: { color: colors.red, marginTop: 12 },
