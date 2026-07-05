@@ -60,7 +60,15 @@ export const NOTE_COLORS = {
 
 export const NOTE_COLOR_KEYS = Object.keys(NOTE_COLORS);
 
-export const getNoteColor = (key) => NOTE_COLORS[key] || NOTE_COLORS.color1;
+export const getNoteColor = (key) => {
+  // Color libre elegido con el picker: el texto se decide por luminancia
+  if (typeof key === "string" && /^#[0-9a-f]{6}$/i.test(key)) {
+    const n = parseInt(key.slice(1), 16);
+    const lum = 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255);
+    return { bg: key, text: lum > 150 ? "#121814" : "#f7fff9" };
+  }
+  return NOTE_COLORS[key] || NOTE_COLORS.color1;
+};
 
 // ===== Fechas =====
 const MONTHS = [

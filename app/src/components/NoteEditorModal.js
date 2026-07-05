@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { taskService } from "../api";
 import { useTheme } from "../theme";
 import { NOTE_COLOR_KEYS, getNoteColor } from "../utils/notes";
+import ColorPickerModal from "./ColorPickerModal";
 
 const pad = (n) => String(n).padStart(2, "0");
 const toYMD = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -64,7 +65,7 @@ export default function NoteEditorModal({ visible, note, folders = [], onClose, 
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
-  const [showAllColors, setShowAllColors] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -75,17 +76,18 @@ export default function NoteEditorModal({ visible, note, folders = [], onClose, 
       setDate(parseYMD(note?.fecha));
       setError("");
       setSaving(false);
-      setShowAllColors(false);
+      setPickerOpen(false);
       setEditorKey((k) => k + 1); // remonta el editor con el contenido nuevo
     }
   }, [visible, note]);
 
-  // Pocos colores a la vista; el resto detrás del "+". Si el elegido no está
-  // entre los visibles, ocupa el último lugar para que siempre se vea.
+  // Pocos colores a la vista + "+" que abre el selector libre.
   const baseColors = NOTE_COLOR_KEYS.slice(0, 5);
-  const visibleColors = baseColors.includes(color)
-    ? baseColors
-    : [...baseColors.slice(0, 4), color];
+  const isCustom = typeof color === "string" && color.startsWith("#");
+  const visibleColors =
+    !isCustom && !baseColors.includes(color)
+      ? [...baseColors.slice(0, 4), color]
+      : baseColors;
 
   const handleSave = async () => {
     if (!meta.trim()) return setError("El título es obligatorio.");
@@ -213,38 +215,25 @@ export default function NoteEditorModal({ visible, note, folders = [], onClose, 
                   </TouchableOpacity>
                 );
               })}
-              <TouchableOpacity
-                style={[styles.colorMore, showAllColors && styles.colorMoreActive]}
-                onPress={() => setShowAllColors((v) => !v)}
-              >
-                <Ionicons
-                  name={showAllColors ? "chevron-up" : "add"}
-                  size={18}
-                  color={showAllColors ? colors.greenDark : colors.muted}
-                />
+              {/* Color libre elegido con el picker */}
+              {isCustom && (
+                <TouchableOpacity
+                  onPress={() => setPickerOpen(true)}
+                  style={[
+                    styles.colorDot,
+                    { backgroundColor: getNoteColor(color).bg },
+                    styles.colorDotActive,
+                  ]}
+                >
+                  <Ionicons name="checkmark" size={15} color={getNoteColor(color).text} />
+                </TouchableOpacity>
+              )}
+
+              {/* "+" abre el selector completo (cuadrado + barra de matiz) */}
+              <TouchableOpacity style={styles.colorMore} onPress={() => setPickerOpen(true)}>
+                <Ionicons name="add" size={18} color={colors.muted} />
               </TouchableOpacity>
             </View>
-
-            {showAllColors && (
-              <View style={styles.colorGridAll}>
-                {NOTE_COLOR_KEYS.map((key) => {
-                  const c = getNoteColor(key);
-                  const active = color === key;
-                  return (
-                    <TouchableOpacity
-                      key={key}
-                      onPress={() => {
-                        setColor(key);
-                        setShowAllColors(false);
-                      }}
-                      style={[styles.colorDot, { backgroundColor: c.bg }, active && styles.colorDotActive]}
-                    >
-                      {active && <Ionicons name="checkmark" size={15} color={c.text} />}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            )}
 
             {/* Título */}
             <Text style={styles.fieldLabel}>Título</Text>
@@ -301,6 +290,13 @@ export default function NoteEditorModal({ visible, note, folders = [], onClose, 
           />
         </KeyboardAvoidingView>
       </View>
+
+      <ColorPickerModal
+        visible={pickerOpen}
+        initialColor={getNoteColor(color).bg}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(hex) => setColor(hex)}
+      />
     </Modal>
   );
 }
@@ -382,19 +378,6 @@ const makeStyles = (colors) =>
       alignItems: "center",
       justifyContent: "center",
     },
-    colorMoreActive: { borderStyle: "solid", borderColor: colors.greenBorder, backgroundColor: colors.greenSoft },
-    colorGridAll: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 10,
-      marginTop: 10,
-      padding: 12,
-      borderWidth: 1,
-      borderColor: colors.cardBorder,
-      borderRadius: 14,
-      backgroundColor: colors.card,
-    },
-
     titleInput: {
       color: colors.text,
       fontSize: 18,

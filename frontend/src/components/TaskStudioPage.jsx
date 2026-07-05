@@ -44,6 +44,15 @@ const MIN_FONT_PX = 8;
 const MAX_FONT_PX = 96;
 const DEFAULT_FONT_PX = 16;
 
+// Estilo inline para colores libres (hex) elegidos con el picker de la app.
+// El color del texto se decide por luminancia del fondo.
+const customNoteStyle = (c) => {
+  if (typeof c !== "string" || !/^#[0-9a-f]{6}$/i.test(c)) return undefined;
+  const n = parseInt(c.slice(1), 16);
+  const lum = 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255);
+  return { background: c, color: lum > 150 ? "#121814" : "#f7fff9" };
+};
+
 const COLOR_OPTIONS = [
   { value: "color1", label: "Verde" },
   { value: "color2", label: "Naranja" },
@@ -1590,6 +1599,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                                 key={task._id}
                                 type="button"
                                 className={`${style.calendarNote} ${style[task.color] || style.color1}`}
+                                style={customNoteStyle(task.color)}
                                 onClick={() => handleEdit(task)}
                                 title={task.meta}
                               >
@@ -1692,6 +1702,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                                   role="button"
                                   tabIndex={0}
                                   className={`${style.noteCard} ${style[task.color] || style.color1}`}
+                                  style={customNoteStyle(task.color)}
                                   onClick={() => handleEdit(task)}
                                   onKeyDown={(event) => {
                                     if (event.target !== event.currentTarget) return;
@@ -2240,7 +2251,10 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
               ) : null}
 
               <div className={`${style.field} ${style.editorField}`}>
-                <div className={`${style.editorShell} ${style.notePaper} ${style[form.color] || style.color1}`}>
+                <div
+                  className={`${style.editorShell} ${style.notePaper} ${style[form.color] || style.color1}`}
+                  style={customNoteStyle(form.color)}
+                >
                   <button
                     type="button"
                     className={style.expandButton}
