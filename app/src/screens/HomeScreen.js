@@ -44,15 +44,15 @@ export default function HomeScreen() {
   // La tarjeta de saldo cambia con el tema: oscura en dark, mint clara en light
   const card = isDark
     ? {
-        stops: ["#0f4a38", "#0c333c", "#081c24"],
-        backup: "#0c333c",
+        stops: ["#16745a", "#0e444b", "#0a2a33"],
+        backup: "#0e444b",
         text: "#ffffff",
-        muted: "rgba(236, 246, 243, 0.65)",
-        iconBorder: "rgba(236, 246, 243, 0.22)",
-        iconBg: "rgba(255, 255, 255, 0.07)",
-        glow1: "rgba(20, 217, 95, 0.10)",
-        glow2: "rgba(19, 170, 182, 0.12)",
-        glow3: "rgba(20, 217, 95, 0.06)",
+        muted: "rgba(236, 246, 243, 0.72)",
+        iconBorder: "rgba(236, 246, 243, 0.28)",
+        iconBg: "rgba(255, 255, 255, 0.1)",
+        glow1: "rgba(20, 217, 95, 0.24)",
+        glow2: "rgba(19, 170, 182, 0.22)",
+        glow3: "rgba(20, 217, 95, 0.12)",
       }
     : {
         stops: ["#9de3c0", "#c4ecd8", "#e8f6ee"],
