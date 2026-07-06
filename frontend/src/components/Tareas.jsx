@@ -22,9 +22,12 @@ import {
   FiList,
   FiMinus,
   FiMoon,
+  FiMoreVertical,
   FiPlus,
   FiSun,
   FiSunrise,
+  FiEdit2,
+  FiTrash2,
   FiX,
 } from "react-icons/fi";
 
@@ -254,6 +257,7 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
   const [historyPeriod, setHistoryPeriod] = useState("month"); // día/semana/mes/año
   const [historyRef, setHistoryRef] = useState(new Date()); // período de referencia del historial
   const [updatingTaskIds, setUpdatingTaskIds] = useState([]);
+  const [openTaskMenu, setOpenTaskMenu] = useState(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [dayActionDate, setDayActionDate] = useState(null); // día tocado en el calendario
   const [editingTask, setEditingTask] = useState(null);
@@ -588,6 +592,8 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
     return visibleTasks.map((task) => {
       const completed = isTaskCompleted(task);
 
+      const menuOpen = openTaskMenu === task._id;
+
       return (
         <div className={style.taskContainer} key={task._id}>
           <div
@@ -598,52 +604,70 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
               task.color?.startsWith?.("#") ? { background: task.color } : undefined
             }
           >
-            <label className={style.checkboxWrapper}>
-              <input
-                type="checkbox"
-                checked={completed}
-                disabled={updatingTaskIds.includes(task._id)}
-                onChange={() => handleToggleComplete(task._id)}
-              />
-              <span className={style.customCheckbox}></span>
-            </label>
+            <div className={style.taskTop}>
+              {/* Izquierda: opciones (tres puntitos) */}
+              <button
+                type="button"
+                className={style.taskOptionsBtn}
+                onClick={() => setOpenTaskMenu(menuOpen ? null : task._id)}
+                aria-label="Opciones"
+                aria-expanded={menuOpen}
+              >
+                <FiMoreVertical />
+              </button>
 
-            <div className={style.taskBody}>
-              <p className={style.taskMeta}>{task.meta}</p>
-              <div className={style.taskMetaRow}>
-                <span className={`${style.taskChip} ${style.taskDate}`}>
-                  <FiCalendar />
-                  {task.fecha ? task.fecha.slice(0, 10) : "-"}
-                </span>
-                <span className={`${style.taskChip} ${style.taskUrgency}`}>
-                  {task.urgencia || "Normal"}
-                </span>
-                <span className={`${style.taskChip} ${style.taskSchedule}`}>
-                  <FiClock />
-                  {task.horario || "Sin horario"}
-                </span>
+              <div className={style.taskBody}>
+                <p className={style.taskMeta}>{task.meta}</p>
+                <div className={style.taskMetaRow}>
+                  <span className={`${style.taskChip} ${style.taskDate}`}>
+                    <FiCalendar />
+                    {task.fecha ? task.fecha.slice(0, 10) : "-"}
+                  </span>
+                  <span className={`${style.taskChip} ${style.taskUrgency}`}>
+                    {task.urgencia || "Normal"}
+                  </span>
+                  <span className={`${style.taskChip} ${style.taskSchedule}`}>
+                    <FiClock />
+                    {task.horario || "Sin horario"}
+                  </span>
+                </div>
               </div>
-            </div>
 
-            <div className={style.taskActions}>
+              {/* Derecha: check circular (se pinta verde al completar) */}
               <button
                 type="button"
-                onClick={() => handleEditTask(task)}
-                className={style.editButton}
-                aria-label="Editar tarea"
-              >
-                <img className={style.ButtonImg} src="/edit.png" alt="edit" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleDeleteTask(task._id)}
-                className={style.deleteButton}
-                aria-label="Eliminar tarea"
-              >
-                <img className={style.ButtonImg} src="/trush.png" alt="delete" />
-              </button>
+                className={`${style.taskCheckCircle} ${completed ? style.taskCheckDone : ""}`}
+                onClick={() => handleToggleComplete(task._id)}
+                disabled={updatingTaskIds.includes(task._id)}
+                aria-label={completed ? "Marcar como pendiente" : "Completar"}
+              />
             </div>
+
+            {/* Fila desplegable con editar / eliminar */}
+            {menuOpen ? (
+              <div className={style.taskExpanded}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpenTaskMenu(null);
+                    handleEditTask(task);
+                  }}
+                  className={style.taskExpandedBtn}
+                >
+                  <FiEdit2 /> Editar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpenTaskMenu(null);
+                    handleDeleteTask(task._id);
+                  }}
+                  className={`${style.taskExpandedBtn} ${style.taskExpandedDelete}`}
+                >
+                  <FiTrash2 /> Eliminar
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       );

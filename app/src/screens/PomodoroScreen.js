@@ -13,10 +13,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import * as SecureStore from "expo-secure-store";
-import { useAudioPlayer, setAudioModeAsync } from "expo-audio";
 import { useTheme } from "../theme";
 
-const ALARM = require("../../assets/pomodoro-alarm.wav");
+// DIAGNÓSTICO: sonido desactivado temporalmente para aislar el crash de Android
 
 const MODES = [
   { key: "focus", label: "Enfoque", def: 25 },
@@ -57,11 +56,8 @@ export default function PomodoroScreen() {
   const targetRef = useRef(null);
   const totalSecs = durations[mode] * 60;
 
-  // Reproductor de la alarma (suena aunque el teléfono esté en silencio)
-  const alarm = useAudioPlayer(ALARM);
-  useEffect(() => {
-    setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
-  }, []);
+  // DIAGNÓSTICO: alarma stub (sin expo-audio) mientras aislamos el crash
+  const alarm = { seekTo() {}, play() {} };
 
   // Cargar guardado
   useEffect(() => {

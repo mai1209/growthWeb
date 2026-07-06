@@ -36,8 +36,7 @@
           "imageWidth": 220
         }
       ],
-      "expo-font",
-      "expo-audio"
+      "expo-font"
     ]
   }
 }

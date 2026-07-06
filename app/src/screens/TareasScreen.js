@@ -31,6 +31,7 @@ export default function TareasScreen() {
   const [viewMode, setViewMode] = useState("day"); // day | calendar | history
   const [formDate, setFormDate] = useState(null);
   const [editTask, setEditTask] = useState(null);
+  const [openMenu, setOpenMenu] = useState(null);
 
   const fetchTasks = useCallback(async () => {
     setError("");
@@ -177,42 +178,66 @@ export default function TareasScreen() {
               const accent =
                 TASK_COLORS[item.color] ||
                 (item.color?.startsWith?.("#") ? item.color : TASK_COLORS.color1);
+              const menuOpen = openMenu === item._id;
+              const fg = done ? colors.muted : "#16241d";
               return (
                 <View style={[styles.card, { backgroundColor: done ? colors.cardSoft : accent }]}>
-                  <TouchableOpacity
-                    style={[
-                      styles.check,
-                      { borderColor: "rgba(0,0,0,0.3)" },
-                      done && { backgroundColor: colors.greenBright, borderColor: colors.greenBright },
-                    ]}
-                    onPress={() => toggleComplete(item)}
-                    disabled={busyIds.includes(item._id)}
-                  >
-                    {done ? <Ionicons name="checkmark" size={16} color="#fff" /> : null}
-                  </TouchableOpacity>
-
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.cardTitle, done && styles.cardTitleDone]}>{item.meta}</Text>
-                    <View style={styles.metaRow}>
-                      {item.urgencia ? <Text style={styles.metaChip}>{item.urgencia}</Text> : null}
-                      {item.horario ? <Text style={styles.metaChip}>{item.horario}</Text> : null}
-                    </View>
-                  </View>
-
-                  <View style={styles.cardActions}>
+                  <View style={styles.cardTop}>
+                    {/* Izquierda: opciones (tres puntitos) */}
                     <TouchableOpacity
-                      onPress={() => {
-                        setEditTask(item);
-                        setShowForm(true);
-                      }}
-                      hitSlop={8}
+                      style={[styles.optionsBtn, { backgroundColor: done ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.12)" }]}
+                      onPress={() => setOpenMenu(menuOpen ? null : item._id)}
+                      hitSlop={6}
                     >
-                      <Ionicons name="pencil" size={19} color={colors.text} />
+                      <Ionicons name="ellipsis-vertical" size={18} color={fg} />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDelete(item)} hitSlop={8}>
-                      <Ionicons name="trash-outline" size={20} color={colors.text} />
-                    </TouchableOpacity>
+
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.cardTitle, done && styles.cardTitleDone]}>{item.meta}</Text>
+                      <View style={styles.metaRow}>
+                        {item.urgencia ? <Text style={styles.metaChip}>{item.urgencia}</Text> : null}
+                        {item.horario ? <Text style={styles.metaChip}>{item.horario}</Text> : null}
+                      </View>
+                    </View>
+
+                    {/* Derecha: check circular (verde lleno al completar) */}
+                    <TouchableOpacity
+                      style={[
+                        styles.checkCircle,
+                        { borderColor: done ? colors.greenBright : "rgba(0,0,0,0.35)" },
+                        done && styles.checkCircleDone,
+                      ]}
+                      onPress={() => toggleComplete(item)}
+                      disabled={busyIds.includes(item._id)}
+                    />
                   </View>
+
+                  {/* Fila desplegable: editar / eliminar */}
+                  {menuOpen ? (
+                    <View style={styles.cardExpanded}>
+                      <TouchableOpacity
+                        style={styles.expandedBtn}
+                        onPress={() => {
+                          setOpenMenu(null);
+                          setEditTask(item);
+                          setShowForm(true);
+                        }}
+                      >
+                        <Ionicons name="pencil" size={15} color={fg} />
+                        <Text style={[styles.expandedText, { color: fg }]}>Editar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.expandedBtn, styles.expandedDelete]}
+                        onPress={() => {
+                          setOpenMenu(null);
+                          handleDelete(item);
+                        }}
+                      >
+                        <Ionicons name="trash-outline" size={15} color={colors.red} />
+                        <Text style={[styles.expandedText, { color: colors.red }]}>Eliminar</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
                 </View>
               );
             }}
@@ -327,24 +352,46 @@ const makeStyles = (colors) => StyleSheet.create({
   progressLbl: { color: colors.muted, fontSize: 11, marginTop: 2 },
 
   card: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
     borderRadius: 16,
     paddingVertical: 14,
     paddingHorizontal: 14,
     overflow: "hidden",
   },
-  check: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: colors.cardBorder,
+  cardTop: { flexDirection: "row", alignItems: "center", gap: 12 },
+  optionsBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
   },
-  cardActions: { flexDirection: "row", alignItems: "center", gap: 14 },
+  checkCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2.5,
+    backgroundColor: "transparent",
+  },
+  checkCircleDone: { backgroundColor: colors.greenBright },
+  cardExpanded: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,0,0,0.18)",
+  },
+  expandedBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    backgroundColor: "rgba(0,0,0,0.14)",
+  },
+  expandedDelete: { backgroundColor: colors.redSoft },
+  expandedText: { fontWeight: "700", fontSize: 13 },
   cardTitle: { color: colors.text, fontSize: 16, fontWeight: "700" },
   cardTitleDone: { textDecorationLine: "line-through", color: colors.muted },
   metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 5 },
