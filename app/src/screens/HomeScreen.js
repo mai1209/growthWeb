@@ -38,8 +38,33 @@ const fmtDate = (value) => {
 };
 
 export default function HomeScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = makeStyles(colors);
+
+  // La tarjeta de saldo cambia con el tema: oscura en dark, mint clara en light
+  const card = isDark
+    ? {
+        stops: ["#0f4a38", "#0c333c", "#081c24"],
+        backup: "#0c333c",
+        text: "#ffffff",
+        muted: "rgba(236, 246, 243, 0.65)",
+        iconBorder: "rgba(236, 246, 243, 0.22)",
+        iconBg: "rgba(255, 255, 255, 0.07)",
+        glow1: "rgba(20, 217, 95, 0.10)",
+        glow2: "rgba(19, 170, 182, 0.12)",
+        glow3: "rgba(20, 217, 95, 0.06)",
+      }
+    : {
+        stops: ["#dff3e6", "#eef6f0", "#ffffff"],
+        backup: "#eef6f0",
+        text: "#16241d",
+        muted: "rgba(22, 36, 29, 0.55)",
+        iconBorder: "rgba(22, 36, 29, 0.2)",
+        iconBg: "rgba(22, 36, 29, 0.05)",
+        glow1: "rgba(20, 217, 95, 0.20)",
+        glow2: "rgba(19, 170, 182, 0.16)",
+        glow3: "rgba(20, 217, 95, 0.10)",
+      };
   const navigation = useNavigation();
   const [movimientos, setMovimientos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -146,7 +171,7 @@ export default function HomeScreen() {
               <>
                 {/* Tarjeta de saldo estilo credit card */}
                 <View
-                  style={styles.balanceCard}
+                  style={[styles.balanceCard, { backgroundColor: card.backup }]}
                   onLayout={(e) =>
                     setCardSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })
                   }
@@ -155,33 +180,45 @@ export default function HomeScreen() {
                     <Svg width={cardSize.w} height={cardSize.h} style={StyleSheet.absoluteFill}>
                       <Defs>
                         <LinearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
-                          <Stop offset="0" stopColor="#0f4a38" />
-                          <Stop offset="0.5" stopColor="#0c333c" />
-                          <Stop offset="1" stopColor="#081c24" />
+                          <Stop offset="0" stopColor={card.stops[0]} />
+                          <Stop offset="0.5" stopColor={card.stops[1]} />
+                          <Stop offset="1" stopColor={card.stops[2]} />
                         </LinearGradient>
                       </Defs>
                       <Rect width={cardSize.w} height={cardSize.h} rx={24} fill="url(#cardGrad)" />
                       {/* Detalles decorativos, sutiles */}
-                      <Circle cx={cardSize.w * 0.88} cy={cardSize.h * 0.08} r={80} fill="rgba(20, 217, 95, 0.10)" />
-                      <Circle cx={cardSize.w * 1.02} cy={cardSize.h * 0.72} r={56} fill="rgba(19, 170, 182, 0.12)" />
-                      <Circle cx={cardSize.w * 0.1} cy={cardSize.h * 1.1} r={60} fill="rgba(20, 217, 95, 0.06)" />
+                      <Circle cx={cardSize.w * 0.88} cy={cardSize.h * 0.08} r={80} fill={card.glow1} />
+                      <Circle cx={cardSize.w * 1.02} cy={cardSize.h * 0.72} r={56} fill={card.glow2} />
+                      <Circle cx={cardSize.w * 0.1} cy={cardSize.h * 1.1} r={60} fill={card.glow3} />
                     </Svg>
                   ) : null}
 
                   <View style={styles.bcTop}>
-                    <Text style={styles.bcKicker}>Saldo total</Text>
+                    <Text style={[styles.bcKicker, { color: card.muted }]}>Saldo total</Text>
                     <View style={styles.bcIcons}>
-                      <TouchableOpacity style={styles.bcIconBtn} onPress={() => goToFilter(null)} hitSlop={6}>
-                        <Ionicons name="funnel-outline" size={16} color="#ecf6f3" />
+                      <TouchableOpacity
+                        style={[styles.bcIconBtn, { borderColor: card.iconBorder, backgroundColor: card.iconBg }]}
+                        onPress={() => goToFilter(null)}
+                        hitSlop={6}
+                      >
+                        <Ionicons name="funnel-outline" size={16} color={card.text} />
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.bcIconBtn} onPress={() => setShowHistory(true)} hitSlop={6}>
-                        <Ionicons name="time-outline" size={17} color="#ecf6f3" />
+                      <TouchableOpacity
+                        style={[styles.bcIconBtn, { borderColor: card.iconBorder, backgroundColor: card.iconBg }]}
+                        onPress={() => setShowHistory(true)}
+                        hitSlop={6}
+                      >
+                        <Ionicons name="time-outline" size={17} color={card.text} />
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.bcIconBtn} onPress={() => setVisible((v) => !v)} hitSlop={6}>
+                      <TouchableOpacity
+                        style={[styles.bcIconBtn, { borderColor: card.iconBorder, backgroundColor: card.iconBg }]}
+                        onPress={() => setVisible((v) => !v)}
+                        hitSlop={6}
+                      >
                         <Ionicons
                           name={visible ? "eye-outline" : "eye-off-outline"}
                           size={17}
-                          color="#ecf6f3"
+                          color={card.text}
                         />
                       </TouchableOpacity>
                     </View>
@@ -190,11 +227,11 @@ export default function HomeScreen() {
                   {loading ? (
                     <ActivityIndicator color="#14d95f" style={{ alignSelf: "flex-start", marginVertical: 14 }} />
                   ) : (
-                    <Text style={styles.bcBalance}>{money(historical.total)}</Text>
+                    <Text style={[styles.bcBalance, { color: card.text }]}>{money(historical.total)}</Text>
                   )}
 
                   <View style={styles.bcFooter}>
-                    <Text style={styles.bcCurrency}>{currencyMeta.codeLabel}</Text>
+                    <Text style={[styles.bcCurrency, { color: card.muted }]}>{currencyMeta.codeLabel}</Text>
                   </View>
                 </View>
 
