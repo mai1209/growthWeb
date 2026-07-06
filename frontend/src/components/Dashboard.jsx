@@ -132,7 +132,7 @@ function Dashboard({
   const currencyMeta = getCurrencyMeta(currentCurrency);
 
   return (
-    <div className={style.page}>
+    <div className={`${style.page} ${style.homeViewport}`}>
       <section className={style.overviewCard}>
         <section className={style.hero}>
           <div className={style.heroControls}>

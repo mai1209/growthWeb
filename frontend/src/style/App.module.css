@@ -121,6 +121,44 @@
   color: var(--color-text);
 }
 
+/* Home clavado al alto del monitor (desktop): sin scroll de página.
+   Los movimientos scrollean adentro de su panel. */
+@media (min-width: 1001px) {
+  .homeViewport {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 78px);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .homeViewport .contentLayout {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .homeViewport .dashboardInfoCard {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .homeViewport .promoSidebar {
+    position: static;
+    max-height: 100%;
+    min-height: 0;
+  }
+
+  .homeViewport .promoCard {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .homeViewport .promoMedia {
+    min-height: 0;
+    max-height: none; /* lo limita la card, que ya está limitada por el viewport */
+  }
+}
+
 .overviewCard {
   display: grid;
   gap: 0;
