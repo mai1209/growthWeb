@@ -4,6 +4,14 @@
   padding: 1.4rem;
   background: var(--sidebar-background);
   border-right: 1px solid var(--border-color);
+
+  /* Misma escala de radios profesional que la página de Ajustes (8-10px) */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 10px;
+  --radius-2xl: 10px;
 }
 
 .panel {
