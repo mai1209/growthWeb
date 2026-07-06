@@ -38,16 +38,6 @@ const getDayInputValue = (date = new Date()) => {
   return `${year}-${month}-${day}`;
 };
 
-const getDateFromInputValue = (value) => {
-  const [year, month, day] = value.split("-").map(Number);
-
-  if (!year || !month || !day) {
-    return new Date();
-  }
-
-  return new Date(year, month - 1, day);
-};
-
 const getMonthRange = (monthValue) => {
   const [year, month] = monthValue.split("-").map(Number);
 
