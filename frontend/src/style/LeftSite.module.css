@@ -656,13 +656,13 @@
 
 
 :global(body[data-theme="light"]) .creditCard {
-  border-color: rgba(12, 18, 14, 0.12);
+  border-color: rgba(12, 18, 14, 0.1);
   background:
-    radial-gradient(circle at 88% 0%, rgba(20, 217, 95, 0.2), transparent 42%),
-    radial-gradient(circle at 106% 76%, rgba(19, 170, 182, 0.16), transparent 40%),
-    radial-gradient(circle at 8% 110%, rgba(20, 217, 95, 0.1), transparent 38%),
-    linear-gradient(135deg, #dff3e6, #eef6f0 55%, #ffffff);
-  box-shadow: 0 18px 42px rgba(21, 33, 24, 0.14);
+    radial-gradient(circle at 88% 0%, rgba(20, 217, 95, 0.32), transparent 46%),
+    radial-gradient(circle at 106% 76%, rgba(19, 170, 182, 0.24), transparent 42%),
+    radial-gradient(circle at 8% 110%, rgba(20, 217, 95, 0.18), transparent 40%),
+    linear-gradient(135deg, #9de3c0, #c4ecd8 55%, #e8f6ee);
+  box-shadow: 0 18px 42px rgba(21, 33, 24, 0.16);
 }
 
 :global(body[data-theme="light"]) .ccKicker {
@@ -674,8 +674,8 @@
 }
 
 :global(body[data-theme="light"]) .ccEye {
-  border-color: rgba(22, 36, 29, 0.2);
-  background: rgba(22, 36, 29, 0.05);
+  border-color: rgba(22, 36, 29, 0.18);
+  background: rgba(255, 255, 255, 0.45);
   color: #16241d;
 }
 

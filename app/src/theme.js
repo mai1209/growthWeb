@@ -5,9 +5,9 @@ const THEME_KEY = "themePreference";
 
 // Paleta del tema CLARO (tomada de las variables de la web, index.css)
 export const lightColors = {
-  bg: "#eef3eb",
+  bg: "#e7f0ee", // blanco-teal frío (hermana con el teal oscuro del tema dark)
   card: "#ffffff",
-  cardSoft: "#f6f9f3",
+  cardSoft: "#f0f7f4",
   cardBorder: "rgba(22, 41, 31, 0.12)",
   text: "#16241d",
   muted: "#5e7065",

@@ -55,15 +55,15 @@ export default function HomeScreen() {
         glow3: "rgba(20, 217, 95, 0.06)",
       }
     : {
-        stops: ["#dff3e6", "#eef6f0", "#ffffff"],
-        backup: "#eef6f0",
+        stops: ["#9de3c0", "#c4ecd8", "#e8f6ee"],
+        backup: "#c4ecd8",
         text: "#16241d",
-        muted: "rgba(22, 36, 29, 0.55)",
-        iconBorder: "rgba(22, 36, 29, 0.2)",
-        iconBg: "rgba(22, 36, 29, 0.05)",
-        glow1: "rgba(20, 217, 95, 0.20)",
-        glow2: "rgba(19, 170, 182, 0.16)",
-        glow3: "rgba(20, 217, 95, 0.10)",
+        muted: "rgba(22, 36, 29, 0.6)",
+        iconBorder: "rgba(22, 36, 29, 0.18)",
+        iconBg: "rgba(255, 255, 255, 0.45)",
+        glow1: "rgba(20, 217, 95, 0.30)",
+        glow2: "rgba(19, 170, 182, 0.22)",
+        glow3: "rgba(20, 217, 95, 0.16)",
       };
   const navigation = useNavigation();
   const [movimientos, setMovimientos] = useState([]);
