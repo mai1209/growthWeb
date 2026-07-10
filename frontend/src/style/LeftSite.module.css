@@ -10,6 +10,19 @@
   height: 100%;
 }
 
+/* En móvil (dentro del panel del menú) ocupa todo el ancho y fluye normal */
+@media (max-width: 1000px) {
+  .container {
+    width: 100%;
+    min-height: 0;
+    padding: 0.25rem 0.1rem 1rem;
+  }
+
+  .panel {
+    height: auto;
+  }
+}
+
 /* En desktop la columna queda CLAVADA a la altura del monitor: sin scroll de
    página; si los resultados no entran, scrollean adentro del panel */
 @media (min-width: 1001px) {

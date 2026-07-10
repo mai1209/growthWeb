@@ -124,6 +124,27 @@
   background: #14d95f;
 }
 
+/* En móvil: fila deslizable, sin envolver (evita la forma de huevo) */
+@media (max-width: 640px) {
+  .modeSelector {
+    width: 100%;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    border-radius: 14px;
+    scrollbar-width: none;
+  }
+
+  .modeSelector::-webkit-scrollbar {
+    display: none;
+  }
+
+  .modeButton {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
 .formCard {
   display: grid;
   width: 100%;
