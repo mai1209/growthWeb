@@ -149,7 +149,7 @@ function LeftSite({
               <button
                 type="button"
                 className={style.typeAdd}
-                onClick={() => navigate("/add")}
+                onClick={() => navigate(`/add?tipo=${viewTab}`)}
               >
                 {viewTab === "deuda" ? "Cargar deuda" : "Nuevo ahorro"}
               </button>

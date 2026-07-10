@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -70,10 +70,14 @@ const getModeFromMovement = (movement) => {
 
 function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const isEditing = !!movementToEdit;
 
+  // ?tipo=ahorro|deuda|... preselecciona el modo (viene de las pestañas del Home)
+  const tipoParam = searchParams.get("tipo");
   const [selectedMode, setSelectedMode] = useState(
-    only || getModeFromMovement(movementToEdit)
+    only ||
+      (!movementToEdit && MODE_CONFIG[tipoParam] ? tipoParam : getModeFromMovement(movementToEdit))
   );
   const [monto, setMonto] = useState("");
   const [categoria, setCategoria] = useState("");
