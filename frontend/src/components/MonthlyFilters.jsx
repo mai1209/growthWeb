@@ -176,7 +176,17 @@ function MonthlyFilters({
 
     return [...monthMovimientos]
       .filter((movimiento) => {
-        if (selectedType !== "all" && movimiento.tipo !== selectedType) {
+        if (selectedType === "ahorro") {
+          // Ahorro incluye los usos de ahorro (egresos pagados con ahorro)
+          if (movimiento.tipo !== "ahorro" && !movimiento.desdeAhorro) {
+            return false;
+          }
+        } else if (selectedType === "egreso") {
+          // Egreso excluye los usos de ahorro (viven en Ahorro)
+          if (movimiento.tipo !== "egreso" || movimiento.desdeAhorro) {
+            return false;
+          }
+        } else if (selectedType !== "all" && movimiento.tipo !== selectedType) {
           return false;
         }
 

@@ -102,7 +102,14 @@ export default function FiltrosScreen() {
 
     const q = search.trim().toLowerCase();
     const filtered = monthMovs.filter((m) => {
-      if (type !== "all" && normalizeMovementType(m.tipo) !== type) return false;
+      const t = normalizeMovementType(m.tipo);
+      if (type === "ahorro") {
+        // Ahorro incluye los usos de ahorro (egresos pagados con ahorro)
+        if (t !== "ahorro" && !m.desdeAhorro) return false;
+      } else if (type === "egreso") {
+        // Egreso excluye los usos de ahorro (viven en Ahorro)
+        if (t !== "egreso" || m.desdeAhorro) return false;
+      } else if (type !== "all" && t !== type) return false;
       if (!q) return true;
       const hay = [m.categoria, m.detalle, m.deudaAcreedor, m.tipo]
         .filter(Boolean)
