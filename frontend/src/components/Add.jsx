@@ -5,7 +5,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Add.module.css";
 import InputMonto from "./InputMonto";
-import { movimientoService } from "../api";
+import { movimientoService, categoriesService } from "../api";
 import {
   CURRENCY_OPTIONS,
   MOVEMENT_METHOD_OPTIONS,
@@ -67,6 +67,13 @@ const MODE_CONFIG = {
   },
 };
 
+// Íconos disponibles para las categorías (emoji: funcionan igual en web y app)
+export const CATEGORY_EMOJIS = [
+  "🍔", "🛒", "🚗", "🏠", "💡", "📱", "💊", "👕", "🎬", "✈️",
+  "🎓", "🎁", "🐶", "💼", "💵", "📈", "🏦", "☕", "🍻", "⚽",
+  "💇", "🔧", "🧾", "🏷️",
+];
+
 const getModeFromMovement = (movement) => {
   if (!movement) return "ingreso";
   if (movement.tipo === "deuda") return "deuda";
@@ -98,6 +105,60 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
   const [deudaAcreedor, setDeudaAcreedor] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // ===== Categorías del usuario (autocompletado + alta con ícono) =====
+  const [categories, setCategories] = useState([]);
+  const [catOpen, setCatOpen] = useState(false); // desplegable de sugerencias
+  const [catModalOpen, setCatModalOpen] = useState(false); // alta de categoría
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatIcon, setNewCatIcon] = useState("🏷️");
+  const [savingCat, setSavingCat] = useState(false);
+
+  const loadCategories = async () => {
+    try {
+      const res = await categoriesService.getAll();
+      setCategories(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      // sin categorías, no bloquea el form
+    }
+  };
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const catSuggestions = useMemo(() => {
+    const term = categoria.trim().toLowerCase();
+    const list = term
+      ? categories.filter((c) => c.nombre.toLowerCase().includes(term))
+      : categories;
+    return list.slice(0, 6);
+  }, [categories, categoria]);
+
+  const selectedCatIcon = useMemo(() => {
+    const match = categories.find(
+      (c) => c.nombre.toLowerCase() === categoria.trim().toLowerCase()
+    );
+    return match?.icono || null;
+  }, [categories, categoria]);
+
+  const handleCreateCategory = async () => {
+    const nombre = newCatName.trim();
+    if (!nombre) return;
+    setSavingCat(true);
+    try {
+      const res = await categoriesService.create({ nombre, icono: newCatIcon });
+      await loadCategories();
+      setCategoria(res.data?.nombre || nombre);
+      setCatModalOpen(false);
+      setNewCatName("");
+      setNewCatIcon("🏷️");
+    } catch {
+      // silencioso: el usuario puede reintentar
+    } finally {
+      setSavingCat(false);
+    }
+  };
 
   useEffect(() => {
     if (only) {
@@ -323,23 +384,65 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
         </div>
 
         <div className={isDebtMode ? style.fieldGridDual : style.fieldGridTriple}>
-          <div className={style.field}>
+          <div className={`${style.field} ${style.catField}`}>
             <label className={style.fieldLabel} htmlFor="categoria">
               Categoria
+              <button
+                type="button"
+                className={style.catAddBtn}
+                onClick={() => {
+                  setNewCatName(categoria.trim());
+                  setCatModalOpen(true);
+                }}
+                title="Crear categoría"
+                aria-label="Crear categoría"
+              >
+                +
+              </button>
             </label>
-            <input
-              id="categoria"
-              name="categoria"
-              className={style.btn}
-              placeholder={
-                isDebtMode
-                  ? "Ej: prestamo, tarjeta, adelanto"
-                  : "Ej: ventas, alquiler, supermercado"
-              }
-              value={categoria}
-              onChange={(event) => setCategoria(event.target.value)}
-              required
-            />
+            <div className={style.catInputWrap}>
+              {selectedCatIcon ? (
+                <span className={style.catInputIcon}>{selectedCatIcon}</span>
+              ) : null}
+              <input
+                id="categoria"
+                name="categoria"
+                className={`${style.btn} ${selectedCatIcon ? style.catInputWithIcon : ""}`}
+                placeholder={
+                  isDebtMode
+                    ? "Ej: prestamo, tarjeta, adelanto"
+                    : "Ej: ventas, alquiler, supermercado"
+                }
+                value={categoria}
+                onChange={(event) => {
+                  setCategoria(event.target.value);
+                  setCatOpen(true);
+                }}
+                onFocus={() => setCatOpen(true)}
+                onBlur={() => setTimeout(() => setCatOpen(false), 150)}
+                autoComplete="off"
+                required
+              />
+            </div>
+
+            {catOpen && catSuggestions.length > 0 ? (
+              <div className={style.catDropdown}>
+                {catSuggestions.map((c) => (
+                  <button
+                    key={c._id}
+                    type="button"
+                    className={style.catOption}
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      setCategoria(c.nombre);
+                      setCatOpen(false);
+                    }}
+                  >
+                    <span>{c.icono}</span> {c.nombre}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           <div className={style.field}>
@@ -462,6 +565,58 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
           </div>
         </div>
       </form>
+
+      {/* Alta de categoría con ícono */}
+      {catModalOpen ? (
+        <div className={style.catOverlay} onClick={() => setCatModalOpen(false)}>
+          <div className={style.catModal} onClick={(event) => event.stopPropagation()}>
+            <h4 className={style.catModalTitle}>Nueva categoría</h4>
+
+            <input
+              className={style.btn}
+              placeholder="Nombre (ej: Comida)"
+              value={newCatName}
+              onChange={(event) => setNewCatName(event.target.value)}
+              maxLength={40}
+              autoFocus
+            />
+
+            <p className={style.catModalLabel}>Ícono</p>
+            <div className={style.catEmojiGrid}>
+              {CATEGORY_EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  className={`${style.catEmoji} ${
+                    newCatIcon === emoji ? style.catEmojiActive : ""
+                  }`}
+                  onClick={() => setNewCatIcon(emoji)}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+
+            <div className={style.catModalActions}>
+              <button
+                type="button"
+                className={style.catCancelBtn}
+                onClick={() => setCatModalOpen(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={style.catSaveBtn}
+                onClick={handleCreateCategory}
+                disabled={savingCat || !newCatName.trim()}
+              >
+                {savingCat ? "..." : `Crear ${newCatIcon}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {isEditing && (
         <div className={style.cancelContainer}>

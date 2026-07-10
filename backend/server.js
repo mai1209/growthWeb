@@ -9,6 +9,7 @@ import ingresoEgresoRoutes from "./src/routes/ingresoEgresoRoutes.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import taskRoutes from "./src/routes/taskRoutes.js";
 import sharedExpenseRoutes from "./src/routes/sharedExpenseRoutes.js";
+import categoryRoutes from "./src/routes/categoryRoutes.js";
 
 dotenv.config();
 
@@ -141,6 +142,7 @@ app.use("/api/add", ingresoEgresoRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/task", taskRoutes);
 app.use("/api/shared-groups", sharedExpenseRoutes);
+app.use("/api/categories", categoryRoutes);
 
 // Rutas de Google montadas de forma perezosa: si el módulo (o sus paquetes)
 // no carga en el entorno serverless, el resto de la API sigue funcionando.

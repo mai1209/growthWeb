@@ -6,7 +6,11 @@
 
 /* Vista de página completa (ruta /add), no dentro del modal del Home */
 .containerPage {
-  padding: 0.25rem 0.9rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* centrado vertical en la pantalla */
+  min-height: calc(100vh - 110px);
+  padding: 1.5rem 0.9rem 2rem;
   max-width: 760px;
   margin: 0 auto;
 }
@@ -675,4 +679,182 @@
   .cancelButton {
     width: 100%;
   }
+}
+
+/* ===== Categorías: autocompletado + alta con ícono ===== */
+.catField {
+  position: relative;
+}
+
+.catAddBtn {
+  margin-left: 0.45rem;
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px dashed var(--border-color);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: -3px;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.catAddBtn:hover {
+  color: #14d95f;
+  border-color: rgba(20, 217, 95, 0.5);
+}
+
+.catInputWrap {
+  position: relative;
+}
+
+.catInputIcon {
+  position: absolute;
+  left: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.05rem;
+  pointer-events: none;
+}
+
+.catInputWithIcon {
+  padding-left: 2.4rem !important;
+}
+
+.catDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: grid;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--surface-card-strong);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.catOption {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.85rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.92rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.catOption:hover {
+  background: var(--accent-surface);
+}
+
+.catOption span {
+  font-size: 1.05rem;
+}
+
+.catOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.catModal {
+  width: 100%;
+  max-width: 380px;
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.3rem;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--surface-card-strong);
+  box-shadow: var(--shadow-soft);
+}
+
+.catModalTitle {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.catModalLabel {
+  margin: 0.2rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.catEmojiGrid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0.35rem;
+}
+
+.catEmoji {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid transparent;
+  border-radius: 9px;
+  background: var(--surface-input);
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.catEmoji:hover {
+  transform: scale(1.1);
+}
+
+.catEmojiActive {
+  border-color: #14d95f;
+  background: rgba(20, 217, 95, 0.12);
+}
+
+.catModalActions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  margin-top: 0.3rem;
+}
+
+.catCancelBtn {
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  background: var(--surface-input);
+  color: var(--color-text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.catSaveBtn {
+  padding: 0.6rem 1.1rem;
+  border: none;
+  border-radius: 9px;
+  background: #14d95f;
+  color: #04140b;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.catSaveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

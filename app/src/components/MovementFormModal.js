@@ -13,8 +13,15 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
-import { movimientoService } from "../api";
+import { movimientoService, categoriesService } from "../api";
 import { useTheme } from "../theme";
+
+// Íconos de categoría (mismos emojis que la web)
+const CATEGORY_EMOJIS = [
+  "🍔", "🛒", "🚗", "🏠", "💡", "📱", "💊", "👕", "🎬", "✈️",
+  "🎓", "🎁", "🐶", "💼", "💵", "📈", "🏦", "☕", "🍻", "⚽",
+  "💇", "🔧", "🧾", "🏷️",
+];
 
 // 6 modos = los accesos rápidos de la web
 export const MOVEMENT_MODES = {
@@ -82,6 +89,52 @@ export default function MovementFormModal({
   const [showDate, setShowDate] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Categorías del usuario: autocompletado + alta con ícono
+  const [categories, setCategories] = useState([]);
+  const [catFocused, setCatFocused] = useState(false);
+  const [catModalOpen, setCatModalOpen] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatIcon, setNewCatIcon] = useState("🏷️");
+  const [savingCat, setSavingCat] = useState(false);
+
+  const loadCategories = async () => {
+    try {
+      const res = await categoriesService.getAll();
+      setCategories(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      // sin categorías, no bloquea
+    }
+  };
+
+  useEffect(() => {
+    if (visible) loadCategories();
+  }, [visible]);
+
+  const term = categoria.trim().toLowerCase();
+  const catSuggestions = (term
+    ? categories.filter((c) => c.nombre.toLowerCase().includes(term))
+    : categories
+  ).slice(0, 5);
+  const selectedCat = categories.find((c) => c.nombre.toLowerCase() === term);
+
+  const handleCreateCategory = async () => {
+    const nombre = newCatName.trim();
+    if (!nombre) return;
+    setSavingCat(true);
+    try {
+      const res = await categoriesService.create({ nombre, icono: newCatIcon });
+      await loadCategories();
+      setCategoria(res.data?.nombre || nombre);
+      setCatModalOpen(false);
+      setNewCatName("");
+      setNewCatIcon("🏷️");
+    } catch {
+      // reintenta el usuario
+    } finally {
+      setSavingCat(false);
+    }
+  };
 
   // Al abrir: precargar (edición) o resetear (nuevo)
   useEffect(() => {
@@ -199,14 +252,48 @@ export default function MovementFormModal({
               ))}
             </View>
 
-            <Text style={styles.label}>Categoría</Text>
-            <TextInput
-              style={styles.input}
-              value={categoria}
-              onChangeText={setCategoria}
-              placeholder="Ej: Sueldo, Supermercado..."
-              placeholderTextColor={colors.muted}
-            />
+            <View style={styles.catLabelRow}>
+              <Text style={styles.label}>Categoría</Text>
+              <TouchableOpacity
+                style={styles.catAddBtn}
+                onPress={() => {
+                  setNewCatName(categoria.trim());
+                  setCatModalOpen(true);
+                }}
+                hitSlop={8}
+              >
+                <Ionicons name="add" size={15} color={colors.muted} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.catInputRow}>
+              {selectedCat ? <Text style={styles.catIcon}>{selectedCat.icono}</Text> : null}
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                value={categoria}
+                onChangeText={setCategoria}
+                onFocus={() => setCatFocused(true)}
+                onBlur={() => setTimeout(() => setCatFocused(false), 150)}
+                placeholder="Ej: Sueldo, Supermercado..."
+                placeholderTextColor={colors.muted}
+              />
+            </View>
+            {catFocused && catSuggestions.length > 0 ? (
+              <View style={styles.catDropdown}>
+                {catSuggestions.map((c) => (
+                  <TouchableOpacity
+                    key={c._id}
+                    style={styles.catOption}
+                    onPress={() => {
+                      setCategoria(c.nombre);
+                      setCatFocused(false);
+                    }}
+                  >
+                    <Text style={styles.catOptionIcon}>{c.icono}</Text>
+                    <Text style={styles.catOptionText}>{c.nombre}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : null}
 
             <Text style={styles.label}>Detalle (opcional)</Text>
             <TextInput
@@ -310,6 +397,63 @@ export default function MovementFormModal({
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Alta de categoría con ícono */}
+      <Modal
+        visible={catModalOpen}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setCatModalOpen(false)}
+      >
+        <View style={styles.catOverlay}>
+          <View style={styles.catModal}>
+            <Text style={styles.catModalTitle}>Nueva categoría</Text>
+
+            <TextInput
+              style={styles.input}
+              value={newCatName}
+              onChangeText={setNewCatName}
+              placeholder="Nombre (ej: Comida)"
+              placeholderTextColor={colors.muted}
+              maxLength={40}
+              autoFocus
+            />
+
+            <Text style={styles.catModalLabel}>Ícono</Text>
+            <View style={styles.catEmojiGrid}>
+              {CATEGORY_EMOJIS.map((emoji) => (
+                <TouchableOpacity
+                  key={emoji}
+                  style={[styles.catEmoji, newCatIcon === emoji && styles.catEmojiActive]}
+                  onPress={() => setNewCatIcon(emoji)}
+                >
+                  <Text style={{ fontSize: 19 }}>{emoji}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.catModalActions}>
+              <TouchableOpacity
+                style={styles.catCancelBtn}
+                onPress={() => setCatModalOpen(false)}
+              >
+                <Text style={styles.catCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.catSaveBtn, (savingCat || !newCatName.trim()) && { opacity: 0.5 }]}
+                onPress={handleCreateCategory}
+                disabled={savingCat || !newCatName.trim()}
+              >
+                {savingCat ? (
+                  <ActivityIndicator color="#04140b" size="small" />
+                ) : (
+                  <Text style={styles.catSaveText}>Crear {newCatIcon}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Modal>
   );
 }
@@ -366,6 +510,96 @@ const makeStyles = (colors) => StyleSheet.create({
   toggleActive: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
   toggleText: { color: colors.muted, fontWeight: "700" },
   toggleTextActive: { color: colors.greenDark },
+  // ===== Categorías =====
+  catLabelRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  catAddBtn: {
+    width: 22,
+    height: 22,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: colors.cardBorder,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  catInputRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  catIcon: { fontSize: 20 },
+  catDropdown: {
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 12,
+    backgroundColor: colors.card,
+    overflow: "hidden",
+  },
+  catOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.cardBorder,
+  },
+  catOptionIcon: { fontSize: 17 },
+  catOptionText: { color: colors.text, fontSize: 15, fontWeight: "600" },
+  catOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  catModal: {
+    width: "100%",
+    maxWidth: 380,
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 16,
+    padding: 18,
+    gap: 12,
+  },
+  catModalTitle: { color: colors.text, fontSize: 17, fontWeight: "800" },
+  catModalLabel: {
+    color: colors.muted,
+    fontSize: 11,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  catEmojiGrid: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
+  catEmoji: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+    backgroundColor: colors.card,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  catEmojiActive: { borderColor: colors.segActive, backgroundColor: colors.greenSoft },
+  catModalActions: { flexDirection: "row", gap: 8, justifyContent: "flex-end", marginTop: 4 },
+  catCancelBtn: {
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.card,
+  },
+  catCancelText: { color: colors.text, fontWeight: "700" },
+  catSaveBtn: {
+    paddingVertical: 11,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+    backgroundColor: colors.segActive,
+  },
+  catSaveText: { color: colors.segActiveText, fontWeight: "800" },
+
   error: { color: colors.red, marginTop: 12 },
   saveBtn: {
     marginTop: 22,

@@ -90,6 +90,12 @@ export const movimientoService = {
   delete: (id) => api.delete(`/api/add/${id}`),
 };
 
+export const categoriesService = {
+  getAll: () => api.get("/api/categories"),
+  create: (data) => api.post("/api/categories", data),
+  delete: (id) => api.delete(`/api/categories/${id}`),
+};
+
 export const sharedGroupsService = {
   getAll: () => api.get("/api/shared-groups"),
   getById: (id) => api.get(`/api/shared-groups/${id}`),
