@@ -252,19 +252,7 @@ export default function MovementFormModal({
               ))}
             </View>
 
-            <View style={styles.catLabelRow}>
-              <Text style={styles.label}>Categoría</Text>
-              <TouchableOpacity
-                style={styles.catAddBtn}
-                onPress={() => {
-                  setNewCatName(categoria.trim());
-                  setCatModalOpen(true);
-                }}
-                hitSlop={8}
-              >
-                <Ionicons name="add" size={15} color={colors.muted} />
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.label}>Categoría</Text>
             <View style={styles.catInputRow}>
               {selectedCat ? <Text style={styles.catIcon}>{selectedCat.icono}</Text> : null}
               <TextInput
@@ -277,8 +265,25 @@ export default function MovementFormModal({
                 placeholderTextColor={colors.muted}
               />
             </View>
-            {catFocused && catSuggestions.length > 0 ? (
+            {catFocused ? (
               <View style={styles.catDropdown}>
+                {/* Crear siempre como primera opción */}
+                <TouchableOpacity
+                  style={[styles.catOption, styles.catOptionNew]}
+                  onPress={() => {
+                    setNewCatName(categoria.trim());
+                    setCatModalOpen(true);
+                    setCatFocused(false);
+                  }}
+                >
+                  <View style={styles.catNewPlus}>
+                    <Ionicons name="add" size={13} color={colors.segActive} />
+                  </View>
+                  <Text style={styles.catOptionNewText}>
+                    Nueva categoría{categoria.trim() ? ` “${categoria.trim()}”` : ""}
+                  </Text>
+                </TouchableOpacity>
+
                 {catSuggestions.map((c) => (
                   <TouchableOpacity
                     key={c._id}
@@ -511,20 +516,19 @@ const makeStyles = (colors) => StyleSheet.create({
   toggleText: { color: colors.muted, fontWeight: "700" },
   toggleTextActive: { color: colors.greenDark },
   // ===== Categorías =====
-  catLabelRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  catAddBtn: {
-    width: 22,
-    height: 22,
-    borderRadius: 7,
-    borderWidth: 1,
+  catInputRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  catOptionNew: { backgroundColor: colors.greenSoft },
+  catOptionNewText: { color: colors.greenDark, fontSize: 14.5, fontWeight: "700", flex: 1 },
+  catNewPlus: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1.5,
     borderStyle: "dashed",
-    borderColor: colors.cardBorder,
+    borderColor: colors.greenBorder,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 14,
-    marginBottom: 6,
   },
-  catInputRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   catIcon: { fontSize: 20 },
   catDropdown: {
     marginTop: 6,

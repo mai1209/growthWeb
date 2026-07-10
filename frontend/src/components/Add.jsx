@@ -387,18 +387,6 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
           <div className={`${style.field} ${style.catField}`}>
             <label className={style.fieldLabel} htmlFor="categoria">
               Categoria
-              <button
-                type="button"
-                className={style.catAddBtn}
-                onClick={() => {
-                  setNewCatName(categoria.trim());
-                  setCatModalOpen(true);
-                }}
-                title="Crear categoría"
-                aria-label="Crear categoría"
-              >
-                +
-              </button>
             </label>
             <div className={style.catInputWrap}>
               {selectedCatIcon ? (
@@ -425,8 +413,23 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
               />
             </div>
 
-            {catOpen && catSuggestions.length > 0 ? (
+            {catOpen ? (
               <div className={style.catDropdown}>
+                {/* Crear siempre como primera opción */}
+                <button
+                  type="button"
+                  className={`${style.catOption} ${style.catOptionNew}`}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    setNewCatName(categoria.trim());
+                    setCatModalOpen(true);
+                    setCatOpen(false);
+                  }}
+                >
+                  <span className={style.catNewPlus}>+</span> Nueva categoría
+                  {categoria.trim() ? ` “${categoria.trim()}”` : ""}
+                </button>
+
                 {catSuggestions.map((c) => (
                   <button
                     key={c._id}
