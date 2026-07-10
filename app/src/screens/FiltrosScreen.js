@@ -291,6 +291,9 @@ export default function FiltrosScreen() {
                     {isPartialDebt ? (
                       <Text style={[styles.movChip, { color: colors.greenDark }]}>Parcial</Text>
                     ) : null}
+                    {item.desdeAhorro ? (
+                      <Text style={[styles.movChip, { color: "#4fb6c9" }]}>Uso de ahorro</Text>
+                    ) : null}
                     {item.medio ? <Text style={styles.movChip}>{item.medio}</Text> : null}
                   </View>
                   {isPendingDebt ? (

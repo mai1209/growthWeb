@@ -42,13 +42,28 @@ function LeftSite({
     }
   };
 
-  // Movimientos del tipo activo (deuda / ahorro), más recientes primero
+  // Movimientos del tipo activo (deuda / ahorro), más recientes primero.
+  // En Ahorros entran también los usos (egresos pagados con ahorro).
   const typeMovs = useMemo(() => {
     if (viewTab === "money") return [];
     return movimientos
-      .filter((m) => m.tipo === viewTab)
+      .filter((m) =>
+        viewTab === "ahorro" ? m.tipo === "ahorro" || m.desdeAhorro : m.tipo === viewTab
+      )
       .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
   }, [movimientos, viewTab]);
+
+  // Ahorro disponible por moneda (ahorrado - usado)
+  const savingsPot = useMemo(() => {
+    const pot = { ARS: 0, USD: 0 };
+    movimientos.forEach((m) => {
+      const cur = m.moneda === "USD" ? "USD" : "ARS";
+      const amount = Number(m.monto) || 0;
+      if (m.tipo === "ahorro") pot[cur] += amount;
+      else if (m.desdeAhorro) pot[cur] -= amount;
+    });
+    return pot;
+  }, [movimientos]);
 
   // Lleva a la página de Filtros con el tipo aplicado (o sin filtro si tipo es null)
   const goToFilter = (tipo) => {
@@ -142,17 +157,44 @@ function LeftSite({
             <div className={style.typeHead}>
               <div>
                 <h2 className={style.typeTitle}>{viewTab === "deuda" ? "Deudas" : "Ahorros"}</h2>
-                <p className={style.typeCount}>
-                  {typeMovs.length} {typeMovs.length === 1 ? "movimiento" : "movimientos"}
-                </p>
+                {viewTab === "ahorro" ? (
+                  <p className={style.typePot}>
+                    Disponible:{" "}
+                    {areTotalsVisible
+                      ? [
+                          savingsPot.ARS !== 0 || savingsPot.USD === 0
+                            ? formatMoney(savingsPot.ARS, "ARS")
+                            : null,
+                          savingsPot.USD !== 0 ? formatMoney(savingsPot.USD, "USD") : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")
+                      : "••••"}
+                  </p>
+                ) : (
+                  <p className={style.typeCount}>
+                    {typeMovs.length} {typeMovs.length === 1 ? "movimiento" : "movimientos"}
+                  </p>
+                )}
               </div>
-              <button
-                type="button"
-                className={style.typeAdd}
-                onClick={() => navigate(`/add?tipo=${viewTab}`)}
-              >
-                {viewTab === "deuda" ? "Cargar deuda" : "Nuevo ahorro"}
-              </button>
+              <div className={style.typeActions}>
+                {viewTab === "ahorro" ? (
+                  <button
+                    type="button"
+                    className={style.typeUse}
+                    onClick={() => navigate("/add?tipo=ahorro-uso")}
+                  >
+                    Usar ahorro
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className={style.typeAdd}
+                  onClick={() => navigate(`/add?tipo=${viewTab}`)}
+                >
+                  {viewTab === "deuda" ? "Cargar deuda" : "Nuevo ahorro"}
+                </button>
+              </div>
             </div>
 
             {typeMovs.length === 0 ? (
@@ -193,10 +235,17 @@ function LeftSite({
                               {isPaid ? "Pagada" : isPartial ? "Parcial" : "Pendiente"}
                             </i>
                           ) : null}
+                          {m.desdeAhorro ? (
+                            <i className={`${style.typeChip} ${style.typeChipUse}`}>
+                              Uso de ahorro
+                            </i>
+                          ) : null}
                         </span>
                       </span>
                       <strong className={style.typeItemAmount}>
-                        {areTotalsVisible ? formatMoney(m.monto, m.moneda || "ARS") : "••••"}
+                        {areTotalsVisible
+                          ? `${m.desdeAhorro ? "- " : ""}${formatMoney(m.monto, m.moneda || "ARS")}`
+                          : "••••"}
                       </strong>
                     </button>
                   );

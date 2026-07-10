@@ -107,13 +107,26 @@ export default function HomeScreen() {
     };
   }, [movimientos, currency]);
 
-  // Movimientos del tipo activo (deuda / ahorro), más recientes primero
+  // Movimientos del tipo activo (deuda / ahorro), más recientes primero.
+  // En Ahorros entran también los usos (egresos pagados con ahorro).
   const typeMovs = useMemo(() => {
     if (isCurrency) return [];
     return movimientos
-      .filter((m) => m.tipo === tab)
+      .filter((m) => (tab === "ahorro" ? m.tipo === "ahorro" || m.desdeAhorro : m.tipo === tab))
       .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
   }, [movimientos, tab, isCurrency]);
+
+  // Ahorro disponible por moneda (ahorrado - usado)
+  const savingsPot = useMemo(() => {
+    const pot = { ARS: 0, USD: 0 };
+    movimientos.forEach((m) => {
+      const cur = m.moneda === "USD" ? "USD" : "ARS";
+      const amount = Number(m.monto) || 0;
+      if (m.tipo === "ahorro") pot[cur] += amount;
+      else if (m.desdeAhorro) pot[cur] -= amount;
+    });
+    return pot;
+  }, [movimientos]);
 
   const currencyMeta = getCurrencyMeta(currency);
   const money = (amount) => (visible ? formatMoney(amount, currency) : "••••");
@@ -283,21 +296,50 @@ export default function HomeScreen() {
                 </View>
 
                 <Text style={styles.balanceLabel}>{tab === "deuda" ? "Deudas" : "Ahorros"}</Text>
-                <Text style={styles.balanceSub}>
-                  {typeMovs.length} {typeMovs.length === 1 ? "movimiento" : "movimientos"}
-                </Text>
-
-                {/* Botón rápido para cargar del tipo activo */}
-                <TouchableOpacity
-                  style={[styles.addTypeBtn, { backgroundColor: tab === "deuda" ? "#d6a92e" : "#2bb888" }]}
-                  onPress={() => setModalMode(tab)}
-                  activeOpacity={0.85}
-                >
-                  <Ionicons name={tab === "deuda" ? "person-outline" : "wallet-outline"} size={18} color="#fff" />
-                  <Text style={styles.quickLabel}>
-                    {tab === "deuda" ? "Cargar deuda" : "Nuevo ahorro"}
+                {tab === "ahorro" ? (
+                  <Text style={styles.potText}>
+                    Disponible:{" "}
+                    {visible
+                      ? [
+                          savingsPot.ARS !== 0 || savingsPot.USD === 0
+                            ? formatMoney(savingsPot.ARS, "ARS")
+                            : null,
+                          savingsPot.USD !== 0 ? formatMoney(savingsPot.USD, "USD") : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")
+                      : "••••"}
                   </Text>
-                </TouchableOpacity>
+                ) : (
+                  <Text style={styles.balanceSub}>
+                    {typeMovs.length} {typeMovs.length === 1 ? "movimiento" : "movimientos"}
+                  </Text>
+                )}
+
+                {/* Botones del tipo activo */}
+                <View style={styles.typeBtnRow}>
+                  <TouchableOpacity
+                    style={[styles.addTypeBtn, { backgroundColor: tab === "deuda" ? "#d6a92e" : "#2bb888" }]}
+                    onPress={() => setModalMode(tab)}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name={tab === "deuda" ? "person-outline" : "wallet-outline"} size={18} color="#fff" />
+                    <Text style={styles.quickLabel}>
+                      {tab === "deuda" ? "Cargar deuda" : "Nuevo ahorro"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {tab === "ahorro" ? (
+                    <TouchableOpacity
+                      style={styles.useTypeBtn}
+                      onPress={() => setModalMode("ahorro-uso")}
+                      activeOpacity={0.85}
+                    >
+                      <Ionicons name="cart-outline" size={18} color="#2bb888" />
+                      <Text style={styles.useTypeText}>Usar ahorro</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
 
                 <Text style={styles.sectionLabel}>Movimientos</Text>
                 {loading ? (
@@ -346,9 +388,15 @@ export default function HomeScreen() {
                                   {isPaid ? "Pagada" : isPartial ? "Parcial" : "Pendiente"}
                                 </Text>
                               ) : null}
+                              {m.desdeAhorro ? (
+                                <Text style={[styles.movChip, { color: "#4fb6c9" }]}>Uso de ahorro</Text>
+                              ) : null}
                             </View>
                           </View>
-                          <Text style={styles.movAmount}>{moneyOf(m.monto, m.moneda)}</Text>
+                          <Text style={styles.movAmount}>
+                            {m.desdeAhorro ? "- " : ""}
+                            {moneyOf(m.monto, m.moneda)}
+                          </Text>
                         </TouchableOpacity>
                       );
                     })}
@@ -539,16 +587,28 @@ const makeStyles = (colors) => StyleSheet.create({
   statValue: { color: colors.text, fontSize: 17, fontWeight: "800", textAlign: "right" },
 
   balanceSub: { color: colors.muted, fontSize: 13, marginTop: 4 },
+  potText: { color: "#2bb888", fontSize: 14, fontWeight: "800", marginTop: 4 },
+  typeBtnRow: { flexDirection: "row", gap: 8, marginTop: 14, flexWrap: "wrap" },
   addTypeBtn: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-start",
     gap: 7,
-    marginTop: 14,
     paddingVertical: 11,
     paddingHorizontal: 16,
     borderRadius: 14,
   },
+  useTypeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "#2bb888",
+    backgroundColor: "rgba(43, 184, 136, 0.12)",
+  },
+  useTypeText: { color: "#2bb888", fontWeight: "800", fontSize: 12.5 },
   emptyText: { color: colors.muted, fontSize: 14, marginTop: 4 },
   movRow: {
     flexDirection: "row",

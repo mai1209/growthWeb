@@ -64,6 +64,11 @@ const ingresoEgresoSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // Egreso pagado con plata del ahorro: descuenta del ahorro, no del saldo
+  desdeAhorro: {
+    type: Boolean,
+    default: false
+  },
   frecuencia: {
     type: String,
     enum: ['mensual', 'quincenal', 'semanal', null],

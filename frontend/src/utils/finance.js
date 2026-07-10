@@ -261,17 +261,23 @@ export const summarizeByType = (movimientos = []) =>
           acc.deudaPendiente += amount;
           acc.deudaPendienteCount += 1;
         }
+      } else if (movimiento.desdeAhorro) {
+        // "Usar ahorro": sale del ahorro acumulado, no del saldo
+        acc.ahorroUsado += amount;
       } else {
         acc.egreso += amount;
       }
 
       acc.total = acc.ingreso - acc.egreso - acc.ahorro;
+      acc.ahorroDisponible = acc.ahorro - acc.ahorroUsado;
       return acc;
     },
     {
       ingreso: 0,
       egreso: 0,
       ahorro: 0,
+      ahorroUsado: 0,
+      ahorroDisponible: 0,
       deudaPendiente: 0,
       deudaPendienteCount: 0,
       deudaPagada: 0,

@@ -123,6 +123,8 @@ export const createIncomeEgress = async (req, res) => {
       deudaMovimientoPagoId: null,
       esRecurrente: tipo === "deuda" ? false : Boolean(esRecurrente),
       frecuencia: tipo === "deuda" ? null : (esRecurrente ? frecuencia : null),
+      // "Usar ahorro": solo aplica a egresos; descuenta del ahorro y no del saldo
+      desdeAhorro: tipo === "egreso" ? Boolean(req.body.desdeAhorro) : false,
       workspace,
       usuario: userId // 🔥 Vincular con el usuario
     });
@@ -297,6 +299,10 @@ export const updateIncomeEgress = async (req, res) => {
     movimiento.frecuencia = movimiento.esRecurrente
       ? frecuencia ?? movimiento.frecuencia
       : null;
+    movimiento.desdeAhorro =
+      nextType === "egreso"
+        ? Boolean(req.body.desdeAhorro ?? movimiento.desdeAhorro)
+        : false;
     
     const movimientoActualizado = await movimiento.save();
     

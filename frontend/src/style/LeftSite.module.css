@@ -189,6 +189,13 @@
   font-size: 0.8rem;
 }
 
+.typeActions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .typeAdd {
   border: none;
   border-radius: 999px;
@@ -199,6 +206,30 @@
   font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
+}
+
+/* Botón "Usar ahorro": mismo tamaño pero delineado */
+.typeUse {
+  border: 1px solid rgba(20, 217, 95, 0.5);
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  background: rgba(20, 217, 95, 0.1);
+  color: #14d95f;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.typeUse:hover {
+  background: rgba(20, 217, 95, 0.18);
+}
+
+.typePot {
+  margin: 0.15rem 0 0;
+  color: #14d95f;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .typeEmpty {
@@ -285,6 +316,11 @@
 .typeChipPaid {
   background: rgba(255, 255, 255, 0.1);
   color: var(--color-muted);
+}
+
+.typeChipUse {
+  background: rgba(19, 170, 182, 0.16);
+  color: #4fd6e0;
 }
 
 .typeItemAmount {
@@ -720,6 +756,19 @@
 
 :global(body[data-theme="light"]) .typeChipPaid {
   background: rgba(12, 18, 14, 0.08);
+}
+
+:global(body[data-theme="light"]) .typePot {
+  color: #128a44;
+}
+
+:global(body[data-theme="light"]) .typeUse {
+  color: #128a44;
+  border-color: rgba(18, 138, 68, 0.4);
+}
+
+:global(body[data-theme="light"]) .typeChipUse {
+  color: #0e7c86;
 }
 
 :global(body[data-theme="light"]) .balanceCard,

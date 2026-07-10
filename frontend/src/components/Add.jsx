@@ -36,6 +36,14 @@ const MODE_CONFIG = {
     recurrente: false,
     tone: "ahorro",
   },
+  "ahorro-uso": {
+    title: "Usar ahorro",
+    description: "Gasta plata del ahorro: descuenta del ahorro acumulado, no del saldo.",
+    tipo: "egreso",
+    recurrente: false,
+    tone: "ahorro",
+    desdeAhorro: true,
+  },
   deuda: {
     title: "Deuda",
     description: "Registra lo que debes ahora y pagalo despues sin tocar la caja hasta ese momento.",
@@ -62,6 +70,7 @@ const MODE_CONFIG = {
 const getModeFromMovement = (movement) => {
   if (!movement) return "ingreso";
   if (movement.tipo === "deuda") return "deuda";
+  if (movement.desdeAhorro) return "ahorro-uso";
   if (movement.esRecurrente) {
     return movement.tipo === "ingreso" ? "ingreso-fijo" : "egreso-fijo";
   }
@@ -180,6 +189,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
       esRecurrente: mode.recurrente,
       frecuencia: mode.recurrente ? frecuencia : null,
       deudaAcreedor: isDebtMode ? deudaAcreedor.trim() : "",
+      desdeAhorro: Boolean(mode.desdeAhorro),
     };
 
     try {

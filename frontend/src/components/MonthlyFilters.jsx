@@ -413,6 +413,9 @@ function MonthlyFilters({
           {movimiento.esRecurrente ? (
             <span className={style.badgeAccent}>Fijo {movimiento.frecuencia}</span>
           ) : null}
+          {movimiento.desdeAhorro ? (
+            <span className={style.badgeAccent}>Uso de ahorro</span>
+          ) : null}
         </div>
 
         <div className={style.rowFooter}>

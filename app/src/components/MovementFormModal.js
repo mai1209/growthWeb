@@ -21,6 +21,13 @@ export const MOVEMENT_MODES = {
   "ingreso-fijo": { title: "Ingreso fijo", tipo: "ingreso", recurrente: true, tone: "ingreso" },
   ingreso: { title: "Nuevo ingreso", tipo: "ingreso", recurrente: false, tone: "ingreso" },
   ahorro: { title: "Nuevo ahorro", tipo: "ahorro", recurrente: false, tone: "ahorro" },
+  "ahorro-uso": {
+    title: "Usar ahorro",
+    tipo: "egreso",
+    recurrente: false,
+    tone: "ahorro",
+    desdeAhorro: true,
+  },
   deuda: { title: "Cargar deuda", tipo: "deuda", recurrente: false, tone: "deuda" },
   "egreso-fijo": { title: "Gasto fijo", tipo: "egreso", recurrente: true, tone: "egreso" },
   egreso: { title: "Nuevo egreso", tipo: "egreso", recurrente: false, tone: "egreso" },
@@ -44,6 +51,7 @@ const toYMD = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDat
 
 const modeFromMovement = (mov) => {
   if (mov.tipo === "deuda") return "deuda";
+  if (mov.desdeAhorro) return "ahorro-uso";
   if (mov.esRecurrente) return mov.tipo === "ingreso" ? "ingreso-fijo" : "egreso-fijo";
   return mov.tipo === "ahorro" ? "ahorro" : mov.tipo === "ingreso" ? "ingreso" : "egreso";
 };
@@ -129,6 +137,7 @@ export default function MovementFormModal({
       esRecurrente: mode.recurrente,
       frecuencia: mode.recurrente ? frecuencia : null,
       deudaAcreedor: isDebt ? deudaAcreedor.trim() : "",
+      desdeAhorro: Boolean(mode.desdeAhorro),
     };
     try {
       if (editMovement) {
