@@ -84,7 +84,7 @@ const getModeFromMovement = (movement) => {
   return movement.tipo === "ahorro" ? "ahorro" : movement.tipo;
 };
 
-function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" }) {
+function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", inModal = false }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isEditing = !!movementToEdit;
@@ -302,7 +302,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
           : style.formAhorro;
 
   return (
-    <div className={`${style.container} ${!only ? style.containerPage : ""}`}>
+    <div className={`${style.container} ${!only && !inModal ? style.containerPage : ""}`}>
       {loading && <div className={style.spinner}></div>}
 
       {isEditing && (

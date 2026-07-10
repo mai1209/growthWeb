@@ -787,7 +787,7 @@
 }
 
 .inlineForm {
-  width: min(1220px, calc(100vw - 2.5rem));
+  width: min(820px, calc(100vw - 2.5rem)); /* pegado al form, sin aire de sobra */
   max-height: calc(100vh - 4rem);
   overflow-y: auto;
   padding: 1.35rem;
@@ -818,10 +818,11 @@
 }
 
 .inlineFormEyebrow {
-  color: var(--color-muted);
+  color: var(--color-text); /* blanco en oscuro, oscuro en claro */
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.76rem;
+  font-weight: 800;
 }
 
 .closeInlineForm {

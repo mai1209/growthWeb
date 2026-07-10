@@ -316,6 +316,7 @@ function Dashboard({
               movementToEdit={movementToEdit}
               only={showOnly === "all" ? undefined : showOnly}
               defaultCurrency={currentCurrency}
+              inModal
             />
           </div>
         </section>
