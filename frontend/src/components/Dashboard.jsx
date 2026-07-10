@@ -139,34 +139,35 @@ function Dashboard({
             <div>
               <p className={style.eyebrow}>Panel de movimientos</p>
             </div>
-            <div className={style.dashboardHeaderRight}>
-              <span className={style.dashboardInfoBadge}>
-                {currencyMeta.codeLabel}
-              </span>
-              <button
-                type="button"
-                className={style.dashboardAddBtn}
-                onClick={() => setShowOnly("all")}
-              >
-                + Cargar movimiento
-              </button>
-            </div>
+            <span className={style.dashboardInfoBadge}>
+              {currencyMeta.codeLabel}
+            </span>
           </div>
 
-          <div className={style.dashboardPeriodSwitch}>
-            {DASHBOARD_PERIODS.map((period) => (
-              <button
-                key={period.value}
-                type="button"
-                className={`${style.dashboardPeriodButton} ${selectedPeriod === period.value
-                  ? style.dashboardPeriodButtonActive
-                  : ""
-                  }`}
-                onClick={() => setSelectedPeriod(period.value)}
-              >
-                {period.label}
-              </button>
-            ))}
+          <div className={style.dashboardPeriodRow}>
+            <div className={style.dashboardPeriodSwitch}>
+              {DASHBOARD_PERIODS.map((period) => (
+                <button
+                  key={period.value}
+                  type="button"
+                  className={`${style.dashboardPeriodButton} ${selectedPeriod === period.value
+                    ? style.dashboardPeriodButtonActive
+                    : ""
+                    }`}
+                  onClick={() => setSelectedPeriod(period.value)}
+                >
+                  {period.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              className={style.dashboardAddBtn}
+              onClick={() => setShowOnly("all")}
+            >
+              + Cargar movimiento
+            </button>
           </div>
 
           <div className={style.dashboardMovementShell}>
