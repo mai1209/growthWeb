@@ -240,6 +240,7 @@ function Dashboard({
                               : movimiento.tipo === "deuda"
                                 ? style.dashboardDebtRow
                                 : style.dashboardExpenseRow;
+                        const isPositive = amountLabel.trim().startsWith("+");
                         // Color del monto según el tipo de movimiento
                         const amountTone = movimiento.desdeAhorro
                           ? style.dashboardAmountAhorro
