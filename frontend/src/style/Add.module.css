@@ -79,22 +79,37 @@
 .modeSelector {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.65rem;
-  margin-bottom: 1rem;
+  justify-content: center; /* centrado en la página */
+  gap: 0.4rem;
+  margin: 0 auto 1.1rem;
+  padding: 0.35rem;
+  width: fit-content;
+  max-width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-pill);
+  background: var(--surface-input);
 }
 
 .modeButton {
-  border: 1px solid rgba(216, 241, 224, 0.12);
+  border: none;
   border-radius: var(--radius-pill);
-  padding: 0.7rem 0.95rem;
-  background: var(--surface-input);
+  padding: 0.6rem 1rem;
+  background: transparent;
   color: var(--color-muted);
+  font-weight: 700;
+  font-size: 0.9rem;
   cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-.modeButtonActive {
+.modeButton:hover {
   color: var(--color-text);
-  background: linear-gradient(135deg, rgba(59, 203, 35, 0.24), rgba(18, 43, 11, 0.92));
+}
+
+.modeButtonActive,
+.modeButtonActive:hover {
+  color: #04140b;
+  background: #14d95f;
 }
 
 .formCard {

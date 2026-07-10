@@ -105,6 +105,13 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS" })
     }
   }, [only]);
 
+  // Si llegan con ?tipo=... (desde las pestañas del Home), respetarlo siempre
+  useEffect(() => {
+    if (!only && !movementToEdit && MODE_CONFIG[tipoParam]) {
+      setSelectedMode(tipoParam);
+    }
+  }, [tipoParam, only, movementToEdit]);
+
   useEffect(() => {
     if (!movementToEdit) {
       setMonto("");
