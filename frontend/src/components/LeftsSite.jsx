@@ -242,7 +242,10 @@ function LeftSite({
                           ) : null}
                         </span>
                       </span>
-                      <strong className={style.typeItemAmount}>
+                      <strong
+                        className={style.typeItemAmount}
+                        style={{ color: m.tipo === "deuda" ? "#e6bc3f" : "#35cfa4" }}
+                      >
                         {areTotalsVisible
                           ? `${m.desdeAhorro ? "- " : ""}${formatMoney(m.monto, m.moneda || "ARS")}`
                           : "••••"}

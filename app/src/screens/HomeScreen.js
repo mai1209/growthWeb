@@ -393,7 +393,12 @@ export default function HomeScreen() {
                               ) : null}
                             </View>
                           </View>
-                          <Text style={styles.movAmount}>
+                          <Text
+                            style={[
+                              styles.movAmount,
+                              { color: m.tipo === "deuda" ? "#e6bc3f" : "#35cfa4" },
+                            ]}
+                          >
                             {m.desdeAhorro ? "- " : ""}
                             {moneyOf(m.monto, m.moneda)}
                           </Text>

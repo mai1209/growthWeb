@@ -352,11 +352,16 @@ function MonthlyFilters({
             typeMeta.signedAsPositive
           );
     const isPositive = amountLabel.trim().startsWith("+");
-    const amountTone = amountLabel.trim().startsWith("-")
-      ? style.amountNegative
-      : isPositive
-        ? style.amountPositive
-        : "";
+    // Color del monto según el tipo de movimiento
+    const amountTone = movimiento.desdeAhorro
+      ? style.amountAhorro
+      : movimiento.tipo === "ingreso"
+        ? style.amountIngreso
+        : movimiento.tipo === "ahorro"
+          ? style.amountAhorro
+          : movimiento.tipo === "deuda"
+            ? style.amountDeuda
+            : style.amountEgreso;
 
     return (
       <article key={movimiento._id} className={`${style.row} ${toneClass}`}>

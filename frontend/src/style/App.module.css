@@ -1088,3 +1088,36 @@
     font-size: 0.98rem;
   }
 }
+
+/* ===== Montos coloreados por tipo (panel de movimientos) ===== */
+.dashboardAmountIngreso {
+  color: #2fd66a !important;
+}
+
+.dashboardAmountEgreso {
+  color: #ff8f7b !important;
+}
+
+.dashboardAmountDeuda {
+  color: #e6bc3f !important;
+}
+
+.dashboardAmountAhorro {
+  color: #35cfa4 !important;
+}
+
+:global(body[data-theme="light"]) .dashboardAmountIngreso {
+  color: #128a44 !important;
+}
+
+:global(body[data-theme="light"]) .dashboardAmountEgreso {
+  color: #c04b38 !important;
+}
+
+:global(body[data-theme="light"]) .dashboardAmountDeuda {
+  color: #9a7514 !important;
+}
+
+:global(body[data-theme="light"]) .dashboardAmountAhorro {
+  color: #0f8468 !important;
+}

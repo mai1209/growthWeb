@@ -996,3 +996,40 @@
     font-size: 0.8rem;
   }
 }
+
+/* ===== Montos coloreados por tipo ===== */
+.amountIngreso {
+  background: rgba(20, 217, 95, 0.14);
+  color: #2fd66a;
+}
+
+.amountEgreso {
+  background: rgba(255, 123, 107, 0.14);
+  color: #ff8f7b;
+}
+
+.amountDeuda {
+  background: rgba(224, 179, 46, 0.16);
+  color: #e6bc3f;
+}
+
+.amountAhorro {
+  background: rgba(43, 184, 136, 0.16);
+  color: #35cfa4;
+}
+
+:global(body[data-theme="light"]) .amountIngreso {
+  color: #128a44;
+}
+
+:global(body[data-theme="light"]) .amountEgreso {
+  color: #c04b38;
+}
+
+:global(body[data-theme="light"]) .amountDeuda {
+  color: #9a7514;
+}
+
+:global(body[data-theme="light"]) .amountAhorro {
+  color: #0f8468;
+}
