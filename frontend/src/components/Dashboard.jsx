@@ -133,56 +133,24 @@ function Dashboard({
 
   return (
     <div className={`${style.page} ${style.homeViewport}`}>
-      <section className={style.overviewCard}>
-        <section className={style.hero}>
-          <div className={style.heroControls}>
-            <div className={style.quickActions}>
-              <button
-                type="button"
-                className={style.incomeAction}
-                onClick={() => setShowOnly("ingreso")}
-              >
-                <img className={style.quickActionIcon} src="ingreso-50.png" alt="" />
-                <span>Nuevo ingreso</span>
-              </button>
-              <button
-                type="button"
-                className={style.expenseAction}
-                onClick={() => setShowOnly("egreso")}
-              >
-                <img className={style.quickActionIcon} src="gastos-50.png" alt="" />
-                <span>Nuevo egreso</span>
-              </button>
-              <button
-                type="button"
-                className={style.fixedIncomeAction}
-                onClick={() => setShowOnly("ingreso-fijo")}
-              >
-                <img className={style.quickActionIcon} src="dinerofijo.png" alt="" />
-                <span>Ingreso fijo</span>
-              </button>
-              <button
-                type="button"
-                className={style.fixedExpenseAction}
-                onClick={() => setShowOnly("egreso-fijo")}
-              >
-                <img className={style.quickActionIcon} src="deuda.png" alt="" />
-                <span>Gasto fijo</span>
-              </button>
-            </div>
-          </div>
-        </section>
-      </section>
-
       <section className={style.contentLayout}>
         <section className={style.dashboardInfoCard}>
           <div className={style.dashboardInfoHeader}>
             <div>
               <p className={style.eyebrow}>Panel de movimientos</p>
             </div>
-            <span className={style.dashboardInfoBadge}>
-              {currencyMeta.codeLabel}
-            </span>
+            <div className={style.dashboardHeaderRight}>
+              <span className={style.dashboardInfoBadge}>
+                {currencyMeta.codeLabel}
+              </span>
+              <button
+                type="button"
+                className={style.dashboardAddBtn}
+                onClick={() => setShowOnly("all")}
+              >
+                + Cargar movimiento
+              </button>
+            </div>
           </div>
 
           <div className={style.dashboardPeriodSwitch}>
@@ -322,18 +290,7 @@ function Dashboard({
           >
             <div className={style.inlineFormHeader}>
               <div>
-                <p className={style.inlineFormEyebrow}>
-                  {showOnly === "deuda"
-                    ? "Cargar deuda"
-                    : `Cargar ${showOnly === "ingreso"
-                      ? "nuevo ingreso"
-                      : showOnly === "egreso"
-                        ? "nuevo egreso"
-                        : showOnly === "ahorro"
-                          ? "ahorro"
-                          : "movimiento fijo"
-                    }`}
-                </p>
+                <p className={style.inlineFormEyebrow}>Cargar movimiento</p>
 
               </div>
 
@@ -357,7 +314,7 @@ function Dashboard({
                 setMovementToEdit?.(null);
               }}
               movementToEdit={movementToEdit}
-              only={showOnly}
+              only={showOnly === "all" ? undefined : showOnly}
               defaultCurrency={currentCurrency}
             />
           </div>
