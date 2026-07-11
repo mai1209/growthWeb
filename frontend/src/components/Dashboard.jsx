@@ -18,13 +18,13 @@ const DASHBOARD_PERIODS = [
 ];
 
 const MOVEMENT_TYPES = [
-  { key: "ingreso", label: "Ingreso", emoji: "💵" },
-  { key: "egreso", label: "Egreso", emoji: "🧾" },
-  { key: "ahorro", label: "Ahorro", emoji: "🏦" },
-  { key: "ahorro-uso", label: "Usar ahorro", emoji: "🪙" },
-  { key: "deuda", label: "Deuda", emoji: "📄" },
-  { key: "ingreso-fijo", label: "Ingreso fijo", emoji: "🔁" },
-  { key: "egreso-fijo", label: "Gasto fijo", emoji: "📆" },
+  { key: "ingreso", label: "Ingreso" },
+  { key: "egreso", label: "Egreso" },
+  { key: "ahorro", label: "Ahorro" },
+  { key: "ahorro-uso", label: "Usar ahorro" },
+  { key: "deuda", label: "Deuda" },
+  { key: "ingreso-fijo", label: "Ingreso fijo" },
+  { key: "egreso-fijo", label: "Gasto fijo" },
 ];
 
 const getPeriodRange = (period) => {
@@ -321,9 +321,6 @@ function Dashboard({
                     setShowOnly(movementType.key);
                   }}
                 >
-                  <span className={style.typePickerEmoji}>
-                    {movementType.emoji}
-                  </span>
                   {movementType.label}
                 </button>
               ))}

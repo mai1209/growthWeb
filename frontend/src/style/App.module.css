@@ -1144,7 +1144,7 @@
 .typePickerBtn {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  justify-content: center;
   min-height: 52px;
   padding: 0.7rem 0.85rem;
   border: 1px solid var(--border-color);
@@ -1167,11 +1167,6 @@
 
 .typePickerBtn:last-child {
   grid-column: 1 / -1;
-}
-
-.typePickerEmoji {
-  font-size: 1.15rem;
-  line-height: 1;
 }
 
 /* ===== Boton unico "Cargar movimiento" del panel ===== */
