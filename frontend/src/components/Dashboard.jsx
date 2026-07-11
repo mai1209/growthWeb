@@ -17,6 +17,16 @@ const DASHBOARD_PERIODS = [
   { value: "year", label: "Anual" },
 ];
 
+const MOVEMENT_TYPES = [
+  { key: "ingreso", label: "Ingreso", emoji: "💵" },
+  { key: "egreso", label: "Egreso", emoji: "🧾" },
+  { key: "ahorro", label: "Ahorro", emoji: "🏦" },
+  { key: "ahorro-uso", label: "Usar ahorro", emoji: "🪙" },
+  { key: "deuda", label: "Deuda", emoji: "📄" },
+  { key: "ingreso-fijo", label: "Ingreso fijo", emoji: "🔁" },
+  { key: "egreso-fijo", label: "Gasto fijo", emoji: "📆" },
+];
+
 const getPeriodRange = (period) => {
   const now = new Date();
 
@@ -108,6 +118,7 @@ function Dashboard({
   ...authProps
 }) {
   const [showOnly, setShowOnly] = useState(null);
+  const [typePickerOpen, setTypePickerOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState("day");
 
   const periodRange = useMemo(
@@ -164,7 +175,7 @@ function Dashboard({
             <button
               type="button"
               className={style.dashboardAddBtn}
-              onClick={() => setShowOnly("all")}
+              onClick={() => setTypePickerOpen(true)}
             >
               + Cargar movimiento
             </button>
@@ -276,6 +287,50 @@ function Dashboard({
           </section>
         </aside>
       </section>
+
+      {typePickerOpen && (
+        <section
+          className={style.modalOverlay}
+          onClick={() => setTypePickerOpen(false)}
+        >
+          <div
+            className={style.typePicker}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className={style.inlineFormHeader}>
+              <p className={style.inlineFormEyebrow}>¿Qué querés cargar?</p>
+
+              <button
+                type="button"
+                className={style.closeInlineForm}
+                onClick={() => setTypePickerOpen(false)}
+                aria-label="Cerrar selector"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <div className={style.typePickerGrid}>
+              {MOVEMENT_TYPES.map((movementType) => (
+                <button
+                  key={movementType.key}
+                  type="button"
+                  className={style.typePickerBtn}
+                  onClick={() => {
+                    setTypePickerOpen(false);
+                    setShowOnly(movementType.key);
+                  }}
+                >
+                  <span className={style.typePickerEmoji}>
+                    {movementType.emoji}
+                  </span>
+                  {movementType.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {showOnly && (
         <section
