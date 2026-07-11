@@ -124,24 +124,25 @@
   background: #14d95f;
 }
 
-/* En móvil: fila deslizable, sin envolver (evita la forma de huevo) */
+/* En móvil: grilla de 2 columnas para que se vean TODAS las opciones */
 @media (max-width: 640px) {
   .modeSelector {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    overflow-x: auto;
-    border-radius: 14px;
-    scrollbar-width: none;
-  }
-
-  .modeSelector::-webkit-scrollbar {
-    display: none;
+    gap: 0.4rem;
+    border-radius: 16px;
   }
 
   .modeButton {
-    flex: 0 0 auto;
+    width: 100%;
+    padding: 0.62rem 0.5rem;
+    text-align: center;
     white-space: nowrap;
+  }
+
+  .modeButton:last-child {
+    grid-column: 1 / -1;
   }
 }
 
