@@ -34,6 +34,7 @@ import {
 const TYPE_FILTERS = [{ value: "all", label: "Todos" }, ...MOVEMENT_TYPE_OPTIONS];
 
 const shiftMonth = (d, n) => new Date(d.getFullYear(), d.getMonth() + n, 1);
+const CHART_H = 90; // alto máx de las barras del mini gráfico anual
 
 export default function FiltrosScreen() {
   const { colors } = useTheme();
@@ -44,6 +45,8 @@ export default function FiltrosScreen() {
   const [error, setError] = useState("");
   const [currency, setCurrency] = useState("ARS");
   const [month, setMonth] = useState(new Date());
+  const [period, setPeriod] = useState("month"); // month | year
+  const [year, setYear] = useState(new Date().getFullYear());
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [type, setType] = useState("all");
@@ -95,9 +98,14 @@ export default function FiltrosScreen() {
     }
   }, [route.params]);
 
-  const { sections, summary } = useMemo(() => {
-    const from = new Date(month.getFullYear(), month.getMonth(), 1);
-    const to = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+  const { sections, summary, monthBreakdown } = useMemo(() => {
+    const isYear = period === "year";
+    const from = isYear
+      ? new Date(year, 0, 1)
+      : new Date(month.getFullYear(), month.getMonth(), 1);
+    const to = isYear
+      ? new Date(year, 11, 31)
+      : new Date(month.getFullYear(), month.getMonth() + 1, 0);
     const monthMovs = filterMovimientosByCurrency(movimientos, currency, { from, to });
 
     const q = search.trim().toLowerCase();
@@ -129,16 +137,51 @@ export default function FiltrosScreen() {
         map.get(key).push(m);
       });
 
+    // Desglose por mes (vista anual): SIEMPRE los 12 meses del año elegido.
+    let breakdown = [];
+    if (isYear) {
+      const byMonth = new Map();
+      filtered.forEach((m) => {
+        const mo = new Date(m.fecha).getMonth();
+        if (!byMonth.has(mo)) byMonth.set(mo, []);
+        byMonth.get(mo).push(m);
+      });
+      breakdown = Array.from({ length: 12 }, (_, mo) => {
+        const movs = byMonth.get(mo) || [];
+        return {
+          monthIndex: mo,
+          label: new Date(year, mo, 1).toLocaleDateString("es-AR", { month: "long" }),
+          summary: summarizeByType(movs),
+          count: movs.length,
+        };
+      });
+    }
+
     return {
       summary: summarizeByType(filtered),
       sections: [...map.entries()].map(([key, data]) => ({
         title: formatDayLabel(data[0].fecha),
         data,
       })),
+      monthBreakdown: breakdown,
     };
-  }, [movimientos, currency, month, search, type]);
+  }, [movimientos, currency, month, year, period, search, type]);
 
   const monthLabel = month.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+  const monthShort = month.toLocaleDateString("es-AR", { month: "short", year: "numeric" });
+  const periodLabel = period === "year" ? String(year) : monthLabel;
+  const goPrev = () =>
+    period === "year" ? setYear((y) => y - 1) : setMonth((m) => shiftMonth(m, -1));
+  const goNext = () =>
+    period === "year" ? setYear((y) => y + 1) : setMonth((m) => shiftMonth(m, 1));
+
+  const yearChartMax = useMemo(() => {
+    if (period !== "year") return 1;
+    return Math.max(
+      1,
+      ...monthBreakdown.flatMap((row) => [row.summary.ingreso, row.summary.egreso])
+    );
+  }, [period, monthBreakdown]);
 
   const summaryCards = [
     { label: "Ingresos", value: formatMoney(summary.ingreso, currency), accent: statAccents.ingreso },
@@ -149,17 +192,8 @@ export default function FiltrosScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={[]}>
-      {/* Mes + ARS/USD + Filtrar */}
+      {/* ARS/USD + Filtrar */}
       <View style={styles.topBar}>
-        <View style={styles.monthNav}>
-          <TouchableOpacity onPress={() => setMonth((m) => shiftMonth(m, -1))} hitSlop={10}>
-            <Ionicons name="chevron-back" size={22} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.monthLabel}>{monthLabel}</Text>
-          <TouchableOpacity onPress={() => setMonth((m) => shiftMonth(m, 1))} hitSlop={10}>
-            <Ionicons name="chevron-forward" size={22} color={colors.text} />
-          </TouchableOpacity>
-        </View>
         <View style={styles.topActions}>
           <View style={styles.currencySwitch}>
             {CURRENCY_OPTIONS.map((opt) => {
@@ -252,10 +286,117 @@ export default function FiltrosScreen() {
         </ScrollView>
       </View>
 
+      {/* Encabezado con switch Mes / Año */}
+      <View style={styles.sectionHead}>
+        <Text style={styles.sectionKicker} numberOfLines={1}>
+          {period === "year" ? "Resumen anual" : "Detalle del mes"}
+        </Text>
+        <View style={styles.sectionControls}>
+          <View style={styles.periodSwitch}>
+            <TouchableOpacity
+              style={[styles.periodBtn, period === "month" && styles.periodBtnActive]}
+              onPress={() => setPeriod("month")}
+            >
+              <Text style={[styles.periodText, period === "month" && styles.periodTextActive]}>Mes</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.periodBtn, period === "year" && styles.periodBtnActive]}
+              onPress={() => setPeriod("year")}
+            >
+              <Text style={[styles.periodText, period === "year" && styles.periodTextActive]}>Año</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.yearStepper}>
+            <TouchableOpacity onPress={goPrev} hitSlop={8}>
+              <Ionicons name="chevron-back" size={16} color={colors.text} />
+            </TouchableOpacity>
+            <Text style={styles.yearStepperText}>{period === "year" ? year : monthShort}</Text>
+            <TouchableOpacity onPress={goNext} hitSlop={8}>
+              <Ionicons name="chevron-forward" size={16} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
       {loading ? (
         <ActivityIndicator color={colors.green} style={{ marginTop: 30 }} />
       ) : error ? (
         <Text style={styles.error}>{error}</Text>
+      ) : period === "year" ? (
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ padding: 16, paddingTop: 8, paddingBottom: 30, gap: 10 }}
+          refreshControl={
+            <RefreshControl refreshing={false} onRefresh={fetchData} tintColor={colors.green} />
+          }
+        >
+          {/* Mini gráfico de barras del año (ingresos/egresos por mes) */}
+          <View style={styles.yearChart}>
+            {monthBreakdown.map((row) => {
+              const incH = Math.max(2, Math.round((row.summary.ingreso / yearChartMax) * CHART_H));
+              const expH = Math.max(2, Math.round((row.summary.egreso / yearChartMax) * CHART_H));
+              return (
+                <View key={row.monthIndex} style={styles.chartCol}>
+                  <View style={styles.chartBars}>
+                    <View style={[styles.chartBarInc, { height: incH }]} />
+                    <View style={[styles.chartBarExp, { height: expH }]} />
+                  </View>
+                  <Text style={styles.chartLabel}>{row.label.slice(0, 3)}</Text>
+                </View>
+              );
+            })}
+          </View>
+
+          {monthBreakdown.map((row) => (
+            <TouchableOpacity
+              key={row.monthIndex}
+              activeOpacity={0.85}
+              style={[styles.monthCard, row.count === 0 && styles.monthCardEmpty]}
+              onPress={() => {
+                setMonth(new Date(year, row.monthIndex, 1));
+                setPeriod("month");
+              }}
+            >
+              <View style={styles.monthCardHead}>
+                <Text style={styles.monthCardName}>{row.label}</Text>
+                <View style={styles.monthCardCount}>
+                  <Text style={styles.monthCardCountText}>{row.count}</Text>
+                </View>
+              </View>
+              <View style={styles.monthCardStats}>
+                <View style={styles.monthStat}>
+                  <Text style={styles.monthStatLabel}>Ingresos</Text>
+                  <Text style={[styles.monthStatValue, { color: colors.greenDark }]}>
+                    {formatMoney(row.summary.ingreso, currency)}
+                  </Text>
+                </View>
+                <View style={styles.monthStat}>
+                  <Text style={styles.monthStatLabel}>Egresos</Text>
+                  <Text style={[styles.monthStatValue, { color: colors.red }]}>
+                    {formatMoney(row.summary.egreso, currency)}
+                  </Text>
+                </View>
+                <View style={styles.monthStat}>
+                  <Text style={styles.monthStatLabel}>Ahorro</Text>
+                  <Text style={styles.monthStatValue}>
+                    {formatMoney(row.summary.ahorro, currency)}
+                  </Text>
+                </View>
+                <View style={styles.monthStat}>
+                  <Text style={styles.monthStatLabel}>Balance</Text>
+                  <Text
+                    style={[
+                      styles.monthStatValue,
+                      { color: row.summary.total >= 0 ? colors.greenDark : colors.red },
+                    ]}
+                  >
+                    {formatMoney(row.summary.total, currency)}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       ) : (
         <SectionList
           style={{ flex: 1 }}
@@ -336,6 +477,7 @@ export default function FiltrosScreen() {
         visible={Boolean(editMov)}
         editMovement={editMov}
         defaultCurrency={currency}
+        movimientos={movimientos}
         onClose={() => setEditMov(null)}
         onSaved={fetchData}
       />
@@ -447,6 +589,107 @@ const makeStyles = (colors) => StyleSheet.create({
   sumDot: { width: 7, height: 7, borderRadius: 4 },
   sumLabel: { color: colors.muted, fontSize: 10.5, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.4 },
   sumValue: { color: colors.text, fontSize: 15, fontWeight: "800", marginTop: 5, fontVariant: ["tabular-nums"] },
+
+  // Encabezado de sección + switch Mes/Año
+  sectionHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 2,
+  },
+  sectionKicker: {
+    flex: 1,
+    color: colors.greenDark,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+  },
+  sectionControls: { flexDirection: "row", alignItems: "center", gap: 8 },
+  periodSwitch: {
+    flexDirection: "row",
+    gap: 3,
+    padding: 3,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.card,
+  },
+  yearStepper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.card,
+  },
+  yearStepperText: {
+    color: colors.text,
+    fontSize: 13.5,
+    fontWeight: "800",
+    fontVariant: ["tabular-nums"],
+    minWidth: 62,
+    textAlign: "center",
+    textTransform: "capitalize",
+  },
+  periodBtn: { paddingVertical: 5, paddingHorizontal: 14, borderRadius: 999 },
+  periodBtnActive: { backgroundColor: colors.segActive },
+  periodText: { color: colors.muted, fontSize: 12.5, fontWeight: "800" },
+  periodTextActive: { color: colors.segActiveText },
+
+  // Mini gráfico de barras del año
+  yearChart: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    paddingBottom: 8,
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
+  },
+  chartCol: { flex: 1, alignItems: "center", gap: 4 },
+  chartBars: { height: CHART_H, flexDirection: "row", alignItems: "flex-end", gap: 2 },
+  chartBarInc: { width: 6, borderTopLeftRadius: 3, borderTopRightRadius: 3, backgroundColor: colors.green },
+  chartBarExp: { width: 6, borderTopLeftRadius: 3, borderTopRightRadius: 3, backgroundColor: colors.red },
+  chartLabel: { fontSize: 9, fontWeight: "700", color: colors.muted, textTransform: "capitalize" },
+
+  // Tarjetas del desglose por mes (vista anual)
+  monthCard: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 16,
+    padding: 14,
+    gap: 12,
+  },
+  monthCardEmpty: { opacity: 0.45 },
+  monthCardHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  monthCardName: { color: colors.text, fontSize: 16, fontWeight: "800", textTransform: "capitalize" },
+  monthCardCount: {
+    minWidth: 22,
+    height: 20,
+    paddingHorizontal: 6,
+    borderRadius: 999,
+    backgroundColor: colors.cardSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  monthCardCountText: { color: colors.muted, fontSize: 11, fontWeight: "800" },
+  monthCardStats: { flexDirection: "row", flexWrap: "wrap" },
+  monthStat: { width: "50%", paddingVertical: 4, gap: 2 },
+  monthStatLabel: {
+    color: colors.muted,
+    fontSize: 10,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  monthStatValue: { color: colors.text, fontSize: 14, fontWeight: "800", fontVariant: ["tabular-nums"] },
 
   dayHeader: {
     color: colors.muted,

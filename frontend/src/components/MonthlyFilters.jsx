@@ -123,6 +123,8 @@ function MonthlyFilters({
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedMonth, setSelectedMonth] = useState(getMonthInputValue(new Date()));
+  const [period, setPeriod] = useState("month"); // month | year
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedRecurrence, setSelectedRecurrence] = useState("all");
@@ -156,11 +158,30 @@ function MonthlyFilters({
   const [settleAmount, setSettleAmount] = useState("");
   const [settlingId, setSettlingId] = useState(null);
 
-  const { from, to } = useMemo(() => getMonthRange(selectedMonth), [selectedMonth]);
+  const { from, to } = useMemo(() => {
+    if (period === "year") {
+      return { from: new Date(selectedYear, 0, 1), to: new Date(selectedYear, 11, 31) };
+    }
+    return getMonthRange(selectedMonth);
+  }, [period, selectedMonth, selectedYear]);
   const selectedMonthLabel = useMemo(
     () => formatMonthHeading(selectedMonth),
     [selectedMonth]
   );
+  const periodLabel = period === "year" ? `Año ${selectedYear}` : selectedMonthLabel;
+
+  // Años disponibles para el selector: rango razonable + los que tengan datos.
+  const availableYears = useMemo(() => {
+    const now = new Date().getFullYear();
+    const set = new Set();
+    for (let y = now + 1; y >= now - 7; y -= 1) set.add(y);
+    movimientos.forEach((movimiento) => {
+      const y = new Date(movimiento.fecha).getFullYear();
+      if (y) set.add(y);
+    });
+    set.add(selectedYear);
+    return Array.from(set).sort((a, b) => b - a);
+  }, [movimientos, selectedYear]);
 
   const monthMovimientos = useMemo(
     () =>
@@ -241,6 +262,40 @@ function MonthlyFilters({
     () => groupMovimientosByDay(filteredMovimientos),
     [filteredMovimientos]
   );
+
+  // Desglose por mes para la vista anual: SIEMPRE los 12 meses del año elegido
+  // (Enero → Diciembre), con 0 en los meses sin movimientos.
+  const monthBreakdown = useMemo(() => {
+    if (period !== "year") return [];
+    const map = new Map();
+    filteredMovimientos.forEach((movimiento) => {
+      const date = new Date(movimiento.fecha);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(movimiento);
+    });
+    return Array.from({ length: 12 }, (_, monthIndex) => {
+      const key = `${selectedYear}-${String(monthIndex + 1).padStart(2, "0")}`;
+      const movs = map.get(key) || [];
+      return {
+        key,
+        label: new Date(selectedYear, monthIndex, 1).toLocaleDateString("es-AR", {
+          month: "long",
+        }),
+        summary: summarizeByType(movs),
+        count: movs.length,
+      };
+    });
+  }, [period, filteredMovimientos, selectedYear]);
+
+  // Escala del mini gráfico anual (mayor ingreso/egreso mensual del año).
+  const yearChartMax = useMemo(() => {
+    if (period !== "year") return 1;
+    return Math.max(
+      1,
+      ...monthBreakdown.flatMap((row) => [row.summary.ingreso, row.summary.egreso])
+    );
+  }, [period, monthBreakdown]);
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -545,8 +600,8 @@ function MonthlyFilters({
     <section className={style.container}>
       <div className={style.hero}>
         <div className={style.heroMonthBlock}>
-          <p className={style.panelKicker}>Mes</p>
-          <h1 className={style.heroMonthTitle}>{selectedMonthLabel}</h1>
+          <p className={style.panelKicker}>{period === "year" ? "Año" : "Mes"}</p>
+          <h1 className={style.heroMonthTitle}>{periodLabel}</h1>
         </div>
         <div className={style.heroActions}>
           <div
@@ -581,17 +636,6 @@ function MonthlyFilters({
 
       {filtersOpen ? (
       <div className={style.filtersPanel}>
-        <div className={style.filterField}>
-          <label htmlFor="month-filter">Mes</label>
-          <input
-            id="month-filter"
-            type="month"
-            value={selectedMonth}
-            onChange={(event) => setSelectedMonth(event.target.value)}
-            className={style.input}
-          />
-        </div>
-
         <div className={`${style.filterField} ${style.searchField}`}>
           <label htmlFor="search-filter">Busqueda</label>
           <input
@@ -731,22 +775,148 @@ function MonthlyFilters({
       <div className={style.detailsLayout}>
         <section className={style.listPanel}>
           <div className={style.panelHeader}>
-            <p className={style.panelKicker}>Detalle del mes</p>
-            <h2>Movimientos encontrados</h2>
+            <div>
+              <p className={style.panelKicker}>
+                {period === "year" ? "Resumen anual" : "Detalle del mes"}
+              </p>
+            </div>
+            <div className={style.panelHeaderControls}>
+              <div className={style.periodSwitch} role="tablist" aria-label="Período">
+                <button
+                  type="button"
+                  className={`${style.periodButton} ${period === "month" ? style.periodButtonActive : ""}`}
+                  onClick={() => setPeriod("month")}
+                  aria-pressed={period === "month"}
+                >
+                  Mes
+                </button>
+                <button
+                  type="button"
+                  className={`${style.periodButton} ${period === "year" ? style.periodButtonActive : ""}`}
+                  onClick={() => setPeriod("year")}
+                  aria-pressed={period === "year"}
+                >
+                  Año
+                </button>
+              </div>
+              {period === "year" ? (
+                <div className={style.yearPicker}>
+                  <select
+                    id="year-select"
+                    aria-label="Año"
+                    className={style.yearSelect}
+                    value={selectedYear}
+                    onChange={(event) => setSelectedYear(Number(event.target.value))}
+                  >
+                    {availableYears.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className={style.yearPicker}>
+                  <input
+                    type="month"
+                    aria-label="Mes"
+                    className={style.monthSelect}
+                    value={selectedMonth}
+                    onChange={(event) => setSelectedMonth(event.target.value)}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className={style.listShell}>
-            {filteredMovimientos.length === 0 ? (
+          {period === "year" ? (
+            monthBreakdown.length === 0 ? (
               <div className={style.emptyState}>
-                <h3>No hay movimientos para mostrar</h3>
-                <p>Cambia el mes o limpia filtros para revisar otra combinacion.</p>
+                <h3>No hay movimientos este año</h3>
+                <p>Probá otro año o limpiá los filtros.</p>
               </div>
             ) : (
-              <div className={style.list}>
-                {groupedFilteredMovimientos.map(renderMovementGroup)}
-              </div>
-            )}
-          </div>
+              <>
+                <div className={style.yearChart} aria-hidden="true">
+                  {monthBreakdown.map((row) => {
+                    const incH = Math.round((row.summary.ingreso / yearChartMax) * 100);
+                    const expH = Math.round((row.summary.egreso / yearChartMax) * 100);
+                    return (
+                      <div
+                        key={row.key}
+                        className={style.chartCol}
+                        title={`${row.label}: ingresos ${formatMoney(
+                          row.summary.ingreso,
+                          currentCurrency
+                        )} · egresos ${formatMoney(row.summary.egreso, currentCurrency)}`}
+                      >
+                        <div className={style.chartBars}>
+                          <span className={style.chartBarInc} style={{ height: `${incH}%` }} />
+                          <span className={style.chartBarExp} style={{ height: `${expH}%` }} />
+                        </div>
+                        <span className={style.chartLabel}>{row.label.slice(0, 3)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className={style.monthGrid}>
+                  {monthBreakdown.map((row) => (
+                    <button
+                      type="button"
+                      key={row.key}
+                      className={`${style.monthCard} ${row.count === 0 ? style.monthCardEmpty : ""}`}
+                      onClick={() => {
+                        setSelectedMonth(row.key);
+                        setPeriod("month");
+                      }}
+                    >
+                    <div className={style.monthCardHead}>
+                      <span className={style.monthCardName}>{row.label}</span>
+                      <span className={style.monthCardCount}>{row.count}</span>
+                    </div>
+                    <div className={style.monthCardStats}>
+                      <div className={style.monthStat}>
+                        <small>Ingresos</small>
+                        <strong className={style.statPos}>
+                          {formatMoney(row.summary.ingreso, currentCurrency)}
+                        </strong>
+                      </div>
+                      <div className={style.monthStat}>
+                        <small>Egresos</small>
+                        <strong className={style.statNeg}>
+                          {formatMoney(row.summary.egreso, currentCurrency)}
+                        </strong>
+                      </div>
+                      <div className={style.monthStat}>
+                        <small>Ahorro</small>
+                        <strong>{formatMoney(row.summary.ahorro, currentCurrency)}</strong>
+                      </div>
+                      <div className={style.monthStat}>
+                        <small>Balance</small>
+                        <strong className={row.summary.total >= 0 ? style.statPos : style.statNeg}>
+                          {formatMoney(row.summary.total, currentCurrency)}
+                        </strong>
+                      </div>
+                    </div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )
+          ) : (
+            <div className={style.listShell}>
+              {filteredMovimientos.length === 0 ? (
+                <div className={style.emptyState}>
+                  <h3>No hay movimientos para mostrar</h3>
+                  <p>Cambia el mes o limpia filtros para revisar otra combinacion.</p>
+                </div>
+              ) : (
+                <div className={style.list}>
+                  {groupedFilteredMovimientos.map(renderMovementGroup)}
+                </div>
+              )}
+            </div>
+          )}
         </section>
       </div>
     </section>

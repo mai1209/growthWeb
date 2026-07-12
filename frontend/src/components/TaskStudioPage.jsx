@@ -25,6 +25,7 @@ import {
   FiMessageSquare,
   FiMinus,
   FiPlus,
+  FiShoppingCart,
   FiTrash2,
   FiType,
   FiUnderline,
@@ -33,6 +34,7 @@ import {
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
 import { taskService } from "../api";
+import ShoppingLists from "./ShoppingLists";
 import style from "../style/TaskStudio.module.css";
 
 // Habilita tamaño de fuente por píxeles (ej. "16px") en vez de small/large.
@@ -729,7 +731,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
 
   const monthIndex = Number(selectedMonth.split("-")[1]) - 1;
   const todayKey = getDateInputValue(new Date());
-  const effectiveView = isCompact ? "notes" : view;
+  // En móvil dejamos Notas y Lista de compras; el Calendario queda solo en desktop.
+  const effectiveView = isCompact ? (view === "shopping" ? "shopping" : "notes") : view;
 
   const folderCounts = useMemo(() => {
     const counts = new Map();
@@ -1425,26 +1428,30 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
         <section className={style.listCard}>
             <div className={style.editorHeader}>
               <div>
-                <p className={style.cardKicker}>Notas</p>
+                <p className={style.cardKicker}>
+                  {effectiveView === "shopping" ? "Listas" : "Notas"}
+                </p>
                 <h2 className={style.listTitle}>
-                  Tus notas
-                  {boardTasks.length ? (
+                  {effectiveView === "shopping" ? "Listas de compras" : "Tus notas"}
+                  {effectiveView !== "shopping" && boardTasks.length ? (
                     <span className={style.listCount}>{boardTasks.length}</span>
                   ) : null}
                 </h2>
               </div>
               <div className={style.listHeaderActions}>
-                {!isCompact ? (
-                  <div className={style.viewToggle} role="tablist" aria-label="Vista de notas">
-                    <button
-                      type="button"
-                      className={`${style.viewToggleButton} ${view === "notes" ? style.viewToggleButtonActive : ""}`}
-                      onClick={() => setView("notes")}
-                      aria-pressed={view === "notes"}
-                    >
-                      <FiFileText />
-                      Notas
-                    </button>
+                {/* En móvil (isCompact) mostramos Notas + Lista de compras;
+                    Calendario queda solo en desktop. */}
+                <div className={style.viewToggle} role="tablist" aria-label="Vista de notas">
+                  <button
+                    type="button"
+                    className={`${style.viewToggleButton} ${effectiveView === "notes" ? style.viewToggleButtonActive : ""}`}
+                    onClick={() => setView("notes")}
+                    aria-pressed={effectiveView === "notes"}
+                  >
+                    <FiFileText />
+                    Notas
+                  </button>
+                  {!isCompact ? (
                     <button
                       type="button"
                       className={`${style.viewToggleButton} ${view === "calendar" ? style.viewToggleButtonActive : ""}`}
@@ -1454,24 +1461,37 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                       <FiCalendar />
                       Calendario
                     </button>
-                  </div>
+                  ) : null}
+                  <button
+                    type="button"
+                    className={`${style.viewToggleButton} ${effectiveView === "shopping" ? style.viewToggleButtonActive : ""}`}
+                    onClick={() => setView("shopping")}
+                    aria-pressed={effectiveView === "shopping"}
+                  >
+                    <FiShoppingCart />
+                    Lista de compras
+                  </button>
+                </div>
+                {effectiveView !== "shopping" ? (
+                  <>
+                    <button
+                      type="button"
+                      className={style.secondaryButton}
+                      onClick={() => {
+                        setDeckScope("all");
+                        setIsDeckOpen(true);
+                      }}
+                      title="Tus flashcards de repaso"
+                    >
+                      <FiBookOpen />
+                      Repaso{dueCountAll ? ` (${dueCountAll})` : ""}
+                    </button>
+                    <button type="button" className={style.secondaryButton} onClick={() => handleNewNote()}>
+                      <FiPlus />
+                      Nueva nota
+                    </button>
+                  </>
                 ) : null}
-                <button
-                  type="button"
-                  className={style.secondaryButton}
-                  onClick={() => {
-                    setDeckScope("all");
-                    setIsDeckOpen(true);
-                  }}
-                  title="Tus flashcards de repaso"
-                >
-                  <FiBookOpen />
-                  Repaso{dueCountAll ? ` (${dueCountAll})` : ""}
-                </button>
-                <button type="button" className={style.secondaryButton} onClick={() => handleNewNote()}>
-                  <FiPlus />
-                  Nueva nota
-                </button>
               </div>
             </div>
 
@@ -1614,6 +1634,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   })}
                 </div>
               </div>
+            ) : effectiveView === "shopping" ? (
+              <ShoppingLists activeWorkspace={activeWorkspace} />
             ) : (
               <div className={style.notesLayout}>
                 <aside className={style.folderSidebar} aria-label="Carpetas">

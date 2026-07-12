@@ -223,8 +223,8 @@ export default function TareasScreen() {
                           setShowForm(true);
                         }}
                       >
-                        <Ionicons name="pencil" size={15} color={fg} />
-                        <Text style={[styles.expandedText, { color: fg }]}>Editar</Text>
+                        <Ionicons name="pencil" size={15} color="#16241d" />
+                        <Text style={[styles.expandedText, { color: "#16241d" }]}>Editar</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.expandedBtn, styles.expandedDelete]}
@@ -233,8 +233,8 @@ export default function TareasScreen() {
                           handleDelete(item);
                         }}
                       >
-                        <Ionicons name="trash-outline" size={15} color={colors.red} />
-                        <Text style={[styles.expandedText, { color: colors.red }]}>Eliminar</Text>
+                        <Ionicons name="trash-outline" size={15} color="#c0392b" />
+                        <Text style={[styles.expandedText, { color: "#c0392b" }]}>Eliminar</Text>
                       </TouchableOpacity>
                     </View>
                   ) : null}
@@ -388,10 +388,12 @@ const makeStyles = (colors) => StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.14)",
+    // Chip claro y opaco: garantiza contraste del texto sobre cualquier
+    // color de tarjeta (pastel, gris o la oscura) y en tarjeta completada.
+    backgroundColor: "rgba(255,255,255,0.92)",
   },
-  expandedDelete: { backgroundColor: colors.redSoft },
-  expandedText: { fontWeight: "700", fontSize: 13 },
+  expandedDelete: { backgroundColor: "rgba(255,255,255,0.92)" },
+  expandedText: { fontWeight: "800", fontSize: 13 },
   cardTitle: { color: colors.text, fontSize: 16, fontWeight: "700" },
   cardTitleDone: { textDecorationLine: "line-through", color: colors.muted },
   metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 5 },

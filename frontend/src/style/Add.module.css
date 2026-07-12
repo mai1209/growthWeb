@@ -823,6 +823,75 @@
   color: var(--color-text);
 }
 
+/* ===== Popup "ya gastaste tus ahorros" ===== */
+.savingsOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 1.2rem;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  animation: savingsFade 0.15s ease;
+}
+
+.savingsCard {
+  width: 100%;
+  max-width: 360px;
+  display: grid;
+  justify-items: center;
+  gap: 0.9rem;
+  padding: 1.6rem 1.4rem;
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  background: var(--surface-card-strong);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+
+.savingsIcon {
+  display: grid;
+  place-items: center;
+  color: #ffcf33;
+  filter: drop-shadow(0 0 8px rgba(255, 207, 51, 0.85))
+    drop-shadow(0 0 2px rgba(255, 207, 51, 0.6));
+}
+
+.savingsIcon svg {
+  width: 2.6rem;
+  height: 2.6rem;
+}
+
+.savingsText {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.savingsBtn {
+  margin-top: 0.2rem;
+  padding: 0.6rem 1.4rem;
+  border: none;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.savingsBtn:hover {
+  filter: brightness(1.05);
+}
+
+@keyframes savingsFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .catModalLabel {
   margin: 0.2rem 0 0;
   color: var(--color-muted);
@@ -836,6 +905,9 @@
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   gap: 0.35rem;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 0.2rem;
 }
 
 .catEmoji {

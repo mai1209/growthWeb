@@ -2871,6 +2871,24 @@ button.folderItem {
     white-space: nowrap;
   }
 
+  /* En móvil apilamos: título arriba, toggle/acciones abajo (evita el
+     solapamiento del toggle sobre el título). */
+  .listCard .editorHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  /* Toggle como segmento full-width en móvil (más parecido a la app) */
+  .viewToggle {
+    width: 100%;
+  }
+
+  .viewToggleButton {
+    flex: 1;
+    justify-content: center;
+  }
+
   .monthNavCount {
     display: none;
   }

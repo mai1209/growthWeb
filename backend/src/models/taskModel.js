@@ -14,7 +14,7 @@ const TaskSchema = new mongoose.Schema({
   },
   tipo: {
     type: String,
-    enum: ['task', 'note'],
+    enum: ['task', 'note', 'shopping'],
     default: 'task',
   },
   workspace: {
@@ -40,6 +40,18 @@ const TaskSchema = new mongoose.Schema({
         box: { type: Number, default: 0 },
         due: { type: String, default: '' },
         createdAt: { type: String },
+        _id: false,
+      },
+    ],
+    default: [],
+  },
+  // Ítems de una lista de compras (solo se usan cuando tipo === 'shopping').
+  items: {
+    type: [
+      {
+        id: { type: String },
+        text: { type: String, default: '' },
+        done: { type: Boolean, default: false },
         _id: false,
       },
     ],

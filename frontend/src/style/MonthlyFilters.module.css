@@ -17,9 +17,9 @@
 .filtersPanel,
 .dayPanel,
 .listPanel {
-  border: 1px solid var(--border-color);
-  background: var(--panel-background);
-  box-shadow: var(--shadow-soft);
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .hero {
@@ -89,10 +89,10 @@
   position: relative;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.25rem;
-  min-width: 220px;
+  gap: 0.2rem;
+  min-width: 150px;
   max-width: 100%;
-  padding: 0.25rem;
+  padding: 0.2rem;
   border: 1px solid var(--border-color);
   border-radius: 999px;
   background: var(--surface-input);
@@ -120,12 +120,14 @@
 .currencyButton {
   position: relative;
   z-index: 1;
-  min-height: 46px;
+  min-height: 34px;
+  padding: 0 0.7rem;
   border: none;
   border-radius: 999px;
   background: transparent;
   color: var(--color-muted);
   font-weight: 700;
+  font-size: 0.85rem;
   cursor: pointer;
 }
 
@@ -331,9 +333,13 @@
 }
 
 .summaryStrip {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
   gap: 0.6rem;
+  overflow-x: auto;
+  padding-bottom: 0.35rem;
+  scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
 }
 
 .summaryCard,
@@ -344,6 +350,9 @@
 
 .summaryCard {
   position: relative;
+  flex: 1 0 auto;
+  min-width: 170px;
+  scroll-snap-align: start;
   padding: 0.7rem 0.6rem 0.7rem 0.85rem;
   display: grid;
   gap: 0.12rem;
@@ -418,12 +427,93 @@
 
 .dayPanel,
 .listPanel {
-  padding: 1rem;
-  border-radius: 24px;
+  padding: 0;
+  border-radius: 0;
 }
 
 .panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem 0.75rem;
+  flex-wrap: wrap;
   margin-bottom: 1rem;
+}
+
+/* El título no crece (deja lugar a los controles al lado); si no entran,
+   los controles bajan a la línea de abajo en vez de cortarse. */
+.panelHeader > div:first-child {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.panelHeaderControls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.yearPicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.yearPickerLabel {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.yearSelect {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 40px;
+  padding: 0.45rem 1.6rem 0.45rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--surface-input)
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238ea8a8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>")
+    no-repeat right 0.7rem center;
+  color: var(--color-text);
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.yearSelect:focus {
+  outline: none;
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-surface);
+}
+
+.monthSelect {
+  min-height: 40px;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--surface-input);
+  color: var(--color-text);
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color-scheme: dark;
+}
+
+.monthSelect::-webkit-calendar-picker-indicator {
+  filter: invert(0.65);
+  cursor: pointer;
+}
+
+.monthSelect:focus {
+  outline: none;
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-surface);
 }
 
 .panelHeader h2 {
@@ -1032,4 +1122,192 @@
 
 :global(body[data-theme="light"]) .amountAhorro {
   color: #0f8468;
+}
+
+/* ===== Switch Mes / Año ===== */
+.periodSwitch {
+  display: inline-flex;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  margin-bottom: 0.35rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--surface-input);
+}
+
+.periodButton {
+  padding: 0.28rem 0.85rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.periodButton:hover {
+  color: var(--color-text);
+}
+
+.periodButtonActive,
+.periodButtonActive:hover {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+/* ===== Desglose por mes (vista anual) ===== */
+.monthGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.monthCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  background: var(--surface-card-strong);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--transition-fast), border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.monthCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-border);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Meses sin movimientos: apagados */
+.monthCardEmpty {
+  opacity: 0.42;
+}
+
+.monthCardEmpty:hover {
+  opacity: 0.72;
+}
+
+/* ===== Mini gráfico de barras del año ===== */
+.yearChart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  height: 132px;
+  padding: 0.4rem 0.2rem 0;
+  margin-bottom: 1.1rem;
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+}
+
+.chartCol {
+  flex: 1 0 auto;
+  min-width: 26px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.chartBars {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+}
+
+.chartBarInc,
+.chartBarExp {
+  width: 8px;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+}
+
+.chartBarInc {
+  background: var(--color-verde);
+}
+
+.chartBarExp {
+  background: var(--color-rojo);
+}
+
+.chartLabel {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: capitalize;
+}
+
+.monthCardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.monthCardName {
+  font-size: 1rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.monthCardCount {
+  min-width: 22px;
+  height: 20px;
+  padding: 0 0.4rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface-input);
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.monthCardStats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 0.7rem;
+}
+
+.monthStat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.monthStat small {
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.monthStat strong {
+  font-size: 0.95rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statPos {
+  color: var(--color-verde);
+}
+
+.statNeg {
+  color: var(--color-rojo);
 }

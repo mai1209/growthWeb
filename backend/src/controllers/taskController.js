@@ -28,6 +28,18 @@ const buildWorkspaceQuery = (workspace) =>
     ? { workspace }
     : { $or: [{ workspace: "personal" }, { workspace: { $exists: false } }] };
 
+const TIPOS_VALIDOS = ["task", "note", "shopping"];
+const normalizeTipo = (value) => (TIPOS_VALIDOS.includes(value) ? value : "task");
+
+const normalizeItems = (value) =>
+  Array.isArray(value)
+    ? value.map((it, index) => ({
+        id: String(it?.id ?? index),
+        text: typeof it?.text === "string" ? it.text : "",
+        done: Boolean(it?.done),
+      }))
+    : [];
+
 const normalizeTaskDate = (value) => {
   if (!value) {
     const now = new Date();
@@ -82,9 +94,11 @@ export const createHabito = async (req, res) => {
       diasRepeticion,
       carpeta,
       flashcards,
+      items,
     } = req.body;
     const userId = req.user.id;
     const workspace = normalizeWorkspace(req);
+    const tipoFinal = normalizeTipo(tipo);
 
     // AÑADE ESTE CONSOLE.LOG
     console.log(
@@ -95,7 +109,7 @@ export const createHabito = async (req, res) => {
       user: userId,
       workspace,
       meta,
-      tipo: tipo === "note" ? "note" : "task",
+      tipo: tipoFinal,
       contenido,
       fecha: normalizeTaskDate(fecha),
       horario,
@@ -105,11 +119,13 @@ export const createHabito = async (req, res) => {
       diasRepeticion: esRecurrente ? diasRepeticion : [],
       carpeta: typeof carpeta === "string" ? carpeta.trim() : "",
       flashcards: Array.isArray(flashcards) ? flashcards : [],
+      items: tipoFinal === "shopping" ? normalizeItems(items) : [],
     });
     const habitoGuardado = await nuevoHabito.save();
 
-    // 🔗 Sincroniza con Google Calendar (si falla, la tarea igual queda guardada)
-    const g = await loadGoogleSync();
+    // 🔗 Sincroniza con Google Calendar (si falla, la tarea igual queda guardada).
+    // Las listas de compras no van al calendario.
+    const g = tipoFinal === "shopping" ? null : await loadGoogleSync();
     const googleEventId = g ? await g.syncTaskToGoogle(userId, habitoGuardado) : null;
     if (googleEventId) {
       habitoGuardado.googleEventId = googleEventId;
@@ -130,7 +146,11 @@ export const getTasks = async (req, res) => {
     const workspace = normalizeWorkspace(req);
     const workspaceQuery = buildWorkspaceQuery(workspace);
     const typeQuery =
-      tipo === "note" ? { tipo: "note" } : { $or: [{ tipo: "task" }, { tipo: { $exists: false } }] };
+      tipo === "note"
+        ? { tipo: "note" }
+        : tipo === "shopping"
+        ? { tipo: "shopping" }
+        : { $or: [{ tipo: "task" }, { tipo: { $exists: false } }] };
 
     const buildTaskState = (task, targetDate) => {
       const taskObj = serializeTask(task);
@@ -329,12 +349,13 @@ export const updateTask = async (req, res) => {
       workspace,
       carpeta,
       flashcards,
+      items,
     } =
       req.body;
 
     // 4. Actualizamos el documento que encontramos en la base de datos
     task.meta = meta || task.meta;
-    if (tipo !== undefined) task.tipo = tipo === "note" ? "note" : "task";
+    if (tipo !== undefined) task.tipo = normalizeTipo(tipo);
     if (workspace !== undefined) task.workspace = normalizeWorkspaceValue(workspace);
     if (contenido !== undefined) task.contenido = contenido;
     task.fecha = fecha ? normalizeTaskDate(fecha) : task.fecha;
@@ -349,12 +370,14 @@ export const updateTask = async (req, res) => {
     if (completada !== undefined) task.completada = completada;
     if (carpeta !== undefined) task.carpeta = typeof carpeta === "string" ? carpeta.trim() : "";
     if (flashcards !== undefined) task.flashcards = Array.isArray(flashcards) ? flashcards : [];
+    if (items !== undefined) task.items = normalizeItems(items);
 
     // 5. Guardamos el documento actualizado (esto SIEMPRE ejecuta las validaciones del modelo)
     const updatedTask = await task.save();
 
-    // 🔗 Sincroniza el cambio con Google Calendar (crea o actualiza el evento)
-    const g = await loadGoogleSync();
+    // 🔗 Sincroniza el cambio con Google Calendar (crea o actualiza el evento).
+    // Las listas de compras no van al calendario.
+    const g = updatedTask.tipo === "shopping" ? null : await loadGoogleSync();
     const googleEventId = g ? await g.syncTaskToGoogle(req.user.id, updatedTask) : null;
     if (googleEventId) {
       updatedTask.googleEventId = googleEventId;

@@ -366,6 +366,10 @@ function Dashboard({
                 setShowOnly(null);
                 setMovementToEdit?.(null);
               }}
+              onNeedSavings={() => {
+                setMovementToEdit?.(null);
+                setShowOnly("ahorro");
+              }}
               movementToEdit={movementToEdit}
               only={showOnly === "all" ? undefined : showOnly}
               defaultCurrency={currentCurrency}

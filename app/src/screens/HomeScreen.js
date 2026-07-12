@@ -416,6 +416,7 @@ export default function HomeScreen() {
         visible={Boolean(modalMode)}
         modeKey={modalMode}
         defaultCurrency={currency}
+        movimientos={movimientos}
         onClose={() => setModalMode(null)}
         onSaved={fetchData}
       />

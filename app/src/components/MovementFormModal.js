@@ -5,6 +5,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Pressable,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
@@ -14,13 +15,31 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { movimientoService, categoriesService } from "../api";
+import { formatMoney } from "../utils/finance";
 import { useTheme } from "../theme";
 
 // Íconos de categoría (mismos emojis que la web)
 const CATEGORY_EMOJIS = [
-  "🍔", "🛒", "🚗", "🏠", "💡", "📱", "💊", "👕", "🎬", "✈️",
-  "🎓", "🎁", "🐶", "💼", "💵", "📈", "🏦", "☕", "🍻", "⚽",
-  "💇", "🔧", "🧾", "🏷️",
+  // Comida y bebida
+  "🍔", "🍕", "🍎", "🥑", "🍞", "🥩", "🥦", "☕", "🍺", "🍷", "🧉", "🍰",
+  // Compras y hogar
+  "🛒", "🛍️", "🎁", "🏠", "🛋️", "🧹", "🧼", "🧻", "💡", "🔌",
+  // Transporte
+  "🚗", "🚕", "🚌", "🚆", "✈️", "⛽", "🚲", "🛵",
+  // Salud y bienestar
+  "💊", "🩺", "🏥", "🦷", "🏋️", "🧘", "🧴",
+  // Ropa y personal
+  "👕", "👟", "👗", "🕶️", "💇", "💅",
+  // Ocio y entretenimiento
+  "🎬", "🎮", "🎧", "🎵", "📺", "🎟️", "📚", "🎨", "⚽", "🏀", "🎾",
+  // Tecnología y trabajo
+  "📱", "💻", "🖥️", "💼", "🧾", "🖊️", "📈", "📊",
+  // Dinero y finanzas
+  "💵", "💳", "🏦", "💰", "🪙",
+  // Educación, familia y mascotas
+  "🎓", "🐶", "🐱", "🧸", "👶",
+  // Herramientas y varios
+  "🔧", "🛠️", "🧰", "🌱", "🌍", "🏖️", "🏨", "🎉", "🏷️",
 ];
 
 // 6 modos = los accesos rápidos de la web
@@ -68,6 +87,7 @@ export default function MovementFormModal({
   modeKey,
   editMovement = null,
   defaultCurrency = "ARS",
+  movimientos = [],
   onClose,
   onSaved,
 }) {
@@ -89,6 +109,24 @@ export default function MovementFormModal({
   const [showDate, setShowDate] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [savingsPopup, setSavingsPopup] = useState(""); // aviso "ya gastaste tus ahorros"
+
+  // Cerrar el popup NO deja el form de "usar ahorro": cierra el modal y
+  // vuelve a Home (que ya está en la pestaña Ahorros) para cargar más.
+  const closeSavingsPopup = () => {
+    setSavingsPopup("");
+    onClose?.();
+  };
+
+  // El popup de ahorro se cierra solo a los pocos segundos.
+  useEffect(() => {
+    if (!savingsPopup) return;
+    const t = setTimeout(() => {
+      setSavingsPopup("");
+      onClose?.();
+    }, 4000);
+    return () => clearTimeout(t);
+  }, [savingsPopup, onClose]);
 
   // Categorías del usuario: autocompletado + alta con ícono
   const [categories, setCategories] = useState([]);
@@ -178,6 +216,28 @@ export default function MovementFormModal({
       return;
     }
 
+    // Guarda "usar ahorro": no dejar gastar más de lo ahorrado (por moneda).
+    // Corta del lado del cliente aunque el backend todavía no valide.
+    if (mode.desdeAhorro) {
+      const cur = moneda === "USD" ? "USD" : "ARS";
+      let disponible = 0;
+      for (const m of movimientos) {
+        if ((m.moneda || "ARS") !== cur) continue;
+        if (editMovement && m._id === editMovement._id) continue;
+        const amt = Number(m.monto) || 0;
+        if (m.tipo === "ahorro") disponible += amt;
+        else if (m.desdeAhorro) disponible -= amt;
+      }
+      if (amount > disponible) {
+        setSavingsPopup(
+          disponible <= 0
+            ? "Ya gastaste tus ahorros. Cargá más ahorro para seguir gastando desde ahí."
+            : `Te queda ${formatMoney(disponible, cur)} de ahorro disponible. Cargá más ahorro para gastar ese monto.`
+        );
+        return;
+      }
+    }
+
     setSaving(true);
     const payload = {
       tipo: mode.tipo,
@@ -201,7 +261,12 @@ export default function MovementFormModal({
       onSaved?.();
       onClose?.();
     } catch (err) {
-      setError(err.response?.data?.error || "No se pudo guardar el movimiento.");
+      const data = err.response?.data;
+      if (data?.code === "AHORRO_INSUFICIENTE") {
+        setSavingsPopup(data.error || "Ya gastaste tus ahorros. Cargá más para seguir gastando desde ahí.");
+      } else {
+        setError(data?.error || "No se pudo guardar el movimiento.");
+      }
     } finally {
       setSaving(false);
     }
@@ -410,7 +475,10 @@ export default function MovementFormModal({
         transparent
         onRequestClose={() => setCatModalOpen(false)}
       >
-        <View style={styles.catOverlay}>
+        <KeyboardAvoidingView
+          style={styles.catOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
           <View style={styles.catModal}>
             <Text style={styles.catModalTitle}>Nueva categoría</Text>
 
@@ -425,7 +493,12 @@ export default function MovementFormModal({
             />
 
             <Text style={styles.catModalLabel}>Ícono</Text>
-            <View style={styles.catEmojiGrid}>
+            <ScrollView
+              style={styles.catEmojiScroll}
+              contentContainerStyle={styles.catEmojiGrid}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
               {CATEGORY_EMOJIS.map((emoji) => (
                 <TouchableOpacity
                   key={emoji}
@@ -435,7 +508,7 @@ export default function MovementFormModal({
                   <Text style={{ fontSize: 19 }}>{emoji}</Text>
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
 
             <View style={styles.catModalActions}>
               <TouchableOpacity
@@ -457,14 +530,74 @@ export default function MovementFormModal({
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
+
+      {/* Popup centrado: en RN un <Modal> hermano no se muestra sobre otro
+          <Modal>, por eso va como overlay absoluto dentro del formulario. */}
+      {savingsPopup ? (
+        <Pressable style={styles.popupOverlay} onPress={closeSavingsPopup}>
+          <Pressable style={styles.popupCard} onPress={() => {}}>
+            <View style={styles.popupIconWrap}>
+              <Ionicons name="warning" size={32} color="#ffcf33" style={styles.popupIconGlow} />
+            </View>
+            <Text style={styles.popupText}>{savingsPopup}</Text>
+            <TouchableOpacity style={styles.popupBtn} onPress={closeSavingsPopup}>
+              <Text style={styles.popupBtnText}>Cargar ahorro</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      ) : null}
     </Modal>
   );
 }
 
 const makeStyles = (colors) => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: "rgba(11,20,15,0.4)", justifyContent: "flex-end" },
+  popupOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 28,
+  },
+  popupCard: {
+    width: "100%",
+    maxWidth: 340,
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    padding: 22,
+    alignItems: "center",
+    gap: 14,
+  },
+  popupIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(255,207,51,0.14)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  popupIconGlow: {
+    textShadowColor: "rgba(255,207,51,0.9)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 12,
+  },
+  popupText: { color: colors.text, fontSize: 15, fontWeight: "700", textAlign: "center", lineHeight: 21 },
+  popupBtn: {
+    marginTop: 4,
+    backgroundColor: colors.greenBright,
+    borderRadius: 12,
+    paddingHorizontal: 22,
+    paddingVertical: 11,
+  },
+  popupBtnText: { color: "#fff", fontWeight: "800", fontSize: 14 },
   sheet: {
     backgroundColor: colors.bg,
     borderTopLeftRadius: 24,
@@ -559,6 +692,7 @@ const makeStyles = (colors) => StyleSheet.create({
   catModal: {
     width: "100%",
     maxWidth: 380,
+    maxHeight: "85%",
     backgroundColor: colors.bg,
     borderWidth: 1,
     borderColor: colors.cardBorder,
@@ -566,6 +700,7 @@ const makeStyles = (colors) => StyleSheet.create({
     padding: 18,
     gap: 12,
   },
+  catEmojiScroll: { maxHeight: 200, alignSelf: "stretch" },
   catModalTitle: { color: colors.text, fontSize: 17, fontWeight: "800" },
   catModalLabel: {
     color: colors.muted,

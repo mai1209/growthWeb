@@ -19,6 +19,7 @@ import {
   formatShortDate,
 } from "../utils/notes";
 import NoteEditorModal from "../components/NoteEditorModal";
+import ShoppingListsPanel from "../components/ShoppingListsPanel";
 
 const ALL_FOLDERS = "__all__";
 
@@ -30,6 +31,7 @@ export default function NotasScreen() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [activeNote, setActiveNote] = useState(null);
   const [folder, setFolder] = useState(ALL_FOLDERS);
+  const [shoppingOpen, setShoppingOpen] = useState(false);
 
   const fetchNotes = useCallback(async () => {
     try {
@@ -84,9 +86,9 @@ export default function NotasScreen() {
             </View>
           </View>
         </View>
-        <TouchableOpacity style={styles.newBtn} onPress={openNew}>
-          <Ionicons name="add" size={18} color="#fff" />
-          <Text style={styles.newBtnText}>Nueva nota</Text>
+        <TouchableOpacity style={styles.newBtn} onPress={() => setShoppingOpen(true)}>
+          <Ionicons name="cart-outline" size={18} color="#fff" />
+          <Text style={styles.newBtnText}>Lista de compras</Text>
         </TouchableOpacity>
       </View>
 
@@ -209,6 +211,8 @@ export default function NotasScreen() {
         onSaved={fetchNotes}
         onDeleted={fetchNotes}
       />
+
+      <ShoppingListsPanel visible={shoppingOpen} onClose={() => setShoppingOpen(false)} />
     </SafeAreaView>
   );
 }

@@ -1,6 +1,6 @@
-import { forwardRef, useEffect, useMemo, useState } from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiAlertTriangle } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Add.module.css";
@@ -69,9 +69,26 @@ const MODE_CONFIG = {
 
 // Íconos disponibles para las categorías (emoji: funcionan igual en web y app)
 export const CATEGORY_EMOJIS = [
-  "🍔", "🛒", "🚗", "🏠", "💡", "📱", "💊", "👕", "🎬", "✈️",
-  "🎓", "🎁", "🐶", "💼", "💵", "📈", "🏦", "☕", "🍻", "⚽",
-  "💇", "🔧", "🧾", "🏷️",
+  // Comida y bebida
+  "🍔", "🍕", "🍎", "🥑", "🍞", "🥩", "🥦", "☕", "🍺", "🍷", "🧉", "🍰",
+  // Compras y hogar
+  "🛒", "🛍️", "🎁", "🏠", "🛋️", "🧹", "🧼", "🧻", "💡", "🔌",
+  // Transporte
+  "🚗", "🚕", "🚌", "🚆", "✈️", "⛽", "🚲", "🛵",
+  // Salud y bienestar
+  "💊", "🩺", "🏥", "🦷", "🏋️", "🧘", "🧴",
+  // Ropa y personal
+  "👕", "👟", "👗", "🕶️", "💇", "💅",
+  // Ocio y entretenimiento
+  "🎬", "🎮", "🎧", "🎵", "📺", "🎟️", "📚", "🎨", "⚽", "🏀", "🎾",
+  // Tecnología y trabajo
+  "📱", "💻", "🖥️", "💼", "🧾", "🖊️", "📈", "📊",
+  // Dinero y finanzas
+  "💵", "💳", "🏦", "💰", "🪙",
+  // Educación, familia y mascotas
+  "🎓", "🐶", "🐱", "🧸", "👶",
+  // Herramientas y varios
+  "🔧", "🛠️", "🧰", "🌱", "🌍", "🏖️", "🏨", "🎉", "🏷️",
 ];
 
 const getModeFromMovement = (movement) => {
@@ -84,7 +101,7 @@ const getModeFromMovement = (movement) => {
   return movement.tipo === "ahorro" ? "ahorro" : movement.tipo;
 };
 
-function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", inModal = false }) {
+function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", inModal = false, onNeedSavings }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isEditing = !!movementToEdit;
@@ -105,6 +122,23 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
   const [deudaAcreedor, setDeudaAcreedor] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [savingsPopup, setSavingsPopup] = useState(""); // aviso "ya gastaste tus ahorros"
+
+  // Cerrar el popup NO deja el form de "usar ahorro": lleva a la vista de
+  // ahorros (para cargar más). En el Dashboard cambia al modo "ahorro";
+  // como página suelta, vuelve al home.
+  const closeSavingsPopup = useCallback(() => {
+    setSavingsPopup("");
+    if (onNeedSavings) onNeedSavings();
+    else navigate("/");
+  }, [onNeedSavings, navigate]);
+
+  // El popup de ahorro se cierra solo a los pocos segundos.
+  useEffect(() => {
+    if (!savingsPopup) return undefined;
+    const t = setTimeout(() => closeSavingsPopup(), 4000);
+    return () => clearTimeout(t);
+  }, [savingsPopup, closeSavingsPopup]);
 
   // ===== Categorías del usuario (autocompletado + alta con ícono) =====
   const [categories, setCategories] = useState([]);
@@ -286,7 +320,12 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
         navigate("/");
       }
     } catch (err) {
-      setError(err.response?.data?.error || "Error al guardar el movimiento");
+      const data = err.response?.data;
+      if (data?.code === "AHORRO_INSUFICIENTE") {
+        setSavingsPopup(data.error || "Ya gastaste tus ahorros. Cargá más para seguir gastando desde ahí.");
+      } else {
+        setError(data?.error || "Error al guardar el movimiento");
+      }
     } finally {
       setLoading(false);
     }
@@ -637,6 +676,34 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
       )}
 
       {error && <p className={style.errorText}>{error}</p>}
+
+      {/* Popup centrado: "ya gastaste tus ahorros". Cierra al tocar afuera o solo. */}
+      {savingsPopup ? (
+        <div
+          className={style.savingsOverlay}
+          onClick={closeSavingsPopup}
+          role="presentation"
+        >
+          <div
+            className={style.savingsCard}
+            onClick={(event) => event.stopPropagation()}
+            role="alertdialog"
+            aria-label="Aviso de ahorro"
+          >
+            <div className={style.savingsIcon}>
+              <FiAlertTriangle />
+            </div>
+            <p className={style.savingsText}>{savingsPopup}</p>
+            <button
+              type="button"
+              className={style.savingsBtn}
+              onClick={closeSavingsPopup}
+            >
+              Cargar ahorro
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

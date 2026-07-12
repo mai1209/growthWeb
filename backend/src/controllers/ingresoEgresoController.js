@@ -19,6 +19,50 @@ const buildWorkspaceQuery = (workspace) =>
     ? { workspace }
     : { $or: [{ workspace: "personal" }, { workspace: { $exists: false } }] };
 
+const formatMoneyServer = (amount, moneda = "ARS") => {
+  const value = Math.max(0, Number(amount) || 0);
+  try {
+    return new Intl.NumberFormat("es-AR", {
+      style: "currency",
+      currency: moneda === "USD" ? "USD" : "ARS",
+      maximumFractionDigits: 2,
+    }).format(value);
+  } catch {
+    return `${value}`;
+  }
+};
+
+// Ahorro disponible (por moneda): lo cargado (tipo "ahorro") menos lo ya
+// gastado desde el ahorro (egresos con desdeAhorro). Se usa para no permitir
+// que el ahorro quede en negativo al "usar ahorro".
+const getAhorroDisponible = async (userId, workspace, moneda, excludeId = null) => {
+  const docs = await IngresoEgresoModel.find({
+    usuario: new mongoose.Types.ObjectId(userId),
+    moneda: moneda === "USD" ? "USD" : "ARS",
+    $and: [
+      buildWorkspaceQuery(workspace),
+      { $or: [{ tipo: "ahorro" }, { tipo: "egreso", desdeAhorro: true }] },
+    ],
+  })
+    .select("tipo monto desdeAhorro")
+    .lean();
+
+  return docs.reduce((acc, d) => {
+    if (excludeId && String(d._id) === String(excludeId)) return acc;
+    const amount = Number(d.monto) || 0;
+    return d.tipo === "ahorro" ? acc + amount : acc - amount;
+  }, 0);
+};
+
+const buildAhorroInsuficienteError = (disponible, moneda) => ({
+  code: "AHORRO_INSUFICIENTE",
+  ahorroDisponible: disponible,
+  error:
+    disponible <= 0
+      ? "Ya gastaste tus ahorros. Cargá más ahorro para seguir gastando desde ahí."
+      : `Te queda ${formatMoneyServer(disponible, moneda)} de ahorro disponible. Cargá más ahorro para gastar ese monto.`,
+});
+
 const normalizeMovementDate = (value) => {
   if (!value) {
     const now = new Date();
@@ -106,6 +150,14 @@ export const createIncomeEgress = async (req, res) => {
     }
     if (esRecurrente && !ALLOWED_RECURRENCES.includes(frecuencia)) {
       return res.status(400).json({ error: "La frecuencia debe ser mensual, quincenal o semanal" });
+    }
+
+    // "Usar ahorro": no permitir gastar más de lo ahorrado (que quede en negativo).
+    if (tipo === "egreso" && Boolean(req.body.desdeAhorro)) {
+      const disponible = await getAhorroDisponible(userId, workspace, moneda || "ARS");
+      if (Number(monto) > disponible) {
+        return res.status(400).json(buildAhorroInsuficienteError(disponible, moneda || "ARS"));
+      }
     }
 
     // Crear nuevo documento vinculado al usuario
@@ -303,7 +355,21 @@ export const updateIncomeEgress = async (req, res) => {
       nextType === "egreso"
         ? Boolean(req.body.desdeAhorro ?? movimiento.desdeAhorro)
         : false;
-    
+
+    // "Usar ahorro": no permitir que el ahorro quede en negativo al editar.
+    // Se excluye este mismo movimiento del cálculo de disponible.
+    if (movimiento.tipo === "egreso" && movimiento.desdeAhorro) {
+      const disponible = await getAhorroDisponible(
+        userId,
+        workspace,
+        movimiento.moneda,
+        movimiento._id
+      );
+      if (Number(movimiento.monto) > disponible) {
+        return res.status(400).json(buildAhorroInsuficienteError(disponible, movimiento.moneda));
+      }
+    }
+
     const movimientoActualizado = await movimiento.save();
     
     res.status(200).json(serializeMovimiento(movimientoActualizado));

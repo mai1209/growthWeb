@@ -1,0 +1,483 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+/* ===== Compositor de nueva lista ===== */
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-xs);
+}
+
+.composerRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.composerIcon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--color-verde);
+}
+
+.composerInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-input);
+  color: var(--color-text);
+  font-size: 0.95rem;
+}
+
+.composerInput:focus {
+  outline: none;
+  border-color: var(--accent-border);
+  box-shadow: var(--ring-accent);
+}
+
+.createBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter var(--transition-fast), transform var(--transition-fast);
+}
+
+.createBtn:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.createBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.swatchRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding-left: 1.6rem;
+}
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  padding: 0;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.swatch:hover {
+  transform: scale(1.12);
+}
+
+.swatchActive {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-surface);
+}
+
+/* ===== Estado / mensajes ===== */
+.error {
+  margin: 0;
+  color: var(--color-rojo);
+  font-weight: 600;
+}
+
+.hint,
+.empty {
+  margin: 0;
+  color: var(--color-muted);
+  text-align: center;
+  padding: 1.5rem 0.5rem;
+  line-height: 1.5;
+}
+
+.summary {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* ===== Tablero de listas ===== */
+.board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.cardDark,
+.cardDark .previewTitle,
+.cardDark .previewSummary,
+.cardDark .detailTitle,
+.cardDark .itemText {
+  color: #f4f8f4;
+}
+
+/* ===== Tarjeta de vista previa (board) ===== */
+.previewCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-xs);
+  color: #172018;
+  min-width: 0;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.previewCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.previewCard:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.previewTitle {
+  margin: 0;
+  padding-right: 2.2rem; /* deja lugar al tachito */
+  font-size: 1.05rem;
+  font-weight: 800;
+  word-break: break-word;
+}
+
+.previewFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.previewSummary {
+  font-size: 0.82rem;
+  font-weight: 700;
+  opacity: 0.75;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.previewChevron {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  opacity: 0.55;
+}
+
+/* ===== Vista detalle (dentro de una lista) ===== */
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.backBtn:hover {
+  background: var(--surface-hover);
+}
+
+.detailCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.2rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-xs);
+  color: #172018;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.detailHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.detailTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.detailTitle {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  word-break: break-word;
+}
+
+.cardCount {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+  color: inherit;
+  white-space: nowrap;
+}
+
+.deleteListBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.1);
+  color: inherit;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.deleteListBtn:hover {
+  background: var(--color-rojo);
+  color: #fff;
+}
+
+/* En la preview, el tachito flota arriba a la derecha. */
+.previewCard .deleteListBtn {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+}
+
+/* ===== Ítems ===== */
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.itemEmpty {
+  color: inherit;
+  opacity: 0.6;
+  font-size: 0.85rem;
+  padding: 0.2rem 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.4rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.cardDark .item {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.itemDone .itemText {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 2px solid rgba(0, 0, 0, 0.35);
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.check svg {
+  width: 14px;
+  height: 14px;
+}
+
+.checkDone {
+  background: var(--color-verde);
+  border-color: var(--color-verde);
+}
+
+.cardDark .check {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.itemText {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.itemDelete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  opacity: 0.4;
+  cursor: pointer;
+  transition: opacity var(--transition-fast), background var(--transition-fast);
+}
+
+.item:hover .itemDelete {
+  opacity: 0.8;
+}
+
+.itemDelete:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* ===== Agregar ítem ===== */
+.addRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.1rem;
+  width: 100%;
+  max-width: 560px; /* input cómodo con el + al lado, no ocupa todo el card */
+  min-width: 0;
+}
+
+.addInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.55);
+  color: #172018;
+  font-size: 0.9rem;
+}
+
+.cardDark .addInput {
+  background: rgba(0, 0, 0, 0.25);
+  color: #f4f8f4;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.addInput:focus {
+  outline: none;
+  border-color: var(--color-verde);
+}
+
+.addBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  color: #16241d;
+  cursor: pointer;
+  transition: filter var(--transition-fast), background var(--transition-fast);
+}
+
+.addBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.addBtn:hover:not(:disabled) {
+  background: #f1f4f1;
+}
+
+.addBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.clearDone {
+  align-self: flex-start;
+  padding: 0.3rem 0.6rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+  color: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.clearDone:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 640px) {
+  .composerRow {
+    flex-wrap: wrap;
+  }
+
+  .createBtn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .board {
+    grid-template-columns: 1fr;
+  }
+}
