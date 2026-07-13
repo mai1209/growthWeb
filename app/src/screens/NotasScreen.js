@@ -22,6 +22,7 @@ import {
 } from "../utils/notes";
 import NoteEditorModal from "../components/NoteEditorModal";
 import ShoppingListsPanel from "../components/ShoppingListsPanel";
+import { getCustomFolders, setCustomFolders } from "../storage";
 
 const ALL_FOLDERS = "__all__";
 
@@ -36,7 +37,32 @@ export default function NotasScreen() {
   const [shoppingOpen, setShoppingOpen] = useState(false);
   const [foldersOpen, setFoldersOpen] = useState(false);
   const [folderSearch, setFolderSearch] = useState("");
+  const [customFolders, setCustom] = useState([]);
+  const [newFolderName, setNewFolderName] = useState("");
   const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    getCustomFolders().then((arr) => setCustom(arr));
+  }, []);
+
+  const handleCreateFolder = async () => {
+    const name = newFolderName.trim();
+    if (!name) return;
+    // no duplicar (ignorando mayúsculas)
+    const exists = [...customFolders, ...folders].some(
+      (f) => f.toLowerCase() === name.toLowerCase()
+    );
+    const next = exists ? customFolders : [...customFolders, name];
+    setCustom(next);
+    setNewFolderName("");
+    setFolder(name); // la dejamos seleccionada
+    setFoldersOpen(false);
+    try {
+      await setCustomFolders(next);
+    } catch {
+      // noop
+    }
+  };
 
   const fetchNotes = useCallback(async () => {
     try {
@@ -54,20 +80,25 @@ export default function NotasScreen() {
     fetchNotes();
   }, [fetchNotes]);
 
-  // Carpetas ordenadas por cantidad de notas (las más usadas primero) + su conteo.
+  // Carpetas: las de las notas + las creadas por el usuario (aunque estén vacías),
+  // ordenadas por cantidad de notas (las más usadas primero) + su conteo.
   const { folders, folderCounts } = useMemo(() => {
     const counts = new Map();
     notes.forEach((n) => {
       const f = (n.carpeta || "").trim();
       if (f) counts.set(f, (counts.get(f) || 0) + 1);
     });
-    const list = Array.from(counts.keys()).sort(
+    const names = new Set(counts.keys());
+    customFolders.forEach((f) => {
+      if (f && f.trim()) names.add(f.trim());
+    });
+    const list = Array.from(names).sort(
       (a, b) => (counts.get(b) || 0) - (counts.get(a) || 0) || a.localeCompare(b, "es")
     );
     return { folders: list, folderCounts: counts };
-  }, [notes]);
+  }, [notes, customFolders]);
 
-  const MAX_CHIPS = 5;
+  const MAX_CHIPS = 4;
   const foldersFiltered = useMemo(() => {
     const q = folderSearch.trim().toLowerCase();
     return q ? folders.filter((f) => f.toLowerCase().includes(q)) : folders;
@@ -133,20 +164,16 @@ export default function NotasScreen() {
                 </TouchableOpacity>
               );
             })}
-            {folders.length > MAX_CHIPS ? (
-              <TouchableOpacity
-                style={[styles.folderChip, styles.folderChipMore]}
-                onPress={() => {
-                  setFolderSearch("");
-                  setFoldersOpen(true);
-                }}
-              >
-                <Ionicons name="grid-outline" size={13} color={colors.greenDark} />
-                <Text style={[styles.folderChipText, styles.folderChipTextActive]}>
-                  Ver todas ({folders.length})
-                </Text>
-              </TouchableOpacity>
-            ) : null}
+            <TouchableOpacity
+              style={[styles.folderChip, styles.folderChipMore]}
+              onPress={() => {
+                setFolderSearch("");
+                setFoldersOpen(true);
+              }}
+              accessibilityLabel="Ver todas las carpetas"
+            >
+              <Ionicons name="chevron-down" size={16} color={colors.greenDark} />
+            </TouchableOpacity>
           </ScrollView>
         </View>
       )}
@@ -276,6 +303,28 @@ export default function NotasScreen() {
             ) : null}
           </View>
 
+          {/* Crear nueva carpeta */}
+          <View style={styles.newFolderRow}>
+            <Ionicons name="folder-open-outline" size={16} color={colors.greenDark} />
+            <TextInput
+              style={styles.searchInput}
+              value={newFolderName}
+              onChangeText={setNewFolderName}
+              placeholder="Nueva carpeta..."
+              placeholderTextColor={colors.muted}
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={handleCreateFolder}
+            />
+            <TouchableOpacity
+              style={[styles.newFolderBtn, !newFolderName.trim() && { opacity: 0.4 }]}
+              onPress={handleCreateFolder}
+              disabled={!newFolderName.trim()}
+            >
+              <Ionicons name="add" size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
           <ScrollView
             contentContainerStyle={{ padding: 16, paddingTop: 6 }}
             keyboardShouldPersistTaps="handled"
@@ -378,9 +427,32 @@ const makeStyles = (colors) => StyleSheet.create({
   folderChipMore: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    justifyContent: "center",
+    paddingHorizontal: 10,
     backgroundColor: colors.greenSoft,
     borderColor: colors.greenBorder,
+  },
+  newFolderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 8,
+    paddingLeft: 12,
+    paddingRight: 6,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.greenBorder,
+    backgroundColor: colors.greenSoft,
+  },
+  newFolderBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: colors.greenBright,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   // Modal "todas las carpetas"

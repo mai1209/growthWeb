@@ -14,3 +14,22 @@ export const getWorkspace = async () => {
 
 export const setWorkspace = (ws) =>
   SecureStore.setItemAsync(WORKSPACE_KEY, ws || "personal");
+
+// Carpetas de notas creadas por el usuario (persisten aunque estén vacías).
+const CUSTOM_FOLDERS_KEY = "customNoteFolders";
+
+export const getCustomFolders = async () => {
+  try {
+    const raw = await SecureStore.getItemAsync(CUSTOM_FOLDERS_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr.filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const setCustomFolders = (arr) =>
+  SecureStore.setItemAsync(
+    CUSTOM_FOLDERS_KEY,
+    JSON.stringify(Array.isArray(arr) ? arr.filter(Boolean) : [])
+  );
