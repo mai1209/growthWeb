@@ -65,8 +65,8 @@ export default function HomeScreen() {
     loop.start();
     return () => loop.stop();
   }, [pulse]);
-  const ringOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
-  const ringScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.04] });
+  const ringOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] });
+  const ringScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1.08] });
 
   // La tarjeta de saldo cambia con el tema: oscura en dark, mint clara en light
   const card = isDark
@@ -80,7 +80,7 @@ export default function HomeScreen() {
         glow1: "rgba(20, 217, 95, 0.24)",
         glow2: "rgba(19, 170, 182, 0.22)",
         glow3: "rgba(20, 217, 95, 0.12)",
-        lineColor: "rgba(255, 255, 255, 0.16)",
+        lineColor: "rgba(255, 255, 255, 0.24)",
       }
     : {
         stops: ["#9de3c0", "#c4ecd8", "#e8f6ee"],
@@ -92,7 +92,7 @@ export default function HomeScreen() {
         glow1: "rgba(20, 217, 95, 0.30)",
         glow2: "rgba(19, 170, 182, 0.22)",
         glow3: "rgba(20, 217, 95, 0.16)",
-        lineColor: "rgba(22, 36, 29, 0.13)",
+        lineColor: "rgba(22, 36, 29, 0.20)",
       };
   const navigation = useNavigation();
   const [movimientos, setMovimientos] = useState([]);
