@@ -9,7 +9,7 @@ import {
   FiFilter,
 } from "react-icons/fi";
 import style from "../style/MonthlyFilters.module.css";
-import { movimientoService } from "../api";
+import { movimientoService, categoriesService } from "../api";
 import {
   CURRENCY_OPTIONS,
   MOVEMENT_METHOD_OPTIONS,
@@ -136,6 +136,22 @@ function MonthlyFilters({
   const [facturaMsg, setFacturaMsg] = useState(null); // { ok, text }
   const [yearMenuOpen, setYearMenuOpen] = useState(false);
   const monthInputRef = useRef(null);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    categoriesService
+      .getAll()
+      .then((res) => setCategories(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {});
+  }, []);
+
+  const catIcon = useMemo(() => {
+    const map = new Map();
+    categories.forEach((c) => {
+      if (c?.nombre && c?.icono) map.set(c.nombre.trim().toLowerCase(), c.icono);
+    });
+    return map;
+  }, [categories]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedRecurrence, setSelectedRecurrence] = useState("all");
@@ -458,7 +474,15 @@ function MonthlyFilters({
       <article key={movimiento._id} className={`${style.row} ${toneClass}`}>
         <div className={style.rowHead}>
           <span className={style.rowIcon}>
-            {isPositive ? <FiArrowUpRight /> : <FiArrowDownRight />}
+            {catIcon.get((movimiento.categoria || "").trim().toLowerCase()) ? (
+              <span className={style.rowIconEmoji}>
+                {catIcon.get((movimiento.categoria || "").trim().toLowerCase())}
+              </span>
+            ) : isPositive ? (
+              <FiArrowUpRight />
+            ) : (
+              <FiArrowDownRight />
+            )}
           </span>
 
           <div className={style.rowText}>

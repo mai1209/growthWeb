@@ -1436,3 +1436,8 @@
   background: var(--accent);
   color: var(--accent-contrast);
 }
+
+.rowIconEmoji {
+  font-size: 1.15rem;
+  line-height: 1;
+}
