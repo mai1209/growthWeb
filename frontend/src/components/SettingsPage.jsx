@@ -37,6 +37,11 @@ const TAB_META = {
     text: "Conectá servicios externos como Google Calendar.",
     icon: FiLink,
   },
+  facturacion: {
+    title: "Facturación (ARCA)",
+    text: "Emití facturas de los ingresos de este perfil.",
+    icon: FiFileText,
+  },
 };
 
 const getInitials = (profile) => {
@@ -798,7 +803,6 @@ function SettingsPage() {
       ) : null}
 
       {activeTab === "integraciones" ? (
-        <>
         <section className={style.card}>
           <div className={style.googleBox}>
             <div className={style.googleInfo}>
@@ -860,8 +864,9 @@ function SettingsPage() {
             ) : null}
           </div>
         </section>
+      ) : null}
 
-        {/* ===== Facturación electrónica (ARCA) ===== */}
+      {activeTab === "facturacion" ? (
         <section className={style.card}>
           <div className={style.googleBox}>
             <div className={style.googleInfo}>
@@ -998,7 +1003,6 @@ function SettingsPage() {
             </div>
           )}
         </section>
-        </>
       ) : null}
 
       {error ? <p className={style.error}>{error}</p> : null}
