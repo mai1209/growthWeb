@@ -265,6 +265,7 @@ export default function NotasScreen() {
         visible={editorOpen}
         note={activeNote}
         folders={folders}
+        defaultCarpeta={!activeNote && folder !== ALL_FOLDERS ? folder : ""}
         onClose={() => setEditorOpen(false)}
         onSaved={fetchNotes}
         onDeleted={fetchNotes}

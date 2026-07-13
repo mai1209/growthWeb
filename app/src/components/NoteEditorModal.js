@@ -51,7 +51,15 @@ const TOOLBAR_ACTIONS = [
   actions.removeFormat,
 ];
 
-export default function NoteEditorModal({ visible, note, folders = [], onClose, onSaved, onDeleted }) {
+export default function NoteEditorModal({
+  visible,
+  note,
+  folders = [],
+  defaultCarpeta = "",
+  onClose,
+  onSaved,
+  onDeleted,
+}) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
@@ -66,20 +74,23 @@ export default function NoteEditorModal({ visible, note, folders = [], onClose, 
   const [saving, setSaving] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [folderListOpen, setFolderListOpen] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setMeta(note?.meta || "");
       setHtml(note?.contenido || "");
       setColor(note?.color || "color1");
-      setCarpeta(note?.carpeta || "");
+      // Nota nueva: si venís desde una carpeta, la dejamos autocompletada.
+      setCarpeta(note?.carpeta || defaultCarpeta || "");
       setDate(parseYMD(note?.fecha));
       setError("");
       setSaving(false);
       setPickerOpen(false);
+      setFolderListOpen(false);
       setEditorKey((k) => k + 1); // remonta el editor con el contenido nuevo
     }
-  }, [visible, note]);
+  }, [visible, note, defaultCarpeta]);
 
   // Pocos colores a la vista + "+" que abre el selector libre.
   const baseColors = NOTE_COLOR_KEYS.slice(0, 5);
@@ -237,7 +248,65 @@ export default function NoteEditorModal({ visible, note, folders = [], onClose, 
                     </TouchableOpacity>
                   );
                 })}
+                <TouchableOpacity
+                  style={[styles.folderChip, styles.folderChipMore2]}
+                  onPress={() => setFolderListOpen((o) => !o)}
+                  accessibilityLabel="Ver todas las carpetas"
+                >
+                  <Ionicons
+                    name={folderListOpen ? "chevron-up" : "chevron-down"}
+                    size={15}
+                    color={colors.greenDark}
+                  />
+                </TouchableOpacity>
               </ScrollView>
+            ) : null}
+
+            {folderListOpen && folders.length > 0 ? (
+              <View style={styles.folderDropdown}>
+                <ScrollView
+                  style={{ maxHeight: 180 }}
+                  keyboardShouldPersistTaps="handled"
+                  nestedScrollEnabled
+                >
+                  <TouchableOpacity
+                    style={styles.folderRow2}
+                    onPress={() => {
+                      setCarpeta("");
+                      setFolderListOpen(false);
+                    }}
+                  >
+                    <Ionicons name="albums-outline" size={16} color={colors.muted} />
+                    <Text
+                      style={[styles.folderRowText, !carpeta.trim() && { color: colors.greenDark }]}
+                    >
+                      Sin carpeta
+                    </Text>
+                  </TouchableOpacity>
+                  {folders.map((f) => {
+                    const active = carpeta.trim() === f;
+                    return (
+                      <TouchableOpacity
+                        key={f}
+                        style={styles.folderRow2}
+                        onPress={() => {
+                          setCarpeta(f);
+                          setFolderListOpen(false);
+                        }}
+                      >
+                        <Ionicons
+                          name="folder-outline"
+                          size={16}
+                          color={active ? colors.greenDark : colors.muted}
+                        />
+                        <Text style={[styles.folderRowText, active && { color: colors.greenDark }]}>
+                          {f}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
             ) : null}
 
             {/* Fondo: pocos colores + "+" que despliega la paleta completa */}
@@ -400,6 +469,29 @@ const makeStyles = (colors) =>
       backgroundColor: colors.cardSoft,
     },
     folderChipActive: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
+    folderChipMore2: {
+      paddingHorizontal: 10,
+      backgroundColor: colors.greenSoft,
+      borderColor: colors.greenBorder,
+    },
+    folderDropdown: {
+      marginTop: 4,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      overflow: "hidden",
+    },
+    folderRow2: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingVertical: 11,
+      paddingHorizontal: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.cardBorder,
+    },
+    folderRowText: { color: colors.text, fontSize: 14, fontWeight: "600" },
     folderChipText: { color: colors.muted, fontWeight: "700", fontSize: 12 },
     folderChipTextActive: { color: colors.greenDark },
 
