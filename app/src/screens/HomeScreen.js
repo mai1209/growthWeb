@@ -65,8 +65,8 @@ export default function HomeScreen() {
     loop.start();
     return () => loop.stop();
   }, [pulse]);
-  const ringOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] });
-  const ringScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1.08] });
+  const ringOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.45, 1] });
+  const ringTranslateY = pulse.interpolate({ inputRange: [0, 1], outputRange: [-8, 8] });
 
   // La tarjeta de saldo cambia con el tema: oscura en dark, mint clara en light
   const card = isDark
@@ -239,7 +239,7 @@ export default function HomeScreen() {
                         pointerEvents="none"
                         style={[
                           StyleSheet.absoluteFill,
-                          { opacity: ringOpacity, transform: [{ scale: ringScale }] },
+                          { opacity: ringOpacity, transform: [{ translateY: ringTranslateY }] },
                         ]}
                       >
                         <Svg width={cardSize.w} height={cardSize.h}>
