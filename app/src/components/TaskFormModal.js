@@ -140,7 +140,6 @@ export default function TaskFormModal({ visible, defaultDate, editTask = null, o
         color,
         esRecurrente,
         diasRepeticion: esRecurrente ? dias : [],
-        workspace: "personal",
       };
       if (editTask) {
         await taskService.update(editTask._id, payload);

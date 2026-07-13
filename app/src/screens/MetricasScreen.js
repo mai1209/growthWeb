@@ -104,7 +104,7 @@ export default function MetricasScreen() {
   const fetchData = useCallback(async () => {
     setError("");
     try {
-      const res = await movimientoService.getAll({ workspace: "personal" });
+      const res = await movimientoService.getAll();
       setMovimientos(Array.isArray(res.data) ? res.data : []);
     } catch {
       setError("No se pudieron cargar los movimientos.");

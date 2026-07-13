@@ -8,6 +8,8 @@ import * as SplashScreen from "expo-splash-screen";
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AuthProvider, useAuth } from "./src/auth/AuthContext";
+import { WorkspaceProvider, useWorkspace } from "./src/workspace/WorkspaceContext";
+import ProfileSwitcher from "./src/components/ProfileSwitcher";
 import { ThemeProvider, useTheme } from "./src/theme";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import LoginScreen from "./src/screens/LoginScreen";
@@ -35,6 +37,7 @@ function TopBar() {
     <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
       <Text style={styles.brand}>GROWTH</Text>
       <View style={styles.topActions}>
+        <ProfileSwitcher />
         <TouchableOpacity onPress={toggleTheme} hitSlop={10}>
           <Ionicons
             name={isDark ? "sunny-outline" : "moon-outline"}
@@ -61,10 +64,12 @@ const TAB_ICONS = {
 
 function MainTabs() {
   const { colors } = useTheme();
+  const { workspace } = useWorkspace();
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <TopBar />
       <Tab.Navigator
+        key={workspace}
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarActiveTintColor: colors.greenDark,
@@ -163,7 +168,9 @@ export default function App() {
       <SafeAreaProvider>
         <ThemeProvider>
           <AuthProvider>
-            <ThemedApp />
+            <WorkspaceProvider>
+              <ThemedApp />
+            </WorkspaceProvider>
           </AuthProvider>
         </ThemeProvider>
       </SafeAreaProvider>

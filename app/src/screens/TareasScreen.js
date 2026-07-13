@@ -36,7 +36,7 @@ export default function TareasScreen() {
   const fetchTasks = useCallback(async () => {
     setError("");
     try {
-      const res = await taskService.getAll({ tipo: "task", workspace: "personal" });
+      const res = await taskService.getAll({ tipo: "task" });
       setAllTasks(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       setError("No se pudieron cargar las tareas.");
