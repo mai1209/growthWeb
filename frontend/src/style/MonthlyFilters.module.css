@@ -1311,3 +1311,44 @@
 .statNeg {
   color: var(--color-rojo);
 }
+
+/* ===== Emitir factura (ARCA) ===== */
+.facturaBtn {
+  padding: 0.28rem 0.7rem;
+  border: 1px solid var(--accent-border);
+  border-radius: 999px;
+  background: var(--accent-surface);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter var(--transition-fast);
+}
+
+.facturaBtn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.facturaBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.facturaMsgOk,
+.facturaMsgErr {
+  margin: 0 0 0.9rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.facturaMsgOk {
+  background: var(--color-verde-soft);
+  color: var(--color-verde);
+}
+
+.facturaMsgErr {
+  background: var(--color-rojo-soft);
+  color: var(--color-rojo);
+}

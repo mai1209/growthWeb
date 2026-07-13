@@ -79,6 +79,20 @@ const ingresoEgresoSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
+  },
+
+  // Factura electrónica emitida para este ingreso (ARCA vía AfipSDK).
+  // Queda vacío hasta que se emite.
+  factura: {
+    cae: { type: String, default: '' },
+    caeVto: { type: String, default: '' }, // vencimiento del CAE (YYYY-MM-DD)
+    tipo: { type: Number },                // CbteTipo (1=A, 6=B, 11=C)
+    tipoNombre: { type: String, default: '' },
+    numero: { type: Number },              // número de comprobante
+    ptoVenta: { type: Number },
+    fecha: { type: String, default: '' },  // fecha del comprobante (YYYYMMDD)
+    homologacion: { type: Boolean, default: false },
+    emitidaAt: { type: Date },
   }
 }, {
   timestamps: true

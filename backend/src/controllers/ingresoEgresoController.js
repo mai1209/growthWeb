@@ -1,5 +1,20 @@
 import IngresoEgresoModel from "../models/ingresoEgresoModel.js";
-import mongoose from 'mongoose'; 
+import FiscalConfigModel from "../models/fiscalConfigModel.js";
+import mongoose from 'mongoose';
+
+// Carga perezosa del servicio de facturación: si el paquete @afipsdk/afip.js
+// no está instalado, el resto de la API sigue funcionando.
+let facturaModule;
+const loadFacturaService = async () => {
+  if (facturaModule !== undefined) return facturaModule;
+  try {
+    facturaModule = await import("../utils/facturaAfip.js");
+  } catch (error) {
+    console.warn("facturaAfip no disponible:", error.message);
+    facturaModule = null;
+  }
+  return facturaModule;
+};
 
 const ALLOWED_TYPES = ["ingreso", "egreso", "ahorro", "deuda"];
 const ALLOWED_CURRENCIES = ["ARS", "USD"];
@@ -514,5 +529,54 @@ export const getAllIncomeEgress = async (req, res) => {
     console.error("💥 Error al obtener todos los movimientos:", error);
     console.error(error.stack);
     res.status(500).json({ error: "Error al obtener todos los movimientos", details: error.message });
+  }
+};
+
+// @desc    Emitir factura electrónica (ARCA vía AfipSDK) para un ingreso
+// @route   POST /api/add/:id/factura
+// @access  Private
+export const emitirFacturaMovimiento = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+    const workspace = normalizeWorkspace(req);
+
+    const movimiento = await IngresoEgresoModel.findById(id);
+    if (!movimiento) {
+      return res.status(404).json({ error: "Movimiento no encontrado" });
+    }
+    if (movimiento.usuario.toString() !== userId.toString()) {
+      return res.status(401).json({ error: "No autorizado" });
+    }
+    if (movimiento.tipo !== "ingreso") {
+      return res.status(400).json({ error: "Solo se pueden facturar ingresos." });
+    }
+    if (movimiento.factura && movimiento.factura.cae) {
+      return res.status(400).json({ error: "Este ingreso ya tiene factura emitida." });
+    }
+
+    const fiscal = await FiscalConfigModel.findOne({ usuario: userId, workspace });
+    if (!fiscal || !fiscal.activo) {
+      return res.status(400).json({ error: "Activá la facturación en Ajustes para este perfil." });
+    }
+    if (!fiscal.arcaAutorizado) {
+      return res.status(400).json({ error: "Falta autorizar la facturación en ARCA (Ajustes)." });
+    }
+
+    const mod = await loadFacturaService();
+    if (!mod || typeof mod.emitirFactura !== "function") {
+      return res
+        .status(500)
+        .json({ error: "El módulo de facturación no está disponible en el servidor." });
+    }
+
+    const factura = await mod.emitirFactura(fiscal, movimiento);
+    movimiento.factura = factura;
+    const guardado = await movimiento.save();
+
+    res.status(200).json(serializeMovimiento(guardado));
+  } catch (error) {
+    console.error("Error al emitir factura:", error);
+    res.status(500).json({ error: error.message || "No se pudo emitir la factura." });
   }
 };

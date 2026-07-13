@@ -87,6 +87,7 @@ export const movimientoService = {
   create: (data) => api.post("/api/add", data),
   update: (id, data) => api.put(`/api/add/${id}`, data),
   settleDebt: (id, data) => api.post(`/api/add/${id}/settle-debt`, data),
+  emitirFactura: (id) => api.post(`/api/add/${id}/factura`),
   delete: (id) => api.delete(`/api/add/${id}`),
 };
 

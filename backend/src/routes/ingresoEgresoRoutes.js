@@ -7,6 +7,7 @@ import {
   deleteIncomeEgress,
   getAllIncomeEgress,
   settleDebtMovement,
+  emitirFacturaMovimiento,
 } from "../controllers/ingresoEgresoController.js";
 import { requireAuth } from "../middlewares/authJwt.js";
 
@@ -27,6 +28,10 @@ router.get("/all", requireAuth, getAllIncomeEgress);
 // Marcar deuda como pagada
 // POST /api/add/:id/settle-debt
 router.post("/:id/settle-debt", requireAuth, settleDebtMovement);
+
+// Emitir factura electrónica (ARCA) para un ingreso
+// POST /api/add/:id/factura
+router.post("/:id/factura", requireAuth, emitirFacturaMovimiento);
 
 // Obtener movimiento por ID
 // GET /api/add/:id

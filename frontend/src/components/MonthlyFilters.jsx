@@ -125,6 +125,8 @@ function MonthlyFilters({
   const [selectedMonth, setSelectedMonth] = useState(getMonthInputValue(new Date()));
   const [period, setPeriod] = useState("month"); // month | year
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [facturaBusyId, setFacturaBusyId] = useState(null);
+  const [facturaMsg, setFacturaMsg] = useState(null); // { ok, text }
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedRecurrence, setSelectedRecurrence] = useState("all");
@@ -323,6 +325,31 @@ function MonthlyFilters({
     }
   };
 
+  const handleEmitirFactura = async (movimiento) => {
+    const movementId = movimiento.sourceId || movimiento._id;
+    if (!movementId) return;
+    setFacturaBusyId(movementId);
+    setFacturaMsg(null);
+    try {
+      const res = await movimientoService.emitirFactura(movementId);
+      const f = res.data?.factura;
+      onMovementUpdate?.(res.data);
+      setFacturaMsg({
+        ok: true,
+        text: f
+          ? `Factura emitida: ${f.tipoNombre} N° ${f.numero} · CAE ${f.cae}`
+          : "Factura emitida.",
+      });
+    } catch (err) {
+      setFacturaMsg({
+        ok: false,
+        text: err.response?.data?.error || "No se pudo emitir la factura.",
+      });
+    } finally {
+      setFacturaBusyId(null);
+    }
+  };
+
   const handleStartSettleDebt = (movimiento) => {
     const movementId = movimiento.sourceId || movimiento._id;
     setSettleMovementId(movementId);
@@ -466,6 +493,24 @@ function MonthlyFilters({
 
         <div className={style.rowBadges}>
           <span className={style.badge}>{typeMeta.label}</span>
+          {movimiento.tipo === "ingreso" ? (
+            movimiento.factura && movimiento.factura.cae ? (
+              <span className={style.badgeAccent}>
+                {movimiento.factura.tipoNombre} N° {movimiento.factura.numero}
+              </span>
+            ) : (
+              <button
+                type="button"
+                className={style.facturaBtn}
+                onClick={() => handleEmitirFactura(movimiento)}
+                disabled={facturaBusyId === (movimiento.sourceId || movimiento._id)}
+              >
+                {facturaBusyId === (movimiento.sourceId || movimiento._id)
+                  ? "Emitiendo..."
+                  : "Emitir factura"}
+              </button>
+            )
+          ) : null}
           {isDebt ? (
             <span
               className={
@@ -828,6 +873,12 @@ function MonthlyFilters({
               )}
             </div>
           </div>
+
+          {facturaMsg ? (
+            <p className={facturaMsg.ok ? style.facturaMsgOk : style.facturaMsgErr}>
+              {facturaMsg.text}
+            </p>
+          ) : null}
 
           {period === "year" ? (
             monthBreakdown.length === 0 ? (
