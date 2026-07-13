@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  Animated,
+  Easing,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -40,6 +42,31 @@ const fmtDate = (value) => {
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
   const styles = makeStyles(colors);
+
+  // Pulso suave para los anillos de la tarjeta (respiran)
+  const pulse = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 2600,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0,
+          duration: 2600,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+  const ringOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
+  const ringScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.04] });
 
   // La tarjeta de saldo cambia con el tema: oscura en dark, mint clara en light
   const card = isDark
@@ -192,31 +219,45 @@ export default function HomeScreen() {
                   }
                 >
                   {cardSize.w > 0 ? (
-                    <Svg width={cardSize.w} height={cardSize.h} style={StyleSheet.absoluteFill}>
-                      <Defs>
-                        <LinearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
-                          <Stop offset="0" stopColor={card.stops[0]} />
-                          <Stop offset="0.5" stopColor={card.stops[1]} />
-                          <Stop offset="1" stopColor={card.stops[2]} />
-                        </LinearGradient>
-                      </Defs>
-                      <Rect width={cardSize.w} height={cardSize.h} rx={24} fill="url(#cardGrad)" />
-                      {/* Glow suave + anillos concéntricos finos (estilo referencia) */}
-                      <Circle cx={cardSize.w * 0.82} cy={cardSize.h * 0.2} r={74} fill={card.glow1} />
-                      <Circle cx={cardSize.w * 0.12} cy={cardSize.h * 1.05} r={70} fill={card.glow3} />
-                      {[52, 108, 168, 232, 300].map((r, i) => (
-                        <Circle
-                          key={r}
-                          cx={cardSize.w * 0.82}
-                          cy={cardSize.h * 0.2}
-                          r={r}
-                          fill="none"
-                          stroke={card.lineColor}
-                          strokeWidth={1}
-                          opacity={0.9 - i * 0.15}
-                        />
-                      ))}
-                    </Svg>
+                    <>
+                      <Svg width={cardSize.w} height={cardSize.h} style={StyleSheet.absoluteFill}>
+                        <Defs>
+                          <LinearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
+                            <Stop offset="0" stopColor={card.stops[0]} />
+                            <Stop offset="0.5" stopColor={card.stops[1]} />
+                            <Stop offset="1" stopColor={card.stops[2]} />
+                          </LinearGradient>
+                        </Defs>
+                        <Rect width={cardSize.w} height={cardSize.h} rx={24} fill="url(#cardGrad)" />
+                        {/* Glow suave */}
+                        <Circle cx={cardSize.w * 0.82} cy={cardSize.h * 0.2} r={74} fill={card.glow1} />
+                        <Circle cx={cardSize.w * 0.12} cy={cardSize.h * 1.05} r={70} fill={card.glow3} />
+                      </Svg>
+
+                      {/* Anillos concéntricos que respiran (capa animada) */}
+                      <Animated.View
+                        pointerEvents="none"
+                        style={[
+                          StyleSheet.absoluteFill,
+                          { opacity: ringOpacity, transform: [{ scale: ringScale }] },
+                        ]}
+                      >
+                        <Svg width={cardSize.w} height={cardSize.h}>
+                          {[52, 108, 168, 232, 300].map((r, i) => (
+                            <Circle
+                              key={r}
+                              cx={cardSize.w * 0.82}
+                              cy={cardSize.h * 0.2}
+                              r={r}
+                              fill="none"
+                              stroke={card.lineColor}
+                              strokeWidth={1}
+                              opacity={0.9 - i * 0.15}
+                            />
+                          ))}
+                        </Svg>
+                      </Animated.View>
+                    </>
                   ) : null}
 
                   <View style={styles.bcTop}>
