@@ -16,7 +16,7 @@
     },
     "android": {
       "package": "app.growthmanager.mobile",
-      "versionCode": 12,
+      "versionCode": 13,
       "adaptiveIcon": {
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/android-icon-foreground.png"
