@@ -242,13 +242,14 @@ export default function HomeScreen() {
                   ) : (
                     <Text style={[styles.bcBalance, { color: card.text }]}>{money(historical.total)}</Text>
                   )}
-                </View>
 
-                {error ? <Text style={styles.error}>{error}</Text> : null}
-
-                {/* Accesos rápidos: íconos dentro de una tarjeta */}
-                <View style={styles.quickCard}>
-                  <View style={styles.quickRow}>
+                  {/* Acciones dentro de la tarjeta (estilo referencia) */}
+                  <View
+                    style={[
+                      styles.bcActions,
+                      { backgroundColor: card.iconBg, borderColor: card.iconBorder },
+                    ]}
+                  >
                     {quickActions.map((a) => (
                       <TouchableOpacity
                         key={a.key}
@@ -256,14 +257,16 @@ export default function HomeScreen() {
                         onPress={() => setModalMode(a.key)}
                         activeOpacity={0.7}
                       >
-                        <Ionicons name={a.icon} size={27} color={a.color} />
-                        <Text style={styles.quickLabel} numberOfLines={1}>
+                        <Ionicons name={a.icon} size={25} color={a.color} />
+                        <Text style={[styles.quickLabel, { color: card.text }]} numberOfLines={1}>
                           {a.label}
                         </Text>
                       </TouchableOpacity>
                     ))}
                   </View>
                 </View>
+
+                {error ? <Text style={styles.error}>{error}</Text> : null}
 
                 {/* Movimientos del mes (clickeables → Filtros filtrado) */}
                 <Text style={styles.sectionLabel}>Resumen</Text>
@@ -548,15 +551,17 @@ const makeStyles = (colors) => StyleSheet.create({
     letterSpacing: 1.5,
   },
 
-  quickCard: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 18,
-    paddingVertical: 14,
+  bcActions: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "flex-start",
+    gap: 4,
+    marginTop: 18,
+    paddingVertical: 12,
     paddingHorizontal: 6,
+    borderRadius: 16,
+    borderWidth: 1,
   },
-  quickRow: { flexDirection: "row", justifyContent: "space-around", alignItems: "flex-start" },
   quickItem: { flex: 1, alignItems: "center", gap: 7, paddingVertical: 6 },
   quickIcon: {
     width: 52,
