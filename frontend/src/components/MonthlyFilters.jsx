@@ -1,6 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiArrowDownRight, FiArrowUpRight, FiCheck, FiChevronDown, FiFilter } from "react-icons/fi";
+import {
+  FiArrowDownRight,
+  FiArrowUpRight,
+  FiCalendar,
+  FiCheck,
+  FiChevronDown,
+  FiFilter,
+} from "react-icons/fi";
 import style from "../style/MonthlyFilters.module.css";
 import { movimientoService } from "../api";
 import {
@@ -127,6 +134,8 @@ function MonthlyFilters({
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [facturaBusyId, setFacturaBusyId] = useState(null);
   const [facturaMsg, setFacturaMsg] = useState(null); // { ok, text }
+  const [yearMenuOpen, setYearMenuOpen] = useState(false);
+  const monthInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedRecurrence, setSelectedRecurrence] = useState("all");
@@ -646,7 +655,59 @@ function MonthlyFilters({
       <div className={style.hero}>
         <div className={style.heroMonthBlock}>
           <p className={style.panelKicker}>{period === "year" ? "Año" : "Mes"}</p>
-          <h1 className={style.heroMonthTitle}>{periodLabel}</h1>
+          <div className={style.heroTitleRow}>
+            <h1 className={style.heroMonthTitle}>{periodLabel}</h1>
+            {period === "month" ? (
+              <button
+                type="button"
+                className={style.heroDateBtn}
+                onClick={() => monthInputRef.current?.showPicker?.()}
+                aria-label="Cambiar mes"
+                title="Cambiar mes"
+              >
+                <FiCalendar />
+                <input
+                  ref={monthInputRef}
+                  type="month"
+                  className={style.heroDateHidden}
+                  value={selectedMonth}
+                  onChange={(event) => event.target.value && setSelectedMonth(event.target.value)}
+                  tabIndex={-1}
+                />
+              </button>
+            ) : (
+              <div className={style.heroYearWrap}>
+                <button
+                  type="button"
+                  className={style.heroDateBtn}
+                  onClick={() => setYearMenuOpen((open) => !open)}
+                  aria-label="Cambiar año"
+                  title="Cambiar año"
+                >
+                  <FiCalendar />
+                </button>
+                {yearMenuOpen ? (
+                  <div className={style.heroYearMenu}>
+                    {availableYears.map((y) => (
+                      <button
+                        key={y}
+                        type="button"
+                        className={`${style.heroYearOption} ${
+                          y === selectedYear ? style.heroYearOptionActive : ""
+                        }`}
+                        onClick={() => {
+                          setSelectedYear(y);
+                          setYearMenuOpen(false);
+                        }}
+                      >
+                        {y}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </div>
         </div>
         <div className={style.heroActions}>
           <div
@@ -844,33 +905,6 @@ function MonthlyFilters({
                   Año
                 </button>
               </div>
-              {period === "year" ? (
-                <div className={style.yearPicker}>
-                  <select
-                    id="year-select"
-                    aria-label="Año"
-                    className={style.yearSelect}
-                    value={selectedYear}
-                    onChange={(event) => setSelectedYear(Number(event.target.value))}
-                  >
-                    {availableYears.map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : (
-                <div className={style.yearPicker}>
-                  <input
-                    type="month"
-                    aria-label="Mes"
-                    className={style.monthSelect}
-                    value={selectedMonth}
-                    onChange={(event) => setSelectedMonth(event.target.value)}
-                  />
-                </div>
-              )}
             </div>
           </div>
 

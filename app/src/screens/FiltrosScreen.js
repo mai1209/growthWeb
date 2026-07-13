@@ -36,6 +36,15 @@ const TYPE_FILTERS = [{ value: "all", label: "Todos" }, ...MOVEMENT_TYPE_OPTIONS
 const shiftMonth = (d, n) => new Date(d.getFullYear(), d.getMonth() + n, 1);
 const CHART_H = 90; // alto máx de las barras del mini gráfico anual
 
+// Ícono outline por tipo de movimiento (estilo minimalista).
+const movementIcon = (m) => {
+  if (m.desdeAhorro) return "swap-horizontal-outline";
+  if (m.tipo === "ingreso") return "arrow-down-outline";
+  if (m.tipo === "ahorro") return "wallet-outline";
+  if (m.tipo === "deuda") return "card-outline";
+  return "arrow-up-outline"; // egreso
+};
+
 export default function FiltrosScreen() {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
@@ -420,7 +429,9 @@ export default function FiltrosScreen() {
             const isPartialDebt = isPendingDebt && debtPaid > 0;
             return (
               <View style={styles.movCard}>
-                <View style={[styles.movBar, { backgroundColor: meta.color }]} />
+                <View style={[styles.movIcon, { borderColor: meta.color + "55", backgroundColor: meta.color + "1f" }]}>
+                  <Ionicons name={movementIcon(item)} size={19} color={meta.color} />
+                </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.movTitle}>{item.categoria || "Sin categoría"}</Text>
                   {item.detalle ? <Text style={styles.movDetail}>{item.detalle}</Text> : null}
@@ -711,11 +722,19 @@ const makeStyles = (colors) => StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 12,
     paddingRight: 13,
-    paddingLeft: 16,
+    paddingLeft: 12,
     marginBottom: 8,
     overflow: "hidden",
   },
   movBar: { position: "absolute", left: 0, top: 0, bottom: 0, width: 4 },
+  movIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   movTitle: { color: colors.text, fontSize: 15, fontWeight: "700" },
   movDetail: { color: colors.muted, fontSize: 13, marginTop: 2 },
   movChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 },

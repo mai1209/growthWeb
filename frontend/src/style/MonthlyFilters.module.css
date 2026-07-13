@@ -1352,3 +1352,87 @@
   background: var(--color-rojo-soft);
   color: var(--color-rojo);
 }
+
+/* ===== Selector de fecha en el título (ícono calendario) ===== */
+.heroTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.heroDateBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--surface-input);
+  color: var(--color-verde);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.heroDateBtn:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-surface);
+}
+
+.heroDateBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* input nativo de mes, oculto: lo abrimos con showPicker() */
+.heroDateHidden {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+}
+
+.heroYearWrap {
+  position: relative;
+}
+
+.heroYearMenu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  z-index: 40;
+  min-width: 110px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 0.35rem;
+  display: grid;
+  gap: 0.15rem;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--modal-background);
+  box-shadow: var(--shadow-md);
+}
+
+.heroYearOption {
+  padding: 0.5rem 0.8rem;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-text);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.heroYearOption:hover {
+  background: var(--surface-hover);
+}
+
+.heroYearOptionActive {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
