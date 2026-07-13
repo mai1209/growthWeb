@@ -53,6 +53,7 @@ export default function HomeScreen() {
         glow1: "rgba(20, 217, 95, 0.24)",
         glow2: "rgba(19, 170, 182, 0.22)",
         glow3: "rgba(20, 217, 95, 0.12)",
+        lineColor: "rgba(255, 255, 255, 0.16)",
       }
     : {
         stops: ["#9de3c0", "#c4ecd8", "#e8f6ee"],
@@ -64,6 +65,7 @@ export default function HomeScreen() {
         glow1: "rgba(20, 217, 95, 0.30)",
         glow2: "rgba(19, 170, 182, 0.22)",
         glow3: "rgba(20, 217, 95, 0.16)",
+        lineColor: "rgba(22, 36, 29, 0.13)",
       };
   const navigation = useNavigation();
   const [movimientos, setMovimientos] = useState([]);
@@ -199,10 +201,21 @@ export default function HomeScreen() {
                         </LinearGradient>
                       </Defs>
                       <Rect width={cardSize.w} height={cardSize.h} rx={24} fill="url(#cardGrad)" />
-                      {/* Detalles decorativos, sutiles */}
-                      <Circle cx={cardSize.w * 0.88} cy={cardSize.h * 0.08} r={80} fill={card.glow1} />
-                      <Circle cx={cardSize.w * 1.02} cy={cardSize.h * 0.72} r={56} fill={card.glow2} />
-                      <Circle cx={cardSize.w * 0.1} cy={cardSize.h * 1.1} r={60} fill={card.glow3} />
+                      {/* Glow suave + anillos concéntricos finos (estilo referencia) */}
+                      <Circle cx={cardSize.w * 0.82} cy={cardSize.h * 0.2} r={74} fill={card.glow1} />
+                      <Circle cx={cardSize.w * 0.12} cy={cardSize.h * 1.05} r={70} fill={card.glow3} />
+                      {[52, 108, 168, 232, 300].map((r, i) => (
+                        <Circle
+                          key={r}
+                          cx={cardSize.w * 0.82}
+                          cy={cardSize.h * 0.2}
+                          r={r}
+                          fill="none"
+                          stroke={card.lineColor}
+                          strokeWidth={1}
+                          opacity={0.9 - i * 0.15}
+                        />
+                      ))}
                     </Svg>
                   ) : null}
 
