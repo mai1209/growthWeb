@@ -250,29 +250,30 @@ export default function HomeScreen() {
 
                 {error ? <Text style={styles.error}>{error}</Text> : null}
 
-                {/* Accesos rápidos */}
-                <Text style={styles.sectionLabel}>Cargar movimiento</Text>
-                <View style={styles.quickRow}>
-                  {quickActions.map((a) => (
-                    <TouchableOpacity
-                      key={a.key}
-                      style={styles.quickItem}
-                      onPress={() => setModalMode(a.key)}
-                      activeOpacity={0.7}
-                    >
-                      <View
-                        style={[
-                          styles.quickIcon,
-                          { borderColor: a.color + "55", backgroundColor: a.color + "1f" },
-                        ]}
+                {/* Accesos rápidos: íconos dentro de una tarjeta */}
+                <View style={styles.quickCard}>
+                  <View style={styles.quickRow}>
+                    {quickActions.map((a) => (
+                      <TouchableOpacity
+                        key={a.key}
+                        style={styles.quickItem}
+                        onPress={() => setModalMode(a.key)}
+                        activeOpacity={0.7}
                       >
-                        <Ionicons name={a.icon} size={23} color={a.color} />
-                      </View>
-                      <Text style={styles.quickLabel} numberOfLines={1}>
-                        {a.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                        <View
+                          style={[
+                            styles.quickIcon,
+                            { borderColor: a.color + "55", backgroundColor: a.color + "1f" },
+                          ]}
+                        >
+                          <Ionicons name={a.icon} size={23} color={a.color} />
+                        </View>
+                        <Text style={styles.quickLabel} numberOfLines={1}>
+                          {a.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
 
                 {/* Movimientos del mes (clickeables → Filtros filtrado) */}
@@ -558,6 +559,14 @@ const makeStyles = (colors) => StyleSheet.create({
     letterSpacing: 1.5,
   },
 
+  quickCard: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
+  },
   quickRow: { flexDirection: "row", justifyContent: "space-around", alignItems: "flex-start" },
   quickItem: { flex: 1, alignItems: "center", gap: 7, paddingVertical: 6 },
   quickIcon: {
