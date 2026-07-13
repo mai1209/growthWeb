@@ -78,6 +78,12 @@ export const categoriesService = {
   delete: (id) => api.delete(`/api/categories/${id}`),
 };
 
+// Config de facturación (ARCA) del perfil activo (workspace va en el header).
+export const fiscalService = {
+  get: () => api.get("/api/fiscal-config"),
+  update: (data) => api.put("/api/fiscal-config", data),
+};
+
 export const sharedGroupsService = {
   getAll: () => api.get("/api/shared-groups"),
   getById: (id) => api.get(`/api/shared-groups/${id}`),

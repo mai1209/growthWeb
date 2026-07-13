@@ -5,8 +5,10 @@ import {
   FiCalendar,
   FiCheckCircle,
   FiChevronDown,
+  FiExternalLink,
   FiEye,
   FiEyeOff,
+  FiFileText,
   FiKey,
   FiLink,
   FiLock,
@@ -16,7 +18,7 @@ import {
   FiTrash2,
   FiUser,
 } from "react-icons/fi";
-import { authService, googleService } from "../api";
+import { authService, googleService, fiscalService } from "../api";
 import style from "../style/Settings.module.css";
 
 const TAB_META = {
@@ -90,6 +92,54 @@ function SettingsPage() {
   const [googleLoading, setGoogleLoading] = useState(true);
   const [googleBusy, setGoogleBusy] = useState(false);
   const [googleSyncing, setGoogleSyncing] = useState(false);
+  const [fiscal, setFiscal] = useState({
+    activo: false,
+    cuit: "",
+    razonSocial: "",
+    condicionIVA: "monotributo",
+    puntoVenta: 1,
+    modo: "manual",
+    arcaAutorizado: false,
+  });
+  const [fiscalLoading, setFiscalLoading] = useState(true);
+  const [fiscalSaving, setFiscalSaving] = useState(false);
+
+  // Carga la config de facturación del perfil activo
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      setFiscalLoading(true);
+      try {
+        const res = await fiscalService.get();
+        if (alive && res.data) setFiscal(res.data);
+      } catch {
+        // sin config aún: quedan los defaults
+      } finally {
+        if (alive) setFiscalLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const handleFiscalChange = (field, value) =>
+    setFiscal((prev) => ({ ...prev, [field]: value }));
+
+  const handleFiscalSave = async () => {
+    setFiscalSaving(true);
+    setError("");
+    setMessage("");
+    try {
+      const res = await fiscalService.update(fiscal);
+      if (res.data) setFiscal(res.data);
+      setMessage("Configuración de facturación guardada.");
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo guardar la facturación.");
+    } finally {
+      setFiscalSaving(false);
+    }
+  };
 
   const profileInitials = useMemo(() => getInitials(profile), [profile]);
   const businessProfiles = profile.businessProfiles?.length
@@ -748,6 +798,7 @@ function SettingsPage() {
       ) : null}
 
       {activeTab === "integraciones" ? (
+        <>
         <section className={style.card}>
           <div className={style.googleBox}>
             <div className={style.googleInfo}>
@@ -809,6 +860,145 @@ function SettingsPage() {
             ) : null}
           </div>
         </section>
+
+        {/* ===== Facturación electrónica (ARCA) ===== */}
+        <section className={style.card}>
+          <div className={style.googleBox}>
+            <div className={style.googleInfo}>
+              <FiFileText />
+              <div>
+                <h2>Facturación electrónica (ARCA)</h2>
+                <p>
+                  Emití facturas de los ingresos de <strong>este perfil</strong>. La
+                  configuración es por perfil (el activo).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {fiscalLoading ? (
+            <p>Cargando configuración...</p>
+          ) : (
+            <div className={style.fiscalBody}>
+              <label className={style.fiscalToggle}>
+                <input
+                  type="checkbox"
+                  checked={fiscal.activo}
+                  onChange={(event) => handleFiscalChange("activo", event.target.checked)}
+                />
+                <span>Activar facturación en este perfil</span>
+              </label>
+
+              {fiscal.activo ? (
+                <>
+                  <div className={style.formGrid}>
+                    <label className={style.field}>
+                      <span>CUIT</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={fiscal.cuit}
+                        onChange={(event) => handleFiscalChange("cuit", event.target.value)}
+                        placeholder="11 dígitos"
+                        maxLength={13}
+                      />
+                    </label>
+
+                    <label className={style.field}>
+                      <span>Razón social</span>
+                      <input
+                        type="text"
+                        value={fiscal.razonSocial}
+                        onChange={(event) => handleFiscalChange("razonSocial", event.target.value)}
+                        placeholder="Nombre o razón social"
+                      />
+                    </label>
+
+                    <label className={style.field}>
+                      <span>Condición frente al IVA</span>
+                      <select
+                        value={fiscal.condicionIVA}
+                        onChange={(event) => handleFiscalChange("condicionIVA", event.target.value)}
+                      >
+                        <option value="monotributo">Monotributo</option>
+                        <option value="responsable_inscripto">Responsable Inscripto</option>
+                        <option value="exento">Exento</option>
+                      </select>
+                    </label>
+
+                    <label className={style.field}>
+                      <span>Punto de venta</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={fiscal.puntoVenta}
+                        onChange={(event) =>
+                          handleFiscalChange("puntoVenta", Number(event.target.value))
+                        }
+                      />
+                    </label>
+
+                    <label className={style.field}>
+                      <span>Modo de emisión</span>
+                      <select
+                        value={fiscal.modo}
+                        onChange={(event) => handleFiscalChange("modo", event.target.value)}
+                      >
+                        <option value="manual">Manual (botón en cada ingreso)</option>
+                        <option value="automatico">Automático (en cada ingreso)</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  {/* Estado de la autorización en ARCA (paso único con Clave Fiscal) */}
+                  <div className={style.arcaBox}>
+                    {fiscal.arcaAutorizado ? (
+                      <p className={style.arcaOk}>
+                        <FiCheckCircle /> Autorizado en ARCA
+                      </p>
+                    ) : (
+                      <>
+                        <p className={style.arcaHint}>
+                          Falta autorizar a Growth en ARCA: un paso único con tu Clave Fiscal
+                          (Administrador de Relaciones → Facturación Electrónica). El asistente
+                          guiado llega en la próxima etapa.
+                        </p>
+                        <div className={style.arcaActions}>
+                          <a
+                            className={style.ghostButton}
+                            href="https://auth.afip.gob.ar/contribuyente_/login.xhtml"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <FiExternalLink /> Abrir ARCA
+                          </a>
+                          <button
+                            type="button"
+                            className={style.ghostButton}
+                            onClick={() => handleFiscalChange("arcaAutorizado", true)}
+                          >
+                            <FiCheckCircle /> Ya lo autoricé
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              ) : null}
+
+              <button
+                type="button"
+                className={style.saveButton}
+                onClick={handleFiscalSave}
+                disabled={fiscalSaving}
+              >
+                <FiSave />
+                {fiscalSaving ? "Guardando..." : "Guardar facturación"}
+              </button>
+            </div>
+          )}
+        </section>
+        </>
       ) : null}
 
       {error ? <p className={style.error}>{error}</p> : null}

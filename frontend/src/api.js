@@ -121,6 +121,13 @@ export const googleService = {
   disconnect: () => api.post("/api/google/disconnect"),
 };
 
+// Config de facturación electrónica (ARCA) del perfil activo.
+// El workspace viaja automático en el header X-Workspace del interceptor.
+export const fiscalService = {
+  get: () => api.get("/api/fiscal-config"),
+  update: (data) => api.put("/api/fiscal-config", data),
+};
+
 export const authService = {
   login: (credentials) =>
     api.post("/api/auth/login", credentials),

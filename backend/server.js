@@ -10,6 +10,7 @@ import authRoutes from "./src/routes/authRoutes.js";
 import taskRoutes from "./src/routes/taskRoutes.js";
 import sharedExpenseRoutes from "./src/routes/sharedExpenseRoutes.js";
 import categoryRoutes from "./src/routes/categoryRoutes.js";
+import fiscalConfigRoutes from "./src/routes/fiscalConfigRoutes.js";
 
 dotenv.config();
 
@@ -143,6 +144,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/task", taskRoutes);
 app.use("/api/shared-groups", sharedExpenseRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/fiscal-config", fiscalConfigRoutes);
 
 // Rutas de Google montadas de forma perezosa: si el módulo (o sus paquetes)
 // no carga en el entorno serverless, el resto de la API sigue funcionando.

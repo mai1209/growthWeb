@@ -7,13 +7,14 @@ import {
   StyleSheet,
   ScrollView,
   Modal,
+  Switch,
   ActivityIndicator,
   Alert,
   Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { authService, googleService } from "../api";
+import { authService, googleService, fiscalService } from "../api";
 import { useTheme } from "../theme";
 import { useAuth } from "../auth/AuthContext";
 
@@ -28,6 +29,7 @@ export default function AjustesScreen({ navigation }) {
     { key: "perfil", label: "Perfil", desc: "Tu nombre y datos de contacto", icon: "person-outline" },
     { key: "password", label: "Cambiar contraseña", desc: "Actualizá tu clave de acceso", icon: "lock-closed-outline" },
     { key: "integraciones", label: "Integraciones", desc: "Google Calendar", icon: "link-outline" },
+    { key: "facturacion", label: "Facturación (ARCA)", desc: "Emití facturas de este perfil", icon: "receipt-outline" },
   ];
 
   const confirmLogout = () => {
@@ -177,6 +179,7 @@ export default function AjustesScreen({ navigation }) {
       <PerfilModal visible={section === "perfil"} onClose={() => setSection(null)} colors={colors} styles={styles} />
       <PasswordModal visible={section === "password"} onClose={() => setSection(null)} colors={colors} styles={styles} />
       <IntegracionesModal visible={section === "integraciones"} onClose={() => setSection(null)} colors={colors} styles={styles} />
+      <FiscalModal visible={section === "facturacion"} onClose={() => setSection(null)} colors={colors} styles={styles} />
     </View>
   );
 }
@@ -244,6 +247,178 @@ function PerfilModal({ visible, onClose, colors, styles }) {
           {msg ? <Text style={styles.msg}>{msg}</Text> : null}
           <TouchableOpacity style={[styles.primaryBtn, saving && { opacity: 0.6 }]} onPress={save} disabled={saving}>
             {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Guardar cambios</Text>}
+          </TouchableOpacity>
+        </>
+      )}
+    </SheetModal>
+  );
+}
+
+/* ---------- Facturación (ARCA) ---------- */
+function FiscalModal({ visible, onClose, colors, styles }) {
+  const [cfg, setCfg] = useState({
+    activo: false,
+    cuit: "",
+    razonSocial: "",
+    condicionIVA: "monotributo",
+    puntoVenta: 1,
+    modo: "manual",
+    arcaAutorizado: false,
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setMsg("");
+    try {
+      const res = await fiscalService.get();
+      if (res.data) setCfg(res.data);
+    } catch {
+      setMsg("No se pudo cargar la configuración.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (visible) load();
+  }, [visible, load]);
+
+  const set = (k, v) => setCfg((p) => ({ ...p, [k]: v }));
+
+  const save = async () => {
+    setSaving(true);
+    setMsg("");
+    try {
+      const res = await fiscalService.update(cfg);
+      if (res.data) setCfg(res.data);
+      setMsg("Configuración guardada.");
+    } catch (err) {
+      setMsg(err.response?.data?.error || "No se pudo guardar.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const CONDS = [
+    ["monotributo", "Monotributo"],
+    ["responsable_inscripto", "Resp. Inscripto"],
+    ["exento", "Exento"],
+  ];
+  const MODOS = [
+    ["manual", "Manual"],
+    ["automatico", "Automático"],
+  ];
+
+  return (
+    <SheetModal visible={visible} onClose={onClose} title="Facturación (ARCA)" colors={colors} styles={styles}>
+      {loading ? (
+        <ActivityIndicator color={colors.green} style={{ marginTop: 20 }} />
+      ) : (
+        <>
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>Activar facturación en este perfil</Text>
+            <Switch
+              value={cfg.activo}
+              onValueChange={(v) => set("activo", v)}
+              trackColor={{ true: colors.greenBright }}
+            />
+          </View>
+
+          {cfg.activo ? (
+            <>
+              <Text style={styles.label}>CUIT</Text>
+              <TextInput
+                style={styles.input}
+                value={cfg.cuit}
+                onChangeText={(t) => set("cuit", t.replace(/\D/g, ""))}
+                keyboardType="number-pad"
+                placeholder="11 dígitos"
+                placeholderTextColor={colors.muted}
+                maxLength={11}
+              />
+
+              <Text style={styles.label}>Razón social</Text>
+              <TextInput
+                style={styles.input}
+                value={cfg.razonSocial}
+                onChangeText={(t) => set("razonSocial", t)}
+                placeholder="Nombre o razón social"
+                placeholderTextColor={colors.muted}
+              />
+
+              <Text style={styles.label}>Condición frente al IVA</Text>
+              <View style={styles.chipRow}>
+                {CONDS.map(([v, l]) => (
+                  <TouchableOpacity
+                    key={v}
+                    style={[styles.chip, cfg.condicionIVA === v && styles.chipActive]}
+                    onPress={() => set("condicionIVA", v)}
+                  >
+                    <Text style={[styles.chipText, cfg.condicionIVA === v && styles.chipTextActive]}>
+                      {l}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles.label}>Punto de venta</Text>
+              <TextInput
+                style={styles.input}
+                value={String(cfg.puntoVenta)}
+                onChangeText={(t) => set("puntoVenta", Number(t.replace(/\D/g, "")) || 1)}
+                keyboardType="number-pad"
+                placeholder="1"
+                placeholderTextColor={colors.muted}
+              />
+
+              <Text style={styles.label}>Modo de emisión</Text>
+              <View style={styles.chipRow}>
+                {MODOS.map(([v, l]) => (
+                  <TouchableOpacity
+                    key={v}
+                    style={[styles.chip, cfg.modo === v && styles.chipActive]}
+                    onPress={() => set("modo", v)}
+                  >
+                    <Text style={[styles.chipText, cfg.modo === v && styles.chipTextActive]}>{l}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={styles.arcaBox}>
+                {cfg.arcaAutorizado ? (
+                  <Text style={styles.arcaOk}>✓ Autorizado en ARCA</Text>
+                ) : (
+                  <>
+                    <Text style={styles.arcaHint}>
+                      Falta autorizar a Growth en ARCA: un paso único con tu Clave Fiscal
+                      (Administrador de Relaciones → Facturación Electrónica). El asistente guiado
+                      llega en la próxima etapa.
+                    </Text>
+                    <View style={styles.arcaActions}>
+                      <TouchableOpacity
+                        style={styles.ghostBtn}
+                        onPress={() =>
+                          Linking.openURL("https://auth.afip.gob.ar/contribuyente_/login.xhtml")
+                        }
+                      >
+                        <Text style={styles.ghostText}>Abrir ARCA</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.ghostBtn} onPress={() => set("arcaAutorizado", true)}>
+                        <Text style={styles.ghostText}>Ya lo autoricé</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+              </View>
+            </>
+          ) : null}
+
+          {msg ? <Text style={styles.msg}>{msg}</Text> : null}
+          <TouchableOpacity style={[styles.primaryBtn, saving && { opacity: 0.6 }]} onPress={save} disabled={saving}>
+            {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Guardar facturación</Text>}
           </TouchableOpacity>
         </>
       )}
@@ -542,6 +717,49 @@ const makeStyles = (colors) =>
     },
     inputDisabled: { opacity: 0.7 },
     msg: { color: colors.greenDark, marginTop: 14, fontWeight: "600" },
+
+    // Facturación (ARCA)
+    switchRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+      marginTop: 6,
+    },
+    switchLabel: { flex: 1, color: colors.text, fontSize: 15, fontWeight: "700" },
+    chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    chip: {
+      paddingVertical: 9,
+      paddingHorizontal: 14,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+    },
+    chipActive: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
+    chipText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
+    chipTextActive: { color: colors.greenDark },
+    arcaBox: {
+      marginTop: 18,
+      gap: 10,
+      padding: 14,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.cardSoft,
+    },
+    arcaOk: { color: colors.greenDark, fontWeight: "800", fontSize: 15 },
+    arcaHint: { color: colors.muted, fontSize: 13.5, lineHeight: 20 },
+    arcaActions: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+    ghostBtn: {
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+    },
+    ghostText: { color: colors.text, fontWeight: "700", fontSize: 13.5 },
     primaryBtn: {
       marginTop: 22,
       backgroundColor: colors.greenBright,

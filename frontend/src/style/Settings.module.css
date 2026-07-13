@@ -751,3 +751,74 @@
     font-size: 0.92rem;
   }
 }
+
+/* ===== Facturación (ARCA) ===== */
+.field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-input);
+  color: var(--color-text);
+  outline: none;
+  cursor: pointer;
+}
+
+.field select:focus {
+  border-color: var(--accent-border);
+  box-shadow: var(--ring-accent);
+}
+
+.fiscalBody {
+  display: grid;
+  gap: 1rem;
+  margin-top: 0.6rem;
+}
+
+.fiscalToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--color-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fiscalToggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-verde);
+  cursor: pointer;
+}
+
+.arcaBox {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-input);
+}
+
+.arcaOk {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-verde);
+  font-weight: 700;
+}
+
+.arcaHint {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+.arcaActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
