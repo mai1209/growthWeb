@@ -244,8 +244,12 @@ export default function MetricasScreen() {
         >
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          {/* Totales */}
-          <View style={styles.summaryGrid}>
+          {/* Totales: fila deslizable (scroll lateral) */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.summaryRow}
+          >
             {summaryCards.map((c) => (
               <View key={c.label} style={styles.summaryCard}>
                 <View style={[styles.sumBar, { backgroundColor: c.accent }]} />
@@ -253,7 +257,7 @@ export default function MetricasScreen() {
                 <Text style={styles.sumValue}>{c.value}</Text>
               </View>
             ))}
-          </View>
+          </ScrollView>
 
           {/* Donuts */}
           {renderChart("Distribución por tipo", typeItems, "Sin datos en este período.")}
@@ -308,9 +312,9 @@ const makeStyles = (colors) =>
     periodChipText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
     periodChipTextActive: { color: colors.greenDark },
 
-    summaryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+    summaryRow: { flexDirection: "row", gap: 10, paddingRight: 4 },
     summaryCard: {
-      width: "48%",
+      minWidth: 150,
       backgroundColor: colors.card,
       borderWidth: 1,
       borderColor: colors.cardBorder,

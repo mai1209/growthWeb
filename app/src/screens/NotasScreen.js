@@ -2,13 +2,15 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
+  TextInput,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  Modal,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { taskService } from "../api";
 import { useTheme } from "../theme";
@@ -32,6 +34,9 @@ export default function NotasScreen() {
   const [activeNote, setActiveNote] = useState(null);
   const [folder, setFolder] = useState(ALL_FOLDERS);
   const [shoppingOpen, setShoppingOpen] = useState(false);
+  const [foldersOpen, setFoldersOpen] = useState(false);
+  const [folderSearch, setFolderSearch] = useState("");
+  const insets = useSafeAreaInsets();
 
   const fetchNotes = useCallback(async () => {
     try {
@@ -49,13 +54,24 @@ export default function NotasScreen() {
     fetchNotes();
   }, [fetchNotes]);
 
-  const folders = useMemo(() => {
-    const set = new Set();
+  // Carpetas ordenadas por cantidad de notas (las más usadas primero) + su conteo.
+  const { folders, folderCounts } = useMemo(() => {
+    const counts = new Map();
     notes.forEach((n) => {
-      if (n.carpeta && n.carpeta.trim()) set.add(n.carpeta.trim());
+      const f = (n.carpeta || "").trim();
+      if (f) counts.set(f, (counts.get(f) || 0) + 1);
     });
-    return Array.from(set).sort();
+    const list = Array.from(counts.keys()).sort(
+      (a, b) => (counts.get(b) || 0) - (counts.get(a) || 0) || a.localeCompare(b, "es")
+    );
+    return { folders: list, folderCounts: counts };
   }, [notes]);
+
+  const MAX_CHIPS = 5;
+  const foldersFiltered = useMemo(() => {
+    const q = folderSearch.trim().toLowerCase();
+    return q ? folders.filter((f) => f.toLowerCase().includes(q)) : folders;
+  }, [folders, folderSearch]);
 
   const visibleNotes = useMemo(
     () => (folder === ALL_FOLDERS ? notes : notes.filter((n) => (n.carpeta || "").trim() === folder)),
@@ -100,22 +116,37 @@ export default function NotasScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.folderRow}
           >
-            {[{ key: ALL_FOLDERS, label: "Todas" }, ...folders.map((f) => ({ key: f, label: f }))].map(
-              (f) => {
-                const active = folder === f.key;
-                return (
-                  <TouchableOpacity
-                    key={f.key}
-                    style={[styles.folderChip, active && styles.folderChipActive]}
-                    onPress={() => setFolder(f.key)}
-                  >
-                    <Text style={[styles.folderChipText, active && styles.folderChipTextActive]}>
-                      {f.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              }
-            )}
+            {[
+              { key: ALL_FOLDERS, label: "Todas" },
+              ...folders.slice(0, MAX_CHIPS).map((f) => ({ key: f, label: f })),
+            ].map((f) => {
+              const active = folder === f.key;
+              return (
+                <TouchableOpacity
+                  key={f.key}
+                  style={[styles.folderChip, active && styles.folderChipActive]}
+                  onPress={() => setFolder(f.key)}
+                >
+                  <Text style={[styles.folderChipText, active && styles.folderChipTextActive]}>
+                    {f.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+            {folders.length > MAX_CHIPS ? (
+              <TouchableOpacity
+                style={[styles.folderChip, styles.folderChipMore]}
+                onPress={() => {
+                  setFolderSearch("");
+                  setFoldersOpen(true);
+                }}
+              >
+                <Ionicons name="grid-outline" size={13} color={colors.greenDark} />
+                <Text style={[styles.folderChipText, styles.folderChipTextActive]}>
+                  Ver todas ({folders.length})
+                </Text>
+              </TouchableOpacity>
+            ) : null}
           </ScrollView>
         </View>
       )}
@@ -213,6 +244,77 @@ export default function NotasScreen() {
       />
 
       <ShoppingListsPanel visible={shoppingOpen} onClose={() => setShoppingOpen(false)} />
+
+      {/* Todas las carpetas: buscador + lista con conteo */}
+      <Modal
+        visible={foldersOpen}
+        animationType="slide"
+        onRequestClose={() => setFoldersOpen(false)}
+      >
+        <View style={[styles.foldersModal, { paddingTop: insets.top + 6, paddingBottom: insets.bottom }]}>
+          <View style={styles.foldersHeader}>
+            <Text style={styles.foldersTitle}>Carpetas</Text>
+            <TouchableOpacity onPress={() => setFoldersOpen(false)} hitSlop={8}>
+              <Ionicons name="close" size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.searchBox}>
+            <Ionicons name="search" size={16} color={colors.muted} />
+            <TextInput
+              style={styles.searchInput}
+              value={folderSearch}
+              onChangeText={setFolderSearch}
+              placeholder="Buscar carpeta..."
+              placeholderTextColor={colors.muted}
+              autoCorrect={false}
+            />
+            {folderSearch ? (
+              <TouchableOpacity onPress={() => setFolderSearch("")} hitSlop={8}>
+                <Ionicons name="close-circle" size={16} color={colors.muted} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+
+          <ScrollView
+            contentContainerStyle={{ padding: 16, paddingTop: 6 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            <TouchableOpacity
+              style={styles.folderItem}
+              onPress={() => {
+                setFolder(ALL_FOLDERS);
+                setFoldersOpen(false);
+              }}
+            >
+              <Ionicons name="albums-outline" size={18} color={colors.greenDark} />
+              <Text style={styles.folderItemName}>Todas</Text>
+              <Text style={styles.folderItemCount}>{notes.length}</Text>
+            </TouchableOpacity>
+
+            {foldersFiltered.map((f) => (
+              <TouchableOpacity
+                key={f}
+                style={styles.folderItem}
+                onPress={() => {
+                  setFolder(f);
+                  setFoldersOpen(false);
+                }}
+              >
+                <Ionicons name="folder-outline" size={18} color={colors.muted} />
+                <Text style={styles.folderItemName} numberOfLines={1}>
+                  {f}
+                </Text>
+                <Text style={styles.folderItemCount}>{folderCounts.get(f) || 0}</Text>
+              </TouchableOpacity>
+            ))}
+
+            {foldersFiltered.length === 0 ? (
+              <Text style={styles.foldersEmpty}>No hay carpetas que coincidan.</Text>
+            ) : null}
+          </ScrollView>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -273,6 +375,66 @@ const makeStyles = (colors) => StyleSheet.create({
   folderChipActive: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
   folderChipText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
   folderChipTextActive: { color: colors.greenDark },
+  folderChipMore: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: colors.greenSoft,
+    borderColor: colors.greenBorder,
+  },
+
+  // Modal "todas las carpetas"
+  foldersModal: { flex: 1, backgroundColor: colors.bg },
+  foldersHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
+  },
+  foldersTitle: { color: colors.text, fontSize: 18, fontWeight: "800" },
+  searchBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    margin: 16,
+    marginBottom: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.card,
+  },
+  searchInput: { flex: 1, color: colors.text, fontSize: 15, paddingVertical: 0 },
+  folderItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    marginBottom: 8,
+  },
+  folderItemName: { flex: 1, color: colors.text, fontSize: 15, fontWeight: "700" },
+  folderItemCount: {
+    minWidth: 26,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: colors.cardSoft,
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: "800",
+    textAlign: "center",
+    overflow: "hidden",
+  },
+  foldersEmpty: { color: colors.muted, textAlign: "center", marginTop: 24 },
 
   empty: { color: colors.muted, textAlign: "center", marginTop: 30, lineHeight: 21 },
 

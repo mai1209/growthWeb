@@ -59,14 +59,34 @@ export default function TareasScreen() {
 
   const toggleComplete = async (task) => {
     const id = task._id;
-    setBusyIds((p) => [...p, id]);
+    const iso = getIsoDate(selectedDate);
+    const wasDone = isTaskCompletedOnDate(task, selectedDate);
+
+    // Optimista: marcamos/desmarcamos al toque, sin esperar la red ni refetch.
+    const applyLocal = (done) =>
+      setAllTasks((prev) =>
+        prev.map((t) => {
+          if (t._id !== id) return t;
+          const set = new Set(t.completadasEn || []);
+          if (done) set.add(iso);
+          else set.delete(iso);
+          return { ...t, completadasEn: Array.from(set) };
+        })
+      );
+
+    applyLocal(!wasDone);
+
     try {
-      await taskService.updateStatus(id, { fecha: getIsoDate(selectedDate) });
-      await fetchTasks();
+      const res = await taskService.updateStatus(id, { fecha: iso });
+      // Reconciliamos con el server si nos manda el estado real.
+      if (res?.data && Array.isArray(res.data.completadasEn)) {
+        setAllTasks((prev) =>
+          prev.map((t) => (t._id === id ? { ...t, completadasEn: res.data.completadasEn } : t))
+        );
+      }
     } catch {
+      applyLocal(wasDone); // revertimos
       Alert.alert("Error", "No se pudo actualizar la tarea.");
-    } finally {
-      setBusyIds((p) => p.filter((x) => x !== id));
     }
   };
 

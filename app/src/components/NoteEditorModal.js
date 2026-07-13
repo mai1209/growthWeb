@@ -185,7 +185,7 @@ export default function NoteEditorModal({ visible, note, folders = [], onClose, 
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled
           >
-            {/* Carpeta */}
+            {/* Carpeta: elegí una existente o escribí una nueva */}
             <View style={styles.metaBar}>
               <View style={[styles.metaPill, { flex: 1 }]}>
                 <Ionicons name="folder-outline" size={13} color={colors.muted} />
@@ -193,11 +193,52 @@ export default function NoteEditorModal({ visible, note, folders = [], onClose, 
                   style={styles.metaInput}
                   value={carpeta}
                   onChangeText={setCarpeta}
-                  placeholder="Sin carpeta"
+                  placeholder="Sin carpeta · escribí una nueva"
                   placeholderTextColor={colors.muted}
                 />
+                {carpeta ? (
+                  <TouchableOpacity onPress={() => setCarpeta("")} hitSlop={8}>
+                    <Ionicons name="close-circle" size={16} color={colors.muted} />
+                  </TouchableOpacity>
+                ) : null}
               </View>
             </View>
+            {folders.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={styles.folderChips}
+              >
+                <TouchableOpacity
+                  style={[styles.folderChip, !carpeta.trim() && styles.folderChipActive]}
+                  onPress={() => setCarpeta("")}
+                >
+                  <Text style={[styles.folderChipText, !carpeta.trim() && styles.folderChipTextActive]}>
+                    Sin carpeta
+                  </Text>
+                </TouchableOpacity>
+                {folders.map((f) => {
+                  const active = carpeta.trim() === f;
+                  return (
+                    <TouchableOpacity
+                      key={f}
+                      style={[styles.folderChip, active && styles.folderChipActive]}
+                      onPress={() => setCarpeta(f)}
+                    >
+                      <Ionicons
+                        name="folder"
+                        size={12}
+                        color={active ? colors.greenDark : colors.muted}
+                      />
+                      <Text style={[styles.folderChipText, active && styles.folderChipTextActive]}>
+                        {f}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            ) : null}
 
             {/* Fondo: pocos colores + "+" que despliega la paleta completa */}
             <Text style={styles.fieldLabel}>Fondo</Text>
@@ -346,6 +387,21 @@ const makeStyles = (colors) =>
     },
     metaPillText: { color: colors.text, fontWeight: "700", fontSize: 13 },
     metaInput: { flex: 1, color: colors.text, fontWeight: "700", fontSize: 13, paddingVertical: 0 },
+    folderChips: { gap: 7, paddingVertical: 10, paddingRight: 8 },
+    folderChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      paddingVertical: 7,
+      paddingHorizontal: 12,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.cardSoft,
+    },
+    folderChipActive: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
+    folderChipText: { color: colors.muted, fontWeight: "700", fontSize: 12 },
+    folderChipTextActive: { color: colors.greenDark },
 
     fieldLabel: {
       color: colors.muted,
