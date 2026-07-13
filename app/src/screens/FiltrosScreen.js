@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { movimientoService } from "../api";
+import { movimientoService, categoriesService } from "../api";
 import MovementFormModal from "../components/MovementFormModal";
 import SettlePersonalDebtModal from "../components/SettlePersonalDebtModal";
 import { statAccents, useTheme } from "../theme";
@@ -50,6 +50,7 @@ export default function FiltrosScreen() {
   const styles = makeStyles(colors);
   const route = useRoute();
   const [movimientos, setMovimientos] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currency, setCurrency] = useState("ARS");
@@ -95,6 +96,23 @@ export default function FiltrosScreen() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Categorías (para mostrar su emoji en cada movimiento)
+  useEffect(() => {
+    categoriesService
+      .getAll()
+      .then((res) => setCategories(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {});
+  }, []);
+
+  // Mapa nombre-de-categoría (minúsculas) -> emoji
+  const catIcon = useMemo(() => {
+    const map = new Map();
+    categories.forEach((c) => {
+      if (c?.nombre && c?.icono) map.set(c.nombre.trim().toLowerCase(), c.icono);
+    });
+    return map;
+  }, [categories]);
 
   // Filtro entrante desde el Home (tarjetas de stats)
   useEffect(() => {
@@ -430,10 +448,15 @@ export default function FiltrosScreen() {
             const debtPaid = Number(item.deudaPagado) || 0;
             const debtRemaining = (Number(item.monto) || 0) - debtPaid;
             const isPartialDebt = isPendingDebt && debtPaid > 0;
+            const emoji = catIcon.get((item.categoria || "").trim().toLowerCase());
             return (
               <View style={styles.movCard}>
                 <View style={[styles.movIcon, { borderColor: meta.color + "55", backgroundColor: meta.color + "1f" }]}>
-                  <Ionicons name={movementIcon(item)} size={19} color={meta.color} />
+                  {emoji ? (
+                    <Text style={{ fontSize: 20 }}>{emoji}</Text>
+                  ) : (
+                    <Ionicons name={movementIcon(item)} size={19} color={meta.color} />
+                  )}
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.movTitle}>{item.categoria || "Sin categoría"}</Text>
