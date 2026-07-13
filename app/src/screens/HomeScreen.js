@@ -242,10 +242,6 @@ export default function HomeScreen() {
                   ) : (
                     <Text style={[styles.bcBalance, { color: card.text }]}>{money(historical.total)}</Text>
                   )}
-
-                  <View style={styles.bcFooter}>
-                    <Text style={[styles.bcCurrency, { color: card.muted }]}>{currencyMeta.codeLabel}</Text>
-                  </View>
                 </View>
 
                 {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -260,14 +256,7 @@ export default function HomeScreen() {
                         onPress={() => setModalMode(a.key)}
                         activeOpacity={0.7}
                       >
-                        <View
-                          style={[
-                            styles.quickIcon,
-                            { borderColor: a.color + "55", backgroundColor: a.color + "1f" },
-                          ]}
-                        >
-                          <Ionicons name={a.icon} size={23} color={a.color} />
-                        </View>
+                        <Ionicons name={a.icon} size={27} color={a.color} />
                         <Text style={styles.quickLabel} numberOfLines={1}>
                           {a.label}
                         </Text>
