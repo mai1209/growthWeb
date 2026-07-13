@@ -225,6 +225,18 @@ export default function FiltrosScreen() {
             <Ionicons name="funnel-outline" size={15} color={filtersOpen ? "#fff" : colors.greenDark} />
             <Text style={[styles.filterToggleText, filtersOpen && { color: "#fff" }]}>Filtrar</Text>
           </TouchableOpacity>
+          {search || type !== "all" ? (
+            <TouchableOpacity
+              style={styles.clearTop}
+              onPress={() => {
+                setSearch("");
+                setType("all");
+              }}
+            >
+              <Ionicons name="close" size={14} color={colors.red} />
+              <Text style={styles.clearTopText}>Limpiar</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       </View>
 
@@ -263,15 +275,6 @@ export default function FiltrosScreen() {
                 </Text>
               </TouchableOpacity>
             ))}
-            {(search || type !== "all") && (
-              <TouchableOpacity
-                style={styles.clearChip}
-                onPress={() => { setSearch(""); setType("all"); }}
-              >
-                <Ionicons name="close" size={13} color={colors.red} />
-                <Text style={styles.clearChipText}>Limpiar</Text>
-              </TouchableOpacity>
-            )}
           </ScrollView>
         </View>
       )}
@@ -508,7 +511,19 @@ const makeStyles = (colors) => StyleSheet.create({
   topBar: { paddingHorizontal: 16, paddingTop: 12, gap: 10 },
   monthNav: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   monthLabel: { color: colors.text, fontSize: 17, fontWeight: "800", textTransform: "capitalize" },
-  topActions: { flexDirection: "row", alignItems: "center", gap: 10 },
+  topActions: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
+  clearTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 7,
+    paddingHorizontal: 11,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.redSoft,
+    backgroundColor: colors.redSoft,
+  },
+  clearTopText: { color: colors.red, fontWeight: "800", fontSize: 12.5 },
   currencySwitch: {
     flexDirection: "row",
     gap: 4,
