@@ -133,10 +133,10 @@ export default function HomeScreen() {
   const moneyOf = (amount, mon) => (visible ? formatMoney(amount, mon || "ARS") : "••••");
 
   const quickActions = [
-    { key: "ingreso", label: "Nuevo ingreso", icon: "arrow-down-circle-outline", bg: "#35b53a" },
-    { key: "egreso", label: "Nuevo egreso", icon: "arrow-up-circle-outline", bg: "#e0654f" },
-    { key: "ingreso-fijo", label: "Ingreso fijo", icon: "repeat-outline", bg: "#2f9e3a" },
-    { key: "egreso-fijo", label: "Gasto fijo", icon: "repeat-outline", bg: "#d9774a" },
+    { key: "ingreso", label: "Ingreso", icon: "arrow-down-outline", color: "#2fa56f" },
+    { key: "egreso", label: "Egreso", icon: "arrow-up-outline", color: "#e0654f" },
+    { key: "ingreso-fijo", label: "Ing. fijo", icon: "repeat-outline", color: "#2f9e3a" },
+    { key: "egreso-fijo", label: "Gasto fijo", icon: "sync-outline", color: "#d9774a" },
   ];
 
   const stats = [
@@ -252,16 +252,25 @@ export default function HomeScreen() {
 
                 {/* Accesos rápidos */}
                 <Text style={styles.sectionLabel}>Cargar movimiento</Text>
-                <View style={styles.quickGrid}>
+                <View style={styles.quickRow}>
                   {quickActions.map((a) => (
                     <TouchableOpacity
                       key={a.key}
-                      style={[styles.quickBtn, { backgroundColor: a.bg }]}
+                      style={styles.quickItem}
                       onPress={() => setModalMode(a.key)}
-                      activeOpacity={0.85}
+                      activeOpacity={0.7}
                     >
-                      <Ionicons name={a.icon} size={16} color="#fff" />
-                      <Text style={styles.quickLabel}>{a.label}</Text>
+                      <View
+                        style={[
+                          styles.quickIcon,
+                          { borderColor: a.color + "55", backgroundColor: a.color + "1f" },
+                        ]}
+                      >
+                        <Ionicons name={a.icon} size={23} color={a.color} />
+                      </View>
+                      <Text style={styles.quickLabel} numberOfLines={1}>
+                        {a.label}
+                      </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -549,17 +558,17 @@ const makeStyles = (colors) => StyleSheet.create({
     letterSpacing: 1.5,
   },
 
-  quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  quickBtn: {
-    width: "48%",
-    flexDirection: "row",
+  quickRow: { flexDirection: "row", justifyContent: "space-around", alignItems: "flex-start" },
+  quickItem: { flex: 1, alignItems: "center", gap: 7, paddingVertical: 6 },
+  quickIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    borderWidth: 1.5,
     alignItems: "center",
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 12,
+    justifyContent: "center",
   },
-  quickLabel: { color: "#fff", fontWeight: "600", fontSize: 12.5, flexShrink: 1 },
+  quickLabel: { color: colors.text, fontWeight: "700", fontSize: 12.5 },
 
   statGrid: { gap: 10 },
   statCard: {
