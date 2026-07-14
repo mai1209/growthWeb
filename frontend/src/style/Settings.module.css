@@ -884,3 +884,29 @@
   justify-content: flex-end;
   gap: 0.6rem;
 }
+
+.comingSoon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.9rem;
+  padding: 1.4rem 0.5rem 1.8rem;
+}
+
+.comingSoonBadge {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  background: rgba(0, 237, 100, 0.14);
+  color: #5dc72d;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+.comingSoon p {
+  color: var(--color-muted);
+  max-width: 34ch;
+  line-height: 1.5;
+}

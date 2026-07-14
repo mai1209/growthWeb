@@ -283,7 +283,8 @@ function FiscalModal({ visible, onClose, colors, styles }) {
   }, []);
 
   useEffect(() => {
-    if (visible) load();
+    // Facturación (ARCA) en preparación: no cargamos config todavía.
+    // if (visible) load();
   }, [visible, load]);
 
   const set = (k, v) => setCfg((p) => ({ ...p, [k]: v }));
@@ -312,6 +313,23 @@ function FiscalModal({ visible, onClose, colors, styles }) {
     ["automatico", "Automático"],
   ];
 
+  // Facturación (ARCA) todavía en preparación: mostramos "Próximamente".
+  return (
+    <SheetModal visible={visible} onClose={onClose} title="Facturación (ARCA)" colors={colors} styles={styles}>
+      <View style={styles.comingSoon}>
+        <Text style={styles.comingSoonBadge}>Próximamente</Text>
+        <Text style={styles.comingSoonText}>
+          La facturación electrónica con ARCA está en camino. Muy pronto vas a poder emitir
+          tickets y facturas de tus ingresos desde acá.
+        </Text>
+        <TouchableOpacity style={styles.primaryBtn} onPress={onClose}>
+          <Text style={styles.primaryText}>Entendido</Text>
+        </TouchableOpacity>
+      </View>
+    </SheetModal>
+  );
+
+  // eslint-disable-next-line no-unreachable
   return (
     <SheetModal visible={visible} onClose={onClose} title="Facturación (ARCA)" colors={colors} styles={styles}>
       {loading ? (
@@ -768,6 +786,24 @@ const makeStyles = (colors) =>
       alignItems: "center",
     },
     primaryText: { color: "#fff", fontSize: 16, fontWeight: "800" },
+    comingSoon: { alignItems: "center", paddingVertical: 24, gap: 14 },
+    comingSoonBadge: {
+      paddingHorizontal: 16,
+      paddingVertical: 7,
+      borderRadius: 999,
+      backgroundColor: colors.greenSoft,
+      color: colors.greenDark,
+      fontWeight: "800",
+      fontSize: 14,
+      overflow: "hidden",
+    },
+    comingSoonText: {
+      color: colors.muted,
+      fontSize: 14,
+      lineHeight: 21,
+      textAlign: "center",
+      paddingHorizontal: 8,
+    },
     secondaryBtn: {
       marginTop: 10,
       borderRadius: 14,

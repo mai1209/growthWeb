@@ -912,6 +912,51 @@ function SettingsPage() {
       ) : null}
 
       {activeTab === "facturacion" ? (
+        <div
+          className={style.modalOverlay}
+          onClick={() => setSearchParams({ tab: "perfil" })}
+          role="presentation"
+        >
+          <div
+            className={style.modalCard}
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-label="Facturación (ARCA)"
+          >
+            <div className={style.modalHead}>
+              <h3>Facturación (ARCA)</h3>
+              <button
+                type="button"
+                className={style.modalClose}
+                onClick={() => setSearchParams({ tab: "perfil" })}
+                aria-label="Cerrar"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <div className={style.comingSoon}>
+              <span className={style.comingSoonBadge}>Próximamente</span>
+              <p>
+                La facturación electrónica con ARCA está en camino. Muy pronto vas a
+                poder emitir tickets y facturas de tus ingresos desde acá.
+              </p>
+            </div>
+
+            <div className={style.modalActions}>
+              <button
+                type="button"
+                className={style.saveButton}
+                onClick={() => setSearchParams({ tab: "perfil" })}
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {false ? (
         <section className={style.card}>
           <div className={style.googleBox}>
             <div className={style.googleInfo}>
