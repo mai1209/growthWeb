@@ -153,6 +153,14 @@ function SettingsPage() {
       ? [profile.businessProfile]
       : [];
 
+  // Perfil (workspace) activo, para resaltarlo con borde brillante.
+  const activeWorkspace = (() => {
+    const ws = String(localStorage.getItem("activeWorkspace") || "").trim();
+    return /^business(?::[a-f\d]{24})?$/i.test(ws) ? ws : "personal";
+  })();
+  const businessWorkspaceId = (business, index) =>
+    index === 0 || business._id === "legacy" ? "business" : `business:${business._id}`;
+
   useEffect(() => {
     let isMounted = true;
 
@@ -506,7 +514,11 @@ function SettingsPage() {
 
           {/* ===== Personal ===== */}
           <p className={style.kicker}>Personal</p>
-          <div className={`${style.accordion} ${openPersonal ? style.accordionOpen : ""}`}>
+          <div
+            className={`${style.accordion} ${openPersonal ? style.accordionOpen : ""} ${
+              activeWorkspace === "personal" ? style.accordionActive : ""
+            }`}
+          >
             <div className={style.accordionHead}>
               <button
                 type="button"
@@ -586,11 +598,15 @@ function SettingsPage() {
             <div className={style.businessList}>
               {businessProfiles.map((business, index) => {
                 const isOpen = openBusiness.has(index);
+                const isActiveProfile =
+                  activeWorkspace === businessWorkspaceId(business, index);
 
                 return (
                   <div
                     key={business._id || index}
-                    className={`${style.accordion} ${isOpen ? style.accordionOpen : ""}`}
+                    className={`${style.accordion} ${isOpen ? style.accordionOpen : ""} ${
+                      isActiveProfile ? style.accordionActive : ""
+                    }`}
                   >
                     <div className={style.accordionHead}>
                       <button

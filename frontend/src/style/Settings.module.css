@@ -822,3 +822,9 @@
   flex-wrap: wrap;
   gap: 0.6rem;
 }
+
+/* Perfil activo: borde brillante */
+.accordionActive {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 1px var(--accent), 0 0 20px rgba(0, 237, 100, 0.4);
+}
