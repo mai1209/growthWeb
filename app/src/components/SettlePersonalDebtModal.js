@@ -21,6 +21,7 @@ export default function SettlePersonalDebtModal({ visible, debt, onClose, onSave
   const styles = makeStyles(colors);
   const [payMode, setPayMode] = useState("full"); // full | partial
   const [amount, setAmount] = useState("");
+  const [medio, setMedio] = useState("efectivo"); // efectivo | transferencia
   const [detalle, setDetalle] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -34,6 +35,7 @@ export default function SettlePersonalDebtModal({ visible, debt, onClose, onSave
     if (visible) {
       setPayMode("full");
       setAmount("");
+      setMedio("efectivo");
       setDetalle(
         debt?.deudaAcreedor ? `Pago de deuda a ${debt.deudaAcreedor}` : "Pago de deuda"
       );
@@ -45,7 +47,7 @@ export default function SettlePersonalDebtModal({ visible, debt, onClose, onSave
   const handleSave = async () => {
     if (!debt) return;
     setError("");
-    const payload = { detalle: detalle.trim() };
+    const payload = { detalle: detalle.trim(), medio };
     if (payMode === "partial") {
       const amt = parseFloat(amount);
       if (!amount || Number.isNaN(amt) || amt <= 0) {
@@ -131,6 +133,24 @@ export default function SettlePersonalDebtModal({ visible, debt, onClose, onSave
                 autoFocus
               />
             )}
+
+            <Text style={styles.label}>Medio</Text>
+            <View style={styles.row}>
+              {[
+                { v: "efectivo", l: "Efectivo" },
+                { v: "transferencia", l: "Transferencia" },
+              ].map((m) => (
+                <TouchableOpacity
+                  key={m.v}
+                  style={[styles.toggle, medio === m.v && styles.toggleActive]}
+                  onPress={() => setMedio(m.v)}
+                >
+                  <Text style={[styles.toggleText, medio === m.v && styles.toggleTextActive]}>
+                    {m.l}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
             <Text style={styles.label}>Detalle</Text>
             <TextInput

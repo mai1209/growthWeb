@@ -246,7 +246,7 @@ export default function MovementFormModal({
       fecha: toYMD(fecha),
       detalle: detalle.trim(),
       moneda: moneda === "USD" ? "USD" : "ARS",
-      medio: isDebt ? undefined : medio,
+      medio,
       esRecurrente: mode.recurrente,
       frecuencia: mode.recurrente ? frecuencia : null,
       deudaAcreedor: isDebt ? deudaAcreedor.trim() : "",
@@ -392,28 +392,24 @@ export default function MovementFormModal({
               />
             )}
 
-            {/* Medio (no para deuda) */}
-            {!isDebt && (
-              <>
-                <Text style={styles.label}>Medio</Text>
-                <View style={styles.toggleRow}>
-                  {[
-                    { v: "efectivo", l: "Efectivo" },
-                    { v: "transferencia", l: "Transferencia" },
-                  ].map((m) => (
-                    <TouchableOpacity
-                      key={m.v}
-                      style={[styles.toggle, medio === m.v && styles.toggleActive]}
-                      onPress={() => setMedio(m.v)}
-                    >
-                      <Text style={[styles.toggleText, medio === m.v && styles.toggleTextActive]}>
-                        {m.l}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            )}
+            {/* Medio (también para deuda: efectivo o transferencia) */}
+            <Text style={styles.label}>Medio</Text>
+            <View style={styles.toggleRow}>
+              {[
+                { v: "efectivo", l: "Efectivo" },
+                { v: "transferencia", l: "Transferencia" },
+              ].map((m) => (
+                <TouchableOpacity
+                  key={m.v}
+                  style={[styles.toggle, medio === m.v && styles.toggleActive]}
+                  onPress={() => setMedio(m.v)}
+                >
+                  <Text style={[styles.toggleText, medio === m.v && styles.toggleTextActive]}>
+                    {m.l}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
             {/* Deuda: acreedor */}
             {isDebt && (
