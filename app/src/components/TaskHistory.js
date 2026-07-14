@@ -110,18 +110,32 @@ export default function TaskHistory({ tasks }) {
       {summary.total === 0 ? (
         <Text style={styles.empty}>No hay tareas en este período.</Text>
       ) : (
-        <View style={styles.chart}>
-          {buckets.map((b, i) => (
-            <View key={i} style={styles.bar}>
-              <View style={styles.barTrack}>
-                <View style={[styles.barFill, { height: `${Math.max(b.percent, 2)}%` }]} />
+        <>
+          <View style={styles.chart}>
+            {buckets.map((b, i) => (
+              <View key={i} style={styles.bar}>
+                <View style={styles.barTrack}>
+                  <View style={[styles.barFill, { height: `${Math.max(b.percent, 2)}%` }]} />
+                </View>
+                <Text style={styles.barLabel} numberOfLines={1}>
+                  {b.label}
+                </Text>
               </View>
-              <Text style={styles.barLabel} numberOfLines={1}>
-                {b.label}
-              </Text>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+
+          <Text style={styles.legend}>
+            Cada barra muestra el % de tareas completadas
+            {period === "year"
+              ? " en cada mes"
+              : period === "week"
+              ? " en cada día de la semana"
+              : period === "month"
+              ? " en cada día del mes"
+              : " del día"}
+            . Arriba ves el total: tareas, hechas y pendientes.
+          </Text>
+        </>
       )}
     </ScrollView>
   );
@@ -178,6 +192,7 @@ const makeStyles = (colors) => StyleSheet.create({
   statValue: { color: colors.text, fontSize: 18, fontWeight: "800" },
   statLabel: { color: colors.muted, fontSize: 10, marginTop: 2 },
   empty: { color: colors.muted, textAlign: "center", paddingVertical: 30 },
+  legend: { color: colors.muted, fontSize: 12.5, lineHeight: 18, marginTop: 2 },
   chart: {
     flexDirection: "row",
     alignItems: "flex-end",
