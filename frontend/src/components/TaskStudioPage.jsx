@@ -954,6 +954,38 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     quill.format(format, true);
   };
 
+  // Convierte a minúsculas / MAYÚSCULAS el texto seleccionado, conservando el
+  // formato (negrita, color, etc.) de cada tramo. Sirve para arreglar textos
+  // que se pegaron en mayúscula desde otra app.
+  const applyCaseToSelection = (mode) => {
+    const quill = quillRef.current;
+    if (!quill) return;
+
+    markDirty();
+    quill.focus();
+
+    const range = quill.getSelection() || selectionRef.current;
+    if (!range || range.length === 0) return;
+
+    const contents = quill.getContents(range.index, range.length);
+    const Delta = Quill.import("delta");
+    const rebuilt = new Delta().retain(range.index);
+
+    contents.ops.forEach((op) => {
+      if (typeof op.insert === "string") {
+        const next =
+          mode === "upper" ? op.insert.toUpperCase() : op.insert.toLowerCase();
+        rebuilt.delete(op.insert.length).insert(next, op.attributes || {});
+      } else if (op.insert !== undefined) {
+        rebuilt.retain(1);
+      }
+    });
+
+    quill.updateContents(rebuilt, "user");
+    quill.setSelection(range.index, range.length, "silent");
+    selectionRef.current = { index: range.index, length: range.length };
+  };
+
   const toggleBulletList = () => {
     if (!quillRef.current) return;
 
@@ -2192,6 +2224,26 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   }
                 >
                   <span className={style.toolbarText}>Aa</span>
+                </button>
+                <button
+                  type="button"
+                  className={style.toolbarButton}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyCaseToSelection("lower")}
+                  aria-label="Pasar a minúsculas"
+                  title="Pasar la selección a minúsculas"
+                >
+                  <span className={style.toolbarText}>aa</span>
+                </button>
+                <button
+                  type="button"
+                  className={style.toolbarButton}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyCaseToSelection("upper")}
+                  aria-label="Pasar a mayúsculas"
+                  title="Pasar la selección a MAYÚSCULAS"
+                >
+                  <span className={style.toolbarText}>AA</span>
                 </button>
                 <button
                   type="button"

@@ -49,6 +49,8 @@ const TOOLBAR_ACTIONS = [
   actions.alignCenter,
   actions.alignRight,
   actions.removeFormat,
+  "toLower",
+  "toUpper",
 ];
 
 export default function NoteEditorModal({
@@ -75,6 +77,24 @@ export default function NoteEditorModal({
   const [editorKey, setEditorKey] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [folderListOpen, setFolderListOpen] = useState(false);
+
+  // Convierte el texto seleccionado a minúsculas / MAYÚSCULAS dentro del editor.
+  // Arregla el texto que se pegó en mayúscula desde otra app.
+  const setSelectionCase = (mode) => {
+    const js = `
+      (function(){
+        try{
+          var sel = window.getSelection();
+          if(!sel || sel.rangeCount === 0) return;
+          var text = sel.toString();
+          if(!text) return;
+          var next = ${mode === "upper" ? "text.toUpperCase()" : "text.toLowerCase()"};
+          document.execCommand('insertText', false, next);
+        }catch(e){}
+      })();
+    `;
+    richText.current?.commandDOM(js);
+  };
 
   useEffect(() => {
     if (visible) {
@@ -389,12 +409,20 @@ export default function NoteEditorModal({
             selectedIconTint={colors.greenDark}
             disabledIconTint={colors.cardBorder}
             style={styles.toolbar}
+            toLower={() => setSelectionCase("lower")}
+            toUpper={() => setSelectionCase("upper")}
             iconMap={{
               [actions.heading1]: ({ tintColor }) => (
                 <Text style={{ color: tintColor, fontWeight: "800", fontSize: 16 }}>H1</Text>
               ),
               [actions.heading2]: ({ tintColor }) => (
                 <Text style={{ color: tintColor, fontWeight: "800", fontSize: 14 }}>H2</Text>
+              ),
+              toLower: ({ tintColor }) => (
+                <Text style={{ color: tintColor, fontWeight: "800", fontSize: 15 }}>aa</Text>
+              ),
+              toUpper: ({ tintColor }) => (
+                <Text style={{ color: tintColor, fontWeight: "800", fontSize: 15 }}>AA</Text>
               ),
             }}
           />
