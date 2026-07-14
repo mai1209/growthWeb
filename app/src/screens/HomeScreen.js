@@ -9,6 +9,7 @@ import {
   RefreshControl,
   Animated,
   Easing,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -103,6 +104,7 @@ export default function HomeScreen() {
   const [cardSize, setCardSize] = useState({ w: 0, h: 0 });
   const [modalMode, setModalMode] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false); // popup "cómo funciona"
 
   const isCurrency = tab === "ARS" || tab === "USD";
   const currency = isCurrency ? tab : "ARS";
@@ -351,7 +353,17 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                 </View>
 
-                <Text style={styles.balanceLabel}>{tab === "deuda" ? "Deudas" : "Ahorros"}</Text>
+                <View style={styles.balanceLabelRow}>
+                  <Text style={styles.balanceLabel}>{tab === "deuda" ? "Deudas" : "Ahorros"}</Text>
+                  <TouchableOpacity
+                    style={styles.infoBtn}
+                    onPress={() => setInfoOpen(true)}
+                    hitSlop={8}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="information-circle-outline" size={19} color={colors.muted} />
+                  </TouchableOpacity>
+                </View>
                 {tab === "ahorro" ? (
                   <Text style={styles.potText}>
                     Disponible:{" "}
@@ -483,6 +495,86 @@ export default function HomeScreen() {
         currency={currency}
         onClose={() => setShowHistory(false)}
       />
+
+      <Modal
+        visible={infoOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setInfoOpen(false)}
+      >
+        <TouchableOpacity
+          style={styles.infoOverlay}
+          activeOpacity={1}
+          onPress={() => setInfoOpen(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.infoCard}>
+            <View style={styles.infoHead}>
+              <Text style={styles.infoTitle}>
+                {tab === "deuda" ? "Cómo funcionan las deudas" : "Cómo funcionan los ahorros"}
+              </Text>
+              <TouchableOpacity onPress={() => setInfoOpen(false)} hitSlop={8}>
+                <Ionicons name="close" size={22} color={colors.muted} />
+              </TouchableOpacity>
+            </View>
+
+            {tab === "deuda" ? (
+              <View style={styles.infoBody}>
+                <Text style={styles.infoText}>
+                  Las deudas son plata que te deben o que tenés que pagar, y se llevan aparte del
+                  saldo.
+                </Text>
+                <Text style={styles.infoText}>
+                  <Text style={styles.infoStrong}>Cargar deuda:</Text> anotás lo pendiente. Queda en
+                  “Deuda pendiente” y todavía no mueve tu saldo.
+                </Text>
+                <Text style={styles.infoText}>
+                  <Text style={styles.infoStrong}>Cuando se cobra/paga:</Text> registrás el pago
+                  (total o parcial) y recién ahí impacta como ingreso o egreso en tu saldo.
+                </Text>
+                <Text style={styles.infoText}>
+                  <Text style={styles.infoStrong}>Pago parcial:</Text> podés ir descontando de a
+                  poco; la deuda muestra cuánto queda.
+                </Text>
+                <Text style={styles.infoTip}>
+                  Idea: usá deudas para lo que está “en el aire” y no ensucia tu saldo real hasta
+                  que se concreta.
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.infoBody}>
+                <Text style={styles.infoText}>
+                  El ahorro es una “bolsita” aparte que sale de tu saldo. Así funciona el flujo
+                  real:
+                </Text>
+                <Text style={styles.infoText}>
+                  <Text style={styles.infoStrong}>1. Cargás saldo:</Text> primero registrás tus
+                  ingresos (tu plata disponible del mes).
+                </Text>
+                <Text style={styles.infoText}>
+                  <Text style={styles.infoStrong}>2. Nuevo ahorro:</Text> al guardarlo, ese monto se
+                  descuenta de tu saldo y se guarda en la bolsita de Ahorros.
+                </Text>
+                <Text style={styles.infoText}>
+                  <Text style={styles.infoStrong}>3. Usar ahorro:</Text> cuando gastás desde el
+                  ahorro, se descuenta solo de la bolsita de Ahorros, no de tu saldo del mes.
+                </Text>
+                <Text style={styles.infoText}>
+                  <Text style={styles.infoStrong}>4. Tope:</Text> no podés usar más ahorro del que
+                  tenés disponible; si querés seguir, primero cargás más ahorro.
+                </Text>
+                <Text style={styles.infoTip}>
+                  En resumen: ahorrar mueve plata del saldo → a la bolsita. Usar ahorro gasta de la
+                  bolsita, sin tocar el saldo del mes.
+                </Text>
+              </View>
+            )}
+
+            <TouchableOpacity style={styles.infoOk} onPress={() => setInfoOpen(false)}>
+              <Text style={styles.infoOkText}>Entendido</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -551,14 +643,63 @@ const makeStyles = (colors) => StyleSheet.create({
     textTransform: "uppercase",
   },
   balanceTitle: { color: colors.text, fontSize: 20, fontWeight: "800", marginTop: 4 },
+  balanceLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 16,
+  },
   balanceLabel: {
     color: colors.muted,
     fontSize: 12,
     fontWeight: "800",
     letterSpacing: 1,
     textTransform: "uppercase",
-    marginTop: 16,
   },
+  infoBtn: { padding: 1 },
+  infoOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    justifyContent: "center",
+    padding: 22,
+  },
+  infoCard: {
+    backgroundColor: colors.bg,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    padding: 18,
+  },
+  infoHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    marginBottom: 12,
+  },
+  infoTitle: { color: colors.text, fontSize: 17, fontWeight: "800", flex: 1 },
+  infoBody: { gap: 10 },
+  infoText: { color: colors.muted, fontSize: 14, lineHeight: 21 },
+  infoStrong: { color: colors.text, fontWeight: "800" },
+  infoTip: {
+    color: colors.text,
+    fontSize: 13.5,
+    lineHeight: 20,
+    backgroundColor: colors.greenSoft,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 2,
+    overflow: "hidden",
+  },
+  infoOk: {
+    marginTop: 18,
+    alignSelf: "flex-end",
+    backgroundColor: colors.greenBright,
+    borderRadius: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 20,
+  },
+  infoOkText: { color: "#0e1a0e", fontWeight: "800", fontSize: 14 },
   balanceValue: { color: colors.text, fontSize: 34, fontWeight: "900", marginTop: 4 },
   error: { color: colors.red, marginTop: 4 },
 
