@@ -17,6 +17,7 @@ import {
   FiSave,
   FiTrash2,
   FiUser,
+  FiX,
 } from "react-icons/fi";
 import { authService, googleService, fiscalService } from "../api";
 import style from "../style/Settings.module.css";
@@ -108,6 +109,15 @@ function SettingsPage() {
   });
   const [fiscalLoading, setFiscalLoading] = useState(true);
   const [fiscalSaving, setFiscalSaving] = useState(false);
+  const [showNewProfile, setShowNewProfile] = useState(false);
+  const [savingNewProfile, setSavingNewProfile] = useState(false);
+  const [newProfile, setNewProfile] = useState({
+    name: "",
+    industry: "",
+    phone: "",
+    logoUrl: "",
+    address: "",
+  });
 
   // Carga la config de facturación del perfil activo
   useEffect(() => {
@@ -333,26 +343,39 @@ function SettingsPage() {
     }));
   };
 
-  const handleAddBusiness = () => {
-    const newIndex = businessProfiles.length;
-    setProfile((prev) => ({
-      ...prev,
-      businessProfiles: [
-        ...(prev.businessProfiles?.length
-          ? prev.businessProfiles
-          : prev.businessProfile?.name
-            ? [prev.businessProfile]
-            : []),
-        {
-          name: "",
-          industry: "",
-          logoUrl: "",
-          phone: "",
-          address: "",
-        },
-      ],
-    }));
-    setOpenBusiness((prev) => new Set(prev).add(newIndex));
+
+  const handleNewProfileChange = (field, value) =>
+    setNewProfile((prev) => ({ ...prev, [field]: value }));
+
+  const handleCreateProfile = async () => {
+    const name = newProfile.name.trim();
+    if (!name) {
+      setError("Poné un nombre al perfil.");
+      return;
+    }
+    setSavingNewProfile(true);
+    setError("");
+    setMessage("");
+    try {
+      const nextBusinesses = [...businessProfiles, { ...newProfile, name }];
+      const res = await authService.updateProfile({
+        fullName: profile.fullName || "",
+        phone: profile.phone || "",
+        profilePhotoUrl: profile.profilePhotoUrl || "",
+        businessProfiles: nextBusinesses,
+      });
+      setProfile((prev) => ({
+        ...prev,
+        businessProfiles: res.data?.businessProfiles || nextBusinesses,
+      }));
+      setNewProfile({ name: "", industry: "", phone: "", logoUrl: "", address: "" });
+      setShowNewProfile(false);
+      setMessage("Perfil creado.");
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo crear el perfil.");
+    } finally {
+      setSavingNewProfile(false);
+    }
   };
 
   const toggleBusiness = (index) => {
@@ -504,7 +527,10 @@ function SettingsPage() {
             <button
               type="button"
               className={style.secondaryButton}
-              onClick={handleAddBusiness}
+              onClick={() => {
+                setNewProfile({ name: "", industry: "", phone: "", logoUrl: "", address: "" });
+                setShowNewProfile(true);
+              }}
               disabled={profileLoading}
             >
               <FiPlus />
@@ -1026,6 +1052,101 @@ function SettingsPage() {
 
       {error ? <p className={style.error}>{error}</p> : null}
       {message ? <p className={style.success}>{message}</p> : null}
+
+      {showNewProfile ? (
+        <div
+          className={style.modalOverlay}
+          onClick={() => setShowNewProfile(false)}
+          role="presentation"
+        >
+          <div
+            className={style.modalCard}
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-label="Nuevo perfil"
+          >
+            <div className={style.modalHead}>
+              <h3>Nuevo perfil</h3>
+              <button
+                type="button"
+                className={style.modalClose}
+                onClick={() => setShowNewProfile(false)}
+                aria-label="Cerrar"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <div className={style.formGrid}>
+              <label className={style.field}>
+                <span>Nombre del negocio</span>
+                <input
+                  type="text"
+                  value={newProfile.name}
+                  onChange={(event) => handleNewProfileChange("name", event.target.value)}
+                  placeholder="Ej: Growth Studio"
+                  autoFocus
+                />
+              </label>
+              <label className={style.field}>
+                <span>Rubro</span>
+                <input
+                  type="text"
+                  value={newProfile.industry}
+                  onChange={(event) => handleNewProfileChange("industry", event.target.value)}
+                  placeholder="Ej: servicios, comercio"
+                />
+              </label>
+              <label className={style.field}>
+                <span>Teléfono del negocio</span>
+                <input
+                  type="tel"
+                  value={newProfile.phone}
+                  onChange={(event) => handleNewProfileChange("phone", event.target.value)}
+                  placeholder="+54 9 ..."
+                />
+              </label>
+              <label className={style.field}>
+                <span>Logo URL</span>
+                <input
+                  type="url"
+                  value={newProfile.logoUrl}
+                  onChange={(event) => handleNewProfileChange("logoUrl", event.target.value)}
+                  placeholder="https://..."
+                />
+              </label>
+              <label className={style.field}>
+                <span>Dirección</span>
+                <input
+                  type="text"
+                  value={newProfile.address}
+                  onChange={(event) => handleNewProfileChange("address", event.target.value)}
+                  placeholder="Local, oficina o ciudad"
+                />
+              </label>
+            </div>
+
+            <div className={style.modalActions}>
+              <button
+                type="button"
+                className={style.ghostButton}
+                onClick={() => setShowNewProfile(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={style.saveButton}
+                onClick={handleCreateProfile}
+                disabled={savingNewProfile || !newProfile.name.trim()}
+              >
+                <FiSave />
+                {savingNewProfile ? "Creando..." : "Crear perfil"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
