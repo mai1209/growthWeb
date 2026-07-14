@@ -87,7 +87,7 @@ function SettingsPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
-  const [openPersonal, setOpenPersonal] = useState(true);
+  const [openPersonal, setOpenPersonal] = useState(false);
   const [openBusiness, setOpenBusiness] = useState(() => new Set());
   const [google, setGoogle] = useState({
     connected: false,
@@ -487,7 +487,25 @@ function SettingsPage() {
 
       {activeTab === "perfil" ? (
         <form className={style.card} onSubmit={handleProfileSubmit}>
-          {/* ===== Perfil personal ===== */}
+          {/* ===== Título + crear perfil ===== */}
+          <div className={style.businessHeader}>
+            <div>
+              <p className={style.kicker}>Ajustes</p>
+              <h2>Perfiles</h2>
+            </div>
+            <button
+              type="button"
+              className={style.secondaryButton}
+              onClick={handleAddBusiness}
+              disabled={profileLoading}
+            >
+              <FiPlus />
+              Crear perfil
+            </button>
+          </div>
+
+          {/* ===== Personal ===== */}
+          <p className={style.kicker}>Personal</p>
           <div className={`${style.accordion} ${openPersonal ? style.accordionOpen : ""}`}>
             <div className={style.accordionHead}>
               <button
@@ -562,22 +580,7 @@ function SettingsPage() {
           </div>
 
           {/* ===== Negocios ===== */}
-          <div className={style.businessHeader}>
-            <div>
-              <p className={style.kicker}>Negocios</p>
-              <h2>Perfiles de negocio</h2>
-              <p>Agregá los negocios que quieras separar del espacio personal.</p>
-            </div>
-            <button
-              type="button"
-              className={style.secondaryButton}
-              onClick={handleAddBusiness}
-              disabled={profileLoading}
-            >
-              <FiPlus />
-              Agregar negocio
-            </button>
-          </div>
+          <p className={style.kicker} style={{ marginTop: "1.4rem" }}>Negocios</p>
 
           {businessProfiles.length ? (
             <div className={style.businessList}>
