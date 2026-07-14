@@ -105,6 +105,7 @@ export default function HomeScreen() {
   const [modalMode, setModalMode] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false); // popup "cómo funciona"
+  const [saldoInfoOpen, setSaldoInfoOpen] = useState(false); // popup info del saldo total
   const [typeCurrency, setTypeCurrency] = useState("ARS"); // ARS/USD dentro de Deuda/Ahorro
 
   const isCurrency = tab === "ARS" || tab === "USD";
@@ -265,7 +266,12 @@ export default function HomeScreen() {
                   ) : null}
 
                   <View style={styles.bcTop}>
-                    <Text style={[styles.bcKicker, { color: card.muted }]}>Saldo total</Text>
+                    <View style={styles.bcKickerRow}>
+                      <Text style={[styles.bcKicker, { color: card.muted }]}>Saldo total</Text>
+                      <TouchableOpacity onPress={() => setSaldoInfoOpen(true)} hitSlop={8}>
+                        <Ionicons name="information-circle-outline" size={17} color={card.muted} />
+                      </TouchableOpacity>
+                    </View>
                     <View style={styles.bcIcons}>
                       <TouchableOpacity
                         style={[styles.bcIconBtn, { borderColor: card.iconBorder, backgroundColor: card.iconBg }]}
@@ -591,6 +597,51 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
+
+      <Modal
+        visible={saldoInfoOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSaldoInfoOpen(false)}
+      >
+        <TouchableOpacity
+          style={styles.infoOverlay}
+          activeOpacity={1}
+          onPress={() => setSaldoInfoOpen(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.infoCard}>
+            <View style={styles.infoHead}>
+              <Text style={styles.infoTitle}>Saldo total</Text>
+              <TouchableOpacity onPress={() => setSaldoInfoOpen(false)} hitSlop={8}>
+                <Ionicons name="close" size={22} color={colors.muted} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.infoBody}>
+              <Text style={styles.infoText}>
+                El saldo total es la <Text style={styles.infoStrong}>diferencia entre tus
+                ingresos y tus egresos</Text>.
+              </Text>
+              <Text style={styles.infoText}>
+                Incluye todo junto: lo que movés en{" "}
+                <Text style={styles.infoStrong}>efectivo</Text> y en{" "}
+                <Text style={styles.infoStrong}>transferencia</Text>.
+              </Text>
+              <View style={styles.saldoTip}>
+                <Ionicons name="funnel-outline" size={16} color={colors.greenDark} />
+                <Text style={styles.saldoTipText}>
+                  ¿Querés ver cuánto es en efectivo y cuánto en transferencia por separado?
+                  Buscalo en Filtros, donde cada movimiento muestra su medio.
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity style={styles.infoOk} onPress={() => setSaldoInfoOpen(false)}>
+              <Text style={styles.infoOkText}>Entendido</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -730,6 +781,16 @@ const makeStyles = (colors) => StyleSheet.create({
     marginTop: 2,
     overflow: "hidden",
   },
+  saldoTip: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: colors.greenSoft,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 2,
+  },
+  saldoTipText: { flex: 1, color: colors.text, fontSize: 13.5, lineHeight: 20 },
   infoOk: {
     marginTop: 18,
     alignSelf: "flex-end",
@@ -752,6 +813,7 @@ const makeStyles = (colors) => StyleSheet.create({
     backgroundColor: "#0c333c", // respaldo hasta que el SVG mida la tarjeta
   },
   bcTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  bcKickerRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   bcKicker: {
     color: "rgba(236, 246, 243, 0.65)",
     fontSize: 12,
