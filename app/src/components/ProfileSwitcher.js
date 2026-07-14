@@ -38,7 +38,7 @@ export default function ProfileSwitcher() {
   return (
     <>
       <TouchableOpacity onPress={() => setOpen(true)} hitSlop={10}>
-        <Ionicons name="people-outline" size={23} color={colors.muted} />
+        <Ionicons name="person-outline" size={23} color={colors.muted} />
       </TouchableOpacity>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
