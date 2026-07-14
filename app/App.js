@@ -44,10 +44,10 @@ function TopBar() {
             color={colors.muted}
           />
         </TouchableOpacity>
-        <ProfileSwitcher />
         <TouchableOpacity onPress={() => navigation.navigate("Ajustes")} hitSlop={10}>
           <Ionicons name="settings-outline" size={23} color={colors.muted} />
         </TouchableOpacity>
+        <ProfileSwitcher />
       </View>
     </View>
   );
