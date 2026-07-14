@@ -599,7 +599,7 @@ const makeStyles = (colors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   content: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 28 },
 
-  fixedHeader: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10, backgroundColor: colors.bg },
+  fixedHeader: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 2, backgroundColor: colors.bg },
   cardStack: { position: "relative" },
 
   // Selector segmentado tipo píldora (mismo lenguaje que Filtros/Métricas)
@@ -633,7 +633,7 @@ const makeStyles = (colors) => StyleSheet.create({
   },
 
   // Contenido flotando, sin marco
-  cardBody: { position: "relative", paddingTop: 10, paddingBottom: 8 },
+  cardBody: { position: "relative", paddingTop: 2, paddingBottom: 8 },
   cardActions: {
     position: "absolute",
     top: 10,
@@ -664,7 +664,7 @@ const makeStyles = (colors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 16,
+    marginTop: 6,
   },
   typeHeaderRight: { flexDirection: "row", alignItems: "center", gap: 10 },
   balanceLabelRow: {
