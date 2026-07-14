@@ -880,19 +880,20 @@
 }
 
 .emptyState {
-  min-height: 220px;
-  padding: 2rem 1.25rem;
+  padding: 1.4rem 1.25rem;
   display: grid;
   place-items: center;
   text-align: center;
 }
 
 .emptyState h3 {
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.25rem;
+  font-size: 1rem;
 }
 
 .emptyState p {
   color: var(--color-muted);
+  font-size: 0.85rem;
 }
 
 :global(body[data-theme="light"]) .input,

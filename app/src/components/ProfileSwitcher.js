@@ -16,7 +16,7 @@ import { useWorkspace } from "../workspace/WorkspaceContext";
 export default function ProfileSwitcher() {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
-  const { workspace, profiles, activeProfile, switchWorkspace, addProfile } = useWorkspace();
+  const { workspace, profiles, switchWorkspace, addProfile } = useWorkspace();
   const [open, setOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [adding, setAdding] = useState(false);
@@ -37,12 +37,8 @@ export default function ProfileSwitcher() {
 
   return (
     <>
-      <TouchableOpacity style={styles.pill} onPress={() => setOpen(true)} hitSlop={6}>
-        <Ionicons name="people-circle-outline" size={16} color={colors.greenDark} />
-        <Text style={styles.pillText} numberOfLines={1}>
-          {activeProfile?.name || "Personal"}
-        </Text>
-        <Ionicons name="chevron-down" size={13} color={colors.muted} />
+      <TouchableOpacity onPress={() => setOpen(true)} hitSlop={10}>
+        <Ionicons name="people-outline" size={23} color={colors.muted} />
       </TouchableOpacity>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>

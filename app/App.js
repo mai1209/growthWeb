@@ -37,7 +37,6 @@ function TopBar() {
     <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
       <Text style={styles.brand}>GROWTH</Text>
       <View style={styles.topActions}>
-        <ProfileSwitcher />
         <TouchableOpacity onPress={toggleTheme} hitSlop={10}>
           <Ionicons
             name={isDark ? "sunny-outline" : "moon-outline"}
@@ -45,6 +44,7 @@ function TopBar() {
             color={colors.muted}
           />
         </TouchableOpacity>
+        <ProfileSwitcher />
         <TouchableOpacity onPress={() => navigation.navigate("Ajustes")} hitSlop={10}>
           <Ionicons name="settings-outline" size={23} color={colors.muted} />
         </TouchableOpacity>
