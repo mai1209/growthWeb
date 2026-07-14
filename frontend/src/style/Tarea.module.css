@@ -1844,6 +1844,18 @@ gap: 1rem;}
   overflow-x: auto;
 }
 
+.historyLegend {
+  margin: 0.7rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.historyLegend strong {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
 .historyBar {
   flex: 1 0 18px;
   display: flex;

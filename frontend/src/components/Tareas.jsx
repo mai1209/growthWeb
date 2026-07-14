@@ -845,23 +845,37 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
         {historySummary.total === 0 ? (
           <p className={style.emptyMessage}>No hay tareas en este período.</p>
         ) : (
-          <div className={style.historyChart}>
-            {buckets.map((b, index) => (
-              <div
-                key={index}
-                className={style.historyBar}
-                title={`${b.label}: ${b.done}/${b.total} (${b.percent}%)`}
-              >
-                <div className={style.historyBarTrack}>
-                  <div
-                    className={style.historyBarFill}
-                    style={{ height: `${b.percent}%` }}
-                  />
+          <>
+            <div className={style.historyChart}>
+              {buckets.map((b, index) => (
+                <div
+                  key={index}
+                  className={style.historyBar}
+                  title={`${b.label}: ${b.done}/${b.total} (${b.percent}%)`}
+                >
+                  <div className={style.historyBarTrack}>
+                    <div
+                      className={style.historyBarFill}
+                      style={{ height: `${b.percent}%` }}
+                    />
+                  </div>
+                  <span className={style.historyBarLabel}>{b.label}</span>
                 </div>
-                <span className={style.historyBarLabel}>{b.label}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            <p className={style.historyLegend}>
+              Cada barra muestra el <strong>% de tareas completadas</strong>
+              {historyPeriod === "year"
+                ? " en cada mes"
+                : historyPeriod === "week"
+                ? " en cada día de la semana"
+                : historyPeriod === "month"
+                ? " en cada día del mes"
+                : " del día"}
+              . Pasá el cursor por una barra para ver <strong>hechas / total</strong>.
+            </p>
+          </>
         )}
       </div>
     );
