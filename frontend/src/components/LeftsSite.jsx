@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiEye, FiEyeOff } from "react-icons/fi";
+import { FiEye, FiEyeOff, FiInfo, FiX } from "react-icons/fi";
 import style from "../style/LeftSite.module.css";
 import {
   filterMovimientosByCurrency,
@@ -31,6 +31,7 @@ function LeftSite({
   const navigate = useNavigate();
   const [areTotalsVisible, setAreTotalsVisible] = useState(true);
   const [viewTab, setViewTab] = useState("money"); // money | deuda | ahorro
+  const [infoOpen, setInfoOpen] = useState(false); // popup "cómo funciona"
 
   const activeTabKey = viewTab === "money" ? currentCurrency : viewTab;
   const handleTabClick = (key) => {
@@ -156,7 +157,18 @@ function LeftSite({
           <div className={style.typePanel}>
             <div className={style.typeHead}>
               <div>
-                <h2 className={style.typeTitle}>{viewTab === "deuda" ? "Deudas" : "Ahorros"}</h2>
+                <h2 className={style.typeTitle}>
+                  {viewTab === "deuda" ? "Deudas" : "Ahorros"}
+                  <button
+                    type="button"
+                    className={style.infoButton}
+                    onClick={() => setInfoOpen(true)}
+                    aria-label="Cómo funciona"
+                    title="Cómo funciona"
+                  >
+                    <FiInfo />
+                  </button>
+                </h2>
                 {viewTab === "ahorro" ? (
                   <p className={style.typePot}>
                     Disponible:{" "}
@@ -334,6 +346,95 @@ function LeftSite({
           <img src="/publicidad.jpg" alt="publicidad" />
         </section>
       </div>
+
+      {infoOpen ? (
+        <div
+          className={style.infoOverlay}
+          onClick={() => setInfoOpen(false)}
+          role="presentation"
+        >
+          <div
+            className={style.infoModal}
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-label={viewTab === "deuda" ? "Cómo funcionan las deudas" : "Cómo funcionan los ahorros"}
+          >
+            <div className={style.infoHead}>
+              <h3>
+                {viewTab === "deuda" ? "Cómo funcionan las deudas" : "Cómo funcionan los ahorros"}
+              </h3>
+              <button
+                type="button"
+                className={style.infoClose}
+                onClick={() => setInfoOpen(false)}
+                aria-label="Cerrar"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            {viewTab === "deuda" ? (
+              <div className={style.infoBody}>
+                <p>Las deudas son plata que te deben o que tenés que pagar, y se llevan aparte del saldo.</p>
+                <ul>
+                  <li>
+                    <strong>Cargar deuda:</strong> anotás lo pendiente. Queda en “Deuda pendiente”
+                    y <em>no</em> mueve tu saldo todavía.
+                  </li>
+                  <li>
+                    <strong>Cuando se cobra/paga:</strong> registrás el pago (total o parcial) y
+                    recién ahí impacta como ingreso o egreso en tu saldo.
+                  </li>
+                  <li>
+                    <strong>Pago parcial:</strong> podés ir descontando de a poco; la deuda muestra
+                    cuánto queda.
+                  </li>
+                </ul>
+                <p className={style.infoTip}>
+                  Idea: usá deudas para lo que está “en el aire” y no ensucia tu saldo real hasta
+                  que se concreta.
+                </p>
+              </div>
+            ) : (
+              <div className={style.infoBody}>
+                <p>El ahorro es una “bolsita” aparte que sale de tu saldo. Así funciona el flujo real:</p>
+                <ul>
+                  <li>
+                    <strong>1. Cargás saldo:</strong> primero registrás tus ingresos (tu plata
+                    disponible del mes).
+                  </li>
+                  <li>
+                    <strong>2. Nuevo ahorro:</strong> al guardar un ahorro, ese monto se
+                    <strong> descuenta de tu saldo</strong> y se guarda en la bolsita de Ahorros.
+                  </li>
+                  <li>
+                    <strong>3. Usar ahorro:</strong> cuando gastás <em>desde el ahorro</em>, se
+                    descuenta <strong>solo de la bolsita de Ahorros</strong>, no de tu saldo del mes.
+                  </li>
+                  <li>
+                    <strong>4. Tope:</strong> no podés usar más ahorro del que tenés disponible;
+                    si querés seguir, primero cargás más ahorro.
+                  </li>
+                </ul>
+                <p className={style.infoTip}>
+                  En resumen: ahorrar mueve plata del saldo → a la bolsita. Usar ahorro gasta de la
+                  bolsita, sin tocar el saldo del mes.
+                </p>
+              </div>
+            )}
+
+            <div className={style.infoActions}>
+              <button
+                type="button"
+                className={style.infoOk}
+                onClick={() => setInfoOpen(false)}
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </aside>
   );
 }
