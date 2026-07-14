@@ -37,8 +37,9 @@ export default function ProfileSwitcher() {
 
   return (
     <>
-      <TouchableOpacity onPress={() => setOpen(true)} hitSlop={10}>
+      <TouchableOpacity style={styles.trigger} onPress={() => setOpen(true)} hitSlop={10}>
         <Ionicons name="person-outline" size={23} color={colors.muted} />
+        <Ionicons name="chevron-down" size={13} color={colors.muted} />
       </TouchableOpacity>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -99,6 +100,7 @@ export default function ProfileSwitcher() {
 
 const makeStyles = (colors) =>
   StyleSheet.create({
+    trigger: { flexDirection: "row", alignItems: "center", gap: 1 },
     pill: {
       flexDirection: "row",
       alignItems: "center",
