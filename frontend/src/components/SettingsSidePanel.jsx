@@ -1,4 +1,4 @@
-import { FiKey, FiLink, FiLock, FiUser } from "react-icons/fi";
+import { FiFileText, FiKey, FiLink, FiLock, FiUser } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 import style from "../style/SettingsSidePanel.module.css";
 
@@ -20,6 +20,12 @@ const OPTIONS = [
     label: "Integraciones",
     description: "Conectá Google Calendar.",
     icon: FiLink,
+  },
+  {
+    to: "/ajustes?tab=facturacion",
+    label: "Facturación (ARCA)",
+    description: "Facturá los ingresos de este perfil.",
+    icon: FiFileText,
   },
 ];
 
