@@ -105,6 +105,7 @@ export default function HomeScreen() {
   const [modalMode, setModalMode] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false); // popup "cómo funciona"
+  const [typeCurrency, setTypeCurrency] = useState("ARS"); // ARS/USD dentro de Deuda/Ahorro
 
   const isCurrency = tab === "ARS" || tab === "USD";
   const currency = isCurrency ? tab : "ARS";
@@ -144,8 +145,9 @@ export default function HomeScreen() {
     if (isCurrency) return [];
     return movimientos
       .filter((m) => (tab === "ahorro" ? m.tipo === "ahorro" || m.desdeAhorro : m.tipo === tab))
+      .filter((m) => (m.moneda === "USD" ? "USD" : "ARS") === typeCurrency)
       .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
-  }, [movimientos, tab, isCurrency]);
+  }, [movimientos, tab, isCurrency, typeCurrency]);
 
   // Ahorro disponible por moneda (ahorrado - usado)
   const savingsPot = useMemo(() => {
@@ -363,24 +365,37 @@ export default function HomeScreen() {
                   >
                     <Ionicons name="information-circle-outline" size={19} color={colors.muted} />
                   </TouchableOpacity>
+
+                  {/* Sub-switch ARS/USD para separar deuda/ahorro por moneda */}
+                  <View style={styles.curSwitch}>
+                    {["ARS", "USD"].map((c) => (
+                      <TouchableOpacity
+                        key={c}
+                        style={[styles.curSwitchBtn, typeCurrency === c && styles.curSwitchBtnActive]}
+                        onPress={() => setTypeCurrency(c)}
+                        activeOpacity={0.85}
+                      >
+                        <Text
+                          style={[
+                            styles.curSwitchText,
+                            typeCurrency === c && styles.curSwitchTextActive,
+                          ]}
+                        >
+                          {c}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
                 {tab === "ahorro" ? (
                   <Text style={styles.potText}>
                     Disponible:{" "}
-                    {visible
-                      ? [
-                          savingsPot.ARS !== 0 || savingsPot.USD === 0
-                            ? formatMoney(savingsPot.ARS, "ARS")
-                            : null,
-                          savingsPot.USD !== 0 ? formatMoney(savingsPot.USD, "USD") : null,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")
-                      : "••••"}
+                    {visible ? formatMoney(savingsPot[typeCurrency], typeCurrency) : "••••"}
                   </Text>
                 ) : (
                   <Text style={styles.balanceSub}>
-                    {typeMovs.length} {typeMovs.length === 1 ? "movimiento" : "movimientos"}
+                    {typeMovs.length} {typeMovs.length === 1 ? "movimiento" : "movimientos"} en{" "}
+                    {typeCurrency}
                   </Text>
                 )}
 
@@ -416,7 +431,7 @@ export default function HomeScreen() {
                   <Text style={styles.error}>{error}</Text>
                 ) : typeMovs.length === 0 ? (
                   <Text style={styles.emptyText}>
-                    No hay {tab === "deuda" ? "deudas" : "ahorros"} cargados todavía.
+                    No hay {tab === "deuda" ? "deudas" : "ahorros"} en {typeCurrency} todavía.
                   </Text>
                 ) : (
                   <View style={styles.statGrid}>
@@ -657,6 +672,23 @@ const makeStyles = (colors) => StyleSheet.create({
     textTransform: "uppercase",
   },
   infoBtn: { padding: 1 },
+  curSwitch: {
+    flexDirection: "row",
+    marginLeft: "auto",
+    backgroundColor: colors.card,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    padding: 2,
+  },
+  curSwitchBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  curSwitchBtnActive: { backgroundColor: colors.greenBright },
+  curSwitchText: { color: colors.muted, fontWeight: "800", fontSize: 12 },
+  curSwitchTextActive: { color: "#0e1a0e" },
   infoOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.55)",
