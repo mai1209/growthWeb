@@ -31,22 +31,6 @@ import {
   FiX,
 } from "react-icons/fi";
 
-const CalendarButton = forwardRef(({ value, onClick }, ref) => (
-  <button
-    ref={ref}
-    type="button"
-    onClick={onClick}
-    className={style.calendarTrigger}
-  >
-    <span className={style.calendarTriggerIcon}>
-      <FiCalendar />
-    </span>
-    <span className={style.calendarTriggerText}>{value || "Seleccionar fecha"}</span>
-    <FiChevronDown className={style.calendarTriggerChevron} />
-  </button>
-));
-
-CalendarButton.displayName = "CalendarButton";
 
 const FormDateButton = forwardRef(({ value, onClick }, ref) => (
   <button
@@ -881,10 +865,6 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
     );
   };
 
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
-  };
-
   return (
     <div className={style.container}>
       <div className={style.headerShell}>
@@ -902,13 +882,17 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
 
               {viewMode === "day" ? (
                 <div className={style.containerFecha}>
-                  <p>Tareas de</p>
-                  <DatePicker
-                    selected={selectedDate}
-                    onChange={handleDateChange}
-                    dateFormat="dd-MM-yyyy"
-                    customInput={<CalendarButton />}
-                  />
+                  <p className={style.dayTitle}>
+                    Tareas de{" "}
+                    {selectedDate.toLocaleDateString("es-AR", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                    })}
+                  </p>
+                  <p className={style.viewSubtitle}>
+                    Para ver las tareas de otro día, andá a Calendario.
+                  </p>
                 </div>
               ) : (
                 <p className={style.viewSubtitle}>

@@ -491,11 +491,12 @@
 }
 .containerFecha {
   width: fit-content;
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  margin: 1rem 0;
-gap: 1rem;}
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 0.5rem 0 0;
+  gap: 0.3rem;
+}
 
 .containerFecha p {
   margin: 0;
@@ -503,6 +504,19 @@ gap: 1rem;}
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dayTitle {
+  font-size: 2rem !important;
+  line-height: 1.1 !important;
+  color: var(--color-text) !important;
+  font-weight: 800 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+}
+
+.dayTitle::first-letter {
   text-transform: uppercase;
 }
 
