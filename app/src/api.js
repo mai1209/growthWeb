@@ -42,6 +42,7 @@ api.interceptors.response.use(
 // ===== Servicios (mismos endpoints que la web) =====
 export const authService = {
   login: (data) => api.post("/api/auth/login", data),
+  signup: (data) => api.post("/api/auth/signup", data),
   getProfile: () => api.get("/api/auth/profile"),
   updateProfile: (data) => api.put("/api/auth/profile", data),
   changePassword: (data) => api.post("/api/auth/change-password", data),
