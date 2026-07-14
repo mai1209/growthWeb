@@ -5,7 +5,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AuthProvider, useAuth } from "./src/auth/AuthContext";
 import { WorkspaceProvider, useWorkspace } from "./src/workspace/WorkspaceContext";
@@ -35,7 +35,14 @@ function TopBar() {
   const styles = makeStyles(colors);
   return (
     <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-      <Text style={styles.brand}>GROWTH</Text>
+      <View style={styles.brandRow}>
+        <Image
+          source={require("./assets/growth-logo.png")}
+          style={styles.brandLogo}
+          resizeMode="contain"
+        />
+        <Text style={styles.brand}>GROWTH</Text>
+      </View>
       <View style={styles.topActions}>
         <TouchableOpacity onPress={toggleTheme} hitSlop={10}>
           <Ionicons
@@ -193,5 +200,7 @@ const makeStyles = (colors) =>
       backgroundColor: colors.bg,
     },
     topActions: { flexDirection: "row", alignItems: "center", gap: 18 },
+    brandRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    brandLogo: { width: 26, height: 26 },
     brand: { color: colors.green, fontSize: 18, fontWeight: "900", letterSpacing: 1.5 },
   });
