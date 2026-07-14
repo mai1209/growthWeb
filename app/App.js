@@ -35,14 +35,11 @@ function TopBar() {
   const styles = makeStyles(colors);
   return (
     <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-      <View style={styles.brandRow}>
-        <Image
-          source={require("./assets/growth-logo.png")}
-          style={styles.brandLogo}
-          resizeMode="contain"
-        />
-        <Text style={styles.brand}>GROWTH</Text>
-      </View>
+      <Image
+        source={require("./assets/growth-logo.png")}
+        style={styles.brandLogo}
+        resizeMode="contain"
+      />
       <View style={styles.topActions}>
         <TouchableOpacity onPress={toggleTheme} hitSlop={10}>
           <Ionicons
@@ -200,7 +197,5 @@ const makeStyles = (colors) =>
       backgroundColor: colors.bg,
     },
     topActions: { flexDirection: "row", alignItems: "center", gap: 18 },
-    brandRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-    brandLogo: { width: 26, height: 26 },
-    brand: { color: colors.green, fontSize: 18, fontWeight: "900", letterSpacing: 1.5 },
+    brandLogo: { width: 40, height: 40 },
   });

@@ -100,14 +100,11 @@ export default function LoginScreen() {
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.brandRow}>
-            <Image
-              source={require("../../assets/growth-logo.png")}
-              style={styles.brandLogo}
-              resizeMode="contain"
-            />
-            <Text style={styles.brand}>GROWTH</Text>
-          </View>
+          <Image
+            source={require("../../assets/growth-logo.png")}
+            style={styles.brandLogo}
+            resizeMode="contain"
+          />
 
           <Text style={styles.title}>
             {isRegister ? "Registrate para comenzar" : "Iniciar sesión"}
@@ -238,9 +235,7 @@ const makeStyles = (colors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.bg },
     container: { flexGrow: 1, justifyContent: "center", padding: 24, gap: 4 },
-    brandRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
-    brandLogo: { width: 30, height: 30 },
-    brand: { color: colors.green, fontSize: 22, fontWeight: "900", letterSpacing: 2 },
+    brandLogo: { width: 64, height: 64, marginBottom: 8 },
     title: { color: colors.text, fontSize: 26, fontWeight: "800", marginBottom: 12 },
     label: {
       color: colors.muted,
