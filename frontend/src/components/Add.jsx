@@ -1,6 +1,6 @@
 import { forwardRef, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiArrowLeft, FiAlertTriangle } from "react-icons/fi";
+import { FiArrowLeft, FiAlertTriangle, FiX } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Add.module.css";
@@ -374,6 +374,20 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
               {config.title}
             </button>
           ))}
+        </div>
+      )}
+
+      {!isEditing && !inModal && (
+        <div className={style.closePanelRow}>
+          <button
+            type="button"
+            className={style.closePanelButton}
+            onClick={() => navigate("/")}
+            aria-label="Cerrar"
+            title="Cerrar sin guardar"
+          >
+            <FiX />
+          </button>
         </div>
       )}
 
