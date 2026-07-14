@@ -346,26 +346,6 @@ export default function HomeScreen() {
             ) : (
               <>
                 <View style={styles.cardActions}>
-                  <TouchableOpacity style={styles.iconBtn} onPress={() => setVisible((v) => !v)} hitSlop={6}>
-                    <Ionicons
-                      name={visible ? "eye-outline" : "eye-off-outline"}
-                      size={19}
-                      color={colors.text}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.balanceLabelRow}>
-                  <Text style={styles.balanceLabel}>{tab === "deuda" ? "Deudas" : "Ahorros"}</Text>
-                  <TouchableOpacity
-                    style={styles.infoBtn}
-                    onPress={() => setInfoOpen(true)}
-                    hitSlop={8}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="information-circle-outline" size={19} color={colors.muted} />
-                  </TouchableOpacity>
-
                   {/* Sub-switch ARS/USD para separar deuda/ahorro por moneda */}
                   <View style={styles.curSwitch}>
                     {["ARS", "USD"].map((c) => (
@@ -386,6 +366,25 @@ export default function HomeScreen() {
                       </TouchableOpacity>
                     ))}
                   </View>
+                  <TouchableOpacity style={styles.iconBtn} onPress={() => setVisible((v) => !v)} hitSlop={6}>
+                    <Ionicons
+                      name={visible ? "eye-outline" : "eye-off-outline"}
+                      size={19}
+                      color={colors.text}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.balanceLabelRow}>
+                  <Text style={styles.balanceLabel}>{tab === "deuda" ? "Deudas" : "Ahorros"}</Text>
+                  <TouchableOpacity
+                    style={styles.infoBtn}
+                    onPress={() => setInfoOpen(true)}
+                    hitSlop={8}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="information-circle-outline" size={19} color={colors.muted} />
+                  </TouchableOpacity>
                 </View>
                 {tab === "ahorro" ? (
                   <Text style={styles.potText}>
@@ -638,7 +637,8 @@ const makeStyles = (colors) => StyleSheet.create({
     top: 10,
     right: 0,
     flexDirection: "row",
-    gap: 8,
+    alignItems: "center",
+    gap: 10,
     zIndex: 2,
   },
   iconBtn: {
@@ -674,7 +674,6 @@ const makeStyles = (colors) => StyleSheet.create({
   infoBtn: { padding: 1 },
   curSwitch: {
     flexDirection: "row",
-    marginLeft: "auto",
     backgroundColor: colors.card,
     borderRadius: 999,
     borderWidth: 1,
