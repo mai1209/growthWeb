@@ -345,46 +345,48 @@ export default function HomeScreen() {
               </>
             ) : (
               <>
-                <View style={styles.cardActions}>
-                  {/* Sub-switch ARS/USD para separar deuda/ahorro por moneda */}
-                  <View style={styles.curSwitch}>
-                    {["ARS", "USD"].map((c) => (
-                      <TouchableOpacity
-                        key={c}
-                        style={[styles.curSwitchBtn, typeCurrency === c && styles.curSwitchBtnActive]}
-                        onPress={() => setTypeCurrency(c)}
-                        activeOpacity={0.85}
-                      >
-                        <Text
-                          style={[
-                            styles.curSwitchText,
-                            typeCurrency === c && styles.curSwitchTextActive,
-                          ]}
-                        >
-                          {c}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+                <View style={styles.typeHeaderRow}>
+                  <View style={styles.balanceLabelRow}>
+                    <Text style={styles.balanceLabel}>{tab === "deuda" ? "Deudas" : "Ahorros"}</Text>
+                    <TouchableOpacity
+                      style={styles.infoBtn}
+                      onPress={() => setInfoOpen(true)}
+                      hitSlop={8}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="information-circle-outline" size={19} color={colors.muted} />
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity style={styles.iconBtn} onPress={() => setVisible((v) => !v)} hitSlop={6}>
-                    <Ionicons
-                      name={visible ? "eye-outline" : "eye-off-outline"}
-                      size={19}
-                      color={colors.text}
-                    />
-                  </TouchableOpacity>
-                </View>
 
-                <View style={styles.balanceLabelRow}>
-                  <Text style={styles.balanceLabel}>{tab === "deuda" ? "Deudas" : "Ahorros"}</Text>
-                  <TouchableOpacity
-                    style={styles.infoBtn}
-                    onPress={() => setInfoOpen(true)}
-                    hitSlop={8}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="information-circle-outline" size={19} color={colors.muted} />
-                  </TouchableOpacity>
+                  <View style={styles.typeHeaderRight}>
+                    {/* Sub-switch ARS/USD para separar deuda/ahorro por moneda */}
+                    <View style={styles.curSwitch}>
+                      {["ARS", "USD"].map((c) => (
+                        <TouchableOpacity
+                          key={c}
+                          style={[styles.curSwitchBtn, typeCurrency === c && styles.curSwitchBtnActive]}
+                          onPress={() => setTypeCurrency(c)}
+                          activeOpacity={0.85}
+                        >
+                          <Text
+                            style={[
+                              styles.curSwitchText,
+                              typeCurrency === c && styles.curSwitchTextActive,
+                            ]}
+                          >
+                            {c}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    <TouchableOpacity style={styles.iconBtn} onPress={() => setVisible((v) => !v)} hitSlop={6}>
+                      <Ionicons
+                        name={visible ? "eye-outline" : "eye-off-outline"}
+                        size={19}
+                        color={colors.text}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 </View>
                 {tab === "ahorro" ? (
                   <Text style={styles.potText}>
@@ -658,11 +660,17 @@ const makeStyles = (colors) => StyleSheet.create({
     textTransform: "uppercase",
   },
   balanceTitle: { color: colors.text, fontSize: 20, fontWeight: "800", marginTop: 4 },
+  typeHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 16,
+  },
+  typeHeaderRight: { flexDirection: "row", alignItems: "center", gap: 10 },
   balanceLabelRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginTop: 16,
   },
   balanceLabel: {
     color: colors.muted,
