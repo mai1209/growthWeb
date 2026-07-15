@@ -1,11 +1,20 @@
 .shell {
   min-height: 100vh;
+  display: flex;
+  align-items: stretch;
 }
 
 .main {
+  flex: 1;
   display: flex;
   align-items: stretch;
   min-width: 0;
+}
+
+@media (max-width: 1000px) {
+  .shell {
+    flex-direction: column;
+  }
 }
 
 .sidebar {

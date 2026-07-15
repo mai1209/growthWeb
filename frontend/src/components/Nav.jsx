@@ -127,16 +127,25 @@ function Nav({
     navigate("/");
   };
 
-  const getNavLinkClass = ({ isActive }) => 
+  const getNavLinkClass = ({ isActive }) =>
     isActive ? `${style.navLink} ${style.activeLink}` : style.navLink;
 
+  const getRailLinkClass = ({ isActive }) =>
+    `${style.railLink} ${isActive ? style.railLinkActive : ""}`;
+
   // --- COMPONENTES INTERNOS PARA EVITAR REPETICIÓN ---
-  const NavItems = () => (
+  const NavItems = ({ rail = false } = {}) => (
     <>
       {NAV_LINKS.map((link) => (
-        <NavLink key={link.to} to={link.to} className={getNavLinkClass} onClick={onCloseMobileMenu}>
+        <NavLink
+          key={link.to}
+          to={link.to}
+          className={rail ? getRailLinkClass : getNavLinkClass}
+          onClick={onCloseMobileMenu}
+          end={link.to === "/"}
+        >
           {link.icon}
-          <span>{link.label}</span>
+          <span className={rail ? style.tip : undefined}>{link.label}</span>
         </NavLink>
       ))}
     </>
@@ -209,47 +218,61 @@ function Nav({
 
   return (
     <>
-      <header className={style.header}>
-        <nav className={style.nav}>
-          <div className={style.logoSection} onClick={() => navigate("/")}>
-            <img className={style.logo} src="/logo.png" alt="Growth" />
-            <span className={style.brandName}>growth</span>
+      {/* Rail vertical — desktop */}
+      <aside className={style.rail}>
+        {currentToken && (
+          <nav className={style.railNav}>
+            <NavItems rail />
+          </nav>
+        )}
+
+        {currentToken && (
+          <div className={style.railBottom}>
+            <button onClick={onThemeToggle} className={style.railAction} type="button">
+              <FiSun className={style.sun} />
+              <FiMoon className={style.moon} />
+              <span className={style.tip}>Cambiar tema</span>
+            </button>
+
+            <ProfileDropdown />
+
+            <button onClick={handleLogout} className={style.railAction} type="button">
+              <FiLogOut />
+              <span className={style.tip}>Cerrar sesión</span>
+            </button>
+
+            <button
+              className={style.railLogo}
+              onClick={() => navigate("/")}
+              type="button"
+              aria-label="Inicio"
+            >
+              <img src="/logo.png" alt="Growth" />
+            </button>
           </div>
+        )}
+      </aside>
 
-          {currentToken && (
-            <div className={style.desktopNav}>
-              <NavItems />
-            </div>
-          )}
+      {/* Barra superior — mobile */}
+      <header className={style.mobileHeader}>
+        <div className={style.logoSection} onClick={() => navigate("/")}>
+          <img className={style.logo} src="/logo.png" alt="Growth" />
+          <span className={style.brandName}>growth</span>
+        </div>
 
-          {currentToken && (
-            <div className={style.actionsSection}>
-              <button onClick={onThemeToggle} className={style.iconAction} title="Cambiar tema">
-                <FiSun className={style.sun} />
-                <FiMoon className={style.moon} />
+        {currentToken && (
+          <div className={style.mobileButtons}>
+            {panelContent ? (
+              <button className={style.panelTrigger} onClick={onToggleMobilePanel}>
+                {panelLabel}
               </button>
-
-              <ProfileDropdown />
-
-              <button onClick={handleLogout} className={style.logoutBtn} title="Cerrar sesión">
-                <FiLogOut />
-              </button>
-
-              {/* Botones Móviles */}
-              <div className={style.mobileButtons}>
-                {panelContent ? (
-                  <button className={style.panelTrigger} onClick={onToggleMobilePanel}>
-                    {panelLabel}
-                  </button>
-                ) : null}
-                <button className={style.burger} onClick={onToggleMobileMenu} aria-label="Menú">
-                  <span />
-                  <span />
-                </button>
-              </div>
-            </div>
-          )}
-        </nav>
+            ) : null}
+            <button className={style.burger} onClick={onToggleMobileMenu} aria-label="Menú">
+              <span />
+              <span />
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Portals: Solo se renderizan si están abiertos */}

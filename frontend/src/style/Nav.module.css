@@ -378,3 +378,171 @@
   gap: 0.5rem;
   cursor: pointer;
 }
+
+/* ===================== Rail vertical (desktop) ===================== */
+.rail {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  flex: 0 0 76px;
+  width: 76px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 0;
+  background: var(--nav-background);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 900;
+}
+
+.railNav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.railLink {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--color-muted);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.railLink:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text);
+}
+
+.railLinkActive {
+  background: #5dc72d;
+  color: #0e1a0e !important;
+  box-shadow: 0 8px 18px rgba(40, 120, 30, 0.28);
+}
+
+.railLink :global(svg) {
+  font-size: 1.25rem;
+}
+
+.railBottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.railAction {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.railAction:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.railAction :global(svg) {
+  font-size: 1.2rem;
+}
+
+.railLogo {
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  margin-top: 0.3rem;
+}
+
+.railLogo img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+/* Tooltip a la derecha del ícono */
+.tip {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  background: var(--panel-background, #0f1a14);
+  color: var(--color-text);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.35rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  z-index: 1200;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.railLink:hover .tip,
+.railAction:hover .tip {
+  opacity: 1;
+}
+
+/* Perfil dentro del rail: solo el avatar, y el menú se abre hacia arriba */
+.rail .userProfile {
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.rail .userName,
+.rail .chevron {
+  display: none;
+}
+
+.rail .profileDropdown {
+  top: auto;
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: auto;
+}
+
+/* La barra superior sólo aparece en mobile */
+.mobileHeader {
+  display: none;
+}
+
+@media (max-width: 1000px) {
+  .rail {
+    display: none;
+  }
+
+  .mobileHeader {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    height: 60px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    background: var(--nav-background);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+}
