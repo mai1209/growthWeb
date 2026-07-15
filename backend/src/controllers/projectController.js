@@ -62,6 +62,7 @@ export const updateProject = async (req, res) => {
       project.nombre = nombre;
     }
     if (req.body.color !== undefined) project.color = String(req.body.color).trim();
+    if (req.body.notas !== undefined) project.notas = String(req.body.notas);
     if (req.body.archivado !== undefined) project.archivado = Boolean(req.body.archivado);
     await project.save();
     return res.status(200).json(serialize(project));

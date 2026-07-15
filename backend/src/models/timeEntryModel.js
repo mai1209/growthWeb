@@ -28,6 +28,21 @@ const timeEntrySchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+    notas: {
+      type: String,
+      default: "",
+    },
+    pausas: {
+      // Intervalos de pausa dentro de la sesión (para ver el detalle).
+      type: [
+        {
+          _id: false,
+          inicio: { type: Date },
+          fin: { type: Date },
+        },
+      ],
+      default: [],
+    },
     inicio: {
       type: Date,
       required: true,

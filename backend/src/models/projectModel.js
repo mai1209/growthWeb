@@ -25,6 +25,11 @@ const projectSchema = new mongoose.Schema(
       default: "#5dc72d",
       trim: true,
     },
+    notas: {
+      // Bloc de notas propio del proyecto (datos del cliente, pendientes, etc.).
+      type: String,
+      default: "",
+    },
     archivado: {
       type: Boolean,
       default: false,

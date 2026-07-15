@@ -46,8 +46,17 @@ const normalizeProyecto = (value) => {
   return /^[a-f\d]{24}$/i.test(s) ? s : null;
 };
 
+const parsePausas = (value) => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((p) => ({ inicio: new Date(p?.inicio), fin: new Date(p?.fin) }))
+    .filter((p) => !Number.isNaN(p.inicio.getTime()) && !Number.isNaN(p.fin.getTime()));
+};
+
 const parseEntryPayload = (body) => {
   const descripcion = String(body.descripcion || "").trim();
+  const notas = typeof body.notas === "string" ? body.notas : "";
+  const pausas = parsePausas(body.pausas);
   const proyecto = normalizeProyecto(body.proyecto);
   const inicio = body.inicio ? new Date(body.inicio) : null;
   const fin = body.fin ? new Date(body.fin) : null;
@@ -70,7 +79,7 @@ const parseEntryPayload = (body) => {
     const d = Number(body.duracion);
     if (!Number.isNaN(d) && d >= 0) duracion = Math.min(Math.round(d), span);
   }
-  return { descripcion, proyecto, inicio, fin, duracion };
+  return { descripcion, notas, pausas, proyecto, inicio, fin, duracion };
 };
 
 // POST /api/time-entries
@@ -86,6 +95,8 @@ export const createTimeEntry = async (req, res) => {
       workspace,
       proyecto: parsed.proyecto,
       descripcion: parsed.descripcion,
+      notas: parsed.notas,
+      pausas: parsed.pausas,
       inicio: parsed.inicio,
       fin: parsed.fin,
       duracion: parsed.duracion,
@@ -106,14 +117,18 @@ export const updateTimeEntry = async (req, res) => {
     }
     const parsed = parseEntryPayload({
       descripcion: req.body.descripcion ?? entry.descripcion,
+      notas: req.body.notas ?? entry.notas,
+      pausas: req.body.pausas ?? entry.pausas,
       proyecto: req.body.proyecto ?? entry.proyecto,
       inicio: req.body.inicio ?? entry.inicio,
       fin: req.body.fin ?? entry.fin,
-      duracion: req.body.duracion,
+      duracion: req.body.duracion ?? entry.duracion,
     });
     if (parsed.error) return res.status(400).json({ error: parsed.error });
 
     entry.descripcion = parsed.descripcion;
+    entry.notas = parsed.notas;
+    entry.pausas = parsed.pausas;
     entry.proyecto = parsed.proyecto;
     entry.inicio = parsed.inicio;
     entry.fin = parsed.fin;
