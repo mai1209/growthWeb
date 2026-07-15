@@ -61,6 +61,12 @@ export default function TimeTracker() {
   const [now, setNow] = useState(Date.now());
   const [saving, setSaving] = useState(false);
   const [menuFor, setMenuFor] = useState(null); // id de la entrada con menú abierto
+  const [finishOpen, setFinishOpen] = useState(false);
+  const [finishNotes, setFinishNotes] = useState("");
+  const [expandedEntry, setExpandedEntry] = useState(null); // sesión abierta
+  const [entryNotesDraft, setEntryNotesDraft] = useState("");
+  const [projectNotesDraft, setProjectNotesDraft] = useState("");
+  const [projectNotesSaved, setProjectNotesSaved] = useState(false);
   const tickRef = useRef(null);
 
   const fetchAll = useCallback(async () => {
@@ -121,34 +127,44 @@ export default function TimeTracker() {
       firstStart: new Date().toISOString(),
       accumulated: 0,
       segmentStart: new Date().toISOString(),
+      pausas: [],
+      pauseStart: null,
     });
   };
 
   const handlePause = () => {
     if (!running?.segmentStart) return;
     const acc = running.accumulated + Math.floor((Date.now() - new Date(running.segmentStart).getTime()) / 1000);
-    persistRunning({ ...running, accumulated: acc, segmentStart: null });
+    persistRunning({ ...running, accumulated: acc, segmentStart: null, pauseStart: new Date().toISOString() });
   };
 
   const handleResume = () => {
     if (!running || running.segmentStart) return;
-    persistRunning({ ...running, segmentStart: new Date().toISOString() });
+    const pausas = [...(running.pausas || [])];
+    if (running.pauseStart) pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString() });
+    persistRunning({ ...running, segmentStart: new Date().toISOString(), pauseStart: null, pausas });
   };
 
-  const handleFinish = async () => {
+  const confirmFinish = async () => {
     if (!running || saving) return;
     setSaving(true);
     const total = activeSecs(running, Date.now());
+    const pausas = [...(running.pausas || [])];
+    if (running.pauseStart) pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString() });
     try {
       await timeEntryService.create({
         proyecto: running.proyecto || undefined,
         descripcion: running.descripcion || descripcion.trim(),
+        notas: finishNotes,
+        pausas,
         inicio: running.firstStart,
         fin: new Date().toISOString(),
         duracion: total,
       });
       persistRunning(null);
       setDescripcion("");
+      setFinishNotes("");
+      setFinishOpen(false);
       await fetchAll();
     } catch {
       setError("No se pudo guardar la sesión.");
@@ -195,6 +211,45 @@ export default function TimeTracker() {
       setError("No se pudo eliminar el proyecto.");
     }
   };
+
+  const toggleExpand = (entry) => {
+    if (expandedEntry === entry._id) {
+      setExpandedEntry(null);
+    } else {
+      setExpandedEntry(entry._id);
+      setEntryNotesDraft(entry.notas || "");
+    }
+  };
+
+  const handleSaveEntryNotes = async (id) => {
+    try {
+      await timeEntryService.update(id, { notas: entryNotesDraft });
+      setEntries((prev) => prev.map((e) => (e._id === id ? { ...e, notas: entryNotesDraft } : e)));
+    } catch {
+      setError("No se pudieron guardar las notas.");
+    }
+  };
+
+  const handleSaveProjectNotes = async () => {
+    if (!openProject?._id) return;
+    try {
+      await projectService.update(openProject._id, { notas: projectNotesDraft });
+      setProjects((prev) =>
+        prev.map((p) => (p._id === openProject._id ? { ...p, notas: projectNotesDraft } : p))
+      );
+      setOpenProject((prev) => (prev ? { ...prev, notas: projectNotesDraft } : prev));
+      setProjectNotesSaved(true);
+      setTimeout(() => setProjectNotesSaved(false), 1500);
+    } catch {
+      setError("No se pudieron guardar las notas del proyecto.");
+    }
+  };
+
+  // Sincroniza el borrador de notas del proyecto al abrir una carpeta
+  useEffect(() => {
+    setProjectNotesDraft(openProject?.notas || "");
+    setExpandedEntry(null);
+  }, [openProject]);
 
   // Cerrar el menú de 3 puntitos al hacer clic en cualquier parte
   useEffect(() => {
@@ -384,10 +439,10 @@ export default function TimeTracker() {
             <button
               type="button"
               className={`${style.midBtn} ${style.stopBtn}`}
-              onClick={handleFinish}
+              onClick={() => setFinishOpen(true)}
               disabled={saving}
             >
-              <FiSquare /> {saving ? "Guardando…" : "Finalizar"}
+              <FiSquare /> Finalizar
             </button>
           </div>
         )}
@@ -421,45 +476,143 @@ export default function TimeTracker() {
             {projEntries.map((e) => {
               const start = new Date(e.inicio);
               const end = new Date(e.fin);
+              const isOpen = expandedEntry === e._id;
+              const pausas = Array.isArray(e.pausas) ? e.pausas : [];
               return (
-                <li key={e._id} className={style.entryItem}>
-                  <div className={style.entryMain}>
-                    <strong>{e.descripcion || "Sin descripción"}</strong>
-                    <span className={style.entryTime}>
-                      {isSameDay(start, new Date())
-                        ? "Hoy"
-                        : start.toLocaleDateString("es-AR", { day: "numeric", month: "short" })}{" "}
-                      · {pad(start.getHours())}:{pad(start.getMinutes())} – {pad(end.getHours())}:
-                      {pad(end.getMinutes())}
-                    </span>
-                  </div>
-                  <span className={style.entryDur}>{fmtDuration(e.duracion)}</span>
-                  <div className={style.menuWrap}>
+                <li key={e._id} className={style.entryLi}>
+                  <div className={style.entryItem}>
                     <button
                       type="button"
-                      className={style.menuBtn}
-                      onClick={(ev) => {
-                        ev.stopPropagation();
-                        setMenuFor(menuFor === e._id ? null : e._id);
-                      }}
-                      aria-label="Opciones"
+                      className={style.entryMain}
+                      onClick={() => toggleExpand(e)}
                     >
-                      ⋯
+                      <strong>{e.descripcion || "Sin descripción"}</strong>
+                      <span className={style.entryTime}>
+                        {isSameDay(start, new Date())
+                          ? "Hoy"
+                          : start.toLocaleDateString("es-AR", { day: "numeric", month: "short" })}{" "}
+                        · {pad(start.getHours())}:{pad(start.getMinutes())} – {pad(end.getHours())}:
+                        {pad(end.getMinutes())}
+                        {e.notas ? " · 📝" : ""}
+                      </span>
                     </button>
-                    {menuFor === e._id ? (
-                      <div className={style.menu}>
-                        <button type="button" onClick={() => handleDeleteEntry(e._id)}>
-                          <FiTrash2 /> Eliminar
-                        </button>
-                      </div>
-                    ) : null}
+                    <span className={style.entryDur}>{fmtDuration(e.duracion)}</span>
+                    <div className={style.menuWrap}>
+                      <button
+                        type="button"
+                        className={style.menuBtn}
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          setMenuFor(menuFor === e._id ? null : e._id);
+                        }}
+                        aria-label="Opciones"
+                      >
+                        ⋯
+                      </button>
+                      {menuFor === e._id ? (
+                        <div className={style.menu}>
+                          <button type="button" onClick={() => handleDeleteEntry(e._id)}>
+                            <FiTrash2 /> Eliminar
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
+
+                  {isOpen ? (
+                    <div className={style.entryDetail}>
+                      {pausas.length ? (
+                        <div className={style.pausasBlock}>
+                          <span className={style.detailLabel}>Pausas</span>
+                          {pausas.map((p, i) => {
+                            const pi = new Date(p.inicio);
+                            const pf = new Date(p.fin);
+                            const dur = Math.max(0, Math.round((pf - pi) / 1000));
+                            return (
+                              <div key={i} className={style.pausaRow}>
+                                <FiPause />
+                                {pad(pi.getHours())}:{pad(pi.getMinutes())} → {pad(pf.getHours())}:
+                                {pad(pf.getMinutes())} · {fmtDuration(dur)}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <span className={style.detailMuted}>Sin pausas.</span>
+                      )}
+
+                      <span className={style.detailLabel}>Notas</span>
+                      <textarea
+                        className={style.notesArea}
+                        value={entryNotesDraft}
+                        onChange={(ev) => setEntryNotesDraft(ev.target.value)}
+                        placeholder="Notas de esta sesión…"
+                        rows={3}
+                      />
+                      <button
+                        type="button"
+                        className={style.saveNotesBtn}
+                        onClick={() => handleSaveEntryNotes(e._id)}
+                      >
+                        Guardar notas
+                      </button>
+                    </div>
+                  ) : null}
                 </li>
               );
             })}
           </ul>
         )}
       </section>
+
+      {/* Notas del proyecto */}
+      {openProject ? (
+        <section className={style.listCard}>
+          <div className={style.listHead}>
+            <h2>
+              <FiClock /> Notas del proyecto
+            </h2>
+          </div>
+          <textarea
+            className={style.notesArea}
+            value={projectNotesDraft}
+            onChange={(e) => setProjectNotesDraft(e.target.value)}
+            placeholder="Datos del cliente, pendientes, links… (notas del proyecto)"
+            rows={5}
+          />
+          <button type="button" className={style.saveNotesBtn} onClick={handleSaveProjectNotes}>
+            {projectNotesSaved ? "✓ Guardado" : "Guardar notas"}
+          </button>
+        </section>
+      ) : null}
+
+      {/* Modal Finalizar con notas */}
+      {finishOpen ? (
+        <div className={style.overlay} onClick={() => setFinishOpen(false)} role="presentation">
+          <div className={style.modal} onClick={(e) => e.stopPropagation()}>
+            <h3>Finalizar sesión</h3>
+            <div className={style.field}>
+              <span>Notas (opcional)</span>
+              <textarea
+                className={style.notesArea}
+                value={finishNotes}
+                onChange={(e) => setFinishNotes(e.target.value)}
+                placeholder="¿Qué hiciste en esta sesión?"
+                rows={4}
+                autoFocus
+              />
+            </div>
+            <div className={style.modalActions}>
+              <button type="button" className={style.ghostBtn} onClick={() => setFinishOpen(false)}>
+                Cancelar
+              </button>
+              <button type="button" className={style.saveBtn} onClick={confirmFinish} disabled={saving}>
+                {saving ? "Guardando…" : "Guardar sesión"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

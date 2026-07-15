@@ -170,6 +170,82 @@
   min-width: 0;
   display: grid;
   gap: 0.2rem;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.entryLi {
+  list-style: none;
+}
+
+.entryDetail {
+  margin-top: 0.5rem;
+  display: grid;
+  gap: 0.5rem;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.08));
+  border-radius: 12px;
+  padding: 0.85rem;
+  background: var(--surface-input, rgba(255, 255, 255, 0.03));
+}
+
+.detailLabel {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detailMuted {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.pausasBlock {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.pausaRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-text);
+  font-size: 0.85rem;
+}
+
+.notesArea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.12));
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
+  color: var(--color-text);
+  font-size: 0.92rem;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.saveNotesBtn {
+  justify-self: start;
+  border: none;
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  background: rgba(93, 199, 45, 0.16);
+  color: #5dc72d;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.saveNotesBtn:hover {
+  background: rgba(93, 199, 45, 0.26);
 }
 
 .entryMain strong {
