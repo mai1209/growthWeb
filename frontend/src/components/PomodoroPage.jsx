@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FiPause, FiPlay, FiRotateCcw, FiSettings, FiSkipForward, FiX } from "react-icons/fi";
 import style from "../style/Pomodoro.module.css";
+import TimeTracker from "./TimeTracker";
 
 const MODES = [
   { key: "focus", label: "Enfoque", defaultMin: 25 },
@@ -126,6 +127,7 @@ export default function PomodoroPage() {
     }
     return merged;
   });
+  const [panel, setPanel] = useState("pomodoro"); // pomodoro | tracker
   const [mode, setMode] = useState("focus");
   const [running, setRunning] = useState(false);
   const [remaining, setRemaining] = useState(settings.focus * 60);
@@ -287,19 +289,38 @@ export default function PomodoroPage() {
   return (
     <div className={style.page}>
       <header className={style.header}>
-        <h1>Pomodoro</h1>
-        <button
-          type="button"
-          className={style.gearBtn}
-          onClick={() => setSettingsOpen(true)}
-          title="Ajustes"
-          aria-label="Ajustes"
-        >
-          <FiSettings size={20} />
-        </button>
+        <div className={style.panelSwitch}>
+          <button
+            type="button"
+            className={`${style.panelSwitchBtn} ${panel === "pomodoro" ? style.panelSwitchActive : ""}`}
+            onClick={() => setPanel("pomodoro")}
+          >
+            Pomodoro
+          </button>
+          <button
+            type="button"
+            className={`${style.panelSwitchBtn} ${panel === "tracker" ? style.panelSwitchActive : ""}`}
+            onClick={() => setPanel("tracker")}
+          >
+            Registro de horas
+          </button>
+        </div>
+        {panel === "pomodoro" ? (
+          <button
+            type="button"
+            className={style.gearBtn}
+            onClick={() => setSettingsOpen(true)}
+            title="Ajustes"
+            aria-label="Ajustes"
+          >
+            <FiSettings size={20} />
+          </button>
+        ) : null}
       </header>
 
-      <div className={style.grid}>
+      {panel === "tracker" ? <TimeTracker /> : null}
+
+      <div className={style.grid} style={panel === "tracker" ? { display: "none" } : undefined}>
         {/* Temporizador */}
         <section className={style.timerCard}>
           <div className={style.modeRow}>

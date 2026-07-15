@@ -10,6 +10,35 @@
 .header {
   position: relative;
   text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.panelSwitch {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.28rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.14));
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
+}
+
+.panelSwitchBtn {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.panelSwitchActive {
+  background: #5dc72d;
+  color: #0e1a0e;
 }
 
 .header h1 {
