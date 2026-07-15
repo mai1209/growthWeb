@@ -2,7 +2,7 @@
   "expo": {
     "name": "Growth Manager",
     "slug": "growth-manager",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -16,7 +16,7 @@
     },
     "android": {
       "package": "app.growthmanager.mobile",
-      "versionCode": 16,
+      "versionCode": 17,
       "adaptiveIcon": {
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/android-icon-foreground.png"
@@ -36,7 +36,13 @@
           "imageWidth": 220
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Growth usa tus fotos para insertar imágenes en tus notas."
+        }
+      ]
     ]
   }
 }

@@ -15,7 +15,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RichEditor, RichToolbar, actions } from "react-native-pell-rich-editor";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { taskService } from "../api";
+import { isCloudinaryConfigured, uploadImageToCloudinary } from "../cloudinary";
 import { useTheme } from "../theme";
 import { NOTE_COLOR_KEYS, getNoteColor } from "../utils/notes";
 import ColorPickerModal from "./ColorPickerModal";
@@ -51,6 +53,7 @@ const TOOLBAR_ACTIONS = [
   actions.removeFormat,
   "toLower",
   "toUpper",
+  "insertPhoto",
 ];
 
 export default function NoteEditorModal({
@@ -94,6 +97,35 @@ export default function NoteEditorModal({
       })();
     `;
     richText.current?.commandDOM(js);
+  };
+
+  // Insertar foto: elige de la galería, sube a Cloudinary e inserta la URL.
+  const handleInsertImage = async () => {
+    if (!isCloudinaryConfigured()) {
+      Alert.alert(
+        "Falta configurar",
+        "Completá app/src/cloudinary.js con tu Cloud name y upload preset para subir fotos."
+      );
+      return;
+    }
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert("Permiso necesario", "Permití el acceso a tus fotos para insertar una imagen.");
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 1,
+      });
+      if (result.canceled) return;
+      const uri = result.assets?.[0]?.uri;
+      if (!uri) return;
+      const url = await uploadImageToCloudinary(uri);
+      richText.current?.insertImage(url);
+    } catch {
+      Alert.alert("Error", "No se pudo subir la imagen.");
+    }
   };
 
   useEffect(() => {
@@ -411,6 +443,7 @@ export default function NoteEditorModal({
             style={styles.toolbar}
             toLower={() => setSelectionCase("lower")}
             toUpper={() => setSelectionCase("upper")}
+            insertPhoto={handleInsertImage}
             iconMap={{
               [actions.heading1]: ({ tintColor }) => (
                 <Text style={{ color: tintColor, fontWeight: "800", fontSize: 16 }}>H1</Text>
@@ -423,6 +456,9 @@ export default function NoteEditorModal({
               ),
               toUpper: ({ tintColor }) => (
                 <Text style={{ color: tintColor, fontWeight: "800", fontSize: 15 }}>AA</Text>
+              ),
+              insertPhoto: ({ tintColor }) => (
+                <Ionicons name="image-outline" size={20} color={tintColor} />
               ),
             }}
           />
