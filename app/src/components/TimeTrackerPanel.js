@@ -167,6 +167,27 @@ export default function TimeTrackerPanel({ colors }) {
     }
   };
 
+  const handleDeleteProject = (project) => {
+    Alert.alert("Eliminar proyecto", `¿Borrar "${project.nombre}"? Las sesiones quedan como "Sin proyecto".`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Eliminar",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await projectService.delete(project._id);
+            setProjects((prev) => prev.filter((p) => p._id !== project._id));
+            setEntries((prev) =>
+              prev.map((e) => (e.proyecto === project._id ? { ...e, proyecto: null } : e))
+            );
+          } catch {
+            Alert.alert("Error", "No se pudo eliminar el proyecto.");
+          }
+        },
+      },
+    ]);
+  };
+
   const handleDeleteEntry = (id) => {
     setMenuFor(null);
     Alert.alert("Eliminar", "¿Borrar esta sesión?", [
@@ -262,6 +283,9 @@ export default function TimeTrackerPanel({ colors }) {
                     </Text>
                   </View>
                   <Text style={styles.folderTotal}>{fmtDuration(t.total)}</Text>
+                  <TouchableOpacity onPress={() => handleDeleteProject(p)} hitSlop={8} style={styles.folderTrash}>
+                    <Ionicons name="trash-outline" size={18} color={colors.muted} />
+                  </TouchableOpacity>
                 </TouchableOpacity>
               );
             })}
@@ -295,6 +319,13 @@ export default function TimeTrackerPanel({ colors }) {
 
   return (
     <View style={styles.wrap}>
+      {menuFor ? (
+        <TouchableOpacity
+          style={[StyleSheet.absoluteFill, { zIndex: 5 }]}
+          activeOpacity={1}
+          onPress={() => setMenuFor(null)}
+        />
+      ) : null}
       <View style={styles.detailHead}>
         <TouchableOpacity style={styles.backBtn} onPress={() => setOpenProject(undefined)}>
           <Ionicons name="chevron-back" size={16} color={colors.text} />
@@ -462,6 +493,7 @@ const makeStyles = (colors) =>
     folderName: { color: colors.text, fontWeight: "800", fontSize: 15 },
     folderMeta: { color: colors.muted, fontSize: 12, marginTop: 2 },
     folderTotal: { color: colors.greenDark, fontWeight: "800", fontSize: 15 },
+    folderTrash: { padding: 4 },
     empty: { color: colors.muted, fontSize: 14, lineHeight: 20, paddingVertical: 10 },
 
     detailHead: { flexDirection: "row", alignItems: "center", gap: 10 },
