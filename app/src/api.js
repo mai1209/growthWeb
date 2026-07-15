@@ -92,6 +92,13 @@ export const timeEntryService = {
   delete: (id) => api.delete(`/api/time-entries/${id}`),
 };
 
+export const projectService = {
+  getAll: () => api.get("/api/projects"),
+  create: (data) => api.post("/api/projects", data),
+  update: (id, data) => api.put(`/api/projects/${id}`, data),
+  delete: (id) => api.delete(`/api/projects/${id}`),
+};
+
 export const sharedGroupsService = {
   getAll: () => api.get("/api/shared-groups"),
   getById: (id) => api.get(`/api/shared-groups/${id}`),

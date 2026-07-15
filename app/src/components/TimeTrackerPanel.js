@@ -6,14 +6,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Modal,
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
-import { timeEntryService } from "../api";
+import { timeEntryService, projectService } from "../api";
 
 const RUNNING_KEY = "gm_timetracker_running";
+const NO_PROJECT = "__none__";
 
 const pad = (n) => String(n).padStart(2, "0");
 
@@ -21,10 +21,9 @@ const fmtDuration = (secs) => {
   const s = Math.max(0, Math.floor(secs));
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
   if (h > 0) return `${h}h ${pad(m)}m`;
-  if (m > 0) return `${m}m ${pad(sec)}s`;
-  return `${sec}s`;
+  if (m > 0) return `${m}m ${pad(s % 60)}s`;
+  return `${s % 60}s`;
 };
 
 const fmtClock = (secs) => {
@@ -41,32 +40,37 @@ const startOfDay = (d) => {
 };
 const startOfWeek = (d) => {
   const x = startOfDay(d);
-  const day = (x.getDay() + 6) % 7;
-  x.setDate(x.getDate() - day);
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
   return x;
 };
 const isSameDay = (a, b) => startOfDay(a).getTime() === startOfDay(b).getTime();
 
+const activeSecs = (r, nowMs) =>
+  r
+    ? r.accumulated + (r.segmentStart ? Math.floor((nowMs - new Date(r.segmentStart).getTime()) / 1000) : 0)
+    : 0;
+
 export default function TimeTrackerPanel({ colors }) {
   const styles = makeStyles(colors);
 
+  const [projects, setProjects] = useState([]);
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [openProject, setOpenProject] = useState(undefined); // undefined = carpetas; obj|null
+  const [newProjectName, setNewProjectName] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [running, setRunning] = useState(null); // { startedAt, descripcion }
+  const [running, setRunning] = useState(null);
   const [now, setNow] = useState(Date.now());
   const [saving, setSaving] = useState(false);
-
-  const [manualOpen, setManualOpen] = useState(false);
-  const [manualDesc, setManualDesc] = useState("");
-  const [manualMin, setManualMin] = useState("");
-
+  const [menuFor, setMenuFor] = useState(null);
   const tickRef = useRef(null);
 
-  const fetchEntries = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
     try {
-      const res = await timeEntryService.getAll();
-      setEntries(Array.isArray(res.data) ? res.data : []);
+      const [p, e] = await Promise.all([projectService.getAll(), timeEntryService.getAll()]);
+      setProjects(Array.isArray(p.data) ? p.data : []);
+      setEntries(Array.isArray(e.data) ? e.data : []);
     } catch {
       // silencioso
     } finally {
@@ -75,13 +79,13 @@ export default function TimeTrackerPanel({ colors }) {
   }, []);
 
   useEffect(() => {
-    fetchEntries();
+    fetchAll();
     (async () => {
       try {
         const raw = await SecureStore.getItemAsync(RUNNING_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed?.startedAt) {
+          if (parsed?.firstStart) {
             setRunning(parsed);
             setDescripcion(parsed.descripcion || "");
           }
@@ -90,10 +94,10 @@ export default function TimeTrackerPanel({ colors }) {
         // nada
       }
     })();
-  }, [fetchEntries]);
+  }, [fetchAll]);
 
   useEffect(() => {
-    if (!running) {
+    if (!running || !running.segmentStart) {
       if (tickRef.current) clearInterval(tickRef.current);
       return undefined;
     }
@@ -102,33 +106,48 @@ export default function TimeTrackerPanel({ colors }) {
     return () => clearInterval(tickRef.current);
   }, [running]);
 
-  const elapsed = running
-    ? Math.floor((now - new Date(running.startedAt).getTime()) / 1000)
-    : 0;
-
-  const handleStart = async () => {
-    const payload = { startedAt: new Date().toISOString(), descripcion: descripcion.trim() };
-    setRunning(payload);
-    try {
-      await SecureStore.setItemAsync(RUNNING_KEY, JSON.stringify(payload));
-    } catch {
-      // nada
-    }
+  const persistRunning = (r) => {
+    setRunning(r);
+    if (r) SecureStore.setItemAsync(RUNNING_KEY, JSON.stringify(r)).catch(() => {});
+    else SecureStore.deleteItemAsync(RUNNING_KEY).catch(() => {});
   };
 
-  const handleStop = async () => {
+  const currentProjectId = openProject === null ? null : openProject?._id;
+
+  const handleStart = () => {
+    persistRunning({
+      proyecto: currentProjectId ?? null,
+      descripcion: descripcion.trim(),
+      firstStart: new Date().toISOString(),
+      accumulated: 0,
+      segmentStart: new Date().toISOString(),
+    });
+  };
+  const handlePause = () => {
+    if (!running?.segmentStart) return;
+    const acc =
+      running.accumulated + Math.floor((Date.now() - new Date(running.segmentStart).getTime()) / 1000);
+    persistRunning({ ...running, accumulated: acc, segmentStart: null });
+  };
+  const handleResume = () => {
+    if (!running || running.segmentStart) return;
+    persistRunning({ ...running, segmentStart: new Date().toISOString() });
+  };
+  const handleFinish = async () => {
     if (!running || saving) return;
     setSaving(true);
+    const total = activeSecs(running, Date.now());
     try {
       await timeEntryService.create({
+        proyecto: running.proyecto || undefined,
         descripcion: running.descripcion || descripcion.trim(),
-        inicio: running.startedAt,
+        inicio: running.firstStart,
         fin: new Date().toISOString(),
+        duracion: total,
       });
-      setRunning(null);
+      persistRunning(null);
       setDescripcion("");
-      await SecureStore.deleteItemAsync(RUNNING_KEY);
-      await fetchEntries();
+      await fetchAll();
     } catch {
       Alert.alert("Error", "No se pudo guardar la sesión.");
     } finally {
@@ -136,7 +155,20 @@ export default function TimeTrackerPanel({ colors }) {
     }
   };
 
-  const handleDelete = (id) => {
+  const handleCreateProject = async () => {
+    const nombre = newProjectName.trim();
+    if (!nombre) return;
+    try {
+      const res = await projectService.create({ nombre });
+      setProjects((prev) => [res.data, ...prev]);
+      setNewProjectName("");
+    } catch {
+      Alert.alert("Error", "No se pudo crear el proyecto.");
+    }
+  };
+
+  const handleDeleteEntry = (id) => {
+    setMenuFor(null);
     Alert.alert("Eliminar", "¿Borrar esta sesión?", [
       { text: "Cancelar", style: "cancel" },
       {
@@ -154,121 +186,199 @@ export default function TimeTrackerPanel({ colors }) {
     ]);
   };
 
-  const submitManual = async () => {
-    const mins = parseInt(manualMin, 10);
-    if (!mins || mins <= 0) {
-      Alert.alert("Faltan datos", "Ingresá los minutos trabajados.");
-      return;
-    }
-    const fin = new Date();
-    const inicio = new Date(fin.getTime() - mins * 60 * 1000);
-    try {
-      await timeEntryService.create({
-        descripcion: manualDesc.trim(),
-        inicio: inicio.toISOString(),
-        fin: fin.toISOString(),
-      });
-      setManualOpen(false);
-      setManualDesc("");
-      setManualMin("");
-      await fetchEntries();
-    } catch {
-      Alert.alert("Error", "No se pudo guardar el registro.");
-    }
-  };
-
-  const { todayEntries, todayTotal, weekTotal } = useMemo(() => {
-    const today = new Date();
-    const weekStart = startOfWeek(today);
-    let dToday = 0;
-    let dWeek = 0;
-    const tEntries = [];
+  const totals = useMemo(() => {
+    const map = new Map();
+    const weekStart = startOfWeek(new Date());
     entries.forEach((e) => {
-      const start = new Date(e.inicio);
-      const dur = Number(e.duracion) || 0;
-      if (start >= weekStart) dWeek += dur;
-      if (isSameDay(start, today)) {
-        dToday += dur;
-        tEntries.push(e);
-      }
+      const key = e.proyecto || NO_PROJECT;
+      const cur = map.get(key) || { total: 0, week: 0, count: 0 };
+      cur.total += Number(e.duracion) || 0;
+      cur.count += 1;
+      if (new Date(e.inicio) >= weekStart) cur.week += Number(e.duracion) || 0;
+      map.set(key, cur);
     });
-    return { todayEntries: tEntries, todayTotal: dToday, weekTotal: dWeek };
+    return map;
   }, [entries]);
 
-  return (
-    <View style={styles.wrap}>
-      <View style={styles.timerCard}>
-        <TextInput
-          style={styles.descInput}
-          value={descripcion}
-          onChangeText={setDescripcion}
-          placeholder="¿En qué estás trabajando?"
-          placeholderTextColor={colors.muted}
-          editable={!running}
-          maxLength={160}
-        />
+  const runningProject = running
+    ? running.proyecto
+      ? projects.find((p) => p._id === running.proyecto)
+      : { nombre: "Sin proyecto" }
+    : null;
+  const elapsed = activeSecs(running, now);
 
-        <Text style={styles.clock}>{fmtClock(elapsed)}</Text>
+  // ---------- Vista carpetas ----------
+  if (openProject === undefined) {
+    const noneTotals = totals.get(NO_PROJECT);
+    return (
+      <View style={styles.wrap}>
+        <View style={styles.createRow}>
+          <TextInput
+            style={styles.createInput}
+            value={newProjectName}
+            onChangeText={setNewProjectName}
+            placeholder="Crear trabajo o proyecto…"
+            placeholderTextColor={colors.muted}
+            maxLength={80}
+            onSubmitEditing={handleCreateProject}
+            returnKeyType="done"
+          />
+          <TouchableOpacity style={styles.createBtn} onPress={handleCreateProject}>
+            <Ionicons name="add" size={24} color="#0e1a0e" />
+          </TouchableOpacity>
+        </View>
 
         {running ? (
           <TouchableOpacity
-            style={[styles.bigBtn, styles.stopBtn]}
-            onPress={handleStop}
-            disabled={saving}
-            activeOpacity={0.85}
+            style={styles.runningBanner}
+            onPress={() => setOpenProject(running.proyecto ? runningProject : null)}
           >
-            {saving ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="stop" size={20} color="#fff" />
-                <Text style={styles.stopText}>Detener y guardar</Text>
-              </>
-            )}
+            <View style={styles.runningDot} />
+            <Text style={styles.runningText}>
+              Sesión {running.segmentStart ? "en curso" : "en pausa"} en{" "}
+              <Text style={{ fontWeight: "800" }}>{runningProject?.nombre || "Sin proyecto"}</Text> ·{" "}
+              {fmtClock(elapsed)}
+            </Text>
           </TouchableOpacity>
+        ) : null}
+
+        {loading ? (
+          <ActivityIndicator color={colors.green} style={{ marginTop: 16 }} />
+        ) : projects.length === 0 && !noneTotals ? (
+          <Text style={styles.empty}>
+            Todavía no tenés proyectos. Creá uno arriba para empezar a registrar tus horas.
+          </Text>
         ) : (
-          <TouchableOpacity
-            style={[styles.bigBtn, styles.startBtn]}
-            onPress={handleStart}
-            activeOpacity={0.85}
-          >
+          <>
+            {projects.map((p) => {
+              const t = totals.get(p._id) || { total: 0, week: 0, count: 0 };
+              return (
+                <TouchableOpacity key={p._id} style={styles.folderCard} onPress={() => setOpenProject(p)}>
+                  <Ionicons name="folder-outline" size={22} color={p.color || colors.greenBright} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.folderName}>{p.nombre}</Text>
+                    <Text style={styles.folderMeta}>
+                      {t.count} {t.count === 1 ? "sesión" : "sesiones"} · semana {fmtDuration(t.week)}
+                    </Text>
+                  </View>
+                  <Text style={styles.folderTotal}>{fmtDuration(t.total)}</Text>
+                </TouchableOpacity>
+              );
+            })}
+
+            {noneTotals ? (
+              <TouchableOpacity style={styles.folderCard} onPress={() => setOpenProject(null)}>
+                <Ionicons name="folder-outline" size={22} color={colors.muted} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.folderName}>Sin proyecto</Text>
+                  <Text style={styles.folderMeta}>
+                    {noneTotals.count} {noneTotals.count === 1 ? "sesión" : "sesiones"}
+                  </Text>
+                </View>
+                <Text style={styles.folderTotal}>{fmtDuration(noneTotals.total)}</Text>
+              </TouchableOpacity>
+            ) : null}
+          </>
+        )}
+      </View>
+    );
+  }
+
+  // ---------- Vista detalle ----------
+  const projName = openProject === null ? "Sin proyecto" : openProject.nombre;
+  const projEntries = entries
+    .filter((e) => (e.proyecto || null) === currentProjectId)
+    .sort((a, b) => new Date(b.inicio) - new Date(a.inicio));
+  const projTotals = totals.get(currentProjectId || NO_PROJECT) || { total: 0, week: 0 };
+  const isRunningHere = running && (running.proyecto || null) === currentProjectId;
+  const runningElsewhere = running && !isRunningHere;
+
+  return (
+    <View style={styles.wrap}>
+      <View style={styles.detailHead}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => setOpenProject(undefined)}>
+          <Ionicons name="chevron-back" size={16} color={colors.text} />
+          <Text style={styles.backText}>Proyectos</Text>
+        </TouchableOpacity>
+        <Text style={styles.detailTitle} numberOfLines={1}>
+          {projName}
+        </Text>
+      </View>
+
+      <View style={styles.timerCard}>
+        <TextInput
+          style={styles.descInput}
+          value={isRunningHere ? running.descripcion : descripcion}
+          onChangeText={(t) =>
+            isRunningHere ? persistRunning({ ...running, descripcion: t }) : setDescripcion(t)
+          }
+          placeholder="¿En qué estás trabajando?"
+          placeholderTextColor={colors.muted}
+          maxLength={160}
+        />
+
+        <Text style={styles.clock}>{fmtClock(isRunningHere ? elapsed : 0)}</Text>
+
+        {runningElsewhere ? (
+          <Text style={styles.warnNote}>
+            Ya tenés una sesión en curso en {runningProject?.nombre}. Finalizala antes de arrancar otra.
+          </Text>
+        ) : !running ? (
+          <TouchableOpacity style={[styles.bigBtn, styles.startBtn]} onPress={handleStart}>
             <Ionicons name="play" size={20} color="#0e1a0e" />
             <Text style={styles.startText}>Iniciar</Text>
           </TouchableOpacity>
+        ) : (
+          <View style={styles.timerBtns}>
+            {running.segmentStart ? (
+              <TouchableOpacity style={[styles.midBtn, styles.pauseBtn]} onPress={handlePause}>
+                <Ionicons name="pause" size={18} color={colors.text} />
+                <Text style={[styles.midText, { color: colors.text }]}>Pausa</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={[styles.midBtn, styles.resumeBtn]} onPress={handleResume}>
+                <Ionicons name="play" size={18} color="#0e1a0e" />
+                <Text style={[styles.midText, { color: "#0e1a0e" }]}>Reanudar</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={[styles.midBtn, styles.stopBtn]}
+              onPress={handleFinish}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="stop" size={18} color="#fff" />
+                  <Text style={[styles.midText, { color: "#fff" }]}>Finalizar</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
         )}
 
         <View style={styles.totalsRow}>
           <View style={styles.totalCard}>
-            <Text style={styles.totalLabel}>HOY</Text>
+            <Text style={styles.totalLabel}>TOTAL PROYECTO</Text>
             <Text style={styles.totalValue}>
-              {fmtDuration(todayTotal + (running ? elapsed : 0))}
+              {fmtDuration(projTotals.total + (isRunningHere ? elapsed : 0))}
             </Text>
           </View>
           <View style={styles.totalCard}>
             <Text style={styles.totalLabel}>ESTA SEMANA</Text>
             <Text style={styles.totalValue}>
-              {fmtDuration(weekTotal + (running ? elapsed : 0))}
+              {fmtDuration(projTotals.week + (isRunningHere ? elapsed : 0))}
             </Text>
           </View>
         </View>
       </View>
 
-      <View style={styles.listHead}>
-        <Text style={styles.listTitle}>Sesiones de hoy</Text>
-        <TouchableOpacity style={styles.manualBtn} onPress={() => setManualOpen(true)}>
-          <Ionicons name="add" size={16} color={colors.greenDark} />
-          <Text style={styles.manualText}>Cargar manual</Text>
-        </TouchableOpacity>
-      </View>
-
-      {loading ? (
-        <ActivityIndicator color={colors.green} style={{ marginTop: 16 }} />
-      ) : todayEntries.length === 0 ? (
-        <Text style={styles.empty}>
-          Todavía no registraste horas hoy. Tocá Iniciar o cargá una sesión manual.
-        </Text>
+      <Text style={styles.listTitle}>Sesiones</Text>
+      {projEntries.length === 0 ? (
+        <Text style={styles.empty}>Todavía no registraste sesiones en este proyecto.</Text>
       ) : (
-        todayEntries.map((e) => {
+        projEntries.map((e) => {
           const start = new Date(e.inicio);
           const end = new Date(e.fin);
           return (
@@ -276,63 +386,99 @@ export default function TimeTrackerPanel({ colors }) {
               <View style={{ flex: 1 }}>
                 <Text style={styles.entryDesc}>{e.descripcion || "Sin descripción"}</Text>
                 <Text style={styles.entryTime}>
-                  {pad(start.getHours())}:{pad(start.getMinutes())} – {pad(end.getHours())}:
+                  {isSameDay(start, new Date())
+                    ? "Hoy"
+                    : start.toLocaleDateString("es-AR", { day: "numeric", month: "short" })}{" "}
+                  · {pad(start.getHours())}:{pad(start.getMinutes())} – {pad(end.getHours())}:
                   {pad(end.getMinutes())}
                 </Text>
               </View>
               <Text style={styles.entryDur}>{fmtDuration(e.duracion)}</Text>
-              <TouchableOpacity onPress={() => handleDelete(e._id)} hitSlop={8}>
-                <Ionicons name="trash-outline" size={18} color={colors.muted} />
-              </TouchableOpacity>
+              <View>
+                <TouchableOpacity onPress={() => setMenuFor(menuFor === e._id ? null : e._id)} hitSlop={8}>
+                  <Ionicons name="ellipsis-vertical" size={18} color={colors.muted} />
+                </TouchableOpacity>
+                {menuFor === e._id ? (
+                  <View style={styles.menu}>
+                    <TouchableOpacity style={styles.menuItem} onPress={() => handleDeleteEntry(e._id)}>
+                      <Ionicons name="trash-outline" size={16} color="#e5533c" />
+                      <Text style={styles.menuText}>Eliminar</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
+              </View>
             </View>
           );
         })
       )}
-
-      <Modal visible={manualOpen} transparent animationType="fade" onRequestClose={() => setManualOpen(false)}>
-        <TouchableOpacity
-          style={styles.overlay}
-          activeOpacity={1}
-          onPress={() => setManualOpen(false)}
-        >
-          <TouchableOpacity activeOpacity={1} style={styles.sheet}>
-            <Text style={styles.sheetTitle}>Cargar sesión manual</Text>
-            <Text style={styles.fieldLabel}>¿En qué trabajaste?</Text>
-            <TextInput
-              style={styles.input}
-              value={manualDesc}
-              onChangeText={setManualDesc}
-              placeholder="Ej: Diseño landing"
-              placeholderTextColor={colors.muted}
-              maxLength={160}
-            />
-            <Text style={styles.fieldLabel}>Minutos trabajados</Text>
-            <TextInput
-              style={styles.input}
-              value={manualMin}
-              onChangeText={(t) => setManualMin(t.replace(/[^\d]/g, ""))}
-              placeholder="Ej: 45"
-              placeholderTextColor={colors.muted}
-              keyboardType="number-pad"
-            />
-            <View style={styles.sheetActions}>
-              <TouchableOpacity style={styles.ghostBtn} onPress={() => setManualOpen(false)}>
-                <Text style={styles.ghostText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={submitManual}>
-                <Text style={styles.saveText}>Guardar</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
     </View>
   );
 }
 
 const makeStyles = (colors) =>
   StyleSheet.create({
-    wrap: { gap: 14 },
+    wrap: { gap: 12 },
+    createRow: { flexDirection: "row", gap: 8 },
+    createInput: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      color: colors.text,
+      fontSize: 15,
+    },
+    createBtn: {
+      width: 50,
+      borderRadius: 12,
+      backgroundColor: colors.greenBright,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    runningBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      borderWidth: 1,
+      borderColor: colors.greenBorder,
+      backgroundColor: colors.greenSoft,
+      borderRadius: 12,
+      padding: 12,
+    },
+    runningDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.greenBright },
+    runningText: { flex: 1, color: colors.text, fontSize: 13 },
+    folderCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 14,
+    },
+    folderName: { color: colors.text, fontWeight: "800", fontSize: 15 },
+    folderMeta: { color: colors.muted, fontSize: 12, marginTop: 2 },
+    folderTotal: { color: colors.greenDark, fontWeight: "800", fontSize: 15 },
+    empty: { color: colors.muted, fontSize: 14, lineHeight: 20, paddingVertical: 10 },
+
+    detailHead: { flexDirection: "row", alignItems: "center", gap: 10 },
+    backBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      borderRadius: 999,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+    },
+    backText: { color: colors.text, fontWeight: "700", fontSize: 13 },
+    detailTitle: { color: colors.text, fontSize: 18, fontWeight: "800", flex: 1 },
+
     timerCard: {
       borderWidth: 1,
       borderColor: colors.cardBorder,
@@ -353,12 +499,7 @@ const makeStyles = (colors) =>
       color: colors.text,
       fontSize: 15,
     },
-    clock: {
-      color: colors.text,
-      fontSize: 48,
-      fontWeight: "900",
-      fontVariant: ["tabular-nums"],
-    },
+    clock: { color: colors.text, fontSize: 46, fontWeight: "900", fontVariant: ["tabular-nums"] },
     bigBtn: {
       flexDirection: "row",
       alignItems: "center",
@@ -371,8 +512,21 @@ const makeStyles = (colors) =>
     },
     startBtn: { backgroundColor: colors.greenBright },
     startText: { color: "#0e1a0e", fontWeight: "800", fontSize: 16 },
+    timerBtns: { flexDirection: "row", gap: 10 },
+    midBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 7,
+      paddingVertical: 13,
+      paddingHorizontal: 20,
+      borderRadius: 999,
+    },
+    midText: { fontWeight: "800", fontSize: 15 },
+    pauseBtn: { backgroundColor: colors.cardSoft || "rgba(255,255,255,0.08)", borderWidth: 1, borderColor: colors.cardBorder },
+    resumeBtn: { backgroundColor: colors.greenBright },
     stopBtn: { backgroundColor: "#e5533c" },
-    stopText: { color: "#fff", fontWeight: "800", fontSize: 16 },
+    warnNote: { color: colors.muted, textAlign: "center", lineHeight: 20, fontSize: 13 },
     totalsRow: { flexDirection: "row", gap: 10, width: "100%" },
     totalCard: {
       flex: 1,
@@ -385,26 +539,9 @@ const makeStyles = (colors) =>
       gap: 3,
     },
     totalLabel: { color: colors.muted, fontSize: 10, fontWeight: "800", letterSpacing: 0.5 },
-    totalValue: { color: colors.text, fontSize: 18, fontWeight: "800" },
-    listHead: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    listTitle: { color: colors.text, fontSize: 16, fontWeight: "800" },
-    manualBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 4,
-      borderWidth: 1,
-      borderColor: colors.greenBorder,
-      backgroundColor: colors.greenSoft,
-      borderRadius: 999,
-      paddingVertical: 6,
-      paddingHorizontal: 12,
-    },
-    manualText: { color: colors.greenDark, fontWeight: "700", fontSize: 12.5 },
-    empty: { color: colors.muted, fontSize: 14, lineHeight: 20, paddingVertical: 10 },
+    totalValue: { color: colors.text, fontSize: 17, fontWeight: "800" },
+
+    listTitle: { color: colors.text, fontSize: 16, fontWeight: "800", marginTop: 4 },
     entryItem: {
       flexDirection: "row",
       alignItems: "center",
@@ -419,41 +556,18 @@ const makeStyles = (colors) =>
     entryDesc: { color: colors.text, fontSize: 14.5, fontWeight: "600" },
     entryTime: { color: colors.muted, fontSize: 12, marginTop: 2 },
     entryDur: { color: colors.greenDark, fontWeight: "800", fontSize: 14.5 },
-    overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", padding: 22 },
-    sheet: {
+    menu: {
+      position: "absolute",
+      top: 24,
+      right: 0,
+      zIndex: 10,
+      minWidth: 140,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
       backgroundColor: colors.bg,
-      borderRadius: 20,
-      borderWidth: 1,
-      borderColor: colors.cardBorder,
-      padding: 18,
-      gap: 10,
-    },
-    sheetTitle: { color: colors.text, fontSize: 18, fontWeight: "800", marginBottom: 4 },
-    fieldLabel: { color: colors.muted, fontSize: 12, fontWeight: "700" },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.cardBorder,
-      backgroundColor: colors.card,
       borderRadius: 12,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
-      color: colors.text,
-      fontSize: 15,
+      padding: 5,
     },
-    sheetActions: { flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 6 },
-    ghostBtn: {
-      borderWidth: 1,
-      borderColor: colors.cardBorder,
-      borderRadius: 12,
-      paddingVertical: 11,
-      paddingHorizontal: 18,
-    },
-    ghostText: { color: colors.text, fontWeight: "700" },
-    saveBtn: {
-      backgroundColor: colors.greenBright,
-      borderRadius: 12,
-      paddingVertical: 11,
-      paddingHorizontal: 20,
-    },
-    saveText: { color: "#0e1a0e", fontWeight: "800" },
+    menuItem: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 9, paddingHorizontal: 10 },
+    menuText: { color: "#e5533c", fontWeight: "700", fontSize: 14 },
   });
