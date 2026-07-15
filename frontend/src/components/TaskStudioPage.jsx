@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FiAlignCenter,
   FiAlignLeft,
+  FiImage,
   FiAlignRight,
   FiBold,
   FiCalendar,
@@ -32,6 +33,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import Quill from "quill";
+import { isCloudinaryConfigured, uploadImageToCloudinary } from "../cloudinary";
 import "quill/dist/quill.snow.css";
 import { taskService } from "../api";
 import ShoppingLists from "./ShoppingLists";
@@ -543,11 +545,49 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       setActiveFormats(getFormatState(formats));
     };
 
+    // Pegar una foto: en vez de incrustarla como base64 (pesadísimo y el server
+    // la rechaza), la subimos a Cloudinary e insertamos solo la URL.
+    const handleImagePaste = (event) => {
+      const items = event.clipboardData?.items;
+      if (!items) return;
+      const imageItem = Array.from(items).find((it) => it.type?.startsWith("image/"));
+      if (!imageItem) return;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      const file = imageItem.getAsFile();
+      if (!file) return;
+
+      if (!isCloudinaryConfigured()) {
+        setError("Para pegar fotos falta configurar Cloudinary (src/cloudinary.js).");
+        return;
+      }
+
+      const range = quill.getSelection(true) || { index: quill.getLength(), length: 0 };
+      const index = range.index;
+      const placeholder = "⏳ Subiendo imagen…";
+      quill.insertText(index, placeholder + "\n", "user");
+
+      uploadImageToCloudinary(file)
+        .then((url) => {
+          quill.deleteText(index, placeholder.length + 1, "user");
+          quill.insertEmbed(index, "image", url, "user");
+          quill.setSelection(index + 1, 0, "silent");
+        })
+        .catch(() => {
+          quill.deleteText(index, placeholder.length + 1, "user");
+          setError("No se pudo subir la imagen.");
+        });
+    };
+    quill.root.addEventListener("paste", handleImagePaste, true);
+
     quill.on("text-change", handleTextChange);
     quill.on("selection-change", handleSelectionChange);
     quillRef.current = quill;
 
     return () => {
+      quill.root.removeEventListener("paste", handleImagePaste, true);
       quill.off("text-change", handleTextChange);
       quill.off("selection-change", handleSelectionChange);
       quillRef.current = null;
@@ -924,6 +964,37 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
 
     setCustomFolders((prev) => (prev.includes(name) ? prev : [...prev, name]));
     handleFieldChange("carpeta", name);
+  };
+
+  // Insertar imagen desde el selector de archivos (sube a Cloudinary → URL).
+  const handleInsertImage = () => {
+    if (!isCloudinaryConfigured()) {
+      setError("Para subir fotos falta configurar Cloudinary (src/cloudinary.js).");
+      return;
+    }
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = () => {
+      const file = input.files?.[0];
+      const quill = quillRef.current;
+      if (!file || !quill) return;
+      const range = quill.getSelection(true) || { index: quill.getLength() };
+      const index = range.index;
+      const placeholder = "⏳ Subiendo imagen…";
+      quill.insertText(index, placeholder + "\n", "user");
+      uploadImageToCloudinary(file)
+        .then((url) => {
+          quill.deleteText(index, placeholder.length + 1, "user");
+          quill.insertEmbed(index, "image", url, "user");
+          quill.setSelection(index + 1, 0, "silent");
+        })
+        .catch(() => {
+          quill.deleteText(index, placeholder.length + 1, "user");
+          setError("No se pudo subir la imagen.");
+        });
+    };
+    input.click();
   };
 
   const getEditorRange = () => {
@@ -2244,6 +2315,16 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   title="Pasar la selección a MAYÚSCULAS"
                 >
                   <span className={style.toolbarText}>AA</span>
+                </button>
+                <button
+                  type="button"
+                  className={style.toolbarButton}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={handleInsertImage}
+                  aria-label="Insertar imagen"
+                  title="Insertar imagen (se sube a la nube)"
+                >
+                  <FiImage />
                 </button>
                 <button
                   type="button"
