@@ -17,6 +17,12 @@ const timeEntrySchema = new mongoose.Schema(
       default: "personal",
       trim: true,
     },
+    proyecto: {
+      // Proyecto/trabajo al que pertenece la sesión (null = "Sin proyecto").
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project",
+      default: null,
+    },
     descripcion: {
       type: String,
       default: "",
