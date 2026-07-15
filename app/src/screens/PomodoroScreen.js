@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import * as SecureStore from "expo-secure-store";
 import { useTheme } from "../theme";
+import TimeTrackerPanel from "../components/TimeTrackerPanel";
 
 // DIAGNÓSTICO: sonido desactivado temporalmente para aislar el crash de Android
 
@@ -44,6 +45,7 @@ export default function PomodoroScreen() {
   const [autoStartPomodoros, setAutoStartPomodoros] = useState(true);
   const [soundOn, setSoundOn] = useState(true);
   const [vibrateOn, setVibrateOn] = useState(true);
+  const [panel, setPanel] = useState("pomodoro"); // pomodoro | tracker
   const [mode, setMode] = useState("focus");
   const [running, setRunning] = useState(false);
   const [remaining, setRemaining] = useState(25 * 60);
@@ -213,15 +215,34 @@ export default function PomodoroScreen() {
     <SafeAreaView style={styles.safe} edges={[]}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.kicker}>POMODORO</Text>
-            <Text style={styles.title}>Enfoque</Text>
+          <View style={styles.panelSwitch}>
+            <TouchableOpacity
+              style={[styles.panelBtn, panel === "pomodoro" && styles.panelBtnActive]}
+              onPress={() => setPanel("pomodoro")}
+            >
+              <Text style={[styles.panelText, panel === "pomodoro" && styles.panelTextActive]}>
+                Pomodoro
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.panelBtn, panel === "tracker" && styles.panelBtnActive]}
+              onPress={() => setPanel("tracker")}
+            >
+              <Text style={[styles.panelText, panel === "tracker" && styles.panelTextActive]}>
+                Registro de horas
+              </Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.gearBtn} onPress={() => setSettingsOpen(true)} hitSlop={8}>
-            <Ionicons name="settings-outline" size={20} color={colors.muted} />
-          </TouchableOpacity>
+          {panel === "pomodoro" ? (
+            <TouchableOpacity style={styles.gearBtn} onPress={() => setSettingsOpen(true)} hitSlop={8}>
+              <Ionicons name="settings-outline" size={20} color={colors.muted} />
+            </TouchableOpacity>
+          ) : null}
         </View>
 
+        {panel === "tracker" ? <TimeTrackerPanel colors={colors} /> : null}
+
+        <View style={panel === "tracker" ? styles.hidden : undefined}>
         {/* Modos */}
         <View style={styles.modeRow}>
           {MODES.map((m) => {
@@ -341,6 +362,7 @@ export default function PomodoroScreen() {
             ))
           )}
         </View>
+        </View>
       </ScrollView>
 
       {/* Modal de ajustes */}
@@ -447,8 +469,24 @@ const makeStyles = (colors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.bg },
     scroll: { padding: 16, paddingBottom: 100 },
-    header: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
+    header: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginBottom: 12, position: "relative" },
+    hidden: { display: "none" },
+    panelSwitch: {
+      flexDirection: "row",
+      gap: 4,
+      padding: 3,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+    },
+    panelBtn: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999 },
+    panelBtnActive: { backgroundColor: colors.greenBright },
+    panelText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
+    panelTextActive: { color: "#0e1a0e", fontWeight: "800" },
     gearBtn: {
+      position: "absolute",
+      right: 0,
       width: 42,
       height: 42,
       borderRadius: 21,

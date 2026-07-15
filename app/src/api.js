@@ -85,6 +85,13 @@ export const fiscalService = {
   update: (data) => api.put("/api/fiscal-config", data),
 };
 
+export const timeEntryService = {
+  getAll: (params) => api.get("/api/time-entries", { params }),
+  create: (data) => api.post("/api/time-entries", data),
+  update: (id, data) => api.put(`/api/time-entries/${id}`, data),
+  delete: (id) => api.delete(`/api/time-entries/${id}`),
+};
+
 export const sharedGroupsService = {
   getAll: () => api.get("/api/shared-groups"),
   getById: (id) => api.get(`/api/shared-groups/${id}`),
