@@ -180,6 +180,30 @@ export default function TimeTracker() {
     }
   };
 
+  const handleDeleteProject = async (project, event) => {
+    event.stopPropagation();
+    if (!window.confirm(`¿Borrar el proyecto "${project.nombre}"? Las sesiones quedan como "Sin proyecto".`)) {
+      return;
+    }
+    try {
+      await projectService.delete(project._id);
+      setProjects((prev) => prev.filter((p) => p._id !== project._id));
+      setEntries((prev) =>
+        prev.map((e) => (e.proyecto === project._id ? { ...e, proyecto: null } : e))
+      );
+    } catch {
+      setError("No se pudo eliminar el proyecto.");
+    }
+  };
+
+  // Cerrar el menú de 3 puntitos al hacer clic en cualquier parte
+  useEffect(() => {
+    if (!menuFor) return undefined;
+    const close = () => setMenuFor(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [menuFor]);
+
   // Totales por proyecto
   const totals = useMemo(() => {
     const map = new Map();
@@ -246,35 +270,56 @@ export default function TimeTracker() {
             {projects.map((p) => {
               const t = totals.get(p._id) || { total: 0, week: 0, count: 0 };
               return (
-                <button
+                <div
                   key={p._id}
-                  type="button"
                   className={style.folderCard}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setOpenProject(p)}
+                  onKeyDown={(e) => e.key === "Enter" && setOpenProject(p)}
                 >
-                  <span className={style.folderIcon} style={{ color: p.color || "#5dc72d" }}>
-                    <FiFolder />
-                  </span>
+                  <div className={style.folderTop}>
+                    <span className={style.folderIcon} style={{ color: p.color || "#5dc72d" }}>
+                      <FiFolder />
+                    </span>
+                    <button
+                      type="button"
+                      className={style.folderDelete}
+                      onClick={(e) => handleDeleteProject(p, e)}
+                      aria-label="Eliminar proyecto"
+                      title="Eliminar proyecto"
+                    >
+                      <FiTrash2 />
+                    </button>
+                  </div>
                   <span className={style.folderName}>{p.nombre}</span>
                   <span className={style.folderTotal}>{fmtDuration(t.total)}</span>
                   <span className={style.folderMeta}>
                     {t.count} {t.count === 1 ? "sesión" : "sesiones"} · esta semana {fmtDuration(t.week)}
                   </span>
-                </button>
+                </div>
               );
             })}
 
             {noneTotals ? (
-              <button type="button" className={style.folderCard} onClick={() => setOpenProject(null)}>
-                <span className={style.folderIcon} style={{ color: "#8a94a6" }}>
-                  <FiFolder />
-                </span>
+              <div
+                className={style.folderCard}
+                role="button"
+                tabIndex={0}
+                onClick={() => setOpenProject(null)}
+                onKeyDown={(e) => e.key === "Enter" && setOpenProject(null)}
+              >
+                <div className={style.folderTop}>
+                  <span className={style.folderIcon} style={{ color: "#8a94a6" }}>
+                    <FiFolder />
+                  </span>
+                </div>
                 <span className={style.folderName}>Sin proyecto</span>
                 <span className={style.folderTotal}>{fmtDuration(noneTotals.total)}</span>
                 <span className={style.folderMeta}>
                   {noneTotals.count} {noneTotals.count === 1 ? "sesión" : "sesiones"}
                 </span>
-              </button>
+              </div>
             ) : null}
           </div>
         )}
@@ -292,7 +337,7 @@ export default function TimeTracker() {
   const runningElsewhere = running && !isRunningHere;
 
   return (
-    <div className={style.wrap}>
+    <div className={style.detailWrap}>
       <div className={style.detailHead}>
         <button type="button" className={style.backBtn} onClick={() => setOpenProject(undefined)}>
           <FiChevronLeft /> Proyectos
@@ -393,7 +438,10 @@ export default function TimeTracker() {
                     <button
                       type="button"
                       className={style.menuBtn}
-                      onClick={() => setMenuFor(menuFor === e._id ? null : e._id)}
+                      onClick={(ev) => {
+                        ev.stopPropagation();
+                        setMenuFor(menuFor === e._id ? null : e._id);
+                      }}
                       aria-label="Opciones"
                     >
                       ⋯

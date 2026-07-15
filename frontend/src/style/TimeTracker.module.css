@@ -286,11 +286,15 @@
 
 .createRow {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
   gap: 0.6rem;
 }
 
 .createInput {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
   border: 1px solid var(--border-color, rgba(216, 241, 224, 0.12));
   border-radius: 14px;
   padding: 0.85rem 1rem;
@@ -300,7 +304,8 @@
 }
 
 .createBtn {
-  width: 50px;
+  flex: 0 0 auto;
+  width: 52px;
   border: none;
   border-radius: 14px;
   background: #5dc72d;
@@ -309,6 +314,40 @@
   display: grid;
   place-items: center;
   cursor: pointer;
+}
+
+/* Detalle apilado: título arriba, timer y sesiones debajo */
+.detailWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.detailWrap .timerCard {
+  align-self: stretch;
+}
+
+.folderTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.folderDelete {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+}
+
+.folderDelete:hover {
+  color: #e5533c;
+  background: rgba(229, 83, 60, 0.12);
 }
 
 .runningBanner {
