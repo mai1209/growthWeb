@@ -64,6 +64,12 @@ export default function TimeTrackerPanel({ colors }) {
   const [now, setNow] = useState(Date.now());
   const [saving, setSaving] = useState(false);
   const [menuFor, setMenuFor] = useState(null);
+  const [finishOpen, setFinishOpen] = useState(false);
+  const [finishNotes, setFinishNotes] = useState("");
+  const [expandedEntry, setExpandedEntry] = useState(null);
+  const [entryNotesDraft, setEntryNotesDraft] = useState("");
+  const [projectNotesDraft, setProjectNotesDraft] = useState("");
+  const [notesSaved, setNotesSaved] = useState(false);
   const tickRef = useRef(null);
 
   const fetchAll = useCallback(async () => {
@@ -121,32 +127,42 @@ export default function TimeTrackerPanel({ colors }) {
       firstStart: new Date().toISOString(),
       accumulated: 0,
       segmentStart: new Date().toISOString(),
+      pausas: [],
+      pauseStart: null,
     });
   };
   const handlePause = () => {
     if (!running?.segmentStart) return;
     const acc =
       running.accumulated + Math.floor((Date.now() - new Date(running.segmentStart).getTime()) / 1000);
-    persistRunning({ ...running, accumulated: acc, segmentStart: null });
+    persistRunning({ ...running, accumulated: acc, segmentStart: null, pauseStart: new Date().toISOString() });
   };
   const handleResume = () => {
     if (!running || running.segmentStart) return;
-    persistRunning({ ...running, segmentStart: new Date().toISOString() });
+    const pausas = [...(running.pausas || [])];
+    if (running.pauseStart) pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString() });
+    persistRunning({ ...running, segmentStart: new Date().toISOString(), pauseStart: null, pausas });
   };
-  const handleFinish = async () => {
+  const confirmFinish = async () => {
     if (!running || saving) return;
     setSaving(true);
     const total = activeSecs(running, Date.now());
+    const pausas = [...(running.pausas || [])];
+    if (running.pauseStart) pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString() });
     try {
       await timeEntryService.create({
         proyecto: running.proyecto || undefined,
         descripcion: running.descripcion || descripcion.trim(),
+        notas: finishNotes,
+        pausas,
         inicio: running.firstStart,
         fin: new Date().toISOString(),
         duracion: total,
       });
       persistRunning(null);
       setDescripcion("");
+      setFinishNotes("");
+      setFinishOpen(false);
       await fetchAll();
     } catch {
       Alert.alert("Error", "No se pudo guardar la sesión.");
@@ -206,6 +222,45 @@ export default function TimeTrackerPanel({ colors }) {
       },
     ]);
   };
+
+  const toggleExpand = (entry) => {
+    if (expandedEntry === entry._id) {
+      setExpandedEntry(null);
+    } else {
+      setExpandedEntry(entry._id);
+      setEntryNotesDraft(entry.notas || "");
+    }
+  };
+
+  const handleSaveEntryNotes = async (id) => {
+    try {
+      await timeEntryService.update(id, { notas: entryNotesDraft });
+      setEntries((prev) => prev.map((e) => (e._id === id ? { ...e, notas: entryNotesDraft } : e)));
+      Alert.alert("Listo", "Notas guardadas.");
+    } catch {
+      Alert.alert("Error", "No se pudieron guardar las notas.");
+    }
+  };
+
+  const handleSaveProjectNotes = async () => {
+    if (!openProject?._id) return;
+    try {
+      await projectService.update(openProject._id, { notas: projectNotesDraft });
+      setProjects((prev) =>
+        prev.map((p) => (p._id === openProject._id ? { ...p, notas: projectNotesDraft } : p))
+      );
+      setOpenProject((prev) => (prev ? { ...prev, notas: projectNotesDraft } : prev));
+      setNotesSaved(true);
+      setTimeout(() => setNotesSaved(false), 1500);
+    } catch {
+      Alert.alert("Error", "No se pudieron guardar las notas del proyecto.");
+    }
+  };
+
+  useEffect(() => {
+    setProjectNotesDraft(openProject?.notas || "");
+    setExpandedEntry(null);
+  }, [openProject]);
 
   const totals = useMemo(() => {
     const map = new Map();
@@ -374,17 +429,11 @@ export default function TimeTrackerPanel({ colors }) {
             )}
             <TouchableOpacity
               style={[styles.midBtn, styles.stopBtn]}
-              onPress={handleFinish}
+              onPress={() => setFinishOpen(true)}
               disabled={saving}
             >
-              {saving ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <>
-                  <Ionicons name="stop" size={18} color="#fff" />
-                  <Text style={[styles.midText, { color: "#fff" }]}>Finalizar</Text>
-                </>
-              )}
+              <Ionicons name="stop" size={18} color="#fff" />
+              <Text style={[styles.midText, { color: "#fff" }]}>Finalizar</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -412,36 +461,127 @@ export default function TimeTrackerPanel({ colors }) {
         projEntries.map((e) => {
           const start = new Date(e.inicio);
           const end = new Date(e.fin);
+          const isOpen = expandedEntry === e._id;
+          const pausas = Array.isArray(e.pausas) ? e.pausas : [];
           return (
-            <View key={e._id} style={styles.entryItem}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.entryDesc}>{e.descripcion || "Sin descripción"}</Text>
-                <Text style={styles.entryTime}>
-                  {isSameDay(start, new Date())
-                    ? "Hoy"
-                    : start.toLocaleDateString("es-AR", { day: "numeric", month: "short" })}{" "}
-                  · {pad(start.getHours())}:{pad(start.getMinutes())} – {pad(end.getHours())}:
-                  {pad(end.getMinutes())}
-                </Text>
-              </View>
-              <Text style={styles.entryDur}>{fmtDuration(e.duracion)}</Text>
-              <View>
-                <TouchableOpacity onPress={() => setMenuFor(menuFor === e._id ? null : e._id)} hitSlop={8}>
-                  <Ionicons name="ellipsis-vertical" size={18} color={colors.muted} />
+            <View key={e._id} style={styles.entryWrap}>
+              <View style={styles.entryItem}>
+                <TouchableOpacity style={{ flex: 1 }} onPress={() => toggleExpand(e)} activeOpacity={0.7}>
+                  <Text style={styles.entryDesc}>
+                    {e.descripcion || "Sin descripción"}
+                    {e.notas ? "  📝" : ""}
+                  </Text>
+                  <Text style={styles.entryTime}>
+                    {isSameDay(start, new Date())
+                      ? "Hoy"
+                      : start.toLocaleDateString("es-AR", { day: "numeric", month: "short" })}{" "}
+                    · {pad(start.getHours())}:{pad(start.getMinutes())} – {pad(end.getHours())}:
+                    {pad(end.getMinutes())}
+                  </Text>
                 </TouchableOpacity>
-                {menuFor === e._id ? (
-                  <View style={styles.menu}>
-                    <TouchableOpacity style={styles.menuItem} onPress={() => handleDeleteEntry(e._id)}>
-                      <Ionicons name="trash-outline" size={16} color="#e5533c" />
-                      <Text style={styles.menuText}>Eliminar</Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : null}
+                <Text style={styles.entryDur}>{fmtDuration(e.duracion)}</Text>
+                <View>
+                  <TouchableOpacity onPress={() => setMenuFor(menuFor === e._id ? null : e._id)} hitSlop={8}>
+                    <Ionicons name="ellipsis-vertical" size={18} color={colors.muted} />
+                  </TouchableOpacity>
+                  {menuFor === e._id ? (
+                    <View style={styles.menu}>
+                      <TouchableOpacity style={styles.menuItem} onPress={() => handleDeleteEntry(e._id)}>
+                        <Ionicons name="trash-outline" size={16} color="#e5533c" />
+                        <Text style={styles.menuText}>Eliminar</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+                </View>
               </View>
+
+              {isOpen ? (
+                <View style={styles.entryDetail}>
+                  {pausas.length ? (
+                    <>
+                      <Text style={styles.detailLabel}>PAUSAS</Text>
+                      {pausas.map((p, i) => {
+                        const pi = new Date(p.inicio);
+                        const pf = new Date(p.fin);
+                        const dur = Math.max(0, Math.round((pf - pi) / 1000));
+                        return (
+                          <Text key={i} style={styles.pausaRow}>
+                            ⏸ {pad(pi.getHours())}:{pad(pi.getMinutes())} → {pad(pf.getHours())}:
+                            {pad(pf.getMinutes())} · {fmtDuration(dur)}
+                          </Text>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <Text style={styles.detailMuted}>Sin pausas.</Text>
+                  )}
+
+                  <Text style={styles.detailLabel}>NOTAS</Text>
+                  <TextInput
+                    style={styles.notesArea}
+                    value={entryNotesDraft}
+                    onChangeText={setEntryNotesDraft}
+                    placeholder="Notas de esta sesión…"
+                    placeholderTextColor={colors.muted}
+                    multiline
+                  />
+                  <TouchableOpacity style={styles.saveNotesBtn} onPress={() => handleSaveEntryNotes(e._id)}>
+                    <Text style={styles.saveNotesText}>Guardar notas</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
             </View>
           );
         })
       )}
+
+      {/* Notas del proyecto */}
+      {openProject ? (
+        <View style={styles.projectNotes}>
+          <Text style={styles.listTitle}>Notas del proyecto</Text>
+          <TextInput
+            style={[styles.notesArea, { minHeight: 90 }]}
+            value={projectNotesDraft}
+            onChangeText={setProjectNotesDraft}
+            placeholder="Datos del cliente, pendientes, links…"
+            placeholderTextColor={colors.muted}
+            multiline
+          />
+          <TouchableOpacity style={styles.saveNotesBtn} onPress={handleSaveProjectNotes}>
+            <Text style={styles.saveNotesText}>{notesSaved ? "✓ Guardado" : "Guardar notas"}</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
+      {/* Modal Finalizar con notas */}
+      <Modal visible={finishOpen} transparent animationType="fade" onRequestClose={() => setFinishOpen(false)}>
+        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setFinishOpen(false)}>
+          <TouchableOpacity activeOpacity={1} style={styles.sheet}>
+            <Text style={styles.sheetTitle}>Finalizar sesión</Text>
+            <Text style={styles.fieldLabel}>Notas (opcional)</Text>
+            <TextInput
+              style={[styles.input, { minHeight: 90, textAlignVertical: "top" }]}
+              value={finishNotes}
+              onChangeText={setFinishNotes}
+              placeholder="¿Qué hiciste en esta sesión?"
+              placeholderTextColor={colors.muted}
+              multiline
+            />
+            <View style={styles.sheetActions}>
+              <TouchableOpacity style={styles.ghostBtn} onPress={() => setFinishOpen(false)}>
+                <Text style={styles.ghostText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveBtn} onPress={confirmFinish} disabled={saving}>
+                {saving ? (
+                  <ActivityIndicator color="#0e1a0e" />
+                ) : (
+                  <Text style={styles.saveText}>Guardar sesión</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -602,4 +742,76 @@ const makeStyles = (colors) =>
     },
     menuItem: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 9, paddingHorizontal: 10 },
     menuText: { color: "#e5533c", fontWeight: "700", fontSize: 14 },
+
+    entryWrap: { gap: 6 },
+    entryDetail: {
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.bg,
+      borderRadius: 12,
+      padding: 12,
+      gap: 8,
+    },
+    detailLabel: { color: colors.muted, fontSize: 10, fontWeight: "800", letterSpacing: 0.5 },
+    detailMuted: { color: colors.muted, fontSize: 13 },
+    pausaRow: { color: colors.text, fontSize: 13 },
+    notesArea: {
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      color: colors.text,
+      fontSize: 14,
+      minHeight: 64,
+      textAlignVertical: "top",
+    },
+    saveNotesBtn: {
+      alignSelf: "flex-start",
+      backgroundColor: colors.greenSoft,
+      borderRadius: 10,
+      paddingVertical: 8,
+      paddingHorizontal: 14,
+    },
+    saveNotesText: { color: colors.greenDark, fontWeight: "800", fontSize: 13 },
+    projectNotes: { gap: 8, marginTop: 8 },
+
+    overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", padding: 22 },
+    sheet: {
+      backgroundColor: colors.bg,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      padding: 18,
+      gap: 10,
+    },
+    sheetTitle: { color: colors.text, fontSize: 18, fontWeight: "800", marginBottom: 4 },
+    fieldLabel: { color: colors.muted, fontSize: 12, fontWeight: "700" },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      color: colors.text,
+      fontSize: 15,
+    },
+    sheetActions: { flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 6 },
+    ghostBtn: {
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 12,
+      paddingVertical: 11,
+      paddingHorizontal: 18,
+    },
+    ghostText: { color: colors.text, fontWeight: "700" },
+    saveBtn: {
+      backgroundColor: colors.greenBright,
+      borderRadius: 12,
+      paddingVertical: 11,
+      paddingHorizontal: 20,
+    },
+    saveText: { color: "#0e1a0e", fontWeight: "800" },
   });
