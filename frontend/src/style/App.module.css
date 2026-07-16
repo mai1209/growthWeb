@@ -122,12 +122,17 @@
 }
 
 /* Home clavado al alto del monitor (desktop): sin scroll de página.
-   Los movimientos scrollean adentro de su panel. */
+   Los movimientos scrollean adentro de su panel. En desktop el nav es un rail
+   lateral (sin barra arriba), así que el alto disponible es todo el 100vh. */
 @media (min-width: 1001px) {
+  .page {
+    min-height: 100vh;
+  }
+
   .homeViewport {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 78px);
+    height: 100vh;
     min-height: 0;
     overflow: hidden;
   }

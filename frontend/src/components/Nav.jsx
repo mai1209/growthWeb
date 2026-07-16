@@ -220,11 +220,19 @@ function Nav({
     <>
       {/* Rail vertical — desktop */}
       <aside className={style.rail}>
-        {currentToken && (
-          <nav className={style.railNav}>
-            <NavItems rail />
-          </nav>
-        )}
+        <div className={style.railTop}>
+          {currentToken && (
+            <div className={style.railProfile}>
+              <ProfileDropdown />
+            </div>
+          )}
+
+          {currentToken && (
+            <nav className={style.railNav}>
+              <NavItems rail />
+            </nav>
+          )}
+        </div>
 
         {currentToken && (
           <div className={style.railBottom}>
@@ -233,8 +241,6 @@ function Nav({
               <FiMoon className={style.moon} />
               <span className={style.tip}>Cambiar tema</span>
             </button>
-
-            <ProfileDropdown />
 
             <button onClick={handleLogout} className={style.railAction} type="button">
               <FiLogOut />

@@ -396,6 +396,17 @@
   z-index: 900;
 }
 
+.railTop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.railProfile {
+  margin-bottom: 0.2rem;
+}
+
 .railNav {
   display: flex;
   flex-direction: column;
@@ -444,16 +455,15 @@
   display: grid;
   place-items: center;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  background: transparent;
   color: var(--color-muted);
   cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition: color 0.15s ease;
 }
 
 .railAction:hover {
   color: var(--color-text);
-  background: rgba(255, 255, 255, 0.06);
 }
 
 .railAction :global(svg) {
@@ -516,8 +526,8 @@
 }
 
 .rail .profileDropdown {
-  top: auto;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 8px);
+  bottom: auto;
   left: 0;
   right: auto;
 }

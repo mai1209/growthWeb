@@ -27,7 +27,7 @@
    página; si los resultados no entran, scrollean adentro del panel */
 @media (min-width: 1001px) {
   .container {
-    height: calc(100vh - 78px);
+    height: 100vh;
     overflow: hidden;
   }
 
