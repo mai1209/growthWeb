@@ -6,6 +6,7 @@ import {
   FiTrash2,
   FiPlus,
   FiChevronLeft,
+  FiChevronDown,
   FiFolder,
   FiClock,
 } from "react-icons/fi";
@@ -67,6 +68,8 @@ export default function TimeTracker() {
   const [entryNotesDraft, setEntryNotesDraft] = useState("");
   const [projectNotesDraft, setProjectNotesDraft] = useState("");
   const [projectNotesSaved, setProjectNotesSaved] = useState(false);
+  const [projectNotesOpen, setProjectNotesOpen] = useState(false);
+  const [entryNotesOpen, setEntryNotesOpen] = useState(false);
   const tickRef = useRef(null);
 
   const fetchAll = useCallback(async () => {
@@ -218,6 +221,7 @@ export default function TimeTracker() {
     } else {
       setExpandedEntry(entry._id);
       setEntryNotesDraft(entry.notas || "");
+      setEntryNotesOpen(false);
     }
   };
 
@@ -400,6 +404,8 @@ export default function TimeTracker() {
         <h2 className={style.detailTitle}>{projName}</h2>
       </div>
 
+      <div className={style.detailGrid}>
+        <div className={style.detailLeft}>
       {/* Cronómetro */}
       <section className={style.timerCard}>
         <input
@@ -459,8 +465,45 @@ export default function TimeTracker() {
         </div>
       </section>
 
-      {/* Sesiones del proyecto */}
-      <section className={style.listCard}>
+      {/* Notas del proyecto (colapsable) */}
+      {openProject ? (
+        <section className={style.listCard}>
+          <button
+            type="button"
+            className={style.collapseHead}
+            onClick={() => setProjectNotesOpen((v) => !v)}
+          >
+            <span className={style.collapseTitle}>
+              <FiClock /> Notas del proyecto
+            </span>
+            <FiChevronDown
+              className={`${style.collapseChevron} ${projectNotesOpen ? style.collapseChevronOpen : ""}`}
+            />
+          </button>
+          {projectNotesOpen ? (
+            <>
+              <textarea
+                className={style.notesArea}
+                value={projectNotesDraft}
+                onChange={(e) => setProjectNotesDraft(e.target.value)}
+                placeholder="Datos del cliente, pendientes, links… (notas del proyecto)"
+                rows={5}
+              />
+              <button
+                type="button"
+                className={style.saveNotesBtn}
+                onClick={handleSaveProjectNotes}
+              >
+                {projectNotesSaved ? "✓ Guardado" : "Guardar notas"}
+              </button>
+            </>
+          ) : null}
+        </section>
+      ) : null}
+        </div>
+
+      {/* Sesiones del proyecto (columna derecha) */}
+      <section className={`${style.listCard} ${style.sessionsCol}`}>
         <div className={style.listHead}>
           <h2>
             <FiClock /> Sesiones
@@ -541,21 +584,34 @@ export default function TimeTracker() {
                         <span className={style.detailMuted}>Sin pausas.</span>
                       )}
 
-                      <span className={style.detailLabel}>Notas</span>
-                      <textarea
-                        className={style.notesArea}
-                        value={entryNotesDraft}
-                        onChange={(ev) => setEntryNotesDraft(ev.target.value)}
-                        placeholder="Notas de esta sesión…"
-                        rows={3}
-                      />
                       <button
                         type="button"
-                        className={style.saveNotesBtn}
-                        onClick={() => handleSaveEntryNotes(e._id)}
+                        className={style.collapseHead}
+                        onClick={() => setEntryNotesOpen((v) => !v)}
                       >
-                        Guardar notas
+                        <span className={style.detailLabel}>Notas</span>
+                        <FiChevronDown
+                          className={`${style.collapseChevron} ${entryNotesOpen ? style.collapseChevronOpen : ""}`}
+                        />
                       </button>
+                      {entryNotesOpen ? (
+                        <>
+                          <textarea
+                            className={style.notesArea}
+                            value={entryNotesDraft}
+                            onChange={(ev) => setEntryNotesDraft(ev.target.value)}
+                            placeholder="Notas de esta sesión…"
+                            rows={3}
+                          />
+                          <button
+                            type="button"
+                            className={style.saveNotesBtn}
+                            onClick={() => handleSaveEntryNotes(e._id)}
+                          >
+                            Guardar notas
+                          </button>
+                        </>
+                      ) : null}
                     </div>
                   ) : null}
                 </li>
@@ -564,27 +620,7 @@ export default function TimeTracker() {
           </ul>
         )}
       </section>
-
-      {/* Notas del proyecto */}
-      {openProject ? (
-        <section className={style.listCard}>
-          <div className={style.listHead}>
-            <h2>
-              <FiClock /> Notas del proyecto
-            </h2>
-          </div>
-          <textarea
-            className={style.notesArea}
-            value={projectNotesDraft}
-            onChange={(e) => setProjectNotesDraft(e.target.value)}
-            placeholder="Datos del cliente, pendientes, links… (notas del proyecto)"
-            rows={5}
-          />
-          <button type="button" className={style.saveNotesBtn} onClick={handleSaveProjectNotes}>
-            {projectNotesSaved ? "✓ Guardado" : "Guardar notas"}
-          </button>
-        </section>
-      ) : null}
+      </div>
 
       {/* Modal Finalizar con notas */}
       {finishOpen ? (

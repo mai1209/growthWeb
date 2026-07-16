@@ -613,3 +613,62 @@
 .menu button:hover {
   background: rgba(229, 83, 60, 0.12);
 }
+
+/* Detalle en 2 columnas: izquierda timer+notas, derecha sesiones */
+.detailGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 370px);
+  gap: 1.15rem;
+  align-items: start;
+}
+
+.detailLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  min-width: 0;
+}
+
+.sessionsCol {
+  align-self: start;
+}
+
+@media (max-width: 900px) {
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Encabezado colapsable (notas) */
+.collapseHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  color: inherit;
+}
+
+.collapseTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.collapseChevron {
+  color: var(--color-muted);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.collapseChevronOpen {
+  transform: rotate(180deg);
+}
