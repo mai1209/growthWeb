@@ -161,7 +161,7 @@
 .closePanelRow {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: -0.4rem;
+  margin-bottom: 0.9rem;
 }
 
 .closePanelButton {
