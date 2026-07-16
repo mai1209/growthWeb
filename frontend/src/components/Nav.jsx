@@ -221,6 +221,15 @@ function Nav({
       {/* Rail vertical — desktop */}
       <aside className={style.rail}>
         <div className={style.railTop}>
+          <button
+            className={style.railLogo}
+            onClick={() => navigate("/")}
+            type="button"
+            aria-label="Inicio"
+          >
+            <img src="/logo.png" alt="Growth" />
+          </button>
+
           {currentToken && (
             <div className={style.railProfile}>
               <ProfileDropdown />
@@ -245,15 +254,6 @@ function Nav({
             <button onClick={handleLogout} className={style.railAction} type="button">
               <FiLogOut />
               <span className={style.tip}>Cerrar sesión</span>
-            </button>
-
-            <button
-              className={style.railLogo}
-              onClick={() => navigate("/")}
-              type="button"
-              aria-label="Inicio"
-            >
-              <img src="/logo.png" alt="Growth" />
             </button>
           </div>
         )}
