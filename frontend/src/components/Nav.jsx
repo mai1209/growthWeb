@@ -231,12 +231,6 @@ function Nav({
           </button>
 
           {currentToken && (
-            <div className={style.railProfile}>
-              <ProfileDropdown />
-            </div>
-          )}
-
-          {currentToken && (
             <nav className={style.railNav}>
               <NavItems rail />
             </nav>
@@ -245,6 +239,10 @@ function Nav({
 
         {currentToken && (
           <div className={style.railBottom}>
+            <div className={style.railProfile}>
+              <ProfileDropdown />
+            </div>
+
             <button onClick={onThemeToggle} className={style.railAction} type="button">
               <FiSun className={style.sun} />
               <FiMoon className={style.moon} />

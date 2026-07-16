@@ -275,17 +275,6 @@ function Dashboard({
 
         </section>
 
-        <aside className={style.promoSidebar}>
-          <section className={style.promoCard}>
-            <div className={style.promoCopy}>
-              <p className={style.eyebrow}>Espacio publicitario</p>
-            </div>
-
-            <div className={style.promoMedia}>
-              <img src="/publicidad.jpg" alt="publicidad" />
-            </div>
-          </section>
-        </aside>
       </section>
 
       {typePickerOpen && (
