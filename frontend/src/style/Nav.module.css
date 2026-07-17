@@ -394,6 +394,38 @@
   background: var(--nav-background);
   border-right: 1px solid rgba(255, 255, 255, 0.06);
   z-index: 900;
+  transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    flex-basis 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    padding 0.28s ease;
+}
+
+/* Fade + deslizado suave de los textos al expandir */
+.railExpanded .tip,
+.railExpanded .railBrand,
+.railExpanded .userName {
+  animation: railLabelIn 0.32s ease both;
+}
+
+@keyframes railLabelIn {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail {
+    transition: none;
+  }
+  .railExpanded .tip,
+  .railExpanded .railBrand,
+  .railExpanded .userName {
+    animation: none;
+  }
 }
 
 .railTop {
