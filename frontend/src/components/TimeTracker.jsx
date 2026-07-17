@@ -498,7 +498,7 @@ export default function TimeTracker() {
             />
           </button>
           {projectNotesOpen ? (
-            <>
+            <div className={style.notesBody}>
               <textarea
                 className={style.notesArea}
                 value={projectNotesDraft}
@@ -513,7 +513,7 @@ export default function TimeTracker() {
               >
                 {projectNotesSaved ? "✓ Guardado" : "Guardar notas"}
               </button>
-            </>
+            </div>
           ) : null}
         </section>
       ) : null}
@@ -647,8 +647,38 @@ export default function TimeTracker() {
         <div className={style.overlay} onClick={() => setFinishOpen(false)} role="presentation">
           <div className={style.modal} onClick={(e) => e.stopPropagation()}>
             <h3>Finalizar sesión</h3>
+
             <div className={style.field}>
-              <span>Notas (opcional)</span>
+              <span>Resumen</span>
+              <div className={style.finishSummary}>
+                <div>
+                  Tiempo trabajado: <strong>{fmtDuration(activeSecs(running, Date.now()))}</strong>
+                </div>
+                {(() => {
+                  const pausas = [...((running && running.pausas) || [])];
+                  if (running?.pauseStart) {
+                    pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString(), motivo: pauseMotivo.trim() });
+                  }
+                  if (!pausas.length) return <div className={style.detailMuted}>Sin pausas.</div>;
+                  return pausas.map((p, i) => {
+                    const pi = new Date(p.inicio);
+                    const pf = new Date(p.fin);
+                    const dur = Math.max(0, Math.round((pf - pi) / 1000));
+                    return (
+                      <div key={i} className={style.pausaRow}>
+                        <FiPause />
+                        {pad(pi.getHours())}:{pad(pi.getMinutes())} → {pad(pf.getHours())}:
+                        {pad(pf.getMinutes())} · {fmtDuration(dur)}
+                        {p.motivo ? <span className={style.pausaMotivo}> · {p.motivo}</span> : null}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+
+            <div className={style.field}>
+              <span>Notas de la sesión (opcional)</span>
               <textarea
                 className={style.notesArea}
                 value={finishNotes}

@@ -675,10 +675,10 @@
 
 .pauseInput {
   width: 100%;
-  border: 1px solid rgba(93, 199, 45, 0.35);
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.12));
   border-radius: 12px;
   padding: 0.7rem 0.9rem;
-  background: rgba(93, 199, 45, 0.08);
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
   color: var(--color-text);
   font-size: 0.9rem;
 }
@@ -686,4 +686,23 @@
 .pausaMotivo {
   color: #5dc72d;
   font-weight: 700;
+}
+
+.notesBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding-top: 0.7rem;
+  padding-bottom: 0.5rem;
+}
+
+.finishSummary {
+  display: grid;
+  gap: 0.35rem;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.12));
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
+  color: var(--color-text);
+  font-size: 0.88rem;
 }
