@@ -862,7 +862,7 @@ export default function TimeTrackerPanel({ colors }) {
           const pausas = Array.isArray(e.pausas) ? e.pausas : [];
           return (
             <View key={e._id} style={styles.entryWrap}>
-              <View style={styles.entryItem}>
+              <View style={[styles.entryItem, isOpen && styles.entryItemOpen]}>
                 <TouchableOpacity style={{ flex: 1 }} onPress={() => toggleExpand(e)} activeOpacity={0.7}>
                   <Text style={styles.entryDesc}>
                     {e.descripcion || "Sin descripción"}
@@ -1195,6 +1195,7 @@ const makeStyles = (colors) =>
       paddingVertical: 11,
       paddingHorizontal: 13,
     },
+    entryItemOpen: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
     entryDesc: { color: colors.text, fontSize: 14.5, fontWeight: "600" },
     entryTime: { color: colors.muted, fontSize: 12, marginTop: 2 },
     entryDur: { color: colors.greenDark, fontWeight: "800", fontSize: 14.5 },

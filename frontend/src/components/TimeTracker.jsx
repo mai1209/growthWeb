@@ -915,7 +915,7 @@ export default function TimeTracker() {
               const pausas = Array.isArray(e.pausas) ? e.pausas : [];
               return (
                 <li key={e._id} className={style.entryLi}>
-                  <div className={style.entryItem}>
+                  <div className={`${style.entryItem} ${isOpen ? style.entryItemOpen : ""}`}>
                     <button
                       type="button"
                       className={style.entryMain}
