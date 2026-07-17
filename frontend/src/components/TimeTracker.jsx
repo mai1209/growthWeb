@@ -739,7 +739,19 @@ export default function TimeTracker() {
         <button type="button" className={style.backBtn} onClick={() => setOpenProject(undefined)}>
           <FiChevronLeft /> Proyectos
         </button>
-        <h2 className={style.detailTitle}>{projName}</h2>
+        <div className={style.detailTitleWrap}>
+          <h2 className={style.detailTitle}>{projName}</h2>
+          {openProject?.createdAt ? (
+            <span className={style.detailDate}>
+              Proyecto del{" "}
+              {new Date(openProject.createdAt).toLocaleDateString("es-AR", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
+            </span>
+          ) : null}
+        </div>
         {openProject ? (
           <button
             type="button"
