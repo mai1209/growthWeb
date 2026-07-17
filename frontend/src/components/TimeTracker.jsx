@@ -252,6 +252,24 @@ export default function TimeTracker() {
     }
   };
 
+  const handleDeleteOrphans = async () => {
+    const orphans = entries.filter((e) => !e.proyecto);
+    if (!orphans.length) {
+      window.alert("No hay sesiones sin proyecto para borrar.");
+      return;
+    }
+    if (!window.confirm(`¿Borrar las ${orphans.length} sesiones sin proyecto? No se puede deshacer.`)) {
+      return;
+    }
+    try {
+      await Promise.all(orphans.map((e) => timeEntryService.delete(e._id)));
+      setEntries((prev) => prev.filter((e) => e.proyecto));
+      setOpenProject(undefined);
+    } catch {
+      setError("No se pudieron borrar las sesiones.");
+    }
+  };
+
   const toggleExpand = (entry) => {
     if (expandedEntry === entry._id) {
       setExpandedEntry(null);
@@ -753,17 +771,19 @@ export default function TimeTracker() {
             </span>
           ) : null}
         </div>
-        {openProject ? (
-          <button
-            type="button"
-            className={style.detailDelete}
-            onClick={() => handleDeleteProject(openProject, { stopPropagation: () => {} }, true)}
-            aria-label="Eliminar proyecto"
-            title="Eliminar proyecto"
-          >
-            <FiTrash2 />
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className={style.detailDelete}
+          onClick={() =>
+            openProject
+              ? handleDeleteProject(openProject, { stopPropagation: () => {} }, true)
+              : handleDeleteOrphans()
+          }
+          aria-label={openProject ? "Eliminar proyecto" : "Borrar sesiones sin proyecto"}
+          title={openProject ? "Eliminar proyecto" : "Borrar sesiones sin proyecto"}
+        >
+          <FiTrash2 />
+        </button>
       </div>
 
       <div className={style.detailGrid}>

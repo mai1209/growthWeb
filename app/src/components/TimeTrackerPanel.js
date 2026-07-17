@@ -244,6 +244,30 @@ export default function TimeTrackerPanel({ colors }) {
     ]);
   };
 
+  const handleDeleteOrphans = () => {
+    const orphans = entries.filter((e) => !e.proyecto);
+    if (!orphans.length) {
+      Alert.alert("Sin sesiones", "No hay sesiones sin proyecto para borrar.");
+      return;
+    }
+    Alert.alert("Borrar sesiones", `¿Borrar las ${orphans.length} sesiones sin proyecto? No se puede deshacer.`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Borrar",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await Promise.all(orphans.map((e) => timeEntryService.delete(e._id)));
+            setEntries((prev) => prev.filter((e) => e.proyecto));
+            setOpenProject(undefined);
+          } catch {
+            Alert.alert("Error", "No se pudieron borrar las sesiones.");
+          }
+        },
+      },
+    ]);
+  };
+
   const handleDeleteEntry = (id) => {
     setMenuFor(null);
     Alert.alert("Eliminar", "¿Borrar esta sesión?", [
@@ -745,11 +769,12 @@ export default function TimeTrackerPanel({ colors }) {
             </Text>
           ) : null}
         </View>
-        {openProject ? (
-          <TouchableOpacity style={styles.detailDelete} onPress={() => handleDeleteProject(openProject, true)}>
-            <Ionicons name="trash-outline" size={19} color={colors.muted} />
-          </TouchableOpacity>
-        ) : null}
+        <TouchableOpacity
+          style={styles.detailDelete}
+          onPress={() => (openProject ? handleDeleteProject(openProject, true) : handleDeleteOrphans())}
+        >
+          <Ionicons name="trash-outline" size={19} color={colors.muted} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.timerCard}>
