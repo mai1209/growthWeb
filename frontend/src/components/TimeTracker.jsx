@@ -235,8 +235,8 @@ export default function TimeTracker() {
     }
   };
 
-  const handleDeleteProject = async (project, event) => {
-    event.stopPropagation();
+  const handleDeleteProject = async (project, event, goBack = false) => {
+    event?.stopPropagation?.();
     if (!window.confirm(`¿Borrar el proyecto "${project.nombre}"? Las sesiones quedan como "Sin proyecto".`)) {
       return;
     }
@@ -246,6 +246,7 @@ export default function TimeTracker() {
       setEntries((prev) =>
         prev.map((e) => (e.proyecto === project._id ? { ...e, proyecto: null } : e))
       );
+      if (goBack) setOpenProject(undefined);
     } catch {
       setError("No se pudo eliminar el proyecto.");
     }
@@ -739,6 +740,17 @@ export default function TimeTracker() {
           <FiChevronLeft /> Proyectos
         </button>
         <h2 className={style.detailTitle}>{projName}</h2>
+        {openProject ? (
+          <button
+            type="button"
+            className={style.detailDelete}
+            onClick={() => handleDeleteProject(openProject, { stopPropagation: () => {} }, true)}
+            aria-label="Eliminar proyecto"
+            title="Eliminar proyecto"
+          >
+            <FiTrash2 />
+          </button>
+        ) : null}
       </div>
 
       <div className={style.detailGrid}>
@@ -883,7 +895,6 @@ export default function TimeTracker() {
                           : start.toLocaleDateString("es-AR", { day: "numeric", month: "short" })}{" "}
                         · {pad(start.getHours())}:{pad(start.getMinutes())} – {pad(end.getHours())}:
                         {pad(end.getMinutes())}
-                        {e.notas ? " · 📝" : ""}
                       </span>
                     </button>
                     <span className={style.entryDur}>{fmtDuration(e.duracion)}</span>

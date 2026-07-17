@@ -523,6 +523,27 @@
   font-size: 1.3rem;
   color: var(--color-text);
   overflow-wrap: anywhere;
+  flex: 1;
+  min-width: 0;
+}
+
+.detailDelete {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.14));
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
+  color: var(--color-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.detailDelete:hover {
+  color: #e5533c;
+  background: rgba(229, 83, 60, 0.12);
 }
 
 .timerBtns {
