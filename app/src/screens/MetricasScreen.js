@@ -48,6 +48,16 @@ const getPeriodRange = (period) => {
   return { from, to };
 };
 
+// Etiqueta sutil del período que se está contando (ej: "jul 2026", "may – jul 2026").
+const periodRangeLabel = (period) => {
+  const { from, to } = getPeriodRange(period);
+  if (period === "year") return String(from.getFullYear());
+  if (period === "month") return from.toLocaleDateString("es-AR", { month: "short", year: "numeric" });
+  const f = from.toLocaleDateString("es-AR", { month: "short" });
+  const t = to.toLocaleDateString("es-AR", { month: "short", year: "numeric" });
+  return `${f} – ${t}`;
+};
+
 // Donut con react-native-svg (segmentos por strokeDasharray)
 function Donut({ items, size = 132, stroke = 22, colors }) {
   const data = items.filter((i) => i.value > 0);
@@ -216,17 +226,22 @@ export default function MetricasScreen() {
           </View>
 
           <View style={styles.periodRow}>
-            {PERIOD_OPTIONS.map((p) => (
-              <TouchableOpacity
-                key={p.value}
-                style={[styles.periodChip, period === p.value && styles.periodChipActive]}
-                onPress={() => setPeriod(p.value)}
-              >
-                <Text style={[styles.periodChipText, period === p.value && styles.periodChipTextActive]}>
-                  {p.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <View style={styles.periodChips}>
+              {PERIOD_OPTIONS.map((p) => (
+                <TouchableOpacity
+                  key={p.value}
+                  style={[styles.periodChip, period === p.value && styles.periodChipActive]}
+                  onPress={() => setPeriod(p.value)}
+                >
+                  <Text style={[styles.periodChipText, period === p.value && styles.periodChipTextActive]}>
+                    {p.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.periodLabel} numberOfLines={1}>
+              {periodRangeLabel(period)}
+            </Text>
           </View>
         </View>
       </View>
@@ -299,7 +314,16 @@ const makeStyles = (colors) =>
     curText: { color: colors.muted, fontWeight: "800", fontSize: 13 },
     curTextActive: { color: colors.segActiveText },
 
-    periodRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    periodRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
+    periodChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, flexShrink: 1 },
+    periodLabel: {
+      color: colors.muted,
+      fontSize: 12,
+      fontWeight: "700",
+      textTransform: "capitalize",
+      opacity: 0.7,
+      marginLeft: "auto",
+    },
     periodChip: {
       paddingVertical: 8,
       paddingHorizontal: 13,

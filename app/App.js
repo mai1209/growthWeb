@@ -76,7 +76,7 @@ function MainTabs() {
         key={workspace}
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarActiveTintColor: colors.greenDark,
+          tabBarActiveTintColor: colors.greenBright,
           tabBarInactiveTintColor: colors.muted,
           tabBarStyle: {
             backgroundColor: colors.bg,
