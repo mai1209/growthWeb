@@ -8,6 +8,9 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
@@ -219,7 +222,7 @@ export default function TimeTrackerPanel({ colors }) {
     }
   };
 
-  const handleDeleteProject = (project) => {
+  const handleDeleteProject = (project, goBack = false) => {
     Alert.alert("Eliminar proyecto", `¿Borrar "${project.nombre}"? Las sesiones quedan como "Sin proyecto".`, [
       { text: "Cancelar", style: "cancel" },
       {
@@ -232,6 +235,7 @@ export default function TimeTrackerPanel({ colors }) {
             setEntries((prev) =>
               prev.map((e) => (e.proyecto === project._id ? { ...e, proyecto: null } : e))
             );
+            if (goBack) setOpenProject(undefined);
           } catch {
             Alert.alert("Error", "No se pudo eliminar el proyecto.");
           }
@@ -490,7 +494,16 @@ export default function TimeTrackerPanel({ colors }) {
         )}
 
         <Modal visible={Boolean(dayAddDate)} transparent animationType="fade" onRequestClose={() => setDayAddDate(null)}>
-          <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setDayAddDate(null)}>
+          <KeyboardAvoidingView
+            style={styles.overlay}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+          >
+            <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setDayAddDate(null)} />
+            <ScrollView
+              style={{ width: "100%", flexGrow: 0 }}
+              contentContainerStyle={{ justifyContent: "center" }}
+              keyboardShouldPersistTaps="handled"
+            >
             <TouchableOpacity activeOpacity={1} style={styles.sheet}>
               <Text style={styles.sheetTitle}>
                 Cargar trabajo{dayAddDate ? ` · ${dayAddDate.toLocaleDateString("es-AR", { day: "numeric", month: "long" })}` : ""}
@@ -583,7 +596,8 @@ export default function TimeTrackerPanel({ colors }) {
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
-          </TouchableOpacity>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </Modal>
       </View>
     );
@@ -720,6 +734,11 @@ export default function TimeTrackerPanel({ colors }) {
         <Text style={styles.detailTitle} numberOfLines={1}>
           {projName}
         </Text>
+        {openProject ? (
+          <TouchableOpacity style={styles.detailDelete} onPress={() => handleDeleteProject(openProject, true)}>
+            <Ionicons name="trash-outline" size={19} color={colors.muted} />
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       <View style={styles.timerCard}>
@@ -811,7 +830,6 @@ export default function TimeTrackerPanel({ colors }) {
                 <TouchableOpacity style={{ flex: 1 }} onPress={() => toggleExpand(e)} activeOpacity={0.7}>
                   <Text style={styles.entryDesc}>
                     {e.descripcion || "Sin descripción"}
-                    {e.notas ? "  📝" : ""}
                   </Text>
                   <Text style={styles.entryTime}>
                     {isSameDay(start, new Date())
@@ -927,7 +945,16 @@ export default function TimeTrackerPanel({ colors }) {
 
       {/* Modal Finalizar con notas */}
       <Modal visible={finishOpen} transparent animationType="fade" onRequestClose={() => setFinishOpen(false)}>
-        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setFinishOpen(false)}>
+        <KeyboardAvoidingView
+          style={styles.overlay}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setFinishOpen(false)} />
+          <ScrollView
+            style={{ width: "100%", flexGrow: 0 }}
+            contentContainerStyle={{ justifyContent: "center" }}
+            keyboardShouldPersistTaps="handled"
+          >
           <TouchableOpacity activeOpacity={1} style={styles.sheet}>
             <Text style={styles.sheetTitle}>Finalizar sesión</Text>
 
@@ -977,7 +1004,8 @@ export default function TimeTrackerPanel({ colors }) {
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
-        </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -1047,6 +1075,15 @@ const makeStyles = (colors) =>
     },
     backText: { color: colors.text, fontWeight: "700", fontSize: 13 },
     detailTitle: { color: colors.text, fontSize: 18, fontWeight: "800", flex: 1 },
+    detailDelete: {
+      width: 40,
+      height: 40,
+      borderRadius: 11,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
 
     timerCard: {
       borderWidth: 1,
