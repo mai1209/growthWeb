@@ -706,3 +706,200 @@
   color: var(--color-text);
   font-size: 0.88rem;
 }
+
+/* ===== Toggle Proyectos / Calendario ===== */
+.topToggle {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.28rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.14));
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
+  align-self: center;
+}
+
+.topToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.topToggleActive {
+  background: #5dc72d;
+  color: #0e1a0e;
+}
+
+/* ===== Calendario ===== */
+.calendarWrap {
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+  border-radius: 20px;
+  background: var(--surface-card, rgba(255, 255, 255, 0.03));
+  padding: 1.1rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.calHead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.calNavBtn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.14));
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.calMonth {
+  min-width: 190px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--color-text);
+  text-transform: capitalize;
+}
+
+.calWeekdays,
+.calGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.4rem;
+}
+
+.calWeekdays span {
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.calCell {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.15rem;
+  padding: 0.4rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.07));
+  background: var(--surface-input, rgba(255, 255, 255, 0.02));
+  color: var(--color-text);
+  cursor: default;
+}
+
+.calCellMuted {
+  opacity: 0.35;
+}
+
+.calCellToday {
+  border-color: rgba(93, 199, 45, 0.6);
+}
+
+.calCellHas {
+  cursor: pointer;
+  background: rgba(93, 199, 45, 0.1);
+  border-color: rgba(93, 199, 45, 0.3);
+}
+
+.calCellHas:hover {
+  background: rgba(93, 199, 45, 0.18);
+}
+
+.calCellSel {
+  outline: 2px solid #5dc72d;
+  outline-offset: -1px;
+}
+
+.calDayNum {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.calDayTotal {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #5dc72d;
+}
+
+.calDetail {
+  border-top: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+  padding-top: 0.8rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.calDetailHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calDetailHead strong {
+  color: var(--color-text);
+  text-transform: capitalize;
+}
+
+.calDetailTotal {
+  color: #5dc72d;
+  font-weight: 800;
+}
+
+.calDetailList {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.calProjRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.08));
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
+  background: var(--surface-input, rgba(255, 255, 255, 0.03));
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.calProjRow:hover {
+  border-color: rgba(93, 199, 45, 0.4);
+}
+
+.calProjName {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+
+.calProjDur {
+  color: #5dc72d;
+  font-weight: 800;
+}
+
+.calHint {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  margin: 0.2rem 0 0;
+}

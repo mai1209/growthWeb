@@ -6,9 +6,11 @@ import {
   FiTrash2,
   FiPlus,
   FiChevronLeft,
+  FiChevronRight,
   FiChevronDown,
   FiFolder,
   FiClock,
+  FiCalendar,
 } from "react-icons/fi";
 import { timeEntryService, projectService } from "../api";
 import style from "../style/TimeTracker.module.css";
@@ -46,6 +48,27 @@ const startOfWeek = (d) => {
 };
 const isSameDay = (a, b) => startOfDay(a).getTime() === startOfDay(b).getTime();
 
+const dayKeyOf = (date) => {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+// Grilla del mes (semanas de lunes a domingo) que contiene a `ref`.
+const buildMonthGrid = (ref) => {
+  const first = new Date(ref.getFullYear(), ref.getMonth(), 1);
+  const start = startOfDay(first);
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7)); // retrocede al lunes
+  const cells = [];
+  for (let i = 0; i < 42; i += 1) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    cells.push(d);
+  }
+  return cells;
+};
+
 const activeSecs = (r, nowMs) =>
   r ? r.accumulated + (r.segmentStart ? Math.floor((nowMs - new Date(r.segmentStart).getTime()) / 1000) : 0) : 0;
 
@@ -71,6 +94,9 @@ export default function TimeTracker() {
   const [projectNotesOpen, setProjectNotesOpen] = useState(false);
   const [entryNotesOpen, setEntryNotesOpen] = useState(false);
   const [pauseMotivo, setPauseMotivo] = useState("");
+  const [topView, setTopView] = useState("proyectos"); // proyectos | calendario
+  const [calRef, setCalRef] = useState(() => new Date());
+  const [selectedDay, setSelectedDay] = useState(null); // dayKey seleccionado en el calendario
   const tickRef = useRef(null);
 
   const fetchAll = useCallback(async () => {
@@ -285,6 +311,30 @@ export default function TimeTracker() {
     return map;
   }, [entries]);
 
+  // Nombre/color por proyecto (para el calendario)
+  const projMeta = useMemo(() => {
+    const map = new Map();
+    projects.forEach((p) => map.set(p._id, { nombre: p.nombre, color: p.color || "#5dc72d" }));
+    map.set(NO_PROJECT, { nombre: "Sin proyecto", color: "#8a94a6" });
+    return map;
+  }, [projects]);
+
+  // Sesiones agrupadas por día (para el calendario)
+  const byDay = useMemo(() => {
+    const map = new Map();
+    entries.forEach((e) => {
+      const key = dayKeyOf(e.inicio);
+      const cur = map.get(key) || { total: 0, byProject: new Map(), items: [] };
+      const dur = Number(e.duracion) || 0;
+      cur.total += dur;
+      const pk = e.proyecto || NO_PROJECT;
+      cur.byProject.set(pk, (cur.byProject.get(pk) || 0) + dur);
+      cur.items.push(e);
+      map.set(key, cur);
+    });
+    return map;
+  }, [entries]);
+
   const runningProject = running
     ? running.proyecto
       ? projects.find((p) => p._id === running.proyecto)
@@ -293,11 +343,128 @@ export default function TimeTracker() {
 
   const elapsed = activeSecs(running, now);
 
+  const goMonth = (delta) =>
+    setCalRef((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
+
+  const openProjectById = (pid) => {
+    if (pid === NO_PROJECT) return setOpenProject(null);
+    const p = projects.find((x) => x._id === pid);
+    if (p) setOpenProject(p);
+  };
+
+  // ---------- Vista Calendario ----------
+  const renderCalendar = () => {
+    const cells = buildMonthGrid(calRef);
+    const monthLabel = calRef.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+    const todayKey = dayKeyOf(new Date());
+    const dayData = selectedDay ? byDay.get(selectedDay) : null;
+
+    return (
+      <div className={style.calendarWrap}>
+        <div className={style.calHead}>
+          <button type="button" className={style.calNavBtn} onClick={() => goMonth(-1)} aria-label="Mes anterior">
+            <FiChevronLeft />
+          </button>
+          <span className={style.calMonth}>{monthLabel}</span>
+          <button type="button" className={style.calNavBtn} onClick={() => goMonth(1)} aria-label="Mes siguiente">
+            <FiChevronRight />
+          </button>
+        </div>
+
+        <div className={style.calWeekdays}>
+          {WEEKDAYS.map((w) => (
+            <span key={w}>{w}</span>
+          ))}
+        </div>
+
+        <div className={style.calGrid}>
+          {cells.map((d) => {
+            const key = dayKeyOf(d);
+            const data = byDay.get(key);
+            const inMonth = d.getMonth() === calRef.getMonth();
+            return (
+              <button
+                type="button"
+                key={key}
+                className={`${style.calCell} ${!inMonth ? style.calCellMuted : ""} ${
+                  key === todayKey ? style.calCellToday : ""
+                } ${data ? style.calCellHas : ""} ${selectedDay === key ? style.calCellSel : ""}`}
+                onClick={() => setSelectedDay(data ? key : null)}
+              >
+                <span className={style.calDayNum}>{d.getDate()}</span>
+                {data ? <span className={style.calDayTotal}>{fmtDuration(data.total)}</span> : null}
+              </button>
+            );
+          })}
+        </div>
+
+        {dayData ? (
+          <div className={style.calDetail}>
+            <div className={style.calDetailHead}>
+              <strong>
+                {new Date(selectedDay).toLocaleDateString("es-AR", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
+              </strong>
+              <span className={style.calDetailTotal}>{fmtDuration(dayData.total)}</span>
+            </div>
+            <div className={style.calDetailList}>
+              {[...dayData.byProject.entries()]
+                .sort((a, b) => b[1] - a[1])
+                .map(([pk, secs]) => {
+                  const meta = projMeta.get(pk) || { nombre: "Proyecto", color: "#5dc72d" };
+                  return (
+                    <button
+                      key={pk}
+                      type="button"
+                      className={style.calProjRow}
+                      onClick={() => openProjectById(pk)}
+                    >
+                      <span className={style.calProjName}>
+                        <FiFolder style={{ color: meta.color }} /> {meta.nombre}
+                      </span>
+                      <span className={style.calProjDur}>{fmtDuration(secs)}</span>
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
+        ) : (
+          <p className={style.calHint}>
+            Tocá un día con horas registradas para ver el desglose por proyecto.
+          </p>
+        )}
+      </div>
+    );
+  };
+
   // ---------- Vista carpetas ----------
   if (openProject === undefined) {
     const noneTotals = totals.get(NO_PROJECT);
     return (
       <div className={style.foldersWrap}>
+        <div className={style.topToggle}>
+          <button
+            type="button"
+            className={`${style.topToggleBtn} ${topView === "proyectos" ? style.topToggleActive : ""}`}
+            onClick={() => setTopView("proyectos")}
+          >
+            <FiFolder /> Proyectos
+          </button>
+          <button
+            type="button"
+            className={`${style.topToggleBtn} ${topView === "calendario" ? style.topToggleActive : ""}`}
+            onClick={() => setTopView("calendario")}
+          >
+            <FiCalendar /> Calendario
+          </button>
+        </div>
+
+        {topView === "calendario" ? renderCalendar() : null}
+        {topView === "calendario" ? null : (
+        <>
         <form className={style.createRow} onSubmit={handleCreateProject}>
           <input
             className={style.createInput}
@@ -388,6 +555,8 @@ export default function TimeTracker() {
               </div>
             ) : null}
           </div>
+        )}
+        </>
         )}
       </div>
     );
