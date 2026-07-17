@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
-import { FiBriefcase, FiChevronDown, FiClock, FiMoon, FiPieChart, FiSettings, FiSun, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3 } from "react-icons/fi";
+import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiMoon, FiPieChart, FiSettings, FiSun, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3 } from "react-icons/fi";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { authService } from "../api";
@@ -36,6 +36,21 @@ function Nav({
   const location = useLocation();
   const [profile, setProfile] = useState(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [railExpanded, setRailExpanded] = useState(
+    () => localStorage.getItem("gw-rail-expanded") === "1"
+  );
+
+  const toggleRail = () => {
+    setRailExpanded((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("gw-rail-expanded", next ? "1" : "0");
+      } catch {
+        /* nada */
+      }
+      return next;
+    });
+  };
   const profileMenuRef = useRef(null);
 
   const currentToken = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -219,16 +234,29 @@ function Nav({
   return (
     <>
       {/* Rail vertical — desktop */}
-      <aside className={style.rail}>
+      <aside className={`${style.rail} ${railExpanded ? style.railExpanded : ""}`}>
         <div className={style.railTop}>
-          <button
-            className={style.railLogo}
-            onClick={() => navigate("/")}
-            type="button"
-            aria-label="Inicio"
-          >
-            <img src="/logo.png" alt="Growth" />
-          </button>
+          <div className={style.railHead}>
+            <button
+              className={style.railLogo}
+              onClick={() => navigate("/")}
+              type="button"
+              aria-label="Inicio"
+            >
+              <img src="/logo.png" alt="Growth" />
+            </button>
+            {currentToken && (
+              <button
+                className={style.railToggle}
+                onClick={toggleRail}
+                type="button"
+                aria-label={railExpanded ? "Contraer menú" : "Expandir menú"}
+                title={railExpanded ? "Contraer" : "Expandir"}
+              >
+                {railExpanded ? <FiChevronsLeft /> : <FiChevronsRight />}
+              </button>
+            )}
+          </div>
 
           {currentToken && (
             <nav className={style.railNav}>
