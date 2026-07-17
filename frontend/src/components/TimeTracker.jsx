@@ -737,7 +737,8 @@ export default function TimeTracker() {
     <div className={style.detailWrap}>
       <div className={style.detailHead}>
         <button type="button" className={style.backBtn} onClick={() => setOpenProject(undefined)}>
-          <FiChevronLeft /> Proyectos
+          <FiChevronLeft />
+          <span className={style.backLabel}>Proyectos</span>
         </button>
         <div className={style.detailTitleWrap}>
           <h2 className={style.detailTitle}>{projName}</h2>

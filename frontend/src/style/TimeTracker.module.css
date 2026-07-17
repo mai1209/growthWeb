@@ -1067,4 +1067,25 @@
   .dayTimeRow {
     grid-template-columns: 1fr 1fr;
   }
+
+  /* Botón volver: solo el ícono en teléfono */
+  .backLabel {
+    display: none;
+  }
+
+  .backBtn {
+    padding: 0;
+    width: 38px;
+    height: 38px;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .detailHead {
+    gap: 0.5rem;
+  }
+
+  .detailTitle {
+    font-size: 1.1rem;
+  }
 }

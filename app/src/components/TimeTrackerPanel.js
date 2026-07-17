@@ -728,8 +728,7 @@ export default function TimeTrackerPanel({ colors }) {
       ) : null}
       <View style={styles.detailHead}>
         <TouchableOpacity style={styles.backBtn} onPress={() => setOpenProject(undefined)}>
-          <Ionicons name="chevron-back" size={16} color={colors.text} />
-          <Text style={styles.backText}>Proyectos</Text>
+          <Ionicons name="chevron-back" size={20} color={colors.text} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.detailTitle} numberOfLines={1}>
@@ -1075,15 +1074,14 @@ const makeStyles = (colors) =>
 
     detailHead: { flexDirection: "row", alignItems: "center", gap: 10 },
     backBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 3,
+      width: 40,
+      height: 40,
+      borderRadius: 11,
       borderWidth: 1,
       borderColor: colors.cardBorder,
       backgroundColor: colors.card,
-      borderRadius: 999,
-      paddingVertical: 6,
-      paddingHorizontal: 12,
+      alignItems: "center",
+      justifyContent: "center",
     },
     backText: { color: colors.text, fontWeight: "700", fontSize: 13 },
     detailTitle: { color: colors.text, fontSize: 18, fontWeight: "800" },
