@@ -70,31 +70,19 @@ export default function HomeScreen() {
   const ringTranslateY = pulse.interpolate({ inputRange: [0, 1], outputRange: [-8, 8] });
 
   // La tarjeta de saldo cambia con el tema: oscura en dark, mint clara en light
-  const card = isDark
-    ? {
-        stops: ["#16745a", "#0e444b", "#0a2a33"],
-        backup: "#0e444b",
-        text: "#ffffff",
-        muted: "rgba(236, 246, 243, 0.72)",
-        iconBorder: "rgba(236, 246, 243, 0.28)",
-        iconBg: "rgba(255, 255, 255, 0.1)",
-        glow1: "rgba(20, 217, 95, 0.24)",
-        glow2: "rgba(19, 170, 182, 0.22)",
-        glow3: "rgba(20, 217, 95, 0.12)",
-        lineColor: "rgba(255, 255, 255, 0.24)",
-      }
-    : {
-        stops: ["#9de3c0", "#c4ecd8", "#e8f6ee"],
-        backup: "#c4ecd8",
-        text: "#16241d",
-        muted: "rgba(22, 36, 29, 0.6)",
-        iconBorder: "rgba(22, 36, 29, 0.18)",
-        iconBg: "rgba(255, 255, 255, 0.45)",
-        glow1: "rgba(20, 217, 95, 0.30)",
-        glow2: "rgba(19, 170, 182, 0.22)",
-        glow3: "rgba(20, 217, 95, 0.16)",
-        lineColor: "rgba(22, 36, 29, 0.20)",
-      };
+  // Fondo 5 — Holográfico (tornasolado). Mismo look en claro/oscuro.
+  const card = {
+    stops: ["#a8e6ff", "#ffc2e6", "#b8f5cf"],
+    backup: "#c8b8ff",
+    text: "#10151b",
+    muted: "rgba(16, 21, 27, 0.62)",
+    iconBorder: "rgba(16, 21, 27, 0.28)",
+    iconBg: "rgba(255, 255, 255, 0.4)",
+    glow1: "rgba(255, 255, 255, 0.3)",
+    glow2: "rgba(200, 184, 255, 0.28)",
+    glow3: "rgba(255, 194, 230, 0.3)",
+    lineColor: "rgba(255, 255, 255, 0.38)",
+  };
   const navigation = useNavigation();
   const [movimientos, setMovimientos] = useState([]);
   const [loading, setLoading] = useState(true);
