@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from "react-native-svg";
+import * as SecureStore from "expo-secure-store";
 import { movimientoService } from "../api";
 import { statAccents, useTheme } from "../theme";
 import MovementFormModal from "../components/MovementFormModal";
@@ -39,6 +40,91 @@ const fmtDate = (value) => {
   const [y, m, d] = s.split("-");
   return y && m && d ? `${d}/${m}/${y}` : s;
 };
+
+const CARD_STYLE_KEY = "gm_card_style";
+
+// Estilos de la tarjeta de saldo (elegibles dando vuelta la tarjeta).
+const CARD_STYLES = {
+  holo: {
+    label: "Holográfico",
+    swatch: "#c8b8ff",
+    stops: ["#a8e6ff", "#ffc2e6", "#b8f5cf"],
+    backup: "#c8b8ff",
+    text: "#10151b",
+    muted: "rgba(16, 21, 27, 0.62)",
+    iconBorder: "rgba(16, 21, 27, 0.28)",
+    iconBg: "rgba(255, 255, 255, 0.4)",
+    glow1: "rgba(255, 255, 255, 0.3)",
+    glow3: "rgba(255, 194, 230, 0.3)",
+    lineColor: "rgba(255, 255, 255, 0.38)",
+  },
+  platino: {
+    label: "Platino",
+    swatch: "#dbe3ec",
+    stops: ["#f4f7fa", "#c7d0da", "#dfe6ee"],
+    backup: "#d6dfe8",
+    text: "#10151b",
+    muted: "rgba(16, 21, 27, 0.6)",
+    iconBorder: "rgba(16, 21, 27, 0.25)",
+    iconBg: "rgba(255, 255, 255, 0.5)",
+    glow1: "rgba(255, 255, 255, 0.5)",
+    glow3: "rgba(255, 255, 255, 0.4)",
+    lineColor: "rgba(255, 255, 255, 0.55)",
+  },
+  titanio: {
+    label: "Titanio",
+    swatch: "#6b7480",
+    stops: ["#565f6a", "#8b95a1", "#3c434c"],
+    backup: "#565f6a",
+    text: "#f2f8fb",
+    muted: "rgba(242, 248, 251, 0.72)",
+    iconBorder: "rgba(242, 248, 251, 0.28)",
+    iconBg: "rgba(255, 255, 255, 0.12)",
+    glow1: "rgba(255, 255, 255, 0.2)",
+    glow3: "rgba(255, 255, 255, 0.12)",
+    lineColor: "rgba(255, 255, 255, 0.3)",
+  },
+  chrome: {
+    label: "Chrome",
+    swatch: "#2b3138",
+    stops: ["#20252c", "#454c56", "#1a1e24"],
+    backup: "#20252c",
+    text: "#f2f8fb",
+    muted: "rgba(242, 248, 251, 0.7)",
+    iconBorder: "rgba(242, 248, 251, 0.22)",
+    iconBg: "rgba(255, 255, 255, 0.1)",
+    glow1: "rgba(255, 255, 255, 0.22)",
+    glow3: "rgba(255, 255, 255, 0.1)",
+    lineColor: "rgba(255, 255, 255, 0.28)",
+  },
+  esmeralda: {
+    label: "Esmeralda",
+    swatch: "#16d97a",
+    stops: ["#12c46f", "#23e58a", "#0c9a5c"],
+    backup: "#12c46f",
+    text: "#08251a",
+    muted: "rgba(8, 37, 26, 0.7)",
+    iconBorder: "rgba(8, 37, 26, 0.25)",
+    iconBg: "rgba(255, 255, 255, 0.3)",
+    glow1: "rgba(255, 255, 255, 0.35)",
+    glow3: "rgba(255, 255, 255, 0.22)",
+    lineColor: "rgba(255, 255, 255, 0.4)",
+  },
+  champagne: {
+    label: "Champagne",
+    swatch: "#d9b877",
+    stops: ["#fbf3dd", "#d9b877", "#c9a55f"],
+    backup: "#e6cf9a",
+    text: "#2a2010",
+    muted: "rgba(42, 32, 16, 0.62)",
+    iconBorder: "rgba(42, 32, 16, 0.28)",
+    iconBg: "rgba(255, 255, 255, 0.4)",
+    glow1: "rgba(255, 255, 255, 0.4)",
+    glow3: "rgba(255, 255, 255, 0.28)",
+    lineColor: "rgba(255, 255, 255, 0.45)",
+  },
+};
+const CARD_ORDER = ["holo", "platino", "titanio", "chrome", "esmeralda", "champagne"];
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
@@ -70,19 +156,39 @@ export default function HomeScreen() {
   const ringTranslateY = pulse.interpolate({ inputRange: [0, 1], outputRange: [-8, 8] });
 
   // La tarjeta de saldo cambia con el tema: oscura en dark, mint clara en light
-  // Fondo 5 — Holográfico (tornasolado). Mismo look en claro/oscuro.
-  const card = {
-    stops: ["#a8e6ff", "#ffc2e6", "#b8f5cf"],
-    backup: "#c8b8ff",
-    text: "#10151b",
-    muted: "rgba(16, 21, 27, 0.62)",
-    iconBorder: "rgba(16, 21, 27, 0.28)",
-    iconBg: "rgba(255, 255, 255, 0.4)",
-    glow1: "rgba(255, 255, 255, 0.3)",
-    glow2: "rgba(200, 184, 255, 0.28)",
-    glow3: "rgba(255, 194, 230, 0.3)",
-    lineColor: "rgba(255, 255, 255, 0.38)",
+  const [cardStyleKey, setCardStyleKey] = useState("holo");
+  const [flipped, setFlipped] = useState(false);
+  const flipAnim = useRef(new Animated.Value(0)).current;
+  const card = CARD_STYLES[cardStyleKey] || CARD_STYLES.holo;
+
+  // Cargar el estilo de tarjeta guardado
+  useEffect(() => {
+    SecureStore.getItemAsync(CARD_STYLE_KEY)
+      .then((k) => {
+        if (k && CARD_STYLES[k]) setCardStyleKey(k);
+      })
+      .catch(() => {});
+  }, []);
+
+  const flipCard = () => {
+    const next = !flipped;
+    setFlipped(next);
+    Animated.timing(flipAnim, {
+      toValue: next ? 1 : 0,
+      duration: 480,
+      useNativeDriver: true,
+    }).start();
   };
+
+  const chooseCard = (key) => {
+    setCardStyleKey(key);
+    SecureStore.setItemAsync(CARD_STYLE_KEY, key).catch(() => {});
+    setFlipped(false);
+    Animated.timing(flipAnim, { toValue: 0, duration: 480, useNativeDriver: true }).start();
+  };
+
+  const frontRotate = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "180deg"] });
+  const backRotate = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ["180deg", "360deg"] });
   const navigation = useNavigation();
   const [movimientos, setMovimientos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -204,9 +310,14 @@ export default function HomeScreen() {
         <View style={styles.cardBody}>
             {isCurrency ? (
               <>
-                {/* Tarjeta de saldo estilo credit card */}
-                <View
-                  style={[styles.balanceCard, { backgroundColor: card.backup }]}
+                {/* Tarjeta de saldo estilo credit card (se da vuelta para elegir color) */}
+                <View style={styles.flipWrap}>
+                <Animated.View
+                  style={[
+                    styles.balanceCard,
+                    { backgroundColor: card.backup },
+                    { transform: [{ perspective: 1000 }, { rotateY: frontRotate }], backfaceVisibility: "hidden" },
+                  ]}
                   onLayout={(e) =>
                     setCardSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })
                   }
@@ -286,6 +397,13 @@ export default function HomeScreen() {
                           color={card.text}
                         />
                       </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.bcIconBtn, { borderColor: card.iconBorder, backgroundColor: card.iconBg }]}
+                        onPress={flipCard}
+                        hitSlop={6}
+                      >
+                        <Ionicons name="color-palette-outline" size={17} color={card.text} />
+                      </TouchableOpacity>
                     </View>
                   </View>
 
@@ -316,6 +434,39 @@ export default function HomeScreen() {
                       </TouchableOpacity>
                     ))}
                   </View>
+                </Animated.View>
+
+                {/* Dorso de la tarjeta: elegir color */}
+                <Animated.View
+                  pointerEvents={flipped ? "auto" : "none"}
+                  style={[
+                    styles.balanceCard,
+                    styles.cardBack,
+                    StyleSheet.absoluteFill,
+                    { transform: [{ perspective: 1000 }, { rotateY: backRotate }], backfaceVisibility: "hidden" },
+                  ]}
+                >
+                  <Text style={styles.cardBackTitle}>Elegí un color de tarjeta</Text>
+                  <View style={styles.swatchRow}>
+                    {CARD_ORDER.map((k) => (
+                      <TouchableOpacity
+                        key={k}
+                        onPress={() => chooseCard(k)}
+                        activeOpacity={0.8}
+                        style={[
+                          styles.swatch,
+                          { backgroundColor: CARD_STYLES[k].swatch },
+                          cardStyleKey === k && styles.swatchActive,
+                        ]}
+                      >
+                        {cardStyleKey === k ? <Ionicons name="checkmark" size={18} color="#0e1a0e" /> : null}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <TouchableOpacity style={styles.cardBackDone} onPress={flipCard}>
+                    <Text style={styles.cardBackDoneText}>Listo</Text>
+                  </TouchableOpacity>
+                </Animated.View>
                 </View>
 
                 {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -792,6 +943,7 @@ const makeStyles = (colors) => StyleSheet.create({
   error: { color: colors.red, marginTop: 4 },
 
   // ===== Tarjeta de saldo (estilo credit card) =====
+  flipWrap: { position: "relative" },
   balanceCard: {
     borderRadius: 24,
     padding: 18,
@@ -800,6 +952,33 @@ const makeStyles = (colors) => StyleSheet.create({
     overflow: "hidden",
     backgroundColor: "#0c333c", // respaldo hasta que el SVG mida la tarjeta
   },
+  cardBack: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 18,
+  },
+  cardBackTitle: { color: colors.text, fontSize: 15, fontWeight: "800" },
+  swatchRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 14 },
+  swatch: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.25)",
+  },
+  swatchActive: { borderColor: colors.greenBright, borderWidth: 3 },
+  cardBackDone: {
+    backgroundColor: colors.greenBright,
+    borderRadius: 999,
+    paddingVertical: 9,
+    paddingHorizontal: 22,
+  },
+  cardBackDoneText: { color: "#0e1a0e", fontWeight: "800", fontSize: 14 },
   bcTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   bcKickerRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   bcKicker: {
