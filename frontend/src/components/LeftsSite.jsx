@@ -85,6 +85,7 @@ function LeftSite({
     setCardStyle(key);
     try {
       localStorage.setItem(CARD_STYLE_KEY, key);
+      window.dispatchEvent(new CustomEvent("gw-card-style", { detail: key }));
     } catch {
       /* nada */
     }

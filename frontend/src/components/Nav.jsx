@@ -18,6 +18,23 @@ const NAV_LINKS = [
   { to: "/ajustes", label: "Ajustes", icon: <FiSettings className={style.navIcon} /> },
 ];
 
+// Acento del avatar según el color de tarjeta elegido (solo decorativo; el resto sigue verde)
+const CARD_ACCENTS = {
+  holo: { ring: "#c8b8ff", glow: "rgba(200, 184, 255, 0.25)" },
+  platino: { ring: "#dbe3ec", glow: "rgba(219, 227, 236, 0.25)" },
+  titanio: { ring: "#9aa4b0", glow: "rgba(154, 164, 176, 0.25)" },
+  chrome: { ring: "#7a828d", glow: "rgba(122, 130, 141, 0.28)" },
+  esmeralda: { ring: "#16d97a", glow: "rgba(22, 217, 122, 0.22)" },
+  champagne: { ring: "#d9b877", glow: "rgba(217, 184, 119, 0.25)" },
+};
+const readCardAccent = () => {
+  try {
+    return CARD_ACCENTS[localStorage.getItem("gw-card-style")] || CARD_ACCENTS.holo;
+  } catch {
+    return CARD_ACCENTS.holo;
+  }
+};
+
 function Nav({
   onLogout,
   isMobileMenuOpen,
@@ -39,6 +56,16 @@ function Nav({
   const [railExpanded, setRailExpanded] = useState(
     () => localStorage.getItem("gw-rail-expanded") === "1"
   );
+  const [cardAccent, setCardAccent] = useState(readCardAccent);
+  useEffect(() => {
+    const update = () => setCardAccent(readCardAccent());
+    window.addEventListener("gw-card-style", update);
+    window.addEventListener("storage", update);
+    return () => {
+      window.removeEventListener("gw-card-style", update);
+      window.removeEventListener("storage", update);
+    };
+  }, []);
 
   const toggleRail = () => {
     setRailExpanded((prev) => {
@@ -234,7 +261,10 @@ function Nav({
   return (
     <>
       {/* Rail vertical — desktop */}
-      <aside className={`${style.rail} ${railExpanded ? style.railExpanded : ""}`}>
+      <aside
+        className={`${style.rail} ${railExpanded ? style.railExpanded : ""}`}
+        style={{ "--avatarAccent": cardAccent.ring, "--avatarAccentGlow": cardAccent.glow }}
+      >
         <div className={style.railTop}>
           <div className={style.railHead}>
             {railExpanded ? (
