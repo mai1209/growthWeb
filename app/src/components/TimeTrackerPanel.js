@@ -731,9 +731,21 @@ export default function TimeTrackerPanel({ colors }) {
           <Ionicons name="chevron-back" size={16} color={colors.text} />
           <Text style={styles.backText}>Proyectos</Text>
         </TouchableOpacity>
-        <Text style={styles.detailTitle} numberOfLines={1}>
-          {projName}
-        </Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.detailTitle} numberOfLines={1}>
+            {projName}
+          </Text>
+          {openProject?.createdAt ? (
+            <Text style={styles.detailDate}>
+              Proyecto del{" "}
+              {new Date(openProject.createdAt).toLocaleDateString("es-AR", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
+            </Text>
+          ) : null}
+        </View>
         {openProject ? (
           <TouchableOpacity style={styles.detailDelete} onPress={() => handleDeleteProject(openProject, true)}>
             <Ionicons name="trash-outline" size={19} color={colors.muted} />
@@ -1074,7 +1086,8 @@ const makeStyles = (colors) =>
       paddingHorizontal: 12,
     },
     backText: { color: colors.text, fontWeight: "700", fontSize: 13 },
-    detailTitle: { color: colors.text, fontSize: 18, fontWeight: "800", flex: 1 },
+    detailTitle: { color: colors.text, fontSize: 18, fontWeight: "800" },
+    detailDate: { color: colors.muted, fontSize: 11.5, fontWeight: "600", marginTop: 1 },
     detailDelete: {
       width: 40,
       height: 40,
