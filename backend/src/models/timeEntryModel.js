@@ -39,6 +39,7 @@ const timeEntrySchema = new mongoose.Schema(
           _id: false,
           inicio: { type: Date },
           fin: { type: Date },
+          motivo: { type: String, default: "" },
         },
       ],
       default: [],

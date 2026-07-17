@@ -49,7 +49,11 @@ const normalizeProyecto = (value) => {
 const parsePausas = (value) => {
   if (!Array.isArray(value)) return [];
   return value
-    .map((p) => ({ inicio: new Date(p?.inicio), fin: new Date(p?.fin) }))
+    .map((p) => ({
+      inicio: new Date(p?.inicio),
+      fin: new Date(p?.fin),
+      motivo: typeof p?.motivo === "string" ? p.motivo.trim().slice(0, 120) : "",
+    }))
     .filter((p) => !Number.isNaN(p.inicio.getTime()) && !Number.isNaN(p.fin.getTime()));
 };
 
