@@ -903,3 +903,67 @@
   text-align: center;
   margin: 0.2rem 0 0;
 }
+
+.calCellTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.calAddBtn {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  opacity: 0;
+  transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.calCell:hover .calAddBtn {
+  opacity: 1;
+}
+
+.calAddBtn:hover {
+  background: rgba(93, 199, 45, 0.2);
+  color: #5dc72d;
+}
+
+.calAddWork {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  justify-self: start;
+  border: 1px solid rgba(93, 199, 45, 0.4);
+  background: rgba(93, 199, 45, 0.12);
+  color: #5dc72d;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.calAddWork:hover {
+  background: rgba(93, 199, 45, 0.22);
+}
+
+.daySelect {
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.12));
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
+  color: var(--color-text);
+  font-size: 0.95rem;
+}
+
+.dayTimeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}

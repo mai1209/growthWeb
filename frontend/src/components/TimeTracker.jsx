@@ -97,6 +97,9 @@ export default function TimeTracker() {
   const [topView, setTopView] = useState("proyectos"); // proyectos | calendario
   const [calRef, setCalRef] = useState(() => new Date());
   const [selectedDay, setSelectedDay] = useState(null); // dayKey seleccionado en el calendario
+  const [dayAddDate, setDayAddDate] = useState(null); // Date del día para "cargar trabajo"
+  const [dayForm, setDayForm] = useState({ proyecto: NO_PROJECT, nuevo: "", descripcion: "", horas: "", minutos: "" });
+  const [dayAddSaving, setDayAddSaving] = useState(false);
   const tickRef = useRef(null);
 
   const fetchAll = useCallback(async () => {
@@ -352,6 +355,51 @@ export default function TimeTracker() {
     if (p) setOpenProject(p);
   };
 
+  const openDayAdd = (dateObj) => {
+    setDayAddDate(dateObj);
+    setDayForm({ proyecto: NO_PROJECT, nuevo: "", descripcion: "", horas: "", minutos: "" });
+  };
+
+  const submitDayEntry = async () => {
+    if (!dayAddDate || dayAddSaving) return;
+    const secs = (parseInt(dayForm.horas, 10) || 0) * 3600 + (parseInt(dayForm.minutos, 10) || 0) * 60;
+    if (secs <= 0) {
+      setError("Poné cuánto tiempo trabajaste (horas o minutos).");
+      return;
+    }
+    setDayAddSaving(true);
+    try {
+      let proyectoId = dayForm.proyecto === NO_PROJECT ? undefined : dayForm.proyecto;
+      if (dayForm.proyecto === "__new__") {
+        const nombre = dayForm.nuevo.trim();
+        if (!nombre) {
+          setError("Poné el nombre del nuevo proyecto.");
+          setDayAddSaving(false);
+          return;
+        }
+        const res = await projectService.create({ nombre });
+        setProjects((prev) => [res.data, ...prev]);
+        proyectoId = res.data._id;
+      }
+      const inicio = new Date(dayAddDate.getFullYear(), dayAddDate.getMonth(), dayAddDate.getDate(), 9, 0, 0);
+      const fin = new Date(inicio.getTime() + secs * 1000);
+      await timeEntryService.create({
+        proyecto: proyectoId,
+        descripcion: dayForm.descripcion.trim(),
+        inicio: inicio.toISOString(),
+        fin: fin.toISOString(),
+        duracion: secs,
+      });
+      setSelectedDay(dayKeyOf(dayAddDate));
+      setDayAddDate(null);
+      await fetchAll();
+    } catch {
+      setError("No se pudo cargar el trabajo.");
+    } finally {
+      setDayAddSaving(false);
+    }
+  };
+
   // ---------- Vista Calendario ----------
   const renderCalendar = () => {
     const cells = buildMonthGrid(calRef);
@@ -383,59 +431,169 @@ export default function TimeTracker() {
             const data = byDay.get(key);
             const inMonth = d.getMonth() === calRef.getMonth();
             return (
-              <button
-                type="button"
+              <div
                 key={key}
+                role="button"
+                tabIndex={0}
                 className={`${style.calCell} ${!inMonth ? style.calCellMuted : ""} ${
                   key === todayKey ? style.calCellToday : ""
                 } ${data ? style.calCellHas : ""} ${selectedDay === key ? style.calCellSel : ""}`}
-                onClick={() => setSelectedDay(data ? key : null)}
+                onClick={() => setSelectedDay(key)}
+                onKeyDown={(ev) => ev.key === "Enter" && setSelectedDay(key)}
               >
-                <span className={style.calDayNum}>{d.getDate()}</span>
+                <div className={style.calCellTop}>
+                  <span className={style.calDayNum}>{d.getDate()}</span>
+                  <button
+                    type="button"
+                    className={style.calAddBtn}
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      openDayAdd(d);
+                    }}
+                    aria-label="Cargar trabajo este día"
+                    title="Cargar trabajo"
+                  >
+                    <FiPlus />
+                  </button>
+                </div>
                 {data ? <span className={style.calDayTotal}>{fmtDuration(data.total)}</span> : null}
-              </button>
+              </div>
             );
           })}
         </div>
 
-        {dayData ? (
+        {selectedDay ? (
           <div className={style.calDetail}>
             <div className={style.calDetailHead}>
               <strong>
-                {new Date(selectedDay).toLocaleDateString("es-AR", {
+                {new Date(`${selectedDay}T00:00:00`).toLocaleDateString("es-AR", {
                   weekday: "long",
                   day: "numeric",
                   month: "long",
                 })}
               </strong>
-              <span className={style.calDetailTotal}>{fmtDuration(dayData.total)}</span>
+              <span className={style.calDetailTotal}>{fmtDuration(dayData?.total || 0)}</span>
             </div>
             <div className={style.calDetailList}>
-              {[...dayData.byProject.entries()]
-                .sort((a, b) => b[1] - a[1])
-                .map(([pk, secs]) => {
-                  const meta = projMeta.get(pk) || { nombre: "Proyecto", color: "#5dc72d" };
-                  return (
-                    <button
-                      key={pk}
-                      type="button"
-                      className={style.calProjRow}
-                      onClick={() => openProjectById(pk)}
-                    >
-                      <span className={style.calProjName}>
-                        <FiFolder style={{ color: meta.color }} /> {meta.nombre}
-                      </span>
-                      <span className={style.calProjDur}>{fmtDuration(secs)}</span>
-                    </button>
-                  );
-                })}
+              {dayData ? (
+                [...dayData.byProject.entries()]
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([pk, secs]) => {
+                    const meta = projMeta.get(pk) || { nombre: "Proyecto", color: "#5dc72d" };
+                    return (
+                      <button
+                        key={pk}
+                        type="button"
+                        className={style.calProjRow}
+                        onClick={() => openProjectById(pk)}
+                      >
+                        <span className={style.calProjName}>
+                          <FiFolder style={{ color: meta.color }} /> {meta.nombre}
+                        </span>
+                        <span className={style.calProjDur}>{fmtDuration(secs)}</span>
+                      </button>
+                    );
+                  })
+              ) : (
+                <p className={style.calHint}>Todavía no cargaste trabajo este día.</p>
+              )}
             </div>
+            <button
+              type="button"
+              className={style.calAddWork}
+              onClick={() => openDayAdd(new Date(`${selectedDay}T00:00:00`))}
+            >
+              <FiPlus /> Cargar trabajo en este día
+            </button>
           </div>
         ) : (
           <p className={style.calHint}>
-            Tocá un día con horas registradas para ver el desglose por proyecto.
+            Tocá un día para ver o cargar el trabajo. Usá el <strong>+</strong> del día para registrar.
           </p>
         )}
+
+        {dayAddDate ? (
+          <div className={style.overlay} onClick={() => setDayAddDate(null)} role="presentation">
+            <div className={style.modal} onClick={(ev) => ev.stopPropagation()}>
+              <h3>
+                Cargar trabajo ·{" "}
+                {dayAddDate.toLocaleDateString("es-AR", { day: "numeric", month: "long" })}
+              </h3>
+              <div className={style.field}>
+                <span>Proyecto</span>
+                <select
+                  className={style.daySelect}
+                  value={dayForm.proyecto}
+                  onChange={(e) => setDayForm((f) => ({ ...f, proyecto: e.target.value }))}
+                >
+                  <option value={NO_PROJECT}>Sin proyecto</option>
+                  {projects.map((p) => (
+                    <option key={p._id} value={p._id}>
+                      {p.nombre}
+                    </option>
+                  ))}
+                  <option value="__new__">＋ Nuevo proyecto…</option>
+                </select>
+              </div>
+              {dayForm.proyecto === "__new__" ? (
+                <div className={style.field}>
+                  <span>Nombre del nuevo proyecto</span>
+                  <input
+                    value={dayForm.nuevo}
+                    onChange={(e) => setDayForm((f) => ({ ...f, nuevo: e.target.value }))}
+                    placeholder="Ej: Cliente X"
+                    maxLength={80}
+                  />
+                </div>
+              ) : null}
+              <div className={style.field}>
+                <span>¿Qué hiciste? (opcional)</span>
+                <input
+                  value={dayForm.descripcion}
+                  onChange={(e) => setDayForm((f) => ({ ...f, descripcion: e.target.value }))}
+                  placeholder="Ej: Diseño de la landing"
+                  maxLength={160}
+                />
+              </div>
+              <div className={style.dayTimeRow}>
+                <div className={style.field}>
+                  <span>Horas</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={dayForm.horas}
+                    onChange={(e) => setDayForm((f) => ({ ...f, horas: e.target.value }))}
+                    placeholder="0"
+                  />
+                </div>
+                <div className={style.field}>
+                  <span>Minutos</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="59"
+                    value={dayForm.minutos}
+                    onChange={(e) => setDayForm((f) => ({ ...f, minutos: e.target.value }))}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+              <div className={style.modalActions}>
+                <button type="button" className={style.ghostBtn} onClick={() => setDayAddDate(null)}>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className={style.saveBtn}
+                  onClick={submitDayEntry}
+                  disabled={dayAddSaving}
+                >
+                  {dayAddSaving ? "Guardando…" : "Guardar"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     );
   };
