@@ -490,7 +490,10 @@ export default function TimeTracker() {
                         <span className={style.calProjName}>
                           <FiFolder style={{ color: meta.color }} /> {meta.nombre}
                         </span>
-                        <span className={style.calProjDur}>{fmtDuration(secs)}</span>
+                        <span className={style.calProjRight}>
+                          <span className={style.calProjDur}>{fmtDuration(secs)}</span>
+                          <FiPlay className={style.calProjPlay} title="Ir al temporizador" />
+                        </span>
                       </button>
                     );
                   })

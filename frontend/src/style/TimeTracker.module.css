@@ -967,3 +967,14 @@
   grid-template-columns: 1fr 1fr;
   gap: 0.7rem;
 }
+
+.calProjRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.calProjPlay {
+  color: #5dc72d;
+  font-size: 0.95rem;
+}
