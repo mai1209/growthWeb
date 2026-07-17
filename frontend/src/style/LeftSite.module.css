@@ -103,12 +103,30 @@
   border-radius: 24px;
   border: 1px solid rgba(216, 241, 224, 0.1);
   overflow: hidden;
+  /* Fondo 5 — Holográfico (tornasolado) */
   background:
-    radial-gradient(circle at 88% 0%, rgba(20, 217, 95, 0.26), transparent 46%),
-    radial-gradient(circle at 106% 76%, rgba(19, 170, 182, 0.24), transparent 42%),
-    radial-gradient(circle at 8% 110%, rgba(20, 217, 95, 0.14), transparent 40%),
-    linear-gradient(135deg, #16745a, #0e444b 52%, #0a2a33);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+    linear-gradient(120deg, #a8e6ff 0%, #c8b8ff 25%, #ffc2e6 50%, #b8f5cf 72%, #a6d0ff 100%);
+  box-shadow: 0 18px 42px rgba(60, 40, 90, 0.28);
+}
+
+/* Texto oscuro sobre el fondo claro holográfico */
+.creditCard .ccKicker {
+  color: rgba(16, 21, 27, 0.62);
+}
+.creditCard .ccBalance {
+  color: #10151b;
+}
+.creditCard .ccCurrency {
+  color: rgba(16, 21, 27, 0.78);
+}
+.creditCard .ccEye {
+  border-color: rgba(16, 21, 27, 0.28);
+  background: rgba(255, 255, 255, 0.4);
+  color: #10151b;
+}
+.creditCard .statusPill {
+  background: rgba(16, 21, 27, 0.14);
+  color: #10151b;
 }
 
 .ccTop {
@@ -849,38 +867,47 @@
 
 
 :global(body[data-theme="light"]) .creditCard {
-  border-color: rgba(12, 18, 14, 0.1);
+  border-color: rgba(12, 18, 14, 0.12);
   background:
-    radial-gradient(circle at 88% 0%, rgba(20, 217, 95, 0.32), transparent 46%),
-    radial-gradient(circle at 106% 76%, rgba(19, 170, 182, 0.24), transparent 42%),
-    radial-gradient(circle at 8% 110%, rgba(20, 217, 95, 0.18), transparent 40%),
-    linear-gradient(135deg, #9de3c0, #c4ecd8 55%, #e8f6ee);
-  box-shadow: 0 18px 42px rgba(21, 33, 24, 0.16);
+    linear-gradient(120deg, #a8e6ff 0%, #c8b8ff 25%, #ffc2e6 50%, #b8f5cf 72%, #a6d0ff 100%);
+  box-shadow: 0 18px 42px rgba(60, 40, 90, 0.18);
 }
 
 /* Anillos concéntricos que se mueven suave arriba/abajo (igual que la app) */
 .creditCard::before {
   content: "";
   position: absolute;
-  inset: -28%;
+  inset: -40% -12%;
   z-index: 0;
   pointer-events: none;
-  background: repeating-radial-gradient(
-    circle at 78% 28%,
-    transparent 0 52px,
-    rgba(255, 255, 255, 0.16) 52px 53px
+  background: linear-gradient(
+    115deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.65) 48%,
+    transparent 60%
   );
-  -webkit-mask: radial-gradient(circle at 78% 28%, #000 0, rgba(0, 0, 0, 0.85) 42%, transparent 92%);
-  mask: radial-gradient(circle at 78% 28%, #000 0, rgba(0, 0, 0, 0.85) 42%, transparent 92%);
-  animation: ccRings 5.2s ease-in-out infinite;
+  mix-blend-mode: overlay;
+  transform: translateX(-120%);
+  animation: ccSheen 5.5s ease-in-out infinite;
 }
 
-:global(body[data-theme="light"]) .creditCard::before {
-  background: repeating-radial-gradient(
-    circle at 78% 28%,
-    transparent 0 52px,
-    rgba(22, 36, 29, 0.16) 52px 53px
-  );
+@keyframes ccSheen {
+  0%,
+  62% {
+    transform: translateX(-120%);
+  }
+  82%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .creditCard::before {
+    animation: none;
+    transform: translateX(30%);
+    opacity: 0.4;
+  }
 }
 
 /* El contenido va por encima de los anillos */
