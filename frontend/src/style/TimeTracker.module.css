@@ -745,6 +745,9 @@
   padding: 1.1rem;
   display: grid;
   gap: 0.7rem;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .calHead {
@@ -995,6 +998,16 @@
     padding: 0.25rem;
     align-items: center;
     gap: 0;
+    overflow: hidden;
+  }
+
+  .calCellTop {
+    justify-content: center;
+  }
+
+  /* En touch no hay hover: el + se oculta, se carga desde el detalle del día */
+  .calAddBtn {
+    display: none;
   }
 
   .calDayNum {
@@ -1002,9 +1015,11 @@
   }
 
   .calDayTotal {
-    font-size: 0.6rem;
-    line-height: 1.1;
+    font-size: 0.58rem;
+    line-height: 1.05;
     text-align: center;
+    overflow: hidden;
+    max-width: 100%;
   }
 
   .calWeekdays span {
