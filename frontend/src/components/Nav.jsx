@@ -250,7 +250,7 @@ function Nav({
                 <span className={style.railBrand}>growth</span>
                 {currentToken && (
                   <button
-                    className={style.railToggle}
+                    className={`${style.railToggle} ${style.railToggleBig}`}
                     onClick={toggleRail}
                     type="button"
                     aria-label="Contraer menú"
