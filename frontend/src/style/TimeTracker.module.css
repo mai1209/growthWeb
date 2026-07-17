@@ -778,7 +778,7 @@
 .calWeekdays,
 .calGrid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 0.4rem;
 }
 
@@ -977,4 +977,46 @@
 .calProjPlay {
   color: #5dc72d;
   font-size: 0.95rem;
+}
+
+/* Calendario compacto en pantallas chicas */
+@media (max-width: 640px) {
+  .calWeekdays,
+  .calGrid {
+    gap: 0.2rem;
+  }
+
+  .calendarWrap {
+    padding: 0.7rem;
+  }
+
+  .calCell {
+    min-height: 46px;
+    padding: 0.25rem;
+    align-items: center;
+    gap: 0;
+  }
+
+  .calDayNum {
+    font-size: 0.78rem;
+  }
+
+  .calDayTotal {
+    font-size: 0.6rem;
+    line-height: 1.1;
+    text-align: center;
+  }
+
+  .calWeekdays span {
+    font-size: 0.62rem;
+  }
+
+  .calMonth {
+    min-width: 0;
+    font-size: 0.95rem;
+  }
+
+  .dayTimeRow {
+    grid-template-columns: 1fr 1fr;
+  }
 }
