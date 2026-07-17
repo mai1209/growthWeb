@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiEye, FiEyeOff, FiInfo, FiX } from "react-icons/fi";
+import { FiEye, FiEyeOff, FiInfo, FiX, FiDroplet, FiCheck } from "react-icons/fi";
 import style from "../style/LeftSite.module.css";
 import {
   filterMovimientosByCurrency,
@@ -22,6 +22,49 @@ const fmtShortDate = (value) => {
   return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : "";
 };
 
+const CARD_STYLE_KEY = "gw-card-style";
+
+// Estilos de la tarjeta de saldo (elegibles dando vuelta la tarjeta).
+const CARD_STYLES = {
+  holo: {
+    swatch: "#c8b8ff",
+    bg: "linear-gradient(120deg, #a8e6ff 0%, #c8b8ff 25%, #ffc2e6 50%, #b8f5cf 72%, #a6d0ff 100%)",
+    text: "#10151b",
+    muted: "rgba(16, 21, 27, 0.62)",
+  },
+  platino: {
+    swatch: "#dbe3ec",
+    bg: "linear-gradient(135deg, #f4f7fa 0%, #c7d0da 22%, #eef2f6 44%, #aeb9c6 66%, #dfe6ee 100%)",
+    text: "#10151b",
+    muted: "rgba(16, 21, 27, 0.6)",
+  },
+  titanio: {
+    swatch: "#6b7480",
+    bg: "linear-gradient(150deg, #565f6a 0%, #8b95a1 26%, #2f363f 52%, #7a838f 74%, #3c434c 100%)",
+    text: "#f2f8fb",
+    muted: "rgba(242, 248, 251, 0.72)",
+  },
+  chrome: {
+    swatch: "#2b3138",
+    bg: "radial-gradient(circle at 78% 8%, rgba(255,255,255,0.22), transparent 42%), linear-gradient(160deg, #20252c 0%, #454c56 28%, #12161b 54%, #525a65 80%, #1a1e24 100%)",
+    text: "#f2f8fb",
+    muted: "rgba(242, 248, 251, 0.7)",
+  },
+  esmeralda: {
+    swatch: "#16d97a",
+    bg: "radial-gradient(circle at 82% 4%, rgba(120,255,180,0.6), transparent 46%), linear-gradient(135deg, #12c46f 0%, #23e58a 48%, #0c9a5c 100%)",
+    text: "#08251a",
+    muted: "rgba(8, 37, 26, 0.7)",
+  },
+  champagne: {
+    swatch: "#d9b877",
+    bg: "linear-gradient(135deg, #fbf3dd 0%, #d9b877 26%, #f6e9c6 50%, #c9a55f 74%, #ead6a3 100%)",
+    text: "#2a2010",
+    muted: "rgba(42, 32, 16, 0.62)",
+  },
+};
+const CARD_ORDER = ["holo", "platino", "titanio", "chrome", "esmeralda", "champagne"];
+
 function LeftSite({
 
   movimientos = [],
@@ -32,6 +75,21 @@ function LeftSite({
   const [areTotalsVisible, setAreTotalsVisible] = useState(true);
   const [viewTab, setViewTab] = useState("money"); // money | deuda | ahorro
   const [infoOpen, setInfoOpen] = useState(false); // popup "cómo funciona"
+  const [cardStyle, setCardStyle] = useState(() => {
+    const saved = typeof localStorage !== "undefined" ? localStorage.getItem(CARD_STYLE_KEY) : null;
+    return saved && CARD_STYLES[saved] ? saved : "holo";
+  });
+  const [cardFlipped, setCardFlipped] = useState(false);
+  const currentCardStyle = CARD_STYLES[cardStyle] || CARD_STYLES.holo;
+  const chooseCard = (key) => {
+    setCardStyle(key);
+    try {
+      localStorage.setItem(CARD_STYLE_KEY, key);
+    } catch {
+      /* nada */
+    }
+    setCardFlipped(false);
+  };
 
   const activeTabKey = viewTab === "money" ? currentCurrency : viewTab;
   const handleTabClick = (key) => {
@@ -130,26 +188,71 @@ function LeftSite({
         </div>
 
         {viewTab === "money" ? (
-          /* Tarjeta de saldo estilo credit card */
-          <div className={style.creditCard}>
-            <div className={style.ccTop}>
-              <p className={style.ccKicker}>Saldo total</p>
-              <button
-                type="button"
-                onClick={() => setAreTotalsVisible((prev) => !prev)}
-                className={style.ccEye}
-                aria-label={areTotalsVisible ? "Ocultar saldo" : "Mostrar saldo"}
-                title={areTotalsVisible ? "Ocultar saldo" : "Mostrar saldo"}
+          /* Tarjeta de saldo — se da vuelta para elegir color */
+          <div className={style.ccFlip}>
+            <div className={`${style.ccFlipInner} ${cardFlipped ? style.ccFlipped : ""}`}>
+              {/* Frente */}
+              <div
+                className={`${style.creditCard} ${style.ccFace}`}
+                style={{
+                  background: currentCardStyle.bg,
+                  "--cardText": currentCardStyle.text,
+                  "--cardMuted": currentCardStyle.muted,
+                }}
               >
-                {areTotalsVisible ? <FiEye /> : <FiEyeOff />}
-              </button>
-            </div>
+                <div className={style.ccTop}>
+                  <p className={style.ccKicker}>Saldo total</p>
+                  <div className={style.ccActions}>
+                    <button
+                      type="button"
+                      onClick={() => setCardFlipped(true)}
+                      className={style.ccEye}
+                      aria-label="Cambiar color de la tarjeta"
+                      title="Cambiar color"
+                    >
+                      <FiDroplet />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAreTotalsVisible((prev) => !prev)}
+                      className={style.ccEye}
+                      aria-label={areTotalsVisible ? "Ocultar saldo" : "Mostrar saldo"}
+                      title={areTotalsVisible ? "Ocultar saldo" : "Mostrar saldo"}
+                    >
+                      {areTotalsVisible ? <FiEye /> : <FiEyeOff />}
+                    </button>
+                  </div>
+                </div>
 
-            <p className={style.ccBalance}>{hideableMoney(historicalSummary.total)}</p>
+                <p className={style.ccBalance}>{hideableMoney(historicalSummary.total)}</p>
 
-            <div className={style.ccFooter}>
-              <span className={style.statusPill}>{monthResultLabel}</span>
-              <span className={style.ccCurrency}>{currencyMeta.codeLabel}</span>
+                <div className={style.ccFooter}>
+                  <span className={style.statusPill}>{monthResultLabel}</span>
+                  <span className={style.ccCurrency}>{currencyMeta.codeLabel}</span>
+                </div>
+              </div>
+
+              {/* Dorso: elegir color */}
+              <div className={`${style.creditCard} ${style.ccFace} ${style.ccBack}`}>
+                <p className={style.ccBackTitle}>Elegí un color de tarjeta</p>
+                <div className={style.swatchRow}>
+                  {CARD_ORDER.map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      className={`${style.swatch} ${cardStyle === k ? style.swatchActive : ""}`}
+                      style={{ background: CARD_STYLES[k].swatch }}
+                      onClick={() => chooseCard(k)}
+                      aria-label={k}
+                    >
+                      {cardStyle === k ? <FiCheck /> : null}
+                    </button>
+                  ))}
+                </div>
+                <button type="button" className={style.ccBackDone} onClick={() => setCardFlipped(false)}>
+                  Listo
+                </button>
+              </div>
             </div>
           </div>
         ) : (
