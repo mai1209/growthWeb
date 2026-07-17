@@ -237,25 +237,52 @@ function Nav({
       <aside className={`${style.rail} ${railExpanded ? style.railExpanded : ""}`}>
         <div className={style.railTop}>
           <div className={style.railHead}>
-            {currentToken && (
-              <button
-                className={style.railToggle}
-                onClick={toggleRail}
-                type="button"
-                aria-label={railExpanded ? "Contraer menú" : "Expandir menú"}
-                title={railExpanded ? "Contraer" : "Expandir"}
-              >
-                {railExpanded ? <FiChevronsLeft /> : <FiChevronsRight />}
-              </button>
+            {railExpanded ? (
+              <>
+                <button
+                  className={style.railLogo}
+                  onClick={() => navigate("/")}
+                  type="button"
+                  aria-label="Inicio"
+                >
+                  <img src="/logo.png" alt="Growth" />
+                </button>
+                <span className={style.railBrand}>growth</span>
+                {currentToken && (
+                  <button
+                    className={style.railToggle}
+                    onClick={toggleRail}
+                    type="button"
+                    aria-label="Contraer menú"
+                    title="Contraer"
+                  >
+                    <FiChevronsLeft />
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                <button
+                  className={style.railLogo}
+                  onClick={() => navigate("/")}
+                  type="button"
+                  aria-label="Inicio"
+                >
+                  <img src="/logo.png" alt="Growth" />
+                </button>
+                {currentToken && (
+                  <button
+                    className={`${style.railToggle} ${style.railToggleBig}`}
+                    onClick={toggleRail}
+                    type="button"
+                    aria-label="Expandir menú"
+                    title="Expandir"
+                  >
+                    <FiChevronsRight />
+                  </button>
+                )}
+              </>
             )}
-            <button
-              className={style.railLogo}
-              onClick={() => navigate("/")}
-              type="button"
-              aria-label="Inicio"
-            >
-              <img src="/logo.png" alt="Growth" />
-            </button>
           </div>
 
           {currentToken && (
