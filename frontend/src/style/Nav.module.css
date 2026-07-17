@@ -525,6 +525,15 @@
   display: none;
 }
 
+/* Avatar del perfil en el rail: más grande y con borde verde para que se note */
+.rail .avatar {
+  width: 42px;
+  height: 42px;
+  border: 2px solid #5dc72d;
+  box-shadow: 0 0 0 3px rgba(93, 199, 45, 0.18);
+  font-size: 1rem;
+}
+
 .rail .profileDropdown {
   top: auto;
   bottom: calc(100% + 8px);
