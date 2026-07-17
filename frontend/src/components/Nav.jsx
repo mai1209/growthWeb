@@ -237,14 +237,6 @@ function Nav({
       <aside className={`${style.rail} ${railExpanded ? style.railExpanded : ""}`}>
         <div className={style.railTop}>
           <div className={style.railHead}>
-            <button
-              className={style.railLogo}
-              onClick={() => navigate("/")}
-              type="button"
-              aria-label="Inicio"
-            >
-              <img src="/logo.png" alt="Growth" />
-            </button>
             {currentToken && (
               <button
                 className={style.railToggle}
@@ -256,6 +248,14 @@ function Nav({
                 {railExpanded ? <FiChevronsLeft /> : <FiChevronsRight />}
               </button>
             )}
+            <button
+              className={style.railLogo}
+              onClick={() => navigate("/")}
+              type="button"
+              aria-label="Inicio"
+            >
+              <img src="/logo.png" alt="Growth" />
+            </button>
           </div>
 
           {currentToken && (

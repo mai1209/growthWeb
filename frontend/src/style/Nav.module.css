@@ -560,10 +560,10 @@
 /* ===== Rail expandible ===== */
 .railHead {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
+  gap: 0.35rem;
 }
 
 .railHead .railLogo {
@@ -604,8 +604,7 @@
 }
 
 .railExpanded .railHead {
-  flex-direction: row;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
   width: 100%;
 }
