@@ -208,7 +208,12 @@ export default function MetricasScreen() {
     <SafeAreaView style={styles.safe} edges={[]}>
       {/* Header + switches FIJOS */}
       <View style={styles.fixedHeader}>
-        <Text style={styles.title}>Métricas</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Métricas</Text>
+          <Text style={styles.periodLabel} numberOfLines={1}>
+            {periodRangeLabel(period)}
+          </Text>
+        </View>
         <View style={styles.controls}>
           <View style={styles.currencySwitch}>
             {CURRENCY_OPTIONS.map((opt) => {
@@ -239,9 +244,6 @@ export default function MetricasScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-            <Text style={styles.periodLabel} numberOfLines={1}>
-              {periodRangeLabel(period)}
-            </Text>
           </View>
         </View>
       </View>
@@ -294,6 +296,7 @@ const makeStyles = (colors) =>
       gap: 12,
       backgroundColor: colors.bg,
     },
+    titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
     title: { color: colors.text, fontSize: 20, fontWeight: "800" },
     content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 30, gap: 12 },
     error: { color: colors.red },
