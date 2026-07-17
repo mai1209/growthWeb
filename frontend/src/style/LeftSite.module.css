@@ -149,6 +149,7 @@
   -webkit-backface-visibility: hidden;
 }
 
+/* El dorso no recibe clics mientras está oculto; el frente sí */
 .ccBack {
   position: absolute;
   inset: 0;
@@ -158,6 +159,16 @@
   justify-content: center;
   gap: 1rem;
   padding: 1.4rem;
+  pointer-events: none;
+}
+
+/* Al girar: el frente deja de capturar clics y el dorso pasa a recibirlos */
+.ccFlipped .ccFace:not(.ccBack) {
+  pointer-events: none;
+}
+
+.ccFlipped .ccBack {
+  pointer-events: auto;
 }
 
 .ccActions {

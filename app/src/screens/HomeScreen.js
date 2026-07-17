@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import Svg, { Defs, LinearGradient, Stop, Rect, Circle } from "react-native-svg";
+import Svg, { Defs, LinearGradient, Stop, Rect } from "react-native-svg";
 import * as SecureStore from "expo-secure-store";
 import { movimientoService } from "../api";
 import { statAccents, useTheme } from "../theme";
@@ -130,30 +130,24 @@ export default function HomeScreen() {
   const { colors, isDark } = useTheme();
   const styles = makeStyles(colors);
 
-  // Pulso suave para los anillos de la tarjeta (respiran)
-  const pulse = useRef(new Animated.Value(0)).current;
+  // Brillo diagonal que se desliza (igual que la web)
+  const sheen = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, {
+        Animated.delay(2600),
+        Animated.timing(sheen, {
           toValue: 1,
-          duration: 2600,
+          duration: 1100,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-        Animated.timing(pulse, {
-          toValue: 0,
-          duration: 2600,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
+        Animated.timing(sheen, { toValue: 0, duration: 0, useNativeDriver: true }),
       ])
     );
     loop.start();
     return () => loop.stop();
-  }, [pulse]);
-  const ringOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.45, 1] });
-  const ringTranslateY = pulse.interpolate({ inputRange: [0, 1], outputRange: [-8, 8] });
+  }, [sheen]);
 
   // La tarjeta de saldo cambia con el tema: oscura en dark, mint clara en light
   const [cardStyleKey, setCardStyleKey] = useState("holo");
@@ -333,32 +327,34 @@ export default function HomeScreen() {
                           </LinearGradient>
                         </Defs>
                         <Rect width={cardSize.w} height={cardSize.h} rx={24} fill="url(#cardGrad)" />
-                        {/* Glow suave */}
-                        <Circle cx={cardSize.w * 0.82} cy={cardSize.h * 0.2} r={74} fill={card.glow1} />
-                        <Circle cx={cardSize.w * 0.12} cy={cardSize.h * 1.05} r={70} fill={card.glow3} />
                       </Svg>
 
-                      {/* Anillos concéntricos que respiran (capa animada) */}
+                      {/* Brillo diagonal que se desliza (igual que la web) */}
                       <Animated.View
                         pointerEvents="none"
                         style={[
                           StyleSheet.absoluteFill,
-                          { opacity: ringOpacity, transform: [{ translateY: ringTranslateY }] },
+                          {
+                            transform: [
+                              {
+                                translateX: sheen.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [-(cardSize.w || 300), cardSize.w || 300],
+                                }),
+                              },
+                            ],
+                          },
                         ]}
                       >
                         <Svg width={cardSize.w} height={cardSize.h}>
-                          {[52, 108, 168, 232, 300].map((r, i) => (
-                            <Circle
-                              key={r}
-                              cx={cardSize.w * 0.82}
-                              cy={cardSize.h * 0.2}
-                              r={r}
-                              fill="none"
-                              stroke={card.lineColor}
-                              strokeWidth={1}
-                              opacity={0.9 - i * 0.15}
-                            />
-                          ))}
+                          <Defs>
+                            <LinearGradient id="cardSheen" x1="0" y1="0" x2="1" y2="0.55">
+                              <Stop offset="0.36" stopColor="#ffffff" stopOpacity="0" />
+                              <Stop offset="0.5" stopColor="#ffffff" stopOpacity="0.5" />
+                              <Stop offset="0.64" stopColor="#ffffff" stopOpacity="0" />
+                            </LinearGradient>
+                          </Defs>
+                          <Rect width={cardSize.w} height={cardSize.h} fill="url(#cardSheen)" />
                         </Svg>
                       </Animated.View>
                     </>
