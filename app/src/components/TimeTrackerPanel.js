@@ -68,7 +68,9 @@ export default function TimeTrackerPanel({ colors }) {
   const [finishNotes, setFinishNotes] = useState("");
   const [expandedEntry, setExpandedEntry] = useState(null);
   const [entryNotesDraft, setEntryNotesDraft] = useState("");
+  const [entryNotesOpen, setEntryNotesOpen] = useState(false);
   const [projectNotesDraft, setProjectNotesDraft] = useState("");
+  const [projectNotesOpen, setProjectNotesOpen] = useState(false);
   const [notesSaved, setNotesSaved] = useState(false);
   const tickRef = useRef(null);
 
@@ -229,6 +231,7 @@ export default function TimeTrackerPanel({ colors }) {
     } else {
       setExpandedEntry(entry._id);
       setEntryNotesDraft(entry.notas || "");
+      setEntryNotesOpen(false);
     }
   };
 
@@ -516,18 +519,33 @@ export default function TimeTrackerPanel({ colors }) {
                     <Text style={styles.detailMuted}>Sin pausas.</Text>
                   )}
 
-                  <Text style={styles.detailLabel}>NOTAS</Text>
-                  <TextInput
-                    style={styles.notesArea}
-                    value={entryNotesDraft}
-                    onChangeText={setEntryNotesDraft}
-                    placeholder="Notas de esta sesión…"
-                    placeholderTextColor={colors.muted}
-                    multiline
-                  />
-                  <TouchableOpacity style={styles.saveNotesBtn} onPress={() => handleSaveEntryNotes(e._id)}>
-                    <Text style={styles.saveNotesText}>Guardar notas</Text>
+                  <TouchableOpacity
+                    style={styles.collapseHead}
+                    onPress={() => setEntryNotesOpen((v) => !v)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.detailLabel}>NOTAS</Text>
+                    <Ionicons
+                      name={entryNotesOpen ? "chevron-up" : "chevron-down"}
+                      size={16}
+                      color={colors.muted}
+                    />
                   </TouchableOpacity>
+                  {entryNotesOpen ? (
+                    <>
+                      <TextInput
+                        style={styles.notesArea}
+                        value={entryNotesDraft}
+                        onChangeText={setEntryNotesDraft}
+                        placeholder="Notas de esta sesión…"
+                        placeholderTextColor={colors.muted}
+                        multiline
+                      />
+                      <TouchableOpacity style={styles.saveNotesBtn} onPress={() => handleSaveEntryNotes(e._id)}>
+                        <Text style={styles.saveNotesText}>Guardar notas</Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : null}
                 </View>
               ) : null}
             </View>
@@ -535,21 +553,36 @@ export default function TimeTrackerPanel({ colors }) {
         })
       )}
 
-      {/* Notas del proyecto */}
+      {/* Notas del proyecto (colapsable) */}
       {openProject ? (
         <View style={styles.projectNotes}>
-          <Text style={styles.listTitle}>Notas del proyecto</Text>
-          <TextInput
-            style={[styles.notesArea, { minHeight: 90 }]}
-            value={projectNotesDraft}
-            onChangeText={setProjectNotesDraft}
-            placeholder="Datos del cliente, pendientes, links…"
-            placeholderTextColor={colors.muted}
-            multiline
-          />
-          <TouchableOpacity style={styles.saveNotesBtn} onPress={handleSaveProjectNotes}>
-            <Text style={styles.saveNotesText}>{notesSaved ? "✓ Guardado" : "Guardar notas"}</Text>
+          <TouchableOpacity
+            style={styles.collapseHead}
+            onPress={() => setProjectNotesOpen((v) => !v)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.listTitle}>Notas del proyecto</Text>
+            <Ionicons
+              name={projectNotesOpen ? "chevron-up" : "chevron-down"}
+              size={18}
+              color={colors.muted}
+            />
           </TouchableOpacity>
+          {projectNotesOpen ? (
+            <>
+              <TextInput
+                style={[styles.notesArea, { minHeight: 90 }]}
+                value={projectNotesDraft}
+                onChangeText={setProjectNotesDraft}
+                placeholder="Datos del cliente, pendientes, links…"
+                placeholderTextColor={colors.muted}
+                multiline
+              />
+              <TouchableOpacity style={styles.saveNotesBtn} onPress={handleSaveProjectNotes}>
+                <Text style={styles.saveNotesText}>{notesSaved ? "✓ Guardado" : "Guardar notas"}</Text>
+              </TouchableOpacity>
+            </>
+          ) : null}
         </View>
       ) : null}
 
@@ -753,6 +786,11 @@ const makeStyles = (colors) =>
       gap: 8,
     },
     detailLabel: { color: colors.muted, fontSize: 10, fontWeight: "800", letterSpacing: 0.5 },
+    collapseHead: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
     detailMuted: { color: colors.muted, fontSize: 13 },
     pausaRow: { color: colors.text, fontSize: 13 },
     notesArea: {
