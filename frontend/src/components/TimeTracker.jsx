@@ -70,6 +70,7 @@ export default function TimeTracker() {
   const [projectNotesSaved, setProjectNotesSaved] = useState(false);
   const [projectNotesOpen, setProjectNotesOpen] = useState(false);
   const [entryNotesOpen, setEntryNotesOpen] = useState(false);
+  const [pauseMotivo, setPauseMotivo] = useState("");
   const tickRef = useRef(null);
 
   const fetchAll = useCallback(async () => {
@@ -144,7 +145,10 @@ export default function TimeTracker() {
   const handleResume = () => {
     if (!running || running.segmentStart) return;
     const pausas = [...(running.pausas || [])];
-    if (running.pauseStart) pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString() });
+    if (running.pauseStart) {
+      pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString(), motivo: pauseMotivo.trim() });
+    }
+    setPauseMotivo("");
     persistRunning({ ...running, segmentStart: new Date().toISOString(), pauseStart: null, pausas });
   };
 
@@ -153,7 +157,10 @@ export default function TimeTracker() {
     setSaving(true);
     const total = activeSecs(running, Date.now());
     const pausas = [...(running.pausas || [])];
-    if (running.pauseStart) pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString() });
+    if (running.pauseStart) {
+      pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString(), motivo: pauseMotivo.trim() });
+    }
+    setPauseMotivo("");
     try {
       await timeEntryService.create({
         proyecto: running.proyecto || undefined,
@@ -453,6 +460,16 @@ export default function TimeTracker() {
           </div>
         )}
 
+        {isRunningHere && !running.segmentStart ? (
+          <input
+            className={style.pauseInput}
+            value={pauseMotivo}
+            onChange={(e) => setPauseMotivo(e.target.value)}
+            placeholder="Motivo de la pausa (ej: comida) — opcional"
+            maxLength={120}
+          />
+        ) : null}
+
         <div className={style.totalsRow}>
           <div className={style.totalCard}>
             <span>Total del proyecto</span>
@@ -576,6 +593,9 @@ export default function TimeTracker() {
                                 <FiPause />
                                 {pad(pi.getHours())}:{pad(pi.getMinutes())} → {pad(pf.getHours())}:
                                 {pad(pf.getMinutes())} · {fmtDuration(dur)}
+                                {p.motivo ? (
+                                  <span className={style.pausaMotivo}> · {p.motivo}</span>
+                                ) : null}
                               </div>
                             );
                           })}

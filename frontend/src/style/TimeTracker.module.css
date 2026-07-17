@@ -672,3 +672,18 @@
 .collapseChevronOpen {
   transform: rotate(180deg);
 }
+
+.pauseInput {
+  width: 100%;
+  border: 1px solid rgba(93, 199, 45, 0.35);
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  background: rgba(93, 199, 45, 0.08);
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.pausaMotivo {
+  color: #5dc72d;
+  font-weight: 700;
+}
