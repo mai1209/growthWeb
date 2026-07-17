@@ -45,6 +45,26 @@ const startOfWeek = (d) => {
 };
 const isSameDay = (a, b) => startOfDay(a).getTime() === startOfDay(b).getTime();
 
+const dayKeyOf = (date) => {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+const WEEKDAYS = ["L", "M", "M", "J", "V", "S", "D"];
+
+const buildMonthGrid = (ref) => {
+  const first = new Date(ref.getFullYear(), ref.getMonth(), 1);
+  const start = startOfDay(first);
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  const cells = [];
+  for (let i = 0; i < 42; i += 1) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    cells.push(d);
+  }
+  return cells;
+};
+
 const activeSecs = (r, nowMs) =>
   r
     ? r.accumulated + (r.segmentStart ? Math.floor((nowMs - new Date(r.segmentStart).getTime()) / 1000) : 0)
@@ -72,6 +92,13 @@ export default function TimeTrackerPanel({ colors }) {
   const [projectNotesDraft, setProjectNotesDraft] = useState("");
   const [projectNotesOpen, setProjectNotesOpen] = useState(false);
   const [notesSaved, setNotesSaved] = useState(false);
+  const [pauseMotivo, setPauseMotivo] = useState("");
+  const [topView, setTopView] = useState("proyectos"); // proyectos | calendario
+  const [calRef, setCalRef] = useState(() => new Date());
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [dayAddDate, setDayAddDate] = useState(null);
+  const [dayForm, setDayForm] = useState({ proyecto: NO_PROJECT, nuevo: "", descripcion: "", horas: "", minutos: "" });
+  const [dayAddSaving, setDayAddSaving] = useState(false);
   const tickRef = useRef(null);
 
   const fetchAll = useCallback(async () => {
@@ -142,7 +169,10 @@ export default function TimeTrackerPanel({ colors }) {
   const handleResume = () => {
     if (!running || running.segmentStart) return;
     const pausas = [...(running.pausas || [])];
-    if (running.pauseStart) pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString() });
+    if (running.pauseStart) {
+      pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString(), motivo: pauseMotivo.trim() });
+    }
+    setPauseMotivo("");
     persistRunning({ ...running, segmentStart: new Date().toISOString(), pauseStart: null, pausas });
   };
   const confirmFinish = async () => {
@@ -150,7 +180,10 @@ export default function TimeTrackerPanel({ colors }) {
     setSaving(true);
     const total = activeSecs(running, Date.now());
     const pausas = [...(running.pausas || [])];
-    if (running.pauseStart) pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString() });
+    if (running.pauseStart) {
+      pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString(), motivo: pauseMotivo.trim() });
+    }
+    setPauseMotivo("");
     try {
       await timeEntryService.create({
         proyecto: running.proyecto || undefined,
@@ -279,6 +312,27 @@ export default function TimeTrackerPanel({ colors }) {
     return map;
   }, [entries]);
 
+  const projMeta = useMemo(() => {
+    const map = new Map();
+    projects.forEach((p) => map.set(p._id, { nombre: p.nombre, color: p.color || "#5dc72d" }));
+    map.set(NO_PROJECT, { nombre: "Sin proyecto", color: "#8a94a6" });
+    return map;
+  }, [projects]);
+
+  const byDay = useMemo(() => {
+    const map = new Map();
+    entries.forEach((e) => {
+      const key = dayKeyOf(e.inicio);
+      const cur = map.get(key) || { total: 0, byProject: new Map() };
+      const dur = Number(e.duracion) || 0;
+      cur.total += dur;
+      const pk = e.proyecto || NO_PROJECT;
+      cur.byProject.set(pk, (cur.byProject.get(pk) || 0) + dur);
+      map.set(key, cur);
+    });
+    return map;
+  }, [entries]);
+
   const runningProject = running
     ? running.proyecto
       ? projects.find((p) => p._id === running.proyecto)
@@ -286,11 +340,282 @@ export default function TimeTrackerPanel({ colors }) {
     : null;
   const elapsed = activeSecs(running, now);
 
+  const goMonth = (delta) =>
+    setCalRef((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
+
+  const openProjectById = (pid) => {
+    if (pid === NO_PROJECT) return setOpenProject(null);
+    const p = projects.find((x) => x._id === pid);
+    if (p) setOpenProject(p);
+  };
+
+  const openDayAdd = (dateObj) => {
+    setDayAddDate(dateObj);
+    setDayForm({ proyecto: NO_PROJECT, nuevo: "", descripcion: "", horas: "", minutos: "" });
+  };
+
+  const submitDayEntry = async () => {
+    if (!dayAddDate || dayAddSaving) return;
+    const secs = (parseInt(dayForm.horas, 10) || 0) * 3600 + (parseInt(dayForm.minutos, 10) || 0) * 60;
+    if (secs <= 0) {
+      Alert.alert("Faltan datos", "Poné cuánto trabajaste (horas o minutos).");
+      return;
+    }
+    setDayAddSaving(true);
+    try {
+      let proyectoId = dayForm.proyecto === NO_PROJECT ? undefined : dayForm.proyecto;
+      if (dayForm.proyecto === "__new__") {
+        const nombre = dayForm.nuevo.trim();
+        if (!nombre) {
+          Alert.alert("Faltan datos", "Poné el nombre del nuevo proyecto.");
+          setDayAddSaving(false);
+          return;
+        }
+        const res = await projectService.create({ nombre });
+        setProjects((prev) => [res.data, ...prev]);
+        proyectoId = res.data._id;
+      }
+      const inicio = new Date(dayAddDate.getFullYear(), dayAddDate.getMonth(), dayAddDate.getDate(), 9, 0, 0);
+      const fin = new Date(inicio.getTime() + secs * 1000);
+      await timeEntryService.create({
+        proyecto: proyectoId,
+        descripcion: dayForm.descripcion.trim(),
+        inicio: inicio.toISOString(),
+        fin: fin.toISOString(),
+        duracion: secs,
+      });
+      setSelectedDay(dayKeyOf(dayAddDate));
+      setDayAddDate(null);
+      await fetchAll();
+    } catch {
+      Alert.alert("Error", "No se pudo cargar el trabajo.");
+    } finally {
+      setDayAddSaving(false);
+    }
+  };
+
+  // ---------- Vista Calendario (mobile) ----------
+  const renderCalendar = () => {
+    const cells = buildMonthGrid(calRef);
+    const monthLabel = calRef.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+    const todayKey = dayKeyOf(new Date());
+    const dayData = selectedDay ? byDay.get(selectedDay) : null;
+
+    return (
+      <View style={styles.calWrap}>
+        <View style={styles.calHead}>
+          <TouchableOpacity onPress={() => goMonth(-1)} hitSlop={8} style={styles.calNavBtn}>
+            <Ionicons name="chevron-back" size={18} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.calMonth}>{monthLabel}</Text>
+          <TouchableOpacity onPress={() => goMonth(1)} hitSlop={8} style={styles.calNavBtn}>
+            <Ionicons name="chevron-forward" size={18} color={colors.text} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.calRow}>
+          {WEEKDAYS.map((w, i) => (
+            <Text key={i} style={styles.calWeekday}>
+              {w}
+            </Text>
+          ))}
+        </View>
+
+        <View style={styles.calGrid}>
+          {cells.map((d) => {
+            const key = dayKeyOf(d);
+            const data = byDay.get(key);
+            const inMonth = d.getMonth() === calRef.getMonth();
+            const sel = selectedDay === key;
+            return (
+              <TouchableOpacity
+                key={key}
+                style={[
+                  styles.calCell,
+                  !inMonth && styles.calCellMuted,
+                  data && styles.calCellHas,
+                  key === todayKey && styles.calCellToday,
+                  sel && styles.calCellSel,
+                ]}
+                onPress={() => setSelectedDay(key)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.calDayNum}>{d.getDate()}</Text>
+                {data ? <View style={styles.calDot} /> : null}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {selectedDay ? (
+          <View style={styles.calDetail}>
+            <View style={styles.calDetailHead}>
+              <Text style={styles.calDetailDate}>
+                {new Date(`${selectedDay}T00:00:00`).toLocaleDateString("es-AR", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
+              </Text>
+              <Text style={styles.calDetailTotal}>{fmtDuration(dayData?.total || 0)}</Text>
+            </View>
+            {dayData ? (
+              [...dayData.byProject.entries()]
+                .sort((a, b) => b[1] - a[1])
+                .map(([pk, secs]) => {
+                  const meta = projMeta.get(pk) || { nombre: "Proyecto", color: "#5dc72d" };
+                  return (
+                    <TouchableOpacity key={pk} style={styles.calProjRow} onPress={() => openProjectById(pk)}>
+                      <Ionicons name="folder-outline" size={16} color={meta.color} />
+                      <Text style={styles.calProjName}>{meta.nombre}</Text>
+                      <Text style={styles.calProjDur}>{fmtDuration(secs)}</Text>
+                      <Ionicons name="play" size={14} color={colors.greenDark} />
+                    </TouchableOpacity>
+                  );
+                })
+            ) : (
+              <Text style={styles.calHint}>Todavía no cargaste trabajo este día.</Text>
+            )}
+            <TouchableOpacity
+              style={styles.calAddWork}
+              onPress={() => openDayAdd(new Date(`${selectedDay}T00:00:00`))}
+            >
+              <Ionicons name="add" size={16} color={colors.greenDark} />
+              <Text style={styles.calAddWorkText}>Cargar trabajo</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <Text style={styles.calHint}>Tocá un día para ver o cargar el trabajo.</Text>
+        )}
+
+        <Modal visible={Boolean(dayAddDate)} transparent animationType="fade" onRequestClose={() => setDayAddDate(null)}>
+          <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setDayAddDate(null)}>
+            <TouchableOpacity activeOpacity={1} style={styles.sheet}>
+              <Text style={styles.sheetTitle}>
+                Cargar trabajo{dayAddDate ? ` · ${dayAddDate.toLocaleDateString("es-AR", { day: "numeric", month: "long" })}` : ""}
+              </Text>
+
+              <Text style={styles.fieldLabel}>Proyecto</Text>
+              <View style={styles.projChips}>
+                <TouchableOpacity
+                  style={[styles.projChip, dayForm.proyecto === NO_PROJECT && styles.projChipActive]}
+                  onPress={() => setDayForm((f) => ({ ...f, proyecto: NO_PROJECT }))}
+                >
+                  <Text style={[styles.projChipText, dayForm.proyecto === NO_PROJECT && styles.projChipTextActive]}>
+                    Sin proyecto
+                  </Text>
+                </TouchableOpacity>
+                {projects.map((p) => (
+                  <TouchableOpacity
+                    key={p._id}
+                    style={[styles.projChip, dayForm.proyecto === p._id && styles.projChipActive]}
+                    onPress={() => setDayForm((f) => ({ ...f, proyecto: p._id }))}
+                  >
+                    <Text style={[styles.projChipText, dayForm.proyecto === p._id && styles.projChipTextActive]}>
+                      {p.nombre}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                  style={[styles.projChip, dayForm.proyecto === "__new__" && styles.projChipActive]}
+                  onPress={() => setDayForm((f) => ({ ...f, proyecto: "__new__" }))}
+                >
+                  <Text style={[styles.projChipText, dayForm.proyecto === "__new__" && styles.projChipTextActive]}>
+                    ＋ Nuevo
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {dayForm.proyecto === "__new__" ? (
+                <TextInput
+                  style={styles.input}
+                  value={dayForm.nuevo}
+                  onChangeText={(t) => setDayForm((f) => ({ ...f, nuevo: t }))}
+                  placeholder="Nombre del nuevo proyecto"
+                  placeholderTextColor={colors.muted}
+                />
+              ) : null}
+
+              <Text style={styles.fieldLabel}>¿Qué hiciste? (opcional)</Text>
+              <TextInput
+                style={styles.input}
+                value={dayForm.descripcion}
+                onChangeText={(t) => setDayForm((f) => ({ ...f, descripcion: t }))}
+                placeholder="Ej: Diseño landing"
+                placeholderTextColor={colors.muted}
+              />
+
+              <View style={styles.timeRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>Horas</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={dayForm.horas}
+                    onChangeText={(t) => setDayForm((f) => ({ ...f, horas: t.replace(/[^\d]/g, "") }))}
+                    keyboardType="number-pad"
+                    placeholder="0"
+                    placeholderTextColor={colors.muted}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>Minutos</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={dayForm.minutos}
+                    onChangeText={(t) => setDayForm((f) => ({ ...f, minutos: t.replace(/[^\d]/g, "") }))}
+                    keyboardType="number-pad"
+                    placeholder="0"
+                    placeholderTextColor={colors.muted}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.sheetActions}>
+                <TouchableOpacity style={styles.ghostBtn} onPress={() => setDayAddDate(null)}>
+                  <Text style={styles.ghostText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.saveBtn} onPress={submitDayEntry} disabled={dayAddSaving}>
+                  {dayAddSaving ? (
+                    <ActivityIndicator color="#0e1a0e" />
+                  ) : (
+                    <Text style={styles.saveText}>Guardar</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
+      </View>
+    );
+  };
+
   // ---------- Vista carpetas ----------
   if (openProject === undefined) {
     const noneTotals = totals.get(NO_PROJECT);
     return (
       <View style={styles.wrap}>
+        <View style={styles.topToggle}>
+          <TouchableOpacity
+            style={[styles.topToggleBtn, topView === "proyectos" && styles.topToggleActive]}
+            onPress={() => setTopView("proyectos")}
+          >
+            <Text style={[styles.topToggleText, topView === "proyectos" && styles.topToggleTextActive]}>
+              Proyectos
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.topToggleBtn, topView === "calendario" && styles.topToggleActive]}
+            onPress={() => setTopView("calendario")}
+          >
+            <Text style={[styles.topToggleText, topView === "calendario" && styles.topToggleTextActive]}>
+              Calendario
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {topView === "calendario" ? (
+          renderCalendar()
+        ) : (
+        <>
         <View style={styles.createRow}>
           <TextInput
             style={styles.createInput}
@@ -361,6 +686,8 @@ export default function TimeTrackerPanel({ colors }) {
               </TouchableOpacity>
             ) : null}
           </>
+        )}
+        </>
         )}
       </View>
     );
@@ -440,6 +767,17 @@ export default function TimeTrackerPanel({ colors }) {
             </TouchableOpacity>
           </View>
         )}
+
+        {isRunningHere && !running.segmentStart ? (
+          <TextInput
+            style={styles.pauseInput}
+            value={pauseMotivo}
+            onChangeText={setPauseMotivo}
+            placeholder="Motivo de la pausa (ej: comida)"
+            placeholderTextColor={colors.muted}
+            maxLength={120}
+          />
+        ) : null}
 
         <View style={styles.totalsRow}>
           <View style={styles.totalCard}>
@@ -591,6 +929,31 @@ export default function TimeTrackerPanel({ colors }) {
         <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setFinishOpen(false)}>
           <TouchableOpacity activeOpacity={1} style={styles.sheet}>
             <Text style={styles.sheetTitle}>Finalizar sesión</Text>
+
+            {running ? (
+              <View style={styles.finishSummary}>
+                <Text style={styles.finishSummaryText}>
+                  Tiempo trabajado: <Text style={{ fontWeight: "800", color: colors.text }}>{fmtDuration(activeSecs(running, Date.now()))}</Text>
+                </Text>
+                {(() => {
+                  const ps = [...((running && running.pausas) || [])];
+                  if (running?.pauseStart) ps.push({ inicio: running.pauseStart, fin: new Date().toISOString(), motivo: pauseMotivo.trim() });
+                  if (!ps.length) return <Text style={styles.detailMuted}>Sin pausas.</Text>;
+                  return ps.map((p, i) => {
+                    const pi = new Date(p.inicio);
+                    const pf = new Date(p.fin);
+                    const dur = Math.max(0, Math.round((pf - pi) / 1000));
+                    return (
+                      <Text key={i} style={styles.finishSummaryText}>
+                        ⏸ {pad(pi.getHours())}:{pad(pi.getMinutes())} → {pad(pf.getHours())}:{pad(pf.getMinutes())} · {fmtDuration(dur)}
+                        {p.motivo ? ` · ${p.motivo}` : ""}
+                      </Text>
+                    );
+                  });
+                })()}
+              </View>
+            ) : null}
+
             <Text style={styles.fieldLabel}>Notas (opcional)</Text>
             <TextInput
               style={[styles.input, { minHeight: 90, textAlignVertical: "top" }]}
@@ -852,4 +1215,129 @@ const makeStyles = (colors) =>
       paddingHorizontal: 20,
     },
     saveText: { color: "#0e1a0e", fontWeight: "800" },
+
+    topToggle: {
+      flexDirection: "row",
+      alignSelf: "center",
+      gap: 4,
+      padding: 3,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+    },
+    topToggleBtn: { paddingVertical: 7, paddingHorizontal: 16, borderRadius: 999 },
+    topToggleActive: { backgroundColor: colors.greenBright },
+    topToggleText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
+    topToggleTextActive: { color: "#0e1a0e", fontWeight: "800" },
+
+    pauseInput: {
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.bg,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      color: colors.text,
+      fontSize: 14,
+    },
+
+    finishSummary: {
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      padding: 12,
+      gap: 4,
+    },
+    finishSummaryText: { color: colors.muted, fontSize: 13, lineHeight: 19 },
+
+    calWrap: {
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 12,
+      gap: 8,
+    },
+    calHead: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 16 },
+    calNavBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 9,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    calMonth: { color: colors.text, fontWeight: "800", fontSize: 15, textTransform: "capitalize", minWidth: 150, textAlign: "center" },
+    calRow: { flexDirection: "row" },
+    calWeekday: { flex: 1, textAlign: "center", color: colors.muted, fontSize: 11, fontWeight: "800" },
+    calGrid: { flexDirection: "row", flexWrap: "wrap" },
+    calCell: {
+      width: `${100 / 7}%`,
+      aspectRatio: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 3,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: "transparent",
+    },
+    calCellMuted: { opacity: 0.32 },
+    calCellHas: { backgroundColor: colors.greenSoft },
+    calCellToday: { borderColor: colors.greenBorder },
+    calCellSel: { borderColor: colors.greenBright, borderWidth: 2 },
+    calDayNum: { color: colors.text, fontSize: 13, fontWeight: "700" },
+    calDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.greenBright },
+    calDetail: {
+      borderTopWidth: 1,
+      borderTopColor: colors.cardBorder,
+      paddingTop: 10,
+      gap: 8,
+    },
+    calDetailHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    calDetailDate: { color: colors.text, fontWeight: "800", fontSize: 14, textTransform: "capitalize", flex: 1 },
+    calDetailTotal: { color: colors.greenDark, fontWeight: "800" },
+    calProjRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.bg,
+      borderRadius: 10,
+      paddingVertical: 9,
+      paddingHorizontal: 11,
+    },
+    calProjName: { flex: 1, color: colors.text, fontWeight: "700", fontSize: 13.5 },
+    calProjDur: { color: colors.greenDark, fontWeight: "800", fontSize: 13.5 },
+    calHint: { color: colors.muted, fontSize: 13, lineHeight: 19, paddingVertical: 4 },
+    calAddWork: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      alignSelf: "flex-start",
+      borderWidth: 1,
+      borderColor: colors.greenBorder,
+      backgroundColor: colors.greenSoft,
+      borderRadius: 999,
+      paddingVertical: 7,
+      paddingHorizontal: 14,
+    },
+    calAddWorkText: { color: colors.greenDark, fontWeight: "800", fontSize: 13 },
+
+    projChips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    projChip: {
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      borderRadius: 999,
+      paddingVertical: 7,
+      paddingHorizontal: 12,
+    },
+    projChipActive: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
+    projChipText: { color: colors.muted, fontWeight: "700", fontSize: 12.5 },
+    projChipTextActive: { color: colors.greenDark },
+    timeRow: { flexDirection: "row", gap: 10 },
   });
