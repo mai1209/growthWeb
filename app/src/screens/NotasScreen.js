@@ -22,6 +22,7 @@ import {
 } from "../utils/notes";
 import NoteEditorModal from "../components/NoteEditorModal";
 import ShoppingListsPanel from "../components/ShoppingListsPanel";
+import AfirmacionesPanel from "../components/AfirmacionesPanel";
 import { getCustomFolders, setCustomFolders } from "../storage";
 
 const ALL_FOLDERS = "__all__";
@@ -35,6 +36,7 @@ export default function NotasScreen() {
   const [activeNote, setActiveNote] = useState(null);
   const [folder, setFolder] = useState(ALL_FOLDERS);
   const [shoppingOpen, setShoppingOpen] = useState(false);
+  const [afirmacionesOpen, setAfirmacionesOpen] = useState(false);
   const [foldersOpen, setFoldersOpen] = useState(false);
   const [folderSearch, setFolderSearch] = useState("");
   const [customFolders, setCustom] = useState([]);
@@ -133,10 +135,23 @@ export default function NotasScreen() {
             </View>
           </View>
         </View>
-        <TouchableOpacity style={styles.newBtn} onPress={() => setShoppingOpen(true)}>
-          <Ionicons name="cart-outline" size={18} color="#fff" />
-          <Text style={styles.newBtnText}>Lista de compras</Text>
-        </TouchableOpacity>
+        {/* Dos accesos al lado: como sólo entra uno con texto, van por ícono */}
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => setShoppingOpen(true)}
+            accessibilityLabel="Listas de compras"
+          >
+            <Ionicons name="cart-outline" size={19} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => setAfirmacionesOpen(true)}
+            accessibilityLabel="Afirmaciones diarias"
+          >
+            <Ionicons name="sunny-outline" size={19} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Carpetas */}
@@ -272,6 +287,10 @@ export default function NotasScreen() {
       />
 
       <ShoppingListsPanel visible={shoppingOpen} onClose={() => setShoppingOpen(false)} />
+      <AfirmacionesPanel
+        visible={afirmacionesOpen}
+        onClose={() => setAfirmacionesOpen(false)}
+      />
 
       {/* Todas las carpetas: buscador + lista con conteo */}
       <Modal
@@ -409,6 +428,15 @@ const makeStyles = (colors) => StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
     marginTop: 4,
+  },
+  headerActions: { flexDirection: "row", gap: 8, marginTop: 4 },
+  iconBtn: {
+    width: 40,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: colors.greenBright,
+    alignItems: "center",
+    justifyContent: "center",
   },
   newBtnText: { color: "#fff", fontWeight: "800", fontSize: 13 },
 

@@ -143,6 +143,15 @@ export const projectService = {
   delete: (id) => api.delete(`/api/projects/${id}`),
 };
 
+export const afirmacionService = {
+  // `fecha` es la fecha local del cliente (YYYY-MM-DD): el "hoy" lo define el
+  // dispositivo, no el servidor.
+  get: (fecha) => api.get(`/api/afirmaciones?fecha=${fecha}`),
+  save: (data) => api.put("/api/afirmaciones", data),
+  marcarLeido: (fecha) => api.post("/api/afirmaciones/leer", { fecha }),
+  desmarcarLeido: (fecha) => api.delete(`/api/afirmaciones/leer?fecha=${fecha}`),
+};
+
 export const authService = {
   login: (credentials) =>
     api.post("/api/auth/login", credentials),

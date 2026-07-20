@@ -1,0 +1,228 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.cargando {
+  margin: 0;
+  padding: 1.2rem;
+  color: var(--color-text-muted, #8a9aa5);
+  font-size: 0.92rem;
+}
+
+/* ===== Encabezado: el día de hoy y la racha ===== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-xs);
+}
+
+.fechaBloque {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.fechaIcono {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--color-verde);
+}
+
+.fecha {
+  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.racha {
+  flex-shrink: 0;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: var(--accent-soft, rgba(93, 199, 45, 0.14));
+  color: var(--color-verde);
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.ayuda {
+  margin: 0;
+  color: var(--color-text-muted, #8a9aa5);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+/* ===== Los renglones ===== */
+.lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.numero {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  margin-top: 0.5rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-input);
+  color: var(--color-text-muted, #8a9aa5);
+  font-size: 0.76rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.62rem 0.8rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-input);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  font-family: inherit;
+  resize: none;
+  overflow: hidden;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent-border);
+  box-shadow: var(--ring-accent);
+}
+
+.borrar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-top: 0.35rem;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted, #8a9aa5);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+/* El tacho aparece al pasar por el renglón, así no ensucia la lista */
+.item:hover .borrar,
+.borrar:focus-visible {
+  opacity: 1;
+}
+
+.borrar:hover {
+  color: #e5484d;
+}
+
+/* En touch no hay hover: lo dejamos siempre visible */
+@media (hover: none) {
+  .borrar {
+    opacity: 1;
+  }
+}
+
+/* ===== Acciones ===== */
+.acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.agregar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted, #8a9aa5);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.agregar:hover:not(:disabled) {
+  border-color: var(--accent-border);
+  color: var(--color-verde);
+}
+
+.agregar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.guardando {
+  color: var(--color-text-muted, #8a9aa5);
+  font-size: 0.78rem;
+}
+
+/* ===== Botón del día ===== */
+.leer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 0.98rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+.leer:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.leer:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.leer:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Ya marcado: baja el peso visual, es un estado confirmado y no una acción */
+.leerHecho {
+  background: var(--accent-soft, rgba(93, 199, 45, 0.14));
+  color: var(--color-verde);
+  box-shadow: inset 0 0 0 1px var(--accent-border, rgba(93, 199, 45, 0.4));
+}

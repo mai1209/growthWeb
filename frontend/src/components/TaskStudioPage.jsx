@@ -27,6 +27,7 @@ import {
   FiMinus,
   FiPlus,
   FiShoppingCart,
+  FiSun,
   FiTrash2,
   FiType,
   FiUnderline,
@@ -37,6 +38,7 @@ import { isCloudinaryConfigured, uploadImageToCloudinary } from "../cloudinary";
 import "quill/dist/quill.snow.css";
 import { taskService } from "../api";
 import ShoppingLists from "./ShoppingLists";
+import Afirmaciones from "./Afirmaciones";
 import style from "../style/TaskStudio.module.css";
 
 // Habilita tamaño de fuente por píxeles (ej. "16px") en vez de small/large.
@@ -771,8 +773,13 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
 
   const monthIndex = Number(selectedMonth.split("-")[1]) - 1;
   const todayKey = getDateInputValue(new Date());
-  // En móvil dejamos Notas y Lista de compras; el Calendario queda solo en desktop.
-  const effectiveView = isCompact ? (view === "shopping" ? "shopping" : "notes") : view;
+  // En móvil dejamos Notas, Lista de compras y Afirmaciones; el Calendario queda
+  // solo en desktop.
+  const effectiveView = isCompact
+    ? view === "shopping" || view === "afirmaciones"
+      ? view
+      : "notes"
+    : view;
 
   const folderCounts = useMemo(() => {
     const counts = new Map();
@@ -1532,11 +1539,21 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
             <div className={style.editorHeader}>
               <div>
                 <p className={style.cardKicker}>
-                  {effectiveView === "shopping" ? "Listas" : "Notas"}
+                  {effectiveView === "shopping"
+                    ? "Listas"
+                    : effectiveView === "afirmaciones"
+                    ? "Afirmaciones"
+                    : "Notas"}
                 </p>
                 <h2 className={style.listTitle}>
-                  {effectiveView === "shopping" ? "Listas de compras" : "Tus notas"}
-                  {effectiveView !== "shopping" && boardTasks.length ? (
+                  {effectiveView === "shopping"
+                    ? "Listas de compras"
+                    : effectiveView === "afirmaciones"
+                    ? "Afirmaciones diarias"
+                    : "Tus notas"}
+                  {effectiveView !== "shopping" &&
+                  effectiveView !== "afirmaciones" &&
+                  boardTasks.length ? (
                     <span className={style.listCount}>{boardTasks.length}</span>
                   ) : null}
                 </h2>
@@ -1574,8 +1591,17 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     <FiShoppingCart />
                     Lista de compras
                   </button>
+                  <button
+                    type="button"
+                    className={`${style.viewToggleButton} ${effectiveView === "afirmaciones" ? style.viewToggleButtonActive : ""}`}
+                    onClick={() => setView("afirmaciones")}
+                    aria-pressed={effectiveView === "afirmaciones"}
+                  >
+                    <FiSun />
+                    Afirmaciones
+                  </button>
                 </div>
-                {effectiveView !== "shopping" ? (
+                {effectiveView !== "shopping" && effectiveView !== "afirmaciones" ? (
                   <>
                     <button
                       type="button"
@@ -1739,6 +1765,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
               </div>
             ) : effectiveView === "shopping" ? (
               <ShoppingLists activeWorkspace={activeWorkspace} />
+            ) : effectiveView === "afirmaciones" ? (
+              <Afirmaciones />
             ) : (
               <div className={style.notesLayout}>
                 <aside className={style.folderSidebar} aria-label="Carpetas">
