@@ -19,10 +19,28 @@ const afirmacionSchema = new mongoose.Schema(
       default: ["", "", "", "", ""],
     },
     // Si está en true las afirmaciones se mantienen día a día (por defecto).
-    // En false cada día arranca vacío (Fase 2).
+    // En false cada día arranca vacío.
     repetirDiario: {
       type: Boolean,
       default: true,
+    },
+    // Día (local) al que pertenecen los renglones actuales. Sirve para saber,
+    // cuando repetirDiario está en false, si lo que hay es de un día pasado.
+    fechaLineas: {
+      type: String,
+      default: "",
+    },
+    // Cuando cada día arranca vacío, lo del día anterior no se tira: se archiva
+    // acá para poder recuperarlo. Guardamos las últimas 60 tandas.
+    archivo: {
+      type: [
+        {
+          _id: false,
+          fecha: String,
+          lineas: [String],
+        },
+      ],
+      default: [],
     },
     // Fechas locales "YYYY-MM-DD" en las que se marcó la lectura.
     // Es el único historial que guardamos: alcanza para la racha y no acumula texto.

@@ -28,6 +28,7 @@ function Afirmaciones() {
   const [lineas, setLineas] = useState(() => Array(RENGLONES_INICIALES).fill(""));
   const [leidoHoy, setLeidoHoy] = useState(false);
   const [racha, setRacha] = useState(0);
+  const [repetirDiario, setRepetirDiario] = useState(true);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const guardadoRef = useRef(null);
@@ -42,6 +43,7 @@ function Afirmaciones() {
     setLineas(completas);
     setLeidoHoy(Boolean(data?.leidoHoy));
     setRacha(Number(data?.racha) || 0);
+    setRepetirDiario(data?.repetirDiario !== false);
   }, []);
 
   const cargar = useCallback(
@@ -127,6 +129,16 @@ function Afirmaciones() {
 
   const hayEscritas = useMemo(() => lineas.some((l) => l.trim()), [lineas]);
 
+  const alternarRepetir = async () => {
+    const proximo = !repetirDiario;
+    setRepetirDiario(proximo); // optimista
+    try {
+      await afirmacionService.save({ repetirDiario: proximo, fecha });
+    } catch {
+      setRepetirDiario(!proximo); // si falló, volvemos al estado real
+    }
+  };
+
   const alternarLeido = async () => {
     const previo = leidoHoy;
     setLeidoHoy(!previo); // optimista: el tilde responde al toque al instante
@@ -152,16 +164,37 @@ function Afirmaciones() {
           <FiSun className={style.fechaIcono} />
           <span className={style.fecha}>{fechaLarga(fecha)}</span>
         </div>
-        {racha > 0 ? (
-          <span className={style.racha} title={`${racha} días seguidos leyendo tus afirmaciones`}>
-            🔥 {racha} {racha === 1 ? "día" : "días"}
-          </span>
-        ) : null}
+        <div className={style.headerAcciones}>
+          {racha > 0 ? (
+            <span className={style.racha} title={`${racha} días seguidos leyendo tus afirmaciones`}>
+              🔥 {racha} {racha === 1 ? "día" : "días"}
+            </span>
+          ) : null}
+
+          <button
+            type="button"
+            role="switch"
+            aria-checked={repetirDiario}
+            className={`${style.switch} ${repetirDiario ? style.switchOn : ""}`}
+            onClick={alternarRepetir}
+            title={
+              repetirDiario
+                ? "Mañana vas a encontrar estas mismas afirmaciones"
+                : "Mañana vas a empezar con los renglones vacíos"
+            }
+          >
+            <span className={style.switchPista}>
+              <span className={style.switchBolita} />
+            </span>
+            Guardarlas al día siguiente
+          </button>
+        </div>
       </header>
 
       <p className={style.ayuda}>
-        Escribí tus afirmaciones y leelas todos los días. Se mantienen día a día: podés editarlas
-        cuando quieras.
+        {repetirDiario
+          ? "Escribí tus afirmaciones y leelas todos los días. Mañana van a estar acá mismo: podés editarlas cuando quieras."
+          : "Cada día vas a empezar con los renglones vacíos. Lo que escribas hoy se guarda igual, no se pierde."}
       </p>
 
       <ol className={style.lista}>

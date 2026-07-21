@@ -4,6 +4,8 @@ const MAX_LINEAS = 30;
 const MAX_LARGO = 400;
 // Guardamos poco más de un año de marcas: alcanza de sobra para la racha.
 const MAX_LECTURAS = 400;
+const RENGLONES_INICIALES = 5;
+const MAX_ARCHIVO = 60;
 
 const esFecha = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
 
@@ -45,6 +47,37 @@ const obtenerDoc = async (userId) => {
   return Afirmacion.create({ usuario: userId });
 };
 
+// Cuando "guardar al día siguiente" está apagado, al cruzar a un día nuevo los
+// renglones se limpian. Lo de ayer no se pierde: queda en el archivo.
+// Es idempotente: después de correr, fechaLineas ya es hoy y no vuelve a entrar.
+const aplicarCambioDeDia = async (doc, fecha) => {
+  if (!esFecha(fecha)) return doc;
+
+  // Documentos viejos (o recién creados): sólo marcamos a qué día pertenecen.
+  if (!doc.fechaLineas) {
+    doc.fechaLineas = fecha;
+    await doc.save();
+    return doc;
+  }
+
+  if (doc.repetirDiario !== false) return doc; // se mantienen: nada que hacer
+  // Comparación de strings YYYY-MM-DD. Si fechaLineas no quedó atrás (mismo día,
+  // o reloj del cliente hacia atrás) no tocamos nada: nunca borrar de más.
+  if (doc.fechaLineas >= fecha) return doc;
+
+  const teniaContenido = doc.lineas.some((linea) => String(linea || "").trim());
+  if (teniaContenido) {
+    doc.archivo = [
+      ...doc.archivo,
+      { fecha: doc.fechaLineas, lineas: doc.lineas },
+    ].slice(-MAX_ARCHIVO);
+  }
+  doc.lineas = Array(RENGLONES_INICIALES).fill("");
+  doc.fechaLineas = fecha;
+  await doc.save();
+  return doc;
+};
+
 const serializar = (doc, fecha) => {
   const lecturas = Array.isArray(doc.lecturas) ? doc.lecturas : [];
   return {
@@ -53,6 +86,7 @@ const serializar = (doc, fecha) => {
     recordatorio: doc.recordatorio || { activo: false, hora: "08:00" },
     leidoHoy: esFecha(fecha) ? lecturas.includes(fecha) : false,
     racha: esFecha(fecha) ? calcularRacha(lecturas, fecha) : 0,
+    archivadas: Array.isArray(doc.archivo) ? doc.archivo.length : 0,
   };
 };
 
@@ -60,7 +94,8 @@ const serializar = (doc, fecha) => {
 export const getAfirmaciones = async (req, res) => {
   try {
     const fecha = String(req.query.fecha || "");
-    const doc = await obtenerDoc(req.user.id);
+    let doc = await obtenerDoc(req.user.id);
+    doc = await aplicarCambioDeDia(doc, fecha);
     return res.status(200).json(serializar(doc, fecha));
   } catch (error) {
     return res.status(500).json({ error: "No se pudieron obtener las afirmaciones" });
@@ -74,7 +109,11 @@ export const updateAfirmaciones = async (req, res) => {
     const doc = await obtenerDoc(req.user.id);
 
     const lineas = limpiarLineas(req.body.lineas);
-    if (lineas) doc.lineas = lineas;
+    if (lineas) {
+      doc.lineas = lineas;
+      // Lo que se escribe ahora pertenece al día del cliente.
+      if (esFecha(fecha)) doc.fechaLineas = fecha;
+    }
     if (typeof req.body.repetirDiario === "boolean") {
       doc.repetirDiario = req.body.repetirDiario;
     }
