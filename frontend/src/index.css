@@ -153,7 +153,10 @@ code {
   width: 22px;
   height: 22px;
   margin-right: 0.55em;
-  vertical-align: -5px;
+  /* `middle` centra el cuadrado con el texto y acompaña el tamaño de fuente.
+     Antes había un `-5px` fijo, que lo dejaba alto y encima se descolocaba al
+     cambiar el tamaño de letra desde la barra. */
+  vertical-align: middle;
   border: 2px solid var(--color-muted);
   border-radius: 6px;
   background: transparent;
