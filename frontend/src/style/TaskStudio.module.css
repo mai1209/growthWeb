@@ -236,21 +236,32 @@
   background: rgba(127, 137, 129, 0.14);
 }
 
-/* Título grande sin caja: se escribe directo sobre la página */
+/* Título grande sin caja: se escribe directo sobre la página.
+   Al enfocar aparece el borde redondeado verde, como un input. */
 .titleGhost {
   width: 100%;
-  padding: 0.1rem 0.1rem 0.2rem;
-  border: none;
+  padding: 0.15rem 0.55rem 0.2rem;
+  border: 2px solid transparent;
+  border-radius: 14px;
   background: transparent;
   color: var(--color-text);
   font-size: 1.6rem;
   font-weight: 800;
   letter-spacing: -0.015em;
   line-height: 1.2;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .titleGhost:focus {
   outline: none;
+  border-color: #5dc72d;
+  box-shadow: 0 0 0 3px rgba(93, 199, 45, 0.18);
+}
+
+/* El texto seleccionado del título en verde, no el gris del sistema */
+.titleGhost::selection {
+  background: rgba(93, 199, 45, 0.4);
+  color: var(--color-text);
 }
 
 .titleGhost::placeholder {
@@ -2371,7 +2382,9 @@ button.folderItem {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex: 1;
+  /* Se ajusta al ancho del texto (no estira): así el botón editar queda al lado
+     del nombre y no pegado a la derecha con un hueco feo. */
+  flex: 0 1 auto;
   min-width: 0;
   padding: 0.4rem 0.45rem;
   border: none;
@@ -2430,6 +2443,8 @@ button.folderItem {
 
 .notePageName {
   min-width: 0;
+  /* Tope para que los nombres largos trunquen con "…" y no empujen los botones. */
+  max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
