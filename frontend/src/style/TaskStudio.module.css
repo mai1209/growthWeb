@@ -201,35 +201,52 @@
   text-transform: uppercase;
 }
 
-/* Cambiar la nota de carpeta (arriba del título) */
-.folderChangeRow {
+/* ===== Cabecera de la nota estilo documento (tipo Notion) ===== */
+.noteHead {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.15rem;
 }
 
-.folderChangeLabel {
-  color: var(--color-verde, #2f6f35);
-  font-size: 0.74rem;
+/* Título grande sin caja: se escribe directo sobre la página */
+.titleGhost {
+  width: 100%;
+  padding: 0.1rem 0.1rem 0.2rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 1.6rem;
   font-weight: 800;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
 }
 
-/* Título (mitad izquierda) + Fondo (mitad derecha) en la misma fila */
-.titleAndBg {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem 1.4rem;
-  align-items: end;
+.titleGhost:focus {
+  outline: none;
 }
 
-.titleAndBg .titleField {
-  margin: 0;
+.titleGhost::placeholder {
+  color: var(--color-muted);
+  opacity: 0.5;
+  font-weight: 700;
 }
 
-.titleAndBg .backgroundPicker {
-  align-content: end;
-  padding-bottom: 0.35rem;
+/* Fila fina bajo el título: carpeta a la izquierda, fondo a la derecha */
+.noteHeadMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(127, 137, 129, 0.18);
+}
+
+/* Swatches más chicos acá: es una fila de metadatos, no la protagonista */
+.noteHeadMeta .colorOption {
+  width: 21px;
+  height: 21px;
+  min-height: 21px;
 }
 
 .editorWorkspace {
@@ -2786,11 +2803,14 @@ button.folderItem {
     gap: 0.55rem;
   }
 
-  /* En móvil el título y el fondo se apilan */
-  .titleAndBg {
-    grid-template-columns: 1fr;
-    gap: 0.7rem;
-    align-items: stretch;
+  /* En móvil el título achica y la fila de metadatos se apila */
+  .titleGhost {
+    font-size: 1.25rem;
+  }
+
+  .noteHeadMeta {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .backgroundPicker {

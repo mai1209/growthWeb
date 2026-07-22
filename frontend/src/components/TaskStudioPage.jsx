@@ -1919,7 +1919,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
             <div className={style.editorHeader}>
               <div>
                 <p className={style.cardKicker}>Editor</p>
-                <h2>{form.id ? form.meta || "Editar nota" : "Nueva nota"}</h2>
+                <h2>{form.id ? "Editar nota" : "Nueva nota"}</h2>
               </div>
               <div className={style.editorActions}>
                 <span className={style.wordCount} title="Palabras escritas">
@@ -1985,64 +1985,65 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
             </div>
 
           <form id="note-editor-form" className={style.form} onSubmit={handleSubmit}>
-            <div className={style.folderChangeRow}>
-              <span className={style.folderChangeLabel}>Cambiar la nota a otra carpeta</span>
-              <span className={style.noteFolderSelect}>
-                <FiFolder />
-                <select
-                  value={form.carpeta || ""}
-                  onChange={(event) => handleFieldChange("carpeta", event.target.value)}
-                  aria-label="Carpeta de la nota"
-                >
-                  <option value="">Sin carpeta</option>
-                  {(form.carpeta && !folders.includes(form.carpeta)
-                    ? [form.carpeta, ...folders]
-                    : folders
-                  ).map((folder) => (
-                    <option key={folder} value={folder}>
-                      {folder}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className={style.noteFolderAdd}
-                  onClick={handleCreateFolderInEditor}
-                  aria-label="Nueva carpeta"
-                  title="Nueva carpeta"
-                >
-                  <FiFolderPlus />
-                </button>
-              </span>
-            </div>
+            {/* Cabecera de la nota, estilo documento: título grande sin caja
+                y una sola fila fina con carpeta + color de fondo. */}
+            <div className={style.noteHead}>
+              <input
+                type="text"
+                value={form.meta}
+                onChange={(event) => handleFieldChange("meta", event.target.value)}
+                placeholder="Título de la nota…"
+                className={style.titleGhost}
+                aria-label="Título de la nota"
+              />
 
-            <div className={style.titleAndBg}>
-              <label className={`${style.field} ${style.titleField}`}>
-                <span>Título</span>
-                <input
-                  type="text"
-                  value={form.meta}
-                  onChange={(event) => handleFieldChange("meta", event.target.value)}
-                  placeholder="Ej: Ideas para promociones de junio"
-                  className={`${style.input} ${style.titleInput}`}
-                />
-              </label>
+              <div className={style.noteHeadMeta}>
+                <span
+                  className={style.noteFolderSelect}
+                  title="Cambiar la nota a otra carpeta"
+                >
+                  <FiFolder />
+                  <select
+                    value={form.carpeta || ""}
+                    onChange={(event) => handleFieldChange("carpeta", event.target.value)}
+                    aria-label="Cambiar la nota a otra carpeta"
+                  >
+                    <option value="">Sin carpeta</option>
+                    {(form.carpeta && !folders.includes(form.carpeta)
+                      ? [form.carpeta, ...folders]
+                      : folders
+                    ).map((folder) => (
+                      <option key={folder} value={folder}>
+                        {folder}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className={style.noteFolderAdd}
+                    onClick={handleCreateFolderInEditor}
+                    aria-label="Nueva carpeta"
+                    title="Nueva carpeta"
+                  >
+                    <FiFolderPlus />
+                  </button>
+                </span>
 
-              <div className={style.backgroundPicker}>
-                <span>Fondo</span>
-                <div className={style.colorGrid}>
-                  {COLOR_OPTIONS.map((color) => (
-                    <button
-                      key={color.value}
-                      type="button"
-                      className={`${style.colorOption} ${style[color.value]} ${
-                        form.color === color.value ? style.colorOptionActive : ""
-                      }`}
-                      onClick={() => handleFieldChange("color", color.value)}
-                      aria-label={`Color ${color.label}`}
-                      title={color.label}
-                    />
-                  ))}
+                <div className={style.backgroundPicker}>
+                  <div className={style.colorGrid}>
+                    {COLOR_OPTIONS.map((color) => (
+                      <button
+                        key={color.value}
+                        type="button"
+                        className={`${style.colorOption} ${style[color.value]} ${
+                          form.color === color.value ? style.colorOptionActive : ""
+                        }`}
+                        onClick={() => handleFieldChange("color", color.value)}
+                        aria-label={`Color de fondo ${color.label}`}
+                        title={`Fondo ${color.label}`}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
