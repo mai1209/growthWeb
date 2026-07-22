@@ -9,7 +9,6 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiCheckSquare,
-  FiClock,
   FiCode,
   FiEdit2,
   FiFilePlus,
@@ -1923,20 +1922,9 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 <h2>{form.id ? form.meta || "Editar nota" : "Nueva nota"}</h2>
               </div>
               <div className={style.editorActions}>
-                <span className={style.wordCount} title="Palabras y tiempo de lectura">
+                <span className={style.wordCount} title="Palabras escritas">
                   {editorStats.words} palabra{editorStats.words === 1 ? "" : "s"}
-                  {editorStats.minutes ? ` · ${editorStats.minutes} min` : ""}
                 </span>
-                <button
-                  type="button"
-                  className={`${style.iconButton} ${style.outlineButton} ${showOutline ? style.iconButtonActive : ""}`}
-                  onClick={() => setShowOutline((prev) => !prev)}
-                  aria-label="Índice de la nota"
-                  title="Índice"
-                  disabled={outline.length === 0}
-                >
-                  <FiList />
-                </button>
                 <div className={style.widthControl} role="group" aria-label="Ancho de la hoja">
                   {SHEET_WIDTH_OPTIONS.map((opt) => (
                     <button
@@ -1997,42 +1985,48 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
             </div>
 
           <form id="note-editor-form" className={style.form} onSubmit={handleSubmit}>
-            <div className={style.noteMetaBar}>
-              <div className={style.noteMetaInfo} aria-label="Fecha y hora de la nota">
-                <span>
-                  <FiCalendar /> {form.fecha}
-                </span>
-                <span>
-                  <FiClock /> {form.horario}
-                </span>
-                <span className={style.noteFolderSelect}>
-                  <FiFolder />
-                  <select
-                    value={form.carpeta || ""}
-                    onChange={(event) => handleFieldChange("carpeta", event.target.value)}
-                    aria-label="Carpeta de la nota"
-                  >
-                    <option value="">Sin carpeta</option>
-                    {(form.carpeta && !folders.includes(form.carpeta)
-                      ? [form.carpeta, ...folders]
-                      : folders
-                    ).map((folder) => (
-                      <option key={folder} value={folder}>
-                        {folder}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    className={style.noteFolderAdd}
-                    onClick={handleCreateFolderInEditor}
-                    aria-label="Nueva carpeta"
-                    title="Nueva carpeta"
-                  >
-                    <FiFolderPlus />
-                  </button>
-                </span>
-              </div>
+            <div className={style.folderChangeRow}>
+              <span className={style.folderChangeLabel}>Cambiar la nota a otra carpeta</span>
+              <span className={style.noteFolderSelect}>
+                <FiFolder />
+                <select
+                  value={form.carpeta || ""}
+                  onChange={(event) => handleFieldChange("carpeta", event.target.value)}
+                  aria-label="Carpeta de la nota"
+                >
+                  <option value="">Sin carpeta</option>
+                  {(form.carpeta && !folders.includes(form.carpeta)
+                    ? [form.carpeta, ...folders]
+                    : folders
+                  ).map((folder) => (
+                    <option key={folder} value={folder}>
+                      {folder}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className={style.noteFolderAdd}
+                  onClick={handleCreateFolderInEditor}
+                  aria-label="Nueva carpeta"
+                  title="Nueva carpeta"
+                >
+                  <FiFolderPlus />
+                </button>
+              </span>
+            </div>
+
+            <div className={style.titleAndBg}>
+              <label className={`${style.field} ${style.titleField}`}>
+                <span>Título</span>
+                <input
+                  type="text"
+                  value={form.meta}
+                  onChange={(event) => handleFieldChange("meta", event.target.value)}
+                  placeholder="Ej: Ideas para promociones de junio"
+                  className={`${style.input} ${style.titleInput}`}
+                />
+              </label>
 
               <div className={style.backgroundPicker}>
                 <span>Fondo</span>
@@ -2052,17 +2046,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 </div>
               </div>
             </div>
-
-            <label className={`${style.field} ${style.titleField}`}>
-              <span>Título</span>
-              <input
-                type="text"
-                value={form.meta}
-                onChange={(event) => handleFieldChange("meta", event.target.value)}
-                placeholder="Ej: Ideas para promociones de junio"
-                className={`${style.input} ${style.titleInput}`}
-              />
-            </label>
 
             <div className={style.editorBody}>
               <aside className={style.pagesColumn} aria-label="Páginas de la nota">
@@ -2101,10 +2084,12 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                             className={style.notePageSelect}
                             onClick={() => handleSelectPage(index)}
                             onDoubleClick={() => startRename(index)}
-                            title={getPageLabel(page, index)}
                           >
                             <span className={style.notePageNumber}>{index + 1}</span>
                             <span className={style.notePageName}>{getPageLabel(page, index)}</span>
+                            <span className={style.notePageTip} role="tooltip">
+                              {getPageLabel(page, index)}
+                            </span>
                           </button>
                         )}
 
