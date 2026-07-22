@@ -208,6 +208,34 @@
   gap: 0.15rem;
 }
 
+/* Título real de la nota en el header del editor, con el lápiz al lado */
+.headerTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.titleEditBtn {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.titleEditBtn:hover {
+  color: var(--color-text);
+  background: rgba(127, 137, 129, 0.14);
+}
+
 /* Título grande sin caja: se escribe directo sobre la página */
 .titleGhost {
   width: 100%;

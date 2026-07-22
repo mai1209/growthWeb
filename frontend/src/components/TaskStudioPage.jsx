@@ -329,6 +329,7 @@ const computeEditorMeta = (instance) => {
 function TaskStudioPage({ activeWorkspace = "personal" }) {
   const editorRef = useRef(null);
   const quillRef = useRef(null);
+  const titleInputRef = useRef(null);
   const selectionRef = useRef(null);
   const monthInputRef = useRef(null);
   const activeNotePageIndexRef = useRef(0);
@@ -1917,9 +1918,28 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
           data-sheet={sheetWidth}
         >
             <div className={style.editorHeader}>
-              <div>
-                <p className={style.cardKicker}>Editor</p>
-                <h2>{form.id ? "Editar nota" : "Nueva nota"}</h2>
+              <div className={style.headerTitleWrap}>
+                <input
+                  ref={titleInputRef}
+                  type="text"
+                  value={form.meta}
+                  onChange={(event) => handleFieldChange("meta", event.target.value)}
+                  placeholder="Título de la nota…"
+                  className={style.titleGhost}
+                  aria-label="Título de la nota"
+                />
+                <button
+                  type="button"
+                  className={style.titleEditBtn}
+                  onClick={() => {
+                    titleInputRef.current?.focus();
+                    titleInputRef.current?.select();
+                  }}
+                  aria-label="Editar título"
+                  title="Editar título"
+                >
+                  <FiEdit2 />
+                </button>
               </div>
               <div className={style.editorActions}>
                 <span className={style.wordCount} title="Palabras escritas">
@@ -1985,18 +2005,9 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
             </div>
 
           <form id="note-editor-form" className={style.form} onSubmit={handleSubmit}>
-            {/* Cabecera de la nota, estilo documento: título grande sin caja
-                y una sola fila fina con carpeta + color de fondo. */}
+            {/* Fila fina de metadatos: carpeta a la izquierda, fondo a la derecha.
+                El título vive arriba, en el header del editor. */}
             <div className={style.noteHead}>
-              <input
-                type="text"
-                value={form.meta}
-                onChange={(event) => handleFieldChange("meta", event.target.value)}
-                placeholder="Título de la nota…"
-                className={style.titleGhost}
-                aria-label="Título de la nota"
-              />
-
               <div className={style.noteHeadMeta}>
                 <span
                   className={style.noteFolderSelect}
