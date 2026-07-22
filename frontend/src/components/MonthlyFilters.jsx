@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  FiArrowDownRight,
-  FiArrowUpRight,
+  FiArrowDown,
+  FiArrowUp,
   FiCalendar,
   FiCheck,
   FiChevronDown,
+  FiCreditCard,
   FiFilter,
+  FiPocket,
+  FiRepeat,
 } from "react-icons/fi";
 import style from "../style/MonthlyFilters.module.css";
-import { movimientoService, categoriesService } from "../api";
+import { movimientoService } from "../api";
 import {
   CURRENCY_OPTIONS,
   MOVEMENT_METHOD_OPTIONS,
@@ -28,6 +31,15 @@ const RECURRENCE_FILTERS = [
   { value: "manual", label: "Manual" },
   { value: "fixed", label: "Fijos" },
 ];
+
+// Ícono por tipo de movimiento (mismo criterio minimalista que la app).
+const movementIcon = (m) => {
+  if (m.desdeAhorro) return <FiRepeat />;
+  if (m.tipo === "ingreso") return <FiArrowDown />;
+  if (m.tipo === "ahorro") return <FiPocket />;
+  if (m.tipo === "deuda") return <FiCreditCard />;
+  return <FiArrowUp />; // egreso
+};
 
 const TYPE_FILTERS = [{ value: "all", label: "Todos" }, ...MOVEMENT_TYPE_OPTIONS];
 const METHOD_FILTERS = [{ value: "all", label: "Todos" }, ...MOVEMENT_METHOD_OPTIONS];
@@ -136,22 +148,6 @@ function MonthlyFilters({
   const [facturaMsg, setFacturaMsg] = useState(null); // { ok, text }
   const [yearMenuOpen, setYearMenuOpen] = useState(false);
   const monthInputRef = useRef(null);
-  const [categories, setCategories] = useState([]);
-
-  useEffect(() => {
-    categoriesService
-      .getAll()
-      .then((res) => setCategories(Array.isArray(res.data) ? res.data : []))
-      .catch(() => {});
-  }, []);
-
-  const catIcon = useMemo(() => {
-    const map = new Map();
-    categories.forEach((c) => {
-      if (c?.nombre && c?.icono) map.set(c.nombre.trim().toLowerCase(), c.icono);
-    });
-    return map;
-  }, [categories]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedRecurrence, setSelectedRecurrence] = useState("all");
@@ -458,7 +454,6 @@ function MonthlyFilters({
             currentCurrency,
             typeMeta.signedAsPositive
           );
-    const isPositive = amountLabel.trim().startsWith("+");
     // Color del monto según el tipo de movimiento
     const amountTone = movimiento.desdeAhorro
       ? style.amountAhorro
@@ -473,17 +468,7 @@ function MonthlyFilters({
     return (
       <article key={movimiento._id} className={`${style.row} ${toneClass}`}>
         <div className={style.rowHead}>
-          <span className={style.rowIcon}>
-            {catIcon.get((movimiento.categoria || "").trim().toLowerCase()) ? (
-              <span className={style.rowIconEmoji}>
-                {catIcon.get((movimiento.categoria || "").trim().toLowerCase())}
-              </span>
-            ) : isPositive ? (
-              <FiArrowUpRight />
-            ) : (
-              <FiArrowDownRight />
-            )}
-          </span>
+          <span className={style.rowIcon}>{movementIcon(movimiento)}</span>
 
           <div className={style.rowText}>
             <p className={style.rowCategory}>{movimiento.categoria}</p>
