@@ -1721,13 +1721,33 @@ button.folderItem {
   min-width: 0;
 }
 
-/* ===== Selector de carpeta en el editor ===== */
+/* ===== Selector de carpeta en el editor (pastilla) ===== */
 .noteFolderSelect {
-  gap: 0.3rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 34px;
+  padding: 0 0.3rem 0 0.8rem;
+  border: 1px solid rgba(127, 137, 129, 0.3);
+  border-radius: 999px;
+  background: rgba(127, 137, 129, 0.1);
+  color: var(--color-text);
+  font-size: 0.84rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.noteFolderSelect:hover {
+  border-color: rgba(93, 199, 45, 0.55);
+}
+
+.noteFolderSelect:focus-within {
+  border-color: #5dc72d;
+  box-shadow: 0 0 0 3px rgba(93, 199, 45, 0.16);
 }
 
 .noteFolderSelect select {
-  max-width: 150px;
+  max-width: 170px;
+  padding-right: 0.15rem;
   border: none;
   background: transparent;
   color: inherit;
@@ -1735,28 +1755,35 @@ button.folderItem {
   font-weight: 700;
   cursor: pointer;
   outline: none;
+  text-overflow: ellipsis;
 }
 
+/* El ícono de carpeta en verde, ata la pastilla al acento de la app */
 .noteFolderSelect>svg {
-  width: 14px;
-  height: 14px;
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  color: #5dc72d;
 }
 
+/* Botón de nueva carpeta: redondo, del mismo alto visual que la pastilla */
 .noteFolderAdd {
   display: inline-grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border: none;
-  background: transparent;
-  color: inherit;
+  border-radius: 999px;
+  background: rgba(93, 199, 45, 0.16);
+  color: #5dc72d;
   cursor: pointer;
-  opacity: 0.7;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
 }
 
 .noteFolderAdd:hover {
-  opacity: 1;
-  color: var(--accent);
+  background: #5dc72d;
+  color: #0e1a0e;
+  transform: scale(1.06);
 }
 
 .noteFolderAdd svg {
