@@ -280,30 +280,29 @@ function Journaling() {
     const e = entradas[libroIdx];
 
     return (
-      <div className={style.libroWrap}>
-        <div className={style.libroPage}>
-          <p className={style.libroFecha}>{fechaLarga(e.fecha)}</p>
-          {Number(e.animo) > 0 ? <p className={style.libroAnimo}>{emojiDe(e.animo)}</p> : null}
+      <div className={style.libroPage}>
+        <p className={style.libroFecha}>{fechaLarga(e.fecha)}</p>
+        {Number(e.animo) > 0 ? <p className={style.libroAnimo}>{emojiDe(e.animo)}</p> : null}
 
-          {CAMPOS.map((p) =>
-            e[p.campo] ? (
-              <div key={p.campo} className={style.libroBloque}>
-                <p className={style.libroPregunta}>{preguntas[p.campo]}</p>
-                <p className={style.libroTexto}>{e[p.campo]}</p>
-              </div>
-            ) : null
-          )}
-          {e.libre ? (
-            <div className={style.libroBloque}>
-              <p className={style.libroTexto}>{e.libre}</p>
+        {CAMPOS.map((p) =>
+          e[p.campo] ? (
+            <div key={p.campo} className={style.libroBloque}>
+              <p className={style.libroPregunta}>{preguntas[p.campo]}</p>
+              <p className={style.libroTexto}>{e[p.campo]}</p>
             </div>
-          ) : null}
-        </div>
+          ) : null
+        )}
+        {e.libre ? (
+          <div className={style.libroBloque}>
+            <p className={style.libroTexto}>{e.libre}</p>
+          </div>
+        ) : null}
 
+        {/* Paginador dentro de la hoja, en tinta */}
         <div className={style.libroNav}>
           <button
             type="button"
-            className={style.calNavBtn}
+            className={style.libroNavBtn}
             onClick={() => setLibroFecha(entradas[libroIdx - 1]?.fecha)}
             disabled={libroIdx <= 0}
             aria-label="Día anterior"
@@ -315,7 +314,7 @@ function Journaling() {
           </span>
           <button
             type="button"
-            className={style.calNavBtn}
+            className={style.libroNavBtn}
             onClick={() => setLibroFecha(entradas[libroIdx + 1]?.fecha)}
             disabled={libroIdx >= entradas.length - 1}
             aria-label="Día siguiente"
@@ -346,20 +345,36 @@ function Journaling() {
         <div className={style.colIzq}>
           <div className={style.animoBox}>
             <p className={style.animoLabel}>¿Cómo estuvo tu día?</p>
+            {/* Las caritas se prenden hasta donde llega el slider */}
             <div className={style.animoRow}>
-              {ANIMOS.map((a) => (
-                <button
-                  key={a.valor}
-                  type="button"
-                  className={`${style.animoBtn} ${Number(entrada.animo) === a.valor ? style.animoActivo : ""}`}
-                  onClick={() => elegirAnimo(a.valor)}
-                  aria-label={`Ánimo ${a.valor} de 5`}
-                  aria-pressed={Number(entrada.animo) === a.valor}
-                >
-                  {a.emoji}
-                </button>
-              ))}
+              {ANIMOS.map((a) => {
+                const nivel = Number(entrada.animo) || 0;
+                const prendida = nivel > 0 && a.valor <= nivel;
+                return (
+                  <span
+                    key={a.valor}
+                    className={`${style.animoCara} ${prendida ? style.animoCaraOn : ""} ${
+                      a.valor === nivel ? style.animoCaraActual : ""
+                    }`}
+                    onClick={() => elegirAnimo(a.valor)}
+                    role="button"
+                    aria-label={`Ánimo ${a.valor} de 5`}
+                  >
+                    {a.emoji}
+                  </span>
+                );
+              })}
             </div>
+            <input
+              type="range"
+              min="0"
+              max="5"
+              step="1"
+              value={Number(entrada.animo) || 0}
+              onChange={(e) => editar("animo", Number(e.target.value))}
+              className={style.animoSlider}
+              aria-label="Ánimo del día (0 sin marcar, 5 muy bien)"
+            />
           </div>
 
           {/* Preguntas guiadas (el texto es personalizable) */}

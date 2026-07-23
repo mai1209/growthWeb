@@ -170,18 +170,15 @@
 }
 
 /* ===== Libro (hoja de cuaderno) ===== */
-.libroWrap {
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-}
-
 /* La hoja: papel crema con renglones y línea de margen roja. Es papel a
-   propósito, no cambia con el tema. */
+   propósito, no cambia con el tema. Se estira hasta el final de la página
+   y el paginador vive adentro, al pie de la hoja. */
 .libroPage {
   --renglon: 30px;
-  min-height: 430px;
-  padding: 1.6rem 1.4rem 1.6rem 3.2rem;
+  display: flex;
+  flex-direction: column;
+  min-height: max(430px, calc(100vh - 310px));
+  padding: 1.6rem 1.4rem 1.1rem 3.2rem;
   border-radius: 12px;
   background-color: #faf4e3;
   background-image:
@@ -231,16 +228,41 @@
   overflow-wrap: break-word;
 }
 
+/* Paginador al pie de la hoja, en tinta */
 .libroNav {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1rem;
+  margin-top: auto;
+  padding-top: 0.6rem;
+}
+
+.libroNavBtn {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(43, 36, 22, 0.4);
+  border-radius: 10px;
+  background: transparent;
+  color: #2b2416;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.libroNavBtn:hover:not(:disabled) {
+  background: rgba(43, 36, 22, 0.08);
+}
+
+.libroNavBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .libroPagina {
-  color: var(--color-muted);
-  font-size: 0.8rem;
+  color: #2b2416;
+  font-size: 0.82rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -328,38 +350,37 @@
   letter-spacing: 0.04em;
 }
 
+/* Caritas: se prenden hasta donde llega el slider, apagadas el resto */
 .animoRow {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
+  padding: 0 2px;
 }
 
-.animoBtn {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  background: var(--surface-input, rgba(127, 137, 129, 0.08));
-  font-size: 1.35rem;
+.animoCara {
+  font-size: 1.5rem;
+  line-height: 1;
   cursor: pointer;
-  filter: grayscale(0.65);
-  opacity: 0.75;
-  transition: transform 0.12s ease, filter 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
+  filter: grayscale(1);
+  opacity: 0.35;
+  transition: transform 0.15s ease, filter 0.2s ease, opacity 0.2s ease;
+  user-select: none;
 }
 
-.animoBtn:hover {
-  transform: scale(1.08);
+.animoCaraOn {
   filter: grayscale(0);
   opacity: 1;
 }
 
-.animoActivo {
-  filter: grayscale(0);
-  opacity: 1;
-  border-color: var(--color-verde, #5dc72d);
-  transform: scale(1.08);
+.animoCaraActual {
+  transform: scale(1.25);
+}
+
+.animoSlider {
+  width: 100%;
+  accent-color: var(--accent, #5dc72d);
+  cursor: pointer;
 }
 
 /* ===== Campos guiados ===== */
