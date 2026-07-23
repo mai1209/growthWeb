@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Modal,
   View,
@@ -81,6 +81,76 @@ const buildMonthGrid = (ref) => {
   return cells;
 };
 
+const THUMB = 30;
+
+const AnimoSlider = React.memo(function AnimoSlider({ value, onChange, styles }) {
+  const [trackW, setTrackW] = useState(0);
+  const trackWRef = useRef(0);
+  const [drag, setDrag] = useState(null);
+  const dragRef = useRef(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  function calcular(x) {
+    const w = trackWRef.current;
+    if (!w) return 0;
+    const usable = Math.max(1, w - THUMB);
+    return Math.min(5, Math.max(0, Math.round(((x - THUMB / 2) / usable) * 5)));
+  }
+
+  function mover(x) {
+    const v = calcular(x);
+    if (dragRef.current !== v) {
+      dragRef.current = v;
+      setDrag(v);
+    }
+  }
+
+  function soltar() {
+    if (dragRef.current != null) onChangeRef.current(dragRef.current);
+    dragRef.current = null;
+    setDrag(null);
+  }
+
+  const pan = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (evt) => mover(evt.nativeEvent.locationX),
+      onPanResponderMove: (evt) => mover(evt.nativeEvent.locationX),
+      onPanResponderRelease: soltar,
+      onPanResponderTerminate: soltar,
+    })
+  ).current;
+
+  const nivel = drag != null ? drag : Number(value) || 0;
+  const usable = Math.max(0, trackW - THUMB);
+  const thumbLeft = (nivel / 5) * usable;
+
+  return (
+    <View style={styles.animoSliderRow}>
+      <View
+        style={styles.animoSliderWrap}
+        onLayout={(e) => {
+          setTrackW(e.nativeEvent.layout.width);
+          trackWRef.current = e.nativeEvent.layout.width;
+        }}
+        {...pan.panHandlers}
+      >
+        <View style={styles.animoTrack}>
+          <View style={[styles.animoFill, { width: thumbLeft + THUMB / 2 }]} />
+        </View>
+        {[1, 2, 3, 4, 5].map((v) => (
+          <View key={v} style={[styles.animoTick, { left: (v / 5) * usable + THUMB / 2 - 3 }]} />
+        ))}
+        <View style={[styles.animoThumb, { left: thumbLeft }]}>
+          <Text style={styles.animoThumbEmoji}>{nivel > 0 ? emojiDe(nivel) : CARA_VACIA}</Text>
+        </View>
+      </View>
+    </View>
+  );
+});
+
 const tieneContenido = (e) =>
   Number(e?.animo) > 0 ||
   [e?.gratitud, e?.mejor, e?.distinto, e?.libre].some((c) => String(c || "").trim());
@@ -88,7 +158,7 @@ const tieneContenido = (e) =>
 export default function JournalingPanel({ visible, onClose }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const styles = makeStyles(colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [fecha, setFecha] = useState(hoyLocal);
   const [entrada, setEntrada] = useState(ENTRADA_VACIA);
@@ -106,28 +176,8 @@ export default function JournalingPanel({ visible, onClose }) {
   const [calRef, setCalRef] = useState(() => new Date());
   const guardadoRef = useRef(null);
 
-  // Slider de ánimo casero (sin librerías nativas): PanResponder sobre el riel.
-  const THUMB = 30;
-  const [trackW, setTrackW] = useState(0);
-  const trackWRef = useRef(0);
   const editarRef = useRef(() => {});
-
-  function setAnimoDesdeX(x) {
-    const w = trackWRef.current;
-    if (!w) return;
-    const usable = Math.max(1, w - THUMB);
-    const v = Math.min(5, Math.max(0, Math.round(((x - THUMB / 2) / usable) * 5)));
-    editarRef.current("animo", v);
-  }
-
-  const animoPan = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt) => setAnimoDesdeX(evt.nativeEvent.locationX),
-      onPanResponderMove: (evt) => setAnimoDesdeX(evt.nativeEvent.locationX),
-    })
-  ).current;
+  const onAnimoChange = useCallback((v) => editarRef.current("animo", v), []);
 
   const aplicar = useCallback((data) => {
     setEntrada(data?.hoy ? { ...ENTRADA_VACIA, ...data.hoy } : ENTRADA_VACIA);
@@ -221,7 +271,12 @@ export default function JournalingPanel({ visible, onClose }) {
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={styles.kicker}>JOURNALING</Text>
-            <Text style={styles.title}>Tu journal</Text>
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>Tu journal</Text>
+              <Text style={styles.headerFecha} numberOfLines={1}>
+                {fechaLarga(fecha)}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -236,52 +291,10 @@ export default function JournalingPanel({ visible, onClose }) {
             keyboardVerticalOffset={0}
           >
             <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-              {/* Fecha centrada, como en Afirmaciones */}
-              <View style={styles.fechaRow}>
-                <Ionicons name="create" size={19} color={colors.greenBright} />
-                <Text style={styles.fecha}>{fechaLarga(fecha)}</Text>
-              </View>
-
               {/* Ánimo: slider con carita viajera */}
               <View style={styles.animoBox}>
                 <Text style={styles.animoLabel}>¿CÓMO ESTUVO TU DÍA?</Text>
-                <View style={styles.animoSliderRow}>
-                  <View
-                    style={styles.animoSliderWrap}
-                    onLayout={(e) => {
-                      setTrackW(e.nativeEvent.layout.width);
-                      trackWRef.current = e.nativeEvent.layout.width;
-                    }}
-                    {...animoPan.panHandlers}
-                  >
-                    {(() => {
-                      const nivel = Number(entrada.animo) || 0;
-                      const usable = Math.max(0, trackW - THUMB);
-                      const thumbLeft = (nivel / 5) * usable;
-                      return (
-                        <>
-                          <View style={styles.animoTrack}>
-                            <View style={[styles.animoFill, { width: thumbLeft + THUMB / 2 }]} />
-                          </View>
-                          {[1, 2, 3, 4, 5].map((v) => (
-                            <View
-                              key={v}
-                              style={[
-                                styles.animoTick,
-                                { left: (v / 5) * usable + THUMB / 2 - 3 },
-                              ]}
-                            />
-                          ))}
-                          <View style={[styles.animoThumb, { left: thumbLeft }]}>
-                            <Text style={styles.animoThumbEmoji}>
-                              {nivel > 0 ? emojiDe(nivel) : CARA_VACIA}
-                            </Text>
-                          </View>
-                        </>
-                      );
-                    })()}
-                  </View>
-                </View>
+                <AnimoSlider value={entrada.animo} onChange={onAnimoChange} styles={styles} />
               </View>
 
               {/* Releer: vista calendario o vista libro */}
@@ -541,6 +554,15 @@ const makeStyles = (colors) =>
     backBtn: { padding: 4 },
     kicker: { color: colors.greenDark, fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
     title: { color: colors.text, fontSize: 20, fontWeight: "800", marginTop: 2 },
+    titleRow: { flexDirection: "row", alignItems: "flex-end", gap: 8, flexWrap: "nowrap" },
+    headerFecha: {
+      flexShrink: 1,
+      color: colors.muted,
+      fontSize: 12.5,
+      fontWeight: "700",
+      textTransform: "capitalize",
+      marginBottom: 3,
+    },
     rachaPill: {
       paddingHorizontal: 10,
       paddingVertical: 5,
