@@ -25,18 +25,15 @@ const asegurarCanal = async () => {
   });
 };
 
-// Elige la afirmación del día: rota entre las escritas según la fecha.
-const afirmacionDelDia = (lineas) => {
-  const escritas = (lineas || []).map((l) => String(l || "").trim()).filter(Boolean);
-  if (!escritas.length) return "Tomate un minuto para leer tus afirmaciones.";
-  const dia = Math.floor(Date.now() / 86400000); // días desde epoch, alcanza para rotar
-  return escritas[dia % escritas.length];
-};
+// Mensaje fijo del recordatorio, con espíritu estoico: la repetición diaria
+// es lo que convierte las palabras en carácter.
+const TITULO = "Tus afirmaciones de hoy";
+const MENSAJE =
+  "Tu mente se tiñe del color de tus pensamientos. Repetilos cada día y se vuelven carácter: leé tus afirmaciones.";
 
 // Sincroniza el recordatorio: cancela el anterior y, si está activo,
-// programa la notificación diaria a la hora elegida con la afirmación del día.
-// Llamalo al abrir el panel y al cambiar la configuración: así el texto rota.
-export const syncAfirmacionesReminder = async ({ activo, hora, lineas }) => {
+// programa la notificación diaria a la hora elegida.
+export const syncAfirmacionesReminder = async ({ activo, hora }) => {
   try {
     await Notifications.cancelScheduledNotificationAsync(REMINDER_ID).catch(() => {});
     if (!activo) return true;
@@ -50,8 +47,8 @@ export const syncAfirmacionesReminder = async ({ activo, hora, lineas }) => {
     await Notifications.scheduleNotificationAsync({
       identifier: REMINDER_ID,
       content: {
-        title: "Tus afirmaciones de hoy ✨",
-        body: afirmacionDelDia(lineas),
+        title: TITULO,
+        body: MENSAJE,
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
