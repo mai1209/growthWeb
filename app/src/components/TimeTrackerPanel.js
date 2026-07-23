@@ -175,18 +175,62 @@ export default function TimeTrackerPanel({ colors }) {
     const pausas = [...(running.pausas || [])];
     if (running.pauseStart) {
       pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString(), motivo: pauseMotivo.trim() });
+    } else if (running.finTs) {
+      // Quedó congelada por un Finalizar sin guardar: ese hueco cuenta como pausa.
+      pausas.push({ inicio: running.finTs, fin: new Date().toISOString(), motivo: "" });
     }
     setPauseMotivo("");
-    persistRunning({ ...running, segmentStart: new Date().toISOString(), pauseStart: null, pausas });
+    persistRunning({ ...running, segmentStart: new Date().toISOString(), pauseStart: null, finTs: null, pausas });
   };
+
+  // Finalizar congela el reloj en el momento del toque: la sesión termina acá.
+  // "Guardar sesión" después sólo persiste (con la nota si querés).
+  const handleOpenFinish = () => {
+    if (!running) return;
+    if (running.segmentStart) {
+      const acc =
+        running.accumulated +
+        Math.floor((Date.now() - new Date(running.segmentStart).getTime()) / 1000);
+      persistRunning({
+        ...running,
+        accumulated: acc,
+        segmentStart: null,
+        finTs: new Date().toISOString(),
+      });
+    } else {
+      // Estaba en pausa: el trabajo terminó cuando arrancó esa pausa.
+      persistRunning({ ...running, finTs: running.pauseStart || new Date().toISOString() });
+    }
+    setFinishOpen(true);
+  };
+
+  // Cancelar el finalizar: si venía corriendo retoma (el rato del modal queda
+  // como pausa); si venía en pausa, sigue en pausa.
+  const handleCancelFinish = () => {
+    if (running?.finTs && !running.pauseStart) {
+      const pausas = [
+        ...(running.pausas || []),
+        { inicio: running.finTs, fin: new Date().toISOString(), motivo: "" },
+      ];
+      persistRunning({
+        ...running,
+        segmentStart: new Date().toISOString(),
+        finTs: null,
+        pausas,
+      });
+    } else if (running?.finTs) {
+      persistRunning({ ...running, finTs: null });
+    }
+    setFinishOpen(false);
+  };
+
   const confirmFinish = async () => {
     if (!running || saving) return;
     setSaving(true);
     const total = activeSecs(running, Date.now());
+    // La última pausa (si venía en pausa) no se registra: la sesión terminó
+    // cuando esa pausa arrancó, no hubo trabajo después.
     const pausas = [...(running.pausas || [])];
-    if (running.pauseStart) {
-      pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString(), motivo: pauseMotivo.trim() });
-    }
     setPauseMotivo("");
     try {
       await timeEntryService.create({
@@ -195,7 +239,7 @@ export default function TimeTrackerPanel({ colors }) {
         notas: finishNotes,
         pausas,
         inicio: running.firstStart,
-        fin: new Date().toISOString(),
+        fin: running.finTs || new Date().toISOString(),
         duracion: total,
       });
       persistRunning(null);
@@ -815,7 +859,7 @@ export default function TimeTrackerPanel({ colors }) {
             )}
             <TouchableOpacity
               style={[styles.midBtn, styles.stopBtn]}
-              onPress={() => setFinishOpen(true)}
+              onPress={handleOpenFinish}
               disabled={saving}
             >
               <Ionicons name="stop" size={18} color="#fff" />
@@ -980,12 +1024,12 @@ export default function TimeTrackerPanel({ colors }) {
       ) : null}
 
       {/* Modal Finalizar con notas */}
-      <Modal visible={finishOpen} transparent animationType="fade" onRequestClose={() => setFinishOpen(false)}>
+      <Modal visible={finishOpen} transparent animationType="fade" onRequestClose={handleCancelFinish}>
         <KeyboardAvoidingView
           style={styles.overlay}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setFinishOpen(false)} />
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={handleCancelFinish} />
           <ScrollView
             style={{ width: "100%", flexGrow: 0 }}
             contentContainerStyle={{ justifyContent: "center" }}
@@ -1001,7 +1045,6 @@ export default function TimeTrackerPanel({ colors }) {
                 </Text>
                 {(() => {
                   const ps = [...((running && running.pausas) || [])];
-                  if (running?.pauseStart) ps.push({ inicio: running.pauseStart, fin: new Date().toISOString(), motivo: pauseMotivo.trim() });
                   if (!ps.length) return <Text style={styles.detailMuted}>Sin pausas.</Text>;
                   return ps.map((p, i) => {
                     const pi = new Date(p.inicio);
@@ -1028,7 +1071,7 @@ export default function TimeTrackerPanel({ colors }) {
               multiline
             />
             <View style={styles.sheetActions}>
-              <TouchableOpacity style={styles.ghostBtn} onPress={() => setFinishOpen(false)}>
+              <TouchableOpacity style={styles.ghostBtn} onPress={handleCancelFinish}>
                 <Text style={styles.ghostText}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.saveBtn} onPress={confirmFinish} disabled={saving}>

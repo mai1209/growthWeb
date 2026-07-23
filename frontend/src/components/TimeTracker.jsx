@@ -176,19 +176,63 @@ export default function TimeTracker() {
     const pausas = [...(running.pausas || [])];
     if (running.pauseStart) {
       pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString(), motivo: pauseMotivo.trim() });
+    } else if (running.finTs) {
+      // Quedó congelada por un Finalizar sin guardar (ej: refresh con el
+      // modal abierto): ese hueco cuenta como pausa.
+      pausas.push({ inicio: running.finTs, fin: new Date().toISOString(), motivo: "" });
     }
     setPauseMotivo("");
-    persistRunning({ ...running, segmentStart: new Date().toISOString(), pauseStart: null, pausas });
+    persistRunning({ ...running, segmentStart: new Date().toISOString(), pauseStart: null, finTs: null, pausas });
+  };
+
+  // Finalizar congela el reloj en el momento del clic: la sesión termina acá.
+  // "Guardar sesión" después sólo persiste (con la nota si querés).
+  const handleOpenFinish = () => {
+    if (!running) return;
+    if (running.segmentStart) {
+      const acc =
+        running.accumulated +
+        Math.floor((Date.now() - new Date(running.segmentStart).getTime()) / 1000);
+      persistRunning({
+        ...running,
+        accumulated: acc,
+        segmentStart: null,
+        finTs: new Date().toISOString(),
+      });
+    } else {
+      // Estaba en pausa: el trabajo terminó cuando arrancó esa pausa.
+      persistRunning({ ...running, finTs: running.pauseStart || new Date().toISOString() });
+    }
+    setFinishOpen(true);
+  };
+
+  // Cancelar el finalizar: si venía corriendo retoma (el rato del modal queda
+  // como pausa); si venía en pausa, sigue en pausa.
+  const handleCancelFinish = () => {
+    if (running?.finTs && !running.pauseStart) {
+      const pausas = [
+        ...(running.pausas || []),
+        { inicio: running.finTs, fin: new Date().toISOString(), motivo: "" },
+      ];
+      persistRunning({
+        ...running,
+        segmentStart: new Date().toISOString(),
+        finTs: null,
+        pausas,
+      });
+    } else if (running?.finTs) {
+      persistRunning({ ...running, finTs: null });
+    }
+    setFinishOpen(false);
   };
 
   const confirmFinish = async () => {
     if (!running || saving) return;
     setSaving(true);
     const total = activeSecs(running, Date.now());
+    // La última pausa (si venía en pausa) no se registra: la sesión terminó
+    // cuando esa pausa arrancó, no hubo trabajo después.
     const pausas = [...(running.pausas || [])];
-    if (running.pauseStart) {
-      pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString(), motivo: pauseMotivo.trim() });
-    }
     setPauseMotivo("");
     try {
       await timeEntryService.create({
@@ -197,7 +241,7 @@ export default function TimeTracker() {
         notas: finishNotes,
         pausas,
         inicio: running.firstStart,
-        fin: new Date().toISOString(),
+        fin: running.finTs || new Date().toISOString(),
         duracion: total,
       });
       persistRunning(null);
@@ -827,7 +871,7 @@ export default function TimeTracker() {
             <button
               type="button"
               className={`${style.midBtn} ${style.stopBtn}`}
-              onClick={() => setFinishOpen(true)}
+              onClick={handleOpenFinish}
               disabled={saving}
             >
               <FiSquare /> Finalizar
@@ -1018,7 +1062,7 @@ export default function TimeTracker() {
 
       {/* Modal Finalizar con notas */}
       {finishOpen ? (
-        <div className={style.overlay} onClick={() => setFinishOpen(false)} role="presentation">
+        <div className={style.overlay} onClick={handleCancelFinish} role="presentation">
           <div className={style.modal} onClick={(e) => e.stopPropagation()}>
             <h3>Finalizar sesión</h3>
 
@@ -1030,9 +1074,6 @@ export default function TimeTracker() {
                 </div>
                 {(() => {
                   const pausas = [...((running && running.pausas) || [])];
-                  if (running?.pauseStart) {
-                    pausas.push({ inicio: running.pauseStart, fin: new Date().toISOString(), motivo: pauseMotivo.trim() });
-                  }
                   if (!pausas.length) return <div className={style.detailMuted}>Sin pausas.</div>;
                   return pausas.map((p, i) => {
                     const pi = new Date(p.inicio);
@@ -1063,7 +1104,7 @@ export default function TimeTracker() {
               />
             </div>
             <div className={style.modalActions}>
-              <button type="button" className={style.ghostBtn} onClick={() => setFinishOpen(false)}>
+              <button type="button" className={style.ghostBtn} onClick={handleCancelFinish}>
                 Cancelar
               </button>
               <button type="button" className={style.saveBtn} onClick={confirmFinish} disabled={saving}>
