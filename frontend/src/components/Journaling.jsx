@@ -152,11 +152,6 @@ function Journaling() {
     });
   };
 
-  const elegirAnimo = (valor) => {
-    // Tocar el mismo emoji lo desmarca.
-    editar("animo", Number(entrada.animo) === valor ? 0 : valor);
-  };
-
   const guardarPreguntas = async () => {
     setEditandoPreguntas(false);
     try {
@@ -209,23 +204,30 @@ function Journaling() {
     return (
       <div className={style.calBox}>
         <div className={style.calNav}>
-          <button
-            type="button"
-            className={style.calNavBtn}
-            onClick={() => setCalRef(new Date(calRef.getFullYear(), calRef.getMonth() - 1, 1))}
-            aria-label="Mes anterior"
-          >
-            <FiChevronLeft />
-          </button>
-          <span className={style.calMes}>{mesLabel}</span>
-          <button
-            type="button"
-            className={style.calNavBtn}
-            onClick={() => setCalRef(new Date(calRef.getFullYear(), calRef.getMonth() + 1, 1))}
-            aria-label="Mes siguiente"
-          >
-            <FiChevronRight />
-          </button>
+          <div className={style.calNavGrupo}>
+            <button
+              type="button"
+              className={style.calNavBtn}
+              onClick={() => setCalRef(new Date(calRef.getFullYear(), calRef.getMonth() - 1, 1))}
+              aria-label="Mes anterior"
+            >
+              <FiChevronLeft />
+            </button>
+            <span className={style.calMes}>{mesLabel}</span>
+            <button
+              type="button"
+              className={style.calNavBtn}
+              onClick={() => setCalRef(new Date(calRef.getFullYear(), calRef.getMonth() + 1, 1))}
+              aria-label="Mes siguiente"
+            >
+              <FiChevronRight />
+            </button>
+          </div>
+          {racha > 0 ? (
+            <span className={style.racha} title={`${racha} días seguidos escribiendo`}>
+              🔥 {racha} {racha === 1 ? "día" : "días"}
+            </span>
+          ) : null}
         </div>
 
         <div className={style.calWeekdays}>
@@ -281,6 +283,14 @@ function Journaling() {
 
     return (
       <div className={style.libroPage}>
+        {racha > 0 ? (
+          <span
+            className={`${style.racha} ${style.rachaEnHoja}`}
+            title={`${racha} días seguidos escribiendo`}
+          >
+            🔥 {racha} {racha === 1 ? "día" : "días"}
+          </span>
+        ) : null}
         <p className={style.libroFecha}>{fechaLarga(e.fecha)}</p>
         {Number(e.animo) > 0 ? <p className={style.libroAnimo}>{emojiDe(e.animo)}</p> : null}
 
@@ -333,11 +343,24 @@ function Journaling() {
           <FiFeather className={style.fechaIcono} />
           <span className={style.fecha}>{fechaLarga(fecha)}</span>
         </div>
-        {racha > 0 ? (
-          <span className={style.racha} title={`${racha} días seguidos escribiendo`}>
-            🔥 {racha} {racha === 1 ? "día" : "días"}
-          </span>
-        ) : null}
+        <div className={style.vistaToggle} role="tablist" aria-label="Cómo ver tus entradas">
+          <button
+            type="button"
+            className={`${style.vistaBtn} ${vista === "calendario" ? style.vistaBtnActivo : ""}`}
+            onClick={() => setVista("calendario")}
+            aria-pressed={vista === "calendario"}
+          >
+            <FiCalendar /> Vista calendario
+          </button>
+          <button
+            type="button"
+            className={`${style.vistaBtn} ${vista === "libro" ? style.vistaBtnActivo : ""}`}
+            onClick={() => setVista("libro")}
+            aria-pressed={vista === "libro"}
+          >
+            <FiBookOpen /> Vista libro
+          </button>
+        </div>
       </header>
 
       <div className={style.cols}>
@@ -345,36 +368,38 @@ function Journaling() {
         <div className={style.colIzq}>
           <div className={style.animoBox}>
             <p className={style.animoLabel}>¿Cómo estuvo tu día?</p>
-            {/* Las caritas se prenden hasta donde llega el slider */}
-            <div className={style.animoRow}>
-              {ANIMOS.map((a) => {
-                const nivel = Number(entrada.animo) || 0;
-                const prendida = nivel > 0 && a.valor <= nivel;
-                return (
-                  <span
-                    key={a.valor}
-                    className={`${style.animoCara} ${prendida ? style.animoCaraOn : ""} ${
-                      a.valor === nivel ? style.animoCaraActual : ""
-                    }`}
-                    onClick={() => elegirAnimo(a.valor)}
-                    role="button"
-                    aria-label={`Ánimo ${a.valor} de 5`}
-                  >
-                    {a.emoji}
-                  </span>
-                );
-              })}
+            {/* Extremos fijos; la carita del nivel actual viaja en el pulgar */}
+            <div className={style.animoSliderRow}>
+              <span className={style.animoEnd}>{ANIMOS[0].emoji}</span>
+              <div className={style.animoSliderWrap}>
+                <input
+                  type="range"
+                  min="0"
+                  max="5"
+                  step="1"
+                  value={Number(entrada.animo) || 0}
+                  onChange={(e) => editar("animo", Number(e.target.value))}
+                  className={style.animoSlider}
+                  aria-label="Ánimo del día (0 sin marcar, 5 muy bien)"
+                />
+                <span
+                  className={style.animoThumb}
+                  style={{
+                    left: `calc(${((Number(entrada.animo) || 0) / 5) * 100}% - ${
+                      ((Number(entrada.animo) || 0) / 5) * 30
+                    }px)`,
+                  }}
+                  aria-hidden="true"
+                >
+                  {Number(entrada.animo) > 0 ? (
+                    emojiDe(entrada.animo)
+                  ) : (
+                    <i className={style.animoThumbVacio} />
+                  )}
+                </span>
+              </div>
+              <span className={style.animoEnd}>{ANIMOS[4].emoji}</span>
             </div>
-            <input
-              type="range"
-              min="0"
-              max="5"
-              step="1"
-              value={Number(entrada.animo) || 0}
-              onChange={(e) => editar("animo", Number(e.target.value))}
-              className={style.animoSlider}
-              aria-label="Ánimo del día (0 sin marcar, 5 muy bien)"
-            />
           </div>
 
           {/* Preguntas guiadas (el texto es personalizable) */}
@@ -473,25 +498,6 @@ function Journaling() {
 
         {/* Columna derecha: releer (calendario o libro) */}
         <div className={style.colDer}>
-          <div className={style.vistaToggle} role="tablist" aria-label="Cómo ver tus entradas">
-            <button
-              type="button"
-              className={`${style.vistaBtn} ${vista === "calendario" ? style.vistaBtnActivo : ""}`}
-              onClick={() => setVista("calendario")}
-              aria-pressed={vista === "calendario"}
-            >
-              <FiCalendar /> Vista calendario
-            </button>
-            <button
-              type="button"
-              className={`${style.vistaBtn} ${vista === "libro" ? style.vistaBtnActivo : ""}`}
-              onClick={() => setVista("libro")}
-              aria-pressed={vista === "libro"}
-            >
-              <FiBookOpen /> Vista libro
-            </button>
-          </div>
-
           {vista === "calendario" ? renderCalendario() : renderLibro()}
         </div>
       </div>

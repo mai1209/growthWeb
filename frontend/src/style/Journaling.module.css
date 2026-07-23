@@ -80,6 +80,12 @@
   gap: 0.6rem;
 }
 
+.calNavGrupo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
 .calNavBtn {
   width: 32px;
   height: 32px;
@@ -177,12 +183,13 @@
    y el paginador vive adentro, al pie de la hoja. */
 .libroPage {
   --renglon: 30px;
+  position: relative;
   display: flex;
   flex-direction: column;
   /* Llena la columna (que acompaña a la izquierda) y nunca menos que la
      ventana: la hoja llega hasta el final de la página. */
   flex: 1;
-  min-height: max(560px, calc(100vh - 240px));
+  min-height: max(560px, calc(100vh - 190px));
   padding: 1.6rem 1.4rem 1.1rem 3.2rem;
   border-radius: 12px;
   background-color: #faf4e3;
@@ -199,6 +206,12 @@
   color: #2b2416;
   font-family: "Bradley Hand", "Segoe Script", "Comic Sans MS", cursive;
   line-height: var(--renglon);
+}
+
+.rachaEnHoja {
+  position: absolute;
+  top: 12px;
+  right: 12px;
 }
 
 .libroFecha {
@@ -355,37 +368,86 @@
   letter-spacing: 0.04em;
 }
 
-/* Caritas: se prenden hasta donde llega el slider, apagadas el resto */
-.animoRow {
+/* Slider de ánimo: extremos fijos y la carita del nivel viaja en el pulgar */
+.animoSliderRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 2px;
+  gap: 0.7rem;
 }
 
-.animoCara {
-  font-size: 1.5rem;
+.animoEnd {
+  flex-shrink: 0;
+  font-size: 1.35rem;
   line-height: 1;
-  cursor: pointer;
-  filter: grayscale(1);
-  opacity: 0.35;
-  transition: transform 0.15s ease, filter 0.2s ease, opacity 0.2s ease;
+  filter: grayscale(0.8);
+  opacity: 0.5;
   user-select: none;
 }
 
-.animoCaraOn {
-  filter: grayscale(0);
-  opacity: 1;
-}
-
-.animoCaraActual {
-  transform: scale(1.25);
+.animoSliderWrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  height: 38px;
 }
 
 .animoSlider {
   width: 100%;
-  accent-color: var(--accent, #5dc72d);
+  height: 6px;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 999px;
+  background: rgba(127, 137, 129, 0.3);
   cursor: pointer;
+  outline: none;
+}
+
+/* El pulgar nativo queda invisible (la carita flotante lo reemplaza),
+   pero mantiene su tamaño para que el arrastre siga siendo cómodo. */
+.animoSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.animoSlider::-moz-range-thumb {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.animoSlider:focus-visible {
+  box-shadow: 0 0 0 3px rgba(93, 199, 45, 0.25);
+}
+
+/* La carita que viaja con el pulgar */
+.animoThumb {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  transition: left 0.12s ease;
+}
+
+/* Sin ánimo marcado: un circulito verde como pulgar */
+.animoThumbVacio {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent, #5dc72d);
+  box-shadow: 0 0 0 3px rgba(93, 199, 45, 0.25);
 }
 
 /* ===== Campos guiados ===== */
