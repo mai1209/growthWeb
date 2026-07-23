@@ -239,7 +239,7 @@ export default function AfirmacionesPanel({ visible, onClose }) {
             >
               {/* El día de hoy */}
               <View style={styles.fechaCard}>
-                <Ionicons name="sunny-outline" size={17} color={colors.green} />
+                <Ionicons name="sunny" size={20} color="#FFD60A" />
                 <Text style={styles.fecha}>{fechaLarga(fecha)}</Text>
               </View>
 
@@ -442,22 +442,18 @@ const makeStyles = (colors) =>
     loading: { flex: 1, alignItems: "center", justifyContent: "center" },
     scroll: { paddingHorizontal: 16, paddingBottom: 20, gap: 10 },
 
+    // Sin caja: la fecha va centrada, suelta sobre el fondo, con el sol amarillo.
     fechaCard: {
       flexDirection: "row",
       alignItems: "center",
+      justifyContent: "center",
       gap: 8,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      borderRadius: 14,
-      borderWidth: 1,
-      borderColor: colors.cardBorder,
-      backgroundColor: colors.card,
+      paddingVertical: 6,
     },
     fecha: {
-      flex: 1,
       color: colors.text,
-      fontSize: 15,
-      fontWeight: "700",
+      fontSize: 16,
+      fontWeight: "800",
       textTransform: "capitalize",
     },
 
