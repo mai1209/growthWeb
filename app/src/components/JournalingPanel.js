@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  PanResponder,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,7 +20,7 @@ import { useTheme } from "../theme";
 
 // Ánimo del día: 1 (muy mal) a 5 (muy bien).
 const ANIMOS = [
-  { valor: 1, emoji: "😞" },
+  { valor: 1, emoji: "😶" },
   { valor: 2, emoji: "😕" },
   { valor: 3, emoji: "😐" },
   { valor: 4, emoji: "🙂" },
@@ -104,6 +105,29 @@ export default function JournalingPanel({ visible, onClose }) {
   const [calRef, setCalRef] = useState(() => new Date());
   const guardadoRef = useRef(null);
 
+  // Slider de ánimo casero (sin librerías nativas): PanResponder sobre el riel.
+  const THUMB = 30;
+  const [trackW, setTrackW] = useState(0);
+  const trackWRef = useRef(0);
+  const editarRef = useRef(() => {});
+
+  function setAnimoDesdeX(x) {
+    const w = trackWRef.current;
+    if (!w) return;
+    const usable = Math.max(1, w - THUMB);
+    const v = Math.min(5, Math.max(0, Math.round(((x - THUMB / 2) / usable) * 5)));
+    editarRef.current("animo", v);
+  }
+
+  const animoPan = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (evt) => setAnimoDesdeX(evt.nativeEvent.locationX),
+      onPanResponderMove: (evt) => setAnimoDesdeX(evt.nativeEvent.locationX),
+    })
+  ).current;
+
   const aplicar = useCallback((data) => {
     setEntrada(data?.hoy ? { ...ENTRADA_VACIA, ...data.hoy } : ENTRADA_VACIA);
     setHistorial(Array.isArray(data?.entradas) ? data.entradas : []);
@@ -147,11 +171,13 @@ export default function JournalingPanel({ visible, onClose }) {
 
   const editar = (campo, valor) => {
     setEntrada((prev) => {
+      if (prev[campo] === valor) return prev;
       const proxima = { ...prev, [campo]: valor };
       guardarDiferido(proxima);
       return proxima;
     });
   };
+  editarRef.current = editar;
 
   const elegirAnimo = (valor) => {
     editar("animo", Number(entrada.animo) === valor ? 0 : valor);
@@ -220,52 +246,51 @@ export default function JournalingPanel({ visible, onClose }) {
                 <Text style={styles.fecha}>{fechaLarga(fecha)}</Text>
               </View>
 
-              {/* Ánimo */}
+              {/* Ánimo: slider con carita viajera */}
               <View style={styles.animoBox}>
                 <Text style={styles.animoLabel}>¿CÓMO ESTUVO TU DÍA?</Text>
-                <View style={styles.animoRow}>
-                  {ANIMOS.map((a) => {
-                    const activo = Number(entrada.animo) === a.valor;
-                    return (
-                      <TouchableOpacity
-                        key={a.valor}
-                        style={[styles.animoBtn, activo && styles.animoActivo]}
-                        onPress={() => elegirAnimo(a.valor)}
-                        accessibilityLabel={`Ánimo ${a.valor} de 5`}
-                      >
-                        <Text style={[styles.animoEmoji, !activo && styles.animoEmojiApagado]}>
-                          {a.emoji}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+                <View style={styles.animoSliderRow}>
+                  <Text style={styles.animoEnd}>{ANIMOS[0].emoji}</Text>
+                  <View
+                    style={styles.animoSliderWrap}
+                    onLayout={(e) => {
+                      setTrackW(e.nativeEvent.layout.width);
+                      trackWRef.current = e.nativeEvent.layout.width;
+                    }}
+                    {...animoPan.panHandlers}
+                  >
+                    {(() => {
+                      const nivel = Number(entrada.animo) || 0;
+                      const usable = Math.max(0, trackW - THUMB);
+                      const thumbLeft = (nivel / 5) * usable;
+                      return (
+                        <>
+                          <View style={styles.animoTrack}>
+                            <View style={[styles.animoFill, { width: thumbLeft + THUMB / 2 }]} />
+                          </View>
+                          {[1, 2, 3, 4, 5].map((v) => (
+                            <View
+                              key={v}
+                              style={[
+                                styles.animoTick,
+                                { left: (v / 5) * usable + THUMB / 2 - 3 },
+                              ]}
+                            />
+                          ))}
+                          <View style={[styles.animoThumb, { left: thumbLeft }]}>
+                            {nivel > 0 ? (
+                              <Text style={styles.animoThumbEmoji}>{emojiDe(nivel)}</Text>
+                            ) : (
+                              <View style={styles.animoThumbDot} />
+                            )}
+                          </View>
+                        </>
+                      );
+                    })()}
+                  </View>
+                  <Text style={styles.animoEnd}>{ANIMOS[4].emoji}</Text>
                 </View>
               </View>
-
-              {/* Ánimo en el tiempo */}
-              {animoSerie.length >= 3 ? (
-                <View style={styles.animoChartBox}>
-                  <Text style={styles.historialTitulo}>TU ÁNIMO EN EL TIEMPO</Text>
-                  <View style={styles.chartBars}>
-                    {animoSerie.map((e) => (
-                      <View
-                        key={e.fecha}
-                        style={[
-                          styles.chartBar,
-                          {
-                            height: `${(Number(e.animo) / 5) * 100}%`,
-                            backgroundColor: ANIMO_COLORS[Number(e.animo)] || colors.greenBright,
-                          },
-                        ]}
-                      />
-                    ))}
-                  </View>
-                  <View style={styles.chartLeyenda}>
-                    <Text style={styles.chartLeyendaText}>{fechaLarga(animoSerie[0].fecha)}</Text>
-                    <Text style={styles.chartLeyendaText}>hoy</Text>
-                  </View>
-                </View>
-              ) : null}
 
               {/* Releer: vista calendario o vista libro */}
               <View style={styles.vistaToggle}>
@@ -542,20 +567,42 @@ const makeStyles = (colors) =>
       gap: 10,
     },
     animoLabel: { color: colors.muted, fontSize: 10.5, fontWeight: "800", letterSpacing: 1 },
-    animoRow: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
-    animoBtn: {
-      flex: 1,
-      height: 46,
-      borderRadius: 12,
-      borderWidth: 2,
-      borderColor: "transparent",
+    animoSliderRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+    animoEnd: { fontSize: 20, opacity: 0.5 },
+    animoSliderWrap: { flex: 1, height: 40, justifyContent: "center" },
+    animoTrack: {
+      height: 6,
+      borderRadius: 999,
       backgroundColor: colors.cardSoft,
+      overflow: "hidden",
+    },
+    animoFill: { height: "100%", borderRadius: 999, backgroundColor: colors.greenBright },
+    /* Puntito vacío en cada posición donde cambia la cara */
+    animoTick: {
+      position: "absolute",
+      top: 17,
+      width: 6,
+      height: 6,
+      borderRadius: 999,
+      borderWidth: 1.5,
+      borderColor: colors.muted,
+      backgroundColor: colors.card,
+    },
+    animoThumb: {
+      position: "absolute",
+      top: 5,
+      width: 30,
+      height: 30,
       alignItems: "center",
       justifyContent: "center",
     },
-    animoActivo: { borderColor: colors.greenBright },
-    animoEmoji: { fontSize: 22 },
-    animoEmojiApagado: { opacity: 0.45 },
+    animoThumbEmoji: { fontSize: 24 },
+    animoThumbDot: {
+      width: 16,
+      height: 16,
+      borderRadius: 999,
+      backgroundColor: colors.greenBright,
+    },
 
     campoLabel: {
       color: colors.green,

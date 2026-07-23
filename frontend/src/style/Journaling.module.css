@@ -398,9 +398,23 @@
   appearance: none;
   -webkit-appearance: none;
   border-radius: 999px;
+  /* El fondo (relleno verde hasta el pulgar) viene inline desde el componente */
   background: rgba(127, 137, 129, 0.3);
   cursor: pointer;
   outline: none;
+}
+
+/* Puntito vacío en cada posición donde cambia la cara */
+.animoTick {
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px solid rgba(127, 137, 129, 0.55);
+  background: var(--surface-card, #10231d);
+  pointer-events: none;
 }
 
 /* El pulgar nativo queda invisible (la carita flotante lo reemplaza),

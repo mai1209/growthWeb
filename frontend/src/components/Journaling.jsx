@@ -14,7 +14,7 @@ import style from "../style/Journaling.module.css";
 
 // Ánimo del día: 1 (muy mal) a 5 (muy bien).
 const ANIMOS = [
-  { valor: 1, emoji: "😞" },
+  { valor: 1, emoji: "😶" },
   { valor: 2, emoji: "😕" },
   { valor: 3, emoji: "😐" },
   { valor: 4, emoji: "🙂" },
@@ -380,8 +380,22 @@ function Journaling() {
                   value={Number(entrada.animo) || 0}
                   onChange={(e) => editar("animo", Number(e.target.value))}
                   className={style.animoSlider}
+                  style={{
+                    background: `linear-gradient(to right, #5dc72d ${
+                      ((Number(entrada.animo) || 0) / 5) * 100
+                    }%, rgba(127, 137, 129, 0.3) ${((Number(entrada.animo) || 0) / 5) * 100}%)`,
+                  }}
                   aria-label="Ánimo del día (0 sin marcar, 5 muy bien)"
                 />
+                {/* Puntitos: acá cambia la cara */}
+                {[1, 2, 3, 4, 5].map((v) => (
+                  <i
+                    key={v}
+                    className={style.animoTick}
+                    style={{ left: `calc(${(v / 5) * 100}% - ${(v / 5) * 30}px + 15px)` }}
+                    aria-hidden="true"
+                  />
+                ))}
                 <span
                   className={style.animoThumb}
                   style={{
