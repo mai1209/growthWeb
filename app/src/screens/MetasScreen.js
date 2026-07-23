@@ -655,24 +655,36 @@ export default function MetasScreen() {
               ) : null}
             </View>
             {showDatePicker ? (
-              <DateTimePicker
-                value={
-                  form.fechaObjetivo
-                    ? new Date(`${form.fechaObjetivo}T12:00:00`)
-                    : new Date()
-                }
-                mode="date"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={(event, selected) => {
-                  setShowDatePicker(Platform.OS === "ios");
-                  if (selected) {
-                    const local = new Date(
-                      selected.getTime() - selected.getTimezoneOffset() * 60000
-                    );
-                    setForm((prev) => ({ ...prev, fechaObjetivo: local.toISOString().slice(0, 10) }));
+              <View style={Platform.OS === "ios" ? styles.datePickerBox : null}>
+                <DateTimePicker
+                  value={
+                    form.fechaObjetivo
+                      ? new Date(`${form.fechaObjetivo}T12:00:00`)
+                      : new Date()
                   }
-                }}
-              />
+                  mode="date"
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  onChange={(event, selected) => {
+                    // Android se cierra solo; en iOS queda abierta hasta el Listo.
+                    if (Platform.OS !== "ios") setShowDatePicker(false);
+                    if (selected) {
+                      const local = new Date(
+                        selected.getTime() - selected.getTimezoneOffset() * 60000
+                      );
+                      setForm((prev) => ({ ...prev, fechaObjetivo: local.toISOString().slice(0, 10) }));
+                    }
+                  }}
+                />
+                {Platform.OS === "ios" ? (
+                  <TouchableOpacity
+                    style={styles.dateListoBtn}
+                    onPress={() => setShowDatePicker(false)}
+                  >
+                    <Ionicons name="checkmark" size={16} color="#fff" />
+                    <Text style={styles.dateListoText}>Listo</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
             ) : null}
 
             <Text style={styles.campoLabel}>¿Cómo medís el avance?</Text>
@@ -1148,6 +1160,24 @@ const makeStyles = (colors) =>
     },
     inputMultiline: { minHeight: 64, textAlignVertical: "top" },
     dateBtn: { flex: 1, flexDirection: "row", alignItems: "center", gap: 7 },
+    datePickerBox: {
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      paddingBottom: 10,
+      alignItems: "center",
+    },
+    dateListoBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      paddingHorizontal: 22,
+      paddingVertical: 9,
+      borderRadius: 999,
+      backgroundColor: colors.greenBright,
+    },
+    dateListoText: { color: "#fff", fontSize: 13, fontWeight: "800" },
     dateText: { color: colors.text, fontSize: 14, fontWeight: "600" },
     datePlaceholder: { color: colors.muted, fontSize: 14 },
 

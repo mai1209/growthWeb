@@ -52,6 +52,8 @@ export default function AfirmacionesPanel({ visible, onClose }) {
   const [repetirDiario, setRepetirDiario] = useState(true);
   const [recordatorio, setRecordatorio] = useState({ activo: false, hora: "08:00" });
   const [showHoraPicker, setShowHoraPicker] = useState(false);
+  // Hora provisoria mientras la ruedita está abierta (iOS): se guarda al tocar Listo.
+  const [horaTemp, setHoraTemp] = useState("08:00");
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const guardadoRef = useRef(null);
@@ -256,7 +258,10 @@ export default function AfirmacionesPanel({ visible, onClose }) {
                   {recordatorio.activo ? (
                     <TouchableOpacity
                       style={styles.horaBtn}
-                      onPress={() => setShowHoraPicker(true)}
+                      onPress={() => {
+                        setHoraTemp(recordatorio.hora);
+                        setShowHoraPicker(true);
+                      }}
                     >
                       <Ionicons name="time-outline" size={14} color={colors.green} />
                       <Text style={styles.horaBtnText}>{recordatorio.hora} hs · cambiar</Text>
@@ -274,20 +279,51 @@ export default function AfirmacionesPanel({ visible, onClose }) {
               </View>
 
               {showHoraPicker ? (
-                <DateTimePicker
-                  value={new Date(`2000-01-01T${recordatorio.hora}:00`)}
-                  mode="time"
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  onChange={(event, selected) => {
-                    setShowHoraPicker(Platform.OS === "ios");
-                    if (selected) {
-                      const hora = `${String(selected.getHours()).padStart(2, "0")}:${String(
-                        selected.getMinutes()
-                      ).padStart(2, "0")}`;
-                      guardarRecordatorio({ ...recordatorio, hora });
-                    }
-                  }}
-                />
+                Platform.OS === "ios" ? (
+                  // iOS: la ruedita queda abierta; se confirma con el botón Listo.
+                  <View style={styles.horaPickerBox}>
+                    <DateTimePicker
+                      value={new Date(`2000-01-01T${horaTemp}:00`)}
+                      mode="time"
+                      display="spinner"
+                      onChange={(event, selected) => {
+                        if (selected) {
+                          setHoraTemp(
+                            `${String(selected.getHours()).padStart(2, "0")}:${String(
+                              selected.getMinutes()
+                            ).padStart(2, "0")}`
+                          );
+                        }
+                      }}
+                    />
+                    <TouchableOpacity
+                      style={styles.horaListoBtn}
+                      onPress={() => {
+                        setShowHoraPicker(false);
+                        guardarRecordatorio({ ...recordatorio, hora: horaTemp });
+                      }}
+                    >
+                      <Ionicons name="checkmark" size={16} color="#fff" />
+                      <Text style={styles.horaListoText}>Listo</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  // Android: el diálogo se cierra solo al aceptar/cancelar.
+                  <DateTimePicker
+                    value={new Date(`2000-01-01T${recordatorio.hora}:00`)}
+                    mode="time"
+                    display="default"
+                    onChange={(event, selected) => {
+                      setShowHoraPicker(false);
+                      if (selected) {
+                        const hora = `${String(selected.getHours()).padStart(2, "0")}:${String(
+                          selected.getMinutes()
+                        ).padStart(2, "0")}`;
+                        guardarRecordatorio({ ...recordatorio, hora });
+                      }
+                    }}
+                  />
+                )
               ) : null}
 
               <Text style={styles.ayuda}>
@@ -439,6 +475,24 @@ const makeStyles = (colors) =>
       borderColor: colors.greenBorder,
     },
     horaBtnText: { color: colors.green, fontSize: 12, fontWeight: "800" },
+    horaPickerBox: {
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      paddingBottom: 10,
+      alignItems: "center",
+    },
+    horaListoBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      paddingHorizontal: 22,
+      paddingVertical: 9,
+      borderRadius: 999,
+      backgroundColor: colors.greenBright,
+    },
+    horaListoText: { color: "#fff", fontSize: 13, fontWeight: "800" },
 
     item: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
     numero: {
