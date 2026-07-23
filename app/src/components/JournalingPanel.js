@@ -18,9 +18,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { journalService } from "../api";
 import { useTheme } from "../theme";
 
-// Ánimo del día: 1 (muy mal) a 5 (muy bien).
+// Ánimo del día: 1 (muy mal) a 5 (muy bien). El 0 muestra la carita sin boca.
+const CARA_VACIA = "😶";
 const ANIMOS = [
-  { valor: 1, emoji: "😶" },
+  { valor: 1, emoji: "😞" },
   { valor: 2, emoji: "😕" },
   { valor: 3, emoji: "😐" },
   { valor: 4, emoji: "🙂" },
@@ -222,11 +223,6 @@ export default function JournalingPanel({ visible, onClose }) {
             <Text style={styles.kicker}>JOURNALING</Text>
             <Text style={styles.title}>Tu journal</Text>
           </View>
-          {racha > 0 ? (
-            <View style={styles.rachaPill}>
-              <Text style={styles.rachaText}>🔥 {racha}</Text>
-            </View>
-          ) : null}
         </View>
 
         {cargando ? (
@@ -250,7 +246,6 @@ export default function JournalingPanel({ visible, onClose }) {
               <View style={styles.animoBox}>
                 <Text style={styles.animoLabel}>¿CÓMO ESTUVO TU DÍA?</Text>
                 <View style={styles.animoSliderRow}>
-                  <Text style={styles.animoEnd}>{ANIMOS[0].emoji}</Text>
                   <View
                     style={styles.animoSliderWrap}
                     onLayout={(e) => {
@@ -278,17 +273,14 @@ export default function JournalingPanel({ visible, onClose }) {
                             />
                           ))}
                           <View style={[styles.animoThumb, { left: thumbLeft }]}>
-                            {nivel > 0 ? (
-                              <Text style={styles.animoThumbEmoji}>{emojiDe(nivel)}</Text>
-                            ) : (
-                              <View style={styles.animoThumbDot} />
-                            )}
+                            <Text style={styles.animoThumbEmoji}>
+                              {nivel > 0 ? emojiDe(nivel) : CARA_VACIA}
+                            </Text>
                           </View>
                         </>
                       );
                     })()}
                   </View>
-                  <Text style={styles.animoEnd}>{ANIMOS[4].emoji}</Text>
                 </View>
               </View>
 
@@ -336,12 +328,19 @@ export default function JournalingPanel({ visible, onClose }) {
                     <Text style={styles.calMes}>
                       {calRef.toLocaleDateString("es-AR", { month: "long", year: "numeric" })}
                     </Text>
-                    <TouchableOpacity
-                      style={styles.calNavBtn}
-                      onPress={() => setCalRef(new Date(calRef.getFullYear(), calRef.getMonth() + 1, 1))}
-                    >
-                      <Ionicons name="chevron-forward" size={16} color={colors.text} />
-                    </TouchableOpacity>
+                    <View style={styles.calNavDerecha}>
+                      <TouchableOpacity
+                        style={styles.calNavBtn}
+                        onPress={() => setCalRef(new Date(calRef.getFullYear(), calRef.getMonth() + 1, 1))}
+                      >
+                        <Ionicons name="chevron-forward" size={16} color={colors.text} />
+                      </TouchableOpacity>
+                      {racha > 0 ? (
+                        <View style={styles.rachaPill}>
+                          <Text style={styles.rachaText}>🔥 {racha} {racha === 1 ? "día" : "días"}</Text>
+                        </View>
+                      ) : null}
+                    </View>
                   </View>
                   <View style={styles.calWeekRow}>
                     {WEEKDAYS.map((d, i) => (
@@ -396,6 +395,11 @@ export default function JournalingPanel({ visible, onClose }) {
               ) : (
                 <View style={styles.libroPage}>
                   <View style={styles.libroMargen} />
+                  {racha > 0 ? (
+                    <View style={styles.rachaEnHoja}>
+                      <Text style={styles.rachaEnHojaText}>🔥 {racha} {racha === 1 ? "día" : "días"}</Text>
+                    </View>
+                  ) : null}
                   <Text style={styles.libroFecha}>{fechaLarga(entradas[libroIdx].fecha)}</Text>
                   {Number(entradas[libroIdx].animo) > 0 ? (
                     <Text style={styles.libroAnimo}>{emojiDe(entradas[libroIdx].animo)}</Text>
@@ -558,17 +562,10 @@ const makeStyles = (colors) =>
     },
     fecha: { color: colors.text, fontSize: 16, fontWeight: "800", textTransform: "capitalize" },
 
-    animoBox: {
-      padding: 12,
-      borderRadius: 14,
-      borderWidth: 1,
-      borderColor: colors.cardBorder,
-      backgroundColor: colors.card,
-      gap: 10,
-    },
+    /* Sin caja: el slider vive suelto sobre el fondo */
+    animoBox: { gap: 10, paddingHorizontal: 2 },
     animoLabel: { color: colors.muted, fontSize: 10.5, fontWeight: "800", letterSpacing: 1 },
-    animoSliderRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-    animoEnd: { fontSize: 20, opacity: 0.5 },
+    animoSliderRow: { flexDirection: "row", alignItems: "center" },
     animoSliderWrap: { flex: 1, height: 40, justifyContent: "center" },
     animoTrack: {
       height: 6,
@@ -597,12 +594,17 @@ const makeStyles = (colors) =>
       justifyContent: "center",
     },
     animoThumbEmoji: { fontSize: 24 },
-    animoThumbDot: {
-      width: 16,
-      height: 16,
+    calNavDerecha: { flexDirection: "row", alignItems: "center", gap: 8 },
+    rachaEnHoja: {
+      position: "absolute",
+      top: 10,
+      right: 10,
+      paddingHorizontal: 9,
+      paddingVertical: 4,
       borderRadius: 999,
-      backgroundColor: colors.greenBright,
+      backgroundColor: "rgba(93, 199, 45, 0.22)",
     },
+    rachaEnHojaText: { color: "#2f6f35", fontSize: 11.5, fontWeight: "800" },
 
     campoLabel: {
       color: colors.green,

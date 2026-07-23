@@ -12,9 +12,11 @@ import {
 import { journalService } from "../api";
 import style from "../style/Journaling.module.css";
 
-// Ánimo del día: 1 (muy mal) a 5 (muy bien).
+// Ánimo del día: 1 (muy mal) a 5 (muy bien). El 0 (sin marcar) muestra la
+// carita neutra sin boca en el pulgar.
+const CARA_VACIA = "😶";
 const ANIMOS = [
-  { valor: 1, emoji: "😶" },
+  { valor: 1, emoji: "😞" },
   { valor: 2, emoji: "😕" },
   { valor: 3, emoji: "😐" },
   { valor: 4, emoji: "🙂" },
@@ -370,7 +372,6 @@ function Journaling() {
             <p className={style.animoLabel}>¿Cómo estuvo tu día?</p>
             {/* Extremos fijos; la carita del nivel actual viaja en el pulgar */}
             <div className={style.animoSliderRow}>
-              <span className={style.animoEnd}>{ANIMOS[0].emoji}</span>
               <div className={style.animoSliderWrap}>
                 <input
                   type="range"
@@ -405,14 +406,9 @@ function Journaling() {
                   }}
                   aria-hidden="true"
                 >
-                  {Number(entrada.animo) > 0 ? (
-                    emojiDe(entrada.animo)
-                  ) : (
-                    <i className={style.animoThumbVacio} />
-                  )}
+                  {Number(entrada.animo) > 0 ? emojiDe(entrada.animo) : CARA_VACIA}
                 </span>
               </div>
-              <span className={style.animoEnd}>{ANIMOS[4].emoji}</span>
             </div>
           </div>
 
