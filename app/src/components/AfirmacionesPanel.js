@@ -31,6 +31,15 @@ const hoyLocal = () => {
   return local.toISOString().slice(0, 10);
 };
 
+// Construye la Date para el picker por componentes: nada de parsear strings,
+// que según el motor/zona horaria corren la hora (el clásico "+1").
+const horaADate = (hora) => {
+  const [h, m] = String(hora || "08:00").split(":").map(Number);
+  const d = new Date();
+  d.setHours(Number.isFinite(h) ? h : 8, Number.isFinite(m) ? m : 0, 0, 0);
+  return d;
+};
+
 const fechaLarga = (fecha) => {
   const [y, m, d] = fecha.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString("es-AR", {
@@ -283,7 +292,7 @@ export default function AfirmacionesPanel({ visible, onClose }) {
                   // iOS: la ruedita queda abierta; se confirma con el botón Listo.
                   <View style={styles.horaPickerBox}>
                     <DateTimePicker
-                      value={new Date(`2000-01-01T${horaTemp}:00`)}
+                      value={horaADate(horaTemp)}
                       mode="time"
                       display="spinner"
                       onChange={(event, selected) => {
@@ -310,7 +319,7 @@ export default function AfirmacionesPanel({ visible, onClose }) {
                 ) : (
                   // Android: el diálogo se cierra solo al aceptar/cancelar.
                   <DateTimePicker
-                    value={new Date(`2000-01-01T${recordatorio.hora}:00`)}
+                    value={horaADate(recordatorio.hora)}
                     mode="time"
                     display="default"
                     onChange={(event, selected) => {
