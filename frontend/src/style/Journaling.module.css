@@ -3,7 +3,265 @@
   flex-direction: column;
   gap: 1rem;
   width: 100%;
-  max-width: 720px;
+}
+
+/* Dos columnas: escribir a la izquierda, releer a la derecha */
+.cols {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(340px, 1fr);
+  gap: 1.4rem;
+  align-items: start;
+}
+
+.colIzq,
+.colDer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+@media (max-width: 1000px) {
+  .cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Toggle calendario / libro ===== */
+.vistaToggle {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.vistaBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.vistaBtn:hover {
+  border-color: var(--accent-border, rgba(93, 199, 45, 0.4));
+}
+
+.vistaBtnActivo {
+  background: var(--accent, #5dc72d);
+  border-color: var(--accent, #5dc72d);
+  color: var(--accent-contrast, #0e1a0e);
+}
+
+/* ===== Calendario ===== */
+.calBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg, 14px);
+  background: var(--surface-card);
+}
+
+.calNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.calNavBtn {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.calNavBtn:hover:not(:disabled) {
+  border-color: var(--accent-border, rgba(93, 199, 45, 0.4));
+}
+
+.calNavBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.calMes {
+  color: var(--color-text);
+  font-size: 0.92rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.calWeekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.calGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.calCell {
+  position: relative;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: rgba(127, 137, 129, 0.06);
+  color: var(--color-text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: default;
+}
+
+.calCellFuera {
+  opacity: 0.32;
+}
+
+.calCellHoy {
+  border-color: var(--accent-border, rgba(93, 199, 45, 0.45));
+}
+
+.calCellConEntrada {
+  cursor: pointer;
+  background: rgba(93, 199, 45, 0.08);
+}
+
+.calCellConEntrada:hover {
+  border-color: var(--accent-border, rgba(93, 199, 45, 0.5));
+}
+
+.calDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.calAyuda {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.74rem;
+}
+
+/* ===== Libro (hoja de cuaderno) ===== */
+.libroWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+/* La hoja: papel crema con renglones y línea de margen roja. Es papel a
+   propósito, no cambia con el tema. */
+.libroPage {
+  --renglon: 30px;
+  min-height: 430px;
+  padding: 1.6rem 1.4rem 1.6rem 3.2rem;
+  border-radius: 12px;
+  background-color: #faf4e3;
+  background-image:
+    linear-gradient(to right, transparent 0 42px, rgba(214, 106, 106, 0.55) 42px 44px, transparent 44px),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 calc(var(--renglon) - 1px),
+      rgba(43, 36, 22, 0.16) calc(var(--renglon) - 1px) var(--renglon)
+    );
+  box-shadow:
+    0 1px 0 rgba(43, 36, 22, 0.12),
+    0 14px 34px rgba(0, 0, 0, 0.25);
+  color: #2b2416;
+  font-family: "Bradley Hand", "Segoe Script", "Comic Sans MS", cursive;
+  line-height: var(--renglon);
+}
+
+.libroFecha {
+  margin: 0 0 calc(var(--renglon) / 2);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  text-decoration: underline;
+  text-decoration-color: rgba(43, 36, 22, 0.35);
+}
+
+.libroAnimo {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.libroBloque {
+  margin: 0;
+}
+
+.libroPregunta {
+  margin: 0;
+  color: #8a5a2a;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.libroTexto {
+  margin: 0 0 calc(var(--renglon) / 2);
+  font-size: 1rem;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.libroNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.libroPagina {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.libroVacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 2.4rem 1.2rem;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-lg, 14px);
+  color: var(--color-muted);
+  text-align: center;
+  font-size: 0.88rem;
+}
+
+.libroVacio svg {
+  width: 26px;
+  height: 26px;
+  color: var(--color-verde, #5dc72d);
 }
 
 .cargando {

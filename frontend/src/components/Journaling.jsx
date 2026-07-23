@@ -1,5 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { FiCheck, FiChevronDown, FiEdit2, FiFeather, FiX } from "react-icons/fi";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FiBookOpen,
+  FiCalendar,
+  FiCheck,
+  FiChevronLeft,
+  FiChevronRight,
+  FiEdit2,
+  FiFeather,
+  FiX,
+} from "react-icons/fi";
 import { journalService } from "../api";
 import style from "../style/Journaling.module.css";
 
@@ -25,15 +34,36 @@ const CAMPOS = [
   { campo: "distinto", placeholder: "Sin culpa: es para mañana." },
 ];
 
-// Color de cada nivel de ánimo (rojo → verde) para el gráfico.
+// Color de cada nivel de ánimo (rojo → verde) para el gráfico y el calendario.
 const ANIMO_COLORS = { 1: "#e5484d", 2: "#e58a3a", 3: "#c9a23a", 4: "#8fbf3f", 5: "#14d95f" };
 
 const ENTRADA_VACIA = { animo: 0, gratitud: "", mejor: "", distinto: "", libre: "" };
+
+const WEEKDAYS = ["L", "M", "M", "J", "V", "S", "D"];
+
+const pad = (n) => String(n).padStart(2, "0");
 
 const hoyLocal = () => {
   const d = new Date();
   const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
   return local.toISOString().slice(0, 10);
+};
+
+const dayKeyOf = (date) =>
+  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+
+// Grilla mensual (6 semanas) arrancando en lunes.
+const buildMonthGrid = (ref) => {
+  const first = new Date(ref.getFullYear(), ref.getMonth(), 1);
+  const start = new Date(first);
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  const cells = [];
+  for (let i = 0; i < 42; i += 1) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    cells.push(d);
+  }
+  return cells;
 };
 
 const fechaLarga = (fecha) => {
@@ -47,6 +77,10 @@ const fechaLarga = (fecha) => {
 
 const emojiDe = (animo) => ANIMOS.find((a) => a.valor === Number(animo))?.emoji || "";
 
+const tieneContenido = (e) =>
+  Number(e?.animo) > 0 ||
+  [e?.gratitud, e?.mejor, e?.distinto, e?.libre].some((c) => String(c || "").trim());
+
 function Journaling() {
   const [fecha, setFecha] = useState(hoyLocal);
   const [entrada, setEntrada] = useState(ENTRADA_VACIA);
@@ -54,10 +88,12 @@ function Journaling() {
   const [racha, setRacha] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
-  const [abierta, setAbierta] = useState(null); // fecha de la entrada expandida
   const [preguntas, setPreguntas] = useState(PREGUNTAS_DEFAULT);
   const [editandoPreguntas, setEditandoPreguntas] = useState(false);
   const [borradorPreguntas, setBorradorPreguntas] = useState(PREGUNTAS_DEFAULT);
+  const [vista, setVista] = useState("calendario"); // calendario | libro
+  const [libroFecha, setLibroFecha] = useState(null); // página abierta del libro
+  const [calRef, setCalRef] = useState(() => new Date());
   const guardadoRef = useRef(null);
 
   const aplicar = useCallback((data) => {
@@ -131,16 +167,165 @@ function Journaling() {
     }
   };
 
-  // Ánimo en el tiempo: historial (viejo → nuevo) + la entrada de hoy.
-  const animoSerie = [...historial]
-    .reverse()
-    .concat(Number(entrada.animo) > 0 ? [{ fecha, animo: entrada.animo }] : [])
-    .filter((e) => Number(e.animo) > 0)
-    .slice(-30);
+  // Todas las entradas con contenido (historial + la de hoy), viejo → nuevo.
+  const entradas = useMemo(() => {
+    const lista = [...historial].reverse();
+    if (tieneContenido(entrada)) lista.push({ ...entrada, fecha });
+    return lista;
+  }, [historial, entrada, fecha]);
+
+  const porFecha = useMemo(() => {
+    const map = new Map();
+    entradas.forEach((e) => map.set(e.fecha, e));
+    return map;
+  }, [entradas]);
+
+  // Ánimo en el tiempo (últimos 30 días con ánimo marcado).
+  const animoSerie = entradas.filter((e) => Number(e.animo) > 0).slice(-30);
+
+  // Página abierta del libro: la elegida, o la última escrita.
+  const libroIdx = useMemo(() => {
+    if (!entradas.length) return -1;
+    const idx = entradas.findIndex((e) => e.fecha === libroFecha);
+    return idx >= 0 ? idx : entradas.length - 1;
+  }, [entradas, libroFecha]);
+
+  const abrirEnLibro = (f) => {
+    setLibroFecha(f);
+    setVista("libro");
+  };
 
   if (cargando) {
     return <p className={style.cargando}>Cargando tu journal…</p>;
   }
+
+  /* ===== Vista calendario ===== */
+  const renderCalendario = () => {
+    const cells = buildMonthGrid(calRef);
+    const mesLabel = calRef.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+    const mesActual = calRef.getMonth();
+    const hoy = hoyLocal();
+
+    return (
+      <div className={style.calBox}>
+        <div className={style.calNav}>
+          <button
+            type="button"
+            className={style.calNavBtn}
+            onClick={() => setCalRef(new Date(calRef.getFullYear(), calRef.getMonth() - 1, 1))}
+            aria-label="Mes anterior"
+          >
+            <FiChevronLeft />
+          </button>
+          <span className={style.calMes}>{mesLabel}</span>
+          <button
+            type="button"
+            className={style.calNavBtn}
+            onClick={() => setCalRef(new Date(calRef.getFullYear(), calRef.getMonth() + 1, 1))}
+            aria-label="Mes siguiente"
+          >
+            <FiChevronRight />
+          </button>
+        </div>
+
+        <div className={style.calWeekdays}>
+          {WEEKDAYS.map((d, i) => (
+            <span key={`${d}-${i}`}>{d}</span>
+          ))}
+        </div>
+
+        <div className={style.calGrid}>
+          {cells.map((d) => {
+            const key = dayKeyOf(d);
+            const e = porFecha.get(key);
+            const esHoy = key === hoy;
+            return (
+              <button
+                key={key}
+                type="button"
+                className={`${style.calCell} ${d.getMonth() !== mesActual ? style.calCellFuera : ""} ${
+                  esHoy ? style.calCellHoy : ""
+                } ${e ? style.calCellConEntrada : ""}`}
+                onClick={() => e && abrirEnLibro(key)}
+                disabled={!e}
+                title={e ? `Leer el ${fechaLarga(key)}` : undefined}
+              >
+                <span>{d.getDate()}</span>
+                {e ? (
+                  <i
+                    className={style.calDot}
+                    style={{ background: ANIMO_COLORS[Number(e.animo)] || "#5dc72d" }}
+                  />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+        <p className={style.calAyuda}>Los días con puntito tienen journaling: tocá uno para leerlo.</p>
+      </div>
+    );
+  };
+
+  /* ===== Vista libro ===== */
+  const renderLibro = () => {
+    if (libroIdx < 0) {
+      return (
+        <div className={style.libroVacio}>
+          <FiBookOpen />
+          <p>Todavía no hay páginas escritas. Lo que escribas hoy va a aparecer acá.</p>
+        </div>
+      );
+    }
+
+    const e = entradas[libroIdx];
+
+    return (
+      <div className={style.libroWrap}>
+        <div className={style.libroPage}>
+          <p className={style.libroFecha}>{fechaLarga(e.fecha)}</p>
+          {Number(e.animo) > 0 ? <p className={style.libroAnimo}>{emojiDe(e.animo)}</p> : null}
+
+          {CAMPOS.map((p) =>
+            e[p.campo] ? (
+              <div key={p.campo} className={style.libroBloque}>
+                <p className={style.libroPregunta}>{preguntas[p.campo]}</p>
+                <p className={style.libroTexto}>{e[p.campo]}</p>
+              </div>
+            ) : null
+          )}
+          {e.libre ? (
+            <div className={style.libroBloque}>
+              <p className={style.libroTexto}>{e.libre}</p>
+            </div>
+          ) : null}
+        </div>
+
+        <div className={style.libroNav}>
+          <button
+            type="button"
+            className={style.calNavBtn}
+            onClick={() => setLibroFecha(entradas[libroIdx - 1]?.fecha)}
+            disabled={libroIdx <= 0}
+            aria-label="Día anterior"
+          >
+            <FiChevronLeft />
+          </button>
+          <span className={style.libroPagina}>
+            Página {libroIdx + 1} de {entradas.length}
+          </span>
+          <button
+            type="button"
+            className={style.calNavBtn}
+            onClick={() => setLibroFecha(entradas[libroIdx + 1]?.fecha)}
+            disabled={libroIdx >= entradas.length - 1}
+            aria-label="Día siguiente"
+          >
+            <FiChevronRight />
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className={style.wrap}>
@@ -156,161 +341,145 @@ function Journaling() {
         ) : null}
       </header>
 
-      {/* Ánimo */}
-      <div className={style.animoBox}>
-        <p className={style.animoLabel}>¿Cómo estuvo tu día?</p>
-        <div className={style.animoRow}>
-          {ANIMOS.map((a) => (
-            <button
-              key={a.valor}
-              type="button"
-              className={`${style.animoBtn} ${Number(entrada.animo) === a.valor ? style.animoActivo : ""}`}
-              onClick={() => elegirAnimo(a.valor)}
-              aria-label={`Ánimo ${a.valor} de 5`}
-              aria-pressed={Number(entrada.animo) === a.valor}
-            >
-              {a.emoji}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Preguntas guiadas (el texto es personalizable) */}
-      <div className={style.preguntasHead}>
-        {editandoPreguntas ? (
-          <>
-            <button type="button" className={style.preguntasBtn} onClick={guardarPreguntas}>
-              <FiCheck /> Guardar preguntas
-            </button>
-            <button
-              type="button"
-              className={style.preguntasBtn}
-              onClick={() => setEditandoPreguntas(false)}
-            >
-              <FiX /> Cancelar
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            className={style.preguntasBtn}
-            onClick={() => {
-              setBorradorPreguntas(preguntas);
-              setEditandoPreguntas(true);
-            }}
-            title="Cambiá el texto de las 3 preguntas por el tuyo"
-          >
-            <FiEdit2 /> Personalizar preguntas
-          </button>
-        )}
-      </div>
-
-      {CAMPOS.map((p) => (
-        <label key={p.campo} className={style.campo}>
-          {editandoPreguntas ? (
-            <input
-              className={style.preguntaInput}
-              value={borradorPreguntas[p.campo]}
-              onChange={(e) =>
-                setBorradorPreguntas((prev) => ({ ...prev, [p.campo]: e.target.value }))
-              }
-              placeholder={PREGUNTAS_DEFAULT[p.campo]}
-              maxLength={90}
-            />
-          ) : (
-            <span>{preguntas[p.campo]}</span>
-          )}
-          <textarea
-            className={style.input}
-            value={entrada[p.campo]}
-            onChange={(e) => editar(p.campo, e.target.value)}
-            placeholder={p.placeholder}
-            rows={2}
-            disabled={editandoPreguntas}
-          />
-        </label>
-      ))}
-
-      <label className={style.campo}>
-        <span>Notas libres (opcional)</span>
-        <textarea
-          className={`${style.input} ${style.inputLibre}`}
-          value={entrada.libre}
-          onChange={(e) => editar("libre", e.target.value)}
-          placeholder="Lo que quieras dejar escrito de hoy…"
-          rows={4}
-        />
-      </label>
-
-      <div className={style.pieGuardado}>{guardando ? "Guardando…" : ""}</div>
-
-      {/* Ánimo en el tiempo */}
-      {animoSerie.length >= 3 ? (
-        <div className={style.animoChart}>
-          <p className={style.historialTitulo}>Tu ánimo en el tiempo</p>
-          <div className={style.chartBars} role="img" aria-label="Ánimo de los últimos días">
-            {animoSerie.map((e) => (
-              <div
-                key={e.fecha}
-                className={style.chartBar}
-                style={{
-                  height: `${(Number(e.animo) / 5) * 100}%`,
-                  background: ANIMO_COLORS[Number(e.animo)] || "#5dc72d",
-                }}
-                title={`${fechaLarga(e.fecha)}: ${emojiDe(e.animo)}`}
-              />
-            ))}
+      <div className={style.cols}>
+        {/* Columna izquierda: escribir hoy */}
+        <div className={style.colIzq}>
+          <div className={style.animoBox}>
+            <p className={style.animoLabel}>¿Cómo estuvo tu día?</p>
+            <div className={style.animoRow}>
+              {ANIMOS.map((a) => (
+                <button
+                  key={a.valor}
+                  type="button"
+                  className={`${style.animoBtn} ${Number(entrada.animo) === a.valor ? style.animoActivo : ""}`}
+                  onClick={() => elegirAnimo(a.valor)}
+                  aria-label={`Ánimo ${a.valor} de 5`}
+                  aria-pressed={Number(entrada.animo) === a.valor}
+                >
+                  {a.emoji}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className={style.chartLeyenda}>
-            <span>{fechaLarga(animoSerie[0].fecha)}</span>
-            <span>hoy</span>
-          </div>
-        </div>
-      ) : null}
 
-      {/* Historial */}
-      {historial.length > 0 ? (
-        <div className={style.historial}>
-          <p className={style.historialTitulo}>Entradas anteriores</p>
-          {historial.map((e) => {
-            const abiertaEsta = abierta === e.fecha;
-            return (
-              <div key={e.fecha} className={style.entrada}>
+          {/* Preguntas guiadas (el texto es personalizable) */}
+          <div className={style.preguntasHead}>
+            {editandoPreguntas ? (
+              <>
+                <button type="button" className={style.preguntasBtn} onClick={guardarPreguntas}>
+                  <FiCheck /> Guardar preguntas
+                </button>
                 <button
                   type="button"
-                  className={style.entradaHead}
-                  onClick={() => setAbierta(abiertaEsta ? null : e.fecha)}
-                  aria-expanded={abiertaEsta}
+                  className={style.preguntasBtn}
+                  onClick={() => setEditandoPreguntas(false)}
                 >
-                  <span className={style.entradaEmoji}>{emojiDe(e.animo) || "·"}</span>
-                  <span className={style.entradaFecha}>{fechaLarga(e.fecha)}</span>
-                  <FiChevronDown
-                    className={`${style.entradaChevron} ${abiertaEsta ? style.entradaChevronOpen : ""}`}
-                  />
+                  <FiX /> Cancelar
                 </button>
-                {abiertaEsta ? (
-                  <div className={style.entradaBody}>
-                    {CAMPOS.map((p) =>
-                      e[p.campo] ? (
-                        <div key={p.campo} className={style.entradaCampo}>
-                          <span>{preguntas[p.campo]}</span>
-                          <p>{e[p.campo]}</p>
-                        </div>
-                      ) : null
-                    )}
-                    {e.libre ? (
-                      <div className={style.entradaCampo}>
-                        <span>Notas libres</span>
-                        <p>{e.libre}</p>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
+              </>
+            ) : (
+              <button
+                type="button"
+                className={style.preguntasBtn}
+                onClick={() => {
+                  setBorradorPreguntas(preguntas);
+                  setEditandoPreguntas(true);
+                }}
+                title="Cambiá el texto de las 3 preguntas por el tuyo"
+              >
+                <FiEdit2 /> Personalizar preguntas
+              </button>
+            )}
+          </div>
+
+          {CAMPOS.map((p) => (
+            <label key={p.campo} className={style.campo}>
+              {editandoPreguntas ? (
+                <input
+                  className={style.preguntaInput}
+                  value={borradorPreguntas[p.campo]}
+                  onChange={(e) =>
+                    setBorradorPreguntas((prev) => ({ ...prev, [p.campo]: e.target.value }))
+                  }
+                  placeholder={PREGUNTAS_DEFAULT[p.campo]}
+                  maxLength={90}
+                />
+              ) : (
+                <span>{preguntas[p.campo]}</span>
+              )}
+              <textarea
+                className={style.input}
+                value={entrada[p.campo]}
+                onChange={(e) => editar(p.campo, e.target.value)}
+                placeholder={p.placeholder}
+                rows={2}
+                disabled={editandoPreguntas}
+              />
+            </label>
+          ))}
+
+          <label className={style.campo}>
+            <span>Notas libres (opcional)</span>
+            <textarea
+              className={`${style.input} ${style.inputLibre}`}
+              value={entrada.libre}
+              onChange={(e) => editar("libre", e.target.value)}
+              placeholder="Lo que quieras dejar escrito de hoy…"
+              rows={4}
+            />
+          </label>
+
+          <div className={style.pieGuardado}>{guardando ? "Guardando…" : ""}</div>
+
+          {/* Ánimo en el tiempo */}
+          {animoSerie.length >= 3 ? (
+            <div className={style.animoChart}>
+              <p className={style.historialTitulo}>Tu ánimo en el tiempo</p>
+              <div className={style.chartBars} role="img" aria-label="Ánimo de los últimos días">
+                {animoSerie.map((e) => (
+                  <div
+                    key={e.fecha}
+                    className={style.chartBar}
+                    style={{
+                      height: `${(Number(e.animo) / 5) * 100}%`,
+                      background: ANIMO_COLORS[Number(e.animo)] || "#5dc72d",
+                    }}
+                    title={`${fechaLarga(e.fecha)}: ${emojiDe(e.animo)}`}
+                  />
+                ))}
               </div>
-            );
-          })}
+              <div className={style.chartLeyenda}>
+                <span>{fechaLarga(animoSerie[0].fecha)}</span>
+                <span>hoy</span>
+              </div>
+            </div>
+          ) : null}
         </div>
-      ) : null}
+
+        {/* Columna derecha: releer (calendario o libro) */}
+        <div className={style.colDer}>
+          <div className={style.vistaToggle} role="tablist" aria-label="Cómo ver tus entradas">
+            <button
+              type="button"
+              className={`${style.vistaBtn} ${vista === "calendario" ? style.vistaBtnActivo : ""}`}
+              onClick={() => setVista("calendario")}
+              aria-pressed={vista === "calendario"}
+            >
+              <FiCalendar /> Vista calendario
+            </button>
+            <button
+              type="button"
+              className={`${style.vistaBtn} ${vista === "libro" ? style.vistaBtnActivo : ""}`}
+              onClick={() => setVista("libro")}
+              aria-pressed={vista === "libro"}
+            >
+              <FiBookOpen /> Vista libro
+            </button>
+          </div>
+
+          {vista === "calendario" ? renderCalendario() : renderLibro()}
+        </div>
+      </div>
     </div>
   );
 }
