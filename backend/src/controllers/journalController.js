@@ -1,7 +1,23 @@
 import Journal from "../models/journalModel.js";
+import JournalConfig from "../models/journalConfigModel.js";
 
 const MAX_CAMPO = 2000;
 const MAX_LISTADO = 60;
+const MAX_PREGUNTA = 90;
+
+// Textos por defecto de las preguntas guiadas.
+const PREGUNTAS_DEFAULT = {
+  gratitud: "Hoy agradezco…",
+  mejor: "Lo mejor de hoy fue…",
+  distinto: "¿Qué harías distinto?",
+};
+
+// Devuelve las preguntas del usuario completando con los defaults.
+const preguntasDe = (config) => ({
+  gratitud: String(config?.preguntas?.gratitud || "").trim() || PREGUNTAS_DEFAULT.gratitud,
+  mejor: String(config?.preguntas?.mejor || "").trim() || PREGUNTAS_DEFAULT.mejor,
+  distinto: String(config?.preguntas?.distinto || "").trim() || PREGUNTAS_DEFAULT.distinto,
+});
 
 const esFecha = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
 
@@ -55,12 +71,36 @@ const armarRespuesta = (entradas, hoy) => {
 export const getJournal = async (req, res) => {
   try {
     const fecha = String(req.query.fecha || "");
-    const entradas = await Journal.find({ usuario: req.user.id })
-      .sort({ fecha: -1 })
-      .limit(MAX_LISTADO);
-    return res.status(200).json(armarRespuesta(entradas, fecha));
+    const [entradas, config] = await Promise.all([
+      Journal.find({ usuario: req.user.id }).sort({ fecha: -1 }).limit(MAX_LISTADO),
+      JournalConfig.findOne({ usuario: req.user.id }),
+    ]);
+    return res
+      .status(200)
+      .json({ ...armarRespuesta(entradas, fecha), preguntas: preguntasDe(config) });
   } catch (error) {
     return res.status(500).json({ error: "No se pudo obtener el journal" });
+  }
+};
+
+// PUT /api/journal/preguntas  { gratitud, mejor, distinto }
+// Textos vacíos vuelven al default.
+export const savePreguntas = async (req, res) => {
+  try {
+    const preguntas = {};
+    for (const campo of ["gratitud", "mejor", "distinto"]) {
+      if (typeof req.body[campo] === "string") {
+        preguntas[`preguntas.${campo}`] = req.body[campo].trim().slice(0, MAX_PREGUNTA);
+      }
+    }
+    const config = await JournalConfig.findOneAndUpdate(
+      { usuario: req.user.id },
+      { $set: preguntas, $setOnInsert: { usuario: req.user.id } },
+      { upsert: true, new: true }
+    );
+    return res.status(200).json({ preguntas: preguntasDe(config) });
+  } catch (error) {
+    return res.status(500).json({ error: "No se pudieron guardar las preguntas" });
   }
 };
 

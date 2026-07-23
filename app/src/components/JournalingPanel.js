@@ -26,12 +26,20 @@ const ANIMOS = [
   { valor: 5, emoji: "😄" },
 ];
 
-// Preguntas guiadas estilo "5 minute journal".
-const PREGUNTAS = [
-  { campo: "gratitud", label: "Hoy agradezco…", placeholder: "Una cosa alcanza." },
-  { campo: "mejor", label: "Lo mejor de hoy fue…", placeholder: "Un momento, una persona, un logro." },
-  { campo: "distinto", label: "¿Qué harías distinto?", placeholder: "Sin culpa: es para mañana." },
+// Preguntas guiadas estilo "5 minute journal". El texto es personalizable.
+const PREGUNTAS_DEFAULT = {
+  gratitud: "Hoy agradezco…",
+  mejor: "Lo mejor de hoy fue…",
+  distinto: "¿Qué harías distinto?",
+};
+const CAMPOS = [
+  { campo: "gratitud", placeholder: "Una cosa alcanza." },
+  { campo: "mejor", placeholder: "Un momento, una persona, un logro." },
+  { campo: "distinto", placeholder: "Sin culpa: es para mañana." },
 ];
+
+// Color de cada nivel de ánimo (rojo → verde) para el gráfico.
+const ANIMO_COLORS = { 1: "#e5484d", 2: "#e58a3a", 3: "#c9a23a", 4: "#8fbf3f", 5: "#14d95f" };
 
 const ENTRADA_VACIA = { animo: 0, gratitud: "", mejor: "", distinto: "", libre: "" };
 
@@ -65,12 +73,16 @@ export default function JournalingPanel({ visible, onClose }) {
   const [guardando, setGuardando] = useState(false);
   const [abierta, setAbierta] = useState(null);
   const [focoCampo, setFocoCampo] = useState(null);
+  const [preguntas, setPreguntas] = useState(PREGUNTAS_DEFAULT);
+  const [editandoPreguntas, setEditandoPreguntas] = useState(false);
+  const [borradorPreguntas, setBorradorPreguntas] = useState(PREGUNTAS_DEFAULT);
   const guardadoRef = useRef(null);
 
   const aplicar = useCallback((data) => {
     setEntrada(data?.hoy ? { ...ENTRADA_VACIA, ...data.hoy } : ENTRADA_VACIA);
     setHistorial(Array.isArray(data?.entradas) ? data.entradas : []);
     setRacha(Number(data?.racha) || 0);
+    if (data?.preguntas) setPreguntas({ ...PREGUNTAS_DEFAULT, ...data.preguntas });
   }, []);
 
   useEffect(() => {
@@ -118,6 +130,23 @@ export default function JournalingPanel({ visible, onClose }) {
   const elegirAnimo = (valor) => {
     editar("animo", Number(entrada.animo) === valor ? 0 : valor);
   };
+
+  const guardarPreguntas = async () => {
+    setEditandoPreguntas(false);
+    try {
+      const { data } = await journalService.savePreguntas(borradorPreguntas);
+      if (data?.preguntas) setPreguntas({ ...PREGUNTAS_DEFAULT, ...data.preguntas });
+    } catch {
+      /* quedan las anteriores */
+    }
+  };
+
+  // Ánimo en el tiempo: historial (viejo → nuevo) + la entrada de hoy.
+  const animoSerie = [...historial]
+    .reverse()
+    .concat(Number(entrada.animo) > 0 ? [{ fecha, animo: entrada.animo }] : [])
+    .filter((e) => Number(e.animo) > 0)
+    .slice(-30);
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -177,10 +206,53 @@ export default function JournalingPanel({ visible, onClose }) {
                 </View>
               </View>
 
+              {/* Personalizar preguntas */}
+              <View style={styles.preguntasHead}>
+                {editandoPreguntas ? (
+                  <>
+                    <TouchableOpacity style={styles.preguntasBtn} onPress={guardarPreguntas}>
+                      <Ionicons name="checkmark" size={14} color={colors.green} />
+                      <Text style={styles.preguntasBtnText}>Guardar preguntas</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.preguntasBtn}
+                      onPress={() => setEditandoPreguntas(false)}
+                    >
+                      <Ionicons name="close" size={14} color={colors.muted} />
+                      <Text style={styles.preguntasBtnText}>Cancelar</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.preguntasBtn}
+                    onPress={() => {
+                      setBorradorPreguntas(preguntas);
+                      setEditandoPreguntas(true);
+                    }}
+                  >
+                    <Ionicons name="pencil" size={13} color={colors.muted} />
+                    <Text style={styles.preguntasBtnText}>Personalizar preguntas</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
               {/* Preguntas guiadas */}
-              {PREGUNTAS.map((p) => (
+              {CAMPOS.map((p) => (
                 <View key={p.campo}>
-                  <Text style={styles.campoLabel}>{p.label}</Text>
+                  {editandoPreguntas ? (
+                    <TextInput
+                      style={styles.preguntaInput}
+                      value={borradorPreguntas[p.campo]}
+                      onChangeText={(v) =>
+                        setBorradorPreguntas((prev) => ({ ...prev, [p.campo]: v }))
+                      }
+                      placeholder={PREGUNTAS_DEFAULT[p.campo]}
+                      placeholderTextColor={colors.muted}
+                      maxLength={90}
+                    />
+                  ) : (
+                    <Text style={styles.campoLabel}>{preguntas[p.campo]}</Text>
+                  )}
                   <TextInput
                     style={[styles.input, focoCampo === p.campo && styles.inputFoco]}
                     value={entrada[p.campo]}
@@ -190,6 +262,7 @@ export default function JournalingPanel({ visible, onClose }) {
                     placeholder={p.placeholder}
                     placeholderTextColor={colors.muted}
                     multiline
+                    editable={!editandoPreguntas}
                   />
                 </View>
               ))}
@@ -214,6 +287,31 @@ export default function JournalingPanel({ visible, onClose }) {
 
               {guardando ? <Text style={styles.guardandoText}>Guardando…</Text> : null}
 
+              {/* Ánimo en el tiempo */}
+              {animoSerie.length >= 3 ? (
+                <View style={styles.animoChartBox}>
+                  <Text style={styles.historialTitulo}>TU ÁNIMO EN EL TIEMPO</Text>
+                  <View style={styles.chartBars}>
+                    {animoSerie.map((e) => (
+                      <View
+                        key={e.fecha}
+                        style={[
+                          styles.chartBar,
+                          {
+                            height: `${(Number(e.animo) / 5) * 100}%`,
+                            backgroundColor: ANIMO_COLORS[Number(e.animo)] || colors.greenBright,
+                          },
+                        ]}
+                      />
+                    ))}
+                  </View>
+                  <View style={styles.chartLeyenda}>
+                    <Text style={styles.chartLeyendaText}>{fechaLarga(animoSerie[0].fecha)}</Text>
+                    <Text style={styles.chartLeyendaText}>hoy</Text>
+                  </View>
+                </View>
+              ) : null}
+
               {/* Historial */}
               {historial.length > 0 ? (
                 <View style={styles.historial}>
@@ -236,10 +334,10 @@ export default function JournalingPanel({ visible, onClose }) {
                         </TouchableOpacity>
                         {abiertaEsta ? (
                           <View style={styles.entradaBody}>
-                            {PREGUNTAS.map((p) =>
+                            {CAMPOS.map((p) =>
                               e[p.campo] ? (
                                 <View key={p.campo} style={styles.entradaCampo}>
-                                  <Text style={styles.entradaCampoLabel}>{p.label}</Text>
+                                  <Text style={styles.entradaCampoLabel}>{preguntas[p.campo]}</Text>
                                   <Text style={styles.entradaCampoTexto}>{e[p.campo]}</Text>
                                 </View>
                               ) : null
@@ -349,6 +447,56 @@ const makeStyles = (colors) =>
     inputFoco: { borderColor: colors.greenBright, borderWidth: 1.5 },
 
     guardandoText: { color: colors.muted, fontSize: 12 },
+
+    preguntasHead: { flexDirection: "row", justifyContent: "flex-end", gap: 8 },
+    preguntasBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderStyle: "dashed",
+      borderColor: colors.cardBorder,
+    },
+    preguntasBtnText: { color: colors.muted, fontSize: 11.5, fontWeight: "700" },
+    preguntaInput: {
+      minHeight: 38,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      marginBottom: 5,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.greenBorder,
+      backgroundColor: colors.card,
+      color: colors.green,
+      fontSize: 13,
+      fontWeight: "800",
+    },
+
+    animoChartBox: {
+      padding: 12,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      gap: 8,
+    },
+    chartBars: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      gap: 3,
+      height: 64,
+    },
+    chartBar: { flex: 1, maxWidth: 22, borderRadius: 3 },
+    chartLeyenda: { flexDirection: "row", justifyContent: "space-between" },
+    chartLeyendaText: {
+      color: colors.muted,
+      fontSize: 10.5,
+      fontWeight: "600",
+      textTransform: "capitalize",
+    },
 
     historial: {
       marginTop: 6,

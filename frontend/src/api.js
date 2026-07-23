@@ -154,6 +154,7 @@ export const journalService = {
   // `fecha` es la fecha local del cliente (YYYY-MM-DD).
   get: (fecha) => api.get(`/api/journal?fecha=${fecha}`),
   save: (data) => api.put("/api/journal", data),
+  savePreguntas: (data) => api.put("/api/journal/preguntas", data),
 };
 
 export const afirmacionService = {
