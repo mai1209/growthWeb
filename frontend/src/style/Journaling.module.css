@@ -190,10 +190,10 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  /* Llena la columna (que acompaña a la izquierda) y nunca menos que la
-     ventana: la hoja llega hasta el final de la página. */
-  flex: 1;
-  min-height: max(560px, calc(100vh - 190px));
+  /* Altura FIJA al espacio del monitor: la hoja nunca crece con el texto
+     (sin scroll); lo que no entra pasa a la página interna siguiente. */
+  height: max(560px, calc(100vh - 190px));
+  flex: 0 0 auto;
   padding: 1.6rem 1.4rem 1.1rem 3.2rem;
   border-radius: 12px;
   background-color: #faf4e3;
