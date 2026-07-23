@@ -143,6 +143,13 @@ export const projectService = {
   delete: (id) => api.delete(`/api/projects/${id}`),
 };
 
+export const metaService = {
+  getAll: () => api.get("/api/metas"),
+  create: (data) => api.post("/api/metas", data),
+  update: (id, data) => api.put(`/api/metas/${id}`, data),
+  delete: (id) => api.delete(`/api/metas/${id}`),
+};
+
 export const afirmacionService = {
   // `fecha` es la fecha local del cliente (YYYY-MM-DD): el "hoy" lo define el
   // dispositivo, no el servidor.

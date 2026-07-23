@@ -10,6 +10,7 @@ import MonthlyFilters from "./MonthlyFilters";
 import SharedExpenses from "./SharedExpenses";
 import SettingsPage from "./SettingsPage";
 import MetricsPage from "./MetricsPage";
+import MetasPage from "./MetasPage";
 import PomodoroPage from "./PomodoroPage";
 
 import LoginPage from "./LoginPage";
@@ -201,6 +202,7 @@ function AppRoutes({
           }
         />
 
+        <Route path="metas" element={<MetasPage activeWorkspace={activeWorkspace} />} />
         <Route path="compartidos" element={<SharedExpenses />} />
         <Route path="pomodoro" element={<PomodoroPage />} />
         <Route path="ajustes" element={<SettingsPage />} />

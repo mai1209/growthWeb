@@ -14,6 +14,7 @@ import fiscalConfigRoutes from "./src/routes/fiscalConfigRoutes.js";
 import timeEntryRoutes from "./src/routes/timeEntryRoutes.js";
 import projectRoutes from "./src/routes/projectRoutes.js";
 import afirmacionRoutes from "./src/routes/afirmacionRoutes.js";
+import metaRoutes from "./src/routes/metaRoutes.js";
 
 dotenv.config();
 
@@ -151,6 +152,7 @@ app.use("/api/fiscal-config", fiscalConfigRoutes);
 app.use("/api/time-entries", timeEntryRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/afirmaciones", afirmacionRoutes);
+app.use("/api/metas", metaRoutes);
 
 // Rutas de Google montadas de forma perezosa: si el módulo (o sus paquetes)
 // no carga en el entorno serverless, el resto de la API sigue funcionando.
