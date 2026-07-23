@@ -36,6 +36,7 @@ export default function NotasScreen() {
   const [activeNote, setActiveNote] = useState(null);
   const [folder, setFolder] = useState(ALL_FOLDERS);
   const [shoppingOpen, setShoppingOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [afirmacionesOpen, setAfirmacionesOpen] = useState(false);
   const [foldersOpen, setFoldersOpen] = useState(false);
   const [folderSearch, setFolderSearch] = useState("");
@@ -135,24 +136,49 @@ export default function NotasScreen() {
             </View>
           </View>
         </View>
-        {/* Dos accesos al lado: como sólo entra uno con texto, van por ícono */}
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={styles.iconBtn}
-            onPress={() => setShoppingOpen(true)}
-            accessibilityLabel="Listas de compras"
-          >
-            <Ionicons name="cart-outline" size={19} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.iconBtn}
-            onPress={() => setAfirmacionesOpen(true)}
-            accessibilityLabel="Afirmaciones diarias"
-          >
-            <Ionicons name="sunny-outline" size={19} color="#fff" />
-          </TouchableOpacity>
-        </View>
+        {/* Un solo acceso: "Más herramientas" despliega las secciones extra */}
+        <TouchableOpacity
+          style={styles.toolsBtn}
+          onPress={() => setToolsOpen(true)}
+          accessibilityLabel="Más herramientas"
+        >
+          <Text style={styles.toolsBtnText}>Más herramientas</Text>
+          <Ionicons name="chevron-down" size={15} color="#fff" />
+        </TouchableOpacity>
       </View>
+
+      {/* Menú de herramientas */}
+      <Modal visible={toolsOpen} transparent animationType="fade" onRequestClose={() => setToolsOpen(false)}>
+        <TouchableOpacity
+          style={styles.toolsBackdrop}
+          activeOpacity={1}
+          onPress={() => setToolsOpen(false)}
+        >
+          <View style={styles.toolsMenu}>
+            <TouchableOpacity
+              style={styles.toolsItem}
+              onPress={() => {
+                setToolsOpen(false);
+                setShoppingOpen(true);
+              }}
+            >
+              <Ionicons name="cart-outline" size={19} color={colors.green} />
+              <Text style={styles.toolsItemText}>Lista de compras</Text>
+            </TouchableOpacity>
+            <View style={styles.toolsDivider} />
+            <TouchableOpacity
+              style={styles.toolsItem}
+              onPress={() => {
+                setToolsOpen(false);
+                setAfirmacionesOpen(true);
+              }}
+            >
+              <Ionicons name="reader-outline" size={19} color={colors.green} />
+              <Text style={styles.toolsItemText}>Afirmaciones</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Carpetas */}
       {folders.length > 0 && (
@@ -429,16 +455,48 @@ const makeStyles = (colors) => StyleSheet.create({
     paddingVertical: 9,
     marginTop: 4,
   },
-  headerActions: { flexDirection: "row", gap: 8, marginTop: 4 },
-  iconBtn: {
-    width: 40,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: colors.greenBright,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   newBtnText: { color: "#fff", fontWeight: "800", fontSize: 13 },
+
+  toolsBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: colors.greenBright,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    marginTop: 4,
+  },
+  toolsBtnText: { color: "#fff", fontWeight: "800", fontSize: 12.5 },
+  toolsBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    alignItems: "flex-end",
+    paddingTop: 150,
+    paddingRight: 16,
+  },
+  toolsMenu: {
+    minWidth: 210,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.card,
+    paddingVertical: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  toolsItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  toolsItemText: { color: colors.text, fontSize: 14, fontWeight: "700" },
+  toolsDivider: { height: 1, backgroundColor: colors.cardBorder, marginHorizontal: 10 },
 
   folderRowWrap: { paddingBottom: 4 },
   folderRow: { paddingHorizontal: 16, gap: 8, paddingVertical: 4 },

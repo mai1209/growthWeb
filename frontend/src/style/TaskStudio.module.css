@@ -1109,6 +1109,69 @@
   color: var(--accent-contrast);
 }
 
+/* ===== Desplegable "Más herramientas" ===== */
+.toolsWrap {
+  position: relative;
+}
+
+.toolsChevron {
+  transition: transform 0.18s ease;
+}
+
+.toolsChevronOpen {
+  transform: rotate(180deg);
+}
+
+.toolsBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+}
+
+.toolsMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 31;
+  min-width: 210px;
+  display: flex;
+  flex-direction: column;
+  padding: 0.3rem;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--panel-background, var(--surface-card));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+}
+
+.toolsItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.8rem;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.toolsItem svg {
+  color: var(--color-verde, #5dc72d);
+}
+
+.toolsItem:hover {
+  background: rgba(127, 137, 129, 0.14);
+}
+
+.toolsItemActive {
+  background: var(--accent-soft, rgba(93, 199, 45, 0.14));
+  color: var(--color-verde, #5dc72d);
+}
+
 /* ===== Vista calendario ===== */
 .calendar {
   display: grid;

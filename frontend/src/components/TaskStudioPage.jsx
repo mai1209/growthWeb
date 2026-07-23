@@ -26,7 +26,8 @@ import {
   FiMinus,
   FiPlus,
   FiShoppingCart,
-  FiSun,
+  FiBook,
+  FiChevronDown,
   FiTrash2,
   FiType,
   FiUnderline,
@@ -373,6 +374,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const [isDirty, setIsDirty] = useState(false);
   const [sizeInput, setSizeInput] = useState(DEFAULT_FONT_PX);
   const [view, setView] = useState("notes");
+  const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const [activeFolder, setActiveFolder] = useState(ALL_FOLDERS);
   const [customFolders, setCustomFolders] = useState(() => readStoredFolders(activeWorkspace));
   const [isCompact, setIsCompact] = useState(
@@ -1582,24 +1584,59 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                       Calendario
                     </button>
                   ) : null}
-                  <button
-                    type="button"
-                    className={`${style.viewToggleButton} ${effectiveView === "shopping" ? style.viewToggleButtonActive : ""}`}
-                    onClick={() => setView("shopping")}
-                    aria-pressed={effectiveView === "shopping"}
-                  >
-                    <FiShoppingCart />
-                    Lista de compras
-                  </button>
-                  <button
-                    type="button"
-                    className={`${style.viewToggleButton} ${effectiveView === "afirmaciones" ? style.viewToggleButtonActive : ""}`}
-                    onClick={() => setView("afirmaciones")}
-                    aria-pressed={effectiveView === "afirmaciones"}
-                  >
-                    <FiSun />
-                    Afirmaciones
-                  </button>
+                  {/* Las herramientas extra viven en un desplegable propio */}
+                  <div className={style.toolsWrap}>
+                    <button
+                      type="button"
+                      className={`${style.viewToggleButton} ${
+                        effectiveView === "shopping" || effectiveView === "afirmaciones"
+                          ? style.viewToggleButtonActive
+                          : ""
+                      }`}
+                      onClick={() => setToolsMenuOpen((prev) => !prev)}
+                      aria-expanded={toolsMenuOpen}
+                    >
+                      Más herramientas
+                      <FiChevronDown
+                        className={`${style.toolsChevron} ${toolsMenuOpen ? style.toolsChevronOpen : ""}`}
+                      />
+                    </button>
+                    {toolsMenuOpen ? (
+                      <>
+                        <div
+                          className={style.toolsBackdrop}
+                          onClick={() => setToolsMenuOpen(false)}
+                          role="presentation"
+                        />
+                        <div className={style.toolsMenu} role="menu">
+                          <button
+                            type="button"
+                            className={`${style.toolsItem} ${effectiveView === "shopping" ? style.toolsItemActive : ""}`}
+                            onClick={() => {
+                              setView("shopping");
+                              setToolsMenuOpen(false);
+                            }}
+                            role="menuitem"
+                          >
+                            <FiShoppingCart />
+                            Lista de compras
+                          </button>
+                          <button
+                            type="button"
+                            className={`${style.toolsItem} ${effectiveView === "afirmaciones" ? style.toolsItemActive : ""}`}
+                            onClick={() => {
+                              setView("afirmaciones");
+                              setToolsMenuOpen(false);
+                            }}
+                            role="menuitem"
+                          >
+                            <FiBook />
+                            Afirmaciones
+                          </button>
+                        </div>
+                      </>
+                    ) : null}
+                  </div>
                 </div>
                 {effectiveView !== "shopping" && effectiveView !== "afirmaciones" ? (
                   <>
