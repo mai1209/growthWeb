@@ -96,6 +96,14 @@ function Journaling() {
   const [vista, setVista] = useState("calendario"); // calendario | libro
   const [libroFecha, setLibroFecha] = useState(null); // página abierta del libro
   const [calRef, setCalRef] = useState(() => new Date());
+  // Páginas internas de un mismo día: el contenido fluye en columnas del ancho
+  // de la hoja (sin scroll) y las flechitas de arriba deslizan entre columnas.
+  const GAP_COL = 60;
+  const [pagInterna, setPagInterna] = useState(0);
+  const [numPagsInternas, setNumPagsInternas] = useState(1);
+  const [anchoHoja, setAnchoHoja] = useState(0);
+  const viewportRef = useRef(null);
+  const columnasRef = useRef(null);
   const guardadoRef = useRef(null);
 
   const aplicar = useCallback((data) => {
@@ -192,6 +200,32 @@ function Journaling() {
     setVista("libro");
   };
 
+  // Al cambiar de día, arrancamos en la primera página interna.
+  useEffect(() => {
+    setPagInterna(0);
+  }, [libroIdx]);
+
+  // Mide el ancho de la hoja y cuántas páginas internas ocupa el contenido.
+  useEffect(() => {
+    if (vista !== "libro") return undefined;
+    const medir = () => {
+      const viewport = viewportRef.current;
+      if (!viewport) return;
+      const w = viewport.clientWidth;
+      setAnchoHoja(w);
+      requestAnimationFrame(() => {
+        const cols = columnasRef.current;
+        if (!cols || !w) return;
+        const paginas = Math.max(1, Math.round((cols.scrollWidth + GAP_COL) / (w + GAP_COL)));
+        setNumPagsInternas(paginas);
+        setPagInterna((prev) => Math.min(prev, paginas - 1));
+      });
+    };
+    medir();
+    window.addEventListener("resize", medir);
+    return () => window.removeEventListener("resize", medir);
+  }, [vista, libroIdx, entradas, preguntas, anchoHoja]);
+
   if (cargando) {
     return <p className={style.cargando}>Cargando tu journal…</p>;
   }
@@ -285,30 +319,72 @@ function Journaling() {
 
     return (
       <div className={style.libroPage}>
-        {racha > 0 ? (
-          <span
-            className={`${style.racha} ${style.rachaEnHoja}`}
-            title={`${racha} días seguidos escribiendo`}
-          >
-            🔥 {racha} {racha === 1 ? "día" : "días"}
-          </span>
-        ) : null}
-        <p className={style.libroFecha}>{fechaLarga(e.fecha)}</p>
-        {Number(e.animo) > 0 ? <p className={style.libroAnimo}>{emojiDe(e.animo)}</p> : null}
+        <div className={style.libroTopControles}>
+          {numPagsInternas > 1 ? (
+            <>
+              <button
+                type="button"
+                className={`${style.libroNavBtn} ${style.libroNavBtnChico}`}
+                onClick={() => setPagInterna((prev) => Math.max(0, prev - 1))}
+                disabled={pagInterna <= 0}
+                aria-label="Página interna anterior"
+              >
+                <FiChevronLeft />
+              </button>
+              <span className={style.libroPaginaChica}>
+                {pagInterna + 1}/{numPagsInternas}
+              </span>
+              <button
+                type="button"
+                className={`${style.libroNavBtn} ${style.libroNavBtnChico}`}
+                onClick={() => setPagInterna((prev) => Math.min(numPagsInternas - 1, prev + 1))}
+                disabled={pagInterna >= numPagsInternas - 1}
+                aria-label="Página interna siguiente"
+              >
+                <FiChevronRight />
+              </button>
+            </>
+          ) : null}
+          {racha > 0 ? (
+            <span className={style.rachaEnHoja} title={`${racha} días seguidos escribiendo`}>
+              🔥 {racha} {racha === 1 ? "día" : "días"}
+            </span>
+          ) : null}
+        </div>
 
-        {CAMPOS.map((p) =>
-          e[p.campo] ? (
-            <div key={p.campo} className={style.libroBloque}>
-              <p className={style.libroPregunta}>{preguntas[p.campo]}</p>
-              <p className={style.libroTexto}>{e[p.campo]}</p>
-            </div>
-          ) : null
-        )}
-        {e.libre ? (
-          <div className={style.libroBloque}>
-            <p className={style.libroTexto}>{e.libre}</p>
+        <div className={style.libroViewport} ref={viewportRef}>
+          <div
+            className={style.libroColumnas}
+            ref={columnasRef}
+            style={
+              anchoHoja
+                ? {
+                    columnWidth: anchoHoja,
+                    WebkitColumnWidth: anchoHoja,
+                    columnGap: GAP_COL,
+                    transform: `translateX(-${pagInterna * (anchoHoja + GAP_COL)}px)`,
+                  }
+                : undefined
+            }
+          >
+            <p className={style.libroFecha}>{fechaLarga(e.fecha)}</p>
+            {Number(e.animo) > 0 ? <p className={style.libroAnimo}>{emojiDe(e.animo)}</p> : null}
+
+            {CAMPOS.map((p) =>
+              e[p.campo] ? (
+                <div key={p.campo} className={style.libroBloque}>
+                  <p className={style.libroPregunta}>{preguntas[p.campo]}</p>
+                  <p className={style.libroTexto}>{e[p.campo]}</p>
+                </div>
+              ) : null
+            )}
+            {e.libre ? (
+              <div className={style.libroBloque}>
+                <p className={style.libroTexto}>{e.libre}</p>
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        </div>
 
         {/* Paginador dentro de la hoja, en tinta */}
         <div className={style.libroNav}>

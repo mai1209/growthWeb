@@ -212,12 +212,47 @@
   line-height: var(--renglon);
 }
 
-.rachaEnHoja {
+/* Controles de arriba de la hoja: flechitas de páginas internas + fueguito */
+.libroTopControles {
   position: absolute;
   top: 12px;
   right: 12px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.rachaEnHoja {
   background: rgba(93, 199, 45, 0.22);
   color: #2f6f35;
+}
+
+.libroNavBtnChico {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+}
+
+.libroPaginaChica {
+  color: #2b2416;
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Contenido del día en columnas del ancho de la hoja: sin scroll, se pasa
+   de página interna deslizando entre columnas */
+.libroViewport {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.libroColumnas {
+  height: 100%;
+  column-fill: auto;
+  transition: transform 0.28s ease;
 }
 
 .libroFecha {
