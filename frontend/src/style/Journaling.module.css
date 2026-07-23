@@ -28,36 +28,40 @@
   }
 }
 
-/* ===== Toggle calendario / libro ===== */
+/* ===== Toggle calendario / libro: switch segmentado en una sola línea ===== */
 .vistaToggle {
-  display: flex;
-  gap: 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--surface-card);
 }
 
 .vistaBtn {
-  flex: 1;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  padding: 0.6rem 0.9rem;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  gap: 0.4rem;
+  padding: 0.45rem 0.95rem;
+  border: none;
+  border-radius: 999px;
   background: transparent;
   color: var(--color-muted);
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  transition: color 0.15s ease, background 0.15s ease;
 }
 
 .vistaBtn:hover {
-  border-color: var(--accent-border, rgba(93, 199, 45, 0.4));
+  color: var(--color-text);
 }
 
-.vistaBtnActivo {
+.vistaBtnActivo,
+.vistaBtnActivo:hover {
   background: var(--accent, #5dc72d);
-  border-color: var(--accent, #5dc72d);
   color: var(--accent-contrast, #0e1a0e);
 }
 
