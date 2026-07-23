@@ -83,9 +83,13 @@ export default function AfirmacionesPanel({ visible, onClose }) {
       hora: data?.recordatorio?.hora || "08:00",
     };
     setRecordatorio(rec);
-    // Re-programa la notificación al abrir: así el texto rota a la
-    // afirmación del día aunque no toques nada.
-    syncAfirmacionesReminder({ ...rec, lineas: completas });
+    // Re-programa la notificación al abrir: así el texto (leé/escribí)
+    // refleja el estado actual de los renglones.
+    syncAfirmacionesReminder({
+      ...rec,
+      lineas: completas,
+      repetirDiario: data?.repetirDiario !== false,
+    });
   }, []);
 
   const cargar = useCallback(
@@ -163,7 +167,7 @@ export default function AfirmacionesPanel({ visible, onClose }) {
   const guardarRecordatorio = async (rec) => {
     setRecordatorio(rec);
     afirmacionService.save({ recordatorio: rec, fecha }).catch(() => {});
-    const ok = await syncAfirmacionesReminder({ ...rec, lineas });
+    const ok = await syncAfirmacionesReminder({ ...rec, lineas, repetirDiario });
     if (rec.activo && !ok) {
       // Sin permiso de notificaciones: volvemos atrás y avisamos.
       const apagado = { ...rec, activo: false };
@@ -182,6 +186,8 @@ export default function AfirmacionesPanel({ visible, onClose }) {
     afirmacionService.save({ repetirDiario: proximo, fecha }).catch(() => {
       setRepetirDiario(!proximo); // si falló, volvemos al estado real
     });
+    // El verbo de la notificación (leé/escribí) depende de este switch.
+    syncAfirmacionesReminder({ ...recordatorio, lineas, repetirDiario: proximo });
   };
 
   const alternarLeido = async () => {

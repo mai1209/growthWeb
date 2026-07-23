@@ -2,17 +2,18 @@ import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
 // Recordatorio diario de afirmaciones con notificación LOCAL (sin servidor).
-// La notificación trae una de tus afirmaciones en el cuerpo, rotando por día.
 
 const REMINDER_ID = "afirmaciones-reminder";
-const CHANNEL_ID = "afirmaciones";
+// v2: los canales de Android son inmutables una vez creados; al cambiar el
+// sonido hay que crear un canal nuevo para que aplique.
+const CHANNEL_ID = "afirmaciones-v2";
 
 // Cómo se muestra si llega con la app abierta.
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
     shouldShowList: true,
-    shouldPlaySound: false,
+    shouldPlaySound: true,
     shouldSetBadge: false,
   }),
 });
@@ -21,19 +22,28 @@ const asegurarCanal = async () => {
   if (Platform.OS !== "android") return;
   await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
     name: "Afirmaciones diarias",
-    importance: Notifications.AndroidImportance.DEFAULT,
+    importance: Notifications.AndroidImportance.HIGH,
+    sound: "default",
   });
 };
 
-// Mensaje fijo del recordatorio, con espíritu estoico: la repetición diaria
-// es lo que convierte las palabras en carácter.
 const TITULO = "Tus afirmaciones de hoy";
-const MENSAJE =
-  "Tu mente se tiñe del color de tus pensamientos. Repetilos cada día y se vuelven carácter: leé tus afirmaciones.";
+
+// Mensaje corto y estoico. El verbo depende de si a esa hora va a haber
+// afirmaciones escritas: con "guardar al día siguiente" prendido y renglones
+// escritos, se leen; si el día arranca vacío, se escriben.
+const mensajeDe = ({ lineas, repetirDiario }) => {
+  const hayEscritas = (lineas || []).some((l) => String(l || "").trim());
+  const seLeen = repetirDiario !== false && hayEscritas;
+  return seLeen
+    ? "Tu mente se tiñe de tus pensamientos: leé tus afirmaciones."
+    : "Tu mente se tiñe de tus pensamientos: escribí tus afirmaciones de hoy.";
+};
 
 // Sincroniza el recordatorio: cancela el anterior y, si está activo,
-// programa la notificación diaria a la hora elegida.
-export const syncAfirmacionesReminder = async ({ activo, hora }) => {
+// programa la notificación diaria a la hora elegida. Llamalo al abrir el
+// panel y ante cualquier cambio de configuración.
+export const syncAfirmacionesReminder = async ({ activo, hora, lineas, repetirDiario }) => {
   try {
     await Notifications.cancelScheduledNotificationAsync(REMINDER_ID).catch(() => {});
     if (!activo) return true;
@@ -48,7 +58,8 @@ export const syncAfirmacionesReminder = async ({ activo, hora }) => {
       identifier: REMINDER_ID,
       content: {
         title: TITULO,
-        body: MENSAJE,
+        body: mensajeDe({ lineas, repetirDiario }),
+        sound: "default",
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
