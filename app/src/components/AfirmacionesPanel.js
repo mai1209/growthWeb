@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -45,6 +46,7 @@ export default function AfirmacionesPanel({ visible, onClose }) {
   const [lineas, setLineas] = useState(() => Array(RENGLONES_INICIALES).fill(""));
   const [leidoHoy, setLeidoHoy] = useState(false);
   const [racha, setRacha] = useState(0);
+  const [repetirDiario, setRepetirDiario] = useState(true);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const guardadoRef = useRef(null);
@@ -58,6 +60,7 @@ export default function AfirmacionesPanel({ visible, onClose }) {
     setLineas(completas);
     setLeidoHoy(Boolean(data?.leidoHoy));
     setRacha(Number(data?.racha) || 0);
+    setRepetirDiario(data?.repetirDiario !== false);
   }, []);
 
   const cargar = useCallback(
@@ -132,6 +135,14 @@ export default function AfirmacionesPanel({ visible, onClose }) {
 
   const hayEscritas = useMemo(() => lineas.some((l) => l.trim()), [lineas]);
 
+  const alternarRepetir = () => {
+    const proximo = !repetirDiario;
+    setRepetirDiario(proximo); // optimista
+    afirmacionService.save({ repetirDiario: proximo, fecha }).catch(() => {
+      setRepetirDiario(!proximo); // si falló, volvemos al estado real
+    });
+  };
+
   const alternarLeido = async () => {
     const previo = leidoHoy;
     setLeidoHoy(!previo); // optimista: responde al toque al instante
@@ -185,9 +196,28 @@ export default function AfirmacionesPanel({ visible, onClose }) {
                 <Text style={styles.fecha}>{fechaLarga(fecha)}</Text>
               </View>
 
+              {/* Guardarlas al día siguiente */}
+              <View style={styles.switchRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.switchTitulo}>Guardarlas al día siguiente</Text>
+                  <Text style={styles.switchDetalle}>
+                    {repetirDiario
+                      ? "Mañana vas a encontrar estas mismas afirmaciones."
+                      : "Mañana vas a empezar con los renglones vacíos."}
+                  </Text>
+                </View>
+                <Switch
+                  value={repetirDiario}
+                  onValueChange={alternarRepetir}
+                  trackColor={{ false: colors.cardBorder, true: colors.greenSoft }}
+                  thumbColor={repetirDiario ? colors.greenBright : colors.muted}
+                />
+              </View>
+
               <Text style={styles.ayuda}>
-                Escribí tus afirmaciones y leelas todos los días. Se mantienen día a día: podés
-                editarlas cuando quieras.
+                {repetirDiario
+                  ? "Escribí tus afirmaciones y leelas todos los días: podés editarlas cuando quieras."
+                  : "Lo que escribas hoy se guarda igual, no se pierde."}
               </Text>
 
               {/* Renglones */}
@@ -305,6 +335,20 @@ const makeStyles = (colors) =>
     },
 
     ayuda: { color: colors.muted, fontSize: 13, lineHeight: 18 },
+
+    switchRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+    },
+    switchTitulo: { color: colors.text, fontSize: 14, fontWeight: "800" },
+    switchDetalle: { color: colors.muted, fontSize: 12, marginTop: 2 },
 
     item: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
     numero: {
