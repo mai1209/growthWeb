@@ -10,7 +10,8 @@
   display: grid;
   grid-template-columns: minmax(320px, 1fr) minmax(340px, 1fr);
   gap: 1.4rem;
-  align-items: start;
+  /* stretch: la columna del libro acompaña el alto de la izquierda */
+  align-items: stretch;
 }
 
 .colIzq,
@@ -64,6 +65,7 @@
 .calBox {
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 0.6rem;
   padding: 1rem;
   border: 1px solid var(--border-color);
@@ -177,7 +179,10 @@
   --renglon: 30px;
   display: flex;
   flex-direction: column;
-  min-height: max(430px, calc(100vh - 310px));
+  /* Llena la columna (que acompaña a la izquierda) y nunca menos que la
+     ventana: la hoja llega hasta el final de la página. */
+  flex: 1;
+  min-height: max(560px, calc(100vh - 240px));
   padding: 1.6rem 1.4rem 1.1rem 3.2rem;
   border-radius: 12px;
   background-color: #faf4e3;

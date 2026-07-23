@@ -60,6 +60,29 @@ const fechaLarga = (fecha) => {
 
 const emojiDe = (animo) => ANIMOS.find((a) => a.valor === Number(animo))?.emoji || "·";
 
+const pad = (n) => String(n).padStart(2, "0");
+const WEEKDAYS = ["L", "M", "M", "J", "V", "S", "D"];
+
+const dayKeyOf = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+// Grilla mensual (6 semanas) arrancando en lunes.
+const buildMonthGrid = (ref) => {
+  const first = new Date(ref.getFullYear(), ref.getMonth(), 1);
+  const start = new Date(first);
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  const cells = [];
+  for (let i = 0; i < 42; i += 1) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    cells.push(d);
+  }
+  return cells;
+};
+
+const tieneContenido = (e) =>
+  Number(e?.animo) > 0 ||
+  [e?.gratitud, e?.mejor, e?.distinto, e?.libre].some((c) => String(c || "").trim());
+
 export default function JournalingPanel({ visible, onClose }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -76,6 +99,9 @@ export default function JournalingPanel({ visible, onClose }) {
   const [preguntas, setPreguntas] = useState(PREGUNTAS_DEFAULT);
   const [editandoPreguntas, setEditandoPreguntas] = useState(false);
   const [borradorPreguntas, setBorradorPreguntas] = useState(PREGUNTAS_DEFAULT);
+  const [vista, setVista] = useState("calendario"); // calendario | libro
+  const [libroFecha, setLibroFecha] = useState(null);
+  const [calRef, setCalRef] = useState(() => new Date());
   const guardadoRef = useRef(null);
 
   const aplicar = useCallback((data) => {
@@ -141,12 +167,22 @@ export default function JournalingPanel({ visible, onClose }) {
     }
   };
 
-  // Ánimo en el tiempo: historial (viejo → nuevo) + la entrada de hoy.
-  const animoSerie = [...historial]
-    .reverse()
-    .concat(Number(entrada.animo) > 0 ? [{ fecha, animo: entrada.animo }] : [])
-    .filter((e) => Number(e.animo) > 0)
-    .slice(-30);
+  // Todas las entradas con contenido (historial + hoy), viejo → nuevo.
+  const entradas = [...historial].reverse();
+  if (tieneContenido(entrada)) entradas.push({ ...entrada, fecha });
+  const porFecha = new Map(entradas.map((e) => [e.fecha, e]));
+
+  // Ánimo en el tiempo (últimos 30 días con ánimo marcado).
+  const animoSerie = entradas.filter((e) => Number(e.animo) > 0).slice(-30);
+
+  // Página abierta del libro: la elegida, o la última escrita.
+  const libroIdxBase = entradas.findIndex((e) => e.fecha === libroFecha);
+  const libroIdx = entradas.length ? (libroIdxBase >= 0 ? libroIdxBase : entradas.length - 1) : -1;
+
+  const abrirEnLibro = (f) => {
+    setLibroFecha(f);
+    setVista("libro");
+  };
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -312,49 +348,146 @@ export default function JournalingPanel({ visible, onClose }) {
                 </View>
               ) : null}
 
-              {/* Historial */}
-              {historial.length > 0 ? (
-                <View style={styles.historial}>
-                  <Text style={styles.historialTitulo}>ENTRADAS ANTERIORES</Text>
-                  {historial.map((e) => {
-                    const abiertaEsta = abierta === e.fecha;
-                    return (
-                      <View key={e.fecha} style={styles.entrada}>
+              {/* Releer: vista calendario o vista libro */}
+              <View style={styles.vistaToggle}>
+                <TouchableOpacity
+                  style={[styles.vistaBtn, vista === "calendario" && styles.vistaBtnActivo]}
+                  onPress={() => setVista("calendario")}
+                >
+                  <Ionicons
+                    name="calendar-outline"
+                    size={15}
+                    color={vista === "calendario" ? "#0e1a0e" : colors.muted}
+                  />
+                  <Text
+                    style={[styles.vistaBtnText, vista === "calendario" && styles.vistaBtnTextActivo]}
+                  >
+                    Calendario
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.vistaBtn, vista === "libro" && styles.vistaBtnActivo]}
+                  onPress={() => setVista("libro")}
+                >
+                  <Ionicons
+                    name="book-outline"
+                    size={15}
+                    color={vista === "libro" ? "#0e1a0e" : colors.muted}
+                  />
+                  <Text style={[styles.vistaBtnText, vista === "libro" && styles.vistaBtnTextActivo]}>
+                    Libro
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {vista === "calendario" ? (
+                <View style={styles.calBox}>
+                  <View style={styles.calNav}>
+                    <TouchableOpacity
+                      style={styles.calNavBtn}
+                      onPress={() => setCalRef(new Date(calRef.getFullYear(), calRef.getMonth() - 1, 1))}
+                    >
+                      <Ionicons name="chevron-back" size={16} color={colors.text} />
+                    </TouchableOpacity>
+                    <Text style={styles.calMes}>
+                      {calRef.toLocaleDateString("es-AR", { month: "long", year: "numeric" })}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.calNavBtn}
+                      onPress={() => setCalRef(new Date(calRef.getFullYear(), calRef.getMonth() + 1, 1))}
+                    >
+                      <Ionicons name="chevron-forward" size={16} color={colors.text} />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.calWeekRow}>
+                    {WEEKDAYS.map((d, i) => (
+                      <Text key={`${d}-${i}`} style={styles.calWeekday}>
+                        {d}
+                      </Text>
+                    ))}
+                  </View>
+                  <View style={styles.calGrid}>
+                    {buildMonthGrid(calRef).map((d) => {
+                      const key = dayKeyOf(d);
+                      const e = porFecha.get(key);
+                      const esHoy = key === hoyLocal();
+                      const fuera = d.getMonth() !== calRef.getMonth();
+                      return (
                         <TouchableOpacity
-                          style={styles.entradaHead}
-                          onPress={() => setAbierta(abiertaEsta ? null : e.fecha)}
+                          key={key}
+                          style={[styles.calCell, esHoy && styles.calCellHoy, e && styles.calCellConEntrada]}
+                          disabled={!e}
+                          onPress={() => e && abrirEnLibro(key)}
                         >
-                          <Text style={styles.entradaEmoji}>{emojiDe(e.animo)}</Text>
-                          <Text style={styles.entradaFecha}>{fechaLarga(e.fecha)}</Text>
-                          <Ionicons
-                            name={abiertaEsta ? "chevron-up" : "chevron-down"}
-                            size={16}
-                            color={colors.muted}
-                          />
+                          <Text style={[styles.calDia, fuera && styles.calDiaFuera]}>{d.getDate()}</Text>
+                          {e ? (
+                            <View
+                              style={[
+                                styles.calDot,
+                                { backgroundColor: ANIMO_COLORS[Number(e.animo)] || colors.greenBright },
+                              ]}
+                            />
+                          ) : (
+                            <View style={styles.calDotVacio} />
+                          )}
                         </TouchableOpacity>
-                        {abiertaEsta ? (
-                          <View style={styles.entradaBody}>
-                            {CAMPOS.map((p) =>
-                              e[p.campo] ? (
-                                <View key={p.campo} style={styles.entradaCampo}>
-                                  <Text style={styles.entradaCampoLabel}>{preguntas[p.campo]}</Text>
-                                  <Text style={styles.entradaCampoTexto}>{e[p.campo]}</Text>
-                                </View>
-                              ) : null
-                            )}
-                            {e.libre ? (
-                              <View style={styles.entradaCampo}>
-                                <Text style={styles.entradaCampoLabel}>Notas libres</Text>
-                                <Text style={styles.entradaCampoTexto}>{e.libre}</Text>
-                              </View>
-                            ) : null}
-                          </View>
-                        ) : null}
-                      </View>
-                    );
-                  })}
+                      );
+                    })}
+                  </View>
+                  <Text style={styles.calAyuda}>
+                    Los días con puntito tienen journaling: tocá uno para leerlo.
+                  </Text>
                 </View>
-              ) : null}
+              ) : libroIdx < 0 ? (
+                <View style={styles.libroVacio}>
+                  <Ionicons name="book-outline" size={26} color={colors.green} />
+                  <Text style={styles.libroVacioText}>
+                    Todavía no hay páginas escritas. Lo que escribas hoy va a aparecer acá.
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.libroPage}>
+                  <View style={styles.libroMargen} />
+                  <Text style={styles.libroFecha}>{fechaLarga(entradas[libroIdx].fecha)}</Text>
+                  {Number(entradas[libroIdx].animo) > 0 ? (
+                    <Text style={styles.libroAnimo}>{emojiDe(entradas[libroIdx].animo)}</Text>
+                  ) : null}
+                  {CAMPOS.map((p) =>
+                    entradas[libroIdx][p.campo] ? (
+                      <View key={p.campo}>
+                        <Text style={styles.libroPregunta}>{preguntas[p.campo]}</Text>
+                        <Text style={styles.libroTexto}>{entradas[libroIdx][p.campo]}</Text>
+                      </View>
+                    ) : null
+                  )}
+                  {entradas[libroIdx].libre ? (
+                    <Text style={styles.libroTexto}>{entradas[libroIdx].libre}</Text>
+                  ) : null}
+
+                  <View style={styles.libroNav}>
+                    <TouchableOpacity
+                      style={[styles.libroNavBtn, libroIdx <= 0 && styles.libroNavBtnOff]}
+                      disabled={libroIdx <= 0}
+                      onPress={() => setLibroFecha(entradas[libroIdx - 1]?.fecha)}
+                    >
+                      <Ionicons name="chevron-back" size={16} color="#2b2416" />
+                    </TouchableOpacity>
+                    <Text style={styles.libroPagina}>
+                      Página {libroIdx + 1} de {entradas.length}
+                    </Text>
+                    <TouchableOpacity
+                      style={[
+                        styles.libroNavBtn,
+                        libroIdx >= entradas.length - 1 && styles.libroNavBtnOff,
+                      ]}
+                      disabled={libroIdx >= entradas.length - 1}
+                      onPress={() => setLibroFecha(entradas[libroIdx + 1]?.fecha)}
+                    >
+                      <Ionicons name="chevron-forward" size={16} color="#2b2416" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
             </ScrollView>
           </KeyboardAvoidingView>
         )}
@@ -497,6 +630,140 @@ const makeStyles = (colors) =>
       fontWeight: "600",
       textTransform: "capitalize",
     },
+
+    vistaToggle: { flexDirection: "row", gap: 7 },
+    vistaBtn: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 5,
+      paddingVertical: 10,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+    },
+    vistaBtnActivo: { backgroundColor: colors.greenBright, borderColor: colors.greenBright },
+    vistaBtnText: { color: colors.muted, fontSize: 13, fontWeight: "800" },
+    vistaBtnTextActivo: { color: "#0e1a0e" },
+
+    calBox: {
+      padding: 12,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      gap: 8,
+    },
+    calNav: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    calNavBtn: {
+      width: 30,
+      height: 30,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    calMes: { color: colors.text, fontSize: 13.5, fontWeight: "800", textTransform: "capitalize" },
+    calWeekRow: { flexDirection: "row" },
+    calWeekday: {
+      flex: 1,
+      textAlign: "center",
+      color: colors.muted,
+      fontSize: 10.5,
+      fontWeight: "800",
+    },
+    calGrid: { flexDirection: "row", flexWrap: "wrap" },
+    calCell: {
+      width: `${100 / 7}%`,
+      minHeight: 42,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 3,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: "transparent",
+      paddingVertical: 4,
+    },
+    calCellHoy: { borderColor: colors.greenBorder },
+    calCellConEntrada: { backgroundColor: colors.greenSoft },
+    calDia: { color: colors.text, fontSize: 12.5, fontWeight: "600" },
+    calDiaFuera: { opacity: 0.3 },
+    calDot: { width: 6, height: 6, borderRadius: 999 },
+    calDotVacio: { width: 6, height: 6 },
+    calAyuda: { color: colors.muted, fontSize: 11.5 },
+
+    /* Hoja de cuaderno: papel crema a propósito, no cambia con el tema */
+    libroPage: {
+      minHeight: 440,
+      padding: 18,
+      paddingLeft: 34,
+      borderRadius: 12,
+      backgroundColor: "#faf4e3",
+      overflow: "hidden",
+      gap: 8,
+    },
+    libroMargen: {
+      position: "absolute",
+      top: 0,
+      bottom: 0,
+      left: 24,
+      width: 2,
+      backgroundColor: "rgba(214, 106, 106, 0.55)",
+    },
+    libroFecha: {
+      color: "#2b2416",
+      fontSize: 16,
+      fontWeight: "700",
+      textTransform: "capitalize",
+      textDecorationLine: "underline",
+      fontFamily: Platform.OS === "ios" ? "Noteworthy" : "cursive",
+    },
+    libroAnimo: { fontSize: 20 },
+    libroPregunta: {
+      color: "#8a5a2a",
+      fontSize: 13.5,
+      fontWeight: "700",
+      fontFamily: Platform.OS === "ios" ? "Noteworthy" : "cursive",
+    },
+    libroTexto: {
+      color: "#2b2416",
+      fontSize: 15,
+      lineHeight: 24,
+      fontFamily: Platform.OS === "ios" ? "Noteworthy" : "cursive",
+    },
+    libroNav: {
+      marginTop: "auto",
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 14,
+      paddingTop: 10,
+    },
+    libroNavBtn: {
+      width: 30,
+      height: 30,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: "rgba(43, 36, 22, 0.4)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    libroNavBtnOff: { opacity: 0.3 },
+    libroPagina: { color: "#2b2416", fontSize: 12.5, fontWeight: "700" },
+    libroVacio: {
+      alignItems: "center",
+      gap: 8,
+      paddingVertical: 30,
+      paddingHorizontal: 16,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderStyle: "dashed",
+      borderColor: colors.cardBorder,
+    },
+    libroVacioText: { color: colors.muted, fontSize: 12.5, textAlign: "center", lineHeight: 17 },
 
     historial: {
       marginTop: 6,
