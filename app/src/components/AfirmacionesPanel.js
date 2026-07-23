@@ -12,6 +12,7 @@ import {
   Platform,
   Switch,
   Alert,
+  Keyboard,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -63,6 +64,21 @@ export default function AfirmacionesPanel({ visible, onClose }) {
   const [showHoraPicker, setShowHoraPicker] = useState(false);
   // Hora provisoria mientras la ruedita está abierta (iOS): se guarda al tocar Listo.
   const [horaTemp, setHoraTemp] = useState("08:00");
+  // Renglón con foco (para pintarle el borde verde) y estado del teclado
+  // (para achicar el pie cuando está abierto y no dejar un hueco feo).
+  const [focoIdx, setFocoIdx] = useState(null);
+  const [tecladoAbierto, setTecladoAbierto] = useState(false);
+
+  useEffect(() => {
+    const showEvt = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvt = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const s1 = Keyboard.addListener(showEvt, () => setTecladoAbierto(true));
+    const s2 = Keyboard.addListener(hideEvt, () => setTecladoAbierto(false));
+    return () => {
+      s1.remove();
+      s2.remove();
+    };
+  }, []);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const guardadoRef = useRef(null);
@@ -231,7 +247,7 @@ export default function AfirmacionesPanel({ visible, onClose }) {
           <KeyboardAvoidingView
             style={{ flex: 1 }}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
-            keyboardVerticalOffset={insets.top + 8}
+            keyboardVerticalOffset={0}
           >
             <ScrollView
               contentContainerStyle={styles.scroll}
@@ -354,9 +370,11 @@ export default function AfirmacionesPanel({ visible, onClose }) {
                     <Text style={styles.numeroText}>{indice + 1}</Text>
                   </View>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, focoIdx === indice && styles.inputFoco]}
                     value={linea}
                     onChangeText={(valor) => editarLinea(indice, valor)}
+                    onFocus={() => setFocoIdx(indice)}
+                    onBlur={() => setFocoIdx((prev) => (prev === indice ? null : prev))}
                     placeholder="Escribí tu afirmación…"
                     placeholderTextColor={colors.muted}
                     multiline
@@ -387,7 +405,8 @@ export default function AfirmacionesPanel({ visible, onClose }) {
             </ScrollView>
 
             {/* Botón del día, fijo abajo */}
-            <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
+            {/* Con el teclado abierto no hace falta la zona segura de abajo */}
+            <View style={[styles.footer, { paddingBottom: tecladoAbierto ? 10 : insets.bottom + 12 }]}>
               <TouchableOpacity
                 style={[
                   styles.leer,
@@ -528,6 +547,11 @@ const makeStyles = (colors) =>
       color: colors.text,
       fontSize: 15,
       lineHeight: 20,
+    },
+    // Renglón enfocado: borde verde brillante para saber dónde estás escribiendo
+    inputFoco: {
+      borderColor: colors.greenBright,
+      borderWidth: 1.5,
     },
     borrar: { padding: 8, marginTop: 6 },
 
