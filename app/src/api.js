@@ -106,6 +106,12 @@ export const metaService = {
   delete: (id) => api.delete(`/api/metas/${id}`),
 };
 
+export const journalService = {
+  // `fecha` es la fecha local del dispositivo (YYYY-MM-DD).
+  get: (fecha) => api.get(`/api/journal?fecha=${fecha}`),
+  save: (data) => api.put("/api/journal", data),
+};
+
 export const afirmacionService = {
   // `fecha` es la fecha local del dispositivo (YYYY-MM-DD): el "hoy" lo define
   // el teléfono, no el servidor.

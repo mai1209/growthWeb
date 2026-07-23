@@ -27,6 +27,7 @@ import {
   FiPlus,
   FiShoppingCart,
   FiBook,
+  FiFeather,
   FiChevronDown,
   FiTrash2,
   FiType,
@@ -39,6 +40,7 @@ import "quill/dist/quill.snow.css";
 import { taskService } from "../api";
 import ShoppingLists from "./ShoppingLists";
 import Afirmaciones from "./Afirmaciones";
+import Journaling from "./Journaling";
 import style from "../style/TaskStudio.module.css";
 
 // Habilita tamaño de fuente por píxeles (ej. "16px") en vez de small/large.
@@ -778,7 +780,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   // En móvil dejamos Notas, Lista de compras y Afirmaciones; el Calendario queda
   // solo en desktop.
   const effectiveView = isCompact
-    ? view === "shopping" || view === "afirmaciones"
+    ? view === "shopping" || view === "afirmaciones" || view === "journal"
       ? view
       : "notes"
     : view;
@@ -1545,6 +1547,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     ? "Listas"
                     : effectiveView === "afirmaciones"
                     ? "Afirmaciones"
+                    : effectiveView === "journal"
+                    ? "Journaling"
                     : "Notas"}
                 </p>
                 <h2 className={style.listTitle}>
@@ -1552,9 +1556,12 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     ? "Listas de compras"
                     : effectiveView === "afirmaciones"
                     ? "Afirmaciones diarias"
+                    : effectiveView === "journal"
+                    ? "Tu journal"
                     : "Tus notas"}
                   {effectiveView !== "shopping" &&
                   effectiveView !== "afirmaciones" &&
+                  effectiveView !== "journal" &&
                   boardTasks.length ? (
                     <span className={style.listCount}>{boardTasks.length}</span>
                   ) : null}
@@ -1589,7 +1596,9 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     <button
                       type="button"
                       className={`${style.viewToggleButton} ${
-                        effectiveView === "shopping" || effectiveView === "afirmaciones"
+                        effectiveView === "shopping" ||
+                        effectiveView === "afirmaciones" ||
+                        effectiveView === "journal"
                           ? style.viewToggleButtonActive
                           : ""
                       }`}
@@ -1633,12 +1642,26 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                             <FiBook />
                             Afirmaciones
                           </button>
+                          <button
+                            type="button"
+                            className={`${style.toolsItem} ${effectiveView === "journal" ? style.toolsItemActive : ""}`}
+                            onClick={() => {
+                              setView("journal");
+                              setToolsMenuOpen(false);
+                            }}
+                            role="menuitem"
+                          >
+                            <FiFeather />
+                            Journaling
+                          </button>
                         </div>
                       </>
                     ) : null}
                   </div>
                 </div>
-                {effectiveView !== "shopping" && effectiveView !== "afirmaciones" ? (
+                {effectiveView !== "shopping" &&
+                effectiveView !== "afirmaciones" &&
+                effectiveView !== "journal" ? (
                   <>
                     <button
                       type="button"
@@ -1804,6 +1827,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
               <ShoppingLists activeWorkspace={activeWorkspace} />
             ) : effectiveView === "afirmaciones" ? (
               <Afirmaciones />
+            ) : effectiveView === "journal" ? (
+              <Journaling />
             ) : (
               <div className={style.notesLayout}>
                 <aside className={style.folderSidebar} aria-label="Carpetas">

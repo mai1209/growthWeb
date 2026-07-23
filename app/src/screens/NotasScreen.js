@@ -23,6 +23,7 @@ import {
 import NoteEditorModal from "../components/NoteEditorModal";
 import ShoppingListsPanel from "../components/ShoppingListsPanel";
 import AfirmacionesPanel from "../components/AfirmacionesPanel";
+import JournalingPanel from "../components/JournalingPanel";
 import { getCustomFolders, setCustomFolders } from "../storage";
 
 const ALL_FOLDERS = "__all__";
@@ -37,6 +38,7 @@ export default function NotasScreen() {
   const [folder, setFolder] = useState(ALL_FOLDERS);
   const [shoppingOpen, setShoppingOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [journalOpen, setJournalOpen] = useState(false);
   const [afirmacionesOpen, setAfirmacionesOpen] = useState(false);
   const [foldersOpen, setFoldersOpen] = useState(false);
   const [folderSearch, setFolderSearch] = useState("");
@@ -175,6 +177,17 @@ export default function NotasScreen() {
             >
               <Ionicons name="reader-outline" size={19} color={colors.green} />
               <Text style={styles.toolsItemText}>Afirmaciones</Text>
+            </TouchableOpacity>
+            <View style={styles.toolsDivider} />
+            <TouchableOpacity
+              style={styles.toolsItem}
+              onPress={() => {
+                setToolsOpen(false);
+                setJournalOpen(true);
+              }}
+            >
+              <Ionicons name="create-outline" size={19} color={colors.green} />
+              <Text style={styles.toolsItemText}>Journaling</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -317,6 +330,7 @@ export default function NotasScreen() {
         visible={afirmacionesOpen}
         onClose={() => setAfirmacionesOpen(false)}
       />
+      <JournalingPanel visible={journalOpen} onClose={() => setJournalOpen(false)} />
 
       {/* Todas las carpetas: buscador + lista con conteo */}
       <Modal
