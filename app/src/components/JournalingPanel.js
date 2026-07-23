@@ -99,7 +99,7 @@ export default function JournalingPanel({ visible, onClose }) {
   const [preguntas, setPreguntas] = useState(PREGUNTAS_DEFAULT);
   const [editandoPreguntas, setEditandoPreguntas] = useState(false);
   const [borradorPreguntas, setBorradorPreguntas] = useState(PREGUNTAS_DEFAULT);
-  const [vista, setVista] = useState("calendario"); // calendario | libro
+  const [vista, setVista] = useState("libro"); // libro (hoja editable) | calendario
   const [libroFecha, setLibroFecha] = useState(null);
   const [calRef, setCalRef] = useState(() => new Date());
   const guardadoRef = useRef(null);
@@ -167,9 +167,9 @@ export default function JournalingPanel({ visible, onClose }) {
     }
   };
 
-  // Todas las entradas con contenido (historial + hoy), viejo → nuevo.
+  // Todas las entradas (historial + SIEMPRE la de hoy: es la página editable).
   const entradas = [...historial].reverse();
-  if (tieneContenido(entrada)) entradas.push({ ...entrada, fecha });
+  entradas.push({ ...entrada, fecha });
   const porFecha = new Map(entradas.map((e) => [e.fecha, e]));
 
   // Ánimo en el tiempo (últimos 30 días con ánimo marcado).
@@ -241,87 +241,6 @@ export default function JournalingPanel({ visible, onClose }) {
                   })}
                 </View>
               </View>
-
-              {/* Personalizar preguntas */}
-              <View style={styles.preguntasHead}>
-                {editandoPreguntas ? (
-                  <>
-                    <TouchableOpacity style={styles.preguntasBtn} onPress={guardarPreguntas}>
-                      <Ionicons name="checkmark" size={14} color={colors.green} />
-                      <Text style={styles.preguntasBtnText}>Guardar preguntas</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.preguntasBtn}
-                      onPress={() => setEditandoPreguntas(false)}
-                    >
-                      <Ionicons name="close" size={14} color={colors.muted} />
-                      <Text style={styles.preguntasBtnText}>Cancelar</Text>
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.preguntasBtn}
-                    onPress={() => {
-                      setBorradorPreguntas(preguntas);
-                      setEditandoPreguntas(true);
-                    }}
-                  >
-                    <Ionicons name="pencil" size={13} color={colors.muted} />
-                    <Text style={styles.preguntasBtnText}>Personalizar preguntas</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              {/* Preguntas guiadas */}
-              {CAMPOS.map((p) => (
-                <View key={p.campo}>
-                  {editandoPreguntas ? (
-                    <TextInput
-                      style={styles.preguntaInput}
-                      value={borradorPreguntas[p.campo]}
-                      onChangeText={(v) =>
-                        setBorradorPreguntas((prev) => ({ ...prev, [p.campo]: v }))
-                      }
-                      placeholder={PREGUNTAS_DEFAULT[p.campo]}
-                      placeholderTextColor={colors.muted}
-                      maxLength={90}
-                    />
-                  ) : (
-                    <Text style={styles.campoLabel}>{preguntas[p.campo]}</Text>
-                  )}
-                  <TextInput
-                    style={[styles.input, focoCampo === p.campo && styles.inputFoco]}
-                    value={entrada[p.campo]}
-                    onChangeText={(v) => editar(p.campo, v)}
-                    onFocus={() => setFocoCampo(p.campo)}
-                    onBlur={() => setFocoCampo((prev) => (prev === p.campo ? null : prev))}
-                    placeholder={p.placeholder}
-                    placeholderTextColor={colors.muted}
-                    multiline
-                    editable={!editandoPreguntas}
-                  />
-                </View>
-              ))}
-
-              <View>
-                <Text style={styles.campoLabel}>Notas libres (opcional)</Text>
-                <TextInput
-                  style={[
-                    styles.input,
-                    styles.inputLibre,
-                    focoCampo === "libre" && styles.inputFoco,
-                  ]}
-                  value={entrada.libre}
-                  onChangeText={(v) => editar("libre", v)}
-                  onFocus={() => setFocoCampo("libre")}
-                  onBlur={() => setFocoCampo((prev) => (prev === "libre" ? null : prev))}
-                  placeholder="Lo que quieras dejar escrito de hoy…"
-                  placeholderTextColor={colors.muted}
-                  multiline
-                />
-              </View>
-
-              {guardando ? <Text style={styles.guardandoText}>Guardando…</Text> : null}
 
               {/* Ánimo en el tiempo */}
               {animoSerie.length >= 3 ? (
@@ -415,12 +334,16 @@ export default function JournalingPanel({ visible, onClose }) {
                       return (
                         <TouchableOpacity
                           key={key}
-                          style={[styles.calCell, esHoy && styles.calCellHoy, e && styles.calCellConEntrada]}
+                          style={[
+                            styles.calCell,
+                            esHoy && styles.calCellHoy,
+                            e && tieneContenido(e) && styles.calCellConEntrada,
+                          ]}
                           disabled={!e}
                           onPress={() => e && abrirEnLibro(key)}
                         >
                           <Text style={[styles.calDia, fuera && styles.calDiaFuera]}>{d.getDate()}</Text>
-                          {e ? (
+                          {e && tieneContenido(e) ? (
                             <View
                               style={[
                                 styles.calDot,
@@ -452,17 +375,94 @@ export default function JournalingPanel({ visible, onClose }) {
                   {Number(entradas[libroIdx].animo) > 0 ? (
                     <Text style={styles.libroAnimo}>{emojiDe(entradas[libroIdx].animo)}</Text>
                   ) : null}
-                  {CAMPOS.map((p) =>
-                    entradas[libroIdx][p.campo] ? (
-                      <View key={p.campo}>
-                        <Text style={styles.libroPregunta}>{preguntas[p.campo]}</Text>
-                        <Text style={styles.libroTexto}>{entradas[libroIdx][p.campo]}</Text>
+
+                  {entradas[libroIdx].fecha === fecha ? (
+                    /* Página de hoy: se escribe directo sobre el papel */
+                    <>
+                      <View style={styles.libroEditRow}>
+                        {editandoPreguntas ? (
+                          <>
+                            <TouchableOpacity style={styles.libroEditBtn} onPress={guardarPreguntas}>
+                              <Ionicons name="checkmark" size={13} color="#2b2416" />
+                              <Text style={styles.libroEditBtnText}>Guardar preguntas</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.libroEditBtn}
+                              onPress={() => setEditandoPreguntas(false)}
+                            >
+                              <Ionicons name="close" size={13} color="#2b2416" />
+                              <Text style={styles.libroEditBtnText}>Cancelar</Text>
+                            </TouchableOpacity>
+                          </>
+                        ) : (
+                          <TouchableOpacity
+                            style={styles.libroEditBtn}
+                            onPress={() => {
+                              setBorradorPreguntas(preguntas);
+                              setEditandoPreguntas(true);
+                            }}
+                          >
+                            <Ionicons name="pencil" size={12} color="#2b2416" />
+                            <Text style={styles.libroEditBtnText}>Personalizar preguntas</Text>
+                          </TouchableOpacity>
+                        )}
                       </View>
-                    ) : null
+
+                      {CAMPOS.map((p) => (
+                        <View key={p.campo}>
+                          {editandoPreguntas ? (
+                            <TextInput
+                              style={styles.libroPreguntaInput}
+                              value={borradorPreguntas[p.campo]}
+                              onChangeText={(v) =>
+                                setBorradorPreguntas((prev) => ({ ...prev, [p.campo]: v }))
+                              }
+                              placeholder={PREGUNTAS_DEFAULT[p.campo]}
+                              placeholderTextColor="rgba(138, 90, 42, 0.5)"
+                              maxLength={90}
+                            />
+                          ) : (
+                            <Text style={styles.libroPregunta}>{preguntas[p.campo]}</Text>
+                          )}
+                          <TextInput
+                            style={styles.libroInput}
+                            value={entrada[p.campo]}
+                            onChangeText={(v) => editar(p.campo, v)}
+                            placeholder={p.placeholder}
+                            placeholderTextColor="rgba(43, 36, 22, 0.35)"
+                            multiline
+                            editable={!editandoPreguntas}
+                          />
+                        </View>
+                      ))}
+
+                      <TextInput
+                        style={[styles.libroInput, styles.libroInputLibre]}
+                        value={entrada.libre}
+                        onChangeText={(v) => editar("libre", v)}
+                        placeholder="Notas libres de hoy…"
+                        placeholderTextColor="rgba(43, 36, 22, 0.35)"
+                        multiline
+                        editable={!editandoPreguntas}
+                      />
+                      {guardando ? <Text style={styles.libroGuardando}>Guardando…</Text> : null}
+                    </>
+                  ) : (
+                    /* Páginas anteriores: solo lectura */
+                    <>
+                      {CAMPOS.map((p) =>
+                        entradas[libroIdx][p.campo] ? (
+                          <View key={p.campo}>
+                            <Text style={styles.libroPregunta}>{preguntas[p.campo]}</Text>
+                            <Text style={styles.libroTexto}>{entradas[libroIdx][p.campo]}</Text>
+                          </View>
+                        ) : null
+                      )}
+                      {entradas[libroIdx].libre ? (
+                        <Text style={styles.libroTexto}>{entradas[libroIdx].libre}</Text>
+                      ) : null}
+                    </>
                   )}
-                  {entradas[libroIdx].libre ? (
-                    <Text style={styles.libroTexto}>{entradas[libroIdx].libre}</Text>
-                  ) : null}
 
                   <View style={styles.libroNav}>
                     <TouchableOpacity
@@ -734,6 +734,44 @@ const makeStyles = (colors) =>
       lineHeight: 24,
       fontFamily: Platform.OS === "ios" ? "Noteworthy" : "cursive",
     },
+    libroEditRow: { flexDirection: "row", justifyContent: "flex-end", gap: 7 },
+    libroEditBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingHorizontal: 9,
+      paddingVertical: 5,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderStyle: "dashed",
+      borderColor: "rgba(43, 36, 22, 0.4)",
+    },
+    libroEditBtnText: { color: "#2b2416", fontSize: 11, fontWeight: "700" },
+    libroPreguntaInput: {
+      color: "#8a5a2a",
+      fontSize: 13.5,
+      fontWeight: "700",
+      paddingVertical: 4,
+      paddingHorizontal: 0,
+      borderBottomWidth: 1,
+      borderBottomColor: "rgba(138, 90, 42, 0.4)",
+      fontFamily: Platform.OS === "ios" ? "Noteworthy" : "cursive",
+    },
+    libroInput: {
+      minHeight: 42,
+      paddingVertical: 6,
+      paddingHorizontal: 0,
+      color: "#2b2416",
+      fontSize: 15,
+      lineHeight: 24,
+      borderBottomWidth: 1,
+      borderBottomColor: "rgba(43, 36, 22, 0.18)",
+      fontFamily: Platform.OS === "ios" ? "Noteworthy" : "cursive",
+      textAlignVertical: "top",
+    },
+    libroInputLibre: { minHeight: 90 },
+    libroGuardando: { color: "rgba(43, 36, 22, 0.5)", fontSize: 11.5 },
+
     libroNav: {
       marginTop: "auto",
       flexDirection: "row",
