@@ -201,8 +201,10 @@ function Journaling() {
   };
 
   // Al cambiar de día, arrancamos en la primera página interna.
+  const pagsPreviasRef = useRef(0);
   useEffect(() => {
     setPagInterna(0);
+    pagsPreviasRef.current = 0;
   }, [libroIdx]);
 
   // Mide el ancho de la hoja y cuántas páginas internas ocupa el contenido.
@@ -218,13 +220,21 @@ function Journaling() {
         if (!cols || !w) return;
         const paginas = Math.max(1, Math.round((cols.scrollWidth + GAP_COL) / (w + GAP_COL)));
         setNumPagsInternas(paginas);
-        setPagInterna((prev) => Math.min(prev, paginas - 1));
+        // Si estás escribiendo el día de hoy y se llenó la hoja, pasa sola a
+        // la página nueva (donde sigue el texto). Para días viejos no salta.
+        const escribiendoHoy = entradas[libroIdx]?.fecha === fecha;
+        if (paginas > pagsPreviasRef.current && escribiendoHoy) {
+          setPagInterna(paginas - 1);
+        } else {
+          setPagInterna((prev) => Math.min(prev, paginas - 1));
+        }
+        pagsPreviasRef.current = paginas;
       });
     };
     medir();
     window.addEventListener("resize", medir);
     return () => window.removeEventListener("resize", medir);
-  }, [vista, libroIdx, entradas, preguntas, anchoHoja]);
+  }, [vista, libroIdx, entradas, preguntas, anchoHoja, fecha]);
 
   if (cargando) {
     return <p className={style.cargando}>Cargando tu journal…</p>;
