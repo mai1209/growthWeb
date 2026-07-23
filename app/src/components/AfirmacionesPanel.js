@@ -11,11 +11,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   Switch,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { afirmacionService } from "../api";
 import { useTheme } from "../theme";
+import { syncAfirmacionesReminder } from "../utils/afirmacionesReminder";
 
 const RENGLONES_INICIALES = 5;
 const MAX_RENGLONES = 30;
@@ -47,6 +50,8 @@ export default function AfirmacionesPanel({ visible, onClose }) {
   const [leidoHoy, setLeidoHoy] = useState(false);
   const [racha, setRacha] = useState(0);
   const [repetirDiario, setRepetirDiario] = useState(true);
+  const [recordatorio, setRecordatorio] = useState({ activo: false, hora: "08:00" });
+  const [showHoraPicker, setShowHoraPicker] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const guardadoRef = useRef(null);
@@ -61,6 +66,15 @@ export default function AfirmacionesPanel({ visible, onClose }) {
     setLeidoHoy(Boolean(data?.leidoHoy));
     setRacha(Number(data?.racha) || 0);
     setRepetirDiario(data?.repetirDiario !== false);
+
+    const rec = {
+      activo: Boolean(data?.recordatorio?.activo),
+      hora: data?.recordatorio?.hora || "08:00",
+    };
+    setRecordatorio(rec);
+    // Re-programa la notificación al abrir: así el texto rota a la
+    // afirmación del día aunque no toques nada.
+    syncAfirmacionesReminder({ ...rec, lineas: completas });
   }, []);
 
   const cargar = useCallback(
@@ -134,6 +148,22 @@ export default function AfirmacionesPanel({ visible, onClose }) {
   };
 
   const hayEscritas = useMemo(() => lineas.some((l) => l.trim()), [lineas]);
+
+  const guardarRecordatorio = async (rec) => {
+    setRecordatorio(rec);
+    afirmacionService.save({ recordatorio: rec, fecha }).catch(() => {});
+    const ok = await syncAfirmacionesReminder({ ...rec, lineas });
+    if (rec.activo && !ok) {
+      // Sin permiso de notificaciones: volvemos atrás y avisamos.
+      const apagado = { ...rec, activo: false };
+      setRecordatorio(apagado);
+      afirmacionService.save({ recordatorio: apagado, fecha }).catch(() => {});
+      Alert.alert(
+        "Notificaciones desactivadas",
+        "Para recibir el recordatorio, permití las notificaciones de Growth en los ajustes del teléfono."
+      );
+    }
+  };
 
   const alternarRepetir = () => {
     const proximo = !repetirDiario;
@@ -213,6 +243,52 @@ export default function AfirmacionesPanel({ visible, onClose }) {
                   thumbColor={repetirDiario ? colors.greenBright : colors.muted}
                 />
               </View>
+
+              {/* Recordatorio diario con la afirmación del día */}
+              <View style={styles.switchRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.switchTitulo}>Recordatorio diario</Text>
+                  <Text style={styles.switchDetalle}>
+                    {recordatorio.activo
+                      ? "Te llega una notificación con tu afirmación del día."
+                      : "Activalo para que te llegue una afirmación por día."}
+                  </Text>
+                  {recordatorio.activo ? (
+                    <TouchableOpacity
+                      style={styles.horaBtn}
+                      onPress={() => setShowHoraPicker(true)}
+                    >
+                      <Ionicons name="time-outline" size={14} color={colors.green} />
+                      <Text style={styles.horaBtnText}>{recordatorio.hora} hs · cambiar</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+                <Switch
+                  value={recordatorio.activo}
+                  onValueChange={(valor) =>
+                    guardarRecordatorio({ ...recordatorio, activo: valor })
+                  }
+                  trackColor={{ false: colors.cardBorder, true: colors.greenSoft }}
+                  thumbColor={recordatorio.activo ? colors.greenBright : colors.muted}
+                />
+              </View>
+
+              {showHoraPicker ? (
+                <DateTimePicker
+                  value={new Date(`2000-01-01T${recordatorio.hora}:00`)}
+                  mode="time"
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  onChange={(event, selected) => {
+                    setShowHoraPicker(Platform.OS === "ios");
+                    if (selected) {
+                      const hora = `${String(selected.getHours()).padStart(2, "0")}:${String(
+                        selected.getMinutes()
+                      ).padStart(2, "0")}`;
+                      guardarRecordatorio({ ...recordatorio, hora });
+                    }
+                  }}
+                />
+              ) : null}
 
               <Text style={styles.ayuda}>
                 {repetirDiario
@@ -349,6 +425,20 @@ const makeStyles = (colors) =>
     },
     switchTitulo: { color: colors.text, fontSize: 14, fontWeight: "800" },
     switchDetalle: { color: colors.muted, fontSize: 12, marginTop: 2 },
+    horaBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      alignSelf: "flex-start",
+      marginTop: 6,
+      paddingHorizontal: 9,
+      paddingVertical: 5,
+      borderRadius: 999,
+      backgroundColor: colors.greenSoft,
+      borderWidth: 1,
+      borderColor: colors.greenBorder,
+    },
+    horaBtnText: { color: colors.green, fontSize: 12, fontWeight: "800" },
 
     item: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
     numero: {

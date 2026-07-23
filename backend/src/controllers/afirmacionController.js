@@ -118,6 +118,16 @@ export const updateAfirmaciones = async (req, res) => {
       doc.repetirDiario = req.body.repetirDiario;
     }
 
+    // Recordatorio diario { activo, hora "HH:MM" } — lo usa la app para
+    // programar la notificación local.
+    if (req.body.recordatorio && typeof req.body.recordatorio === "object") {
+      const { activo, hora } = req.body.recordatorio;
+      if (typeof activo === "boolean") doc.recordatorio.activo = activo;
+      if (/^([01]\d|2[0-3]):[0-5]\d$/.test(String(hora || ""))) {
+        doc.recordatorio.hora = hora;
+      }
+    }
+
     await doc.save();
     return res.status(200).json(serializar(doc, fecha));
   } catch (error) {
