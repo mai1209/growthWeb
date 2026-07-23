@@ -17,6 +17,7 @@ import HomeScreen from "./src/screens/HomeScreen";
 import TareasScreen from "./src/screens/TareasScreen";
 import FiltrosScreen from "./src/screens/FiltrosScreen";
 import MetricasScreen from "./src/screens/MetricasScreen";
+import MetasScreen from "./src/screens/MetasScreen";
 import CompartidosScreen from "./src/screens/CompartidosScreen";
 import NotasScreen from "./src/screens/NotasScreen";
 import PomodoroScreen from "./src/screens/PomodoroScreen";
@@ -61,6 +62,7 @@ const TAB_ICONS = {
   Home: "home",
   Tareas: "checkbox",
   Metricas: "stats-chart",
+  Metas: "flag",
   Compartidos: "people",
   Notas: "document-text",
   Pomodoro: "timer",
@@ -99,6 +101,7 @@ function MainTabs() {
         <Tab.Screen name="Home" component={HomeScreen} />
         <Tab.Screen name="Tareas" component={TareasScreen} />
         <Tab.Screen name="Metricas" component={MetricasScreen} options={{ tabBarLabel: "Métricas" }} />
+        <Tab.Screen name="Metas" component={MetasScreen} />
         <Tab.Screen name="Compartidos" component={CompartidosScreen} />
         <Tab.Screen name="Notas" component={NotasScreen} />
         <Tab.Screen name="Pomodoro" component={PomodoroScreen} />

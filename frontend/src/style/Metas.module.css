@@ -90,6 +90,139 @@
   font-weight: 600;
 }
 
+/* ===== Gráficos ===== */
+.chartsGrid {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) 1fr;
+  gap: 0.9rem;
+}
+
+.chartCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg, 14px);
+  background: var(--surface-card);
+}
+
+.donutLayout {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+}
+
+.donut {
+  flex-shrink: 0;
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.donutHole {
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background: var(--surface-card);
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+
+.donutHole strong {
+  color: var(--color-text);
+  font-size: 1.3rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.donutHole span {
+  color: var(--color-muted);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 150px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.legendItem i {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.legendItem span {
+  flex: 1;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.legendItem strong {
+  color: var(--color-text);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.barList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: minmax(90px, 170px) 1fr 40px;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.barNombre {
+  color: var(--color-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.barTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(127, 137, 129, 0.2);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.35s ease;
+}
+
+.barPct {
+  text-align: right;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ===== Filtros ===== */
 .filtros {
   display: flex;
@@ -703,6 +836,10 @@
 @media (max-width: 640px) {
   .page {
     padding: 1rem 0.9rem 5rem;
+  }
+
+  .chartsGrid {
+    grid-template-columns: 1fr;
   }
 
   .dosCol,

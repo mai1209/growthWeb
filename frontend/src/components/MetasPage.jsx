@@ -88,6 +88,25 @@ const dueLabel = (m) => {
 
 const fmtNum = (n) => Number(n || 0).toLocaleString("es-AR");
 
+// Colores por plazo (los mismos de las pills).
+const PLAZO_COLORS = { corto: "#5b8ad6", mediano: "#c9a23a", largo: "#b06ad6" };
+
+// Gradiente cónico para el donut (mismo recurso que la página de Métricas).
+const buildConicGradient = (items) => {
+  const total = items.reduce((acc, item) => acc + item.value, 0);
+  if (!total) return "conic-gradient(rgba(127,137,129,0.25) 0 100%)";
+  let acumulado = 0;
+  const stops = items
+    .filter((item) => item.value > 0)
+    .map((item) => {
+      const desde = (acumulado / total) * 100;
+      acumulado += item.value;
+      const hasta = (acumulado / total) * 100;
+      return `${item.color} ${desde}% ${hasta}%`;
+    });
+  return `conic-gradient(${stops.join(", ")})`;
+};
+
 function MetasPage({ activeWorkspace }) {
   const [metas, setMetas] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -255,6 +274,27 @@ function MetasPage({ activeWorkspace }) {
       : 0;
     return { activas: activas.length, completadas: completadas.length, promedio };
   }, [metas]);
+
+  // Datos para los gráficos: distribución por plazo y avance de las activas.
+  const plazoItems = useMemo(
+    () =>
+      HORIZONTES.map((h) => ({
+        label: h.label,
+        color: PLAZO_COLORS[h.value],
+        value: metas.filter((m) => m.horizonte === h.value && m.estado !== "completada").length,
+      })),
+    [metas]
+  );
+
+  const barrasAvance = useMemo(
+    () =>
+      metas
+        .filter((m) => m.estado === "activa")
+        .map((m) => ({ id: m._id, titulo: m.titulo, progreso: progressOf(m), horizonte: m.horizonte }))
+        .sort((a, b) => b.progreso - a.progreso)
+        .slice(0, 6),
+    [metas]
+  );
 
   const medidaLabel = (m) => {
     if (m.medicion === "hitos") {
@@ -737,6 +777,63 @@ function MetasPage({ activeWorkspace }) {
           </div>
         </div>
       </div>
+
+      {/* Gráficos */}
+      {metas.length > 0 ? (
+        <div className={style.chartsGrid}>
+          <article className={style.chartCard}>
+            <p className={style.boxLabel}>Metas por plazo</p>
+            <div className={style.donutLayout}>
+              <div
+                className={style.donut}
+                style={{ background: buildConicGradient(plazoItems) }}
+                aria-label="Distribución de metas por plazo"
+              >
+                <div className={style.donutHole}>
+                  <strong>{plazoItems.reduce((a, i) => a + i.value, 0)}</strong>
+                  <span>en curso</span>
+                </div>
+              </div>
+              <div className={style.legend}>
+                {plazoItems.map((item) => (
+                  <div key={item.label} className={style.legendItem}>
+                    <i style={{ background: item.color }} />
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </article>
+
+          <article className={style.chartCard}>
+            <p className={style.boxLabel}>Avance de tus metas activas</p>
+            {barrasAvance.length === 0 ? (
+              <p className={style.vacio}>No hay metas activas para graficar.</p>
+            ) : (
+              <div className={style.barList}>
+                {barrasAvance.map((b) => (
+                  <div key={b.id} className={style.barRow}>
+                    <span className={style.barNombre} title={b.titulo}>
+                      {b.titulo}
+                    </span>
+                    <div className={style.barTrack}>
+                      <div
+                        className={style.barFill}
+                        style={{
+                          width: `${b.progreso}%`,
+                          background: PLAZO_COLORS[b.horizonte] || "#5dc72d",
+                        }}
+                      />
+                    </div>
+                    <span className={style.barPct}>{b.progreso}%</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </article>
+        </div>
+      ) : null}
 
       {/* Filtros */}
       <div className={style.filtros}>
