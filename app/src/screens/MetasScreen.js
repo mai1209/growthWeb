@@ -113,6 +113,7 @@ export default function MetasScreen() {
   const [numeroNuevo, setNumeroNuevo] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [chartsOpen, setChartsOpen] = useState(false);
 
   const cargar = useCallback(async () => {
     try {
@@ -788,10 +789,23 @@ export default function MetasScreen() {
           <Text style={styles.kicker}>METAS</Text>
           <Text style={styles.title}>Tus metas</Text>
         </View>
-        <TouchableOpacity style={styles.newBtn} onPress={abrirCrear}>
-          <Ionicons name="add" size={18} color="#fff" />
-          <Text style={styles.newBtnText}>Nueva meta</Text>
-        </TouchableOpacity>
+        <View style={styles.headerAcciones}>
+          <TouchableOpacity
+            style={[styles.chartBtn, chartsOpen && styles.chartBtnActivo]}
+            onPress={() => setChartsOpen((prev) => !prev)}
+            accessibilityLabel={chartsOpen ? "Ocultar gráficos" : "Ver gráficos"}
+          >
+            <Ionicons
+              name={chartsOpen ? "stats-chart" : "stats-chart-outline"}
+              size={18}
+              color={chartsOpen ? colors.green : colors.muted}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.newBtn} onPress={abrirCrear}>
+            <Ionicons name="add" size={18} color="#fff" />
+            <Text style={styles.newBtnText}>Nueva meta</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {cargando ? (
@@ -829,7 +843,7 @@ export default function MetasScreen() {
           </View>
 
           {/* Gráfico: distribución por plazo (barra apilada) */}
-          {plazoItems.total > 0 ? (
+          {chartsOpen && plazoItems.total > 0 ? (
             <View style={styles.box}>
               <Text style={styles.boxLabel}>METAS POR PLAZO</Text>
               <View style={styles.stackTrack}>
@@ -859,7 +873,7 @@ export default function MetasScreen() {
           ) : null}
 
           {/* Gráfico: avance de las activas */}
-          {barrasAvance.length > 0 ? (
+          {chartsOpen && barrasAvance.length > 0 ? (
             <View style={styles.box}>
               <Text style={styles.boxLabel}>AVANCE DE TUS METAS ACTIVAS</Text>
               {barrasAvance.map((b) => (
@@ -939,6 +953,18 @@ const makeStyles = (colors) =>
     },
     kicker: { color: colors.greenDark, fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
     title: { color: colors.text, fontSize: 22, fontWeight: "800", marginTop: 3 },
+    headerAcciones: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
+    chartBtn: {
+      width: 38,
+      height: 38,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    chartBtnActivo: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
     newBtn: {
       flexDirection: "row",
       alignItems: "center",
@@ -947,7 +973,6 @@ const makeStyles = (colors) =>
       borderRadius: 12,
       paddingHorizontal: 14,
       paddingVertical: 9,
-      marginTop: 4,
     },
     newBtnText: { color: "#fff", fontWeight: "800", fontSize: 13 },
 

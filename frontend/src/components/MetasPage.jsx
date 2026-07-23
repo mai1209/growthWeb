@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  FiBarChart2,
   FiCheck,
   FiCheckCircle,
   FiEdit2,
@@ -114,6 +115,21 @@ function MetasPage({ activeWorkspace }) {
   const [estadoFiltro, setEstadoFiltro] = useState("activa");
   const [detalle, setDetalle] = useState(null); // meta abierta
   const [form, setForm] = useState(null); // formulario crear/editar
+  const [chartsOpen, setChartsOpen] = useState(
+    () => typeof localStorage !== "undefined" && localStorage.getItem("gw-metas-charts") === "1"
+  );
+
+  const toggleCharts = () => {
+    setChartsOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("gw-metas-charts", next ? "1" : "0");
+      } catch {
+        /* nada */
+      }
+      return next;
+    });
+  };
   const [hitoNuevo, setHitoNuevo] = useState("");
   const [numeroNuevo, setNumeroNuevo] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -748,9 +764,21 @@ function MetasPage({ activeWorkspace }) {
           <p className={style.kicker}>Metas</p>
           <h1 className={style.titulo}>Tus metas</h1>
         </div>
-        <button type="button" className={style.btnNueva} onClick={abrirCrear}>
-          <FiPlus /> Nueva meta
-        </button>
+        <div className={style.headerAcciones}>
+          <button
+            type="button"
+            className={`${style.btnGrafico} ${chartsOpen ? style.btnGraficoActivo : ""}`}
+            onClick={toggleCharts}
+            aria-label={chartsOpen ? "Ocultar gráficos" : "Ver gráficos"}
+            title={chartsOpen ? "Ocultar gráficos" : "Ver gráficos"}
+            aria-pressed={chartsOpen}
+          >
+            <FiBarChart2 />
+          </button>
+          <button type="button" className={style.btnNueva} onClick={abrirCrear}>
+            <FiPlus /> Nueva meta
+          </button>
+        </div>
       </header>
 
       {/* Resumen */}
@@ -778,8 +806,8 @@ function MetasPage({ activeWorkspace }) {
         </div>
       </div>
 
-      {/* Gráficos */}
-      {metas.length > 0 ? (
+      {/* Gráficos (se abren con el ícono del header) */}
+      {chartsOpen && metas.length > 0 ? (
         <div className={style.chartsGrid}>
           <article className={style.chartCard}>
             <p className={style.boxLabel}>Metas por plazo</p>
