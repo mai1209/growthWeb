@@ -3,10 +3,12 @@ import {
   FiBookOpen,
   FiCalendar,
   FiCheck,
+  FiChevronDown,
   FiChevronLeft,
   FiChevronRight,
   FiEdit2,
   FiFeather,
+  FiGrid,
   FiPlus,
   FiTrash2,
   FiX,
@@ -36,6 +38,48 @@ const CAMPOS = [
   { campo: "gratitud", placeholder: "Una cosa alcanza." },
   { campo: "mejor", placeholder: "Un momento, una persona, un logro." },
   { campo: "distinto", placeholder: "Sin culpa: es para mañana." },
+];
+
+// Plantillas de preguntas por nivel/tema (arranque para quien no sabe qué
+// poner; igual se pueden editar o reemplazar). Cada una llena las 3 base y
+// suma alguna extra.
+const PLANTILLAS = [
+  {
+    id: "introspeccion",
+    nivel: "Básico",
+    tema: "Introspección",
+    hint: "Conocerte un poco más cada día",
+    base: {
+      gratitud: "¿Cómo me siento hoy y por qué?",
+      mejor: "¿Qué fue lo más importante que me pasó hoy?",
+      distinto: "¿Qué necesito hoy que no me estoy dando?",
+    },
+    extras: ["¿Por qué estoy agradecido/a hoy?"],
+  },
+  {
+    id: "estoicismo",
+    nivel: "Intermedio",
+    tema: "Estoicismo",
+    hint: "Lo que controlás, la virtud, el presente",
+    base: {
+      gratitud: "¿Qué estuvo bajo mi control hoy y qué no?",
+      mejor: "¿Actué con virtud o me dominó la emoción?",
+      distinto: "¿Qué obstáculo de hoy puedo volver aprendizaje?",
+    },
+    extras: ["Si hoy fuera mi último día, ¿lo viví bien?"],
+  },
+  {
+    id: "productividad",
+    nivel: "Avanzado",
+    tema: "Productividad",
+    hint: "Foco, ejecución y mejora continua",
+    base: {
+      gratitud: "¿Cuál fue mi tarea más importante y la completé?",
+      mejor: "¿Qué me dio impulso y qué me frenó hoy?",
+      distinto: "¿Qué voy a hacer distinto mañana?",
+    },
+    extras: ["¿Cuál es la única cosa que hará que mañana valga la pena?"],
+  },
 ];
 
 // Color de cada nivel de ánimo (rojo → verde) para el gráfico y el calendario.
@@ -101,6 +145,7 @@ function Journaling() {
   const [borradorPreguntas, setBorradorPreguntas] = useState(PREGUNTAS_DEFAULT);
   const [extras, setExtras] = useState([]); // definiciones [{id, texto}]
   const [borradorExtras, setBorradorExtras] = useState([]);
+  const [plantillasOpen, setPlantillasOpen] = useState(false);
   const [vista, setVista] = useState("libro"); // libro | calendario
   const [calRef, setCalRef] = useState(() => new Date());
   // Páginas internas de un mismo día: el contenido fluye en columnas del ancho
@@ -185,22 +230,29 @@ function Journaling() {
     guardarDiferido();
   };
 
-  const guardarPreguntas = async () => {
-    setEditandoPreguntas(false);
-    const limpio = borradorExtras
-      .map((x) => ({ id: x.id, texto: String(x.texto || "").trim() }))
+  // Aplica un set de preguntas (base + extras). Optimista: actualiza en
+  // pantalla al instante y persiste; así guarda a la primera.
+  const aplicarPreguntas = async (base, extrasLista) => {
+    const limpio = (extrasLista || [])
+      .map((x) => ({ id: x.id || nuevoId(), texto: String(x.texto || "").trim() }))
       .filter((x) => x.texto);
+    setPreguntas({ ...PREGUNTAS_DEFAULT, ...base });
+    setExtras(limpio);
+    setEditandoPreguntas(false);
     try {
-      const { data } = await journalService.savePreguntas({
-        ...borradorPreguntas,
-        extras: limpio,
-        fecha,
-      });
+      const { data } = await journalService.savePreguntas({ ...base, extras: limpio, fecha });
       if (data?.preguntas) setPreguntas({ ...PREGUNTAS_DEFAULT, ...data.preguntas });
-      setExtras(Array.isArray(data?.extras) ? data.extras : limpio);
+      if (Array.isArray(data?.extras)) setExtras(data.extras);
     } catch {
-      /* quedan las anteriores */
+      /* quedó lo optimista; se reintenta al volver a guardar */
     }
+  };
+
+  const guardarPreguntas = () => aplicarPreguntas(borradorPreguntas, borradorExtras);
+
+  const aplicarPlantilla = (pl) => {
+    setPlantillasOpen(false);
+    aplicarPreguntas(pl.base, pl.extras.map((texto) => ({ id: nuevoId(), texto })));
   };
 
   // Guarda ya lo pendiente (antes de cambiar de día) y navega a otro día.
@@ -511,28 +563,73 @@ function Journaling() {
             </button>
           ) : null}
         </div>
-        <div className={style.vistaToggle} role="tablist" aria-label="Cómo ver tus entradas">
-          {/* Pastilla verde que se desliza detrás de la opción activa */}
-          <span
-            className={`${style.vistaThumb} ${vista === "calendario" ? style.vistaThumbDer : ""}`}
-            aria-hidden="true"
-          />
-          <button
-            type="button"
-            className={`${style.vistaBtn} ${vista === "libro" ? style.vistaBtnActivo : ""}`}
-            onClick={() => setVista("libro")}
-            aria-pressed={vista === "libro"}
-          >
-            <FiBookOpen /> Libro
-          </button>
-          <button
-            type="button"
-            className={`${style.vistaBtn} ${vista === "calendario" ? style.vistaBtnActivo : ""}`}
-            onClick={() => setVista("calendario")}
-            aria-pressed={vista === "calendario"}
-          >
-            <FiCalendar /> Calendario
-          </button>
+        <div className={style.headerAcciones}>
+          <div className={style.vistaToggle} role="tablist" aria-label="Cómo ver tus entradas">
+            {/* Pastilla verde que se desliza detrás de la opción activa */}
+            <span
+              className={`${style.vistaThumb} ${vista === "calendario" ? style.vistaThumbDer : ""}`}
+              aria-hidden="true"
+            />
+            <button
+              type="button"
+              className={`${style.vistaBtn} ${vista === "libro" ? style.vistaBtnActivo : ""}`}
+              onClick={() => setVista("libro")}
+              aria-pressed={vista === "libro"}
+            >
+              <FiBookOpen /> Libro
+            </button>
+            <button
+              type="button"
+              className={`${style.vistaBtn} ${vista === "calendario" ? style.vistaBtnActivo : ""}`}
+              onClick={() => setVista("calendario")}
+              aria-pressed={vista === "calendario"}
+            >
+              <FiCalendar /> Calendario
+            </button>
+          </div>
+
+          {/* Plantillas de preguntas por nivel */}
+          <div className={style.plantillasWrap}>
+            <button
+              type="button"
+              className={`${style.plantillasBtn} ${plantillasOpen ? style.plantillasBtnOpen : ""}`}
+              onClick={() => setPlantillasOpen((prev) => !prev)}
+              aria-expanded={plantillasOpen}
+            >
+              <FiGrid /> Plantillas
+              <FiChevronDown
+                className={`${style.plantillasChevron} ${plantillasOpen ? style.plantillasChevronOpen : ""}`}
+              />
+            </button>
+            {plantillasOpen ? (
+              <>
+                <div
+                  className={style.plantillasBackdrop}
+                  onClick={() => setPlantillasOpen(false)}
+                  role="presentation"
+                />
+                <div className={style.plantillasMenu} role="menu">
+                  <p className={style.plantillasTitulo}>Elegí un set de preguntas</p>
+                  {PLANTILLAS.map((pl) => (
+                    <button
+                      key={pl.id}
+                      type="button"
+                      className={style.plantillaItem}
+                      onClick={() => aplicarPlantilla(pl)}
+                      role="menuitem"
+                    >
+                      <span className={style.plantillaNivel}>{pl.nivel}</span>
+                      <span className={style.plantillaTema}>{pl.tema}</span>
+                      <span className={style.plantillaHint}>{pl.hint}</span>
+                    </button>
+                  ))}
+                  <p className={style.plantillasPie}>
+                    Después las podés editar o escribir las tuyas.
+                  </p>
+                </div>
+              </>
+            ) : null}
+          </div>
         </div>
       </header>
 
@@ -625,7 +722,7 @@ function Journaling() {
                     setBorradorPreguntas((prev) => ({ ...prev, [p.campo]: e.target.value }))
                   }
                   placeholder={PREGUNTAS_DEFAULT[p.campo]}
-                  maxLength={90}
+                  maxLength={200}
                 />
               ))}
               {borradorExtras.map((x) => (
@@ -639,7 +736,7 @@ function Journaling() {
                       )
                     }
                     placeholder="Tu pregunta…"
-                    maxLength={90}
+                    maxLength={200}
                   />
                   <button
                     type="button"

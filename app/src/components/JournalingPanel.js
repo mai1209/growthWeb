@@ -286,10 +286,13 @@ export default function JournalingPanel({ visible, onClose }) {
   };
 
   const guardarPreguntas = async () => {
-    setEditandoPreguntas(false);
     const limpio = borradorExtras
-      .map((x) => ({ id: x.id, texto: String(x.texto || "").trim() }))
+      .map((x) => ({ id: x.id || nuevoId(), texto: String(x.texto || "").trim() }))
       .filter((x) => x.texto);
+    // Optimista: se ve el cambio al instante y guarda a la primera.
+    setPreguntas({ ...PREGUNTAS_DEFAULT, ...borradorPreguntas });
+    setExtras(limpio);
+    setEditandoPreguntas(false);
     try {
       const { data } = await journalService.savePreguntas({
         ...borradorPreguntas,
@@ -297,9 +300,9 @@ export default function JournalingPanel({ visible, onClose }) {
         fecha,
       });
       if (data?.preguntas) setPreguntas({ ...PREGUNTAS_DEFAULT, ...data.preguntas });
-      setExtras(Array.isArray(data?.extras) ? data.extras : limpio);
+      if (Array.isArray(data?.extras)) setExtras(data.extras);
     } catch {
-      /* quedan las anteriores */
+      /* quedó lo optimista */
     }
   };
 
@@ -590,7 +593,7 @@ export default function JournalingPanel({ visible, onClose }) {
                               }
                               placeholder={PREGUNTAS_DEFAULT[p.campo]}
                               placeholderTextColor="rgba(138, 90, 42, 0.5)"
-                              maxLength={90}
+                              maxLength={200}
                             />
                           ) : (
                             <Text style={styles.libroPregunta}>{preguntasVista(entradas[libroIdx])[p.campo]}</Text>
@@ -622,7 +625,7 @@ export default function JournalingPanel({ visible, onClose }) {
                                 }
                                 placeholder="Tu pregunta…"
                                 placeholderTextColor="rgba(138, 90, 42, 0.5)"
-                                maxLength={90}
+                                maxLength={200}
                               />
                               <TouchableOpacity
                                 onPress={() =>

@@ -3,7 +3,7 @@ import JournalConfig from "../models/journalConfigModel.js";
 
 const MAX_CAMPO = 2000;
 const MAX_LISTADO = 60;
-const MAX_PREGUNTA = 90;
+const MAX_PREGUNTA = 200;
 const MAX_EXTRAS = 15;
 
 // Textos por defecto de las preguntas guiadas.
