@@ -241,52 +241,52 @@
 }
 
 .color1 {
-  background: linear-gradient(135deg, #9cfb43, #5dc72d);
+  background: #5dc72d;
   border-color: rgba(156, 251, 67, 0.36);
 }
 
 .color2 {
-  background: linear-gradient(135deg, #ff9e45, #ff6b2f);
+  background: #ff7a35;
   border-color: rgba(255, 138, 67, 0.34);
 }
 
 .color3 {
-  background: linear-gradient(135deg, #ffe15a, #e3b72f);
+  background: #f0c419;
   border-color: rgba(255, 225, 90, 0.32);
 }
 
 .color4 {
-  background: linear-gradient(135deg, #7be7ad, #35c981);
+  background: #35c981;
   border-color: rgba(123, 231, 173, 0.3);
 }
 
 .color5 {
-  background: linear-gradient(135deg, #88d8ff, #3f9fe7);
+  background: #3f9fe7;
   border-color: rgba(136, 216, 255, 0.34);
 }
 
 .color6 {
-  background: linear-gradient(135deg, #ffabc9, #ea5e9a);
+  background: #ea5e9a;
   border-color: rgba(255, 171, 201, 0.34);
 }
 
 .color7 {
-  background: linear-gradient(135deg, #c9b6ff, #8b6ee8);
+  background: #8b6ee8;
   border-color: rgba(201, 182, 255, 0.34);
 }
 
 .color8 {
-  background: linear-gradient(135deg, #ff8d8d, #e05252);
+  background: #e05252;
   border-color: rgba(255, 141, 141, 0.34);
 }
 
 .color9 {
-  background: linear-gradient(135deg, #c7d2df, #8e9baa);
+  background: #8e9baa;
   border-color: rgba(199, 210, 223, 0.34);
 }
 
 .color10 {
-  background: linear-gradient(135deg, #fbfbf2, #dfe6d4);
+  background: #dfe6d4;
   border-color: rgba(251, 251, 242, 0.5);
 }
 
@@ -449,7 +449,7 @@
 }
 
 :global(.react-datepicker__day--selected) {
-  background: linear-gradient(135deg, #9cfb43, #5dc72d) !important;
+  background: #5dc72d !important;
   color: #111813 !important;
   font-weight: 900 !important;
 }
@@ -593,6 +593,72 @@
   color: white;
   font-size: 14px;
   top: -0.2rem;
+}
+
+/* ===== Agenda / grilla de horario (vista Día) ===== */
+.agenda {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.agendaRow {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: stretch;
+}
+
+/* Riel de tiempo con la línea vertical continua y el nodo */
+.agendaTime {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 0.9rem 0.95rem 0 0;
+}
+
+.agendaTime::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: calc(100% + 0.7rem);
+  width: 2px;
+  background: var(--border-color);
+}
+
+.agendaRow:last-child .agendaTime::before {
+  height: 1.5rem;
+}
+
+.agendaTimeLabel {
+  color: var(--color-text);
+  font-size: 0.8rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  line-height: 1.1;
+}
+
+.agendaTimeSoft .agendaTimeLabel {
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+.agendaDot {
+  position: absolute;
+  top: 1.15rem;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent, #5dc72d);
+  box-shadow: 0 0 0 3px var(--panel-background);
+}
+
+.agendaTimeSoft .agendaDot {
+  background: var(--color-muted);
 }
 
 .taskCard {
@@ -1245,7 +1311,7 @@
 }
 
 .dayChip input:checked + span {
-  background: linear-gradient(135deg, #9cfb43, #5dc72d);
+  background: #5dc72d;
   border-color: rgba(156, 251, 67, 0.6);
   color: #101711;
   box-shadow:
@@ -1626,7 +1692,7 @@
 
 /* Botón "Nueva tarea": misma forma/tamaño que las vistas, pero como acción */
 .viewSwitchAction {
-  background: linear-gradient(135deg, #9cfb43, #5dc72d);
+  background: #5dc72d;
   color: #0e2a12;
 }
 
@@ -1944,7 +2010,7 @@
 
 .dayActionPrimary {
   border: none;
-  background: linear-gradient(135deg, #9cfb43, #5dc72d);
+  background: #5dc72d;
   color: #0e2a12;
 }
 

@@ -563,6 +563,24 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
     return isTaskCompletedOnDate(task, selectedDate);
   };
 
+  // Orden de agenda: horas exactas cronológicas, después momentos
+  // (Mañana/Tarde/Noche) y al final las que no tienen horario.
+  const MOMENTO_RANK = { "Mañana": 8 * 60, "Tarde": 14 * 60, "Noche": 20 * 60 };
+  const agendaKey = (t) => {
+    const h = t.horario || "";
+    if (isExactTime(h)) {
+      const [hh, mm] = h.split(":").map(Number);
+      return hh * 60 + mm;
+    }
+    if (MOMENTO_RANK[h] != null) return MOMENTO_RANK[h];
+    return Infinity; // sin horario al final
+  };
+  const agendaLabel = (h) => {
+    if (isExactTime(h)) return h;
+    if (h === "Mañana" || h === "Tarde" || h === "Noche") return h;
+    return "Sin hora";
+  };
+
   const renderContent = () => {
     if (loading) return <p className={style.emptyMessage}>Cargando tareas...</p>;
     if (error) return <p className={style.errorMessage}>{error}</p>;
@@ -573,13 +591,22 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
         </p>
       );
 
-    return visibleTasks.map((task) => {
+    const ordenadas = [...visibleTasks].sort((a, b) => agendaKey(a) - agendaKey(b));
+
+    return (
+      <div className={style.agenda}>
+        {ordenadas.map((task) => {
       const completed = isTaskCompleted(task);
 
       const menuOpen = openTaskMenu === task._id;
+      const sinHora = !isExactTime(task.horario) && !["Mañana", "Tarde", "Noche"].includes(task.horario);
 
       return (
-        <div className={style.taskContainer} key={task._id}>
+        <div className={style.agendaRow} key={task._id}>
+          <div className={`${style.agendaTime} ${sinHora ? style.agendaTimeSoft : ""}`}>
+            <span className={style.agendaTimeLabel}>{agendaLabel(task.horario)}</span>
+            <span className={style.agendaDot} />
+          </div>
           <div
             className={`${style.taskCard} ${
               completed ? style.completed : ""
@@ -655,7 +682,9 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
           </div>
         </div>
       );
-    });
+        })}
+      </div>
+    );
   };
 
   const renderCalendar = () => {
