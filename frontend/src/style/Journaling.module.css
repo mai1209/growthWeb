@@ -581,12 +581,40 @@
   padding: 0 2px;
 }
 
+.animoLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
 .animoLabel {
   margin: 0;
   color: var(--color-muted);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.04em;
+}
+
+.ayudaLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.35rem;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.ayudaLink:hover {
+  color: var(--color-verde, #5dc72d);
 }
 
 /* Slider de ánimo: extremos fijos y la carita del nivel viaja en el pulgar */

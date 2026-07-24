@@ -15,7 +15,6 @@ import {
   FiFileText,
   FiFolder,
   FiFolderPlus,
-  FiHelpCircle,
   FiHash,
   FiItalic,
   FiLayers,
@@ -41,7 +40,6 @@ import { taskService } from "../api";
 import ShoppingLists from "./ShoppingLists";
 import Afirmaciones from "./Afirmaciones";
 import Journaling from "./Journaling";
-import JournalAyuda from "./JournalAyuda";
 import style from "../style/TaskStudio.module.css";
 
 // Habilita tamaño de fuente por píxeles (ej. "16px") en vez de small/large.
@@ -377,7 +375,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const [isDirty, setIsDirty] = useState(false);
   const [sizeInput, setSizeInput] = useState(DEFAULT_FONT_PX);
   const [view, setView] = useState("notes");
-  const [journalAyudaOpen, setJournalAyudaOpen] = useState(false);
   const [activeFolder, setActiveFolder] = useState(ALL_FOLDERS);
   const [customFolders, setCustomFolders] = useState(() => readStoredFolders(activeWorkspace));
   const [isCompact, setIsCompact] = useState(
@@ -1569,15 +1566,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 </h2>
               </div>
               <div className={style.listHeaderActions}>
-                {effectiveView === "journal" ? (
-                  <button
-                    type="button"
-                    className={style.journalAyudaLink}
-                    onClick={() => setJournalAyudaOpen(true)}
-                  >
-                    <FiHelpCircle /> ¿Necesitás ayuda?
-                  </button>
-                ) : null}
                 {/* En móvil (isCompact) mostramos Notas + Lista de compras;
                     Calendario queda solo en desktop. */}
                 <div className={style.viewToggle} role="tablist" aria-label="Vista de notas">
@@ -1766,12 +1754,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
             ) : effectiveView === "afirmaciones" ? (
               <Afirmaciones />
             ) : effectiveView === "journal" ? (
-              <>
-                <Journaling />
-                {journalAyudaOpen ? (
-                  <JournalAyuda onClose={() => setJournalAyudaOpen(false)} />
-                ) : null}
-              </>
+              <Journaling />
             ) : (
               <div className={style.notesLayout}>
                 <aside className={style.folderSidebar} aria-label="Carpetas">

@@ -13,7 +13,9 @@ import {
   FiTrash2,
   FiX,
 } from "react-icons/fi";
+import { FiHelpCircle } from "react-icons/fi";
 import { journalService } from "../api";
+import JournalAyuda from "./JournalAyuda";
 import style from "../style/Journaling.module.css";
 
 // Ánimo del día: 1 (muy mal) a 5 (muy bien). El 0 (sin marcar) muestra la
@@ -147,6 +149,7 @@ function Journaling() {
   const [borradorExtras, setBorradorExtras] = useState([]);
   const [plantillasOpen, setPlantillasOpen] = useState(false);
   const [vista, setVista] = useState("libro"); // libro | calendario
+  const [ayudaOpen, setAyudaOpen] = useState(false);
   const [calRef, setCalRef] = useState(() => new Date());
   // Páginas internas de un mismo día: el contenido fluye en columnas del ancho
   // de la hoja (sin scroll) y las flechitas de arriba deslizan entre columnas.
@@ -658,7 +661,16 @@ function Journaling() {
         {/* Columna izquierda: escribir hoy */}
         <div className={style.colIzq}>
           <div className={style.animoBox}>
-            <p className={style.animoLabel}>¿Cómo te sentís hoy?</p>
+            <div className={style.animoLabelRow}>
+              <p className={style.animoLabel}>¿Cómo te sentís hoy?</p>
+              <button
+                type="button"
+                className={style.ayudaLink}
+                onClick={() => setAyudaOpen(true)}
+              >
+                <FiHelpCircle /> Sugerencias de preguntas
+              </button>
+            </div>
             {/* Extremos fijos; la carita del nivel actual viaja en el pulgar */}
             <div className={style.animoSliderRow}>
               <div className={style.animoSliderWrap}>
@@ -851,6 +863,8 @@ function Journaling() {
           {vista === "calendario" ? renderCalendario() : renderLibro()}
         </div>
       </div>
+
+      {ayudaOpen ? <JournalAyuda onClose={() => setAyudaOpen(false)} /> : null}
     </div>
   );
 }
