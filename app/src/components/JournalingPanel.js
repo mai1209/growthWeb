@@ -914,7 +914,16 @@ const makeStyles = (colors) =>
       lineHeight: 24,
       fontFamily: Platform.OS === "ios" ? "Noteworthy" : "cursive",
     },
-    libroEditRow: { flexDirection: "row", justifyContent: "flex-end", gap: 7 },
+    // Flotante arriba a la derecha, a la altura de la carita (no ocupa fila).
+    libroEditRow: {
+      position: "absolute",
+      top: 44,
+      right: 12,
+      zIndex: 3,
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      gap: 7,
+    },
     libroEditBtn: {
       flexDirection: "row",
       alignItems: "center",
