@@ -305,10 +305,12 @@ export default function JournalingPanel({ visible, onClose }) {
   const preguntasVista = (e) => {
     if (!e || e.fecha === fecha) return preguntas;
     const snap = e.preguntas || {};
+    // Días viejos sin snapshot propio caen al DEFAULT (no a las preguntas
+    // actuales): así cambiar las preguntas hoy nunca reescribe los días viejos.
     return {
-      gratitud: snap.gratitud || preguntas.gratitud,
-      mejor: snap.mejor || preguntas.mejor,
-      distinto: snap.distinto || preguntas.distinto,
+      gratitud: snap.gratitud || PREGUNTAS_DEFAULT.gratitud,
+      mejor: snap.mejor || PREGUNTAS_DEFAULT.mejor,
+      distinto: snap.distinto || PREGUNTAS_DEFAULT.distinto,
     };
   };
 
