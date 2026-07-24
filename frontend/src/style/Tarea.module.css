@@ -664,13 +664,14 @@
 .taskCard {
   display: flex;
   flex-direction: column;
-  border-radius: var(--radius-xl);
+  border-radius: 16px; /* igual que la app */
   padding: 0.85rem 1rem;
-  border: 1px solid rgba(216, 241, 224, 0.08);
+  border: none;
   box-shadow: var(--shadow-sm);
   color: #111813;
   position: relative;
   min-height: 0;
+  overflow: hidden;
 }
 
 /* Fila principal: opciones · contenido · check circular */
