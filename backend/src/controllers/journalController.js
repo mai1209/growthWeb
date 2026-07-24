@@ -55,6 +55,12 @@ const serialize = (e) => ({
   mejor: e.mejor || "",
   distinto: e.distinto || "",
   libre: e.libre || "",
+  // Snapshot de las preguntas de ese día (vacío = usar las actuales).
+  preguntas: {
+    gratitud: e.preguntas?.gratitud || "",
+    mejor: e.preguntas?.mejor || "",
+    distinto: e.preguntas?.distinto || "",
+  },
 });
 
 const armarRespuesta = (entradas, hoy) => {
@@ -98,7 +104,26 @@ export const savePreguntas = async (req, res) => {
       { $set: preguntas, $setOnInsert: { usuario: req.user.id } },
       { upsert: true, new: true }
     );
-    return res.status(200).json({ preguntas: preguntasDe(config) });
+    const resueltas = preguntasDe(config);
+
+    // "Se guarda ese día": estampá las preguntas nuevas en la entrada del día
+    // indicado (hoy), sin tocar los días anteriores.
+    const fecha = String(req.body.fecha || "");
+    if (esFecha(fecha)) {
+      await Journal.updateOne(
+        { usuario: req.user.id, fecha },
+        {
+          $set: {
+            "preguntas.gratitud": resueltas.gratitud,
+            "preguntas.mejor": resueltas.mejor,
+            "preguntas.distinto": resueltas.distinto,
+          },
+          $setOnInsert: { usuario: req.user.id, fecha },
+        },
+        { upsert: true }
+      );
+    }
+    return res.status(200).json({ preguntas: resueltas });
   } catch (error) {
     return res.status(500).json({ error: "No se pudieron guardar las preguntas" });
   }
@@ -120,9 +145,24 @@ export const saveJournal = async (req, res) => {
       }
     }
 
+    // Al CREAR la entrada del día, congelamos las preguntas activas ese día.
+    const config = await JournalConfig.findOne({ usuario: req.user.id });
+    const preguntasHoy = preguntasDe(config);
+
     await Journal.findOneAndUpdate(
       { usuario: req.user.id, fecha },
-      { $set: cambios, $setOnInsert: { usuario: req.user.id, fecha } },
+      {
+        $set: cambios,
+        $setOnInsert: {
+          usuario: req.user.id,
+          fecha,
+          preguntas: {
+            gratitud: preguntasHoy.gratitud,
+            mejor: preguntasHoy.mejor,
+            distinto: preguntasHoy.distinto,
+          },
+        },
+      },
       { upsert: true, new: true }
     );
 

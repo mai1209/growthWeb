@@ -28,6 +28,29 @@
   }
 }
 
+.hoyBtn {
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--accent-border, rgba(93, 199, 45, 0.4));
+  border-radius: 999px;
+  background: var(--accent-soft, rgba(93, 199, 45, 0.14));
+  color: var(--color-verde, #5dc72d);
+  font-size: 0.74rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.hoyBtn:hover {
+  filter: brightness(1.08);
+}
+
+/* Día activo (el que se está editando) en el calendario */
+.calCellActiva {
+  border-color: var(--accent, #5dc72d);
+  box-shadow: 0 0 0 2px var(--accent-soft, rgba(93, 199, 45, 0.2));
+}
+
 /* ===== Switch Libro / Calendario con pastilla deslizante ===== */
 .vistaToggle {
   position: relative;

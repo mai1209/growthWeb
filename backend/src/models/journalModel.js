@@ -27,6 +27,13 @@ const journalSchema = new mongoose.Schema(
     mejor: { type: String, default: "" }, // Lo mejor de hoy fue…
     distinto: { type: String, default: "" }, // ¿Qué harías distinto?
     libre: { type: String, default: "" }, // Notas libres
+    // Snapshot de las preguntas activas cuando se escribió ese día: así
+    // cambiar las preguntas después no reescribe los días viejos.
+    preguntas: {
+      gratitud: { type: String, default: "" },
+      mejor: { type: String, default: "" },
+      distinto: { type: String, default: "" },
+    },
   },
   { timestamps: true }
 );

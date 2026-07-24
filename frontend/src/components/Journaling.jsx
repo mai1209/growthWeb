@@ -39,7 +39,7 @@ const CAMPOS = [
 // Color de cada nivel de ánimo (rojo → verde) para el gráfico y el calendario.
 const ANIMO_COLORS = { 1: "#e5484d", 2: "#e58a3a", 3: "#c9a23a", 4: "#8fbf3f", 5: "#14d95f" };
 
-const ENTRADA_VACIA = { animo: 0, gratitud: "", mejor: "", distinto: "", libre: "" };
+const ENTRADA_VACIA = { animo: 0, gratitud: "", mejor: "", distinto: "", libre: "", preguntas: {} };
 
 const WEEKDAYS = ["L", "M", "M", "J", "V", "S", "D"];
 
@@ -94,7 +94,6 @@ function Journaling() {
   const [editandoPreguntas, setEditandoPreguntas] = useState(false);
   const [borradorPreguntas, setBorradorPreguntas] = useState(PREGUNTAS_DEFAULT);
   const [vista, setVista] = useState("libro"); // libro | calendario
-  const [libroFecha, setLibroFecha] = useState(null); // página abierta del libro
   const [calRef, setCalRef] = useState(() => new Date());
   // Páginas internas de un mismo día: el contenido fluye en columnas del ancho
   // de la hoja (sin scroll) y las flechitas de arriba deslizan entre columnas.
@@ -166,18 +165,45 @@ function Journaling() {
   const guardarPreguntas = async () => {
     setEditandoPreguntas(false);
     try {
-      const { data } = await journalService.savePreguntas(borradorPreguntas);
+      const { data } = await journalService.savePreguntas({ ...borradorPreguntas, fecha });
       if (data?.preguntas) setPreguntas({ ...PREGUNTAS_DEFAULT, ...data.preguntas });
     } catch {
       /* quedan las anteriores */
     }
   };
 
-  // Todas las entradas con contenido (historial + la de hoy), viejo → nuevo.
+  // Guarda ya lo pendiente (antes de cambiar de día) y navega a otro día.
+  const flushGuardado = async () => {
+    if (guardadoRef.current) {
+      clearTimeout(guardadoRef.current);
+      guardadoRef.current = null;
+    }
+    const cambios = { ...pendienteRef.current };
+    pendienteRef.current = {};
+    if (!Object.keys(cambios).length) return;
+    try {
+      await journalService.save({ ...cambios, fecha });
+    } catch {
+      pendienteRef.current = { ...cambios, ...pendienteRef.current };
+    }
+  };
+
+  const irADia = async (f, { libro = false } = {}) => {
+    if (!f) return;
+    if (f !== fecha) {
+      await flushGuardado();
+      setFecha(f);
+    }
+    if (libro) setVista("libro");
+  };
+
+  // Todas las entradas: historial (otros días con contenido) + el día activo
+  // en vivo (aunque esté vacío, para poder verlo y editarlo). Viejo → nuevo.
   const entradas = useMemo(() => {
-    const lista = [...historial].reverse();
-    if (tieneContenido(entrada)) lista.push({ ...entrada, fecha });
-    return lista;
+    const map = new Map();
+    historial.filter(tieneContenido).forEach((e) => map.set(e.fecha, e));
+    map.set(fecha, { ...entrada, fecha });
+    return [...map.values()].sort((a, b) => a.fecha.localeCompare(b.fecha));
   }, [historial, entrada, fecha]);
 
   const porFecha = useMemo(() => {
@@ -189,16 +215,22 @@ function Journaling() {
   // Ánimo en el tiempo (últimos 30 días con ánimo marcado).
   const animoSerie = entradas.filter((e) => Number(e.animo) > 0).slice(-30);
 
-  // Página abierta del libro: la elegida, o la última escrita.
-  const libroIdx = useMemo(() => {
-    if (!entradas.length) return -1;
-    const idx = entradas.findIndex((e) => e.fecha === libroFecha);
-    return idx >= 0 ? idx : entradas.length - 1;
-  }, [entradas, libroFecha]);
+  // La página del libro es el día activo (el que se está editando).
+  const libroIdx = useMemo(
+    () => entradas.findIndex((e) => e.fecha === fecha),
+    [entradas, fecha]
+  );
 
-  const abrirEnLibro = (f) => {
-    setLibroFecha(f);
-    setVista("libro");
+  // Preguntas a mostrar de una entrada: el día activo usa las actuales;
+  // los días viejos usan el snapshot que quedó guardado ese día.
+  const preguntasVista = (e) => {
+    if (e.fecha === fecha) return preguntas;
+    const snap = e.preguntas || {};
+    return {
+      gratitud: snap.gratitud || preguntas.gratitud,
+      mejor: snap.mejor || preguntas.mejor,
+      distinto: snap.distinto || preguntas.distinto,
+    };
   };
 
   // Al cambiar de día, arrancamos en la primera página interna.
@@ -288,16 +320,17 @@ function Journaling() {
             const key = dayKeyOf(d);
             const e = porFecha.get(key);
             const esHoy = key === hoy;
+            const esFuturo = key > hoy;
             return (
               <button
                 key={key}
                 type="button"
                 className={`${style.calCell} ${d.getMonth() !== mesActual ? style.calCellFuera : ""} ${
                   esHoy ? style.calCellHoy : ""
-                } ${e ? style.calCellConEntrada : ""}`}
-                onClick={() => e && abrirEnLibro(key)}
-                disabled={!e}
-                title={e ? `Leer el ${fechaLarga(key)}` : undefined}
+                } ${e ? style.calCellConEntrada : ""} ${key === fecha ? style.calCellActiva : ""}`}
+                onClick={() => irADia(key, { libro: true })}
+                disabled={esFuturo}
+                title={e ? `Abrir el ${fechaLarga(key)}` : `Escribir el ${fechaLarga(key)}`}
               >
                 <span>{d.getDate()}</span>
                 {e ? (
@@ -310,7 +343,7 @@ function Journaling() {
             );
           })}
         </div>
-        <p className={style.calAyuda}>Los días con puntito tienen journaling: tocá uno para leerlo.</p>
+        <p className={style.calAyuda}>Tocá cualquier día para abrirlo y escribir; el puntito marca los que ya tienen algo.</p>
       </div>
     );
   };
@@ -384,7 +417,7 @@ function Journaling() {
             {CAMPOS.map((p) =>
               e[p.campo] ? (
                 <div key={p.campo} className={style.libroBloque}>
-                  <p className={style.libroPregunta}>{preguntas[p.campo]}</p>
+                  <p className={style.libroPregunta}>{preguntasVista(e)[p.campo]}</p>
                   <p className={style.libroTexto}>{e[p.campo]}</p>
                 </div>
               ) : null
@@ -402,7 +435,7 @@ function Journaling() {
           <button
             type="button"
             className={style.libroNavBtn}
-            onClick={() => setLibroFecha(entradas[libroIdx - 1]?.fecha)}
+            onClick={() => irADia(entradas[libroIdx - 1]?.fecha)}
             disabled={libroIdx <= 0}
             aria-label="Día anterior"
           >
@@ -414,7 +447,7 @@ function Journaling() {
           <button
             type="button"
             className={style.libroNavBtn}
-            onClick={() => setLibroFecha(entradas[libroIdx + 1]?.fecha)}
+            onClick={() => irADia(entradas[libroIdx + 1]?.fecha)}
             disabled={libroIdx >= entradas.length - 1}
             aria-label="Día siguiente"
           >
@@ -431,6 +464,11 @@ function Journaling() {
         <div className={style.fechaBloque}>
           <FiFeather className={style.fechaIcono} />
           <span className={style.fecha}>{fechaLarga(fecha)}</span>
+          {fecha !== hoyLocal() ? (
+            <button type="button" className={style.hoyBtn} onClick={() => irADia(hoyLocal())}>
+              Volver a hoy
+            </button>
+          ) : null}
         </div>
         <div className={style.vistaToggle} role="tablist" aria-label="Cómo ver tus entradas">
           {/* Pastilla verde que se desliza detrás de la opción activa */}
@@ -566,7 +604,7 @@ function Journaling() {
               className={`${style.input} ${style.inputLibre}`}
               value={entrada.libre}
               onChange={(e) => editar("libre", e.target.value)}
-              placeholder="Lo que quieras dejar escrito de hoy…"
+              placeholder="Lo que quieras dejar escrito de este día…"
               rows={4}
             />
           </label>
