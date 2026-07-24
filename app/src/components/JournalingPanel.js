@@ -44,7 +44,10 @@ const CAMPOS = [
 // Color de cada nivel de ánimo (rojo → verde) para el gráfico.
 const ANIMO_COLORS = { 1: "#e5484d", 2: "#e58a3a", 3: "#c9a23a", 4: "#8fbf3f", 5: "#14d95f" };
 
-const ENTRADA_VACIA = { animo: 0, gratitud: "", mejor: "", distinto: "", libre: "" };
+const ENTRADA_VACIA = { animo: 0, gratitud: "", mejor: "", distinto: "", libre: "", extras: [] };
+
+let extraSeq = 0;
+const nuevoId = () => `x${Date.now().toString(36)}${(extraSeq++).toString(36)}`;
 
 const hoyLocal = () => {
   const d = new Date();
@@ -154,7 +157,8 @@ const AnimoSlider = React.memo(function AnimoSlider({ value, onChange, styles })
 
 const tieneContenido = (e) =>
   Number(e?.animo) > 0 ||
-  [e?.gratitud, e?.mejor, e?.distinto, e?.libre].some((c) => String(c || "").trim());
+  [e?.gratitud, e?.mejor, e?.distinto, e?.libre].some((c) => String(c || "").trim()) ||
+  (Array.isArray(e?.extras) && e.extras.some((x) => String(x?.valor || "").trim()));
 
 export default function JournalingPanel({ visible, onClose }) {
   const { colors } = useTheme();
@@ -172,6 +176,8 @@ export default function JournalingPanel({ visible, onClose }) {
   const [preguntas, setPreguntas] = useState(PREGUNTAS_DEFAULT);
   const [editandoPreguntas, setEditandoPreguntas] = useState(false);
   const [borradorPreguntas, setBorradorPreguntas] = useState(PREGUNTAS_DEFAULT);
+  const [extras, setExtras] = useState([]); // definiciones [{id, texto}]
+  const [borradorExtras, setBorradorExtras] = useState([]);
   const [vista, setVista] = useState("libro"); // libro (hoja editable) | calendario
   const [calRef, setCalRef] = useState(() => new Date());
   const guardadoRef = useRef(null);
@@ -195,6 +201,7 @@ export default function JournalingPanel({ visible, onClose }) {
     setHistorial(Array.isArray(data?.entradas) ? data.entradas : []);
     setRacha(Number(data?.racha) || 0);
     if (data?.preguntas) setPreguntas({ ...PREGUNTAS_DEFAULT, ...data.preguntas });
+    setExtras(Array.isArray(data?.extras) ? data.extras : []);
   }, []);
 
   // Al abrir el panel volvemos siempre al día de hoy.
@@ -248,15 +255,49 @@ export default function JournalingPanel({ visible, onClose }) {
   };
   editarRef.current = editar;
 
+  const editarExtra = (id, valor) => {
+    const cur = entrada.extras || [];
+    const existente = cur.find((x) => x.id === id);
+    // Preserva el texto del snapshot (día viejo) o toma el de la config (hoy).
+    const texto = existente?.texto || extras.find((x) => x.id === id)?.texto || "";
+    const list = existente
+      ? cur.map((x) => (x.id === id ? { ...x, texto, valor } : x))
+      : [...cur, { id, texto, valor }];
+    pendienteRef.current.extras = list;
+    setEntrada((prev) => ({ ...prev, extras: list }));
+    guardarDiferido();
+  };
+
+  // Preguntas extra a mostrar: hoy usa las definiciones de la config; los días
+  // viejos, el snapshot que quedó en esa entrada.
+  const extrasVista = () => {
+    if (fecha === hoyLocal()) {
+      return extras.map((d) => ({
+        id: d.id,
+        texto: d.texto,
+        valor: (entrada.extras || []).find((x) => x.id === d.id)?.valor || "",
+      }));
+    }
+    return (entrada.extras || []).map((x) => ({ id: x.id, texto: x.texto, valor: x.valor || "" }));
+  };
+
   const elegirAnimo = (valor) => {
     editar("animo", Number(entrada.animo) === valor ? 0 : valor);
   };
 
   const guardarPreguntas = async () => {
     setEditandoPreguntas(false);
+    const limpio = borradorExtras
+      .map((x) => ({ id: x.id, texto: String(x.texto || "").trim() }))
+      .filter((x) => x.texto);
     try {
-      const { data } = await journalService.savePreguntas({ ...borradorPreguntas, fecha });
+      const { data } = await journalService.savePreguntas({
+        ...borradorPreguntas,
+        extras: limpio,
+        fecha,
+      });
       if (data?.preguntas) setPreguntas({ ...PREGUNTAS_DEFAULT, ...data.preguntas });
+      setExtras(Array.isArray(data?.extras) ? data.extras : limpio);
     } catch {
       /* quedan las anteriores */
     }
@@ -527,6 +568,7 @@ export default function JournalingPanel({ visible, onClose }) {
                             style={styles.libroEditBtn}
                             onPress={() => {
                               setBorradorPreguntas(preguntas);
+                              setBorradorExtras(extras.map((x) => ({ ...x })));
                               setEditandoPreguntas(true);
                             }}
                           >
@@ -564,6 +606,59 @@ export default function JournalingPanel({ visible, onClose }) {
                           />
                         </View>
                       ))}
+
+                      {/* Preguntas extra */}
+                      {editandoPreguntas ? (
+                        <>
+                          {borradorExtras.map((x) => (
+                            <View key={x.id} style={styles.extraEditRow}>
+                              <TextInput
+                                style={[styles.libroPreguntaInput, { flex: 1 }]}
+                                value={x.texto}
+                                onChangeText={(v) =>
+                                  setBorradorExtras((prev) =>
+                                    prev.map((it) => (it.id === x.id ? { ...it, texto: v } : it))
+                                  )
+                                }
+                                placeholder="Tu pregunta…"
+                                placeholderTextColor="rgba(138, 90, 42, 0.5)"
+                                maxLength={90}
+                              />
+                              <TouchableOpacity
+                                onPress={() =>
+                                  setBorradorExtras((prev) => prev.filter((it) => it.id !== x.id))
+                                }
+                                hitSlop={8}
+                              >
+                                <Ionicons name="trash-outline" size={16} color="#8a5a2a" />
+                              </TouchableOpacity>
+                            </View>
+                          ))}
+                          <TouchableOpacity
+                            style={styles.agregarPreguntaBtn}
+                            onPress={() =>
+                              setBorradorExtras((prev) => [...prev, { id: nuevoId(), texto: "" }])
+                            }
+                          >
+                            <Ionicons name="add" size={15} color="#2b2416" />
+                            <Text style={styles.agregarPreguntaText}>Agregar pregunta</Text>
+                          </TouchableOpacity>
+                        </>
+                      ) : (
+                        extrasVista().map((x) => (
+                          <View key={x.id}>
+                            <Text style={styles.libroPregunta}>{x.texto}</Text>
+                            <TextInput
+                              style={styles.libroInput}
+                              value={x.valor}
+                              onChangeText={(v) => editarExtra(x.id, v)}
+                              placeholder="Escribí tu respuesta…"
+                              placeholderTextColor="rgba(43, 36, 22, 0.35)"
+                              multiline
+                            />
+                          </View>
+                        ))
+                      )}
 
                       <TextInput
                         style={[styles.libroInput, styles.libroInputLibre]}
@@ -961,6 +1056,20 @@ const makeStyles = (colors) =>
       textAlignVertical: "top",
     },
     libroInputLibre: { minHeight: 90 },
+    extraEditRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    agregarPreguntaBtn: {
+      alignSelf: "flex-start",
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      paddingHorizontal: 11,
+      paddingVertical: 7,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderStyle: "dashed",
+      borderColor: "rgba(43, 36, 22, 0.4)",
+    },
+    agregarPreguntaText: { color: "#2b2416", fontSize: 12.5, fontWeight: "800" },
     libroGuardando: { color: "rgba(43, 36, 22, 0.5)", fontSize: 11.5 },
 
     libroNav: {

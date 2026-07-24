@@ -7,6 +7,8 @@ import {
   FiChevronRight,
   FiEdit2,
   FiFeather,
+  FiPlus,
+  FiTrash2,
   FiX,
 } from "react-icons/fi";
 import { journalService } from "../api";
@@ -39,7 +41,10 @@ const CAMPOS = [
 // Color de cada nivel de ánimo (rojo → verde) para el gráfico y el calendario.
 const ANIMO_COLORS = { 1: "#e5484d", 2: "#e58a3a", 3: "#c9a23a", 4: "#8fbf3f", 5: "#14d95f" };
 
-const ENTRADA_VACIA = { animo: 0, gratitud: "", mejor: "", distinto: "", libre: "", preguntas: {} };
+const ENTRADA_VACIA = { animo: 0, gratitud: "", mejor: "", distinto: "", libre: "", preguntas: {}, extras: [] };
+
+let extraSeq = 0;
+const nuevoId = () => `x${Date.now().toString(36)}${(extraSeq++).toString(36)}`;
 
 const WEEKDAYS = ["L", "M", "M", "J", "V", "S", "D"];
 
@@ -81,7 +86,8 @@ const emojiDe = (animo) => ANIMOS.find((a) => a.valor === Number(animo))?.emoji 
 
 const tieneContenido = (e) =>
   Number(e?.animo) > 0 ||
-  [e?.gratitud, e?.mejor, e?.distinto, e?.libre].some((c) => String(c || "").trim());
+  [e?.gratitud, e?.mejor, e?.distinto, e?.libre].some((c) => String(c || "").trim()) ||
+  (Array.isArray(e?.extras) && e.extras.some((x) => String(x?.valor || "").trim()));
 
 function Journaling() {
   const [fecha, setFecha] = useState(hoyLocal);
@@ -93,6 +99,8 @@ function Journaling() {
   const [preguntas, setPreguntas] = useState(PREGUNTAS_DEFAULT);
   const [editandoPreguntas, setEditandoPreguntas] = useState(false);
   const [borradorPreguntas, setBorradorPreguntas] = useState(PREGUNTAS_DEFAULT);
+  const [extras, setExtras] = useState([]); // definiciones [{id, texto}]
+  const [borradorExtras, setBorradorExtras] = useState([]);
   const [vista, setVista] = useState("libro"); // libro | calendario
   const [calRef, setCalRef] = useState(() => new Date());
   // Páginas internas de un mismo día: el contenido fluye en columnas del ancho
@@ -110,6 +118,7 @@ function Journaling() {
     setHistorial(Array.isArray(data?.entradas) ? data.entradas : []);
     setRacha(Number(data?.racha) || 0);
     if (data?.preguntas) setPreguntas({ ...PREGUNTAS_DEFAULT, ...data.preguntas });
+    setExtras(Array.isArray(data?.extras) ? data.extras : []);
   }, []);
 
   useEffect(() => {
@@ -162,11 +171,33 @@ function Journaling() {
     guardarDiferido();
   };
 
+  const valorExtra = (id) => (entrada.extras || []).find((x) => x.id === id)?.valor || "";
+
+  const editarExtra = (id, valor) => {
+    const def = extras.find((x) => x.id === id);
+    const cur = entrada.extras || [];
+    const existe = cur.some((x) => x.id === id);
+    const list = existe
+      ? cur.map((x) => (x.id === id ? { ...x, texto: def?.texto || x.texto, valor } : x))
+      : [...cur, { id, texto: def?.texto || "", valor }];
+    pendienteRef.current.extras = list;
+    setEntrada((prev) => ({ ...prev, extras: list }));
+    guardarDiferido();
+  };
+
   const guardarPreguntas = async () => {
     setEditandoPreguntas(false);
+    const limpio = borradorExtras
+      .map((x) => ({ id: x.id, texto: String(x.texto || "").trim() }))
+      .filter((x) => x.texto);
     try {
-      const { data } = await journalService.savePreguntas({ ...borradorPreguntas, fecha });
+      const { data } = await journalService.savePreguntas({
+        ...borradorPreguntas,
+        extras: limpio,
+        fecha,
+      });
       if (data?.preguntas) setPreguntas({ ...PREGUNTAS_DEFAULT, ...data.preguntas });
+      setExtras(Array.isArray(data?.extras) ? data.extras : limpio);
     } catch {
       /* quedan las anteriores */
     }
@@ -424,6 +455,14 @@ function Journaling() {
                 </div>
               ) : null
             )}
+            {(e.extras || []).map((x) =>
+              String(x.valor || "").trim() ? (
+                <div key={x.id} className={style.libroBloque}>
+                  <p className={style.libroPregunta}>{x.texto}</p>
+                  <p className={style.libroTexto}>{x.valor}</p>
+                </div>
+              ) : null
+            )}
             {e.libre ? (
               <div className={style.libroBloque}>
                 <p className={style.libroTexto}>{e.libre}</p>
@@ -565,19 +604,21 @@ function Journaling() {
                 className={style.preguntasBtn}
                 onClick={() => {
                   setBorradorPreguntas(preguntas);
+                  setBorradorExtras(extras.map((x) => ({ ...x })));
                   setEditandoPreguntas(true);
                 }}
-                title="Cambiá el texto de las 3 preguntas por el tuyo"
+                title="Cambiá tus preguntas o agregá más"
               >
                 <FiEdit2 /> Personalizar preguntas
               </button>
             )}
           </div>
 
-          {CAMPOS.map((p) => (
-            <label key={p.campo} className={style.campo}>
-              {editandoPreguntas ? (
+          {editandoPreguntas ? (
+            <div className={style.editorPreguntas}>
+              {CAMPOS.map((p) => (
                 <input
+                  key={p.campo}
                   className={style.preguntaInput}
                   value={borradorPreguntas[p.campo]}
                   onChange={(e) =>
@@ -586,19 +627,68 @@ function Journaling() {
                   placeholder={PREGUNTAS_DEFAULT[p.campo]}
                   maxLength={90}
                 />
-              ) : (
-                <span>{preguntas[p.campo]}</span>
-              )}
-              <textarea
-                className={style.input}
-                value={entrada[p.campo]}
-                onChange={(e) => editar(p.campo, e.target.value)}
-                placeholder={p.placeholder}
-                rows={2}
-                disabled={editandoPreguntas}
-              />
-            </label>
-          ))}
+              ))}
+              {borradorExtras.map((x) => (
+                <div key={x.id} className={style.extraEditRow}>
+                  <input
+                    className={style.preguntaInput}
+                    value={x.texto}
+                    onChange={(e) =>
+                      setBorradorExtras((prev) =>
+                        prev.map((it) => (it.id === x.id ? { ...it, texto: e.target.value } : it))
+                      )
+                    }
+                    placeholder="Tu pregunta…"
+                    maxLength={90}
+                  />
+                  <button
+                    type="button"
+                    className={style.extraDelBtn}
+                    onClick={() =>
+                      setBorradorExtras((prev) => prev.filter((it) => it.id !== x.id))
+                    }
+                    aria-label="Quitar pregunta"
+                  >
+                    <FiTrash2 />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className={style.agregarPreguntaBtn}
+                onClick={() => setBorradorExtras((prev) => [...prev, { id: nuevoId(), texto: "" }])}
+              >
+                <FiPlus /> Agregar pregunta
+              </button>
+            </div>
+          ) : (
+            <>
+              {CAMPOS.map((p) => (
+                <label key={p.campo} className={style.campo}>
+                  <span>{preguntas[p.campo]}</span>
+                  <textarea
+                    className={style.input}
+                    value={entrada[p.campo]}
+                    onChange={(e) => editar(p.campo, e.target.value)}
+                    placeholder={p.placeholder}
+                    rows={2}
+                  />
+                </label>
+              ))}
+              {extras.map((x) => (
+                <label key={x.id} className={style.campo}>
+                  <span>{x.texto}</span>
+                  <textarea
+                    className={style.input}
+                    value={valorExtra(x.id)}
+                    onChange={(e) => editarExtra(x.id, e.target.value)}
+                    placeholder="Escribí tu respuesta…"
+                    rows={2}
+                  />
+                </label>
+              ))}
+            </>
+          )}
 
           <label className={style.campo}>
             <span>Notas libres (opcional)</span>

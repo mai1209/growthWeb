@@ -34,6 +34,12 @@ const journalSchema = new mongoose.Schema(
       mejor: { type: String, default: "" },
       distinto: { type: String, default: "" },
     },
+    // Preguntas extra de ese día: texto (snapshot) + respuesta. Así cambiar
+    // o borrar una pregunta extra después no reescribe los días viejos.
+    extras: {
+      type: [{ _id: false, id: String, texto: String, valor: { type: String, default: "" } }],
+      default: [],
+    },
   },
   { timestamps: true }
 );

@@ -4,6 +4,7 @@ import JournalConfig from "../models/journalConfigModel.js";
 const MAX_CAMPO = 2000;
 const MAX_LISTADO = 60;
 const MAX_PREGUNTA = 90;
+const MAX_EXTRAS = 15;
 
 // Textos por defecto de las preguntas guiadas.
 const PREGUNTAS_DEFAULT = {
@@ -12,12 +13,21 @@ const PREGUNTAS_DEFAULT = {
   distinto: "¿Qué harías distinto?",
 };
 
-// Devuelve las preguntas del usuario completando con los defaults.
+// Devuelve las 3 preguntas base del usuario completando con los defaults.
 const preguntasDe = (config) => ({
   gratitud: String(config?.preguntas?.gratitud || "").trim() || PREGUNTAS_DEFAULT.gratitud,
   mejor: String(config?.preguntas?.mejor || "").trim() || PREGUNTAS_DEFAULT.mejor,
   distinto: String(config?.preguntas?.distinto || "").trim() || PREGUNTAS_DEFAULT.distinto,
 });
+
+// Definiciones de las preguntas extra (id + texto), limpias.
+const extrasDe = (config) =>
+  Array.isArray(config?.extras)
+    ? config.extras
+        .filter((x) => x && x.id)
+        .slice(0, MAX_EXTRAS)
+        .map((x) => ({ id: String(x.id).slice(0, 40), texto: String(x.texto || "").slice(0, MAX_PREGUNTA) }))
+    : [];
 
 const esFecha = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
 
@@ -32,7 +42,8 @@ const sumarDias = (fecha, delta) => {
 // Una entrada "cuenta" para la racha si tiene algo escrito o ánimo marcado.
 const tieneContenido = (e) =>
   Number(e.animo) > 0 ||
-  [e.gratitud, e.mejor, e.distinto, e.libre].some((c) => String(c || "").trim());
+  [e.gratitud, e.mejor, e.distinto, e.libre].some((c) => String(c || "").trim()) ||
+  (Array.isArray(e.extras) && e.extras.some((x) => String(x?.valor || "").trim()));
 
 // Días consecutivos hacia atrás. Si hoy todavía no escribió, arranca desde
 // ayer: la racha no se "pierde" a la mañana antes de escribir.
@@ -61,6 +72,14 @@ const serialize = (e) => ({
     mejor: e.preguntas?.mejor || "",
     distinto: e.preguntas?.distinto || "",
   },
+  // Preguntas extra de ese día (texto snapshot + respuesta).
+  extras: Array.isArray(e.extras)
+    ? e.extras.map((x) => ({
+        id: String(x.id || ""),
+        texto: x.texto || "",
+        valor: x.valor || "",
+      }))
+    : [],
 });
 
 const armarRespuesta = (entradas, hoy) => {
@@ -81,9 +100,11 @@ export const getJournal = async (req, res) => {
       Journal.find({ usuario: req.user.id }).sort({ fecha: -1 }).limit(MAX_LISTADO),
       JournalConfig.findOne({ usuario: req.user.id }),
     ]);
-    return res
-      .status(200)
-      .json({ ...armarRespuesta(entradas, fecha), preguntas: preguntasDe(config) });
+    return res.status(200).json({
+      ...armarRespuesta(entradas, fecha),
+      preguntas: preguntasDe(config),
+      extras: extrasDe(config),
+    });
   } catch (error) {
     return res.status(500).json({ error: "No se pudo obtener el journal" });
   }
@@ -93,15 +114,25 @@ export const getJournal = async (req, res) => {
 // Textos vacíos vuelven al default.
 export const savePreguntas = async (req, res) => {
   try {
-    const preguntas = {};
+    const set = {};
     for (const campo of ["gratitud", "mejor", "distinto"]) {
       if (typeof req.body[campo] === "string") {
-        preguntas[`preguntas.${campo}`] = req.body[campo].trim().slice(0, MAX_PREGUNTA);
+        set[`preguntas.${campo}`] = req.body[campo].trim().slice(0, MAX_PREGUNTA);
       }
+    }
+    // Definiciones de las preguntas extra (id + texto), sin las vacías.
+    if (Array.isArray(req.body.extras)) {
+      set.extras = req.body.extras
+        .filter((x) => x && x.id && String(x.texto || "").trim())
+        .slice(0, MAX_EXTRAS)
+        .map((x) => ({
+          id: String(x.id).slice(0, 40),
+          texto: String(x.texto).trim().slice(0, MAX_PREGUNTA),
+        }));
     }
     const config = await JournalConfig.findOneAndUpdate(
       { usuario: req.user.id },
-      { $set: preguntas, $setOnInsert: { usuario: req.user.id } },
+      { $set: set, $setOnInsert: { usuario: req.user.id } },
       { upsert: true, new: true }
     );
     const resueltas = preguntasDe(config);
@@ -123,7 +154,7 @@ export const savePreguntas = async (req, res) => {
         { upsert: true }
       );
     }
-    return res.status(200).json({ preguntas: resueltas });
+    return res.status(200).json({ preguntas: resueltas, extras: extrasDe(config) });
   } catch (error) {
     return res.status(500).json({ error: "No se pudieron guardar las preguntas" });
   }
@@ -143,6 +174,17 @@ export const saveJournal = async (req, res) => {
       if (typeof req.body[campo] === "string") {
         cambios[campo] = req.body[campo].slice(0, MAX_CAMPO);
       }
+    }
+    // Respuestas a las preguntas extra: cada una guarda id + texto + valor.
+    if (Array.isArray(req.body.extras)) {
+      cambios.extras = req.body.extras
+        .filter((x) => x && x.id)
+        .slice(0, MAX_EXTRAS)
+        .map((x) => ({
+          id: String(x.id).slice(0, 40),
+          texto: String(x.texto || "").slice(0, MAX_PREGUNTA),
+          valor: String(x.valor || "").slice(0, MAX_CAMPO),
+        }));
     }
 
     // Al CREAR la entrada del día, congelamos las preguntas activas ese día.

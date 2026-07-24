@@ -17,6 +17,11 @@ const journalConfigSchema = new mongoose.Schema(
       mejor: { type: String, default: "" },
       distinto: { type: String, default: "" },
     },
+    // Preguntas extra que agregó el usuario (más allá de las 3 base).
+    extras: {
+      type: [{ _id: false, id: String, texto: String }],
+      default: [],
+    },
   },
   { timestamps: true }
 );
