@@ -12,6 +12,7 @@ import {
   Platform,
   Keyboard,
   PanResponder,
+  Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -175,6 +176,17 @@ export default function JournalingPanel({ visible, onClose }) {
   const [calRef, setCalRef] = useState(() => new Date());
   const guardadoRef = useRef(null);
 
+  // Switch Libro/Calendario con pastilla deslizante (igual que la web).
+  const [toggleW, setToggleW] = useState(0);
+  const toggleAnim = useRef(new Animated.Value(0)).current; // 0=libro, 1=calendario
+  useEffect(() => {
+    Animated.timing(toggleAnim, {
+      toValue: vista === "calendario" ? 1 : 0,
+      duration: 220,
+      useNativeDriver: true,
+    }).start();
+  }, [vista, toggleAnim]);
+
   const editarRef = useRef(() => {});
   const onAnimoChange = useCallback((v) => editarRef.current("animo", v), []);
 
@@ -309,19 +321,21 @@ export default function JournalingPanel({ visible, onClose }) {
             <Ionicons name="chevron-back" size={22} color={colors.text} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={styles.kicker}>JOURNALING</Text>
-            <View style={styles.titleRow}>
-              <Text style={styles.title}>Tu journal</Text>
+            <View style={styles.kickerRow}>
+              <Text style={styles.kicker}>JOURNALING</Text>
               <Text style={styles.headerFecha} numberOfLines={1}>
                 {fechaLarga(fecha)}
               </Text>
             </View>
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>Tu journal</Text>
+              {fecha !== hoyLocal() ? (
+                <TouchableOpacity style={styles.hoyBtn} onPress={() => irADia(hoyLocal())}>
+                  <Text style={styles.hoyBtnText}>Hoy</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
           </View>
-          {fecha !== hoyLocal() ? (
-            <TouchableOpacity style={styles.hoyBtn} onPress={() => irADia(hoyLocal())}>
-              <Text style={styles.hoyBtnText}>Hoy</Text>
-            </TouchableOpacity>
-          ) : null}
         </View>
 
         {cargando ? (
@@ -341,10 +355,46 @@ export default function JournalingPanel({ visible, onClose }) {
                 <AnimoSlider value={entrada.animo} onChange={onAnimoChange} styles={styles} />
               </View>
 
-              {/* Releer: vista calendario o vista libro */}
-              <View style={styles.vistaToggle}>
+              {/* Switch Libro / Calendario con pastilla deslizante */}
+              <View
+                style={styles.vistaToggle}
+                onLayout={(e) => setToggleW(e.nativeEvent.layout.width)}
+              >
+                {toggleW > 0 ? (
+                  <Animated.View
+                    style={[
+                      styles.vistaThumb,
+                      {
+                        width: (toggleW - 8) / 2,
+                        transform: [
+                          {
+                            translateX: toggleAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0, (toggleW - 8) / 2],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}
+                  />
+                ) : null}
                 <TouchableOpacity
-                  style={[styles.vistaBtn, vista === "calendario" && styles.vistaBtnActivo]}
+                  style={styles.vistaBtn}
+                  activeOpacity={0.8}
+                  onPress={() => setVista("libro")}
+                >
+                  <Ionicons
+                    name="book-outline"
+                    size={15}
+                    color={vista === "libro" ? "#0e1a0e" : colors.muted}
+                  />
+                  <Text style={[styles.vistaBtnText, vista === "libro" && styles.vistaBtnTextActivo]}>
+                    Libro
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.vistaBtn}
+                  activeOpacity={0.8}
                   onPress={() => setVista("calendario")}
                 >
                   <Ionicons
@@ -356,19 +406,6 @@ export default function JournalingPanel({ visible, onClose }) {
                     style={[styles.vistaBtnText, vista === "calendario" && styles.vistaBtnTextActivo]}
                   >
                     Calendario
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.vistaBtn, vista === "libro" && styles.vistaBtnActivo]}
-                  onPress={() => setVista("libro")}
-                >
-                  <Ionicons
-                    name="book-outline"
-                    size={15}
-                    color={vista === "libro" ? "#0e1a0e" : colors.muted}
-                  />
-                  <Text style={[styles.vistaBtnText, vista === "libro" && styles.vistaBtnTextActivo]}>
-                    Libro
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -601,6 +638,7 @@ const makeStyles = (colors) =>
     },
     backBtn: { padding: 4 },
     kicker: { color: colors.greenDark, fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
+    kickerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
     title: { color: colors.text, fontSize: 20, fontWeight: "800", marginTop: 2 },
     titleRow: { flexDirection: "row", alignItems: "flex-end", gap: 8, flexWrap: "nowrap" },
     headerFecha: {
@@ -609,7 +647,6 @@ const makeStyles = (colors) =>
       fontSize: 12.5,
       fontWeight: "700",
       textTransform: "capitalize",
-      marginBottom: 3,
     },
     rachaPill: {
       paddingHorizontal: 10,
@@ -621,7 +658,7 @@ const makeStyles = (colors) =>
     },
     rachaText: { color: colors.green, fontSize: 13, fontWeight: "800" },
 
-    scroll: { paddingHorizontal: 16, paddingBottom: 30, gap: 12 },
+    scroll: { flexGrow: 1, paddingHorizontal: 16, paddingBottom: 30, gap: 12 },
 
     fechaRow: {
       flexDirection: "row",
@@ -760,24 +797,37 @@ const makeStyles = (colors) =>
       textTransform: "capitalize",
     },
 
-    vistaToggle: { flexDirection: "row", gap: 7 },
+    vistaToggle: {
+      position: "relative",
+      flexDirection: "row",
+      padding: 4,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+    },
+    vistaThumb: {
+      position: "absolute",
+      top: 4,
+      bottom: 4,
+      left: 4,
+      borderRadius: 999,
+      backgroundColor: colors.greenBright,
+    },
     vistaBtn: {
       flex: 1,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: 5,
-      paddingVertical: 10,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: colors.cardBorder,
-      backgroundColor: colors.card,
+      gap: 6,
+      paddingVertical: 9,
+      borderRadius: 999,
     },
-    vistaBtnActivo: { backgroundColor: colors.greenBright, borderColor: colors.greenBright },
     vistaBtnText: { color: colors.muted, fontSize: 13, fontWeight: "800" },
     vistaBtnTextActivo: { color: "#0e1a0e" },
 
     calBox: {
+      flexGrow: 1,
       padding: 12,
       borderRadius: 14,
       borderWidth: 1,
@@ -826,6 +876,7 @@ const makeStyles = (colors) =>
 
     /* Hoja de cuaderno: papel crema a propósito, no cambia con el tema */
     libroPage: {
+      flexGrow: 1,
       minHeight: 440,
       padding: 18,
       paddingLeft: 34,
