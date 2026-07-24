@@ -468,7 +468,7 @@ function Switch({ value, onToggle, colors }) {
 const makeStyles = (colors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.bg },
-    scroll: { padding: 16, paddingBottom: 100 },
+    scroll: { padding: 16, paddingTop: 2, paddingBottom: 100 },
     header: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginBottom: 12, position: "relative" },
     hidden: { display: "none" },
     panelSwitch: {

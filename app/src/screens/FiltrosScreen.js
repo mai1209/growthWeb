@@ -349,7 +349,7 @@ export default function FiltrosScreen() {
       ) : period === "year" ? (
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ padding: 16, paddingTop: 8, paddingBottom: 30, gap: 10 }}
+          contentContainerStyle={{ padding: 16, paddingTop: 2, paddingBottom: 30, gap: 10 }}
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={fetchData} tintColor={colors.green} />
           }
@@ -522,7 +522,7 @@ export default function FiltrosScreen() {
 
 const makeStyles = (colors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  topBar: { paddingHorizontal: 16, paddingTop: 12, gap: 10 },
+  topBar: { paddingHorizontal: 16, paddingTop: 2, gap: 10 },
   monthNav: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   monthLabel: { color: colors.text, fontSize: 17, fontWeight: "800", textTransform: "capitalize" },
   topActions: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },

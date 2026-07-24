@@ -180,7 +180,7 @@ export default function CompartidosScreen() {
             </View>
 
             <ScrollView
-              contentContainerStyle={{ padding: 16, paddingTop: 12, paddingBottom: 100 }}
+              contentContainerStyle={{ padding: 16, paddingTop: 2, paddingBottom: 100 }}
               refreshControl={
                 <RefreshControl refreshing={false} onRefresh={refreshDetail} tintColor={colors.green} />
               }
@@ -464,7 +464,7 @@ const makeStyles = (colors) => StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 2,
     paddingBottom: 8,
   },
   listTitle: { color: colors.text, fontSize: 20, fontWeight: "800" },

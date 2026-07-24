@@ -170,7 +170,7 @@ export default function TareasScreen() {
           <FlatList
             data={dayTasks}
             keyExtractor={(item) => item._id}
-            contentContainerStyle={{ padding: 16, paddingTop: 12, gap: 10, paddingBottom: 90 }}
+            contentContainerStyle={{ padding: 16, paddingTop: 2, gap: 10, paddingBottom: 90 }}
             refreshControl={
               <RefreshControl refreshing={false} onRefresh={fetchTasks} tintColor={colors.green} />
             }
@@ -306,7 +306,7 @@ const makeStyles = (colors) => StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 2,
   },
   dateBtn: {
     flexDirection: "row",

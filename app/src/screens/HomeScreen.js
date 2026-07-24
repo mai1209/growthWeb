@@ -783,9 +783,9 @@ export default function HomeScreen() {
 
 const makeStyles = (colors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  content: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 28 },
+  content: { paddingHorizontal: 16, paddingTop: 2, paddingBottom: 28 },
 
-  fixedHeader: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 2, backgroundColor: colors.bg },
+  fixedHeader: { paddingHorizontal: 16, paddingTop: 2, paddingBottom: 2, backgroundColor: colors.bg },
   cardStack: { position: "relative" },
 
   // Selector segmentado tipo píldora (mismo lenguaje que Filtros/Métricas)

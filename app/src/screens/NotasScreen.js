@@ -236,7 +236,7 @@ export default function NotasScreen() {
         <ActivityIndicator color={colors.green} style={{ marginTop: 30 }} />
       ) : (
         <ScrollView
-          contentContainerStyle={{ padding: 16, paddingTop: 8, paddingBottom: 90 }}
+          contentContainerStyle={{ padding: 16, paddingTop: 2, paddingBottom: 90 }}
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={fetchNotes} tintColor={colors.green} />
           }
@@ -435,7 +435,7 @@ const makeStyles = (colors) => StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 2,
     paddingBottom: 8,
     gap: 10,
   },

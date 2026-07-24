@@ -291,7 +291,7 @@ const makeStyles = (colors) =>
     safe: { flex: 1, backgroundColor: colors.bg },
     fixedHeader: {
       paddingHorizontal: 16,
-      paddingTop: 12,
+      paddingTop: 2,
       paddingBottom: 12,
       gap: 12,
       backgroundColor: colors.bg,
