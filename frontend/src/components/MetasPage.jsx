@@ -3,6 +3,7 @@ import {
   FiBarChart2,
   FiCheck,
   FiCheckCircle,
+  FiCheckSquare,
   FiEdit2,
   FiFlag,
   FiPause,
@@ -12,8 +13,20 @@ import {
   FiTrash2,
   FiX,
 } from "react-icons/fi";
-import { metaService } from "../api";
+import { metaService, taskService } from "../api";
 import style from "../style/Metas.module.css";
+
+const URGENCIAS = [
+  { value: "importante", label: "Importante" },
+  { value: "urgente", label: "Urgente" },
+  { value: "obligaciones", label: "Obligación" },
+  { value: "no importante", label: "Sin prisa" },
+];
+const hoyYMD = () => {
+  const d = new Date();
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+};
 
 const HORIZONTES = [
   { value: "corto", label: "Corto plazo", hint: "próximas semanas / meses" },
@@ -132,6 +145,9 @@ function MetasPage({ activeWorkspace }) {
   const [estadoFiltro, setEstadoFiltro] = useState("activa");
   const [detalle, setDetalle] = useState(null); // meta abierta
   const [form, setForm] = useState(null); // formulario crear/editar
+  const [taskLink, setTaskLink] = useState(null); // hito -> tarea { meta, indice, texto }
+  const [taskForm, setTaskForm] = useState(null); // datos del form de tarea
+  const [taskSaving, setTaskSaving] = useState(false);
   const [chartsOpen, setChartsOpen] = useState(
     () => typeof localStorage !== "undefined" && localStorage.getItem("gw-metas-charts") === "1"
   );
@@ -180,6 +196,49 @@ function MetasPage({ activeWorkspace }) {
       return data;
     } catch {
       return null;
+    }
+  };
+
+  // Al elegir "Agregar a tarea" en un hito, precargamos el form de tarea.
+  useEffect(() => {
+    if (taskLink) {
+      setTaskForm({
+        meta: taskLink.texto,
+        fecha: hoyYMD(),
+        horario: "",
+        urgencia: "importante",
+        color: "color1",
+      });
+    } else {
+      setTaskForm(null);
+    }
+  }, [taskLink]);
+
+  const guardarTareaDeHito = async (event) => {
+    event.preventDefault();
+    if (!taskForm?.meta.trim() || taskSaving) return;
+    setTaskSaving(true);
+    try {
+      await taskService.create({
+        meta: taskForm.meta.trim(),
+        tipo: "task",
+        fecha: taskForm.fecha,
+        horario: taskForm.horario || "",
+        urgencia: taskForm.urgencia,
+        color: taskForm.color,
+        metaId: taskLink.meta._id,
+        hitoIndex: taskLink.indice,
+      });
+      setTaskLink(null);
+      // Recargamos para ver el hito ya vinculado ("En tareas").
+      const { data } = await metaService.getAll();
+      const lista = Array.isArray(data) ? data : [];
+      setMetas(lista);
+      setDetalle((prev) => (prev ? lista.find((m) => m._id === prev._id) || prev : prev));
+    } catch {
+      /* nada */
+    } finally {
+      setTaskSaving(false);
     }
   };
 
@@ -462,26 +521,41 @@ function MetasPage({ activeWorkspace }) {
               ) : (
                 <ul className={style.hitosLista}>
                   {meta.hitos.map((hito, indice) => (
-                    <li key={indice} className={style.hitoItem}>
-                      <button
-                        type="button"
-                        className={`${style.hitoCheck} ${hito.hecho ? style.hitoCheckOn : ""}`}
-                        onClick={() => toggleHito(meta, indice)}
-                        aria-label={hito.hecho ? "Desmarcar hito" : "Marcar hito"}
-                      >
-                        {hito.hecho ? <FiCheck /> : null}
-                      </button>
-                      <span className={`${style.hitoTexto} ${hito.hecho ? style.hitoHecho : ""}`}>
-                        {hito.texto}
-                      </span>
-                      <button
-                        type="button"
-                        className={style.hitoBorrar}
-                        onClick={() => borrarHito(meta, indice)}
-                        aria-label="Borrar hito"
-                      >
-                        <FiTrash2 />
-                      </button>
+                    <li key={indice} className={style.hitoRow}>
+                      <div className={style.hitoItem}>
+                        <button
+                          type="button"
+                          className={`${style.hitoCheck} ${hito.hecho ? style.hitoCheckOn : ""}`}
+                          onClick={() => toggleHito(meta, indice)}
+                          aria-label={hito.hecho ? "Desmarcar hito" : "Marcar hito"}
+                        >
+                          {hito.hecho ? <FiCheck /> : null}
+                        </button>
+                        <span className={`${style.hitoTexto} ${hito.hecho ? style.hitoHecho : ""}`}>
+                          {hito.texto}
+                        </span>
+                        <button
+                          type="button"
+                          className={style.hitoBorrar}
+                          onClick={() => borrarHito(meta, indice)}
+                          aria-label="Borrar hito"
+                        >
+                          <FiTrash2 />
+                        </button>
+                      </div>
+                      {hito.taskId ? (
+                        <span className={style.hitoEnTareas}>
+                          <FiCheckSquare /> En tareas
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className={style.hitoAddTarea}
+                          onClick={() => setTaskLink({ meta, indice, texto: hito.texto })}
+                        >
+                          <FiPlus /> Agregar a tarea
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -939,6 +1013,84 @@ function MetasPage({ activeWorkspace }) {
 
       {detalle ? renderDetalle() : null}
       {form ? renderForm() : null}
+
+      {/* Crear tarea desde un hito (queda vinculada) */}
+      {taskForm ? (
+        <div className={style.overlay} onClick={() => setTaskLink(null)}>
+          <form
+            className={style.panel}
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={guardarTareaDeHito}
+          >
+            <div className={style.panelHead}>
+              <h2 className={style.panelTitulo}>Agregar hito a Tareas</h2>
+              <button
+                type="button"
+                className={style.iconBtn}
+                onClick={() => setTaskLink(null)}
+                aria-label="Cerrar"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <label className={style.campo}>
+              <span>Tarea</span>
+              <input
+                className={style.input}
+                value={taskForm.meta}
+                onChange={(e) => setTaskForm({ ...taskForm, meta: e.target.value })}
+                autoFocus
+              />
+            </label>
+
+            <div className={style.dosCol}>
+              <label className={style.campo}>
+                <span>Fecha</span>
+                <input
+                  className={style.input}
+                  type="date"
+                  value={taskForm.fecha}
+                  onChange={(e) => setTaskForm({ ...taskForm, fecha: e.target.value })}
+                />
+              </label>
+              <label className={style.campo}>
+                <span>Horario (opcional)</span>
+                <input
+                  className={style.input}
+                  type="time"
+                  value={taskForm.horario}
+                  onChange={(e) => setTaskForm({ ...taskForm, horario: e.target.value })}
+                />
+              </label>
+            </div>
+
+            <div className={style.campo}>
+              <span>Prioridad</span>
+              <div className={style.chipsRow}>
+                {URGENCIAS.map((u) => (
+                  <button
+                    key={u.value}
+                    type="button"
+                    className={`${style.chip} ${taskForm.urgencia === u.value ? style.chipActivo : ""}`}
+                    onClick={() => setTaskForm({ ...taskForm, urgencia: u.value })}
+                  >
+                    {u.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className={style.btnGuardar}
+              disabled={!taskForm.meta.trim() || taskSaving}
+            >
+              {taskSaving ? "Guardando…" : "Crear tarea"}
+            </button>
+          </form>
+        </div>
+      ) : null}
     </section>
   );
 }
