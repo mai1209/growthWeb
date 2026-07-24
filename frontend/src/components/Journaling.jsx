@@ -255,6 +255,20 @@ function Journaling() {
     aplicarPreguntas(pl.base, pl.extras.map((texto) => ({ id: nuevoId(), texto })));
   };
 
+  // Detecta qué plantilla coincide con las preguntas actuales (para marcarla).
+  const plantillaActivaId = (() => {
+    const eq = (a, b) => String(a || "").trim() === String(b || "").trim();
+    const found = PLANTILLAS.find(
+      (pl) =>
+        eq(pl.base.gratitud, preguntas.gratitud) &&
+        eq(pl.base.mejor, preguntas.mejor) &&
+        eq(pl.base.distinto, preguntas.distinto) &&
+        pl.extras.length === extras.length &&
+        pl.extras.every((t, i) => eq(t, extras[i]?.texto))
+    );
+    return found?.id || null;
+  })();
+
   // Guarda ya lo pendiente (antes de cambiar de día) y navega a otro día.
   const flushGuardado = async () => {
     if (guardadoRef.current) {
@@ -614,13 +628,20 @@ function Journaling() {
                     <button
                       key={pl.id}
                       type="button"
-                      className={style.plantillaItem}
+                      className={`${style.plantillaItem} ${
+                        pl.id === plantillaActivaId ? style.plantillaItemActivo : ""
+                      }`}
                       onClick={() => aplicarPlantilla(pl)}
                       role="menuitem"
                     >
-                      <span className={style.plantillaNivel}>{pl.nivel}</span>
-                      <span className={style.plantillaTema}>{pl.tema}</span>
-                      <span className={style.plantillaHint}>{pl.hint}</span>
+                      <span className={style.plantillaTextos}>
+                        <span className={style.plantillaNivel}>{pl.nivel}</span>
+                        <span className={style.plantillaTema}>{pl.tema}</span>
+                        <span className={style.plantillaHint}>{pl.hint}</span>
+                      </span>
+                      {pl.id === plantillaActivaId ? (
+                        <FiCheck className={style.plantillaCheck} />
+                      ) : null}
                     </button>
                   ))}
                   <p className={style.plantillasPie}>

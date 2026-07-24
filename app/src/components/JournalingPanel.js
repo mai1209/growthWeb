@@ -41,6 +41,46 @@ const CAMPOS = [
   { campo: "distinto", placeholder: "Sin culpa: es para mañana." },
 ];
 
+// Plantillas de preguntas por nivel/tema (arranque; se pueden editar igual).
+const PLANTILLAS = [
+  {
+    id: "introspeccion",
+    nivel: "Básico",
+    tema: "Introspección",
+    hint: "Conocerte un poco más cada día",
+    base: {
+      gratitud: "¿Cómo me siento hoy y por qué?",
+      mejor: "¿Qué fue lo más importante que me pasó hoy?",
+      distinto: "¿Qué necesito hoy que no me estoy dando?",
+    },
+    extras: ["¿Por qué estoy agradecido/a hoy?"],
+  },
+  {
+    id: "estoicismo",
+    nivel: "Intermedio",
+    tema: "Estoicismo",
+    hint: "Lo que controlás, la virtud, el presente",
+    base: {
+      gratitud: "¿Qué estuvo bajo mi control hoy y qué no?",
+      mejor: "¿Actué con virtud o me dominó la emoción?",
+      distinto: "¿Qué obstáculo de hoy puedo volver aprendizaje?",
+    },
+    extras: ["Si hoy fuera mi último día, ¿lo viví bien?"],
+  },
+  {
+    id: "productividad",
+    nivel: "Avanzado",
+    tema: "Productividad",
+    hint: "Foco, ejecución y mejora continua",
+    base: {
+      gratitud: "¿Cuál fue mi tarea más importante y la completé?",
+      mejor: "¿Qué me dio impulso y qué me frenó hoy?",
+      distinto: "¿Qué voy a hacer distinto mañana?",
+    },
+    extras: ["¿Cuál es la única cosa que hará que mañana valga la pena?"],
+  },
+];
+
 // Color de cada nivel de ánimo (rojo → verde) para el gráfico.
 const ANIMO_COLORS = { 1: "#e5484d", 2: "#e58a3a", 3: "#c9a23a", 4: "#8fbf3f", 5: "#14d95f" };
 
@@ -178,6 +218,7 @@ export default function JournalingPanel({ visible, onClose }) {
   const [borradorPreguntas, setBorradorPreguntas] = useState(PREGUNTAS_DEFAULT);
   const [extras, setExtras] = useState([]); // definiciones [{id, texto}]
   const [borradorExtras, setBorradorExtras] = useState([]);
+  const [plantillasOpen, setPlantillasOpen] = useState(false);
   const [vista, setVista] = useState("libro"); // libro (hoja editable) | calendario
   const [calRef, setCalRef] = useState(() => new Date());
   const guardadoRef = useRef(null);
@@ -306,6 +347,32 @@ export default function JournalingPanel({ visible, onClose }) {
     }
   };
 
+  const aplicarPlantilla = async (pl) => {
+    setPlantillasOpen(false);
+    const limpio = pl.extras.map((texto) => ({ id: nuevoId(), texto }));
+    setPreguntas({ ...PREGUNTAS_DEFAULT, ...pl.base });
+    setExtras(limpio);
+    try {
+      const { data } = await journalService.savePreguntas({ ...pl.base, extras: limpio, fecha });
+      if (data?.preguntas) setPreguntas({ ...PREGUNTAS_DEFAULT, ...data.preguntas });
+      if (Array.isArray(data?.extras)) setExtras(data.extras);
+    } catch {
+      /* quedó lo optimista */
+    }
+  };
+
+  // Detecta qué plantilla coincide con las preguntas actuales (para marcarla).
+  const eqTxt = (a, b) => String(a || "").trim() === String(b || "").trim();
+  const plantillaActivaId =
+    PLANTILLAS.find(
+      (pl) =>
+        eqTxt(pl.base.gratitud, preguntas.gratitud) &&
+        eqTxt(pl.base.mejor, preguntas.mejor) &&
+        eqTxt(pl.base.distinto, preguntas.distinto) &&
+        pl.extras.length === extras.length &&
+        pl.extras.every((t, i) => eqTxt(t, extras[i]?.texto))
+    )?.id || null;
+
   // Guarda lo pendiente antes de cambiar de día (para no perder nada) y navega.
   const flushGuardado = async () => {
     if (guardadoRef.current) {
@@ -400,6 +467,16 @@ export default function JournalingPanel({ visible, onClose }) {
                 <Text style={styles.animoLabel}>¿CÓMO TE SENTÍS HOY?</Text>
                 <AnimoSlider value={entrada.animo} onChange={onAnimoChange} styles={styles} />
               </View>
+
+              {/* Botón de plantillas de preguntas */}
+              <TouchableOpacity
+                style={styles.plantillasBtn}
+                onPress={() => setPlantillasOpen(true)}
+              >
+                <Ionicons name="grid-outline" size={15} color={colors.text} />
+                <Text style={styles.plantillasBtnText}>Plantillas</Text>
+                <Ionicons name="chevron-down" size={14} color={colors.muted} />
+              </TouchableOpacity>
 
               {/* Switch Libro / Calendario con pastilla deslizante */}
               <View
@@ -718,6 +795,48 @@ export default function JournalingPanel({ visible, onClose }) {
             </ScrollView>
           </KeyboardAvoidingView>
         )}
+
+        {/* Menú de plantillas */}
+        <Modal
+          visible={plantillasOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setPlantillasOpen(false)}
+        >
+          <TouchableOpacity
+            style={styles.plantillasBackdrop}
+            activeOpacity={1}
+            onPress={() => setPlantillasOpen(false)}
+          >
+            <View style={styles.plantillasSheet}>
+              <Text style={styles.plantillasTitulo}>Elegí un set de preguntas</Text>
+              {PLANTILLAS.map((pl) => {
+                const activa = pl.id === plantillaActivaId;
+                return (
+                  <TouchableOpacity
+                    key={pl.id}
+                    style={[styles.plantillaItem, activa && styles.plantillaItemActivo]}
+                    onPress={() => aplicarPlantilla(pl)}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.plantillaNivel, activa && styles.plantillaTxtActivo]}>
+                        {pl.nivel}
+                      </Text>
+                      <Text style={[styles.plantillaTema, activa && styles.plantillaTxtActivo]}>
+                        {pl.tema}
+                      </Text>
+                      <Text style={[styles.plantillaHint, activa && styles.plantillaTxtActivo]}>
+                        {pl.hint}
+                      </Text>
+                    </View>
+                    {activa ? <Ionicons name="checkmark" size={18} color="#0e1a0e" /> : null}
+                  </TouchableOpacity>
+                );
+              })}
+              <Text style={styles.plantillasPie}>Después las podés editar o escribir las tuyas.</Text>
+            </View>
+          </TouchableOpacity>
+        </Modal>
       </View>
     </Modal>
   );
@@ -1059,6 +1178,61 @@ const makeStyles = (colors) =>
       textAlignVertical: "top",
     },
     libroInputLibre: { minHeight: 90 },
+    plantillasBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 5,
+      paddingVertical: 9,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+    },
+    plantillasBtnText: { color: colors.text, fontSize: 13, fontWeight: "800" },
+    plantillasBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.45)",
+      justifyContent: "center",
+      paddingHorizontal: 22,
+    },
+    plantillasSheet: {
+      borderRadius: 18,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      padding: 10,
+    },
+    plantillasTitulo: {
+      color: colors.muted,
+      fontSize: 11,
+      fontWeight: "800",
+      letterSpacing: 0.6,
+      textTransform: "uppercase",
+      marginHorizontal: 6,
+      marginBottom: 6,
+      marginTop: 2,
+    },
+    plantillaItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      padding: 12,
+      borderRadius: 12,
+    },
+    plantillaItemActivo: { backgroundColor: colors.greenBright },
+    plantillaNivel: {
+      color: colors.green,
+      fontSize: 10.5,
+      fontWeight: "800",
+      letterSpacing: 0.4,
+      textTransform: "uppercase",
+    },
+    plantillaTema: { color: colors.text, fontSize: 15, fontWeight: "800", marginTop: 1 },
+    plantillaHint: { color: colors.muted, fontSize: 12.5, marginTop: 1 },
+    plantillaTxtActivo: { color: "#0e1a0e" },
+    plantillasPie: { color: colors.muted, fontSize: 11.5, marginHorizontal: 6, marginTop: 4, marginBottom: 2 },
+
     extraEditRow: { flexDirection: "row", alignItems: "center", gap: 8 },
     agregarPreguntaBtn: {
       alignSelf: "flex-start",

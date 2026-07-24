@@ -124,8 +124,9 @@
 
 .plantillaItem {
   display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   padding: 0.6rem 0.7rem;
   border: none;
   border-radius: 10px;
@@ -135,8 +136,35 @@
   transition: background 0.15s ease;
 }
 
+.plantillaTextos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
 .plantillaItem:hover {
   background: rgba(127, 137, 129, 0.14);
+}
+
+/* Plantilla seleccionada: fondo verde y tilde */
+.plantillaItemActivo,
+.plantillaItemActivo:hover {
+  background: var(--accent, #5dc72d);
+}
+
+.plantillaItemActivo .plantillaNivel {
+  color: rgba(14, 26, 14, 0.7);
+}
+
+.plantillaItemActivo .plantillaTema,
+.plantillaItemActivo .plantillaHint {
+  color: var(--accent-contrast, #0e1a0e);
+}
+
+.plantillaCheck {
+  flex-shrink: 0;
+  color: var(--accent-contrast, #0e1a0e);
 }
 
 .plantillaNivel {
