@@ -12,6 +12,7 @@ import {
   Platform,
   Alert,
   RefreshControl,
+  Keyboard,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -113,6 +114,18 @@ export default function MetasScreen() {
   const [numeroNuevo, setNumeroNuevo] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [tecladoAbierto, setTecladoAbierto] = useState(false);
+
+  useEffect(() => {
+    const showEvt = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvt = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const s1 = Keyboard.addListener(showEvt, () => setTecladoAbierto(true));
+    const s2 = Keyboard.addListener(hideEvt, () => setTecladoAbierto(false));
+    return () => {
+      s1.remove();
+      s2.remove();
+    };
+  }, []);
   const [chartsOpen, setChartsOpen] = useState(false);
 
   const cargar = useCallback(async () => {
@@ -576,7 +589,7 @@ export default function MetasScreen() {
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
-          keyboardVerticalOffset={insets.top + 8}
+          keyboardVerticalOffset={0}
         >
           <ScrollView contentContainerStyle={styles.modalScroll} keyboardShouldPersistTaps="handled">
             <Text style={styles.campoLabel}>¿Qué querés lograr?</Text>
@@ -622,7 +635,12 @@ export default function MetasScreen() {
               placeholder="Finanzas, Salud…"
               placeholderTextColor={colors.muted}
             />
-            <View style={styles.chipsWrap}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.chipsRow}
+            >
               {AREAS.map((a) => (
                 <TouchableOpacity
                   key={a}
@@ -632,7 +650,7 @@ export default function MetasScreen() {
                   <Text style={[styles.chipText, form.area === a && styles.chipTextActivo]}>{a}</Text>
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
 
             <Text style={styles.campoLabel}>Fecha objetivo (opcional)</Text>
             <View style={styles.addRow}>
@@ -778,7 +796,7 @@ export default function MetasScreen() {
             ) : null}
           </ScrollView>
 
-          <View style={[styles.modalFoot, { paddingBottom: insets.bottom + 12 }]}>
+          <View style={[styles.modalFoot, { paddingBottom: tecladoAbierto ? 10 : insets.bottom + 12 }]}>
             <TouchableOpacity
               style={[styles.btnGuardar, (!form.titulo.trim() || guardando) && { opacity: 0.5 }]}
               onPress={guardarForm}
@@ -1126,7 +1144,7 @@ const makeStyles = (colors) =>
     backBtn: { padding: 4 },
     modalTitulo: { flex: 1, textAlign: "center", color: colors.text, fontSize: 16, fontWeight: "800" },
     iconBtn: { padding: 8 },
-    modalScroll: { paddingHorizontal: 16, paddingBottom: 26, gap: 10 },
+    modalScroll: { paddingHorizontal: 16, paddingBottom: 40, gap: 10 },
 
     detalleTitulo: { color: colors.text, fontSize: 21, fontWeight: "800", lineHeight: 27 },
     detalleDesc: { color: colors.muted, fontSize: 13.5, lineHeight: 19 },
