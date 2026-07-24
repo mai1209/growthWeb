@@ -29,7 +29,6 @@ import {
   FiShoppingCart,
   FiBook,
   FiFeather,
-  FiChevronDown,
   FiTrash2,
   FiType,
   FiUnderline,
@@ -378,7 +377,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const [isDirty, setIsDirty] = useState(false);
   const [sizeInput, setSizeInput] = useState(DEFAULT_FONT_PX);
   const [view, setView] = useState("notes");
-  const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const [journalAyudaOpen, setJournalAyudaOpen] = useState(false);
   const [activeFolder, setActiveFolder] = useState(ALL_FOLDERS);
   const [customFolders, setCustomFolders] = useState(() => readStoredFolders(activeWorkspace));
@@ -1603,81 +1601,40 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                       Calendario
                     </button>
                   ) : null}
-                  {/* Las herramientas extra viven en un desplegable propio */}
-                  <div className={style.toolsWrap}>
+                  {/* Herramientas extra, todas inline en la misma barra */}
+                  <button
+                    type="button"
+                    className={`${style.viewToggleButton} ${effectiveView === "shopping" ? style.viewToggleButtonActive : ""}`}
+                    onClick={() => setView("shopping")}
+                    aria-pressed={effectiveView === "shopping"}
+                  >
+                    <FiShoppingCart />
+                    Lista de compras
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.viewToggleButton} ${effectiveView === "afirmaciones" ? style.viewToggleButtonActive : ""}`}
+                    onClick={() => setView("afirmaciones")}
+                    aria-pressed={effectiveView === "afirmaciones"}
+                  >
+                    <FiBook />
+                    Afirmaciones
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.viewToggleButton} ${effectiveView === "journal" ? style.viewToggleButtonActive : ""}`}
+                    onClick={() => setView("journal")}
+                    aria-pressed={effectiveView === "journal"}
+                  >
+                    <FiFeather />
+                    Journaling
+                  </button>
+                  {effectiveView !== "shopping" &&
+                  effectiveView !== "afirmaciones" &&
+                  effectiveView !== "journal" ? (
                     <button
                       type="button"
-                      className={`${style.viewToggleButton} ${
-                        effectiveView === "shopping" ||
-                        effectiveView === "afirmaciones" ||
-                        effectiveView === "journal"
-                          ? style.viewToggleButtonActive
-                          : ""
-                      }`}
-                      onClick={() => setToolsMenuOpen((prev) => !prev)}
-                      aria-expanded={toolsMenuOpen}
-                    >
-                      Más herramientas
-                      <FiChevronDown
-                        className={`${style.toolsChevron} ${toolsMenuOpen ? style.toolsChevronOpen : ""}`}
-                      />
-                    </button>
-                    {toolsMenuOpen ? (
-                      <>
-                        <div
-                          className={style.toolsBackdrop}
-                          onClick={() => setToolsMenuOpen(false)}
-                          role="presentation"
-                        />
-                        <div className={style.toolsMenu} role="menu">
-                          <button
-                            type="button"
-                            className={`${style.toolsItem} ${effectiveView === "shopping" ? style.toolsItemActive : ""}`}
-                            onClick={() => {
-                              setView("shopping");
-                              setToolsMenuOpen(false);
-                            }}
-                            role="menuitem"
-                          >
-                            <FiShoppingCart />
-                            Lista de compras
-                          </button>
-                          <button
-                            type="button"
-                            className={`${style.toolsItem} ${effectiveView === "afirmaciones" ? style.toolsItemActive : ""}`}
-                            onClick={() => {
-                              setView("afirmaciones");
-                              setToolsMenuOpen(false);
-                            }}
-                            role="menuitem"
-                          >
-                            <FiBook />
-                            Afirmaciones
-                          </button>
-                          <button
-                            type="button"
-                            className={`${style.toolsItem} ${effectiveView === "journal" ? style.toolsItemActive : ""}`}
-                            onClick={() => {
-                              setView("journal");
-                              setToolsMenuOpen(false);
-                            }}
-                            role="menuitem"
-                          >
-                            <FiFeather />
-                            Journaling
-                          </button>
-                        </div>
-                      </>
-                    ) : null}
-                  </div>
-                </div>
-                {effectiveView !== "shopping" &&
-                effectiveView !== "afirmaciones" &&
-                effectiveView !== "journal" ? (
-                  <>
-                    <button
-                      type="button"
-                      className={style.secondaryButton}
+                      className={style.viewToggleButton}
                       onClick={() => {
                         setDeckScope("all");
                         setIsDeckOpen(true);
@@ -1687,11 +1644,15 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                       <FiBookOpen />
                       Repaso{dueCountAll ? ` (${dueCountAll})` : ""}
                     </button>
-                    <button type="button" className={style.secondaryButton} onClick={() => handleNewNote()}>
-                      <FiPlus />
-                      Nueva nota
-                    </button>
-                  </>
+                  ) : null}
+                </div>
+                {effectiveView !== "shopping" &&
+                effectiveView !== "afirmaciones" &&
+                effectiveView !== "journal" ? (
+                  <button type="button" className={style.secondaryButton} onClick={() => handleNewNote()}>
+                    <FiPlus />
+                    Nueva nota
+                  </button>
                 ) : null}
               </div>
             </div>
