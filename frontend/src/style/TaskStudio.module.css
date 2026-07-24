@@ -35,6 +35,34 @@
   letter-spacing: 0.12em;
 }
 
+/* Fila del kicker + enlace de ayuda del journal */
+.journalKickerRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.journalAyudaLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.1rem 0.3rem;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.journalAyudaLink:hover {
+  color: var(--color-verde, #5dc72d);
+}
+
 
 
 .layout {

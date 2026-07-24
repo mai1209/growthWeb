@@ -15,6 +15,7 @@ import {
   FiFileText,
   FiFolder,
   FiFolderPlus,
+  FiHelpCircle,
   FiHash,
   FiItalic,
   FiLayers,
@@ -41,6 +42,7 @@ import { taskService } from "../api";
 import ShoppingLists from "./ShoppingLists";
 import Afirmaciones from "./Afirmaciones";
 import Journaling from "./Journaling";
+import JournalAyuda from "./JournalAyuda";
 import style from "../style/TaskStudio.module.css";
 
 // Habilita tamaño de fuente por píxeles (ej. "16px") en vez de small/large.
@@ -377,6 +379,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const [sizeInput, setSizeInput] = useState(DEFAULT_FONT_PX);
   const [view, setView] = useState("notes");
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
+  const [journalAyudaOpen, setJournalAyudaOpen] = useState(false);
   const [activeFolder, setActiveFolder] = useState(ALL_FOLDERS);
   const [customFolders, setCustomFolders] = useState(() => readStoredFolders(activeWorkspace));
   const [isCompact, setIsCompact] = useState(
@@ -1542,15 +1545,26 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
         <section className={style.listCard}>
             <div className={style.editorHeader}>
               <div>
-                <p className={style.cardKicker}>
-                  {effectiveView === "shopping"
-                    ? "Listas"
-                    : effectiveView === "afirmaciones"
-                    ? "Afirmaciones"
-                    : effectiveView === "journal"
-                    ? "Journaling"
-                    : "Notas"}
-                </p>
+                <div className={style.journalKickerRow}>
+                  <p className={style.cardKicker}>
+                    {effectiveView === "shopping"
+                      ? "Listas"
+                      : effectiveView === "afirmaciones"
+                      ? "Afirmaciones"
+                      : effectiveView === "journal"
+                      ? "Journaling"
+                      : "Notas"}
+                  </p>
+                  {effectiveView === "journal" ? (
+                    <button
+                      type="button"
+                      className={style.journalAyudaLink}
+                      onClick={() => setJournalAyudaOpen(true)}
+                    >
+                      <FiHelpCircle /> ¿Necesitás ayuda?
+                    </button>
+                  ) : null}
+                </div>
                 <h2 className={style.listTitle}>
                   {effectiveView === "shopping"
                     ? "Listas de compras"
@@ -1828,7 +1842,12 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
             ) : effectiveView === "afirmaciones" ? (
               <Afirmaciones />
             ) : effectiveView === "journal" ? (
-              <Journaling />
+              <>
+                <Journaling />
+                {journalAyudaOpen ? (
+                  <JournalAyuda onClose={() => setJournalAyudaOpen(false)} />
+                ) : null}
+              </>
             ) : (
               <div className={style.notesLayout}>
                 <aside className={style.folderSidebar} aria-label="Carpetas">
