@@ -1,6 +1,32 @@
 import { useState } from "react";
-import { FiChevronDown, FiCopy, FiCheck, FiHelpCircle, FiX } from "react-icons/fi";
+import {
+  FiAnchor,
+  FiChevronDown,
+  FiCheck,
+  FiCompass,
+  FiCopy,
+  FiDroplet,
+  FiGift,
+  FiHeart,
+  FiHelpCircle,
+  FiTarget,
+  FiUmbrella,
+  FiUsers,
+  FiX,
+} from "react-icons/fi";
 import style from "../style/JournalAyuda.module.css";
+
+// Íconos monocromos por tema (blancos, como en categorías).
+const ICONOS = {
+  autoconocimiento: FiCompass,
+  gratitud: FiGift,
+  emociones: FiDroplet,
+  vinculos: FiUsers,
+  estoicismo: FiAnchor,
+  metas: FiTarget,
+  "amor-propio": FiHeart,
+  dificiles: FiUmbrella,
+};
 
 // Centro de ayuda del journal. Pensado para ir sumando secciones: hoy están
 // las "Preguntas por tema"; más adelante se agregan otras (guías, ejemplos…).
@@ -203,16 +229,16 @@ function JournalAyuda({ onClose }) {
     <div className={style.overlay} onClick={onClose} role="presentation">
       <div className={style.panel} onClick={(e) => e.stopPropagation()}>
         <header className={style.head}>
-          <div className={style.headTitulo}>
-            <FiHelpCircle className={style.headIcono} />
-            <div>
-              <p className={style.kicker}>Ayuda para tu journal</p>
-              <h2 className={style.titulo}>¿No sabés qué escribir?</h2>
-            </div>
+          <div>
+            <p className={style.kicker}>Ayuda para tu journal</p>
+            <h2 className={style.titulo}>¿No sabés qué escribir?</h2>
           </div>
-          <button type="button" className={style.cerrar} onClick={onClose} aria-label="Cerrar">
-            <FiX />
-          </button>
+          <div className={style.headRight}>
+            <FiHelpCircle className={style.headIcono} />
+            <button type="button" className={style.cerrar} onClick={onClose} aria-label="Cerrar">
+              <FiX />
+            </button>
+          </div>
         </header>
 
         <div className={style.cuerpo}>
@@ -225,6 +251,7 @@ function JournalAyuda({ onClose }) {
             <div className={style.temas}>
               {TEMAS.map((tema) => {
                 const abierto = temaAbierto === tema.id;
+                const Icono = ICONOS[tema.id] || FiCompass;
                 return (
                   <div key={tema.id} className={style.tema}>
                     <button
@@ -233,7 +260,7 @@ function JournalAyuda({ onClose }) {
                       onClick={() => setTemaAbierto(abierto ? null : tema.id)}
                       aria-expanded={abierto}
                     >
-                      <span className={style.temaEmoji}>{tema.emoji}</span>
+                      <Icono className={style.temaIcono} />
                       <span className={style.temaTitulo}>{tema.titulo}</span>
                       <span className={style.temaCount}>{tema.preguntas.length}</span>
                       <FiChevronDown

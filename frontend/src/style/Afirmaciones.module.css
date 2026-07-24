@@ -19,11 +19,7 @@
   justify-content: space-between;
   gap: 0.8rem;
   flex-wrap: wrap;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  background: var(--surface-card);
-  box-shadow: var(--shadow-xs);
+  padding: 0.4rem 0.2rem;
 }
 
 .fechaBloque {
@@ -161,7 +157,7 @@
   min-width: 0;
   padding: 0.62rem 0.8rem;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: 14px;
   background: var(--surface-input);
   color: var(--color-text);
   font-size: 0.95rem;
@@ -169,12 +165,20 @@
   font-family: inherit;
   resize: none;
   overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+
+/* Hover: borde y texto más brillantes, bien redondeado */
+.input:hover {
+  border-color: #5dc72d;
+  color: #eafff0;
+  box-shadow: 0 0 0 3px rgba(93, 199, 45, 0.14);
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--accent-border);
-  box-shadow: var(--ring-accent);
+  border-color: #5dc72d;
+  box-shadow: 0 0 0 3px rgba(93, 199, 45, 0.2);
 }
 
 .borrar {

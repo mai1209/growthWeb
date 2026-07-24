@@ -1569,6 +1569,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     <span className={style.listCount}>{boardTasks.length}</span>
                   ) : null}
                 </h2>
+              </div>
+              <div className={style.listHeaderActions}>
                 {effectiveView === "journal" ? (
                   <button
                     type="button"
@@ -1578,8 +1580,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     <FiHelpCircle /> ¿Necesitás ayuda?
                   </button>
                 ) : null}
-              </div>
-              <div className={style.listHeaderActions}>
                 {/* En móvil (isCompact) mostramos Notas + Lista de compras;
                     Calendario queda solo en desktop. */}
                 <div className={style.viewToggle} role="tablist" aria-label="Vista de notas">

@@ -31,10 +31,10 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.headTitulo {
+.headRight {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.5rem;
 }
 
 .headIcono {
@@ -125,8 +125,10 @@
   text-align: left;
 }
 
-.temaEmoji {
-  font-size: 1.1rem;
+.temaIcono {
+  width: 18px;
+  height: 18px;
+  color: var(--color-text);
 }
 
 .temaTitulo {
