@@ -93,7 +93,7 @@ function Journaling() {
   const [preguntas, setPreguntas] = useState(PREGUNTAS_DEFAULT);
   const [editandoPreguntas, setEditandoPreguntas] = useState(false);
   const [borradorPreguntas, setBorradorPreguntas] = useState(PREGUNTAS_DEFAULT);
-  const [vista, setVista] = useState("calendario"); // calendario | libro
+  const [vista, setVista] = useState("libro"); // libro | calendario
   const [libroFecha, setLibroFecha] = useState(null); // página abierta del libro
   const [calRef, setCalRef] = useState(() => new Date());
   // Páginas internas de un mismo día: el contenido fluye en columnas del ancho
@@ -132,34 +132,35 @@ function Journaling() {
     };
   }, []);
 
-  // Autoguardado, igual que Afirmaciones: sin botón de guardar.
-  const guardarDiferido = useCallback(
-    (proxima) => {
-      if (guardadoRef.current) clearTimeout(guardadoRef.current);
-      guardadoRef.current = setTimeout(async () => {
-        setGuardando(true);
-        try {
-          const { data } = await journalService.save({ ...proxima, fecha });
-          setHistorial(Array.isArray(data?.entradas) ? data.entradas : []);
-          setRacha(Number(data?.racha) || 0);
-        } catch {
-          /* reintenta en la próxima edición */
-        } finally {
-          setGuardando(false);
-        }
-      }, 800);
-    },
-    [fecha]
-  );
+  // Autoguardado PARCIAL: se mandan solo los campos tocados en esta sesión.
+  // Así un estado viejo o vacío jamás puede pisar lo que ya está guardado.
+  const pendienteRef = useRef({});
+  const guardarDiferido = useCallback(() => {
+    if (guardadoRef.current) clearTimeout(guardadoRef.current);
+    guardadoRef.current = setTimeout(async () => {
+      const cambios = { ...pendienteRef.current };
+      if (!Object.keys(cambios).length) return;
+      pendienteRef.current = {};
+      setGuardando(true);
+      try {
+        const { data } = await journalService.save({ ...cambios, fecha });
+        setHistorial(Array.isArray(data?.entradas) ? data.entradas : []);
+        setRacha(Number(data?.racha) || 0);
+      } catch {
+        // Reencola lo no guardado sin pisar ediciones nuevas.
+        pendienteRef.current = { ...cambios, ...pendienteRef.current };
+      } finally {
+        setGuardando(false);
+      }
+    }, 800);
+  }, [fecha]);
 
   useEffect(() => () => guardadoRef.current && clearTimeout(guardadoRef.current), []);
 
   const editar = (campo, valor) => {
-    setEntrada((prev) => {
-      const proxima = { ...prev, [campo]: valor };
-      guardarDiferido(proxima);
-      return proxima;
-    });
+    pendienteRef.current[campo] = valor;
+    setEntrada((prev) => ({ ...prev, [campo]: valor }));
+    guardarDiferido();
   };
 
   const guardarPreguntas = async () => {
@@ -432,21 +433,26 @@ function Journaling() {
           <span className={style.fecha}>{fechaLarga(fecha)}</span>
         </div>
         <div className={style.vistaToggle} role="tablist" aria-label="Cómo ver tus entradas">
-          <button
-            type="button"
-            className={`${style.vistaBtn} ${vista === "calendario" ? style.vistaBtnActivo : ""}`}
-            onClick={() => setVista("calendario")}
-            aria-pressed={vista === "calendario"}
-          >
-            <FiCalendar /> Vista calendario
-          </button>
+          {/* Pastilla verde que se desliza detrás de la opción activa */}
+          <span
+            className={`${style.vistaThumb} ${vista === "calendario" ? style.vistaThumbDer : ""}`}
+            aria-hidden="true"
+          />
           <button
             type="button"
             className={`${style.vistaBtn} ${vista === "libro" ? style.vistaBtnActivo : ""}`}
             onClick={() => setVista("libro")}
             aria-pressed={vista === "libro"}
           >
-            <FiBookOpen /> Vista libro
+            <FiBookOpen /> Libro
+          </button>
+          <button
+            type="button"
+            className={`${style.vistaBtn} ${vista === "calendario" ? style.vistaBtnActivo : ""}`}
+            onClick={() => setVista("calendario")}
+            aria-pressed={vista === "calendario"}
+          >
+            <FiCalendar /> Calendario
           </button>
         </div>
       </header>

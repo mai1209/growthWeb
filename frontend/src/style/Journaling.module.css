@@ -28,22 +28,41 @@
   }
 }
 
-/* ===== Toggle calendario / libro: switch segmentado en una sola línea ===== */
+/* ===== Switch Libro / Calendario con pastilla deslizante ===== */
 .vistaToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   padding: 4px;
   border: 1px solid var(--border-color);
   border-radius: 999px;
   background: var(--surface-card);
 }
 
+/* La pastilla verde que se desliza al cambiar de opción */
+.vistaThumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: 999px;
+  background: var(--accent, #5dc72d);
+  transition: transform 0.28s cubic-bezier(0.34, 1.3, 0.5, 1);
+}
+
+.vistaThumbDer {
+  transform: translateX(100%);
+}
+
 .vistaBtn {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
-  padding: 0.45rem 0.95rem;
+  padding: 0.45rem 1rem;
   border: none;
   border-radius: 999px;
   background: transparent;
@@ -52,7 +71,7 @@
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition: color 0.2s ease;
 }
 
 .vistaBtn:hover {
@@ -61,7 +80,6 @@
 
 .vistaBtnActivo,
 .vistaBtnActivo:hover {
-  background: var(--accent, #5dc72d);
   color: var(--accent-contrast, #0e1a0e);
 }
 

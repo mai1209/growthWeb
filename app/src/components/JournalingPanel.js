@@ -198,35 +198,38 @@ export default function JournalingPanel({ visible, onClose }) {
       .finally(() => setCargando(false));
   }, [visible, aplicar]);
 
-  // Autoguardado, igual que Afirmaciones.
-  const guardarDiferido = useCallback(
-    (proxima) => {
-      if (guardadoRef.current) clearTimeout(guardadoRef.current);
-      guardadoRef.current = setTimeout(async () => {
-        setGuardando(true);
-        try {
-          const { data } = await journalService.save({ ...proxima, fecha });
-          setHistorial(Array.isArray(data?.entradas) ? data.entradas : []);
-          setRacha(Number(data?.racha) || 0);
-        } catch {
-          /* reintenta en la próxima edición */
-        } finally {
-          setGuardando(false);
-        }
-      }, 800);
-    },
-    [fecha]
-  );
+  // Autoguardado PARCIAL: se mandan solo los campos tocados en esta sesión.
+  // Así un estado viejo o vacío jamás puede pisar lo que ya está guardado.
+  const pendienteRef = useRef({});
+  const guardarDiferido = useCallback(() => {
+    if (guardadoRef.current) clearTimeout(guardadoRef.current);
+    guardadoRef.current = setTimeout(async () => {
+      const cambios = { ...pendienteRef.current };
+      if (!Object.keys(cambios).length) return;
+      pendienteRef.current = {};
+      setGuardando(true);
+      try {
+        const { data } = await journalService.save({ ...cambios, fecha });
+        setHistorial(Array.isArray(data?.entradas) ? data.entradas : []);
+        setRacha(Number(data?.racha) || 0);
+      } catch {
+        // Reencola lo no guardado sin pisar ediciones nuevas.
+        pendienteRef.current = { ...cambios, ...pendienteRef.current };
+      } finally {
+        setGuardando(false);
+      }
+    }, 800);
+  }, [fecha]);
 
   useEffect(() => () => guardadoRef.current && clearTimeout(guardadoRef.current), []);
 
   const editar = (campo, valor) => {
     setEntrada((prev) => {
       if (prev[campo] === valor) return prev;
-      const proxima = { ...prev, [campo]: valor };
-      guardarDiferido(proxima);
-      return proxima;
+      return { ...prev, [campo]: valor };
     });
+    pendienteRef.current[campo] = valor;
+    guardarDiferido();
   };
   editarRef.current = editar;
 
