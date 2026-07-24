@@ -22,6 +22,18 @@ const URGENCIAS = [
   { value: "obligaciones", label: "Obligación" },
   { value: "no importante", label: "Sin prisa" },
 ];
+// Colores de tarea (mismos que en Tareas) para elegir el fondo.
+const COLORES_TAREA = [
+  { key: "color1", grad: "linear-gradient(135deg, #9cfb43, #5dc72d)" },
+  { key: "color2", grad: "linear-gradient(135deg, #ff9e45, #ff6b2f)" },
+  { key: "color3", grad: "linear-gradient(135deg, #ffe15a, #e3b72f)" },
+  { key: "color4", grad: "linear-gradient(135deg, #7be7ad, #35c981)" },
+  { key: "color5", grad: "linear-gradient(135deg, #88d8ff, #3f9fe7)" },
+  { key: "color6", grad: "linear-gradient(135deg, #ffabc9, #ea5e9a)" },
+  { key: "color7", grad: "linear-gradient(135deg, #c9b6ff, #8b6ee8)" },
+  { key: "color8", grad: "linear-gradient(135deg, #ff8d8d, #e05252)" },
+];
+
 const hoyYMD = () => {
   const d = new Date();
   const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
@@ -1076,6 +1088,24 @@ function MetasPage({ activeWorkspace }) {
                     onClick={() => setTaskForm({ ...taskForm, urgencia: u.value })}
                   >
                     {u.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={style.campo}>
+              <span>Color de fondo</span>
+              <div className={style.colorRow}>
+                {COLORES_TAREA.map((c) => (
+                  <button
+                    key={c.key}
+                    type="button"
+                    className={`${style.colorSwatch} ${taskForm.color === c.key ? style.colorSwatchActive : ""}`}
+                    style={{ background: c.grad }}
+                    onClick={() => setTaskForm({ ...taskForm, color: c.key })}
+                    aria-label={`Color ${c.key}`}
+                  >
+                    {taskForm.color === c.key ? <FiCheck /> : null}
                   </button>
                 ))}
               </div>

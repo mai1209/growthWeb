@@ -626,23 +626,24 @@
 
 .hitoRow {
   display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .hitoItem {
   display: flex;
   align-items: center;
   gap: 0.55rem;
+  flex: 1;
+  min-width: 0;
 }
 
-/* Vínculo del hito con Tareas */
+/* Vínculo del hito con Tareas — al lado del hito */
 .hitoAddTarea {
-  align-self: flex-start;
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  margin-left: 1.9rem;
   padding: 0.15rem 0.55rem;
   border: 1px dashed var(--accent-border, rgba(93, 199, 45, 0.5));
   border-radius: 999px;
@@ -650,6 +651,7 @@
   color: var(--color-verde, #5dc72d);
   font-size: 0.72rem;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -659,14 +661,43 @@
 }
 
 .hitoEnTareas {
-  align-self: flex-start;
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  margin-left: 1.9rem;
   color: var(--color-verde, #5dc72d);
   font-size: 0.72rem;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Selector de color de fondo de la tarea */
+.colorRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.colorSwatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  display: grid;
+  place-items: center;
+  color: #0e1a0e;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.colorSwatch:hover {
+  transform: scale(1.08);
+}
+
+.colorSwatchActive {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px rgba(93, 199, 45, 0.4);
 }
 
 .hitoCheck {
