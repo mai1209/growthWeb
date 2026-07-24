@@ -35,18 +35,12 @@
   letter-spacing: 0.12em;
 }
 
-/* Fila del kicker + enlace de ayuda del journal */
-.journalKickerRow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
-  flex-wrap: wrap;
-}
-
+/* Enlace de ayuda del journal, debajo del título */
 .journalAyudaLink {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
+  margin-top: 0.4rem;
   padding: 0.1rem 0.3rem;
   border: none;
   background: transparent;

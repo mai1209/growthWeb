@@ -31,10 +31,10 @@
     overflow: hidden;
   }
 
+  /* Stat cards con su alto natural (sin estirarse al alto del monitor).
+     El espacio publicitario ya se pega abajo con su margin-top:auto. */
   .statGrid {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
+    flex: 0 0 auto;
   }
 }
 

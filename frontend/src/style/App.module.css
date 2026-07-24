@@ -144,7 +144,26 @@
 
   .homeViewport .dashboardInfoCard {
     min-height: 0;
-    overflow-y: auto;
+    overflow: hidden;
+    align-content: stretch;
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+
+  /* La lista de movimientos llena hasta el fondo y scrollea adentro */
+  .homeViewport .dashboardMovementShell {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .homeViewport .dashboardMovementList {
+    max-height: none;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .homeViewport .dashboardEmptyState {
+    min-height: 100%;
   }
 
   .homeViewport .promoSidebar {

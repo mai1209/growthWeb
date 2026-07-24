@@ -1545,26 +1545,15 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
         <section className={style.listCard}>
             <div className={style.editorHeader}>
               <div>
-                <div className={style.journalKickerRow}>
-                  <p className={style.cardKicker}>
-                    {effectiveView === "shopping"
-                      ? "Listas"
-                      : effectiveView === "afirmaciones"
-                      ? "Afirmaciones"
-                      : effectiveView === "journal"
-                      ? "Journaling"
-                      : "Notas"}
-                  </p>
-                  {effectiveView === "journal" ? (
-                    <button
-                      type="button"
-                      className={style.journalAyudaLink}
-                      onClick={() => setJournalAyudaOpen(true)}
-                    >
-                      <FiHelpCircle /> ¿Necesitás ayuda?
-                    </button>
-                  ) : null}
-                </div>
+                <p className={style.cardKicker}>
+                  {effectiveView === "shopping"
+                    ? "Listas"
+                    : effectiveView === "afirmaciones"
+                    ? "Afirmaciones"
+                    : effectiveView === "journal"
+                    ? "Journaling"
+                    : "Notas"}
+                </p>
                 <h2 className={style.listTitle}>
                   {effectiveView === "shopping"
                     ? "Listas de compras"
@@ -1580,6 +1569,15 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     <span className={style.listCount}>{boardTasks.length}</span>
                   ) : null}
                 </h2>
+                {effectiveView === "journal" ? (
+                  <button
+                    type="button"
+                    className={style.journalAyudaLink}
+                    onClick={() => setJournalAyudaOpen(true)}
+                  >
+                    <FiHelpCircle /> ¿Necesitás ayuda?
+                  </button>
+                ) : null}
               </div>
               <div className={style.listHeaderActions}>
                 {/* En móvil (isCompact) mostramos Notas + Lista de compras;
