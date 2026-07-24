@@ -1590,17 +1590,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     <FiFileText />
                     Notas
                   </button>
-                  {!isCompact ? (
-                    <button
-                      type="button"
-                      className={`${style.viewToggleButton} ${view === "calendar" ? style.viewToggleButtonActive : ""}`}
-                      onClick={() => setView("calendar")}
-                      aria-pressed={view === "calendar"}
-                    >
-                      <FiCalendar />
-                      Calendario
-                    </button>
-                  ) : null}
                   {/* Herramientas extra, todas inline en la misma barra */}
                   <button
                     type="button"
@@ -1846,25 +1835,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 </aside>
 
                 <div className={style.notesBoardWrap}>
-                  {/* Acciones a la derecha, a la altura de "Últimos 30 días" */}
-                  <div className={style.boardToolbar}>
-                    <button
-                      type="button"
-                      className={style.viewToggleButton}
-                      onClick={() => {
-                        setDeckScope("all");
-                        setIsDeckOpen(true);
-                      }}
-                      title="Tus flashcards de repaso"
-                    >
-                      <FiBookOpen />
-                      Repaso{dueCountAll ? ` (${dueCountAll})` : ""}
-                    </button>
-                    <button type="button" className={style.secondaryButton} onClick={() => handleNewNote()}>
-                      <FiPlus />
-                      Nueva nota
-                    </button>
-                  </div>
                   {boardTasks.length === 0 ? (
                     <p className={style.emptyState}>
                       {activeFolder === ALL_FOLDERS
@@ -1873,11 +1843,50 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     </p>
                   ) : (
                     <div className={style.notesBoard}>
-                      {boardGroups.map((group) => (
+                      {boardGroups.map((group, index) => (
                         <section key={group.key} className={style.boardGroup}>
-                          <div className={style.boardGroupHeader}>
+                          <div
+                            className={`${style.boardGroupHeader} ${index === 0 ? style.boardGroupHeaderTop : ""}`}
+                          >
                             <span className={style.boardGroupTitle}>{group.label}</span>
                             <span className={style.boardGroupCount}>{group.notes.length}</span>
+                            {index === 0 ? (
+                              <>
+                                <span className={style.boardHeaderLine} />
+                                <div className={style.boardHeaderActions}>
+                                  {!isCompact ? (
+                                    <button
+                                      type="button"
+                                      className={`${style.viewToggleButton} ${view === "calendar" ? style.viewToggleButtonActive : ""}`}
+                                      onClick={() => setView("calendar")}
+                                    >
+                                      <FiCalendar />
+                                      Calendario
+                                    </button>
+                                  ) : null}
+                                  <button
+                                    type="button"
+                                    className={style.viewToggleButton}
+                                    onClick={() => {
+                                      setDeckScope("all");
+                                      setIsDeckOpen(true);
+                                    }}
+                                    title="Tus flashcards de repaso"
+                                  >
+                                    <FiBookOpen />
+                                    Repaso{dueCountAll ? ` (${dueCountAll})` : ""}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={style.secondaryButton}
+                                    onClick={() => handleNewNote()}
+                                  >
+                                    <FiPlus />
+                                    Nueva nota
+                                  </button>
+                                </div>
+                              </>
+                            ) : null}
                           </div>
 
                           <div className={style.boardGrid}>
