@@ -172,7 +172,6 @@ export default function JournalingPanel({ visible, onClose }) {
   const [editandoPreguntas, setEditandoPreguntas] = useState(false);
   const [borradorPreguntas, setBorradorPreguntas] = useState(PREGUNTAS_DEFAULT);
   const [vista, setVista] = useState("libro"); // libro (hoja editable) | calendario
-  const [libroFecha, setLibroFecha] = useState(null);
   const [calRef, setCalRef] = useState(() => new Date());
   const guardadoRef = useRef(null);
 
@@ -186,17 +185,21 @@ export default function JournalingPanel({ visible, onClose }) {
     if (data?.preguntas) setPreguntas({ ...PREGUNTAS_DEFAULT, ...data.preguntas });
   }, []);
 
+  // Al abrir el panel volvemos siempre al día de hoy.
+  useEffect(() => {
+    if (visible) setFecha(hoyLocal());
+  }, [visible]);
+
+  // Cargamos el día activo (hoy o el que se abra del calendario/flechas).
   useEffect(() => {
     if (!visible) return;
-    const actual = hoyLocal();
-    setFecha(actual);
     setCargando(true);
     journalService
-      .get(actual)
+      .get(fecha)
       .then(({ data }) => aplicar(data))
       .catch(() => {})
       .finally(() => setCargando(false));
-  }, [visible, aplicar]);
+  }, [visible, fecha, aplicar]);
 
   // Autoguardado PARCIAL: se mandan solo los campos tocados en esta sesión.
   // Así un estado viejo o vacío jamás puede pisar lo que ya está guardado.
@@ -240,28 +243,61 @@ export default function JournalingPanel({ visible, onClose }) {
   const guardarPreguntas = async () => {
     setEditandoPreguntas(false);
     try {
-      const { data } = await journalService.savePreguntas(borradorPreguntas);
+      const { data } = await journalService.savePreguntas({ ...borradorPreguntas, fecha });
       if (data?.preguntas) setPreguntas({ ...PREGUNTAS_DEFAULT, ...data.preguntas });
     } catch {
       /* quedan las anteriores */
     }
   };
 
-  // Todas las entradas (historial + SIEMPRE la de hoy: es la página editable).
-  const entradas = [...historial].reverse();
-  entradas.push({ ...entrada, fecha });
+  // Guarda lo pendiente antes de cambiar de día (para no perder nada) y navega.
+  const flushGuardado = async () => {
+    if (guardadoRef.current) {
+      clearTimeout(guardadoRef.current);
+      guardadoRef.current = null;
+    }
+    const cambios = { ...pendienteRef.current };
+    pendienteRef.current = {};
+    if (!Object.keys(cambios).length) return;
+    try {
+      await journalService.save({ ...cambios, fecha });
+    } catch {
+      pendienteRef.current = { ...cambios, ...pendienteRef.current };
+    }
+  };
+
+  const irADia = async (f, { libro = false } = {}) => {
+    if (!f) return;
+    if (f !== fecha) {
+      await flushGuardado();
+      setFecha(f);
+    }
+    if (libro) setVista("libro");
+  };
+
+  // Historial (otros días con contenido) + el día activo en vivo (editable).
+  const mapEntradas = new Map();
+  historial.filter(tieneContenido).forEach((e) => mapEntradas.set(e.fecha, e));
+  mapEntradas.set(fecha, { ...entrada, fecha });
+  const entradas = [...mapEntradas.values()].sort((a, b) => a.fecha.localeCompare(b.fecha));
   const porFecha = new Map(entradas.map((e) => [e.fecha, e]));
 
   // Ánimo en el tiempo (últimos 30 días con ánimo marcado).
   const animoSerie = entradas.filter((e) => Number(e.animo) > 0).slice(-30);
 
-  // Página abierta del libro: la elegida, o la última escrita.
-  const libroIdxBase = entradas.findIndex((e) => e.fecha === libroFecha);
-  const libroIdx = entradas.length ? (libroIdxBase >= 0 ? libroIdxBase : entradas.length - 1) : -1;
+  // La página del libro es el día activo (el que se está editando).
+  const libroIdx = entradas.findIndex((e) => e.fecha === fecha);
 
-  const abrirEnLibro = (f) => {
-    setLibroFecha(f);
-    setVista("libro");
+  // Preguntas de una entrada: el día activo usa las actuales; los días viejos
+  // usan el snapshot que quedó guardado ese día.
+  const preguntasVista = (e) => {
+    if (!e || e.fecha === fecha) return preguntas;
+    const snap = e.preguntas || {};
+    return {
+      gratitud: snap.gratitud || preguntas.gratitud,
+      mejor: snap.mejor || preguntas.mejor,
+      distinto: snap.distinto || preguntas.distinto,
+    };
   };
 
   return (
@@ -281,6 +317,11 @@ export default function JournalingPanel({ visible, onClose }) {
               </Text>
             </View>
           </View>
+          {fecha !== hoyLocal() ? (
+            <TouchableOpacity style={styles.hoyBtn} onPress={() => irADia(hoyLocal())}>
+              <Text style={styles.hoyBtnText}>Hoy</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         {cargando ? (
@@ -371,6 +412,7 @@ export default function JournalingPanel({ visible, onClose }) {
                       const e = porFecha.get(key);
                       const esHoy = key === hoyLocal();
                       const fuera = d.getMonth() !== calRef.getMonth();
+                      const esFuturo = key > hoyLocal();
                       return (
                         <TouchableOpacity
                           key={key}
@@ -378,9 +420,10 @@ export default function JournalingPanel({ visible, onClose }) {
                             styles.calCell,
                             esHoy && styles.calCellHoy,
                             e && tieneContenido(e) && styles.calCellConEntrada,
+                            key === fecha && styles.calCellActiva,
                           ]}
-                          disabled={!e}
-                          onPress={() => e && abrirEnLibro(key)}
+                          disabled={esFuturo}
+                          onPress={() => irADia(key, { libro: true })}
                         >
                           <Text style={[styles.calDia, fuera && styles.calDiaFuera]}>{d.getDate()}</Text>
                           {e && tieneContenido(e) ? (
@@ -398,7 +441,7 @@ export default function JournalingPanel({ visible, onClose }) {
                     })}
                   </View>
                   <Text style={styles.calAyuda}>
-                    Los días con puntito tienen journaling: tocá uno para leerlo.
+                    Tocá cualquier día para abrirlo y escribir; el puntito marca los que ya tienen algo.
                   </Text>
                 </View>
               ) : libroIdx < 0 ? (
@@ -421,9 +464,10 @@ export default function JournalingPanel({ visible, onClose }) {
                     <Text style={styles.libroAnimo}>{emojiDe(entradas[libroIdx].animo)}</Text>
                   ) : null}
 
-                  {entradas[libroIdx].fecha === fecha ? (
-                    /* Página de hoy: se escribe directo sobre el papel */
+                  {true ? (
+                    /* Día activo: se escribe directo sobre el papel */
                     <>
+                      {fecha === hoyLocal() ? (
                       <View style={styles.libroEditRow}>
                         {editandoPreguntas ? (
                           <>
@@ -452,6 +496,7 @@ export default function JournalingPanel({ visible, onClose }) {
                           </TouchableOpacity>
                         )}
                       </View>
+                      ) : null}
 
                       {CAMPOS.map((p) => (
                         <View key={p.campo}>
@@ -467,7 +512,7 @@ export default function JournalingPanel({ visible, onClose }) {
                               maxLength={90}
                             />
                           ) : (
-                            <Text style={styles.libroPregunta}>{preguntas[p.campo]}</Text>
+                            <Text style={styles.libroPregunta}>{preguntasVista(entradas[libroIdx])[p.campo]}</Text>
                           )}
                           <TextInput
                             style={styles.libroInput}
@@ -485,7 +530,7 @@ export default function JournalingPanel({ visible, onClose }) {
                         style={[styles.libroInput, styles.libroInputLibre]}
                         value={entrada.libre}
                         onChangeText={(v) => editar("libre", v)}
-                        placeholder="Notas libres de hoy…"
+                        placeholder="Notas libres de este día…"
                         placeholderTextColor="rgba(43, 36, 22, 0.35)"
                         multiline
                         editable={!editandoPreguntas}
@@ -513,7 +558,7 @@ export default function JournalingPanel({ visible, onClose }) {
                     <TouchableOpacity
                       style={[styles.libroNavBtn, libroIdx <= 0 && styles.libroNavBtnOff]}
                       disabled={libroIdx <= 0}
-                      onPress={() => setLibroFecha(entradas[libroIdx - 1]?.fecha)}
+                      onPress={() => irADia(entradas[libroIdx - 1]?.fecha)}
                     >
                       <Ionicons name="chevron-back" size={16} color="#2b2416" />
                     </TouchableOpacity>
@@ -526,7 +571,7 @@ export default function JournalingPanel({ visible, onClose }) {
                         libroIdx >= entradas.length - 1 && styles.libroNavBtnOff,
                       ]}
                       disabled={libroIdx >= entradas.length - 1}
-                      onPress={() => setLibroFecha(entradas[libroIdx + 1]?.fecha)}
+                      onPress={() => irADia(entradas[libroIdx + 1]?.fecha)}
                     >
                       <Ionicons name="chevron-forward" size={16} color="#2b2416" />
                     </TouchableOpacity>
@@ -630,6 +675,16 @@ const makeStyles = (colors) =>
       backgroundColor: "rgba(93, 199, 45, 0.22)",
     },
     rachaEnHojaText: { color: "#2f6f35", fontSize: 11.5, fontWeight: "800" },
+    hoyBtn: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.greenBorder,
+      backgroundColor: colors.greenSoft,
+    },
+    hoyBtnText: { color: colors.green, fontSize: 12.5, fontWeight: "800" },
+    calCellActiva: { borderColor: colors.greenBright },
 
     campoLabel: {
       color: colors.green,
