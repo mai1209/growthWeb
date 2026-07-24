@@ -57,6 +57,8 @@ const metaSchema = new mongoose.Schema(
           _id: false,
           texto: String,
           hecho: { type: Boolean, default: false },
+          // Si el hito se mandó a Tareas, acá queda el id de esa tarea.
+          taskId: { type: String, default: "" },
         },
       ],
       default: [],

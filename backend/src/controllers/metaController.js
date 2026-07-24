@@ -1,4 +1,5 @@
 import Meta from "../models/metaModel.js";
+import Task from "../models/taskModel.js";
 
 const MAX_HITOS = 40;
 const MAX_TEXTO = 300;
@@ -26,6 +27,7 @@ const limpiarHitos = (valor) => {
     .map((h) => ({
       texto: String(h.texto).trim().slice(0, MAX_TEXTO),
       hecho: Boolean(h.hecho),
+      taskId: typeof h.taskId === "string" ? h.taskId : "",
     }));
 };
 
@@ -108,8 +110,41 @@ export const updateMeta = async (req, res) => {
     const meta = await Meta.findOne({ _id: req.params.id, usuario: req.user.id });
     if (!meta) return res.status(404).json({ error: "Meta no encontrada" });
 
+    // Guardamos el estado previo de los hitos (por su taskId) para detectar
+    // qué hitos vinculados cambiaron de "hecho" y sincronizar la tarea.
+    const previos = new Map();
+    (meta.hitos || []).forEach((h) => {
+      if (h.taskId) previos.set(h.taskId, Boolean(h.hecho));
+    });
+
     aplicarCampos(meta, req.body);
+
+    // El cliente no siempre reenvía el taskId: lo reatamos por índice desde
+    // lo que ya había guardado, así el vínculo no se pierde al editar.
+    if (Array.isArray(req.body.hitos)) {
+      meta.hitos.forEach((h, i) => {
+        if (!h.taskId && req.body.hitos[i]?.taskId) h.taskId = req.body.hitos[i].taskId;
+      });
+    }
+
     await meta.save();
+
+    // 🎯 Para cada hito vinculado cuyo "hecho" cambió, sincronizamos la tarea:
+    // marcarla/desmarcarla para la fecha de la propia tarea.
+    for (const h of meta.hitos) {
+      if (!h.taskId || !previos.has(h.taskId)) continue;
+      if (previos.get(h.taskId) === Boolean(h.hecho)) continue;
+      try {
+        const task = await Task.findOne({ _id: h.taskId, user: req.user.id });
+        if (!task) continue;
+        const dia = new Date(task.fecha).toISOString().slice(0, 10);
+        task.completadasEn = h.hecho ? [dia] : [];
+        await task.save();
+      } catch (e) {
+        /* si una tarea no se pudo sincronizar, la meta igual se guardó */
+      }
+    }
+
     return res.status(200).json(serialize(meta));
   } catch (error) {
     return res.status(500).json({ error: "No se pudo actualizar la meta" });

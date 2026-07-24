@@ -95,6 +95,16 @@ completadasEn: {
     default: "",
   },
 
+  // 🎯 Vínculo con un hito de una meta (si la tarea nació de un hito).
+  metaId: {
+    type: String,
+    default: "",
+  },
+  hitoIndex: {
+    type: Number,
+    default: -1,
+  },
+
 }, {
   timestamps: true,
 });

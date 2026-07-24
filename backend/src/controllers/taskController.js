@@ -1,4 +1,5 @@
 import Task from "../models/taskModel.js";
+import Meta from "../models/metaModel.js";
 import mongoose from "mongoose";
 
 // Carga perezosa de la sincronización con Google. Si el módulo (o sus paquetes)
@@ -95,10 +96,13 @@ export const createHabito = async (req, res) => {
       carpeta,
       flashcards,
       items,
+      metaId,
+      hitoIndex,
     } = req.body;
     const userId = req.user.id;
     const workspace = normalizeWorkspace(req);
     const tipoFinal = normalizeTipo(tipo);
+    const idxHito = Number.isInteger(hitoIndex) ? hitoIndex : -1;
 
     // AÑADE ESTE CONSOLE.LOG
     console.log(
@@ -120,8 +124,24 @@ export const createHabito = async (req, res) => {
       carpeta: typeof carpeta === "string" ? carpeta.trim() : "",
       flashcards: Array.isArray(flashcards) ? flashcards : [],
       items: tipoFinal === "shopping" ? normalizeItems(items) : [],
+      metaId: typeof metaId === "string" ? metaId : "",
+      hitoIndex: idxHito,
     });
     const habitoGuardado = await nuevoHabito.save();
+
+    // 🎯 Si la tarea nació de un hito, dejamos el id de la tarea en ese hito
+    // (para poder sincronizar el "hecho" en ambos sentidos).
+    if (metaId && idxHito >= 0) {
+      try {
+        const meta = await Meta.findOne({ _id: metaId, usuario: userId });
+        if (meta && meta.hitos && meta.hitos[idxHito]) {
+          meta.hitos[idxHito].taskId = String(habitoGuardado._id);
+          await meta.save();
+        }
+      } catch (e) {
+        /* si falla el link, la tarea igual queda creada */
+      }
+    }
 
     // 🔗 Sincroniza con Google Calendar (si falla, la tarea igual queda guardada).
     // Las listas de compras no van al calendario.
@@ -259,6 +279,22 @@ export const updateTaskStatus = async (req, res) => {
 
     // ✅ CALCULAR completada PARA ESA FECHA
     const completada = task.completadasEn.includes(fecha);
+
+    // 🎯 Si la tarea está vinculada a un hito, sincronizamos el "hecho".
+    if (task.metaId && task.hitoIndex >= 0) {
+      try {
+        const meta = await Meta.findOne({ _id: task.metaId, usuario: req.user.id });
+        if (meta && meta.hitos && meta.hitos[task.hitoIndex]) {
+          const hechoActual = task.completadasEn.length > 0;
+          if (meta.hitos[task.hitoIndex].hecho !== hechoActual) {
+            meta.hitos[task.hitoIndex].hecho = hechoActual;
+            await meta.save();
+          }
+        }
+      } catch (e) {
+        /* si falla el sync, el estado de la tarea igual se guardó */
+      }
+    }
 
     const taskObj = serializeTask(task);
     taskObj.completada = completada;
