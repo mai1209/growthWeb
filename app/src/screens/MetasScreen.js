@@ -33,7 +33,24 @@ const MEDICIONES = [
   { value: "manual", label: "Manual" },
 ];
 
-const AREAS = ["Finanzas", "Salud", "Carrera", "Personal", "Aprendizaje"];
+const AREAS_EJEMPLO = ["Finanzas", "Salud", "Carrera", "Personal", "Aprendizaje"];
+
+// Chips de área = ejemplos + las áreas que ya usaste en tus metas, sin repetir
+// (comparando sin distinguir mayúsculas). Las usadas van primero.
+const areasSugeridas = (metas) => {
+  const usadas = [];
+  const vistas = new Set();
+  metas.forEach((m) => {
+    const a = String(m.area || "").trim();
+    const k = a.toLowerCase();
+    if (a && !vistas.has(k)) {
+      vistas.add(k);
+      usadas.push(a);
+    }
+  });
+  const extra = AREAS_EJEMPLO.filter((a) => !vistas.has(a.toLowerCase()));
+  return [...usadas, ...extra];
+};
 
 // Colores por plazo (los mismos que la web).
 const PLAZO_COLORS = { corto: "#5b8ad6", mediano: "#c9a23a", largo: "#b06ad6" };
@@ -641,15 +658,18 @@ export default function MetasScreen() {
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.chipsRow}
             >
-              {AREAS.map((a) => (
-                <TouchableOpacity
-                  key={a}
-                  style={[styles.chip, form.area === a && styles.chipActivo]}
-                  onPress={() => setForm({ ...form, area: a })}
-                >
-                  <Text style={[styles.chipText, form.area === a && styles.chipTextActivo]}>{a}</Text>
-                </TouchableOpacity>
-              ))}
+              {areasSugeridas(metas).map((a) => {
+                const activo = String(form.area || "").trim().toLowerCase() === a.toLowerCase();
+                return (
+                  <TouchableOpacity
+                    key={a}
+                    style={[styles.chip, activo && styles.chipActivo]}
+                    onPress={() => setForm({ ...form, area: a })}
+                  >
+                    <Text style={[styles.chipText, activo && styles.chipTextActivo]}>{a}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
 
             <Text style={styles.campoLabel}>Fecha objetivo (opcional)</Text>

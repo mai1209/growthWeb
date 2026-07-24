@@ -21,7 +21,24 @@ const HORIZONTES = [
   { value: "largo", label: "Largo plazo", hint: "a uno o más años" },
 ];
 
-const AREAS = ["Finanzas", "Salud", "Carrera", "Personal", "Aprendizaje"];
+const AREAS_EJEMPLO = ["Finanzas", "Salud", "Carrera", "Personal", "Aprendizaje"];
+
+// Sugerencias de área = ejemplos + las áreas que ya usaste en tus metas, sin
+// repetir (sin distinguir mayúsculas). Las usadas van primero.
+const areasSugeridas = (metas) => {
+  const usadas = [];
+  const vistas = new Set();
+  metas.forEach((m) => {
+    const a = String(m.area || "").trim();
+    const k = a.toLowerCase();
+    if (a && !vistas.has(k)) {
+      vistas.add(k);
+      usadas.push(a);
+    }
+  });
+  const extra = AREAS_EJEMPLO.filter((a) => !vistas.has(a.toLowerCase()));
+  return [...usadas, ...extra];
+};
 
 const MEDICIONES = [
   { value: "hitos", label: "Por hitos", hint: "una checklist de pasos" },
@@ -641,7 +658,7 @@ function MetasPage({ activeWorkspace }) {
               placeholder="Finanzas, Salud…"
             />
             <datalist id="areas-metas">
-              {AREAS.map((a) => (
+              {areasSugeridas(metas).map((a) => (
                 <option key={a} value={a} />
               ))}
             </datalist>
