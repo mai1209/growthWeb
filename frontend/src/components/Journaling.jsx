@@ -501,7 +501,7 @@ function Journaling() {
         {/* Columna izquierda: escribir hoy */}
         <div className={style.colIzq}>
           <div className={style.animoBox}>
-            <p className={style.animoLabel}>¿Cómo estuvo tu día?</p>
+            <p className={style.animoLabel}>¿Cómo te sentís hoy?</p>
             {/* Extremos fijos; la carita del nivel actual viaja en el pulgar */}
             <div className={style.animoSliderRow}>
               <div className={style.animoSliderWrap}>

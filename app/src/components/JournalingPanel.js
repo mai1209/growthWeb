@@ -353,7 +353,7 @@ export default function JournalingPanel({ visible, onClose }) {
             <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
               {/* Ánimo: slider con carita viajera */}
               <View style={styles.animoBox}>
-                <Text style={styles.animoLabel}>¿CÓMO ESTUVO TU DÍA?</Text>
+                <Text style={styles.animoLabel}>¿CÓMO TE SENTÍS HOY?</Text>
                 <AnimoSlider value={entrada.animo} onChange={onAnimoChange} styles={styles} />
               </View>
 
