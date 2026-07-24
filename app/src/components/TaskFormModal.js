@@ -43,7 +43,15 @@ const DAYS = ["D", "L", "M", "MI", "J", "V", "S"];
 const pad = (n) => String(n).padStart(2, "0");
 const toYMD = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-export default function TaskFormModal({ visible, defaultDate, editTask = null, onClose, onSaved }) {
+export default function TaskFormModal({
+  visible,
+  defaultDate,
+  editTask = null,
+  prefillMeta = "",
+  link = null,
+  onClose,
+  onSaved,
+}) {
   const { colors, isDark } = useTheme();
   const styles = makeStyles(colors);
   const [meta, setMeta] = useState("");
@@ -102,7 +110,7 @@ export default function TaskFormModal({ visible, defaultDate, editTask = null, o
       setEsRecurrente(Boolean(editTask.esRecurrente));
       setDias(Array.isArray(editTask.diasRepeticion) ? editTask.diasRepeticion : []);
     } else {
-      setMeta("");
+      setMeta(prefillMeta || "");
       setFecha(defaultDate || new Date());
       setMomento("");
       setUseExact(false);
@@ -115,7 +123,7 @@ export default function TaskFormModal({ visible, defaultDate, editTask = null, o
     setError("");
     setSaving(false);
     setPickerOpen(false);
-  }, [visible, defaultDate, editTask]);
+  }, [visible, defaultDate, editTask, prefillMeta]);
 
   const toggleDay = (d) =>
     setDias((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]));
@@ -144,7 +152,9 @@ export default function TaskFormModal({ visible, defaultDate, editTask = null, o
       if (editTask) {
         await taskService.update(editTask._id, payload);
       } else {
-        await taskService.create({ ...payload, contenido: "" });
+        const linkFields =
+          link && link.metaId ? { metaId: link.metaId, hitoIndex: link.hitoIndex } : {};
+        await taskService.create({ ...payload, contenido: "", ...linkFields });
       }
       onSaved?.();
       onClose?.();

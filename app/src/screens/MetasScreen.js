@@ -19,6 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useFocusEffect } from "@react-navigation/native";
 import { metaService } from "../api";
+import TaskFormModal from "../components/TaskFormModal";
 import { useTheme } from "../theme";
 
 const HORIZONTES = [
@@ -131,6 +132,8 @@ export default function MetasScreen() {
   const [numeroNuevo, setNumeroNuevo] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  // Hito que se está mandando a Tareas: { meta, indice, texto }
+  const [taskLink, setTaskLink] = useState(null);
   const [tecladoAbierto, setTecladoAbierto] = useState(false);
 
   useEffect(() => {
@@ -475,19 +478,37 @@ export default function MetasScreen() {
                   </Text>
                 ) : (
                   meta.hitos.map((hito, indice) => (
-                    <View key={indice} style={styles.hitoItem}>
-                      <TouchableOpacity
-                        style={[styles.hitoCheck, hito.hecho && styles.hitoCheckOn]}
-                        onPress={() => toggleHito(meta, indice)}
-                      >
-                        {hito.hecho ? <Ionicons name="checkmark" size={14} color="#0e1a0e" /> : null}
-                      </TouchableOpacity>
-                      <Text style={[styles.hitoTexto, hito.hecho && styles.hitoHecho]}>
-                        {hito.texto}
-                      </Text>
-                      <TouchableOpacity onPress={() => borrarHito(meta, indice)} hitSlop={8}>
-                        <Ionicons name="trash-outline" size={16} color={colors.muted} />
-                      </TouchableOpacity>
+                    <View key={indice} style={styles.hitoRow}>
+                      <View style={styles.hitoItem}>
+                        <TouchableOpacity
+                          style={[styles.hitoCheck, hito.hecho && styles.hitoCheckOn]}
+                          onPress={() => toggleHito(meta, indice)}
+                        >
+                          {hito.hecho ? <Ionicons name="checkmark" size={14} color="#0e1a0e" /> : null}
+                        </TouchableOpacity>
+                        <Text style={[styles.hitoTexto, hito.hecho && styles.hitoHecho]}>
+                          {hito.texto}
+                        </Text>
+                        <TouchableOpacity onPress={() => borrarHito(meta, indice)} hitSlop={8}>
+                          <Ionicons name="trash-outline" size={16} color={colors.muted} />
+                        </TouchableOpacity>
+                      </View>
+                      {hito.taskId ? (
+                        <View style={styles.hitoEnTareas}>
+                          <Ionicons name="checkbox-outline" size={12} color={colors.green} />
+                          <Text style={styles.hitoEnTareasText}>En tareas</Text>
+                        </View>
+                      ) : (
+                        <TouchableOpacity
+                          style={styles.hitoAddTarea}
+                          onPress={() =>
+                            setTaskLink({ meta, indice, texto: hito.texto })
+                          }
+                        >
+                          <Ionicons name="add" size={13} color={colors.green} />
+                          <Text style={styles.hitoAddTareaText}>Agregar a tarea</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   ))
                 )}
@@ -982,6 +1003,26 @@ export default function MetasScreen() {
       )}
 
       {detalle ? renderDetalle() : null}
+
+      {/* Mandar un hito a Tareas: form precargado con el nombre del hito */}
+      <TaskFormModal
+        visible={!!taskLink}
+        prefillMeta={taskLink?.texto || ""}
+        link={taskLink ? { metaId: taskLink.meta._id, hitoIndex: taskLink.indice } : null}
+        onClose={() => setTaskLink(null)}
+        onSaved={async () => {
+          setTaskLink(null);
+          // Recargamos metas y el detalle abierto para ver el hito ya vinculado.
+          try {
+            const { data } = await metaService.getAll();
+            const lista = Array.isArray(data) ? data : [];
+            setMetas(lista);
+            setDetalle((prev) => (prev ? lista.find((m) => m._id === prev._id) || prev : prev));
+          } catch {
+            /* nada */
+          }
+        }}
+      />
       {form ? renderForm() : null}
     </SafeAreaView>
   );
@@ -1170,7 +1211,30 @@ const makeStyles = (colors) =>
     detalleDesc: { color: colors.muted, fontSize: 13.5, lineHeight: 19 },
     detalleDue: { color: colors.muted, fontSize: 12, fontWeight: "700" },
 
+    hitoRow: { gap: 4 },
     hitoItem: { flexDirection: "row", alignItems: "center", gap: 9 },
+    hitoAddTarea: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      alignSelf: "flex-start",
+      marginLeft: 31,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderStyle: "dashed",
+      borderColor: colors.greenBorder,
+    },
+    hitoAddTareaText: { color: colors.green, fontSize: 11, fontWeight: "700" },
+    hitoEnTareas: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      alignSelf: "flex-start",
+      marginLeft: 31,
+    },
+    hitoEnTareasText: { color: colors.green, fontSize: 11, fontWeight: "700" },
     hitoCheck: {
       width: 22,
       height: 22,
