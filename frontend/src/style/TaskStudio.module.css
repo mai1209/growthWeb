@@ -1820,8 +1820,20 @@ button.folderItem {
 }
 
 .notesBoardWrap {
+  position: relative;
   flex: 1;
   min-width: 0;
+}
+
+/* Repaso + Nueva nota a la derecha, a la altura de "Últimos 30 días" */
+.boardToolbar {
+  position: absolute;
+  top: -0.35rem;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* ===== Selector de carpeta en el editor (pastilla) ===== */

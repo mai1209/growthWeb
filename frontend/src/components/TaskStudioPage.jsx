@@ -1629,31 +1629,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     <FiFeather />
                     Journaling
                   </button>
-                  {effectiveView !== "shopping" &&
-                  effectiveView !== "afirmaciones" &&
-                  effectiveView !== "journal" ? (
-                    <button
-                      type="button"
-                      className={style.viewToggleButton}
-                      onClick={() => {
-                        setDeckScope("all");
-                        setIsDeckOpen(true);
-                      }}
-                      title="Tus flashcards de repaso"
-                    >
-                      <FiBookOpen />
-                      Repaso{dueCountAll ? ` (${dueCountAll})` : ""}
-                    </button>
-                  ) : null}
                 </div>
-                {effectiveView !== "shopping" &&
-                effectiveView !== "afirmaciones" &&
-                effectiveView !== "journal" ? (
-                  <button type="button" className={style.secondaryButton} onClick={() => handleNewNote()}>
-                    <FiPlus />
-                    Nueva nota
-                  </button>
-                ) : null}
               </div>
             </div>
 
@@ -1870,6 +1846,25 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 </aside>
 
                 <div className={style.notesBoardWrap}>
+                  {/* Acciones a la derecha, a la altura de "Últimos 30 días" */}
+                  <div className={style.boardToolbar}>
+                    <button
+                      type="button"
+                      className={style.viewToggleButton}
+                      onClick={() => {
+                        setDeckScope("all");
+                        setIsDeckOpen(true);
+                      }}
+                      title="Tus flashcards de repaso"
+                    >
+                      <FiBookOpen />
+                      Repaso{dueCountAll ? ` (${dueCountAll})` : ""}
+                    </button>
+                    <button type="button" className={style.secondaryButton} onClick={() => handleNewNote()}>
+                      <FiPlus />
+                      Nueva nota
+                    </button>
+                  </div>
                   {boardTasks.length === 0 ? (
                     <p className={style.emptyState}>
                       {activeFolder === ALL_FOLDERS
