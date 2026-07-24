@@ -977,7 +977,7 @@ const makeStyles = (colors) =>
       alignItems: "flex-start",
       justifyContent: "space-between",
       paddingHorizontal: 16,
-      paddingTop: 12,
+      paddingTop: 2,
       paddingBottom: 8,
       gap: 10,
     },
