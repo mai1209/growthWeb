@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { journalService } from "../api";
 import { useTheme } from "../theme";
+import JournalAyudaModal from "./JournalAyudaModal";
 
 // Ánimo del día: 1 (muy mal) a 5 (muy bien). El 0 muestra la carita sin boca.
 const CARA_VACIA = "😶";
@@ -220,6 +221,7 @@ export default function JournalingPanel({ visible, onClose }) {
   const [borradorExtras, setBorradorExtras] = useState([]);
   const [plantillasOpen, setPlantillasOpen] = useState(false);
   const [vista, setVista] = useState("libro"); // libro (hoja editable) | calendario
+  const [ayudaOpen, setAyudaOpen] = useState(false);
   const [calRef, setCalRef] = useState(() => new Date());
   const guardadoRef = useRef(null);
 
@@ -464,7 +466,17 @@ export default function JournalingPanel({ visible, onClose }) {
             <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
               {/* Ánimo: slider con carita viajera */}
               <View style={styles.animoBox}>
-                <Text style={styles.animoLabel}>¿CÓMO TE SENTÍS HOY?</Text>
+                <View style={styles.animoLabelRow}>
+                  <Text style={styles.animoLabel}>¿CÓMO TE SENTÍS HOY?</Text>
+                  <TouchableOpacity
+                    style={styles.sugerenciasLink}
+                    onPress={() => setAyudaOpen(true)}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="help-circle-outline" size={13} color={colors.green} />
+                    <Text style={styles.sugerenciasLinkText}>Sugerencias de preguntas</Text>
+                  </TouchableOpacity>
+                </View>
                 <AnimoSlider value={entrada.animo} onChange={onAnimoChange} styles={styles} />
               </View>
 
@@ -837,6 +849,9 @@ export default function JournalingPanel({ visible, onClose }) {
             </View>
           </TouchableOpacity>
         </Modal>
+
+        {/* Centro de ayuda: preguntas por tema para inspirarte */}
+        <JournalAyudaModal visible={ayudaOpen} onClose={() => setAyudaOpen(false)} />
       </View>
     </Modal>
   );
@@ -890,7 +905,15 @@ const makeStyles = (colors) =>
 
     /* Sin caja: el slider vive suelto sobre el fondo */
     animoBox: { gap: 10, paddingHorizontal: 2 },
+    animoLabelRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+    },
     animoLabel: { color: colors.muted, fontSize: 10.5, fontWeight: "800", letterSpacing: 1 },
+    sugerenciasLink: { flexDirection: "row", alignItems: "center", gap: 4 },
+    sugerenciasLinkText: { color: colors.green, fontSize: 12, fontWeight: "800" },
     animoSliderRow: { flexDirection: "row", alignItems: "center" },
     animoSliderWrap: { flex: 1, height: 40, justifyContent: "center" },
     animoTrack: {
