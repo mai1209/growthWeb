@@ -358,7 +358,7 @@
   display: grid;
   gap: 0.12rem;
   min-height: 0;
-  border-radius: var(--radius-md);
+  border-radius: 20px;
   overflow: hidden;
 }
 
@@ -603,7 +603,7 @@
   gap: 0.7rem;
   min-height: 9.5rem;
   padding: 0.9rem 1rem;
-  border-radius: var(--radius-lg);
+  border-radius: 20px;
   border: 1px solid var(--border-color);
   background: var(--surface-input);
 }

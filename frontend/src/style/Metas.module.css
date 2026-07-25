@@ -96,7 +96,7 @@
   gap: 0.7rem;
   padding: 0.8rem 1rem;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg, 14px);
+  border-radius: 20px;
   background: var(--surface-card);
 }
 
@@ -306,12 +306,23 @@
   gap: 0.55rem;
   padding: 1rem 1.1rem;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg, 14px);
+  border-radius: 20px;
   background: var(--surface-card);
   color: inherit;
   text-align: left;
   cursor: pointer;
   transition: border-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+}
+
+/* Borde del color del plazo de cada meta */
+.card_corto {
+  border-color: rgba(91, 138, 214, 0.55);
+}
+.card_mediano {
+  border-color: rgba(201, 162, 58, 0.55);
+}
+.card_largo {
+  border-color: rgba(176, 106, 214, 0.55);
 }
 
 .card:hover {

@@ -423,9 +423,9 @@ function MetasPage({ activeWorkspace }) {
       <button
         type="button"
         key={meta._id}
-        className={`${style.card} ${meta.estado === "completada" ? style.cardCompletada : ""} ${
-          meta.estado === "pausada" ? style.cardPausada : ""
-        }`}
+        className={`${style.card} ${style[`card_${meta.horizonte}`] || ""} ${
+          meta.estado === "completada" ? style.cardCompletada : ""
+        } ${meta.estado === "pausada" ? style.cardPausada : ""}`}
         onClick={() => setDetalle(meta)}
       >
         <div className={style.cardTop}>
