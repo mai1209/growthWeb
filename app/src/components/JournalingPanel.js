@@ -337,10 +337,11 @@ export default function JournalingPanel({ visible, onClose }) {
     setExtras(limpio);
     setEditandoPreguntas(false);
     try {
+      // Siempre en HOY: cambiar preguntas nunca reescribe los días viejos.
       const { data } = await journalService.savePreguntas({
         ...borradorPreguntas,
         extras: limpio,
-        fecha,
+        fecha: hoyLocal(),
       });
       if (data?.preguntas) setPreguntas({ ...PREGUNTAS_DEFAULT, ...data.preguntas });
       if (Array.isArray(data?.extras)) setExtras(data.extras);
@@ -355,7 +356,7 @@ export default function JournalingPanel({ visible, onClose }) {
     setPreguntas({ ...PREGUNTAS_DEFAULT, ...pl.base });
     setExtras(limpio);
     try {
-      const { data } = await journalService.savePreguntas({ ...pl.base, extras: limpio, fecha });
+      const { data } = await journalService.savePreguntas({ ...pl.base, extras: limpio, fecha: hoyLocal() });
       if (data?.preguntas) setPreguntas({ ...PREGUNTAS_DEFAULT, ...data.preguntas });
       if (Array.isArray(data?.extras)) setExtras(data.extras);
     } catch {
@@ -412,6 +413,8 @@ export default function JournalingPanel({ visible, onClose }) {
 
   // La página del libro es el día activo (el que se está editando).
   const libroIdx = entradas.findIndex((e) => e.fecha === fecha);
+  // Sólo hoy se pueden cambiar las preguntas o elegir una plantilla.
+  const esHoy = fecha === hoyLocal();
 
   // Preguntas de una entrada: el día activo usa las actuales; los días viejos
   // usan el snapshot que quedó guardado ese día.
@@ -480,15 +483,17 @@ export default function JournalingPanel({ visible, onClose }) {
                 <AnimoSlider value={entrada.animo} onChange={onAnimoChange} styles={styles} />
               </View>
 
-              {/* Botón de plantillas de preguntas */}
-              <TouchableOpacity
-                style={styles.plantillasBtn}
-                onPress={() => setPlantillasOpen(true)}
-              >
-                <Ionicons name="grid-outline" size={15} color={colors.text} />
-                <Text style={styles.plantillasBtnText}>Plantillas</Text>
-                <Ionicons name="chevron-down" size={14} color={colors.muted} />
-              </TouchableOpacity>
+              {/* Botón de plantillas de preguntas (sólo hoy) */}
+              {esHoy ? (
+                <TouchableOpacity
+                  style={styles.plantillasBtn}
+                  onPress={() => setPlantillasOpen(true)}
+                >
+                  <Ionicons name="grid-outline" size={15} color={colors.text} />
+                  <Text style={styles.plantillasBtnText}>Plantillas</Text>
+                  <Ionicons name="chevron-down" size={14} color={colors.muted} />
+                </TouchableOpacity>
+              ) : null}
 
               {/* Switch Libro / Calendario con pastilla deslizante */}
               <View

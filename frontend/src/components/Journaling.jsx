@@ -188,6 +188,12 @@ function Journaling() {
     };
   }, []);
 
+  // Al pararse en un día viejo se cierra el editor: las preguntas sólo se
+  // cambian desde hoy (y no deben tocar los días ya respondidos).
+  useEffect(() => {
+    if (fecha !== hoyLocal()) setEditandoPreguntas(false);
+  }, [fecha]);
+
   // Autoguardado PARCIAL: se mandan solo los campos tocados en esta sesión.
   // Así un estado viejo o vacío jamás puede pisar lo que ya está guardado.
   const pendienteRef = useRef({});
@@ -243,7 +249,8 @@ function Journaling() {
     setExtras(limpio);
     setEditandoPreguntas(false);
     try {
-      const { data } = await journalService.savePreguntas({ ...base, extras: limpio, fecha });
+      // Siempre se estampan en HOY: cambiar preguntas nunca reescribe días viejos.
+      const { data } = await journalService.savePreguntas({ ...base, extras: limpio, fecha: hoyLocal() });
       if (data?.preguntas) setPreguntas({ ...PREGUNTAS_DEFAULT, ...data.preguntas });
       if (Array.isArray(data?.extras)) setExtras(data.extras);
     } catch {
@@ -334,6 +341,21 @@ function Journaling() {
       distinto: snap.distinto || PREGUNTAS_DEFAULT.distinto,
     };
   };
+
+  // ¿El día activo es hoy? Sólo hoy se pueden cambiar las preguntas/plantilla.
+  const esHoy = fecha === hoyLocal();
+  // Preguntas y extras del día que se está editando: hoy usa la config actual;
+  // un día viejo usa su snapshot congelado (así editar hoy no lo reescribe).
+  const preguntasActivas = esHoy
+    ? preguntas
+    : {
+        gratitud: entrada.preguntas?.gratitud || PREGUNTAS_DEFAULT.gratitud,
+        mejor: entrada.preguntas?.mejor || PREGUNTAS_DEFAULT.mejor,
+        distinto: entrada.preguntas?.distinto || PREGUNTAS_DEFAULT.distinto,
+      };
+  const extrasActivos = esHoy
+    ? extras
+    : (entrada.extras || []).map((x) => ({ id: x.id, texto: x.texto }));
 
   // Al cambiar de día, arrancamos en la primera página interna.
   const pagsPreviasRef = useRef(0);
@@ -605,7 +627,8 @@ function Journaling() {
             </button>
           </div>
 
-          {/* Plantillas de preguntas por nivel */}
+          {/* Plantillas de preguntas por nivel (sólo hoy) */}
+          {esHoy ? (
           <div className={style.plantillasWrap}>
             <button
               type="button"
@@ -654,6 +677,7 @@ function Journaling() {
               </>
             ) : null}
           </div>
+          ) : null}
         </div>
       </header>
 
@@ -713,7 +737,8 @@ function Journaling() {
             </div>
           </div>
 
-          {/* Preguntas guiadas (el texto es personalizable) */}
+          {/* Preguntas guiadas (el texto es personalizable, sólo hoy) */}
+          {esHoy ? (
           <div className={style.preguntasHead}>
             {editandoPreguntas ? (
               <>
@@ -743,8 +768,9 @@ function Journaling() {
               </button>
             )}
           </div>
+          ) : null}
 
-          {editandoPreguntas ? (
+          {editandoPreguntas && esHoy ? (
             <div className={style.editorPreguntas}>
               {CAMPOS.map((p) => (
                 <input
@@ -795,7 +821,7 @@ function Journaling() {
             <>
               {CAMPOS.map((p) => (
                 <label key={p.campo} className={style.campo}>
-                  <span>{preguntas[p.campo]}</span>
+                  <span>{preguntasActivas[p.campo]}</span>
                   <textarea
                     className={style.input}
                     value={entrada[p.campo]}
@@ -805,7 +831,7 @@ function Journaling() {
                   />
                 </label>
               ))}
-              {extras.map((x) => (
+              {extrasActivos.map((x) => (
                 <label key={x.id} className={style.campo}>
                   <span>{x.texto}</span>
                   <textarea
