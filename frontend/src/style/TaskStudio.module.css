@@ -141,7 +141,7 @@
 .dayButton,
 .taskRowActions button {
   min-height: 46px;
-  border-radius: 16px;
+  border-radius: 20px;
   border: none;
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(14px);
@@ -165,7 +165,7 @@
 
 .titleInput {
   min-height: 44px;
-  border-radius: 16px;
+  border-radius: 20px;
   font-weight: 700;
 }
 
@@ -263,7 +263,7 @@
   width: 100%;
   padding: 0.15rem 0.55rem 0.2rem;
   border: 2px solid transparent;
-  border-radius: 14px;
+  border-radius: 20px;
   background: transparent;
   color: var(--color-text);
   font-size: 1.6rem;
@@ -342,7 +342,7 @@
   width: 40px;
   height: 40px;
   min-height: 40px;
-  border-radius: 16px;
+  border-radius: 20px;
   border: 1px solid rgba(17, 24, 20, 0.1);
   background: transparent;
   color: #172018;
@@ -380,7 +380,7 @@
   width: 34px;
   min-height: 28px;
   border: 1px solid rgba(17, 24, 20, 0.1);
-  border-radius: 16px;
+  border-radius: 20px;
   background: transparent;
   color: #172018;
   cursor: pointer;
@@ -402,7 +402,7 @@
   gap: 2px;
   padding: 2px;
   border: 1px solid rgba(17, 24, 20, 0.12);
-  border-radius: 16px;
+  border-radius: 20px;
   background: #ffffff;
 }
 
@@ -461,7 +461,7 @@
   margin-bottom: 0.7rem;
   padding: 0.85rem 1rem;
   border: 1px solid rgba(17, 24, 20, 0.12);
-  border-radius: 14px;
+  border-radius: 20px;
   background: #ffffff;
   box-shadow: var(--shadow-xs, 0 6px 16px rgba(0, 0, 0, 0.06));
 }
@@ -568,7 +568,7 @@
 
 .editorShell {
   position: relative;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
 }
 
@@ -588,7 +588,7 @@
 
 .editor {
   min-height: 220px;
-  border-radius: 16px;
+  border-radius: 20px;
   border: 1px solid rgba(17, 24, 20, 0.12);
   background: #ffffff;
 }
@@ -678,7 +678,7 @@
    nota, con borde redondeado y sombra, como una página apoyada. */
 .editorExpanded .editor :global(.ql-editor) {
   background: rgba(255, 255, 255, 0.55);
-  border-radius: 18px;
+  border-radius: 20px;
   margin-block: 1.3rem 2.2rem;
   box-shadow:
     0 0 0 1px rgba(17, 24, 20, 0.08),
@@ -743,7 +743,7 @@
   align-items: center;
   gap: 2px;
   padding: 3px;
-  border-radius: 16px;
+  border-radius: 20px;
   border: 1px solid rgba(17, 24, 20, 0.12);
   background: var(--surface-input, rgba(0, 0, 0, 0.04));
 }
@@ -853,7 +853,7 @@
   margin-bottom: 0.7rem;
   padding: 0.85rem 1rem;
   border: 1px solid rgba(17, 24, 20, 0.12);
-  border-radius: 14px;
+  border-radius: 20px;
   background: var(--surface-input, #ffffff);
   box-shadow: var(--shadow-xs, 0 6px 16px rgba(0, 0, 0, 0.06));
 }
@@ -1159,7 +1159,7 @@
   flex-direction: column;
   padding: 0.3rem;
   border: 1px solid var(--border-color);
-  border-radius: 14px;
+  border-radius: 20px;
   background: var(--panel-background, var(--surface-card));
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
 }
@@ -1170,7 +1170,7 @@
   gap: 0.6rem;
   padding: 0.65rem 0.8rem;
   border: none;
-  border-radius: 16px;
+  border-radius: 20px;
   background: transparent;
   color: var(--color-text);
   font-size: 0.88rem;
@@ -1230,7 +1230,7 @@
   min-height: 104px;
   padding: 0.45rem;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: 18px;
   background: var(--surface-card);
 }
 
@@ -3024,7 +3024,7 @@ button.folderItem {
     width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
-    border-radius: 16px;
+    border-radius: 20px;
   }
 
   .toolbarButton {
@@ -3274,7 +3274,7 @@ button.folderItem {
   min-height: 70px;
   resize: vertical;
   padding: 0.75rem 0.85rem;
-  border-radius: 16px;
+  border-radius: 20px;
   border: 1px solid rgba(17, 24, 20, 0.18);
   background: var(--surface-input, #ffffff);
   color: var(--color-text);
@@ -3298,7 +3298,7 @@ button.folderItem {
 .fcCardError {
   margin: 0;
   padding: 0.6rem 0.8rem;
-  border-radius: 16px;
+  border-radius: 20px;
   background: rgba(192, 73, 47, 0.12);
   border: 1px solid rgba(192, 73, 47, 0.35);
   color: #c0492f;
@@ -3309,7 +3309,7 @@ button.folderItem {
 .fcEmpty {
   margin: 0;
   padding: 1.2rem;
-  border-radius: 14px;
+  border-radius: 20px;
   background: var(--surface-input, rgba(0, 0, 0, 0.04));
   color: var(--color-muted);
   line-height: 1.55;
@@ -3325,7 +3325,7 @@ button.folderItem {
   min-height: 50px;
   padding: 0.8rem 1rem;
   border: none;
-  border-radius: 14px;
+  border-radius: 20px;
   background: linear-gradient(135deg, rgba(144, 211, 106, 0.95), rgba(52, 132, 67, 0.98));
   color: #ffffff;
   font-weight: 800;
@@ -3342,7 +3342,7 @@ button.folderItem {
   grid-template-columns: 1fr 1fr;
   gap: 0.3rem;
   padding: 0.25rem;
-  border-radius: 16px;
+  border-radius: 20px;
   border: 1px solid rgba(17, 24, 20, 0.12);
   background: var(--surface-input, rgba(0, 0, 0, 0.04));
 }
@@ -3371,7 +3371,7 @@ button.folderItem {
   width: 100%;
   min-height: 46px;
   border: 1px dashed rgba(47, 111, 53, 0.5);
-  border-radius: 16px;
+  border-radius: 20px;
   background: rgba(144, 211, 106, 0.1);
   color: #2f6f35;
   font-weight: 800;
@@ -3416,7 +3416,7 @@ button.folderItem {
   gap: 0.35rem;
   padding: 0.4rem 0.7rem;
   border: 1px solid rgba(75, 143, 58, 0.4);
-  border-radius: 16px;
+  border-radius: 20px;
   background: rgba(144, 211, 106, 0.12);
   color: #2f6f35;
   font-size: 0.8rem;
@@ -3434,7 +3434,7 @@ button.folderItem {
   justify-content: space-between;
   gap: 0.6rem;
   padding: 0.75rem 0.85rem;
-  border-radius: 16px;
+  border-radius: 20px;
   border: 1px solid rgba(17, 24, 20, 0.1);
   background: var(--surface-input, rgba(0, 0, 0, 0.02));
 }
@@ -3476,7 +3476,7 @@ button.folderItem {
   justify-items: center;
   text-align: center;
   padding: 1rem;
-  border-radius: 14px;
+  border-radius: 20px;
   background: rgba(144, 211, 106, 0.12);
   border: 1px solid rgba(75, 143, 58, 0.25);
 }
@@ -3494,7 +3494,7 @@ button.folderItem {
   margin-top: 0.4rem;
   padding: 0.5rem 0.9rem;
   border: 1px solid rgba(75, 143, 58, 0.4);
-  border-radius: 16px;
+  border-radius: 20px;
   background: transparent;
   color: #2f6f35;
   font-weight: 700;
@@ -3605,7 +3605,7 @@ button.folderItem {
 .fcKnown {
   min-height: 52px;
   border: none;
-  border-radius: 14px;
+  border-radius: 20px;
   font-weight: 800;
   font-size: 1rem;
   cursor: pointer;

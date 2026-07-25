@@ -289,7 +289,7 @@
   min-height: 42px;
   padding: 0.45rem 0.7rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  border-radius: 20px;
   color: var(--color-text);
   font-weight: 600;
   font-size: 0.88rem;
@@ -353,7 +353,7 @@
 
 .insightCard {
   padding: 0.95rem;
-  border-radius: 18px;
+  border-radius: 20px;
   border: 1px solid rgba(216, 241, 224, 0.08);
   background:
     linear-gradient(
@@ -748,7 +748,7 @@
   justify-content: center;
   text-decoration: none;
   font-weight: 700;
-  border-radius: 14px;
+  border-radius: 20px;
 }
 
 .dashboardPrimaryLink {
@@ -795,7 +795,7 @@
 
 .promoMedia {
   flex: 1;
-  border-radius: 18px;
+  border-radius: 20px;
   overflow: hidden;
   min-height: 340px;
   max-height: calc(100vh - 220px); /* se adapta a la pantalla, no crece infinito */
@@ -982,7 +982,7 @@
 
   .quickActions button {
     padding: 0.8rem 0.9rem;
-    border-radius: 14px;
+    border-radius: 20px;
     font-size: 0.92rem;
   }
 
@@ -1072,7 +1072,7 @@
   }
 
   .dashboardMovementShell {
-    border-radius: 18px;
+    border-radius: 20px;
   }
 
   .quickActions {
@@ -1084,7 +1084,7 @@
     min-height: 44px;
     padding: 0.55rem 0.6rem;
     gap: 0.35rem;
-    border-radius: 16px;
+    border-radius: 20px;
   }
 
   .quickActions button span {
@@ -1105,7 +1105,7 @@
 
   .dashboardMovementRow {
     padding: 0.8rem 0.85rem;
-    border-radius: 16px;
+    border-radius: 20px;
   }
 
   .dashboardMovementCategory,
@@ -1153,7 +1153,7 @@
   display: grid;
   gap: 1rem;
   padding: 1.2rem;
-  border-radius: 18px;
+  border-radius: 20px;
   border: 1px solid var(--border-color);
   background: var(--panel-background);
   box-shadow: var(--shadow-soft);
@@ -1172,7 +1172,7 @@
   min-height: 52px;
   padding: 0.7rem 0.85rem;
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 20px;
   background: var(--surface-input);
   color: var(--color-text);
   font-size: 0.92rem;

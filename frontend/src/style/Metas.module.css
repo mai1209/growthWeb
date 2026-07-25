@@ -45,7 +45,7 @@
   display: inline-grid;
   place-items: center;
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 20px;
   background: transparent;
   color: var(--color-muted);
   font-size: 1.1rem;
@@ -70,7 +70,7 @@
   gap: 0.4rem;
   padding: 0.62rem 1.1rem;
   border: none;
-  border-radius: 16px;
+  border-radius: 20px;
   background: var(--accent, #5dc72d);
   color: var(--accent-contrast, #0e1a0e);
   font-size: 0.9rem;
@@ -520,7 +520,7 @@
   gap: 0.85rem;
   padding: 1.3rem 1.4rem 1.5rem;
   border: 1px solid var(--border-color);
-  border-radius: 18px;
+  border-radius: 20px;
   background: var(--panel-background, var(--surface-card));
   box-shadow: 0 30px 70px rgba(0, 0, 0, 0.4);
 }
@@ -551,7 +551,7 @@
   display: inline-grid;
   place-items: center;
   border: none;
-  border-radius: 16px;
+  border-radius: 20px;
   background: transparent;
   color: var(--color-muted);
   cursor: pointer;
@@ -596,7 +596,7 @@
   gap: 0.55rem;
   padding: 0.9rem 1rem;
   border: 1px solid var(--border-color);
-  border-radius: 14px;
+  border-radius: 20px;
   background: rgba(127, 137, 129, 0.06);
 }
 
@@ -808,7 +808,7 @@
   gap: 0.45rem;
   padding: 0.72rem 1rem;
   border: none;
-  border-radius: 16px;
+  border-radius: 20px;
   background: var(--accent, #5dc72d);
   color: var(--accent-contrast, #0e1a0e);
   font-size: 0.9rem;
@@ -827,7 +827,7 @@
   gap: 0.45rem;
   padding: 0.72rem 1rem;
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 20px;
   background: transparent;
   color: var(--color-muted);
   font-size: 0.9rem;
@@ -848,7 +848,7 @@
   gap: 0.35rem;
   padding: 0.5rem 0.85rem;
   border: 1px dashed var(--border-color);
-  border-radius: 16px;
+  border-radius: 20px;
   background: transparent;
   color: var(--color-muted);
   font-size: 0.82rem;
@@ -882,7 +882,7 @@
   min-height: 42px;
   padding: 0.55rem 0.8rem;
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 20px;
   background: var(--surface-input, rgba(127, 137, 129, 0.08));
   color: var(--color-text);
   font-size: 0.92rem;
@@ -916,7 +916,7 @@
   margin-top: 0.3rem;
   padding: 0.8rem 1rem;
   border: none;
-  border-radius: 16px;
+  border-radius: 20px;
   background: var(--accent, #5dc72d);
   color: var(--accent-contrast, #0e1a0e);
   font-size: 0.95rem;
