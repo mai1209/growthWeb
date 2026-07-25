@@ -194,7 +194,7 @@
   display: grid;
   gap: 0.5rem;
   border: 1px solid var(--border-color, rgba(216, 241, 224, 0.08));
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 0.85rem;
   background: var(--surface-input, rgba(255, 255, 255, 0.03));
 }
@@ -229,7 +229,7 @@
   width: 100%;
   resize: vertical;
   border: 1px solid var(--border-color, rgba(216, 241, 224, 0.12));
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 0.7rem 0.85rem;
   background: var(--surface-input, rgba(255, 255, 255, 0.04));
   color: var(--color-text);
@@ -241,7 +241,7 @@
 .saveNotesBtn {
   justify-self: start;
   border: none;
-  border-radius: 10px;
+  border-radius: 16px;
   padding: 0.5rem 1rem;
   background: rgba(93, 199, 45, 0.16);
   color: #5dc72d;
@@ -278,7 +278,7 @@
   color: var(--color-muted);
   cursor: pointer;
   padding: 0.35rem;
-  border-radius: 8px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
 }
@@ -326,7 +326,7 @@
 
 .field input {
   border: 1px solid var(--border-color, rgba(216, 241, 224, 0.12));
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 0.7rem 0.85rem;
   background: var(--surface-input, rgba(255, 255, 255, 0.04));
   color: var(--color-text);
@@ -344,7 +344,7 @@
   border: 1px solid var(--border-color, rgba(216, 241, 224, 0.14));
   background: transparent;
   color: var(--color-text);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 0.6rem 1.1rem;
   font-weight: 700;
   cursor: pointer;
@@ -354,7 +354,7 @@
   border: none;
   background: #5dc72d;
   color: #0e1a0e;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 0.6rem 1.2rem;
   font-weight: 800;
   cursor: pointer;
@@ -421,7 +421,7 @@
   color: var(--color-muted);
   cursor: pointer;
   padding: 0.3rem;
-  border-radius: 8px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
   font-size: 0.95rem;
@@ -550,7 +550,7 @@
   place-items: center;
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid var(--border-color, rgba(216, 241, 224, 0.14));
   background: var(--surface-input, rgba(255, 255, 255, 0.04));
   color: var(--color-muted);
@@ -613,7 +613,7 @@
   font-size: 1.3rem;
   line-height: 1;
   padding: 0.2rem 0.5rem;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 .menuBtn:hover {
@@ -628,7 +628,7 @@
   z-index: 5;
   min-width: 150px;
   border: 1px solid var(--border-color, rgba(216, 241, 224, 0.14));
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--panel-background, #0f1a14);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
   padding: 0.35rem;
@@ -643,7 +643,7 @@
   background: transparent;
   color: #e5533c;
   padding: 0.6rem 0.7rem;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
   font-size: 0.9rem;
@@ -715,7 +715,7 @@
 .pauseInput {
   width: 100%;
   border: 1px solid var(--border-color, rgba(216, 241, 224, 0.12));
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 0.7rem 0.9rem;
   background: var(--surface-input, rgba(255, 255, 255, 0.04));
   color: var(--color-text);
@@ -739,7 +739,7 @@
   display: grid;
   gap: 0.35rem;
   border: 1px solid var(--border-color, rgba(216, 241, 224, 0.12));
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 0.75rem 0.85rem;
   background: var(--surface-input, rgba(255, 255, 255, 0.04));
   color: var(--color-text);
@@ -801,7 +801,7 @@
   place-items: center;
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: 16px;
   border: 1px solid var(--border-color, rgba(216, 241, 224, 0.14));
   background: var(--surface-input, rgba(255, 255, 255, 0.04));
   color: var(--color-text);
@@ -841,7 +841,7 @@
   justify-content: flex-start;
   gap: 0.1rem;
   padding: 0.4rem 0.5rem;
-  border-radius: 10px;
+  border-radius: 16px;
   border: 1px solid var(--border-color, rgba(216, 241, 224, 0.07));
   background: var(--surface-input, rgba(255, 255, 255, 0.02));
   color: var(--color-text);
@@ -915,7 +915,7 @@
   align-items: center;
   justify-content: space-between;
   border: 1px solid var(--border-color, rgba(216, 241, 224, 0.08));
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 0.6rem 0.8rem;
   background: var(--surface-input, rgba(255, 255, 255, 0.03));
   color: var(--color-text);
@@ -962,7 +962,7 @@
   place-items: center;
   width: 22px;
   height: 22px;
-  border-radius: 7px;
+  border-radius: 12px;
   opacity: 0;
   transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease;
 }
@@ -997,7 +997,7 @@
 
 .daySelect {
   border: 1px solid var(--border-color, rgba(216, 241, 224, 0.12));
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 0.7rem 0.85rem;
   background: var(--surface-input, rgba(255, 255, 255, 0.04));
   color: var(--color-text);

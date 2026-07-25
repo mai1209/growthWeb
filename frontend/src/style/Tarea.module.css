@@ -533,7 +533,7 @@
 .calendarTrigger {
   min-height: 40px;
   padding: 0.58rem 0.8rem;
-  border-radius: 13px;
+  border-radius: 16px;
   border: 1px solid rgba(216, 241, 224, 0.1);
   background: var(--surface-input);
   color: var(--color-text);
@@ -1297,7 +1297,7 @@
   min-height: 38px;
   padding: 0 0.65rem;
   border: 1px solid rgba(216, 241, 224, 0.14);
-  border-radius: 13px;
+  border-radius: 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1673,7 +1673,7 @@
   gap: 0.4rem;
   padding: 0.5rem 0.85rem;
   border: none;
-  border-radius: 10px;
+  border-radius: 16px;
   background: transparent;
   color: var(--color-muted);
   font-size: 0.85rem;
@@ -1733,7 +1733,7 @@
   height: 36px;
   display: inline-grid;
   place-items: center;
-  border-radius: 10px;
+  border-radius: 16px;
   border: 1px solid var(--border-color);
   background: rgba(255, 255, 255, 0.05);
   color: var(--color-text);
@@ -1772,7 +1772,7 @@
   gap: 0.3rem;
   min-height: 72px;
   padding: 0.45rem;
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid var(--border-color);
   background: rgba(255, 255, 255, 0.03);
   color: var(--color-text);
@@ -1842,7 +1842,7 @@
   display: inline-flex;
   gap: 0.25rem;
   padding: 0.25rem;
-  border-radius: 12px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-color);
 }
@@ -1850,7 +1850,7 @@
 .historyPeriodButton {
   padding: 0.45rem 0.85rem;
   border: none;
-  border-radius: 9px;
+  border-radius: 12px;
   background: transparent;
   color: var(--color-muted);
   font-size: 0.82rem;
@@ -1881,7 +1881,7 @@
   height: 34px;
   display: inline-grid;
   place-items: center;
-  border-radius: 10px;
+  border-radius: 16px;
   border: 1px solid var(--border-color);
   background: rgba(255, 255, 255, 0.05);
   color: var(--color-text);
@@ -1952,7 +1952,7 @@
   max-width: 26px;
   display: flex;
   align-items: flex-end;
-  border-radius: 6px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.06);
   overflow: hidden;
 }
@@ -1960,7 +1960,7 @@
 .historyBarFill {
   width: 100%;
   min-height: 2px;
-  border-radius: 6px;
+  border-radius: 12px;
   background: linear-gradient(180deg, #9cfb43, #5dc72d);
 }
 

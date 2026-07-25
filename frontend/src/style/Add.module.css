@@ -4,11 +4,11 @@
   position: relative;
 
   /* Escala de radios profesional (como Ajustes): 8-12px */
-  --radius-xs: 6px;
-  --radius-sm: 8px;
-  --radius-md: 8px;
-  --radius-lg: 10px;
-  --radius-xl: 12px;
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 14px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
   --radius-2xl: 14px;
 }
 
@@ -752,7 +752,7 @@
   display: inline-grid;
   place-items: center;
   border: 1px dashed var(--border-color);
-  border-radius: 7px;
+  border-radius: 12px;
   background: transparent;
   color: var(--color-muted);
   font-size: 1rem;
@@ -793,7 +793,7 @@
   z-index: 30;
   display: grid;
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 16px;
   background: var(--surface-card-strong);
   box-shadow: var(--shadow-md);
   overflow: hidden;
@@ -902,7 +902,7 @@
   margin-top: 0.2rem;
   padding: 0.6rem 1.4rem;
   border: none;
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--accent);
   color: var(--accent-contrast);
   font-weight: 800;
@@ -942,7 +942,7 @@
   display: grid;
   place-items: center;
   border: 1.5px solid transparent;
-  border-radius: 9px;
+  border-radius: 12px;
   background: var(--surface-input);
   font-size: 1.15rem;
   cursor: pointer;
@@ -968,7 +968,7 @@
 .catCancelBtn {
   padding: 0.6rem 1rem;
   border: 1px solid var(--border-color);
-  border-radius: 9px;
+  border-radius: 12px;
   background: var(--surface-input);
   color: var(--color-text);
   font-weight: 700;
@@ -978,7 +978,7 @@
 .catSaveBtn {
   padding: 0.6rem 1.1rem;
   border: none;
-  border-radius: 9px;
+  border-radius: 12px;
   background: #14d95f;
   color: #04140b;
   font-weight: 800;
@@ -1007,7 +1007,7 @@
   width: 20px;
   height: 20px;
   border: 1.5px dashed rgba(20, 217, 95, 0.55);
-  border-radius: 6px;
+  border-radius: 12px;
   font-size: 0.95rem;
   line-height: 1;
 }

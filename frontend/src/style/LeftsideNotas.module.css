@@ -325,7 +325,7 @@
   height: 42px;
   padding: 0 0.7rem;
   border: 1px solid rgba(216, 241, 224, 0.16);
-  border-radius: 12px;
+  border-radius: 16px;
   font-size: 0.8rem;
   color: var(--color-text);
   cursor: pointer;

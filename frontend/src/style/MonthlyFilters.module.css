@@ -858,7 +858,7 @@
 .modeBtn {
   flex: 1;
   min-height: 42px;
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid rgba(216, 241, 224, 0.14);
   background: var(--surface-input);
   color: var(--color-muted);
@@ -1369,7 +1369,7 @@
   width: 38px;
   height: 38px;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--surface-input);
   color: var(--color-verde);
   cursor: pointer;
@@ -1420,7 +1420,7 @@
 .heroYearOption {
   padding: 0.5rem 0.8rem;
   border: none;
-  border-radius: 10px;
+  border-radius: 16px;
   background: transparent;
   color: var(--color-text);
   font-weight: 700;

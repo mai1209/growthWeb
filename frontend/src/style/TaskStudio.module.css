@@ -141,7 +141,7 @@
 .dayButton,
 .taskRowActions button {
   min-height: 46px;
-  border-radius: 12px;
+  border-radius: 16px;
   border: none;
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(14px);
@@ -342,7 +342,7 @@
   width: 40px;
   height: 40px;
   min-height: 40px;
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid rgba(17, 24, 20, 0.1);
   background: transparent;
   color: #172018;
@@ -380,7 +380,7 @@
   width: 34px;
   min-height: 28px;
   border: 1px solid rgba(17, 24, 20, 0.1);
-  border-radius: 10px;
+  border-radius: 16px;
   background: transparent;
   color: #172018;
   cursor: pointer;
@@ -402,7 +402,7 @@
   gap: 2px;
   padding: 2px;
   border: 1px solid rgba(17, 24, 20, 0.12);
-  border-radius: 10px;
+  border-radius: 16px;
   background: #ffffff;
 }
 
@@ -410,7 +410,7 @@
   width: 26px;
   height: 28px;
   border: none;
-  border-radius: 7px;
+  border-radius: 12px;
   background: transparent;
   color: #2f6f35;
   font-size: 1.1rem;
@@ -427,7 +427,7 @@
   width: 38px;
   height: 28px;
   border: none;
-  border-radius: 6px;
+  border-radius: 12px;
   background: transparent;
   color: #172018;
   font-size: 0.9rem;
@@ -491,7 +491,7 @@
 .symbolButton {
   height: 38px;
   border: 1px solid rgba(17, 24, 20, 0.1);
-  border-radius: 9px;
+  border-radius: 12px;
   background: #ffffff;
   color: #172018;
   font-size: 1.15rem;
@@ -513,7 +513,7 @@
 .tableSizeButton {
   height: 32px;
   border: 1px solid rgba(17, 24, 20, 0.1);
-  border-radius: 9px;
+  border-radius: 12px;
   background: #ffffff;
   color: #172018;
   font-size: 0.8rem;
@@ -743,7 +743,7 @@
   align-items: center;
   gap: 2px;
   padding: 3px;
-  border-radius: 10px;
+  border-radius: 16px;
   border: 1px solid rgba(17, 24, 20, 0.12);
   background: var(--surface-input, rgba(0, 0, 0, 0.04));
 }
@@ -753,7 +753,7 @@
   height: 28px;
   padding: 0 0.45rem;
   border: none;
-  border-radius: 7px;
+  border-radius: 12px;
   background: transparent;
   color: var(--color-muted);
   font-size: 0.78rem;
@@ -880,7 +880,7 @@
   width: 26px;
   height: 26px;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   background: transparent;
   color: var(--color-muted);
   cursor: pointer;
@@ -901,7 +901,7 @@
   text-align: left;
   padding: 0.4rem 0.55rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   background: transparent;
   color: var(--color-text);
   font-size: 0.9rem;
@@ -1170,7 +1170,7 @@
   gap: 0.6rem;
   padding: 0.65rem 0.8rem;
   border: none;
-  border-radius: 10px;
+  border-radius: 16px;
   background: transparent;
   color: var(--color-text);
   font-size: 0.88rem;
@@ -2553,7 +2553,7 @@ button.folderItem {
   width: max-content;
   max-width: 260px;
   padding: 0.4rem 0.6rem;
-  border-radius: 8px;
+  border-radius: 12px;
   background: #172018;
   color: #f4f8f4;
   font-size: 0.78rem;
@@ -3274,7 +3274,7 @@ button.folderItem {
   min-height: 70px;
   resize: vertical;
   padding: 0.75rem 0.85rem;
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid rgba(17, 24, 20, 0.18);
   background: var(--surface-input, #ffffff);
   color: var(--color-text);
@@ -3298,7 +3298,7 @@ button.folderItem {
 .fcCardError {
   margin: 0;
   padding: 0.6rem 0.8rem;
-  border-radius: 10px;
+  border-radius: 16px;
   background: rgba(192, 73, 47, 0.12);
   border: 1px solid rgba(192, 73, 47, 0.35);
   color: #c0492f;
@@ -3342,7 +3342,7 @@ button.folderItem {
   grid-template-columns: 1fr 1fr;
   gap: 0.3rem;
   padding: 0.25rem;
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid rgba(17, 24, 20, 0.12);
   background: var(--surface-input, rgba(0, 0, 0, 0.04));
 }
@@ -3350,7 +3350,7 @@ button.folderItem {
 .fcScopeTab {
   min-height: 38px;
   border: none;
-  border-radius: 9px;
+  border-radius: 12px;
   background: transparent;
   color: var(--color-muted);
   font-weight: 700;
@@ -3371,7 +3371,7 @@ button.folderItem {
   width: 100%;
   min-height: 46px;
   border: 1px dashed rgba(47, 111, 53, 0.5);
-  border-radius: 12px;
+  border-radius: 16px;
   background: rgba(144, 211, 106, 0.1);
   color: #2f6f35;
   font-weight: 800;
@@ -3416,7 +3416,7 @@ button.folderItem {
   gap: 0.35rem;
   padding: 0.4rem 0.7rem;
   border: 1px solid rgba(75, 143, 58, 0.4);
-  border-radius: 10px;
+  border-radius: 16px;
   background: rgba(144, 211, 106, 0.12);
   color: #2f6f35;
   font-size: 0.8rem;
@@ -3434,7 +3434,7 @@ button.folderItem {
   justify-content: space-between;
   gap: 0.6rem;
   padding: 0.75rem 0.85rem;
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid rgba(17, 24, 20, 0.1);
   background: var(--surface-input, rgba(0, 0, 0, 0.02));
 }
@@ -3494,7 +3494,7 @@ button.folderItem {
   margin-top: 0.4rem;
   padding: 0.5rem 0.9rem;
   border: 1px solid rgba(75, 143, 58, 0.4);
-  border-radius: 10px;
+  border-radius: 16px;
   background: transparent;
   color: #2f6f35;
   font-weight: 700;
@@ -3513,7 +3513,7 @@ button.folderItem {
   width: 34px;
   height: 34px;
   border: none;
-  border-radius: 9px;
+  border-radius: 12px;
   background: transparent;
   color: #c0492f;
   cursor: pointer;

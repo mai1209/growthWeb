@@ -74,7 +74,7 @@
   border: none;
   background: transparent;
   min-height: 40px;
-  border-radius: 12px;
+  border-radius: 16px;
   color: var(--color-muted);
   font-size: 0.86rem;
   font-weight: 800;
@@ -413,7 +413,7 @@
 .infoTip {
   margin: 0.2rem 0 0 !important;
   padding: 0.7rem 0.85rem;
-  border-radius: 12px;
+  border-radius: 16px;
   background: rgba(93, 199, 45, 0.12);
   border: 1px solid rgba(93, 199, 45, 0.28);
   color: var(--color-text) !important;
@@ -428,7 +428,7 @@
 
 .infoOk {
   border: none;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 0.6rem 1.2rem;
   background: #5dc72d;
   color: #0e1a0e;
