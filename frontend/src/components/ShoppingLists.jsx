@@ -197,18 +197,18 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
             <FiPlus />
             Crear lista
           </button>
-        </div>
-        <div className={style.swatchRow} role="radiogroup" aria-label="Color de la lista">
-          {LIST_COLORS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              className={`${style.swatch} ${colorStyle[c]} ${newColor === c ? style.swatchActive : ""}`}
-              onClick={() => setNewColor(c)}
-              aria-label={`Color ${c}`}
-              aria-pressed={newColor === c}
-            />
-          ))}
+          <div className={style.swatchRow} role="radiogroup" aria-label="Color de la lista">
+            {LIST_COLORS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className={`${style.swatch} ${colorStyle[c]} ${newColor === c ? style.swatchActive : ""}`}
+                onClick={() => setNewColor(c)}
+                aria-label={`Color ${c}`}
+                aria-pressed={newColor === c}
+              />
+            ))}
+          </div>
         </div>
       </form>
 
