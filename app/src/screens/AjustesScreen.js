@@ -701,8 +701,9 @@ function NotificacionesModal({ visible, onClose, colors, styles }) {
             <TouchableOpacity
               style={styles.notifDoneBtn}
               onPress={() => {
-                onMinutosBlur();
                 Keyboard.dismiss();
+                onMinutosBlur();
+                onClose();
               }}
             >
               <Text style={styles.notifDoneText}>Listo</Text>
