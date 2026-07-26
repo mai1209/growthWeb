@@ -310,6 +310,11 @@ function Journaling() {
     const map = new Map();
     historial.filter(tieneContenido).forEach((e) => map.set(e.fecha, e));
     map.set(fecha, { ...entrada, fecha });
+    // Hoy siempre es una página navegable del libro, aunque esté vacío: así
+    // desde cualquier día viejo la flecha "siguiente" te devuelve a hoy para
+    // poder escribir (antes hoy se caía del libro y quedabas trabado en ayer).
+    const hoy = hoyLocal();
+    if (!map.has(hoy)) map.set(hoy, { ...ENTRADA_VACIA, fecha: hoy });
     return [...map.values()].sort((a, b) => a.fecha.localeCompare(b.fecha));
   }, [historial, entrada, fecha]);
 
