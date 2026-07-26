@@ -1,30 +1,18 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Add from "./Add";
-import { FiArrowDownRight, FiArrowUpRight, FiX } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
 import style from "../style/App.module.css";
+import MovementCard from "./MovementCard";
 import {
   filterMovimientosByCurrency,
-  formatMoney,
-  formatSignedMoney,
   getCurrencyMeta,
-  getMovementTypeMeta,
 } from "../utils/finance";
 
 const DASHBOARD_PERIODS = [
   { value: "day", label: "Hoy" },
   { value: "month", label: "Mensual" },
   { value: "year", label: "Anual" },
-];
-
-const MOVEMENT_TYPES = [
-  { key: "ingreso", label: "Ingreso" },
-  { key: "egreso", label: "Egreso" },
-  { key: "ahorro", label: "Ahorro" },
-  { key: "ahorro-uso", label: "Usar ahorro" },
-  { key: "deuda", label: "Deuda" },
-  { key: "ingreso-fijo", label: "Ingreso fijo" },
-  { key: "egreso-fijo", label: "Gasto fijo" },
 ];
 
 const getPeriodRange = (period) => {
@@ -49,12 +37,6 @@ const getPeriodRange = (period) => {
     to: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
   };
 };
-
-const formatDashboardDate = (value) =>
-  new Date(value).toLocaleDateString("es-AR", {
-    day: "2-digit",
-    month: "short",
-  });
 
 const getLocalDayKey = (value) => {
   const date = new Date(value);
@@ -117,8 +99,8 @@ function Dashboard({
   onCurrencyChange,
   ...authProps
 }) {
+  const navigate = useNavigate();
   const [showOnly, setShowOnly] = useState(null);
-  const [typePickerOpen, setTypePickerOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState("day");
 
   const periodRange = useMemo(
@@ -175,7 +157,7 @@ function Dashboard({
             <button
               type="button"
               className={style.dashboardAddBtn}
-              onClick={() => setTypePickerOpen(true)}
+              onClick={() => navigate("/add")}
             >
               + Cargar movimiento
             </button>
@@ -202,70 +184,15 @@ function Dashboard({
                     </div>
 
                     <div className={style.dashboardMovementGroupRows}>
-                      {group.movimientos.map((movimiento) => {
-                        const typeMeta = getMovementTypeMeta(movimiento.tipo);
-                        const amountLabel =
-                          typeMeta.signedAsPositive === null
-                            ? formatMoney(movimiento.monto, currentCurrency)
-                            : formatSignedMoney(
-                              movimiento.monto,
-                              currentCurrency,
-                              typeMeta.signedAsPositive,
-                            );
-                        const toneClass =
-                          movimiento.tipo === "ingreso"
-                            ? style.dashboardIncomeRow
-                            : movimiento.tipo === "ahorro"
-                              ? style.dashboardSavingsRow
-                              : movimiento.tipo === "deuda"
-                                ? style.dashboardDebtRow
-                                : style.dashboardExpenseRow;
-                        const isPositive = amountLabel.trim().startsWith("+");
-                        // Color del monto según el tipo de movimiento
-                        const amountTone = movimiento.desdeAhorro
-                          ? style.dashboardAmountAhorro
-                          : movimiento.tipo === "ingreso"
-                            ? style.dashboardAmountIngreso
-                            : movimiento.tipo === "ahorro"
-                              ? style.dashboardAmountAhorro
-                              : movimiento.tipo === "deuda"
-                                ? style.dashboardAmountDeuda
-                                : style.dashboardAmountEgreso;
-
-                        return (
-                          <Link
-                            key={movimiento._id}
-                            to="/filtros"
-                            className={`${style.dashboardMovementRow} ${toneClass}`}
-                          >
-                            <span className={style.dashboardMovementIcon}>
-                              {isPositive ? <FiArrowUpRight /> : <FiArrowDownRight />}
-                            </span>
-
-                            <div className={style.dashboardMovementMain}>
-                              <p className={style.dashboardMovementCategory}>
-                                {movimiento.categoria}
-                              </p>
-                              <p className={style.dashboardMovementDetail}>
-                                {movimiento.detalle || "Sin detalle"}
-                              </p>
-                              <div className={style.dashboardMovementFooter}>
-                                <span className={style.dashboardMovementTypeTag}>
-                                  {typeMeta.label}
-                                </span>
-                                <span className={style.dashboardMovementDate}>
-                                  {formatDashboardDate(movimiento.fecha)}
-                                </span>
-                                <strong
-                                  className={`${style.dashboardMovementAmount} ${amountTone}`}
-                                >
-                                  {amountLabel}
-                                </strong>
-                              </div>
-                            </div>
-                          </Link>
-                        );
-                      })}
+                      {group.movimientos.map((movimiento) => (
+                        <MovementCard
+                          key={movimiento._id}
+                          movimiento={movimiento}
+                          currentCurrency={currentCurrency}
+                          onEditMovement={setMovementToEdit}
+                          onMovementUpdate={onMovementUpdate}
+                        />
+                      ))}
                     </div>
                   </section>
                 ))}
@@ -276,47 +203,6 @@ function Dashboard({
         </section>
 
       </section>
-
-      {typePickerOpen && (
-        <section
-          className={style.modalOverlay}
-          onClick={() => setTypePickerOpen(false)}
-        >
-          <div
-            className={style.typePicker}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className={style.inlineFormHeader}>
-              <p className={style.inlineFormEyebrow}>¿Qué querés cargar?</p>
-
-              <button
-                type="button"
-                className={style.closeInlineForm}
-                onClick={() => setTypePickerOpen(false)}
-                aria-label="Cerrar selector"
-              >
-                <FiX />
-              </button>
-            </div>
-
-            <div className={style.typePickerGrid}>
-              {MOVEMENT_TYPES.map((movementType) => (
-                <button
-                  key={movementType.key}
-                  type="button"
-                  className={style.typePickerBtn}
-                  onClick={() => {
-                    setTypePickerOpen(false);
-                    setShowOnly(movementType.key);
-                  }}
-                >
-                  {movementType.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {showOnly && (
         <section

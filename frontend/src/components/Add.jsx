@@ -360,6 +360,20 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
         </div>
       )}
 
+      {!isEditing && !inModal && (
+        <div className={style.closePanelRow}>
+          <button
+            type="button"
+            className={style.closePanelButton}
+            onClick={() => navigate("/")}
+            aria-label="Cerrar"
+            title="Cerrar sin guardar"
+          >
+            <FiX />
+          </button>
+        </div>
+      )}
+
       {!only && !isEditing && (
         <div className={style.modeSelector}>
           {Object.entries(MODE_CONFIG).map(([key, config]) => (
@@ -374,20 +388,6 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
               {config.title}
             </button>
           ))}
-        </div>
-      )}
-
-      {!isEditing && !inModal && (
-        <div className={style.closePanelRow}>
-          <button
-            type="button"
-            className={style.closePanelButton}
-            onClick={() => navigate("/")}
-            aria-label="Cerrar"
-            title="Cerrar sin guardar"
-          >
-            <FiX />
-          </button>
         </div>
       )}
 
