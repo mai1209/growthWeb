@@ -14,6 +14,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { taskService } from "../api";
 import { useTheme } from "../theme";
 import { filterTasksForDate, isTaskCompletedOnDate, getIsoDate } from "../utils/tasks";
+import { loadNotifSettings } from "../utils/notifSettings";
+import { syncTaskReminders } from "../utils/taskReminders";
 import TaskFormModal, { TASK_COLORS } from "../components/TaskFormModal";
 import TaskCalendar from "../components/TaskCalendar";
 import TaskHistory from "../components/TaskHistory";
@@ -37,7 +39,12 @@ export default function TareasScreen() {
     setError("");
     try {
       const res = await taskService.getAll({ tipo: "task" });
-      setAllTasks(Array.isArray(res.data) ? res.data : []);
+      const list = Array.isArray(res.data) ? res.data : [];
+      setAllTasks(list);
+      // Reprogramamos los recordatorios "X min antes" con las tareas frescas.
+      loadNotifSettings()
+        .then((s) => syncTaskReminders(list, s))
+        .catch(() => {});
     } catch (err) {
       setError("No se pudieron cargar las tareas.");
     } finally {

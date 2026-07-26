@@ -14,9 +14,11 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { authService, googleService, fiscalService } from "../api";
+import { authService, googleService, fiscalService, taskService } from "../api";
 import { useTheme } from "../theme";
 import { useAuth } from "../auth/AuthContext";
+import { loadNotifSettings, saveNotifSettings } from "../utils/notifSettings";
+import { syncTaskReminders } from "../utils/taskReminders";
 
 export default function AjustesScreen({ navigation }) {
   const { colors } = useTheme();
@@ -28,6 +30,7 @@ export default function AjustesScreen({ navigation }) {
   const ROWS = [
     { key: "perfil", label: "Perfil", desc: "Tu nombre y datos de contacto", icon: "person-outline" },
     { key: "password", label: "Cambiar contraseña", desc: "Actualizá tu clave de acceso", icon: "lock-closed-outline" },
+    { key: "notificaciones", label: "Configuración de notificaciones", desc: "Avisos de tareas y más", icon: "notifications-outline" },
     { key: "integraciones", label: "Integraciones", desc: "Google Calendar", icon: "link-outline" },
     { key: "facturacion", label: "Facturación (ARCA)", desc: "Emití facturas de este perfil", icon: "receipt-outline" },
   ];
@@ -178,6 +181,7 @@ export default function AjustesScreen({ navigation }) {
 
       <PerfilModal visible={section === "perfil"} onClose={() => setSection(null)} colors={colors} styles={styles} />
       <PasswordModal visible={section === "password"} onClose={() => setSection(null)} colors={colors} styles={styles} />
+      <NotificacionesModal visible={section === "notificaciones"} onClose={() => setSection(null)} colors={colors} styles={styles} />
       <IntegracionesModal visible={section === "integraciones"} onClose={() => setSection(null)} colors={colors} styles={styles} />
       <FiscalModal visible={section === "facturacion"} onClose={() => setSection(null)} colors={colors} styles={styles} />
     </View>
@@ -604,6 +608,94 @@ function IntegracionesModal({ visible, onClose, colors, styles }) {
   );
 }
 
+/* ---------- Configuración de notificaciones ---------- */
+function NotificacionesModal({ visible, onClose, colors, styles }) {
+  const [avisar, setAvisar] = useState(false);
+  const [minutos, setMinutos] = useState("10");
+
+  useEffect(() => {
+    if (!visible) return undefined;
+    let vivo = true;
+    loadNotifSettings().then((s) => {
+      if (!vivo) return;
+      setAvisar(!!s.avisarAntesTarea);
+      setMinutos(String(s.minutosAntes ?? 10));
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [visible]);
+
+  // Guarda la config y reprograma los recordatorios con las tareas actuales.
+  const persistir = async (next) => {
+    const settings = {
+      avisarAntesTarea: next.avisar,
+      minutosAntes: Math.max(0, parseInt(next.minutos, 10) || 0),
+    };
+    await saveNotifSettings(settings);
+    try {
+      const res = await taskService.getAll({ tipo: "task" });
+      await syncTaskReminders(Array.isArray(res.data) ? res.data : [], settings);
+    } catch {
+      // si falla el reprogramado, la config igual quedó guardada
+    }
+  };
+
+  const onToggle = (val) => {
+    setAvisar(val);
+    persistir({ avisar: val, minutos });
+  };
+
+  const onMinutosBlur = () => {
+    const limpio = String(parseInt(minutos, 10) || 0);
+    setMinutos(limpio);
+    persistir({ avisar, minutos: limpio });
+  };
+
+  return (
+    <SheetModal
+      visible={visible}
+      onClose={onClose}
+      title="Configuración de notificaciones"
+      colors={colors}
+      styles={styles}
+    >
+      <View style={styles.notifRow}>
+        <View style={{ flex: 1, paddingRight: 12 }}>
+          <Text style={styles.notifLabel}>Avisarme antes de una tarea</Text>
+          <Text style={styles.notifDesc}>
+            Te llega una notificación unos minutos antes de cada tarea que tenga hora.
+          </Text>
+        </View>
+        <Switch
+          value={avisar}
+          onValueChange={onToggle}
+          trackColor={{ false: colors.cardBorder, true: colors.greenSoft }}
+          thumbColor={avisar ? colors.greenBright : colors.muted}
+        />
+      </View>
+
+      {avisar ? (
+        <View style={styles.notifMinRow}>
+          <Text style={styles.notifLabel}>Minutos antes</Text>
+          <TextInput
+            style={styles.notifInput}
+            value={minutos}
+            onChangeText={(v) => setMinutos(v.replace(/[^0-9]/g, ""))}
+            onBlur={onMinutosBlur}
+            keyboardType="number-pad"
+            maxLength={4}
+            placeholder="10"
+            placeholderTextColor={colors.muted}
+          />
+        </View>
+      ) : null}
+
+      <Text style={styles.notifNota}>Vamos a ir sumando más avisos acá.</Text>
+    </SheetModal>
+  );
+}
+
 /* ---------- Hoja base reutilizable ---------- */
 function SheetModal({ visible, onClose, title, colors, styles, children }) {
   return (
@@ -819,4 +911,37 @@ const makeStyles = (colors) =>
     integDesc: { color: colors.muted, fontSize: 14, marginTop: 12, lineHeight: 20 },
     refreshBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 16 },
     refreshText: { color: colors.greenDark, fontWeight: "700", fontSize: 13 },
+
+    // Configuración de notificaciones
+    notifRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.cardBorder,
+    },
+    notifLabel: { color: colors.text, fontSize: 15, fontWeight: "700" },
+    notifDesc: { color: colors.muted, fontSize: 13, marginTop: 4, lineHeight: 18 },
+    notifMinRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.cardBorder,
+    },
+    notifInput: {
+      minWidth: 72,
+      textAlign: "center",
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: "700",
+      backgroundColor: colors.card,
+    },
+    notifNota: { color: colors.muted, fontSize: 12, marginTop: 16, fontStyle: "italic" },
   });
