@@ -447,7 +447,7 @@ function LeftSite({
         {/* Publicidad chica para llenar el espacio libre del panel */}
         <section className={style.sideAd}>
           <p className={style.sideAdLabel}>Espacio publicitario</p>
-          <img src="/publicidad.jpg" alt="publicidad" />
+          <img src="/publicidadChica.png" alt="publicidad" />
         </section>
       </div>
 
