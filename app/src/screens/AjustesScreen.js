@@ -670,8 +670,11 @@ function NotificacionesModal({ visible, onClose, colors, styles }) {
         <Switch
           value={avisar}
           onValueChange={onToggle}
-          trackColor={{ false: colors.cardBorder, true: colors.greenSoft }}
-          thumbColor={avisar ? colors.greenBright : colors.muted}
+          // Track gris visible (hace de contorno sobre fondo blanco) + thumb
+          // blanco: así la pastilla se distingue y no queda solo un punto gris.
+          trackColor={{ false: "#aab2b8", true: colors.green }}
+          thumbColor="#ffffff"
+          ios_backgroundColor="#aab2b8"
         />
       </View>
 
