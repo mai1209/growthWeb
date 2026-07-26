@@ -1549,21 +1549,18 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     ? "Journaling"
                     : "Notas"}
                 </p>
-                <h2 className={style.listTitle}>
-                  {effectiveView === "shopping"
-                    ? "Listas de compras"
-                    : effectiveView === "afirmaciones"
-                    ? "Afirmaciones diarias"
-                    : effectiveView === "journal"
-                    ? "Tu journal"
-                    : "Tus notas"}
-                  {effectiveView !== "shopping" &&
-                  effectiveView !== "afirmaciones" &&
-                  effectiveView !== "journal" &&
-                  boardTasks.length ? (
-                    <span className={style.listCount}>{boardTasks.length}</span>
-                  ) : null}
-                </h2>
+                {/* En journal y afirmaciones no mostramos título grande: alcanza
+                    con el rótulo de arriba (la fecha / el propio panel hacen de título). */}
+                {effectiveView !== "journal" && effectiveView !== "afirmaciones" && (
+                  <h2 className={style.listTitle}>
+                    {effectiveView === "shopping"
+                      ? "Listas de compras"
+                      : "Tus notas"}
+                    {effectiveView !== "shopping" && boardTasks.length ? (
+                      <span className={style.listCount}>{boardTasks.length}</span>
+                    ) : null}
+                  </h2>
+                )}
               </div>
               <div className={style.listHeaderActions}>
                 {/* En móvil (isCompact) mostramos Notas + Lista de compras;

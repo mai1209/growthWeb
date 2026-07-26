@@ -441,12 +441,12 @@ export default function JournalingPanel({ visible, onClose }) {
           <View style={{ flex: 1 }}>
             <View style={styles.kickerRow}>
               <Text style={styles.kicker}>JOURNALING</Text>
-              <Text style={styles.headerFecha} numberOfLines={1}>
-                {fechaLarga(fecha)}
-              </Text>
             </View>
             <View style={styles.titleRow}>
-              <Text style={styles.title}>Tu journal</Text>
+              {/* La fecha del día hace de título (antes decía "Tu journal"). */}
+              <Text style={styles.title} numberOfLines={1}>
+                {fechaLarga(fecha)}
+              </Text>
               {fecha !== hoyLocal() ? (
                 <TouchableOpacity style={styles.hoyBtn} onPress={() => irADia(hoyLocal())}>
                   <Text style={styles.hoyBtnText}>Hoy</Text>
@@ -454,6 +454,17 @@ export default function JournalingPanel({ visible, onClose }) {
               ) : null}
             </View>
           </View>
+          {/* Plantillas: arriba a la derecha del todo (sólo hoy). */}
+          {esHoy ? (
+            <TouchableOpacity
+              style={styles.plantillasBtn}
+              onPress={() => setPlantillasOpen(true)}
+            >
+              <Ionicons name="grid-outline" size={15} color={colors.text} />
+              <Text style={styles.plantillasBtnText}>Plantillas</Text>
+              <Ionicons name="chevron-down" size={14} color={colors.muted} />
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         {cargando ? (
@@ -482,18 +493,6 @@ export default function JournalingPanel({ visible, onClose }) {
                 </View>
                 <AnimoSlider value={entrada.animo} onChange={onAnimoChange} styles={styles} />
               </View>
-
-              {/* Botón de plantillas de preguntas (sólo hoy) */}
-              {esHoy ? (
-                <TouchableOpacity
-                  style={styles.plantillasBtn}
-                  onPress={() => setPlantillasOpen(true)}
-                >
-                  <Ionicons name="grid-outline" size={15} color={colors.text} />
-                  <Text style={styles.plantillasBtnText}>Plantillas</Text>
-                  <Ionicons name="chevron-down" size={14} color={colors.muted} />
-                </TouchableOpacity>
-              ) : null}
 
               {/* Switch Libro / Calendario con pastilla deslizante */}
               <View
@@ -878,15 +877,8 @@ const makeStyles = (colors) =>
     backBtn: { padding: 4 },
     kicker: { color: colors.greenDark, fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
     kickerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-    title: { color: colors.text, fontSize: 20, fontWeight: "800", marginTop: 2 },
+    title: { color: colors.text, fontSize: 14, fontWeight: "700", marginTop: 1 },
     titleRow: { flexDirection: "row", alignItems: "flex-end", gap: 8, flexWrap: "nowrap" },
-    headerFecha: {
-      flexShrink: 1,
-      color: colors.muted,
-      fontSize: 12.5,
-      fontWeight: "700",
-      textTransform: "capitalize",
-    },
     rachaPill: {
       paddingHorizontal: 10,
       paddingVertical: 5,
@@ -1211,7 +1203,8 @@ const makeStyles = (colors) =>
       alignItems: "center",
       justifyContent: "center",
       gap: 5,
-      paddingVertical: 9,
+      paddingVertical: 7,
+      paddingHorizontal: 12,
       borderRadius: 999,
       borderWidth: 1,
       borderColor: colors.cardBorder,
