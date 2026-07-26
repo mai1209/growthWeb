@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
+  Keyboard,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -681,16 +682,30 @@ function NotificacionesModal({ visible, onClose, colors, styles }) {
       {avisar ? (
         <View style={styles.notifMinRow}>
           <Text style={styles.notifLabel}>Minutos antes</Text>
-          <TextInput
-            style={styles.notifInput}
-            value={minutos}
-            onChangeText={(v) => setMinutos(v.replace(/[^0-9]/g, ""))}
-            onBlur={onMinutosBlur}
-            keyboardType="number-pad"
-            maxLength={4}
-            placeholder="10"
-            placeholderTextColor={colors.muted}
-          />
+          <View style={styles.notifMinControls}>
+            <TextInput
+              style={styles.notifInput}
+              value={minutos}
+              onChangeText={(v) => setMinutos(v.replace(/[^0-9]/g, ""))}
+              onBlur={onMinutosBlur}
+              keyboardType="number-pad"
+              maxLength={4}
+              placeholder="10"
+              placeholderTextColor={colors.muted}
+              returnKeyType="done"
+            />
+            {/* El teclado numérico no trae tecla "aceptar": este botón cierra el
+                teclado y guarda los minutos. */}
+            <TouchableOpacity
+              style={styles.notifDoneBtn}
+              onPress={() => {
+                onMinutosBlur();
+                Keyboard.dismiss();
+              }}
+            >
+              <Text style={styles.notifDoneText}>Listo</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       ) : null}
 
@@ -946,5 +961,13 @@ const makeStyles = (colors) =>
       fontWeight: "700",
       backgroundColor: colors.card,
     },
+    notifMinControls: { flexDirection: "row", alignItems: "center", gap: 10 },
+    notifDoneBtn: {
+      paddingHorizontal: 16,
+      paddingVertical: 9,
+      borderRadius: 999,
+      backgroundColor: colors.green,
+    },
+    notifDoneText: { color: "#ffffff", fontWeight: "800", fontSize: 14 },
     notifNota: { color: colors.muted, fontSize: 12, marginTop: 16, fontStyle: "italic" },
   });
