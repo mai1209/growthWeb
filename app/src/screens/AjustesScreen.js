@@ -12,6 +12,8 @@ import {
   Alert,
   Linking,
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -718,7 +720,11 @@ function NotificacionesModal({ visible, onClose, colors, styles }) {
 function SheetModal({ visible, onClose, title, colors, styles, children }) {
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      {/* La hoja sube con el teclado para que el input no quede tapado. */}
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
         <View style={styles.sheet}>
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>{title}</Text>
@@ -730,7 +736,7 @@ function SheetModal({ visible, onClose, title, colors, styles, children }) {
             {children}
           </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
