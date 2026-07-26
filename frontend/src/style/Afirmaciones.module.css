@@ -150,6 +150,40 @@
   font-size: 0.76rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Número activo: marca el renglón resaltado. */
+.numeroOn {
+  background: #7bff4d;
+  color: #06210a;
+  box-shadow: 0 0 10px rgba(123, 255, 77, 0.6);
+}
+
+/* Renglón resaltado (fijo, se prende/apaga desde el número). */
+.inputResaltada {
+  border-color: #7bff4d;
+  box-shadow: 0 0 0 2px rgba(123, 255, 77, 0.35), 0 0 18px rgba(123, 255, 77, 0.5);
+  color: #e9ffdd;
+  text-shadow: 0 0 8px rgba(123, 255, 77, 0.65);
+}
+
+/* En tema claro el verde neón se lava sobre el fondo blanco: usamos un verde
+   más oscuro y saturado, con texto verde oscuro para que se lea el resaltado. */
+:global(body[data-theme="light"]) .input:focus,
+:global(body[data-theme="light"]) .inputResaltada {
+  border-color: #17922f;
+  box-shadow: 0 0 0 2px rgba(23, 146, 47, 0.3), 0 0 14px rgba(23, 146, 47, 0.35);
+  color: #0c4a1c;
+  text-shadow: none;
+}
+
+:global(body[data-theme="light"]) .numeroOn {
+  background: #17922f;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(23, 146, 47, 0.45);
 }
 
 .input {
@@ -177,8 +211,12 @@
 
 .input:focus {
   outline: none;
-  border-color: #5dc72d;
-  box-shadow: 0 0 0 3px rgba(93, 199, 45, 0.2);
+  border-color: #7bff4d;
+  /* Glow verde brillante: aro nítido + resplandor difuso alrededor. */
+  box-shadow: 0 0 0 2px rgba(123, 255, 77, 0.35), 0 0 18px rgba(123, 255, 77, 0.5);
+  /* Texto resaltado con brillo. */
+  color: #e9ffdd;
+  text-shadow: 0 0 8px rgba(123, 255, 77, 0.65);
 }
 
 .borrar {

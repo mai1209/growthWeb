@@ -51,9 +51,9 @@ const fechaLarga = (fecha) => {
 };
 
 export default function AfirmacionesPanel({ visible, onClose }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const styles = makeStyles(colors);
+  const styles = makeStyles(colors, isDark);
 
   const [fecha, setFecha] = useState(hoyLocal);
   const [lineas, setLineas] = useState(() => Array(RENGLONES_INICIALES).fill(""));
@@ -68,6 +68,17 @@ export default function AfirmacionesPanel({ visible, onClose }) {
   // (para achicar el pie cuando está abierto y no dejar un hueco feo).
   const [focoIdx, setFocoIdx] = useState(null);
   const [tecladoAbierto, setTecladoAbierto] = useState(false);
+  // Renglones resaltados (fijos): se prenden/apagan al tocar el número, así no
+  // hace falta abrir el teclado para marcarlos.
+  const [resaltadas, setResaltadas] = useState(() => new Set());
+
+  const toggleResaltada = (indice) =>
+    setResaltadas((prev) => {
+      const next = new Set(prev);
+      if (next.has(indice)) next.delete(indice);
+      else next.add(indice);
+      return next;
+    });
 
   useEffect(() => {
     const showEvt = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
@@ -230,7 +241,6 @@ export default function AfirmacionesPanel({ visible, onClose }) {
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={styles.kicker}>AFIRMACIONES</Text>
-            <Text style={styles.title}>Afirmaciones diarias</Text>
           </View>
           {racha > 0 ? (
             <View style={styles.rachaPill}>
@@ -366,11 +376,25 @@ export default function AfirmacionesPanel({ visible, onClose }) {
               {/* Renglones */}
               {lineas.map((linea, indice) => (
                 <View key={indice} style={styles.item}>
-                  <View style={styles.numero}>
-                    <Text style={styles.numeroText}>{indice + 1}</Text>
-                  </View>
+                  <TouchableOpacity
+                    style={[styles.numero, resaltadas.has(indice) && styles.numeroOn]}
+                    onPress={() => toggleResaltada(indice)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.numeroText,
+                        resaltadas.has(indice) && styles.numeroTextOn,
+                      ]}
+                    >
+                      {indice + 1}
+                    </Text>
+                  </TouchableOpacity>
                   <TextInput
-                    style={[styles.input, focoIdx === indice && styles.inputFoco]}
+                    style={[
+                      styles.input,
+                      (focoIdx === indice || resaltadas.has(indice)) && styles.inputFoco,
+                    ]}
                     value={linea}
                     onChangeText={(valor) => editarLinea(indice, valor)}
                     onFocus={() => setFocoIdx(indice)}
@@ -433,7 +457,7 @@ export default function AfirmacionesPanel({ visible, onClose }) {
   );
 }
 
-const makeStyles = (colors) =>
+const makeStyles = (colors, isDark = false) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.bg },
 
@@ -535,6 +559,16 @@ const makeStyles = (colors) =>
       backgroundColor: colors.cardSoft,
     },
     numeroText: { color: colors.muted, fontSize: 12, fontWeight: "700" },
+    // Número activo cuando el renglón está resaltado.
+    numeroOn: {
+      backgroundColor: colors.greenBright,
+      shadowColor: colors.greenBright,
+      shadowOpacity: 0.6,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 0 },
+      elevation: 5,
+    },
+    numeroTextOn: { color: "#06210a" },
     input: {
       flex: 1,
       minHeight: 44,
@@ -552,6 +586,18 @@ const makeStyles = (colors) =>
     inputFoco: {
       borderColor: colors.greenBright,
       borderWidth: 1.5,
+      // Glow verde brillante alrededor del input.
+      shadowColor: colors.greenBright,
+      shadowOpacity: 0.55,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 0 },
+      elevation: 6,
+      // Texto resaltado con brillo. El color sigue al tema (en claro es oscuro,
+      // así se lee sobre fondo blanco; el neón sólo queda en el borde/glow).
+      color: colors.text,
+      textShadowColor: isDark ? "rgba(123, 255, 77, 0.7)" : "transparent",
+      textShadowOffset: { width: 0, height: 0 },
+      textShadowRadius: 8,
     },
     borrar: { padding: 8, marginTop: 6 },
 

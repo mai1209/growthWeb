@@ -31,6 +31,16 @@ function Afirmaciones() {
   const [repetirDiario, setRepetirDiario] = useState(true);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  // Renglones resaltados (fijos): se prenden/apagan al hacer click en el número.
+  const [resaltadas, setResaltadas] = useState(() => new Set());
+
+  const toggleResaltada = (indice) =>
+    setResaltadas((prev) => {
+      const next = new Set(prev);
+      if (next.has(indice)) next.delete(indice);
+      else next.add(indice);
+      return next;
+    });
   const guardadoRef = useRef(null);
 
   const aplicarRespuesta = useCallback((data) => {
@@ -200,9 +210,16 @@ function Afirmaciones() {
       <ol className={style.lista}>
         {lineas.map((linea, indice) => (
           <li key={indice} className={style.item}>
-            <span className={style.numero}>{indice + 1}</span>
+            <span
+              className={`${style.numero} ${resaltadas.has(indice) ? style.numeroOn : ""}`}
+              onClick={() => toggleResaltada(indice)}
+              role="button"
+              title="Resaltar afirmación"
+            >
+              {indice + 1}
+            </span>
             <textarea
-              className={style.input}
+              className={`${style.input} ${resaltadas.has(indice) ? style.inputResaltada : ""}`}
               value={linea}
               rows={1}
               placeholder="Escribí tu afirmación…"
