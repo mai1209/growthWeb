@@ -135,7 +135,14 @@ export default function AjustesScreen({ navigation }) {
             <TouchableOpacity
               key={r.key}
               style={[styles.row, i < ROWS.length - 1 && styles.rowBorder]}
-              onPress={() => setSection(r.key)}
+              onPress={() =>
+                r.key === "integraciones"
+                  ? Alert.alert(
+                      "Próximamente",
+                      "Las integraciones (Google Calendar) van a estar disponibles muy pronto."
+                    )
+                  : setSection(r.key)
+              }
             >
               <View style={styles.rowIcon}>
                 <Ionicons name={r.icon} size={20} color={colors.greenDark} />

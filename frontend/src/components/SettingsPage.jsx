@@ -324,6 +324,11 @@ function SettingsPage() {
   };
 
   const handleTabChange = (tab) => {
+    // Integraciones todavía no está disponible: por ahora avisamos y no entramos.
+    if (tab === "integraciones") {
+      window.alert("Próximamente");
+      return;
+    }
     setSearchParams({ tab });
     setError("");
     setMessage("");
