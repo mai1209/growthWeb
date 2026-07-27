@@ -388,9 +388,9 @@ const makeStyles = (colors) => StyleSheet.create({
   error: { color: colors.red, padding: 16 },
   empty: { color: colors.muted, padding: 16, textAlign: "center" },
   // Riel de horario a la izquierda de cada tarea (compacto, como en la web).
-  agendaRow: { flexDirection: "row", alignItems: "stretch" },
+  agendaRow: { flexDirection: "row", alignItems: "stretch", gap: 10 },
   agendaTime: {
-    width: 44,
+    width: 42,
     paddingRight: 8,
     paddingTop: 12,
     alignItems: "flex-end",
