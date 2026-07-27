@@ -180,6 +180,28 @@ export default function AfirmacionesPanel({ visible, onClose }) {
     });
   };
 
+  // Borra TODAS las afirmaciones y arranca de cero (con confirmación).
+  const resetearAfirmaciones = () => {
+    Alert.alert(
+      "Reset",
+      "Se borrarán TODAS las afirmaciones para empezar de nuevo.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Aceptar",
+          style: "destructive",
+          onPress: () => {
+            const vacias = Array(RENGLONES_INICIALES).fill("");
+            setLineas(vacias);
+            setResaltadas(new Set());
+            if (guardadoRef.current) clearTimeout(guardadoRef.current);
+            afirmacionService.save({ lineas: vacias, fecha }).catch(() => {});
+          },
+        },
+      ]
+    );
+  };
+
   const borrarLinea = (indice) => {
     setLineas((prev) => {
       if (prev.length <= 1) return prev;
@@ -285,6 +307,13 @@ export default function AfirmacionesPanel({ visible, onClose }) {
                   trackColor={{ false: colors.cardBorder, true: colors.greenSoft }}
                   thumbColor={repetirDiario ? colors.greenBright : colors.muted}
                 />
+                <TouchableOpacity
+                  style={styles.resetBtn}
+                  onPress={resetearAfirmaciones}
+                >
+                  <Ionicons name="refresh" size={13} color={colors.muted} />
+                  <Text style={styles.resetBtnText}>Reset</Text>
+                </TouchableOpacity>
               </View>
 
               {/* Recordatorio diario con la afirmación del día */}
@@ -515,6 +544,18 @@ const makeStyles = (colors, isDark = false) =>
     },
     switchTitulo: { color: colors.text, fontSize: 14, fontWeight: "800" },
     switchDetalle: { color: colors.muted, fontSize: 12, marginTop: 2 },
+    // Botón chico "Reset" al lado del switch.
+    resetBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+    },
+    resetBtnText: { color: colors.muted, fontSize: 12, fontWeight: "700" },
     horaBtn: {
       flexDirection: "row",
       alignItems: "center",

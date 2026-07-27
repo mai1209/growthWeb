@@ -50,6 +50,25 @@
   flex-wrap: wrap;
 }
 
+/* Botón chico "Reset": borra todas las afirmaciones (destructivo → hover rojo). */
+.resetBtn {
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.resetBtn:hover {
+  color: #e66565;
+  border-color: rgba(230, 101, 101, 0.5);
+  background: rgba(230, 101, 101, 0.1);
+}
+
 .racha {
   flex-shrink: 0;
   padding: 0.3rem 0.7rem;

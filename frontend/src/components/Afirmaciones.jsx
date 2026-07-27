@@ -128,6 +128,19 @@ function Afirmaciones() {
     });
   };
 
+  // Borra TODAS las afirmaciones y arranca de cero (con confirmación).
+  const resetearAfirmaciones = () => {
+    const ok = window.confirm(
+      "Se borrarán TODAS las afirmaciones para empezar de nuevo."
+    );
+    if (!ok) return;
+    const vacias = Array(RENGLONES_INICIALES).fill("");
+    setLineas(vacias);
+    setResaltadas(new Set());
+    if (guardadoRef.current) clearTimeout(guardadoRef.current);
+    afirmacionService.save({ lineas: vacias, fecha }).catch(() => {});
+  };
+
   const borrarLinea = (indice) => {
     setLineas((prev) => {
       if (prev.length <= 1) return prev;
@@ -197,6 +210,15 @@ function Afirmaciones() {
               <span className={style.switchBolita} />
             </span>
             Guardarlas al día siguiente
+          </button>
+
+          <button
+            type="button"
+            className={style.resetBtn}
+            onClick={resetearAfirmaciones}
+            title="Borrar todas las afirmaciones y empezar de nuevo"
+          >
+            Reset
           </button>
         </div>
       </header>
