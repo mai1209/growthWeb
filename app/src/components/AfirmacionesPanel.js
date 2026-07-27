@@ -269,6 +269,10 @@ export default function AfirmacionesPanel({ visible, onClose }) {
               <Text style={styles.rachaText}>🔥 {racha}</Text>
             </View>
           ) : null}
+          <TouchableOpacity style={styles.resetBtn} onPress={resetearAfirmaciones}>
+            <Ionicons name="refresh" size={13} color={colors.muted} />
+            <Text style={styles.resetBtnText}>Reset</Text>
+          </TouchableOpacity>
         </View>
 
         {cargando ? (
@@ -307,13 +311,6 @@ export default function AfirmacionesPanel({ visible, onClose }) {
                   trackColor={{ false: colors.cardBorder, true: colors.greenSoft }}
                   thumbColor={repetirDiario ? colors.greenBright : colors.muted}
                 />
-                <TouchableOpacity
-                  style={styles.resetBtn}
-                  onPress={resetearAfirmaciones}
-                >
-                  <Ionicons name="refresh" size={13} color={colors.muted} />
-                  <Text style={styles.resetBtnText}>Reset</Text>
-                </TouchableOpacity>
               </View>
 
               {/* Recordatorio diario con la afirmación del día */}
