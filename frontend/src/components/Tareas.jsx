@@ -230,6 +230,45 @@ const summarizePeriod = (tasks, from, to) => {
   };
 };
 
+// 30 frases de motivación para hacer tareas: se muestra 1 por día (rota sola).
+const FRASES_TAREAS = [
+  "Las personas que cumplen sus tareas rinden más que las que las postergan. Hoy te toca a vos.",
+  "Cada tarea que tachás es un ladrillo de la persona que querés ser.",
+  "La disciplina es elegir lo que querés a largo plazo por sobre lo que querés ahora.",
+  "No tenés que hacerlo perfecto, tenés que empezarlo.",
+  "Una tarea hecha vale más que diez planeadas.",
+  "El futuro se construye con lo que hacés hoy, no mañana.",
+  "Los que hacen, avanzan. Los que esperan motivación, siguen igual.",
+  "Hecho es mejor que perfecto. Dale para adelante.",
+  "Pequeños pasos todos los días te llevan lejos.",
+  "La constancia le gana al talento cuando el talento no es constante.",
+  "Tu yo del futuro te va a agradecer lo que hagas ahora.",
+  "Empezá aunque no tengas ganas: las ganas vienen después.",
+  "Ordená tu día y tu cabeza se ordena sola.",
+  "No cuentes los días, hacé que los días cuenten.",
+  "El progreso, no la perfección, es lo que te mantiene en movimiento.",
+  "Lo difícil de hoy es lo fácil de mañana si lo practicás.",
+  "Menos excusas, más tareas tachadas.",
+  "La motivación te arranca, el hábito te sostiene.",
+  "Cada 'sí' a tu tarea es un 'no' a la mediocridad.",
+  "Enfocate en una sola cosa y hacela bien.",
+  "Los grandes resultados son la suma de pequeñas tareas cumplidas.",
+  "Dejá de esperar el momento perfecto: crealo.",
+  "Tu energía sigue a tu acción, no al revés.",
+  "Cumplir con vos mismo es la mejor forma de subir tu autoestima.",
+  "Hoy es un buen día para hacer eso que venís posponiendo.",
+  "La suerte aparece cuando la preparación se encuentra con la acción.",
+  "Terminar lo que empezás es un superpoder. Usalo.",
+  "Un día productivo empieza con una sola tarea bien hecha.",
+  "No busques hacer todo, buscá hacer lo importante.",
+  "Sé constante en lo chico y lo grande llega solo.",
+];
+
+const diaDelAnio = (date) => {
+  const inicio = new Date(date.getFullYear(), 0, 0);
+  return Math.floor((date - inicio) / 86400000);
+};
+
 function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -295,6 +334,29 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
   const completedTasksCount = activeSummary.done;
   const pendingTasksCount = activeSummary.pending;
   const progressPercent = activeSummary.percent;
+
+  // Comparación de progreso: este mes vs. el mes pasado.
+  const comparativaMes = useMemo(() => {
+    const hoy = new Date();
+    const act = getPeriodRange("month", hoy);
+    const ant = getPeriodRange(
+      "month",
+      new Date(hoy.getFullYear(), hoy.getMonth() - 1, 15)
+    );
+    const a = summarizePeriod(tasks, act.from, act.to);
+    const b = summarizePeriod(tasks, ant.from, ant.to);
+    return {
+      actual: a.percent,
+      anterior: b.percent,
+      diff: a.percent - b.percent,
+      total: a.total,
+      totalAnt: b.total,
+    };
+  }, [tasks]);
+
+  // Frase de motivación del día (rota 1 por día entre 30).
+  const fraseDelDia =
+    FRASES_TAREAS[diaDelAnio(new Date()) % FRASES_TAREAS.length];
 
   const fetchTasks = useCallback(async () => {
     const storedToken = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -1003,6 +1065,20 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                 pendientes
               </p>
             </div>
+          </div>
+
+          {comparativaMes.total > 0 || comparativaMes.totalAnt > 0 ? (
+            <p className={style.progresoComparativa}>
+              Este mes cumpliste el{" "}
+              <strong>{comparativaMes.actual}%</strong> de tus tareas ·{" "}
+              {comparativaMes.diff >= 0 ? "▲" : "▼"} {Math.abs(comparativaMes.diff)}{" "}
+              pts vs. el mes pasado ({comparativaMes.anterior}%)
+            </p>
+          ) : null}
+
+          <div className={style.fraseCard}>
+            <span className={style.fraseLabel}>💪 Frase del día</span>
+            <p className={style.fraseTexto}>{fraseDelDia}</p>
           </div>
         </aside>
 

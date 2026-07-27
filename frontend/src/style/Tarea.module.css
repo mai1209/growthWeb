@@ -159,6 +159,52 @@
   line-height: 1;
 }
 
+/* Texto comparativo de progreso (este mes vs. mes pasado). */
+.progresoComparativa {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--color-muted);
+}
+
+.progresoComparativa strong {
+  color: var(--color-text);
+}
+
+/* Card de frase motivacional (estilo dona). */
+.fraseCard {
+  width: 100%;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(93, 199, 45, 0.28);
+  background: linear-gradient(
+    160deg,
+    rgba(93, 199, 45, 0.14),
+    rgba(93, 199, 45, 0.04)
+  );
+  text-align: center;
+}
+
+.fraseLabel {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-verde, #5dc72d);
+}
+
+.fraseTexto {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
 .kicker {
   color: var(--color-verde);
   font-size: 0.76rem;
