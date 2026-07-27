@@ -416,28 +416,38 @@ export default function AfirmacionesPanel({ visible, onClose }) {
                       {indice + 1}
                     </Text>
                   </TouchableOpacity>
-                  <TextInput
+                  <View
                     style={[
-                      styles.input,
-                      (focoIdx === indice || resaltadas.has(indice)) && styles.inputFoco,
+                      styles.inputWrap,
+                      (focoIdx === indice || resaltadas.has(indice)) &&
+                        styles.inputWrapFoco,
                     ]}
-                    value={linea}
-                    onChangeText={(valor) => editarLinea(indice, valor)}
-                    onFocus={() => setFocoIdx(indice)}
-                    onBlur={() => setFocoIdx((prev) => (prev === indice ? null : prev))}
-                    placeholder="Escribí tu afirmación…"
-                    placeholderTextColor={colors.muted}
-                    multiline
-                  />
-                  {lineas.length > 1 ? (
-                    <TouchableOpacity
-                      style={styles.borrar}
-                      onPress={() => borrarLinea(indice)}
-                      accessibilityLabel={`Borrar renglón ${indice + 1}`}
-                    >
-                      <Ionicons name="trash-outline" size={17} color={colors.muted} />
-                    </TouchableOpacity>
-                  ) : null}
+                  >
+                    <TextInput
+                      style={[
+                        styles.input,
+                        (focoIdx === indice || resaltadas.has(indice)) &&
+                          styles.inputTextFoco,
+                      ]}
+                      value={linea}
+                      onChangeText={(valor) => editarLinea(indice, valor)}
+                      onFocus={() => setFocoIdx(indice)}
+                      onBlur={() => setFocoIdx((prev) => (prev === indice ? null : prev))}
+                      placeholder="Escribí tu afirmación…"
+                      placeholderTextColor={colors.muted}
+                      multiline
+                    />
+                    {lineas.length > 1 ? (
+                      <TouchableOpacity
+                        style={styles.borrar}
+                        onPress={() => borrarLinea(indice)}
+                        accessibilityLabel={`Borrar renglón ${indice + 1}`}
+                        hitSlop={8}
+                      >
+                        <Ionicons name="trash-outline" size={15} color={colors.muted} />
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
                 </View>
               ))}
 
@@ -610,37 +620,45 @@ const makeStyles = (colors, isDark = false) =>
       elevation: 5,
     },
     numeroTextOn: { color: "#06210a" },
-    input: {
+    // El recuadro (borde/fondo/glow) ahora envuelve el input + el cesto.
+    inputWrap: {
       flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
       minHeight: 44,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
       borderRadius: 12,
       borderWidth: 1,
       borderColor: colors.cardBorder,
       backgroundColor: colors.card,
-      color: colors.text,
-      fontSize: 15,
-      lineHeight: 20,
+      paddingRight: 4,
     },
-    // Renglón enfocado: borde verde brillante para saber dónde estás escribiendo
-    inputFoco: {
+    inputWrapFoco: {
       borderColor: colors.greenBright,
       borderWidth: 1.5,
-      // Glow verde brillante alrededor del input.
       shadowColor: colors.greenBright,
       shadowOpacity: 0.55,
       shadowRadius: 10,
       shadowOffset: { width: 0, height: 0 },
       elevation: 6,
-      // Texto resaltado con brillo. El color sigue al tema (en claro es oscuro,
-      // así se lee sobre fondo blanco; el neón sólo queda en el borde/glow).
+    },
+    input: {
+      flex: 1,
+      minHeight: 44,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      color: colors.text,
+      fontSize: 15,
+      lineHeight: 20,
+    },
+    // Sólo el brillo del texto al resaltar (el borde/glow va en el wrapper).
+    inputTextFoco: {
       color: colors.text,
       textShadowColor: isDark ? "rgba(123, 255, 77, 0.7)" : "transparent",
       textShadowOffset: { width: 0, height: 0 },
       textShadowRadius: 8,
     },
-    borrar: { padding: 8, marginTop: 6 },
+    // Renglón enfocado: borde verde brillante para saber dónde estás escribiendo
+    borrar: { padding: 6 },
 
     acciones: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 2 },
     agregar: {
