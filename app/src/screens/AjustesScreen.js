@@ -22,6 +22,8 @@ import { useTheme } from "../theme";
 import { useAuth } from "../auth/AuthContext";
 import { loadNotifSettings, saveNotifSettings } from "../utils/notifSettings";
 import { syncTaskReminders } from "../utils/taskReminders";
+import { DONACIONES } from "../utils/donaciones";
+import * as Clipboard from "expo-clipboard";
 
 export default function AjustesScreen({ navigation }) {
   const { colors } = useTheme();
@@ -36,6 +38,7 @@ export default function AjustesScreen({ navigation }) {
     { key: "notificaciones", label: "Configuración de notificaciones", desc: "Avisos de tareas y más", icon: "notifications-outline" },
     { key: "integraciones", label: "Integraciones", desc: "Google Calendar", icon: "link-outline" },
     { key: "facturacion", label: "Facturación (ARCA)", desc: "Emití facturas de este perfil", icon: "receipt-outline" },
+    { key: "donaciones", label: "Apoyar Growth 💚", desc: "Colaborá con el proyecto (es gratis)", icon: "heart-outline" },
   ];
 
   const confirmLogout = () => {
@@ -192,6 +195,7 @@ export default function AjustesScreen({ navigation }) {
       <PerfilModal visible={section === "perfil"} onClose={() => setSection(null)} colors={colors} styles={styles} />
       <PasswordModal visible={section === "password"} onClose={() => setSection(null)} colors={colors} styles={styles} />
       <NotificacionesModal visible={section === "notificaciones"} onClose={() => setSection(null)} colors={colors} styles={styles} />
+      <DonacionesModal visible={section === "donaciones"} onClose={() => setSection(null)} colors={colors} styles={styles} />
       <IntegracionesModal visible={section === "integraciones"} onClose={() => setSection(null)} colors={colors} styles={styles} />
       <FiscalModal visible={section === "facturacion"} onClose={() => setSection(null)} colors={colors} styles={styles} />
     </View>
@@ -724,6 +728,68 @@ function NotificacionesModal({ visible, onClose, colors, styles }) {
   );
 }
 
+/* ---------- Apoyar Growth (donaciones) ---------- */
+function DonacionesModal({ visible, onClose, colors, styles }) {
+  const [copiadoId, setCopiadoId] = useState(null);
+
+  const copiar = async (item) => {
+    try {
+      await Clipboard.setStringAsync(item.valor);
+      setCopiadoId(item.id);
+      setTimeout(
+        () => setCopiadoId((prev) => (prev === item.id ? null : prev)),
+        1600
+      );
+    } catch {
+      // si falla el portapapeles, no rompemos nada
+    }
+  };
+
+  return (
+    <SheetModal
+      visible={visible}
+      onClose={onClose}
+      title="Apoyar Growth 💚"
+      colors={colors}
+      styles={styles}
+    >
+      <Text style={styles.donarIntro}>
+        Growth es y va a seguir siendo gratis. Si te suma, un aporte ayuda a
+        mantenerla y mejorarla. Copiá el dato y transferí por donde te quede
+        cómodo. ¡Gracias! 🙌
+      </Text>
+
+      {DONACIONES.map((item) => (
+        <View key={item.id} style={styles.donarMetodo}>
+          <View style={styles.donarMetodoHead}>
+            <Ionicons name={item.icono} size={18} color={colors.greenDark} />
+            <Text style={styles.donarMetodoTit}>{item.titulo}</Text>
+          </View>
+          <Text style={styles.donarMetodoDesc}>{item.desc}</Text>
+          <View style={styles.donarValorRow}>
+            <Text style={styles.donarValor} numberOfLines={1}>
+              {item.valor}
+            </Text>
+            <TouchableOpacity
+              style={[styles.donarCopiar, copiadoId === item.id && styles.donarCopiarOk]}
+              onPress={() => copiar(item)}
+            >
+              <Ionicons
+                name={copiadoId === item.id ? "checkmark" : "copy-outline"}
+                size={14}
+                color="#06210a"
+              />
+              <Text style={styles.donarCopiarText}>
+                {copiadoId === item.id ? "Copiado" : "Copiar"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
+    </SheetModal>
+  );
+}
+
 /* ---------- Hoja base reutilizable ---------- */
 function SheetModal({ visible, onClose, title, colors, styles, children }) {
   return (
@@ -984,4 +1050,42 @@ const makeStyles = (colors) =>
     },
     notifDoneText: { color: "#ffffff", fontWeight: "800", fontSize: 14 },
     notifNota: { color: colors.muted, fontSize: 12, marginTop: 16, fontStyle: "italic" },
+
+    // Apoyar Growth (donaciones)
+    donarIntro: { color: colors.muted, fontSize: 14, lineHeight: 20, marginBottom: 16 },
+    donarMetodo: {
+      padding: 14,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: "rgba(93,199,45,0.28)",
+      backgroundColor: "rgba(93,199,45,0.08)",
+      marginBottom: 12,
+      gap: 6,
+    },
+    donarMetodoHead: { flexDirection: "row", alignItems: "center", gap: 8 },
+    donarMetodoTit: { color: colors.text, fontSize: 15, fontWeight: "800", flex: 1 },
+    donarMetodoDesc: { color: colors.muted, fontSize: 12, lineHeight: 17 },
+    donarValorRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
+    donarValor: {
+      flex: 1,
+      color: colors.text,
+      fontSize: 13,
+      fontWeight: "700",
+      fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+      backgroundColor: "rgba(93,199,45,0.12)",
+      borderRadius: 8,
+      paddingHorizontal: 8,
+      paddingVertical: 6,
+    },
+    donarCopiar: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 999,
+      backgroundColor: colors.greenBright,
+    },
+    donarCopiarOk: { backgroundColor: colors.greenSoft },
+    donarCopiarText: { color: "#06210a", fontSize: 13, fontWeight: "800" },
   });
