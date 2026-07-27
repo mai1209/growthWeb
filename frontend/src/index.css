@@ -104,6 +104,14 @@ body[data-theme="light"] {
 }
 
 
+html,
+body {
+  /* Ninguna pantalla debe scrollear en horizontal: si algo se pasa de ancho,
+     se recorta y los contenedores internos (pestañas, carpetas) scrollean solos. */
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   padding: 0;
