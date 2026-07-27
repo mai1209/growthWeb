@@ -34,11 +34,16 @@
   0%,
   100% {
     transform: scale(1);
-    opacity: 0.7;
+    opacity: 0.55;
+    color: rgba(93, 199, 45, 0.16);
+    filter: drop-shadow(0 0 6px rgba(93, 199, 45, 0.3));
   }
   50% {
     transform: scale(1.35);
     opacity: 1;
+    /* Verde brillante + glow, el mismo de las afirmaciones resaltadas. */
+    color: #7bff4d;
+    filter: drop-shadow(0 0 14px rgba(123, 255, 77, 0.85));
   }
 }
 
