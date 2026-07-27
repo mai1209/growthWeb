@@ -150,9 +150,11 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
   const handleClearDone = (listId) =>
     mutateItems(listId, (items) => items.filter((it) => !it.done));
 
-  const handleSetPrice = (listId, itemId, precio) =>
+  const handleSetPrice = (listId, itemId, precio, cantidad) =>
     mutateItems(listId, (items) =>
-      items.map((it) => (it.id === itemId ? { ...it, precio } : it))
+      items.map((it) =>
+        it.id === itemId ? { ...it, precio, cantidad: cantidad || 1 } : it
+      )
     );
 
   const totalPending = useMemo(
@@ -179,7 +181,9 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
         onDeleteItem={(itemId) => handleDeleteItem(openList._id, itemId)}
         onDeleteList={() => handleDeleteList(openList._id)}
         onClearDone={() => handleClearDone(openList._id)}
-        onSetPrice={(itemId, precio) => handleSetPrice(openList._id, itemId, precio)}
+        onSetPrice={(itemId, precio, cantidad) =>
+          handleSetPrice(openList._id, itemId, precio, cantidad)
+        }
       />
     );
   }
@@ -280,23 +284,25 @@ function PreviewCard({ list, colorClass, onOpen, onDeleteList }) {
       }}
       title={`Abrir "${list.meta || "Sin título"}"`}
     >
-      <button
-        type="button"
-        className={style.deleteListBtn}
-        onClick={(event) => {
-          event.stopPropagation();
-          onDeleteList();
-        }}
-        aria-label="Eliminar lista"
-        title="Eliminar lista"
-      >
-        <FiTrash2 />
-      </button>
+      <div className={style.previewTopRight}>
+        <FiChevronRight className={style.previewChevron} />
+        <button
+          type="button"
+          className={style.deleteListBtn}
+          onClick={(event) => {
+            event.stopPropagation();
+            onDeleteList();
+          }}
+          aria-label="Eliminar lista"
+          title="Eliminar lista"
+        >
+          <FiTrash2 />
+        </button>
+      </div>
 
       <h3 className={style.previewTitle}>{list.meta || "Sin título"}</h3>
       <div className={style.previewFooter}>
         <span className={style.previewSummary}>{summary}</span>
-        <FiChevronRight className={style.previewChevron} />
       </div>
     </article>
   );
@@ -321,21 +327,30 @@ function ListDetail({
   const doneCount = items.filter((it) => it.done).length;
   const isDark = list.color === "color11";
 
-  // Precio por ítem: se abre un input al tocar "precio"; el total suma todo.
+  // Precio por ítem (precio unitario × cantidad); el total suma cada línea.
   const [priceOpenId, setPriceOpenId] = useState(null);
   const [priceDraft, setPriceDraft] = useState("");
+  const [qtyDraft, setQtyDraft] = useState("1");
   const fmt = (n) => Number(n || 0).toLocaleString("es-AR");
-  const total = items.reduce((acc, it) => acc + (Number(it.precio) || 0), 0);
+  const lineaTotal = (it) => (Number(it.precio) || 0) * (Number(it.cantidad) || 1);
+  const total = items.reduce((acc, it) => acc + lineaTotal(it), 0);
 
   const abrirPrecio = (it) => {
     setPriceOpenId(it.id);
     setPriceDraft(it.precio != null ? String(it.precio) : "");
+    setQtyDraft(it.cantidad ? String(it.cantidad) : "1");
   };
   const guardarPrecio = (itemId) => {
     const n = parseFloat(String(priceDraft).replace(",", "."));
-    onSetPrice(itemId, Number.isFinite(n) && n >= 0 ? n : null);
+    const q = parseInt(qtyDraft, 10);
+    onSetPrice(
+      itemId,
+      Number.isFinite(n) && n >= 0 ? n : null,
+      Number.isFinite(q) && q >= 1 ? q : 1
+    );
     setPriceOpenId(null);
     setPriceDraft("");
+    setQtyDraft("1");
   };
 
   useEffect(() => {
@@ -407,31 +422,59 @@ function ListDetail({
                 <span className={style.itemText}>{it.text}</span>
 
                 {priceOpenId === it.id ? (
-                  <input
-                    className={style.precioInput}
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={priceDraft}
-                    autoFocus
-                    onChange={(e) => setPriceDraft(e.target.value)}
-                    onBlur={() => guardarPrecio(it.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
+                  <span
+                    className={style.precioEdit}
+                    onBlur={(e) => {
+                      if (!e.currentTarget.contains(e.relatedTarget)) {
                         guardarPrecio(it.id);
                       }
                     }}
-                    placeholder="$"
-                  />
+                  >
+                    <input
+                      className={style.precioInput}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={priceDraft}
+                      autoFocus
+                      onChange={(e) => setPriceDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          guardarPrecio(it.id);
+                        }
+                      }}
+                      placeholder="$"
+                    />
+                    <span className={style.precioX}>×</span>
+                    <input
+                      className={style.cantInput}
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={qtyDraft}
+                      onChange={(e) => setQtyDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          guardarPrecio(it.id);
+                        }
+                      }}
+                      aria-label="Cantidad"
+                    />
+                  </span>
                 ) : (
                   <button
                     type="button"
                     className={`${style.precioBtn} ${it.precio != null ? style.precioBtnSet : ""}`}
                     onClick={() => abrirPrecio(it)}
-                    title="Ponerle precio"
+                    title="Ponerle precio (precio × cantidad)"
                   >
-                    {it.precio != null ? `$ ${fmt(it.precio)}` : "precio"}
+                    {it.precio != null
+                      ? Number(it.cantidad) > 1
+                        ? `$ ${fmt(lineaTotal(it))} · ×${it.cantidad}`
+                        : `$ ${fmt(it.precio)}`
+                      : "precio"}
                   </button>
                 )}
 

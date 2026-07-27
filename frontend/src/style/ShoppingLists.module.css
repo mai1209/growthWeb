@@ -289,10 +289,18 @@
 }
 
 /* En la preview, el tachito flota arriba a la derecha. */
-.previewCard .deleteListBtn {
+/* Esquina superior derecha del preview: flecha + tacho, uno al lado del otro. */
+.previewTopRight {
   position: absolute;
   top: 0.7rem;
   right: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.previewCard .previewChevron {
+  opacity: 0.6;
 }
 
 /* ===== Ítems ===== */
@@ -358,6 +366,38 @@
 
 /* Sacamos el aro azul de foco por defecto y ponemos verde brillante. */
 .precioInput:focus {
+  outline: none;
+  border-color: #2fb81a;
+  box-shadow: 0 0 0 3px rgba(59, 203, 35, 0.3);
+}
+
+/* Edición precio × cantidad */
+.precioEdit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.precioX {
+  color: #0d5c1f;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.cantInput {
+  width: 52px;
+  padding: 0.3rem 0.5rem;
+  border-radius: 999px;
+  border: 2px solid #3bcb23;
+  background: rgba(255, 255, 255, 0.9);
+  color: #172018;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.cantInput:focus {
   outline: none;
   border-color: #2fb81a;
   box-shadow: 0 0 0 3px rgba(59, 203, 35, 0.3);
