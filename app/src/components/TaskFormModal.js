@@ -205,6 +205,19 @@ export default function TaskFormModal({
 
             <Text style={styles.label}>Momento</Text>
             <View style={styles.wrap}>
+              <TouchableOpacity
+                style={[styles.chip, useExact && styles.chipActive]}
+                onPress={() => {
+                  setUseExact(true);
+                  setShowTime(true);
+                }}
+              >
+                <Ionicons name="time-outline" size={15} color={useExact ? colors.greenDark : colors.muted} />
+                <Text style={[styles.chipText, useExact && styles.chipTextActive]}>
+                  {useExact ? `${pad(exactTime.getHours())}:${pad(exactTime.getMinutes())}` : "Hora exacta"}
+                </Text>
+              </TouchableOpacity>
+
               {MOMENTOS.map((m) => {
                 const active = !useExact && momento === m.value;
                 return (
@@ -221,19 +234,6 @@ export default function TaskFormModal({
                   </TouchableOpacity>
                 );
               })}
-
-              <TouchableOpacity
-                style={[styles.chip, useExact && styles.chipActive]}
-                onPress={() => {
-                  setUseExact(true);
-                  setShowTime(true);
-                }}
-              >
-                <Ionicons name="time-outline" size={15} color={useExact ? colors.greenDark : colors.muted} />
-                <Text style={[styles.chipText, useExact && styles.chipTextActive]}>
-                  {useExact ? `${pad(exactTime.getHours())}:${pad(exactTime.getMinutes())}` : "Hora exacta"}
-                </Text>
-              </TouchableOpacity>
             </View>
             {showTime && (
               <DateTimePicker
@@ -308,11 +308,11 @@ export default function TaskFormModal({
               style={styles.repeatRow}
               onPress={() => setEsRecurrente((v) => !v)}
             >
-              <Ionicons
-                name={esRecurrente ? "checkbox" : "square-outline"}
-                size={22}
-                color={esRecurrente ? colors.greenDark : colors.muted}
-              />
+              <View style={[styles.repeatCircle, esRecurrente && styles.repeatCircleOn]}>
+                {esRecurrente ? (
+                  <Ionicons name="checkmark" size={14} color="#fff" />
+                ) : null}
+              </View>
               <Text style={styles.repeatText}>Repetir tarea</Text>
             </TouchableOpacity>
 
@@ -440,6 +440,20 @@ const makeStyles = (colors) => StyleSheet.create({
   },
   repeatRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 18 },
   repeatText: { color: colors.text, fontSize: 15, fontWeight: "700" },
+  // Check redondo (círculo verde vacío que se llena al marcar), como en la web.
+  repeatCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: colors.greenBright,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  repeatCircleOn: {
+    backgroundColor: colors.greenBright,
+    borderColor: colors.greenBright,
+  },
   error: { color: colors.red, marginTop: 12 },
   saveBtn: {
     marginTop: 22,
