@@ -10,6 +10,10 @@ import {
   summarizeByType,
 } from "../utils/finance";
 
+// Link de donación. Reemplazar por tu Cafecito (cafecito.app/tu-usuario) o
+// tu link de Mercado Pago. Si lo dejás vacío, el botón igual abre esta página.
+const DONATION_URL = "https://cafecito.app/growthmanager";
+
 const HOME_TABS = [
   { key: "ARS", label: "ARS" },
   { key: "USD", label: "USD" },
@@ -444,10 +448,44 @@ function LeftSite({
         </div>
         ) : null}
 
-        {/* Publicidad chica para llenar el espacio libre del panel */}
-        <section className={style.sideAd}>
-          <p className={style.sideAdLabel}>Espacio publicitario</p>
-          <img src="/publicidadChica.png" alt="publicidad" />
+        {/* Apoyo: Growth es gratis, invitamos a compartir y a donar */}
+        <section className={style.sideSupport}>
+          <p className={style.sideSupportLabel}>Apoyá Growth 💚</p>
+          <p className={style.sideSupportText}>
+            Growth es 100% gratis. Si te sirve, compartila o invitanos un
+            cafecito para seguir mejorándola.
+          </p>
+          <div className={style.sideSupportBtns}>
+            <button
+              type="button"
+              className={style.sideSupportShare}
+              onClick={async () => {
+                const url = "https://growthmanager.app";
+                const texto =
+                  "Estoy usando Growth Manager para ordenar mi plata, tareas y metas. ¡Está buenísima y es gratis! 🌱";
+                try {
+                  if (navigator.share) {
+                    await navigator.share({ title: "Growth Manager", text: texto, url });
+                  } else {
+                    await navigator.clipboard.writeText(`${texto} ${url}`);
+                    alert("¡Link copiado! Compartilo con quien quieras 💚");
+                  }
+                } catch {
+                  /* el usuario canceló el compartir */
+                }
+              }}
+            >
+              Compartir Growth
+            </button>
+            <a
+              className={style.sideSupportDonate}
+              href={DONATION_URL}
+              target="_blank"
+              rel="noreferrer"
+            >
+              ☕ Invitame un café
+            </a>
+          </div>
         </section>
       </div>
 
