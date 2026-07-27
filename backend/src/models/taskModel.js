@@ -52,6 +52,8 @@ const TaskSchema = new mongoose.Schema({
         id: { type: String },
         text: { type: String, default: '' },
         done: { type: Boolean, default: false },
+        // Precio opcional del ítem (para ver el total de la compra).
+        precio: { type: Number, default: null },
         _id: false,
       },
     ],
