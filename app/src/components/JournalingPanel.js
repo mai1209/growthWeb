@@ -430,6 +430,58 @@ export default function JournalingPanel({ visible, onClose }) {
     };
   };
 
+  // Panel de métricas del ánimo (caritas): promedio + distribución.
+  const renderMetricas = () => {
+    const serie = animoSerie;
+    if (serie.length < 1) {
+      return (
+        <View style={styles.metricasVacio}>
+          <Ionicons name="stats-chart-outline" size={30} color={colors.muted} />
+          <Text style={styles.metricasVacioText}>
+            Marcá tu ánimo unos días y acá vas a ver cómo venís.
+          </Text>
+        </View>
+      );
+    }
+    const LABELS = { 1: "muy bajo", 2: "bajo", 3: "normal", 4: "bien", 5: "muy bien" };
+    const prom = Math.max(
+      1,
+      Math.min(5, Math.round(serie.reduce((a, e) => a + Number(e.animo), 0) / serie.length))
+    );
+    const distrib = [5, 4, 3, 2, 1].map((v) => ({
+      v,
+      count: serie.filter((e) => Number(e.animo) === v).length,
+    }));
+    const maxCount = Math.max(1, ...distrib.map((d) => d.count));
+    return (
+      <View style={styles.metricasBox}>
+        <View style={styles.metricasHead}>
+          <Text style={styles.metricasEmoji}>{emojiDe(prom)}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.metricasTit}>Tu ánimo en el tiempo</Text>
+            <Text style={styles.metricasSub}>
+              {serie.length} {serie.length === 1 ? "día" : "días"} · promedio {LABELS[prom]}
+            </Text>
+          </View>
+        </View>
+        {distrib.map((d) => (
+          <View key={d.v} style={styles.metricasDistRow}>
+            <Text style={styles.metricasCara}>{emojiDe(d.v)}</Text>
+            <View style={styles.metricasBarTrack}>
+              <View
+                style={[
+                  styles.metricasBarFill,
+                  { width: `${(d.count / maxCount) * 100}%`, backgroundColor: ANIMO_COLORS[d.v] },
+                ]}
+              />
+            </View>
+            <Text style={styles.metricasCount}>{d.count}</Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={[styles.safe, { paddingTop: insets.top }]}>
@@ -494,62 +546,76 @@ export default function JournalingPanel({ visible, onClose }) {
                 <AnimoSlider value={entrada.animo} onChange={onAnimoChange} styles={styles} />
               </View>
 
-              {/* Switch Libro / Calendario con pastilla deslizante */}
-              <View
-                style={styles.vistaToggle}
-                onLayout={(e) => setToggleW(e.nativeEvent.layout.width)}
-              >
-                {toggleW > 0 ? (
-                  <Animated.View
-                    style={[
-                      styles.vistaThumb,
-                      {
-                        width: (toggleW - 8) / 2,
-                        transform: [
-                          {
-                            translateX: toggleAnim.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [0, (toggleW - 8) / 2],
-                            }),
-                          },
-                        ],
-                      },
-                    ]}
-                  />
-                ) : null}
-                <TouchableOpacity
-                  style={styles.vistaBtn}
-                  activeOpacity={0.8}
-                  onPress={() => setVista("libro")}
+              {/* Switch Libro / Calendario (solo íconos) + botón Métricas */}
+              <View style={styles.vistaRow}>
+                <View
+                  style={styles.vistaToggle}
+                  onLayout={(e) => setToggleW(e.nativeEvent.layout.width)}
                 >
-                  <Ionicons
-                    name="book-outline"
-                    size={15}
-                    color={vista === "libro" ? "#0e1a0e" : colors.muted}
-                  />
-                  <Text style={[styles.vistaBtnText, vista === "libro" && styles.vistaBtnTextActivo]}>
-                    Libro
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.vistaBtn}
-                  activeOpacity={0.8}
-                  onPress={() => setVista("calendario")}
-                >
-                  <Ionicons
-                    name="calendar-outline"
-                    size={15}
-                    color={vista === "calendario" ? "#0e1a0e" : colors.muted}
-                  />
-                  <Text
-                    style={[styles.vistaBtnText, vista === "calendario" && styles.vistaBtnTextActivo]}
+                  {toggleW > 0 ? (
+                    <Animated.View
+                      style={[
+                        styles.vistaThumb,
+                        {
+                          width: (toggleW - 8) / 2,
+                          transform: [
+                            {
+                              translateX: toggleAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0, (toggleW - 8) / 2],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    />
+                  ) : null}
+                  <TouchableOpacity
+                    style={styles.vistaBtn}
+                    activeOpacity={0.8}
+                    onPress={() => setVista("libro")}
+                    accessibilityLabel="Libro"
                   >
-                    Calendario
-                  </Text>
+                    <Ionicons
+                      name="book-outline"
+                      size={17}
+                      color={vista === "libro" ? "#0e1a0e" : colors.muted}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.vistaBtn}
+                    activeOpacity={0.8}
+                    onPress={() => setVista("calendario")}
+                    accessibilityLabel="Calendario"
+                  >
+                    <Ionicons
+                      name="calendar-outline"
+                      size={17}
+                      color={vista === "calendario" ? "#0e1a0e" : colors.muted}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity
+                  style={[
+                    styles.metricasBtn,
+                    vista === "metricas" && styles.metricasBtnActivo,
+                  ]}
+                  activeOpacity={0.8}
+                  onPress={() => setVista(vista === "metricas" ? "libro" : "metricas")}
+                  accessibilityLabel="Métricas de ánimo"
+                >
+                  <Ionicons
+                    name="stats-chart-outline"
+                    size={17}
+                    color={vista === "metricas" ? "#0e1a0e" : colors.muted}
+                  />
                 </TouchableOpacity>
               </View>
 
-              {vista === "calendario" ? (
+              {vista === "metricas" ? (
+                renderMetricas()
+              ) : vista === "calendario" ? (
                 <View style={styles.calBox}>
                   <View style={styles.calNav}>
                     <TouchableOpacity
@@ -1036,14 +1102,68 @@ const makeStyles = (colors) =>
       textTransform: "capitalize",
     },
 
+    vistaRow: { flexDirection: "row", alignItems: "center", gap: 8 },
     vistaToggle: {
       position: "relative",
+      flex: 1,
       flexDirection: "row",
       padding: 4,
       borderRadius: 999,
       borderWidth: 1,
       borderColor: colors.cardBorder,
       backgroundColor: colors.card,
+    },
+    metricasBtn: {
+      width: 46,
+      height: 46,
+      borderRadius: 999,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+    },
+    metricasBtnActivo: {
+      backgroundColor: colors.greenBright,
+      borderColor: colors.greenBright,
+    },
+    // Panel de métricas del ánimo (caritas)
+    metricasVacio: {
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 10,
+      paddingVertical: 40,
+      paddingHorizontal: 20,
+    },
+    metricasVacioText: { color: colors.muted, textAlign: "center", fontSize: 13 },
+    metricasBox: {
+      gap: 12,
+      padding: 16,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+    },
+    metricasHead: { flexDirection: "row", alignItems: "center", gap: 12 },
+    metricasEmoji: { fontSize: 34 },
+    metricasTit: { color: colors.text, fontSize: 15, fontWeight: "800" },
+    metricasSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
+    metricasDistRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+    metricasCara: { fontSize: 18, width: 26, textAlign: "center" },
+    metricasBarTrack: {
+      flex: 1,
+      height: 12,
+      borderRadius: 999,
+      backgroundColor: "rgba(127,137,129,0.18)",
+      overflow: "hidden",
+    },
+    metricasBarFill: { height: "100%", borderRadius: 999, minWidth: 4 },
+    metricasCount: {
+      width: 22,
+      textAlign: "right",
+      color: colors.muted,
+      fontSize: 13,
+      fontWeight: "700",
     },
     vistaThumb: {
       position: "absolute",
