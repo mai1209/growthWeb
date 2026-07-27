@@ -376,7 +376,11 @@
      (sin scroll); lo que no entra pasa a la página interna siguiente. */
   height: max(560px, calc(100vh - 190px));
   flex: 0 0 auto;
-  padding: 1.6rem 1.4rem 1.1rem 3.2rem;
+  /* El padding-top reserva un renglón extra arriba para que el texto de TODAS
+     las páginas internas arranque debajo del paginador y el fueguito (absolutos
+     arriba a la derecha) y no se tape. Un renglón exacto mantiene la alineación
+     con las líneas de la hoja. */
+  padding: calc(1.6rem + var(--renglon)) 1.4rem 1.1rem 3.2rem;
   border-radius: 16px;
   background-color: #faf4e3;
   background-image:
@@ -433,12 +437,6 @@
 
 .libroColumnas {
   height: 100%;
-  box-sizing: border-box;
-  /* Reservamos un renglón arriba para que el texto de TODAS las páginas
-     internas arranque debajo del paginador y el fueguito (que van absolutos
-     arriba a la derecha) y no se tape. Un renglón exacto mantiene la
-     alineación con las líneas de la hoja. */
-  padding-top: var(--renglon);
   column-fill: auto;
   transition: transform 0.28s ease;
 }
