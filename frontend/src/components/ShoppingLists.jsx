@@ -150,6 +150,11 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
   const handleClearDone = (listId) =>
     mutateItems(listId, (items) => items.filter((it) => !it.done));
 
+  const handleSetPrice = (listId, itemId, precio) =>
+    mutateItems(listId, (items) =>
+      items.map((it) => (it.id === itemId ? { ...it, precio } : it))
+    );
+
   const totalPending = useMemo(
     () => lists.reduce((acc, l) => acc + (l.items || []).filter((it) => !it.done).length, 0),
     [lists]
@@ -174,6 +179,7 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
         onDeleteItem={(itemId) => handleDeleteItem(openList._id, itemId)}
         onDeleteList={() => handleDeleteList(openList._id)}
         onClearDone={() => handleClearDone(openList._id)}
+        onSetPrice={(itemId, precio) => handleSetPrice(openList._id, itemId, precio)}
       />
     );
   }
@@ -308,11 +314,29 @@ function ListDetail({
   onDeleteItem,
   onDeleteList,
   onClearDone,
+  onSetPrice,
 }) {
   const inputRef = useRef(null);
   const items = list.items || [];
   const doneCount = items.filter((it) => it.done).length;
   const isDark = list.color === "color11";
+
+  // Precio por ítem: se abre un input al tocar "precio"; el total suma todo.
+  const [priceOpenId, setPriceOpenId] = useState(null);
+  const [priceDraft, setPriceDraft] = useState("");
+  const fmt = (n) => Number(n || 0).toLocaleString("es-AR");
+  const total = items.reduce((acc, it) => acc + (Number(it.precio) || 0), 0);
+
+  const abrirPrecio = (it) => {
+    setPriceOpenId(it.id);
+    setPriceDraft(it.precio != null ? String(it.precio) : "");
+  };
+  const guardarPrecio = (itemId) => {
+    const n = parseFloat(String(priceDraft).replace(",", "."));
+    onSetPrice(itemId, Number.isFinite(n) && n >= 0 ? n : null);
+    setPriceOpenId(null);
+    setPriceDraft("");
+  };
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -381,6 +405,36 @@ function ListDetail({
                   {it.done ? <FiCheck /> : null}
                 </button>
                 <span className={style.itemText}>{it.text}</span>
+
+                {priceOpenId === it.id ? (
+                  <input
+                    className={style.precioInput}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={priceDraft}
+                    autoFocus
+                    onChange={(e) => setPriceDraft(e.target.value)}
+                    onBlur={() => guardarPrecio(it.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        guardarPrecio(it.id);
+                      }
+                    }}
+                    placeholder="$"
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    className={`${style.precioBtn} ${it.precio != null ? style.precioBtnSet : ""}`}
+                    onClick={() => abrirPrecio(it)}
+                    title="Ponerle precio"
+                  >
+                    {it.precio != null ? `$ ${fmt(it.precio)}` : "precio"}
+                  </button>
+                )}
+
                 <button
                   type="button"
                   className={style.itemDelete}
@@ -394,6 +448,13 @@ function ListDetail({
             ))
           )}
         </ul>
+
+        {total > 0 ? (
+          <div className={style.totalRow}>
+            <span className={style.totalLabel}>Total</span>
+            <strong className={style.totalMonto}>$ {fmt(total)}</strong>
+          </div>
+        ) : null}
 
         {doneCount > 0 ? (
           <button type="button" className={style.clearDone} onClick={onClearDone}>
