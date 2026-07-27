@@ -218,6 +218,17 @@
     0 16px 32px rgba(0, 0, 0, 0.2);
 }
 
+/* En una tarea completada el card es oscuro: los 3 puntitos de ajustes van en
+   gris claro (antes quedaban oscuro sobre oscuro y no se veían). */
+.completed .taskOptionsBtn {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(233, 241, 236, 0.9);
+}
+
+.completed .taskOptionsBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .taskActions {
   display: flex;
   align-items: center;
