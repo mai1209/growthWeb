@@ -27,15 +27,20 @@ const ICONOS = {
 };
 
 // Íconos de gestión decorativos del fondo (verdes, delineados, con glow).
+// Cada uno late (crece/achica) con su propio ritmo para un efecto aleatorio.
 const FONDO = [
-  { Icon: FiTrendingUp, style: { top: "6%", left: "5%", width: 74, height: 74 } },
-  { Icon: FiPieChart, style: { top: "14%", right: "7%", width: 58, height: 58 } },
-  { Icon: FiTarget, style: { top: "42%", left: "3%", width: 88, height: 88 } },
-  { Icon: FiBarChart2, style: { top: "58%", right: "5%", width: 82, height: 82 } },
-  { Icon: FiCheckSquare, style: { bottom: "10%", left: "8%", width: 66, height: 66 } },
-  { Icon: FiCalendar, style: { bottom: "14%", right: "10%", width: 60, height: 60 } },
-  { Icon: FiClock, style: { top: "30%", right: "16%", width: 46, height: 46 } },
-  { Icon: FiFlag, style: { bottom: "34%", left: "14%", width: 50, height: 50 } },
+  { Icon: FiTrendingUp, style: { top: "6%", left: "5%", width: 34, height: 34, animationDelay: "0s", animationDuration: "3.2s" } },
+  { Icon: FiPieChart, style: { top: "13%", right: "8%", width: 28, height: 28, animationDelay: "1.1s", animationDuration: "2.8s" } },
+  { Icon: FiTarget, style: { top: "40%", left: "4%", width: 38, height: 38, animationDelay: "0.6s", animationDuration: "3.9s" } },
+  { Icon: FiBarChart2, style: { top: "56%", right: "6%", width: 34, height: 34, animationDelay: "2.2s", animationDuration: "3.4s" } },
+  { Icon: FiCheckSquare, style: { bottom: "9%", left: "9%", width: 30, height: 30, animationDelay: "1.6s", animationDuration: "2.6s" } },
+  { Icon: FiCalendar, style: { bottom: "14%", right: "11%", width: 28, height: 28, animationDelay: "0.3s", animationDuration: "4.3s" } },
+  { Icon: FiClock, style: { top: "28%", right: "17%", width: 24, height: 24, animationDelay: "2.6s", animationDuration: "3s" } },
+  { Icon: FiFlag, style: { bottom: "32%", left: "15%", width: 26, height: 26, animationDelay: "1.9s", animationDuration: "3.6s" } },
+  { Icon: FiDollarSign, style: { top: "70%", left: "10%", width: 26, height: 26, animationDelay: "0.9s", animationDuration: "3.1s" } },
+  { Icon: FiTrendingUp, style: { top: "80%", right: "16%", width: 30, height: 30, animationDelay: "2.9s", animationDuration: "3.7s" } },
+  { Icon: FiTarget, style: { top: "18%", left: "22%", width: 22, height: 22, animationDelay: "1.4s", animationDuration: "2.9s" } },
+  { Icon: FiPieChart, style: { bottom: "44%", right: "22%", width: 24, height: 24, animationDelay: "3.3s", animationDuration: "3.5s" } },
 ];
 
 function ApoyarPage() {
