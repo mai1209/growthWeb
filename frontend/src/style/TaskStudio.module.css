@@ -961,6 +961,36 @@
     padding: 0.28rem 0.55rem;
     font-size: 0.68rem;
   }
+
+  /* Header apila: título arriba, acciones abajo a lo ancho. */
+  .editorHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.7rem;
+  }
+
+  .listHeaderActions {
+    width: 100%;
+  }
+
+  /* Pestañas (Notas / Lista de compras / Afirmaciones / Journaling) en una
+     sola fila con scroll horizontal en vez de salirse de la pantalla. */
+  .viewToggle {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .viewToggle::-webkit-scrollbar {
+    display: none;
+  }
+
+  .viewToggleButton {
+    flex-shrink: 0;
+  }
 }
 
 .formGrid,
