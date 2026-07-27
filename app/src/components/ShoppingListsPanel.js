@@ -158,9 +158,11 @@ export default function ShoppingListsPanel({ visible, onClose }) {
   const handleClearDone = (listId) =>
     mutateItems(listId, (items) => items.filter((it) => !it.done));
 
-  const handleSetPrice = (listId, itemId, precio) =>
+  const handleSetPrice = (listId, itemId, precio, cantidad) =>
     mutateItems(listId, (items) =>
-      items.map((it) => (it.id === itemId ? { ...it, precio } : it))
+      items.map((it) =>
+        it.id === itemId ? { ...it, precio, cantidad: cantidad || 1 } : it
+      )
     );
 
   const openList = openListId ? lists.find((l) => l._id === openListId) : null;
@@ -205,7 +207,9 @@ export default function ShoppingListsPanel({ visible, onClose }) {
               onDeleteItem={(id) => handleDeleteItem(openList._id, id)}
               onDeleteList={() => handleDeleteList(openList._id)}
               onClearDone={() => handleClearDone(openList._id)}
-              onSetPrice={(id, precio) => handleSetPrice(openList._id, id, precio)}
+              onSetPrice={(id, precio, cantidad) =>
+                handleSetPrice(openList._id, id, precio, cantidad)
+              }
             />
           ) : (
             <ScrollView
@@ -338,17 +342,26 @@ function ListDetail({
 
   const [priceOpenId, setPriceOpenId] = useState(null);
   const [priceDraft, setPriceDraft] = useState("");
+  const [qtyDraft, setQtyDraft] = useState("1");
   const fmt = (n) => Number(n || 0).toLocaleString("es-AR");
-  const total = items.reduce((acc, it) => acc + (Number(it.precio) || 0), 0);
+  const lineaTotal = (it) => (Number(it.precio) || 0) * (Number(it.cantidad) || 1);
+  const total = items.reduce((acc, it) => acc + lineaTotal(it), 0);
   const abrirPrecio = (it) => {
     setPriceOpenId(it.id);
     setPriceDraft(it.precio != null ? String(it.precio) : "");
+    setQtyDraft(it.cantidad ? String(it.cantidad) : "1");
   };
   const guardarPrecio = (itemId) => {
     const n = parseFloat(String(priceDraft).replace(",", "."));
-    onSetPrice(itemId, Number.isFinite(n) && n >= 0 ? n : null);
+    const q = parseInt(qtyDraft, 10);
+    onSetPrice(
+      itemId,
+      Number.isFinite(n) && n >= 0 ? n : null,
+      Number.isFinite(q) && q >= 1 ? q : 1
+    );
     setPriceOpenId(null);
     setPriceDraft("");
+    setQtyDraft("1");
   };
 
   return (
@@ -401,17 +414,32 @@ function ListDetail({
               </Text>
 
               {priceOpenId === it.id ? (
-                <TextInput
-                  style={styles.precioInput}
-                  value={priceDraft}
-                  onChangeText={setPriceDraft}
-                  onBlur={() => guardarPrecio(it.id)}
-                  onSubmitEditing={() => guardarPrecio(it.id)}
-                  keyboardType="numeric"
-                  placeholder="$"
-                  placeholderTextColor={colors.muted}
-                  autoFocus
-                />
+                <View style={styles.precioEdit}>
+                  <TextInput
+                    style={styles.precioInput}
+                    value={priceDraft}
+                    onChangeText={setPriceDraft}
+                    onSubmitEditing={() => guardarPrecio(it.id)}
+                    keyboardType="numeric"
+                    placeholder="$"
+                    placeholderTextColor={colors.muted}
+                    autoFocus
+                  />
+                  <Text style={styles.precioX}>×</Text>
+                  <TextInput
+                    style={styles.cantInput}
+                    value={qtyDraft}
+                    onChangeText={setQtyDraft}
+                    onSubmitEditing={() => guardarPrecio(it.id)}
+                    keyboardType="numeric"
+                  />
+                  <TouchableOpacity
+                    style={styles.precioOk}
+                    onPress={() => guardarPrecio(it.id)}
+                  >
+                    <Ionicons name="checkmark" size={16} color="#fff" />
+                  </TouchableOpacity>
+                </View>
               ) : (
                 <TouchableOpacity
                   style={[styles.precioBtn, it.precio != null && styles.precioBtnSet]}
@@ -423,7 +451,11 @@ function ListDetail({
                       it.precio != null && styles.precioBtnTextSet,
                     ]}
                   >
-                    {it.precio != null ? `$ ${fmt(it.precio)}` : "precio"}
+                    {it.precio != null
+                      ? Number(it.cantidad) > 1
+                        ? `$ ${fmt(lineaTotal(it))} ×${it.cantidad}`
+                        : `$ ${fmt(it.precio)}`
+                      : "precio"}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -604,10 +636,33 @@ const makeStyles = (colors) =>
     precioBtnSet: { borderColor: "rgba(20,120,40,0.5)" },
     precioBtnText: { color: "#172018", fontSize: 12, fontWeight: "700" },
     precioBtnTextSet: { color: "#0d5c1f" },
-    precioInput: {
-      width: 84,
+    precioEdit: { flexDirection: "row", alignItems: "center", gap: 4 },
+    precioX: { color: "#0d5c1f", fontWeight: "800", fontSize: 13 },
+    cantInput: {
+      width: 42,
       paddingVertical: 4,
-      paddingHorizontal: 10,
+      paddingHorizontal: 6,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: "#3bcb23",
+      backgroundColor: "rgba(255,255,255,0.9)",
+      color: "#172018",
+      fontSize: 13,
+      fontWeight: "700",
+      textAlign: "center",
+    },
+    precioOk: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      backgroundColor: "#3bcb23",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    precioInput: {
+      width: 64,
+      paddingVertical: 4,
+      paddingHorizontal: 8,
       borderRadius: 999,
       borderWidth: 1,
       borderColor: "rgba(20,120,40,0.5)",
