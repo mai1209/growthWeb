@@ -12,6 +12,7 @@ import SettingsPage from "./SettingsPage";
 import MetricsPage from "./MetricsPage";
 import MetasPage from "./MetasPage";
 import PomodoroPage from "./PomodoroPage";
+import ApoyarPage from "./ApoyarPage";
 
 import LoginPage from "./LoginPage";
 import SignupPage from "./SignupPage";
@@ -206,6 +207,7 @@ function AppRoutes({
         <Route path="compartidos" element={<SharedExpenses />} />
         <Route path="pomodoro" element={<PomodoroPage />} />
         <Route path="ajustes" element={<SettingsPage />} />
+        <Route path="apoyar" element={<ApoyarPage />} />
 
         {/* Cualquier otra ruta privada → dashboard */}
         <Route path="*" element={<Navigate to="/" />} />

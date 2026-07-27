@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
-import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiMoon, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3 } from "react-icons/fi";
+import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiMoon, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiHeart } from "react-icons/fi";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { authService } from "../api";
@@ -17,6 +17,7 @@ const NAV_LINKS = [
   { to: "/notas", label: "Notas", icon: <FiEdit3 className={style.navIcon} /> },
   { to: "/pomodoro", label: "Pomodoro", icon: <FiClock className={style.navIcon} /> },
   { to: "/ajustes", label: "Ajustes", icon: <FiSettings className={style.navIcon} /> },
+  { to: "/apoyar", label: "Apoyar", icon: <FiHeart className={style.navIcon} /> },
 ];
 
 // Acento del avatar según el color de tarjeta elegido (solo decorativo; el resto sigue verde)

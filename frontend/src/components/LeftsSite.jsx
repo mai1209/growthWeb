@@ -9,10 +9,7 @@ import {
   isSameMonth,
   summarizeByType,
 } from "../utils/finance";
-
-// Link de donación. Reemplazar por tu Cafecito (cafecito.app/tu-usuario) o
-// tu link de Mercado Pago. Si lo dejás vacío, el botón igual abre esta página.
-const DONATION_URL = "https://cafecito.app/growthmanager";
+import { MP_ALIAS } from "../utils/donaciones";
 
 const HOME_TABS = [
   { key: "ARS", label: "ARS" },
@@ -477,14 +474,20 @@ function LeftSite({
             >
               Compartir Growth
             </button>
-            <a
+            <button
+              type="button"
               className={style.sideSupportDonate}
-              href={DONATION_URL}
-              target="_blank"
-              rel="noreferrer"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(MP_ALIAS);
+                  alert(`¡Alias de Mercado Pago copiado! (${MP_ALIAS}) 💚`);
+                } catch {
+                  alert(`Alias de Mercado Pago: ${MP_ALIAS}`);
+                }
+              }}
             >
-              ☕ Invitame un café
-            </a>
+              💚 Donar — copiar alias MP
+            </button>
           </div>
         </section>
       </div>
