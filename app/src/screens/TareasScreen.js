@@ -21,6 +21,30 @@ import TaskCalendar from "../components/TaskCalendar";
 import TaskHistory from "../components/TaskHistory";
 import ProgressRing from "../components/ProgressRing";
 
+// Franja del día según el horario de la tarea (para agrupar en encabezados).
+const FRANJAS = [
+  { key: "manana", label: "Mañana" },
+  { key: "tarde", label: "Tarde" },
+  { key: "noche", label: "Noche" },
+  { key: "sinhora", label: "Sin hora" },
+];
+
+const franjaDe = (horario) => {
+  const h = String(horario || "").trim();
+  if (!h) return "sinhora";
+  if (h === "Mañana") return "manana";
+  if (h === "Tarde") return "tarde";
+  if (h === "Noche") return "noche";
+  const m = /^(\d{1,2}):/.exec(h);
+  if (m) {
+    const hh = Number(m[1]);
+    if (hh < 12) return "manana";
+    if (hh < 19) return "tarde";
+    return "noche";
+  }
+  return "sinhora";
+};
+
 export default function TareasScreen() {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
@@ -63,6 +87,19 @@ export default function TareasScreen() {
   const completedCount = dayTasks.filter((t) => isTaskCompletedOnDate(t, selectedDate)).length;
   const pendingCount = Math.max(dayTasks.length - completedCount, 0);
   const progressPercent = dayTasks.length ? Math.round((completedCount / dayTasks.length) * 100) : 0;
+
+  // Tareas agrupadas por franja horaria, con un encabezado chico por grupo.
+  const listData = useMemo(() => {
+    const out = [];
+    FRANJAS.forEach((f) => {
+      const items = dayTasks.filter((t) => franjaDe(t.horario) === f.key);
+      if (items.length) {
+        out.push({ _header: true, _id: `franja-${f.key}`, label: f.label });
+        items.forEach((t) => out.push(t));
+      }
+    });
+    return out;
+  }, [dayTasks]);
 
   const toggleComplete = async (task) => {
     const id = task._id;
@@ -175,7 +212,7 @@ export default function TareasScreen() {
           </View>
 
           <FlatList
-            data={dayTasks}
+            data={listData}
             keyExtractor={(item) => item._id}
             contentContainerStyle={{ padding: 16, paddingTop: 2, gap: 10, paddingBottom: 90 }}
             refreshControl={
@@ -201,6 +238,9 @@ export default function TareasScreen() {
             }
             ListEmptyComponent={<Text style={styles.empty}>No hay tareas para este día.</Text>}
             renderItem={({ item }) => {
+              if (item._header) {
+                return <Text style={styles.franjaHeader}>{item.label}</Text>;
+              }
               const done = isTaskCompletedOnDate(item, selectedDate);
               const accent =
                 TASK_COLORS[item.color] ||
@@ -349,6 +389,17 @@ const makeStyles = (colors) => StyleSheet.create({
   },
   error: { color: colors.red, padding: 16 },
   empty: { color: colors.muted, padding: 16, textAlign: "center" },
+  // Encabezado chico de cada franja horaria (Mañana / Tarde / Noche / Sin hora).
+  franjaHeader: {
+    color: colors.muted,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginTop: 4,
+    marginBottom: -2,
+    marginLeft: 2,
+  },
 
   progressCard: {
     flexDirection: "row",
