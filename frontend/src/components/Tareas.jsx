@@ -1124,6 +1124,16 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
               <div className={style.formField}>
                 <span>Momento</span>
                 <div className={style.momentoGrid}>
+                  <button
+                    type="button"
+                    className={`${style.momentoButton} ${
+                      formData.momento === "exacta" ? style.momentoButtonActive : ""
+                    }`}
+                    onClick={() => handleMomentoSelect("exacta")}
+                  >
+                    <FiClock />
+                    Hora exacta
+                  </button>
                   {MOMENTO_OPTIONS.map(({ value, label, Icon }) => (
                     <button
                       key={value}
@@ -1137,16 +1147,6 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                       {label}
                     </button>
                   ))}
-                  <button
-                    type="button"
-                    className={`${style.momentoButton} ${
-                      formData.momento === "exacta" ? style.momentoButtonActive : ""
-                    }`}
-                    onClick={() => handleMomentoSelect("exacta")}
-                  >
-                    <FiClock />
-                    Hora exacta
-                  </button>
                 </div>
 
                 {formData.momento === "exacta" ? (

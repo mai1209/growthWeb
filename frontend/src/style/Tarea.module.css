@@ -1178,7 +1178,15 @@
 
 .momentoTimeInput {
   margin-top: 0.55rem;
-  max-width: 200px;
+  width: fit-content;
+  max-width: 140px;
+}
+
+/* Ícono de reloj del input de hora: blanco (antes negro, no se veía). */
+.momentoTimeInput::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.5);
+  cursor: pointer;
+  margin-left: 0.2rem;
 }
 
 .formDateButton {
@@ -1295,9 +1303,33 @@
 }
 
 .repeatToggle input {
-  width: 18px;
-  height: 18px;
-  accent-color: #3bcb23;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #3bcb23;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s ease;
+}
+
+/* Al marcar se pinta de verde con un tilde blanco. */
+.repeatToggle input:checked {
+  background: #3bcb23;
+}
+
+.repeatToggle input:checked::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 .daysPicker {
