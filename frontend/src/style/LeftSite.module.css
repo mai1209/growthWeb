@@ -601,6 +601,8 @@
 
 /* Bloque de apoyo (compartir + donar), reemplaza el espacio publicitario. */
 .sideSupport {
+  position: relative;
+  overflow: hidden;
   display: grid;
   gap: 0.6rem;
   padding: 1rem;
@@ -613,6 +615,51 @@
   );
   margin-top: auto;
   flex: 0 0 auto;
+}
+
+/* Mini íconos de gestión de fondo, verdes y con glow (laten suave). */
+.sideSupportBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.sideSupportBgIcon {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  color: rgba(123, 255, 77, 0.18);
+  filter: drop-shadow(0 0 4px rgba(123, 255, 77, 0.3));
+  animation: sideLatido 3.4s ease-in-out infinite;
+}
+
+@keyframes sideLatido {
+  0%,
+  100% {
+    transform: scale(1);
+    color: rgba(123, 255, 77, 0.18);
+    filter: drop-shadow(0 0 3px rgba(123, 255, 77, 0.25));
+  }
+  50% {
+    transform: scale(1.3);
+    color: #7bff4d;
+    filter: drop-shadow(0 0 8px rgba(123, 255, 77, 0.85));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sideSupportBgIcon {
+    animation: none;
+  }
+}
+
+/* El contenido queda por encima del fondo decorativo. */
+.sideSupportLabel,
+.sideSupportText,
+.sideSupportBtns {
+  position: relative;
+  z-index: 1;
 }
 
 .sideSupportLabel {

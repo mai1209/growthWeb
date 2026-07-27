@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiEye, FiEyeOff, FiInfo, FiX, FiDroplet, FiCheck } from "react-icons/fi";
+import { FiEye, FiEyeOff, FiInfo, FiX, FiDroplet, FiCheck, FiTrendingUp, FiTarget, FiPieChart, FiCheckSquare, FiFlag } from "react-icons/fi";
 import style from "../style/LeftSite.module.css";
 import {
   filterMovimientosByCurrency,
@@ -446,6 +446,13 @@ function LeftSite({
 
         {/* Apoyo: Growth es gratis, invitamos a compartir y a donar */}
         <section className={style.sideSupport}>
+          <div className={style.sideSupportBg} aria-hidden="true">
+            <FiTrendingUp className={style.sideSupportBgIcon} style={{ top: "12%", left: "7%", animationDelay: "0s" }} />
+            <FiTarget className={style.sideSupportBgIcon} style={{ top: "20%", right: "9%", animationDelay: "1.2s" }} />
+            <FiPieChart className={style.sideSupportBgIcon} style={{ bottom: "34%", left: "6%", animationDelay: "0.6s" }} />
+            <FiCheckSquare className={style.sideSupportBgIcon} style={{ bottom: "14%", right: "8%", animationDelay: "1.8s" }} />
+            <FiFlag className={style.sideSupportBgIcon} style={{ top: "50%", right: "26%", animationDelay: "2.4s" }} />
+          </div>
           <p className={style.sideSupportLabel}>Apoyá Growth 💚</p>
           <p className={style.sideSupportText}>
             Growth es 100% gratis. Si te sirve, compartila o invitanos un
