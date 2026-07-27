@@ -229,6 +229,17 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* El botón "Editar" del menú también quedaba oscuro sobre oscuro en la tarjeta
+   completada: texto claro (el "Eliminar" sigue rojo como está). */
+.completed .taskExpandedBtn:not(.taskExpandedDelete) {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(233, 241, 236, 0.92);
+}
+
+.completed .taskExpandedBtn:not(.taskExpandedDelete):hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .taskActions {
   display: flex;
   align-items: center;
@@ -1596,6 +1607,27 @@
 
   .newTaskButton svg {
     flex: 0 0 auto;
+  }
+
+  /* Riel de horas compacto en el teléfono: se ve, pero ocupa poco espacio. */
+  .agendaRow {
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 0.4rem;
+  }
+
+  .agendaTime {
+    padding: 0.7rem 0.5rem 0 0;
+  }
+
+  .agendaTimeLabel {
+    font-size: 0.62rem;
+    line-height: 1.05;
+  }
+
+  .agendaDot {
+    width: 8px;
+    height: 8px;
+    top: 0.85rem;
   }
 
   .progressCard {
