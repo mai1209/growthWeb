@@ -466,14 +466,14 @@ export default function AfirmacionesPanel({ visible, onClose }) {
                 onPress={alternarLeido}
                 disabled={!hayEscritas}
               >
-                {leidoHoy ? (
-                  <>
-                    <Ionicons name="checkmark" size={18} color={colors.green} />
-                    <Text style={[styles.leerText, styles.leerTextHecho]}>Leídas hoy</Text>
-                  </>
-                ) : (
-                  <Text style={styles.leerText}>Leí mis afirmaciones de hoy</Text>
-                )}
+                <View style={[styles.leerCirculo, leidoHoy && styles.leerCirculoHecho]}>
+                  {leidoHoy ? (
+                    <Ionicons name="checkmark" size={14} color="#fff" />
+                  ) : null}
+                </View>
+                <Text style={[styles.leerText, leidoHoy && styles.leerTextHecho]}>
+                  {leidoHoy ? "Leídas hoy" : "Leí mis afirmaciones de hoy"}
+                </Text>
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
@@ -595,6 +595,9 @@ const makeStyles = (colors, isDark = false) =>
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.cardSoft,
+      // Borde fino verde (igual que en la web): marca el círculo interactivo.
+      borderWidth: 1,
+      borderColor: "rgba(59, 203, 35, 0.55)",
     },
     numeroText: { color: colors.muted, fontSize: 12, fontWeight: "700" },
     // Número activo cuando el renglón está resaltado.
@@ -665,10 +668,24 @@ const makeStyles = (colors, isDark = false) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: 7,
+      gap: 8,
       paddingVertical: 14,
-      borderRadius: 14,
+      borderRadius: 999,
       backgroundColor: colors.greenBright,
+    },
+    // Círculo tipo check (como en Tareas/web): vacío y se llena al marcar leídas.
+    leerCirculo: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      borderWidth: 2,
+      borderColor: "#fff",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    leerCirculoHecho: {
+      borderColor: colors.green,
+      backgroundColor: colors.green,
     },
     // Ya marcado: baja el peso visual, es un estado confirmado y no una acción
     leerHecho: {
