@@ -13,7 +13,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { taskService } from "../api";
 import { useTheme } from "../theme";
-import { filterTasksForDate, isTaskCompletedOnDate, getIsoDate } from "../utils/tasks";
+import {
+  filterTasksForDate,
+  isTaskCompletedOnDate,
+  getIsoDate,
+  getPeriodRange,
+  summarizePeriod,
+} from "../utils/tasks";
 import { loadNotifSettings } from "../utils/notifSettings";
 import { syncTaskReminders } from "../utils/taskReminders";
 import TaskFormModal, { TASK_COLORS } from "../components/TaskFormModal";
@@ -42,6 +48,45 @@ const agendaLabel = (h) => {
   if (isExactTime(s)) return s;
   if (s === "Mañana" || s === "Tarde" || s === "Noche") return s;
   return "Sin hora";
+};
+
+// 30 frases de motivación: se muestra 1 por día (rota sola).
+const FRASES_TAREAS = [
+  "Las personas que cumplen sus tareas rinden más que las que las postergan. Hoy te toca a vos.",
+  "Cada tarea que tachás es un ladrillo de la persona que querés ser.",
+  "La disciplina es elegir lo que querés a largo plazo por sobre lo que querés ahora.",
+  "No tenés que hacerlo perfecto, tenés que empezarlo.",
+  "Una tarea hecha vale más que diez planeadas.",
+  "El futuro se construye con lo que hacés hoy, no mañana.",
+  "Los que hacen, avanzan. Los que esperan motivación, siguen igual.",
+  "Hecho es mejor que perfecto. Dale para adelante.",
+  "Pequeños pasos todos los días te llevan lejos.",
+  "La constancia le gana al talento cuando el talento no es constante.",
+  "Tu yo del futuro te va a agradecer lo que hagas ahora.",
+  "Empezá aunque no tengas ganas: las ganas vienen después.",
+  "Ordená tu día y tu cabeza se ordena sola.",
+  "No cuentes los días, hacé que los días cuenten.",
+  "El progreso, no la perfección, es lo que te mantiene en movimiento.",
+  "Lo difícil de hoy es lo fácil de mañana si lo practicás.",
+  "Menos excusas, más tareas tachadas.",
+  "La motivación te arranca, el hábito te sostiene.",
+  "Cada 'sí' a tu tarea es un 'no' a la mediocridad.",
+  "Enfocate en una sola cosa y hacela bien.",
+  "Los grandes resultados son la suma de pequeñas tareas cumplidas.",
+  "Dejá de esperar el momento perfecto: crealo.",
+  "Tu energía sigue a tu acción, no al revés.",
+  "Cumplir con vos mismo es la mejor forma de subir tu autoestima.",
+  "Hoy es un buen día para hacer eso que venís posponiendo.",
+  "La suerte aparece cuando la preparación se encuentra con la acción.",
+  "Terminar lo que empezás es un superpoder. Usalo.",
+  "Un día productivo empieza con una sola tarea bien hecha.",
+  "No busques hacer todo, buscá hacer lo importante.",
+  "Sé constante en lo chico y lo grande llega solo.",
+];
+
+const diaDelAnio = (date) => {
+  const inicio = new Date(date.getFullYear(), 0, 0);
+  return Math.floor((date - inicio) / 86400000);
 };
 
 export default function TareasScreen() {
@@ -86,6 +131,26 @@ export default function TareasScreen() {
   const completedCount = dayTasks.filter((t) => isTaskCompletedOnDate(t, selectedDate)).length;
   const pendingCount = Math.max(dayTasks.length - completedCount, 0);
   const progressPercent = dayTasks.length ? Math.round((completedCount / dayTasks.length) * 100) : 0;
+
+  // Progreso del mes vs. el mes pasado + frase del día.
+  const comparativaMes = useMemo(() => {
+    const hoy = new Date();
+    const act = getPeriodRange("month", hoy);
+    const ant = getPeriodRange(
+      "month",
+      new Date(hoy.getFullYear(), hoy.getMonth() - 1, 15)
+    );
+    const a = summarizePeriod(allTasks, act.from, act.to);
+    const b = summarizePeriod(allTasks, ant.from, ant.to);
+    return {
+      actual: a.percent,
+      anterior: b.percent,
+      diff: a.percent - b.percent,
+      total: a.total,
+      totalAnt: b.total,
+    };
+  }, [allTasks]);
+  const fraseDelDia = FRASES_TAREAS[diaDelAnio(new Date()) % FRASES_TAREAS.length];
 
   // Tareas ordenadas por horario para el riel de la izquierda.
   const sortedTasks = useMemo(
@@ -211,20 +276,39 @@ export default function TareasScreen() {
               <RefreshControl refreshing={false} onRefresh={fetchTasks} tintColor={colors.green} />
             }
             ListHeaderComponent={
-              <View style={styles.progressCard}>
-                <ProgressRing percent={progressPercent} />
-                <View style={styles.progressSide}>
-                  <Text style={styles.progressKicker}>Progreso</Text>
-                  <View style={styles.progressBoxes}>
-                    <View style={styles.progressBox}>
-                      <Text style={styles.progressNum}>{completedCount}</Text>
-                      <Text style={styles.progressLbl}>completadas</Text>
-                    </View>
-                    <View style={styles.progressBox}>
-                      <Text style={styles.progressNum}>{pendingCount}</Text>
-                      <Text style={styles.progressLbl}>pendientes</Text>
+              <View>
+                <View style={styles.progressCard}>
+                  <ProgressRing percent={progressPercent} />
+                  <View style={styles.progressSide}>
+                    <Text style={styles.progressKicker}>Progreso</Text>
+                    <View style={styles.progressBoxes}>
+                      <View style={styles.progressBox}>
+                        <Text style={styles.progressNum}>{completedCount}</Text>
+                        <Text style={styles.progressLbl}>completadas</Text>
+                      </View>
+                      <View style={styles.progressBox}>
+                        <Text style={styles.progressNum}>{pendingCount}</Text>
+                        <Text style={styles.progressLbl}>pendientes</Text>
+                      </View>
                     </View>
                   </View>
+                </View>
+
+                {comparativaMes.total > 0 || comparativaMes.totalAnt > 0 ? (
+                  <Text style={styles.comparativa}>
+                    Este mes cumpliste el {comparativaMes.actual}% de tus tareas ·{" "}
+                    {comparativaMes.diff >= 0 ? "▲" : "▼"} {Math.abs(comparativaMes.diff)} pts vs. el mes pasado ({comparativaMes.anterior}%)
+                  </Text>
+                ) : null}
+
+                <View style={styles.fraseCard}>
+                  <View style={styles.fraseBg} pointerEvents="none">
+                    <Ionicons name="trending-up-outline" size={16} color="rgba(123,255,77,0.2)" style={styles.fraseBgIcon1} />
+                    <Ionicons name="flag-outline" size={16} color="rgba(123,255,77,0.2)" style={styles.fraseBgIcon2} />
+                    <Ionicons name="checkmark-done-outline" size={16} color="rgba(123,255,77,0.2)" style={styles.fraseBgIcon3} />
+                  </View>
+                  <Text style={styles.fraseLabel}>FRASE DEL DÍA</Text>
+                  <Text style={styles.fraseTexto}>{fraseDelDia}</Text>
                 </View>
               </View>
             }
@@ -428,7 +512,62 @@ const makeStyles = (colors) => StyleSheet.create({
     alignItems: "center",
     gap: 16,
     paddingVertical: 6,
-    paddingBottom: 16,
+    paddingBottom: 12,
+  },
+  // Comparativa de progreso + frase del día
+  comparativa: {
+    color: colors.muted,
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  fraseCard: {
+    position: "relative",
+    overflow: "hidden",
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(93,199,45,0.28)",
+    backgroundColor: "rgba(93,199,45,0.09)",
+    marginBottom: 12,
+    gap: 4,
+  },
+  fraseBg: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
+  fraseBgIcon1: {
+    position: "absolute",
+    top: 10,
+    left: 14,
+    textShadowColor: "rgba(123,255,77,0.6)",
+    textShadowRadius: 6,
+  },
+  fraseBgIcon2: {
+    position: "absolute",
+    bottom: 10,
+    right: 16,
+    textShadowColor: "rgba(123,255,77,0.6)",
+    textShadowRadius: 6,
+  },
+  fraseBgIcon3: {
+    position: "absolute",
+    top: 12,
+    right: 24,
+    textShadowColor: "rgba(123,255,77,0.6)",
+    textShadowRadius: 6,
+  },
+  fraseLabel: {
+    color: colors.greenBright,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+    textAlign: "center",
+  },
+  fraseTexto: {
+    color: colors.text,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "600",
+    textAlign: "center",
   },
   progressSide: { flex: 1, gap: 8 },
   progressKicker: {
