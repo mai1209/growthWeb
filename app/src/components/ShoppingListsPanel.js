@@ -158,6 +158,11 @@ export default function ShoppingListsPanel({ visible, onClose }) {
   const handleClearDone = (listId) =>
     mutateItems(listId, (items) => items.filter((it) => !it.done));
 
+  const handleSetPrice = (listId, itemId, precio) =>
+    mutateItems(listId, (items) =>
+      items.map((it) => (it.id === itemId ? { ...it, precio } : it))
+    );
+
   const openList = openListId ? lists.find((l) => l._id === openListId) : null;
 
   return (
@@ -200,6 +205,7 @@ export default function ShoppingListsPanel({ visible, onClose }) {
               onDeleteItem={(id) => handleDeleteItem(openList._id, id)}
               onDeleteList={() => handleDeleteList(openList._id)}
               onClearDone={() => handleClearDone(openList._id)}
+              onSetPrice={(id, precio) => handleSetPrice(openList._id, id, precio)}
             />
           ) : (
             <ScrollView
@@ -324,10 +330,26 @@ function ListDetail({
   onDeleteItem,
   onDeleteList,
   onClearDone,
+  onSetPrice,
 }) {
   const items = list.items || [];
   const doneCount = items.filter((it) => it.done).length;
   const palette = getNoteColor(list.color);
+
+  const [priceOpenId, setPriceOpenId] = useState(null);
+  const [priceDraft, setPriceDraft] = useState("");
+  const fmt = (n) => Number(n || 0).toLocaleString("es-AR");
+  const total = items.reduce((acc, it) => acc + (Number(it.precio) || 0), 0);
+  const abrirPrecio = (it) => {
+    setPriceOpenId(it.id);
+    setPriceDraft(it.precio != null ? String(it.precio) : "");
+  };
+  const guardarPrecio = (itemId) => {
+    const n = parseFloat(String(priceDraft).replace(",", "."));
+    onSetPrice(itemId, Number.isFinite(n) && n >= 0 ? n : null);
+    setPriceOpenId(null);
+    setPriceDraft("");
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -377,6 +399,35 @@ function ListDetail({
               >
                 {it.text}
               </Text>
+
+              {priceOpenId === it.id ? (
+                <TextInput
+                  style={styles.precioInput}
+                  value={priceDraft}
+                  onChangeText={setPriceDraft}
+                  onBlur={() => guardarPrecio(it.id)}
+                  onSubmitEditing={() => guardarPrecio(it.id)}
+                  keyboardType="numeric"
+                  placeholder="$"
+                  placeholderTextColor={colors.muted}
+                  autoFocus
+                />
+              ) : (
+                <TouchableOpacity
+                  style={[styles.precioBtn, it.precio != null && styles.precioBtnSet]}
+                  onPress={() => abrirPrecio(it)}
+                >
+                  <Text
+                    style={[
+                      styles.precioBtnText,
+                      it.precio != null && styles.precioBtnTextSet,
+                    ]}
+                  >
+                    {it.precio != null ? `$ ${fmt(it.precio)}` : "precio"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
               <TouchableOpacity
                 style={[
                   styles.check,
@@ -389,6 +440,13 @@ function ListDetail({
             </View>
           ))
         )}
+
+        {total > 0 ? (
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>TOTAL</Text>
+            <Text style={styles.totalMonto}>$ {fmt(total)}</Text>
+          </View>
+        ) : null}
 
         {doneCount > 0 ? (
           <TouchableOpacity style={styles.clearDone} onPress={onClearDone}>
@@ -533,6 +591,43 @@ const makeStyles = (colors) =>
     itemText: { flex: 1, fontSize: 15, fontWeight: "600" },
     itemTextDone: { textDecorationLine: "line-through", opacity: 0.5 },
     itemDelete: { width: 26, height: 26, alignItems: "center", justifyContent: "center", opacity: 0.6 },
+
+    // Botón "precio" + input inline por ítem
+    precioBtn: {
+      paddingVertical: 3,
+      paddingHorizontal: 9,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: "rgba(0,0,0,0.18)",
+      backgroundColor: "rgba(255,255,255,0.5)",
+    },
+    precioBtnSet: { borderColor: "rgba(20,120,40,0.5)" },
+    precioBtnText: { color: "#172018", fontSize: 12, fontWeight: "700" },
+    precioBtnTextSet: { color: "#0d5c1f" },
+    precioInput: {
+      width: 84,
+      paddingVertical: 4,
+      paddingHorizontal: 10,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: "rgba(20,120,40,0.5)",
+      backgroundColor: "rgba(255,255,255,0.85)",
+      color: "#172018",
+      fontSize: 13,
+      fontWeight: "700",
+    },
+    totalRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginTop: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderRadius: 14,
+      backgroundColor: "rgba(255,255,255,0.45)",
+    },
+    totalLabel: { fontSize: 12, fontWeight: "800", letterSpacing: 1, color: "#172018" },
+    totalMonto: { fontSize: 16, fontWeight: "800", color: "#0d5c1f" },
 
     clearDone: {
       alignSelf: "flex-start",
