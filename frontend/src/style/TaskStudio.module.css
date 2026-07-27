@@ -3188,14 +3188,40 @@ button.folderItem {
     gap: 0.75rem;
   }
 
-  /* Toggle como segmento full-width en móvil (más parecido a la app) */
+  /* Toggle full-width con scroll horizontal en móvil: las 4 pestañas no entran,
+     así que se deslizan con el dedo en vez de salirse/cortarse. */
   .viewToggle {
     width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .viewToggle::-webkit-scrollbar {
+    display: none;
   }
 
   .viewToggleButton {
-    flex: 1;
+    flex: 0 0 auto;
     justify-content: center;
+    white-space: nowrap;
+  }
+
+  /* Fila "Últimos 30 días / Repaso / Nueva nota": envuelve para que
+     "Nueva nota" no se salga de la pantalla (los botones bajan a otra línea). */
+  .boardGroupHeader {
+    flex-wrap: wrap;
+  }
+
+  .boardHeaderLine {
+    display: none;
+  }
+
+  .boardHeaderActions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .monthNavCount {
