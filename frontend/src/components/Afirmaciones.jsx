@@ -293,14 +293,8 @@ function Afirmaciones() {
             : "Marcá que ya las leíste"
         }
       >
-        {leidoHoy ? (
-          <>
-            <FiCheck />
-            Leídas hoy
-          </>
-        ) : (
-          "Leí mis afirmaciones de hoy"
-        )}
+        <span className={style.leerCirculo}>{leidoHoy ? <FiCheck /> : null}</span>
+        {leidoHoy ? "Leídas hoy" : "Leí mis afirmaciones de hoy"}
       </button>
     </div>
   );

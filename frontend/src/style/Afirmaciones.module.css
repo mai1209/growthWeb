@@ -165,6 +165,8 @@
   place-items: center;
   border-radius: 50%;
   background: var(--surface-input);
+  /* Borde fino verde: marca el círculo como interactivo (se resalta al click). */
+  border: 1px solid rgba(93, 199, 45, 0.55);
   color: var(--color-text-muted, #8a9aa5);
   font-size: 0.76rem;
   font-weight: 700;
@@ -318,7 +320,7 @@
   width: 100%;
   padding: 0.85rem 1rem;
   border: none;
-  border-radius: var(--radius-lg);
+  border-radius: 999px;
   background: var(--accent);
   color: var(--accent-contrast);
   font-size: 0.98rem;
@@ -329,6 +331,31 @@
 
 .leer:hover:not(:disabled) {
   filter: brightness(1.06);
+}
+
+/* Círculo tipo "check" (como en Tareas): vacío y se llena al marcar leídas. */
+.leerCirculo {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  transition: background 0.15s ease;
+}
+
+.leerCirculo svg {
+  width: 14px;
+  height: 14px;
+}
+
+.leerHecho .leerCirculo {
+  background: currentColor;
+}
+
+.leerHecho .leerCirculo svg {
+  color: #ffffff;
 }
 
 .leer:active:not(:disabled) {
