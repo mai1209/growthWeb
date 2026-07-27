@@ -437,7 +437,7 @@ function ListDetail({
                     style={styles.precioOk}
                     onPress={() => guardarPrecio(it.id)}
                   >
-                    <Ionicons name="checkmark" size={16} color="#fff" />
+                    <Text style={styles.precioOkText}>Listo</Text>
                   </TouchableOpacity>
                 </View>
               ) : (
@@ -652,13 +652,14 @@ const makeStyles = (colors) =>
       textAlign: "center",
     },
     precioOk: {
-      width: 26,
-      height: 26,
-      borderRadius: 13,
+      paddingVertical: 4,
+      paddingHorizontal: 10,
+      borderRadius: 999,
       backgroundColor: "#3bcb23",
       alignItems: "center",
       justifyContent: "center",
     },
+    precioOkText: { color: "#fff", fontSize: 12, fontWeight: "800" },
     precioInput: {
       width: 64,
       paddingVertical: 4,
