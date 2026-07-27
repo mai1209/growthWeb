@@ -21,28 +21,27 @@ import TaskCalendar from "../components/TaskCalendar";
 import TaskHistory from "../components/TaskHistory";
 import ProgressRing from "../components/ProgressRing";
 
-// Franja del día según el horario de la tarea (para agrupar en encabezados).
-const FRANJAS = [
-  { key: "manana", label: "Mañana" },
-  { key: "tarde", label: "Tarde" },
-  { key: "noche", label: "Noche" },
-  { key: "sinhora", label: "Sin hora" },
-];
+// Riel de horarios (como en la web): etiqueta de hora a la izquierda de cada
+// tarea y orden por horario (exactas por minuto, luego Mañana/Tarde/Noche, y las
+// "Sin hora" al final).
+const isExactTime = (h) => /^\d{1,2}:\d{2}$/.test(String(h || "").trim());
+const MOMENTO_RANK = { Mañana: 8 * 60, Tarde: 14 * 60, Noche: 20 * 60 };
 
-const franjaDe = (horario) => {
-  const h = String(horario || "").trim();
-  if (!h) return "sinhora";
-  if (h === "Mañana") return "manana";
-  if (h === "Tarde") return "tarde";
-  if (h === "Noche") return "noche";
-  const m = /^(\d{1,2}):/.exec(h);
-  if (m) {
-    const hh = Number(m[1]);
-    if (hh < 12) return "manana";
-    if (hh < 19) return "tarde";
-    return "noche";
+const agendaKey = (t) => {
+  const h = String(t.horario || "").trim();
+  if (isExactTime(h)) {
+    const [hh, mm] = h.split(":").map(Number);
+    return hh * 60 + mm;
   }
-  return "sinhora";
+  if (MOMENTO_RANK[h] != null) return MOMENTO_RANK[h];
+  return 100000; // sin hora al final
+};
+
+const agendaLabel = (h) => {
+  const s = String(h || "").trim();
+  if (isExactTime(s)) return s;
+  if (s === "Mañana" || s === "Tarde" || s === "Noche") return s;
+  return "Sin hora";
 };
 
 export default function TareasScreen() {
@@ -88,18 +87,11 @@ export default function TareasScreen() {
   const pendingCount = Math.max(dayTasks.length - completedCount, 0);
   const progressPercent = dayTasks.length ? Math.round((completedCount / dayTasks.length) * 100) : 0;
 
-  // Tareas agrupadas por franja horaria, con un encabezado chico por grupo.
-  const listData = useMemo(() => {
-    const out = [];
-    FRANJAS.forEach((f) => {
-      const items = dayTasks.filter((t) => franjaDe(t.horario) === f.key);
-      if (items.length) {
-        out.push({ _header: true, _id: `franja-${f.key}`, label: f.label });
-        items.forEach((t) => out.push(t));
-      }
-    });
-    return out;
-  }, [dayTasks]);
+  // Tareas ordenadas por horario para el riel de la izquierda.
+  const sortedTasks = useMemo(
+    () => [...dayTasks].sort((a, b) => agendaKey(a) - agendaKey(b)),
+    [dayTasks]
+  );
 
   const toggleComplete = async (task) => {
     const id = task._id;
@@ -212,7 +204,7 @@ export default function TareasScreen() {
           </View>
 
           <FlatList
-            data={listData}
+            data={sortedTasks}
             keyExtractor={(item) => item._id}
             contentContainerStyle={{ padding: 16, paddingTop: 2, gap: 10, paddingBottom: 90 }}
             refreshControl={
@@ -238,9 +230,6 @@ export default function TareasScreen() {
             }
             ListEmptyComponent={<Text style={styles.empty}>No hay tareas para este día.</Text>}
             renderItem={({ item }) => {
-              if (item._header) {
-                return <Text style={styles.franjaHeader}>{item.label}</Text>;
-              }
               const done = isTaskCompletedOnDate(item, selectedDate);
               const accent =
                 TASK_COLORS[item.color] ||
@@ -248,7 +237,16 @@ export default function TareasScreen() {
               const menuOpen = openMenu === item._id;
               const fg = done ? colors.muted : "#16241d";
               return (
-                <View style={[styles.card, { backgroundColor: done ? colors.cardSoft : accent }]}>
+                <View style={styles.agendaRow}>
+                  {/* Riel de horario a la izquierda (compacto, como en la web) */}
+                  <View style={styles.agendaTime}>
+                    <View style={styles.agendaLine} />
+                    <Text style={styles.agendaTimeLabel} numberOfLines={1}>
+                      {agendaLabel(item.horario)}
+                    </Text>
+                    <View style={styles.agendaDot} />
+                  </View>
+                  <View style={[styles.card, styles.cardFlex, { backgroundColor: done ? colors.cardSoft : accent }]}>
                   <View style={styles.cardTop}>
                     {/* Izquierda: opciones (tres puntitos) */}
                     <TouchableOpacity
@@ -263,7 +261,6 @@ export default function TareasScreen() {
                       <Text style={[styles.cardTitle, done && styles.cardTitleDone]}>{item.meta}</Text>
                       <View style={styles.metaRow}>
                         {item.urgencia ? <Text style={styles.metaChip}>{item.urgencia}</Text> : null}
-                        {item.horario ? <Text style={styles.metaChip}>{item.horario}</Text> : null}
                       </View>
                     </View>
 
@@ -305,6 +302,7 @@ export default function TareasScreen() {
                       </TouchableOpacity>
                     </View>
                   ) : null}
+                  </View>
                 </View>
               );
             }}
@@ -389,17 +387,41 @@ const makeStyles = (colors) => StyleSheet.create({
   },
   error: { color: colors.red, padding: 16 },
   empty: { color: colors.muted, padding: 16, textAlign: "center" },
-  // Encabezado chico de cada franja horaria (Mañana / Tarde / Noche / Sin hora).
-  franjaHeader: {
-    color: colors.muted,
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    marginTop: 4,
-    marginBottom: -2,
-    marginLeft: 2,
+  // Riel de horario a la izquierda de cada tarea (compacto, como en la web).
+  agendaRow: { flexDirection: "row", alignItems: "stretch" },
+  agendaTime: {
+    width: 44,
+    paddingRight: 8,
+    paddingTop: 12,
+    alignItems: "flex-end",
+    position: "relative",
   },
+  agendaLine: {
+    position: "absolute",
+    top: 0,
+    bottom: -10,
+    right: 0,
+    width: 2,
+    backgroundColor: colors.cardBorder,
+  },
+  agendaTimeLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: colors.text,
+    textAlign: "right",
+  },
+  agendaDot: {
+    position: "absolute",
+    top: 15,
+    right: -3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.greenBright,
+    borderWidth: 2,
+    borderColor: colors.bg,
+  },
+  cardFlex: { flex: 1 },
 
   progressCard: {
     flexDirection: "row",
