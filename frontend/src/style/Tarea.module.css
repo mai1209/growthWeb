@@ -175,6 +175,8 @@
 
 /* Card de frase motivacional (estilo dona). */
 .fraseCard {
+  position: relative;
+  overflow: hidden;
   width: 100%;
   display: grid;
   gap: 0.35rem;
@@ -189,7 +191,46 @@
   text-align: center;
 }
 
+/* Íconos de gestión brillantes de fondo (laten). */
+.fraseBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.fraseBgIcon {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  color: rgba(123, 255, 77, 0.16);
+  filter: drop-shadow(0 0 4px rgba(123, 255, 77, 0.3));
+  animation: fraseLatido 3.4s ease-in-out infinite;
+}
+
+@keyframes fraseLatido {
+  0%,
+  100% {
+    transform: scale(1);
+    color: rgba(123, 255, 77, 0.16);
+    filter: drop-shadow(0 0 3px rgba(123, 255, 77, 0.25));
+  }
+  50% {
+    transform: scale(1.3);
+    color: #7bff4d;
+    filter: drop-shadow(0 0 8px rgba(123, 255, 77, 0.85));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fraseBgIcon {
+    animation: none;
+  }
+}
+
 .fraseLabel {
+  position: relative;
+  z-index: 1;
   font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -198,6 +239,8 @@
 }
 
 .fraseTexto {
+  position: relative;
+  z-index: 1;
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.45;

@@ -29,6 +29,10 @@ import {
   FiEdit2,
   FiTrash2,
   FiX,
+  FiTrendingUp,
+  FiTarget,
+  FiCheckSquare,
+  FiFlag,
 } from "react-icons/fi";
 
 
@@ -1077,7 +1081,13 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
           ) : null}
 
           <div className={style.fraseCard}>
-            <span className={style.fraseLabel}>💪 Frase del día</span>
+            <div className={style.fraseBg} aria-hidden="true">
+              <FiTrendingUp className={style.fraseBgIcon} style={{ top: "14%", left: "8%", animationDelay: "0s" }} />
+              <FiTarget className={style.fraseBgIcon} style={{ top: "22%", right: "10%", animationDelay: "1.2s" }} />
+              <FiCheckSquare className={style.fraseBgIcon} style={{ bottom: "16%", left: "10%", animationDelay: "0.6s" }} />
+              <FiFlag className={style.fraseBgIcon} style={{ bottom: "20%", right: "12%", animationDelay: "1.8s" }} />
+            </div>
+            <span className={style.fraseLabel}>Frase del día</span>
             <p className={style.fraseTexto}>{fraseDelDia}</p>
           </div>
         </aside>
