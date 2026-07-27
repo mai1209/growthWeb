@@ -1,17 +1,54 @@
 .page {
+  position: relative;
   display: flex;
   justify-content: center;
   padding: 1.6rem 1.5rem 4rem;
   min-height: 100vh;
   color: var(--color-text);
+  overflow: hidden;
+}
+
+/* Fondo decorativo: íconos de gestión verdes, delineados y con glow. */
+.bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bgIcon {
+  position: absolute;
+  color: rgba(93, 199, 45, 0.16);
+  stroke-width: 1.1;
+  filter: drop-shadow(0 0 10px rgba(93, 199, 45, 0.35));
+}
+
+.card {
+  position: relative;
+  z-index: 1;
 }
 
 .card {
   width: 100%;
-  max-width: 720px;
+  max-width: 980px;
   display: flex;
   flex-direction: column;
   gap: 1.6rem;
+}
+
+/* Explicación a un lado y formas de pago al otro (en desktop). */
+.cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.6rem;
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .cols {
+    grid-template-columns: 1fr;
+  }
 }
 
 .hero {
@@ -113,8 +150,27 @@
 
 .metodoTit {
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.95rem;
   font-weight: 800;
+}
+
+.metodoIcono {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: rgba(93, 199, 45, 0.14);
+  color: var(--color-verde, #5dc72d);
+}
+
+.metodoIcono svg {
+  width: 16px;
+  height: 16px;
 }
 
 .metodoDesc {

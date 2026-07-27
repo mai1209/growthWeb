@@ -1,7 +1,42 @@
 import { useState } from "react";
-import { FiHeart, FiCopy, FiCheck } from "react-icons/fi";
+import {
+  FiHeart,
+  FiCopy,
+  FiCheck,
+  FiDollarSign,
+  FiCreditCard,
+  FiTrendingUp,
+  FiPieChart,
+  FiBarChart2,
+  FiTarget,
+  FiCheckSquare,
+  FiCalendar,
+  FiClock,
+  FiFlag,
+} from "react-icons/fi";
+import { FaBitcoin, FaEthereum } from "react-icons/fa";
 import style from "../style/Apoyar.module.css";
 import { DONACIONES } from "../utils/donaciones";
+
+// Ícono por método (al lado del título).
+const ICONOS = {
+  mp: <FiDollarSign />,
+  eth: <FaEthereum />,
+  btc: <FaBitcoin />,
+  astropay: <FiCreditCard />,
+};
+
+// Íconos de gestión decorativos del fondo (verdes, delineados, con glow).
+const FONDO = [
+  { Icon: FiTrendingUp, style: { top: "6%", left: "5%", width: 74, height: 74 } },
+  { Icon: FiPieChart, style: { top: "14%", right: "7%", width: 58, height: 58 } },
+  { Icon: FiTarget, style: { top: "42%", left: "3%", width: 88, height: 88 } },
+  { Icon: FiBarChart2, style: { top: "58%", right: "5%", width: 82, height: 82 } },
+  { Icon: FiCheckSquare, style: { bottom: "10%", left: "8%", width: 66, height: 66 } },
+  { Icon: FiCalendar, style: { bottom: "14%", right: "10%", width: 60, height: 60 } },
+  { Icon: FiClock, style: { top: "30%", right: "16%", width: 46, height: 46 } },
+  { Icon: FiFlag, style: { bottom: "34%", left: "14%", width: 50, height: 50 } },
+];
 
 function ApoyarPage() {
   const [copiadoId, setCopiadoId] = useState(null);
@@ -21,6 +56,11 @@ function ApoyarPage() {
 
   return (
     <div className={style.page}>
+      <div className={style.bg} aria-hidden="true">
+        {FONDO.map(({ Icon, style: pos }, i) => (
+          <Icon key={i} className={style.bgIcon} style={pos} />
+        ))}
+      </div>
       <div className={style.card}>
         <div className={style.hero}>
           <span className={style.heroIcon}>
@@ -33,6 +73,7 @@ function ApoyarPage() {
           </p>
         </div>
 
+        <div className={style.cols}>
         <section className={style.bloque}>
           <h2 className={style.bloqueTit}>¿Qué es Growth?</h2>
           <p className={style.parrafo}>
@@ -64,7 +105,12 @@ function ApoyarPage() {
             {DONACIONES.map((item) => (
               <div key={item.id} className={style.metodo}>
                 <div className={style.metodoInfo}>
-                  <p className={style.metodoTit}>{item.titulo}</p>
+                  <p className={style.metodoTit}>
+                    <span className={style.metodoIcono}>
+                      {ICONOS[item.icono] || <FiDollarSign />}
+                    </span>
+                    {item.titulo}
+                  </p>
                   <p className={style.metodoDesc}>{item.desc}</p>
                   <code className={style.metodoValor}>{item.valor}</code>
                 </div>
@@ -89,6 +135,7 @@ function ApoyarPage() {
             ))}
           </div>
         </section>
+        </div>
       </div>
     </div>
   );
