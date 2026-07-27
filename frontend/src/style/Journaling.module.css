@@ -963,3 +963,169 @@
   line-height: 1.5;
   white-space: pre-wrap;
 }
+
+/* ===== Botón Métricas + panel de ánimo (caritas) ===== */
+.metricasBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.metricasBtn:hover {
+  border-color: rgba(93, 199, 45, 0.5);
+}
+
+.metricasBtnActivo {
+  background: #5dc72d;
+  border-color: #5dc72d;
+  color: #06210a;
+}
+
+.metricasPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 1.2rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-card, rgba(255, 255, 255, 0.03));
+}
+
+.metricasVacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 220px;
+  text-align: center;
+  color: var(--color-muted);
+  padding: 1.5rem;
+}
+
+.metricasVacio svg {
+  width: 30px;
+  height: 30px;
+  opacity: 0.6;
+}
+
+.metricasHead {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.metricasEmojiBig {
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.metricasTitulo {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.metricasSub {
+  margin: 0.15rem 0 0;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.metricasDist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.metricasDistRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.metricasCara {
+  font-size: 1.15rem;
+  width: 1.6rem;
+  text-align: center;
+}
+
+.metricasBarTrack {
+  flex: 1;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(127, 137, 129, 0.18);
+  overflow: hidden;
+}
+
+.metricasBarFill {
+  height: 100%;
+  border-radius: 999px;
+  min-width: 4px;
+  transition: width 0.3s ease;
+}
+
+.metricasCount {
+  width: 1.5rem;
+  text-align: right;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.metricasSecTit {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.metricasSerie {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.35rem;
+  height: 150px;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+}
+
+.metricasDia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 0 0 auto;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.metricasColTrack {
+  flex: 1;
+  width: 16px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.metricasCol {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  min-height: 6px;
+  transition: height 0.3s ease;
+}
+
+.metricasDiaCara {
+  font-size: 0.95rem;
+}

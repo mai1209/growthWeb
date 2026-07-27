@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  FiBarChart2,
   FiBookOpen,
   FiCalendar,
   FiCheck,
@@ -478,6 +479,85 @@ function Journaling() {
   };
 
   /* ===== Vista libro ===== */
+  // Pantalla de métricas del ánimo: caritas + gráfico, se abre con el botón
+  // "Métricas" del header (reemplaza al libro/calendario en la columna derecha).
+  const renderMetricas = () => {
+    const serie = animoSerie;
+    if (serie.length < 1) {
+      return (
+        <div className={style.metricasVacio}>
+          <FiBarChart2 />
+          <p>Marcá tu ánimo unos días y acá vas a ver cómo venís.</p>
+        </div>
+      );
+    }
+    const LABELS = { 1: "muy bajo", 2: "bajo", 3: "normal", 4: "bien", 5: "muy bien" };
+    const promedio =
+      serie.reduce((acc, e) => acc + Number(e.animo), 0) / serie.length;
+    const prom = Math.max(1, Math.min(5, Math.round(promedio)));
+    const distrib = [5, 4, 3, 2, 1].map((v) => ({
+      v,
+      count: serie.filter((e) => Number(e.animo) === v).length,
+    }));
+    const maxCount = Math.max(1, ...distrib.map((d) => d.count));
+
+    return (
+      <div className={style.metricasPanel}>
+        <div className={style.metricasHead}>
+          <span className={style.metricasEmojiBig}>{emojiDe(prom)}</span>
+          <div>
+            <p className={style.metricasTitulo}>Tu ánimo en el tiempo</p>
+            <p className={style.metricasSub}>
+              {serie.length} {serie.length === 1 ? "día" : "días"} · promedio {LABELS[prom]}
+            </p>
+          </div>
+        </div>
+
+        {/* Cuánto se repite cada carita */}
+        <div className={style.metricasDist}>
+          {distrib.map((d) => (
+            <div key={d.v} className={style.metricasDistRow}>
+              <span className={style.metricasCara}>{emojiDe(d.v)}</span>
+              <div className={style.metricasBarTrack}>
+                <div
+                  className={style.metricasBarFill}
+                  style={{
+                    width: `${(d.count / maxCount) * 100}%`,
+                    background: ANIMO_COLORS[d.v],
+                  }}
+                />
+              </div>
+              <span className={style.metricasCount}>{d.count}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Serie temporal, cada día con su carita */}
+        <p className={style.metricasSecTit}>Últimos días</p>
+        <div className={style.metricasSerie}>
+          {serie.map((e) => (
+            <div
+              key={e.fecha}
+              className={style.metricasDia}
+              title={`${fechaLarga(e.fecha)}: ${emojiDe(e.animo)}`}
+            >
+              <div className={style.metricasColTrack}>
+                <div
+                  className={style.metricasCol}
+                  style={{
+                    height: `${(Number(e.animo) / 5) * 100}%`,
+                    background: ANIMO_COLORS[Number(e.animo)],
+                  }}
+                />
+              </div>
+              <span className={style.metricasDiaCara}>{emojiDe(e.animo)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const renderLibro = () => {
     if (libroIdx < 0) {
       return (
@@ -631,6 +711,16 @@ function Journaling() {
               <FiCalendar /> Calendario
             </button>
           </div>
+
+          <button
+            type="button"
+            className={`${style.metricasBtn} ${vista === "metricas" ? style.metricasBtnActivo : ""}`}
+            onClick={() => setVista(vista === "metricas" ? "libro" : "metricas")}
+            aria-pressed={vista === "metricas"}
+            title="Ver tu ánimo en el tiempo"
+          >
+            <FiBarChart2 /> Métricas
+          </button>
 
           {/* Plantillas de preguntas por nivel (sólo hoy) */}
           {esHoy ? (
@@ -863,35 +953,16 @@ function Journaling() {
           </label>
 
           <div className={style.pieGuardado}>{guardando ? "Guardando…" : ""}</div>
-
-          {/* Ánimo en el tiempo */}
-          {animoSerie.length >= 3 ? (
-            <div className={style.animoChart}>
-              <p className={style.historialTitulo}>Tu ánimo en el tiempo</p>
-              <div className={style.chartBars} role="img" aria-label="Ánimo de los últimos días">
-                {animoSerie.map((e) => (
-                  <div
-                    key={e.fecha}
-                    className={style.chartBar}
-                    style={{
-                      height: `${(Number(e.animo) / 5) * 100}%`,
-                      background: ANIMO_COLORS[Number(e.animo)] || "#5dc72d",
-                    }}
-                    title={`${fechaLarga(e.fecha)}: ${emojiDe(e.animo)}`}
-                  />
-                ))}
-              </div>
-              <div className={style.chartLeyenda}>
-                <span>{fechaLarga(animoSerie[0].fecha)}</span>
-                <span>hoy</span>
-              </div>
-            </div>
-          ) : null}
+          {/* El "Tu ánimo en el tiempo" se movió al botón Métricas del header. */}
         </div>
 
-        {/* Columna derecha: releer (calendario o libro) */}
+        {/* Columna derecha: releer (calendario, libro o métricas de ánimo) */}
         <div className={style.colDer}>
-          {vista === "calendario" ? renderCalendario() : renderLibro()}
+          {vista === "metricas"
+            ? renderMetricas()
+            : vista === "calendario"
+              ? renderCalendario()
+              : renderLibro()}
         </div>
       </div>
 
