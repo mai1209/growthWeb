@@ -9,7 +9,6 @@ import {
   isSameMonth,
   summarizeByType,
 } from "../utils/finance";
-import { MP_ALIAS } from "../utils/donaciones";
 
 const HOME_TABS = [
   { key: "ARS", label: "ARS" },
@@ -477,16 +476,9 @@ function LeftSite({
             <button
               type="button"
               className={style.sideSupportDonate}
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(MP_ALIAS);
-                  alert(`¡Alias de Mercado Pago copiado! (${MP_ALIAS}) 💚`);
-                } catch {
-                  alert(`Alias de Mercado Pago: ${MP_ALIAS}`);
-                }
-              }}
+              onClick={() => navigate("/apoyar")}
             >
-              💚 Donar — copiar alias MP
+              💚 Quiero apoyar
             </button>
           </div>
         </section>
