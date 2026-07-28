@@ -345,7 +345,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
       {loading && <div className={style.spinner}></div>}
 
       {!inModal && (
-        <div className={style.addChartBg} aria-hidden="true">
+        <div className={style.addChartBg} data-tone={mode.tone} aria-hidden="true">
           <svg viewBox="0 0 1200 380" preserveAspectRatio="none" className={style.addChartSvg}>
             <defs>
               <linearGradient id="addChartFill" x1="0" y1="0" x2="0" y2="1">

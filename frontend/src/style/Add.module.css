@@ -1016,28 +1016,53 @@
    Fondo animado: gráfico alcista que se dibuja en loop
    ============================================================ */
 .addChartBg {
-  position: absolute;
+  /* Fija a la ventana: ocupa toda la pantalla detrás del formulario. El nav
+     (z-index alto y fondo opaco) la tapa en su franja; el resto se ve. */
+  position: fixed;
   inset: 0;
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  border-radius: inherit;
+  /* Color del gráfico según el tipo de movimiento (mismos tonos que el form). */
+  --add-chart-color: #3dff7a;
+}
+
+.addChartBg[data-tone="ingreso"] {
+  --add-chart-color: #3dff7a;
+}
+.addChartBg[data-tone="egreso"] {
+  --add-chart-color: #ff8a72;
+}
+.addChartBg[data-tone="ahorro"] {
+  --add-chart-color: #3fe0d0;
+}
+.addChartBg[data-tone="deuda"] {
+  --add-chart-color: #ffd25c;
+}
+
+/* El color del degradé y de la línea siguen la variable, con transición suave. */
+.addChartBg stop {
+  stop-color: var(--add-chart-color);
+  transition: stop-color 0.5s ease;
 }
 
 .addChartSvg {
   position: absolute;
-  left: -5%;
-  bottom: 4%;
-  width: 110%;
-  height: 82%;
+  left: -3%;
+  bottom: 0;
+  width: 106%;
+  height: 72%;
   opacity: 0.5;
-  filter: drop-shadow(0 0 8px rgba(61, 255, 122, 0.45));
+  filter: drop-shadow(0 0 10px var(--add-chart-color));
+  transition: filter 0.5s ease;
   animation: addChartDrift 9s ease-in-out infinite alternate;
 }
 
 .addChartLine {
+  stroke: var(--add-chart-color);
   stroke-dasharray: 1700;
   stroke-dashoffset: 1700;
+  transition: stroke 0.5s ease;
   animation: addChartDraw 5.5s ease-in-out infinite;
 }
 
