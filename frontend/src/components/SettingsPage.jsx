@@ -387,6 +387,18 @@ function SettingsPage() {
     return () => clearTimeout(timer);
   }, [profile.username, editingProfile]);
 
+  // Los avisos son toasts flotantes: se van solos (el éxito antes que el error).
+  useEffect(() => {
+    if (!message) return undefined;
+    const t = setTimeout(() => setMessage(""), 3200);
+    return () => clearTimeout(t);
+  }, [message]);
+  useEffect(() => {
+    if (!error) return undefined;
+    const t = setTimeout(() => setError(""), 5000);
+    return () => clearTimeout(t);
+  }, [error]);
+
   const handleBusinessListChange = (index, field, value) => {
     setProfile((prev) => ({
       ...prev,
@@ -700,110 +712,141 @@ function SettingsPage() {
 
               {/* ===== Formulario de edición (se despliega) ===== */}
               {editingProfile ? (
-                <form className={style.editForm} onSubmit={handleProfileSubmit}>
-                  <label className={style.field}>
-                    <span>Nombre de usuario</span>
-                    <div className={`${style.handleField} ${usernameUi.cls}`}>
-                      <span className={style.handleAt}>@</span>
-                      <input
-                        type="text"
-                        value={profile.username || ""}
-                        onChange={(event) => handleUsernameChange(event.target.value)}
-                        placeholder="tu_usuario"
-                        disabled={profileLoading}
-                        autoCapitalize="none"
-                        autoCorrect="off"
-                        spellCheck={false}
-                      />
-                      {usernameUi.icon ? (
-                        <span className={style.handleStatus}>{usernameUi.icon}</span>
-                      ) : null}
-                    </div>
-                    <small className={style.handleHint}>{usernameUi.hint}</small>
-                  </label>
-
-                  <div className={style.formGrid}>
-                    <label className={style.field}>
-                      <span>Nombre completo</span>
-                      <input
-                        type="text"
-                        value={profile.fullName}
-                        onChange={(event) => handleProfileChange("fullName", event.target.value)}
-                        placeholder="Nombre para mostrar"
-                        disabled={profileLoading}
-                      />
-                    </label>
-
-                    <label className={style.field}>
-                      <span>Email de ingreso</span>
-                      <input type="email" value={profile.email} disabled />
-                    </label>
-
-                    <label className={style.field}>
-                      <span>Teléfono</span>
-                      <input
-                        type="tel"
-                        value={profile.phone}
-                        onChange={(event) => handleProfileChange("phone", event.target.value)}
-                        placeholder="+54 9 ..."
-                        disabled={profileLoading}
-                      />
-                    </label>
-
-                    <label className={style.field}>
-                      <span>Foto de perfil URL</span>
-                      <input
-                        type="url"
-                        value={profile.profilePhotoUrl}
-                        onChange={(event) =>
-                          handleProfileChange("profilePhotoUrl", event.target.value)
-                        }
-                        placeholder="https://..."
-                        disabled={profileLoading}
-                      />
-                    </label>
-
-                    <label className={style.field}>
-                      <span>Banner / portada URL</span>
-                      <input
-                        type="url"
-                        value={profile.bannerUrl || ""}
-                        onChange={(event) => handleProfileChange("bannerUrl", event.target.value)}
-                        placeholder="https://..."
-                        disabled={profileLoading}
-                      />
-                    </label>
-                  </div>
-
-                  <label className={style.field}>
-                    <span>Bio</span>
-                    <textarea
-                      className={style.bioInput}
-                      value={profile.bio || ""}
-                      onChange={(event) =>
-                        handleProfileChange("bio", event.target.value.slice(0, 160))
-                      }
-                      placeholder="Contá algo sobre vos (máx. 160 caracteres)"
-                      rows={3}
-                      disabled={profileLoading}
-                    />
-                    <small className={style.bioCounter}>{(profile.bio || "").length}/160</small>
-                  </label>
-
-                  <button
-                    type="submit"
-                    className={style.saveButton}
-                    disabled={
-                      profileSaving ||
-                      usernameCheck.status === "taken" ||
-                      usernameCheck.status === "invalid" ||
-                      usernameCheck.status === "checking"
-                    }
+                <div
+                  className={style.modalOverlay}
+                  onClick={() => setEditingProfile(false)}
+                  role="presentation"
+                >
+                  <form
+                    className={`${style.modalCard} ${style.editModalCard}`}
+                    onClick={(event) => event.stopPropagation()}
+                    onSubmit={handleProfileSubmit}
                   >
-                    <FiSave />
-                    {profileSaving ? "Guardando..." : "Guardar cambios"}
-                  </button>
-                </form>
+                    {/* Encabezado estilo Twitter: cerrar · título · guardar */}
+                    <div className={style.editModalHead}>
+                      <button
+                        type="button"
+                        className={style.modalClose}
+                        onClick={() => setEditingProfile(false)}
+                        aria-label="Cerrar"
+                      >
+                        <FiX />
+                      </button>
+                      <h3>Editar perfil</h3>
+                      <button
+                        type="submit"
+                        className={style.editModalSave}
+                        disabled={
+                          profileSaving ||
+                          usernameCheck.status === "taken" ||
+                          usernameCheck.status === "invalid" ||
+                          usernameCheck.status === "checking"
+                        }
+                      >
+                        {profileSaving ? "Guardando..." : "Guardar"}
+                      </button>
+                    </div>
+
+                    <div className={style.editModalBody}>
+                      <label className={style.field}>
+                        <span>Nombre de usuario</span>
+                        <div className={`${style.handleField} ${usernameUi.cls}`}>
+                          <span className={style.handleAt}>@</span>
+                          <input
+                            type="text"
+                            value={profile.username || ""}
+                            onChange={(event) => handleUsernameChange(event.target.value)}
+                            placeholder="tu_usuario"
+                            disabled={profileLoading}
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            spellCheck={false}
+                          />
+                          {usernameUi.icon ? (
+                            <span className={style.handleStatus}>{usernameUi.icon}</span>
+                          ) : null}
+                        </div>
+                        <small className={style.handleHint}>{usernameUi.hint}</small>
+                      </label>
+
+                      <div className={style.formGrid}>
+                        <label className={style.field}>
+                          <span>Nombre completo</span>
+                          <input
+                            type="text"
+                            value={profile.fullName}
+                            onChange={(event) =>
+                              handleProfileChange("fullName", event.target.value)
+                            }
+                            placeholder="Nombre para mostrar"
+                            disabled={profileLoading}
+                          />
+                        </label>
+
+                        <label className={style.field}>
+                          <span>Email de ingreso</span>
+                          <input type="email" value={profile.email} disabled />
+                        </label>
+
+                        <label className={style.field}>
+                          <span>Teléfono</span>
+                          <input
+                            type="tel"
+                            value={profile.phone}
+                            onChange={(event) =>
+                              handleProfileChange("phone", event.target.value)
+                            }
+                            placeholder="+54 9 ..."
+                            disabled={profileLoading}
+                          />
+                        </label>
+
+                        <label className={style.field}>
+                          <span>Foto de perfil URL</span>
+                          <input
+                            type="url"
+                            value={profile.profilePhotoUrl}
+                            onChange={(event) =>
+                              handleProfileChange("profilePhotoUrl", event.target.value)
+                            }
+                            placeholder="https://..."
+                            disabled={profileLoading}
+                          />
+                        </label>
+
+                        <label className={style.field}>
+                          <span>Banner / portada URL</span>
+                          <input
+                            type="url"
+                            value={profile.bannerUrl || ""}
+                            onChange={(event) =>
+                              handleProfileChange("bannerUrl", event.target.value)
+                            }
+                            placeholder="https://..."
+                            disabled={profileLoading}
+                          />
+                        </label>
+                      </div>
+
+                      <label className={style.field}>
+                        <span>Bio</span>
+                        <textarea
+                          className={style.bioInput}
+                          value={profile.bio || ""}
+                          onChange={(event) =>
+                            handleProfileChange("bio", event.target.value.slice(0, 160))
+                          }
+                          placeholder="Contá algo sobre vos (máx. 160 caracteres)"
+                          rows={3}
+                          disabled={profileLoading}
+                        />
+                        <small className={style.bioCounter}>
+                          {(profile.bio || "").length}/160
+                        </small>
+                      </label>
+                    </div>
+                  </form>
+                </div>
               ) : null}
             </>
           ) : (
@@ -1302,8 +1345,38 @@ function SettingsPage() {
         </section>
       ) : null}
 
-      {error ? <p className={style.error}>{error}</p> : null}
-      {message ? <p className={style.success}>{message}</p> : null}
+      {message || error ? (
+        <div className={style.toastWrap} role="status" aria-live="polite">
+          {message ? (
+            <div className={`${style.toast} ${style.toastSuccess}`}>
+              <FiCheckCircle />
+              <span>{message}</span>
+              <button
+                type="button"
+                className={style.toastClose}
+                onClick={() => setMessage("")}
+                aria-label="Cerrar aviso"
+              >
+                <FiX />
+              </button>
+            </div>
+          ) : null}
+          {error ? (
+            <div className={`${style.toast} ${style.toastError}`}>
+              <FiAlertCircle />
+              <span>{error}</span>
+              <button
+                type="button"
+                className={style.toastClose}
+                onClick={() => setError("")}
+                aria-label="Cerrar aviso"
+              >
+                <FiX />
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {showNewProfile ? (
         <div

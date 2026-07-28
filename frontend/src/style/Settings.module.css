@@ -1,5 +1,6 @@
 .container {
   display: grid;
+  align-content: start;
   gap: 1.1rem;
   padding: 2rem;
   min-height: calc(100vh - 78px);
@@ -1216,5 +1217,150 @@
 
   .editProfileBtn {
     margin-top: 50px;
+  }
+}
+
+/* ============================================================
+   Popup de edición de perfil (estilo Twitter) + toasts
+   ============================================================ */
+
+.editModalCard {
+  max-width: 560px;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+.editModalHead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--surface-card-strong);
+}
+
+.editModalHead h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--color-text);
+}
+
+.editModalSave {
+  min-height: 36px;
+  padding: 0.45rem 1.25rem;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.editModalSave:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.editModalSave:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.editModalBody {
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem;
+  max-height: calc(88vh - 58px);
+  overflow-y: auto;
+}
+
+/* Toasts flotantes (avisos que se van solos) */
+.toastWrap {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 1200;
+  display: grid;
+  gap: 0.5rem;
+  width: min(92vw, 430px);
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.8rem 0.95rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  font-weight: 600;
+  animation: toastIn 0.25s ease;
+}
+
+.toast span {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.toast svg {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+}
+
+.toastClose {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  opacity: 0.65;
+  cursor: pointer;
+}
+
+.toastClose:hover {
+  opacity: 1;
+}
+
+.toastSuccess {
+  background: var(--color-verde-soft);
+  border-color: var(--accent-border);
+  color: var(--color-text);
+}
+
+.toastSuccess svg {
+  color: var(--accent);
+}
+
+.toastError {
+  background: var(--color-rojo-soft);
+  border-color: rgba(255, 90, 90, 0.4);
+  color: var(--color-text);
+}
+
+.toastError svg {
+  color: var(--color-rojo);
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
