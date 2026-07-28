@@ -242,6 +242,9 @@ export default function MetasScreen() {
   const abrirCrear = () => setForm({ ...FORM_VACIO });
 
   const abrirEditar = (meta) => {
+    // Cerramos el detalle para que el form de edición quede visible (antes
+    // quedaba detrás del detalle y sólo aparecía al volver atrás).
+    setDetalle(null);
     setForm({
       id: meta._id,
       titulo: meta.titulo || "",
