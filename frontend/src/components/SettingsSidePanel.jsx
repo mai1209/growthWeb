@@ -35,7 +35,7 @@ function SettingsSidePanel() {
   const [open, setOpen] = useState(false);
 
   return (
-    <aside className={style.container}>
+    <aside className={`${style.container} ${open ? style.containerOpen : ""}`}>
       <div className={style.panel}>
         <button
           type="button"

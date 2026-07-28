@@ -1,9 +1,11 @@
 .container {
-  width: 288px;
+  /* Colapsado por defecto: rail angosto con sólo el ícono (como el nav vertical). */
+  width: 76px;
   min-height: calc(100vh - 78px);
-  padding: 1.1rem;
+  padding: 0.9rem 0.7rem;
   background: var(--sidebar-background);
   border-right: 1px solid var(--border-color);
+  transition: width var(--transition-base), padding var(--transition-base);
 
   /* Misma escala de radios profesional que la página de Ajustes (8-10px) */
   --radius-xs: 6px;
@@ -29,10 +31,11 @@
 }
 
 .header {
-  padding: 0.6rem 0.75rem;
+  padding: 0.55rem;
   display: flex;
   gap: 0.65rem;
   align-items: center;
+  justify-content: center; /* colapsado: ícono centrado */
   box-shadow: var(--shadow-xs);
   width: 100%;
   text-align: left;
@@ -42,13 +45,34 @@
   transition: border-color var(--transition-fast), background-color var(--transition-fast);
 }
 
-.header:hover {
-  border-color: var(--accent-border);
+/* Colapsado: sólo se ve el ícono; el texto y el chevron se ocultan. */
+.headerText,
+.headerChevron {
+  display: none;
 }
 
-.headerText {
+.containerOpen {
+  width: 288px;
+  padding: 1.1rem;
+}
+
+.containerOpen .header {
+  justify-content: flex-start;
+  padding: 0.6rem 0.75rem;
+}
+
+.containerOpen .headerText {
+  display: block;
   flex: 1;
   min-width: 0;
+}
+
+.containerOpen .headerChevron {
+  display: block;
+}
+
+.header:hover {
+  border-color: var(--accent-border);
 }
 
 .headerChevron {
@@ -168,7 +192,8 @@
 }
 
 @media (max-width: 1000px) {
-  .container {
+  .container,
+  .containerOpen {
     width: 100%;
     min-height: auto;
     padding: 0;
@@ -179,5 +204,16 @@
   .panel {
     position: relative;
     top: 0;
+  }
+
+  /* En mobile no hay rail: el encabezado se ve completo. */
+  .headerText,
+  .headerChevron {
+    display: block;
+  }
+
+  .header {
+    justify-content: flex-start;
+    padding: 0.6rem 0.75rem;
   }
 }
