@@ -1058,7 +1058,8 @@
   animation: addChartDrift 9s ease-in-out infinite alternate;
 }
 
-.addChartLine {
+.addChartLine,
+.addChartLineDown {
   stroke: var(--add-chart-color);
   stroke-dasharray: 1700;
   stroke-dashoffset: 1700;
@@ -1066,9 +1067,31 @@
   animation: addChartDraw 5.5s ease-in-out infinite;
 }
 
-.addChartArea {
+.addChartArea,
+.addChartAreaDown {
   opacity: 0;
   animation: addChartFillFade 5.5s ease-in-out infinite;
+}
+
+/* Por defecto se ve el alcista (sube). El bajista (baja) se oculta. */
+.addChartLineDown,
+.addChartAreaDown {
+  display: none;
+}
+
+/* En egreso y deuda el gráfico baja: mostramos el bajista y ocultamos el alcista. */
+.addChartBg[data-tone="egreso"] .addChartLine,
+.addChartBg[data-tone="egreso"] .addChartArea,
+.addChartBg[data-tone="deuda"] .addChartLine,
+.addChartBg[data-tone="deuda"] .addChartArea {
+  display: none;
+}
+
+.addChartBg[data-tone="egreso"] .addChartLineDown,
+.addChartBg[data-tone="egreso"] .addChartAreaDown,
+.addChartBg[data-tone="deuda"] .addChartLineDown,
+.addChartBg[data-tone="deuda"] .addChartAreaDown {
+  display: block;
 }
 
 @keyframes addChartDraw {

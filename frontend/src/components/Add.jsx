@@ -353,6 +353,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
                 <stop offset="100%" stopColor="#2fe36b" stopOpacity="0" />
               </linearGradient>
             </defs>
+            {/* Alcista: sube (ingreso / ahorro) */}
             <path
               className={style.addChartArea}
               fill="url(#addChartFill)"
@@ -366,6 +367,22 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
               strokeLinecap="round"
               strokeLinejoin="round"
               d="M0,340 L90,320 L180,335 L270,290 L360,305 L450,255 L540,270 L630,215 L720,235 L810,175 L900,195 L990,130 L1080,150 L1200,70"
+            />
+
+            {/* Bajista: baja (egreso / deuda) */}
+            <path
+              className={style.addChartAreaDown}
+              fill="url(#addChartFill)"
+              d="M0,70 L90,90 L180,75 L270,120 L360,105 L450,155 L540,140 L630,195 L720,175 L810,235 L900,215 L990,280 L1080,260 L1200,340 L1200,380 L0,380 Z"
+            />
+            <path
+              className={style.addChartLineDown}
+              fill="none"
+              stroke="#3dff7a"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M0,70 L90,90 L180,75 L270,120 L360,105 L450,155 L540,140 L630,195 L720,175 L810,235 L900,215 L990,280 L1080,260 L1200,340"
             />
           </svg>
         </div>
