@@ -733,19 +733,15 @@ function NotificacionesModal({ visible, onClose, colors, styles }) {
 // Íconos de gestión decorativos del fondo (verdes, delineados, con glow), como
 // en la web. Cada uno late (crece/achica) con su propio ritmo y arranque para
 // dar un efecto aleatorio de "se prenden y apagan".
+// Pocos, chicos y pegados a los bordes (fuera del texto), para que se intuyan
+// de fondo sin tapar nada. Muy tenues.
 const FONDO_DONAR = [
-  { name: "trending-up-outline", pos: { top: "3%", left: "5%" }, size: 30, dur: 3200, delay: 0 },
-  { name: "pie-chart-outline", pos: { top: "10%", right: "6%" }, size: 26, dur: 2800, delay: 400 },
-  { name: "locate-outline", pos: { top: "30%", left: "3%" }, size: 34, dur: 3900, delay: 900 },
-  { name: "bar-chart-outline", pos: { top: "45%", right: "4%" }, size: 30, dur: 3400, delay: 1300 },
-  { name: "checkbox-outline", pos: { bottom: "9%", left: "7%" }, size: 27, dur: 2600, delay: 700 },
-  { name: "calendar-outline", pos: { bottom: "14%", right: "8%" }, size: 26, dur: 4300, delay: 200 },
-  { name: "time-outline", pos: { top: "22%", right: "16%" }, size: 22, dur: 3000, delay: 1600 },
-  { name: "flag-outline", pos: { bottom: "28%", left: "13%" }, size: 24, dur: 3600, delay: 1100 },
-  { name: "cash-outline", pos: { top: "62%", left: "8%" }, size: 24, dur: 3100, delay: 500 },
-  { name: "trending-up-outline", pos: { top: "74%", right: "13%" }, size: 27, dur: 3700, delay: 1800 },
-  { name: "locate-outline", pos: { top: "15%", left: "24%" }, size: 20, dur: 2900, delay: 1400 },
-  { name: "pie-chart-outline", pos: { bottom: "40%", right: "20%" }, size: 22, dur: 3500, delay: 2000 },
+  { name: "trending-up-outline", pos: { top: "1%", left: "2%" }, size: 22, dur: 3200, delay: 0 },
+  { name: "pie-chart-outline", pos: { top: "8%", right: "2%" }, size: 20, dur: 2800, delay: 400 },
+  { name: "locate-outline", pos: { top: "38%", left: "1%" }, size: 24, dur: 3900, delay: 900 },
+  { name: "bar-chart-outline", pos: { top: "52%", right: "1%" }, size: 22, dur: 3400, delay: 1300 },
+  { name: "flag-outline", pos: { bottom: "5%", left: "2%" }, size: 20, dur: 3600, delay: 1100 },
+  { name: "calendar-outline", pos: { bottom: "9%", right: "2%" }, size: 20, dur: 4300, delay: 200 },
 ];
 
 function DonacionesModal({ visible, onClose, colors, styles }) {
@@ -803,13 +799,13 @@ function DonacionesModal({ visible, onClose, colors, styles }) {
               {
                 opacity: pulsos[i].interpolate({
                   inputRange: [0, 1],
-                  outputRange: [0.3, 0.85],
+                  outputRange: [0.07, 0.22],
                 }),
                 transform: [
                   {
                     scale: pulsos[i].interpolate({
                       inputRange: [0, 1],
-                      outputRange: [1, 1.4],
+                      outputRange: [1, 1.18],
                     }),
                   },
                 ],
@@ -1124,9 +1120,9 @@ const makeStyles = (colors) =>
     donarBg: { ...StyleSheet.absoluteFillObject },
     donarBgIcon: { position: "absolute" },
     donarBgGlow: {
-      textShadowColor: "rgba(123,255,77,0.9)",
+      textShadowColor: "rgba(123,255,77,0.6)",
       textShadowOffset: { width: 0, height: 0 },
-      textShadowRadius: 9,
+      textShadowRadius: 5,
     },
     donarIntro: { color: colors.muted, fontSize: 14, lineHeight: 20, marginBottom: 16 },
     donarMetodo: {
