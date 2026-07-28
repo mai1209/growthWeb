@@ -31,6 +31,19 @@ const userSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+    // Portada tipo "banner" (perfil estilo red social). Opcional.
+    bannerUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    // Bio / descripción corta del usuario (para la futura sección de comunidad).
+    bio: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 160,
+    },
     businessProfile: {
       name: {
         type: String,

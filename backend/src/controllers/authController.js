@@ -11,6 +11,12 @@ const RESET_TOKEN_MINUTES = 60;
 
 const normalizeEmail = (value = "") => value.trim().toLowerCase();
 
+// Nombre de usuario estilo @handle: minúsculas, números y guion bajo, 3-20.
+// Único entre usuarios (lo usamos para @menciones en la futura comunidad).
+const HANDLE_REGEX = /^[a-z0-9_]{3,20}$/;
+const normalizeHandle = (value = "") => String(value || "").trim().toLowerCase();
+const isValidHandle = (value = "") => HANDLE_REGEX.test(value);
+
 const buildAppUrl = () => {
   const explicit =
     process.env.FRONTEND_URL ||
@@ -78,6 +84,9 @@ const serializeProfile = (user) => {
     fullName: user.fullName || user.username || "",
     phone: user.phone || "",
     profilePhotoUrl: user.profilePhotoUrl || "",
+    bannerUrl: user.bannerUrl || "",
+    bio: user.bio || "",
+    createdAt: user.createdAt || null,
     businessProfile: {
       name: firstBusiness.name || "",
       industry: firstBusiness.industry || "",
@@ -289,12 +298,61 @@ export const getProfile = async (req, res) => {
   }
 };
 
+// GET /api/auth/username-available?u=handle
+// Valida formato y disponibilidad (excluyendo al propio usuario) para el chequeo
+// en vivo del formulario de perfil.
+export const checkUsername = async (req, res) => {
+  try {
+    const handle = normalizeHandle(req.query.u);
+
+    if (!handle) {
+      return res.status(200).json({ available: false, reason: "empty" });
+    }
+    if (!isValidHandle(handle)) {
+      return res.status(200).json({ available: false, reason: "invalid" });
+    }
+
+    const me = await User.findById(req.userId).select("username");
+    if (me && me.username === handle) {
+      // Es el mismo que ya tenés: cuenta como disponible.
+      return res.status(200).json({ available: true, reason: "self" });
+    }
+
+    const taken = await User.findOne({ username: handle }).select("_id");
+    return res.status(200).json({ available: !taken, reason: taken ? "taken" : "ok" });
+  } catch (err) {
+    console.error("Check username error:", err);
+    return res.status(500).json({ error: "No se pudo verificar el usuario" });
+  }
+};
+
 export const updateProfile = async (req, res) => {
   try {
     const user = await User.findById(req.userId);
 
     if (!user) {
       return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    // Username (@handle): sólo si viene y cambia. Único entre usuarios.
+    if (req.body.username !== undefined) {
+      const nextHandle = normalizeHandle(req.body.username);
+      if (nextHandle !== user.username) {
+        if (!isValidHandle(nextHandle)) {
+          return res.status(400).json({
+            error:
+              "El usuario debe tener entre 3 y 20 caracteres: minúsculas, números o guion bajo.",
+          });
+        }
+        const taken = await User.findOne({
+          username: nextHandle,
+          _id: { $ne: user._id },
+        }).select("_id");
+        if (taken) {
+          return res.status(400).json({ error: "Ese nombre de usuario ya está en uso." });
+        }
+        user.username = nextHandle;
+      }
     }
 
     const fullName = String(req.body.fullName || "").trim();
@@ -313,6 +371,18 @@ export const updateProfile = async (req, res) => {
 
     if (profilePhotoUrl && !/^https?:\/\/.+/i.test(profilePhotoUrl)) {
       return res.status(400).json({ error: "La foto de perfil debe ser una URL válida" });
+    }
+    // Banner y bio: sólo se tocan si vienen en el body, así un update parcial
+    // (ej: crear un negocio) no los pisa con vacío.
+    if (req.body.bannerUrl !== undefined) {
+      const bannerUrl = String(req.body.bannerUrl || "").trim();
+      if (bannerUrl && !/^https?:\/\/.+/i.test(bannerUrl)) {
+        return res.status(400).json({ error: "El banner debe ser una URL válida" });
+      }
+      user.bannerUrl = bannerUrl;
+    }
+    if (req.body.bio !== undefined) {
+      user.bio = String(req.body.bio || "").replace(/\s+$/g, "").slice(0, 160);
     }
     const invalidLogo = businessProfiles.some(
       (business) => business.logoUrl && !/^https?:\/\/.+/i.test(business.logoUrl)
