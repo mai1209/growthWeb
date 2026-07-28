@@ -88,6 +88,12 @@ const userSchema = new mongoose.Schema(
           default: "",
           trim: true,
         },
+        // Portada del negocio (perfil de empresa estilo red social).
+        bannerUrl: {
+          type: String,
+          default: "",
+          trim: true,
+        },
         phone: {
           type: String,
           default: "",

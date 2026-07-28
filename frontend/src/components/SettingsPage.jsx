@@ -2,12 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   FiAlertCircle,
+  FiArrowLeft,
   FiBriefcase,
   FiCalendar,
   FiCheck,
   FiCheckCircle,
   FiChevronDown,
+  FiChevronRight,
   FiExternalLink,
+  FiMapPin,
   FiEye,
   FiEyeOff,
   FiFileText,
@@ -125,6 +128,10 @@ function SettingsPage() {
   const [openBusiness, setOpenBusiness] = useState(() => new Set());
   // Vista del tab Perfil: "personal" (tarjeta estilo red social) o "negocios".
   const [perfilView, setPerfilView] = useState("personal");
+  // Negocio abierto (pantalla interna de ese perfil de empresa) o null = lista.
+  const [selectedBusiness, setSelectedBusiness] = useState(null);
+  // Edición del negocio abierto (popup como el personal).
+  const [editingBusiness, setEditingBusiness] = useState(false);
   // Edición del perfil personal (se despliega el formulario bajo la tarjeta).
   const [editingProfile, setEditingProfile] = useState(false);
   // Chequeo en vivo de disponibilidad del @usuario.
@@ -450,6 +457,20 @@ function SettingsPage() {
     }));
   };
 
+  // Sube el logo o la portada de un negocio desde los archivos (Finder).
+  const handleBusinessImageFile = async (index, field, file, maxW, maxH) => {
+    if (!file) return;
+    if (!file.type?.startsWith("image/")) {
+      setError("Elegí un archivo de imagen.");
+      return;
+    }
+    try {
+      const dataUrl = await fileToDataUrl(file, maxW, maxH);
+      handleBusinessListChange(index, field, dataUrl);
+    } catch {
+      setError("No se pudo procesar la imagen.");
+    }
+  };
 
   const handleNewProfileChange = (field, value) =>
     setNewProfile((prev) => ({ ...prev, [field]: value }));
@@ -547,6 +568,7 @@ function SettingsPage() {
 
       setProfile(response.data.profile);
       setEditingProfile(false);
+      setEditingBusiness(false);
       setUsernameCheck({ status: "idle" });
       window.dispatchEvent(
         new CustomEvent("growth-profile-updated", {
@@ -943,6 +965,261 @@ function SettingsPage() {
                 </div>
               ) : null}
             </>
+          ) : selectedBusiness !== null && businessProfiles[selectedBusiness] ? (
+            /* ===== Pantalla interna del negocio (estilo perfil personal) ===== */
+            <div className={style.businessDetail}>
+              <button
+                type="button"
+                className={style.detailBack}
+                onClick={() => {
+                  setSelectedBusiness(null);
+                  setEditingBusiness(false);
+                }}
+              >
+                <FiArrowLeft />
+                Volver a negocios
+              </button>
+
+              {(() => {
+                const biz = businessProfiles[selectedBusiness] || {};
+                return (
+                  <div className={style.profileCard}>
+                    <div
+                      className={style.profileBanner}
+                      style={
+                        biz.bannerUrl
+                          ? { backgroundImage: `url("${biz.bannerUrl}")` }
+                          : undefined
+                      }
+                    />
+                    <div className={style.profileTopRow}>
+                      <span className={style.profileAvatar}>
+                        {biz.logoUrl ? (
+                          <img src={biz.logoUrl} alt="Logo del negocio" />
+                        ) : (
+                          <FiBriefcase />
+                        )}
+                      </span>
+                      <button
+                        type="button"
+                        className={style.editProfileBtn}
+                        onClick={() => setEditingBusiness(true)}
+                      >
+                        Editar perfil
+                      </button>
+                    </div>
+                    <div className={style.profileIdentity}>
+                      <strong className={style.profileName}>
+                        {biz.name || "Nuevo negocio"}
+                      </strong>
+                      <span className={style.profileHandle}>
+                        {biz.industry || "Sin rubro definido"}
+                      </span>
+                      <div className={style.profileMeta}>
+                        {biz.phone ? (
+                          <span>
+                            <FiPhone />
+                            {biz.phone}
+                          </span>
+                        ) : null}
+                        {biz.address ? (
+                          <span>
+                            <FiMapPin />
+                            {biz.address}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Popup de edición del negocio (mismo formato que el personal) */}
+              {editingBusiness ? (
+                <div
+                  className={style.modalOverlay}
+                  onClick={() => setEditingBusiness(false)}
+                  role="presentation"
+                >
+                  <form
+                    className={`${style.modalCard} ${style.editModalCard}`}
+                    onClick={(event) => event.stopPropagation()}
+                    onSubmit={handleProfileSubmit}
+                  >
+                    <div className={style.editModalHead}>
+                      <button
+                        type="button"
+                        className={style.modalClose}
+                        onClick={() => setEditingBusiness(false)}
+                        aria-label="Cerrar"
+                      >
+                        <FiX />
+                      </button>
+                      <h3>Editar negocio</h3>
+                      <button
+                        type="submit"
+                        className={style.editModalSave}
+                        disabled={profileSaving}
+                      >
+                        {profileSaving ? "Guardando..." : "Guardar"}
+                      </button>
+                    </div>
+
+                    <div className={style.editModalBody}>
+                      <div className={style.formGrid}>
+                        <label className={style.field}>
+                          <span>Nombre del negocio</span>
+                          <input
+                            type="text"
+                            value={businessProfiles[selectedBusiness]?.name || ""}
+                            onChange={(event) =>
+                              handleBusinessListChange(selectedBusiness, "name", event.target.value)
+                            }
+                            placeholder="Ej: Growth Studio"
+                            disabled={profileLoading}
+                          />
+                        </label>
+                        <label className={style.field}>
+                          <span>Rubro</span>
+                          <input
+                            type="text"
+                            value={businessProfiles[selectedBusiness]?.industry || ""}
+                            onChange={(event) =>
+                              handleBusinessListChange(
+                                selectedBusiness,
+                                "industry",
+                                event.target.value
+                              )
+                            }
+                            placeholder="Ej: servicios, comercio"
+                            disabled={profileLoading}
+                          />
+                        </label>
+                        <label className={style.field}>
+                          <span>Teléfono</span>
+                          <input
+                            type="tel"
+                            value={businessProfiles[selectedBusiness]?.phone || ""}
+                            onChange={(event) =>
+                              handleBusinessListChange(selectedBusiness, "phone", event.target.value)
+                            }
+                            placeholder="+54 9 ..."
+                            disabled={profileLoading}
+                          />
+                        </label>
+                        <label className={style.field}>
+                          <span>Dirección</span>
+                          <input
+                            type="text"
+                            value={businessProfiles[selectedBusiness]?.address || ""}
+                            onChange={(event) =>
+                              handleBusinessListChange(
+                                selectedBusiness,
+                                "address",
+                                event.target.value
+                              )
+                            }
+                            placeholder="Local, oficina o ciudad"
+                            disabled={profileLoading}
+                          />
+                        </label>
+                      </div>
+
+                      <label className={style.field}>
+                        <span>Logo del negocio</span>
+                        <div className={style.uploadRow}>
+                          <span className={style.uploadAvatar}>
+                            {businessProfiles[selectedBusiness]?.logoUrl ? (
+                              <img
+                                src={businessProfiles[selectedBusiness].logoUrl}
+                                alt="Logo del negocio"
+                              />
+                            ) : (
+                              <FiBriefcase />
+                            )}
+                          </span>
+                          <div className={style.uploadActions}>
+                            <label className={style.uploadBtn}>
+                              <FiUpload />
+                              Subir logo
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(event) =>
+                                  handleBusinessImageFile(
+                                    selectedBusiness,
+                                    "logoUrl",
+                                    event.target.files?.[0],
+                                    512,
+                                    512
+                                  )
+                                }
+                                hidden
+                              />
+                            </label>
+                            {businessProfiles[selectedBusiness]?.logoUrl ? (
+                              <button
+                                type="button"
+                                className={style.uploadRemove}
+                                onClick={() =>
+                                  handleBusinessListChange(selectedBusiness, "logoUrl", "")
+                                }
+                              >
+                                Quitar
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </label>
+
+                      <label className={style.field}>
+                        <span>Portada</span>
+                        <div
+                          className={style.uploadBanner}
+                          style={
+                            businessProfiles[selectedBusiness]?.bannerUrl
+                              ? {
+                                  backgroundImage: `url("${businessProfiles[selectedBusiness].bannerUrl}")`,
+                                }
+                              : undefined
+                          }
+                        >
+                          <label className={style.uploadBtn}>
+                            <FiUpload />
+                            Subir portada
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(event) =>
+                                handleBusinessImageFile(
+                                  selectedBusiness,
+                                  "bannerUrl",
+                                  event.target.files?.[0],
+                                  1280,
+                                  480
+                                )
+                              }
+                              hidden
+                            />
+                          </label>
+                          {businessProfiles[selectedBusiness]?.bannerUrl ? (
+                            <button
+                              type="button"
+                              className={style.uploadRemove}
+                              onClick={() =>
+                                handleBusinessListChange(selectedBusiness, "bannerUrl", "")
+                              }
+                            >
+                              Quitar
+                            </button>
+                          ) : null}
+                        </div>
+                      </label>
+                    </div>
+                  </form>
+                </div>
+              ) : null}
+            </div>
           ) : (
             <form className={style.businessForm} onSubmit={handleProfileSubmit}>
               {/* ===== Barra: crear perfil ===== */}
@@ -962,28 +1239,19 @@ function SettingsPage() {
                 </button>
               </div>
 
-          {businessProfiles.length ? (
-            <div className={style.businessList}>
-              {businessProfiles.map((business, index) => {
-                const isOpen = openBusiness.has(index);
-                const isActiveProfile =
-                  activeWorkspace === businessWorkspaceId(business, index);
-
-                return (
-                  <div
-                    key={business._id || index}
-                    className={`${style.accordion} ${isOpen ? style.accordionOpen : ""} ${
-                      isActiveProfile ? style.accordionActive : ""
-                    }`}
-                  >
-                    <div className={style.accordionHead}>
+              {businessProfiles.length ? (
+                <div className={style.businessList}>
+                  {businessProfiles.map((business, index) => (
+                    <div key={business._id || index} className={style.businessRow}>
                       <button
                         type="button"
-                        className={style.accordionToggle}
-                        onClick={() => toggleBusiness(index)}
-                        aria-expanded={isOpen}
+                        className={style.businessRowMain}
+                        onClick={() => {
+                          setSelectedBusiness(index);
+                          setEditingBusiness(false);
+                        }}
                       >
-                        <span className={style.accordionAvatar}>
+                        <span className={style.businessRowAvatar}>
                           {business.logoUrl ? (
                             <img src={business.logoUrl} alt="Logo del negocio" />
                           ) : (
@@ -999,7 +1267,7 @@ function SettingsPage() {
                             {business.industry || "Sin rubro definido"}
                           </small>
                         </span>
-                        <FiChevronDown className={style.accordionChevron} />
+                        <FiChevronRight className={style.businessRowArrow} />
                       </button>
                       <button
                         type="button"
@@ -1011,77 +1279,14 @@ function SettingsPage() {
                         <FiTrash2 />
                       </button>
                     </div>
-
-                    <div className={style.accordionBody}>
-                      <div className={style.accordionBodyInner}>
-                        <div className={style.formGrid}>
-                          <label className={style.field}>
-                            <span>Nombre del negocio</span>
-                            <input
-                              type="text"
-                              value={business.name || ""}
-                              onChange={(event) => handleBusinessListChange(index, "name", event.target.value)}
-                              placeholder="Ej: Growth Studio"
-                              disabled={profileLoading}
-                            />
-                          </label>
-
-                          <label className={style.field}>
-                            <span>Rubro</span>
-                            <input
-                              type="text"
-                              value={business.industry || ""}
-                              onChange={(event) => handleBusinessListChange(index, "industry", event.target.value)}
-                              placeholder="Ej: Indumentaria, servicios, comercio"
-                              disabled={profileLoading}
-                            />
-                          </label>
-
-                          <label className={style.field}>
-                            <span>Teléfono del negocio</span>
-                            <input
-                              type="tel"
-                              value={business.phone || ""}
-                              onChange={(event) => handleBusinessListChange(index, "phone", event.target.value)}
-                              placeholder="+54 9 ..."
-                              disabled={profileLoading}
-                            />
-                          </label>
-
-                          <label className={style.field}>
-                            <span>Logo URL</span>
-                            <input
-                              type="url"
-                              value={business.logoUrl || ""}
-                              onChange={(event) => handleBusinessListChange(index, "logoUrl", event.target.value)}
-                              placeholder="https://..."
-                              disabled={profileLoading}
-                            />
-                          </label>
-
-                          <label className={style.field}>
-                            <span>Dirección</span>
-                            <input
-                              type="text"
-                              value={business.address || ""}
-                              onChange={(event) => handleBusinessListChange(index, "address", event.target.value)}
-                              placeholder="Local, oficina o ciudad"
-                              disabled={profileLoading}
-                            />
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className={style.emptyBusiness}>
-              <FiBriefcase />
-              <p>Todavía no agregaste negocios.</p>
-            </div>
-          )}
+                  ))}
+                </div>
+              ) : (
+                <div className={style.emptyBusiness}>
+                  <FiBriefcase />
+                  <p>Todavía no agregaste negocios.</p>
+                </div>
+              )}
 
               <button type="submit" className={style.saveButton} disabled={profileSaving}>
                 <FiSave />

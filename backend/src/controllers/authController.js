@@ -56,6 +56,7 @@ const normalizeBusinessProfile = (business = {}) => {
     name: String(business.name || "").trim(),
     industry: String(business.industry || "").trim(),
     logoUrl: String(business.logoUrl || "").trim(),
+    bannerUrl: String(business.bannerUrl || "").trim(),
     phone: String(business.phone || "").trim(),
     address: String(business.address || "").trim(),
   };
@@ -98,6 +99,7 @@ const serializeProfile = (user) => {
       name: firstBusiness.name || "",
       industry: firstBusiness.industry || "",
       logoUrl: firstBusiness.logoUrl || "",
+      bannerUrl: firstBusiness.bannerUrl || "",
       phone: firstBusiness.phone || "",
       address: firstBusiness.address || "",
     },
@@ -398,10 +400,24 @@ export const updateProfile = async (req, res) => {
       user.bio = String(req.body.bio || "").replace(/\s+$/g, "").slice(0, 160);
     }
     const invalidLogo = businessProfiles.some(
-      (business) => business.logoUrl && !/^https?:\/\/.+/i.test(business.logoUrl)
+      (business) => business.logoUrl && !isValidImageRef(business.logoUrl)
     );
     if (invalidLogo) {
-      return res.status(400).json({ error: "Los logos de negocio deben ser URLs válidas" });
+      return res.status(400).json({ error: "El logo de un negocio no es válido" });
+    }
+    const invalidBanner = businessProfiles.some(
+      (business) => business.bannerUrl && !isValidImageRef(business.bannerUrl)
+    );
+    if (invalidBanner) {
+      return res.status(400).json({ error: "La portada de un negocio no es válida" });
+    }
+    const imageTooBig = businessProfiles.some(
+      (business) =>
+        (business.logoUrl && business.logoUrl.length > MAX_IMAGE_DATA_URL) ||
+        (business.bannerUrl && business.bannerUrl.length > MAX_IMAGE_DATA_URL)
+    );
+    if (imageTooBig) {
+      return res.status(400).json({ error: "Una imagen de negocio es demasiado grande" });
     }
 
     user.fullName = fullName;
