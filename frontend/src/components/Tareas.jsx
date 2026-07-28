@@ -1074,9 +1074,8 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
           {comparativaMes.total > 0 || comparativaMes.totalAnt > 0 ? (
             <p className={style.progresoComparativa}>
               Este mes cumpliste el{" "}
-              <strong>{comparativaMes.actual}%</strong> de tus tareas ·{" "}
-              {comparativaMes.diff >= 0 ? "▲" : "▼"} {Math.abs(comparativaMes.diff)}{" "}
-              pts vs. el mes pasado ({comparativaMes.anterior}%)
+              <strong>{comparativaMes.actual}%</strong> de tus tareas · el mes
+              pasado fue <strong>{comparativaMes.anterior}%</strong>
             </p>
           ) : null}
 

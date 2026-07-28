@@ -296,8 +296,8 @@ export default function TareasScreen() {
 
                 {comparativaMes.total > 0 || comparativaMes.totalAnt > 0 ? (
                   <Text style={styles.comparativa}>
-                    Este mes cumpliste el {comparativaMes.actual}% de tus tareas ·{" "}
-                    {comparativaMes.diff >= 0 ? "▲" : "▼"} {Math.abs(comparativaMes.diff)} pts vs. el mes pasado ({comparativaMes.anterior}%)
+                    Este mes cumpliste el {comparativaMes.actual}% de tus tareas ·
+                    el mes pasado fue {comparativaMes.anterior}%
                   </Text>
                 ) : null}
 
