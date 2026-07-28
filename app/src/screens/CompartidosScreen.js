@@ -180,7 +180,7 @@ export default function CompartidosScreen() {
             </View>
 
             <ScrollView
-              contentContainerStyle={{ padding: 16, paddingTop: 2, paddingBottom: 100 }}
+              contentContainerStyle={{ padding: 16, paddingTop: 14, paddingBottom: 100 }}
               refreshControl={
                 <RefreshControl refreshing={false} onRefresh={refreshDetail} tintColor={colors.green} />
               }
