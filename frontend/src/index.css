@@ -107,9 +107,11 @@ body[data-theme="light"] {
 html,
 body {
   /* Ninguna pantalla debe scrollear en horizontal: si algo se pasa de ancho,
-     se recorta y los contenedores internos (pestañas, carpetas) scrollean solos. */
+     se recorta y los contenedores internos (pestañas, carpetas) scrollean solos.
+     Usamos `clip` en vez de `hidden` para no crear un contenedor de scroll
+     (hidden rompía el position:sticky del nav lateral). */
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
