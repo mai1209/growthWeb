@@ -407,6 +407,17 @@ export default function FiltrosScreen() {
                   </Text>
                 </View>
                 <View style={styles.monthStat}>
+                  <Text style={styles.monthStatLabel}>Deuda</Text>
+                  <Text
+                    style={[
+                      styles.monthStatValue,
+                      row.summary.deudaPendiente > 0 && { color: colors.red },
+                    ]}
+                  >
+                    {formatMoney(row.summary.deudaPendiente, currency)}
+                  </Text>
+                </View>
+                <View style={styles.monthStat}>
                   <Text style={styles.monthStatLabel}>Balance</Text>
                   <Text
                     style={[

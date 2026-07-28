@@ -777,6 +777,12 @@ function MonthlyFilters({
                         <strong>{formatMoney(row.summary.ahorro, currentCurrency)}</strong>
                       </div>
                       <div className={style.monthStat}>
+                        <small>Deuda</small>
+                        <strong className={row.summary.deudaPendiente > 0 ? style.statNeg : ""}>
+                          {formatMoney(row.summary.deudaPendiente, currentCurrency)}
+                        </strong>
+                      </div>
+                      <div className={style.monthStat}>
                         <small>Balance</small>
                         <strong className={row.summary.total >= 0 ? style.statPos : style.statNeg}>
                           {formatMoney(row.summary.total, currentCurrency)}
