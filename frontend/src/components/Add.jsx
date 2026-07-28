@@ -344,6 +344,33 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
     <div className={`${style.container} ${!only && !inModal ? style.containerPage : ""}`}>
       {loading && <div className={style.spinner}></div>}
 
+      {!inModal && (
+        <div className={style.addChartBg} aria-hidden="true">
+          <svg viewBox="0 0 1200 380" preserveAspectRatio="none" className={style.addChartSvg}>
+            <defs>
+              <linearGradient id="addChartFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#2fe36b" stopOpacity="0.28" />
+                <stop offset="100%" stopColor="#2fe36b" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path
+              className={style.addChartArea}
+              fill="url(#addChartFill)"
+              d="M0,340 L90,320 L180,335 L270,290 L360,305 L450,255 L540,270 L630,215 L720,235 L810,175 L900,195 L990,130 L1080,150 L1200,70 L1200,380 L0,380 Z"
+            />
+            <path
+              className={style.addChartLine}
+              fill="none"
+              stroke="#3dff7a"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M0,340 L90,320 L180,335 L270,290 L360,305 L450,255 L540,270 L630,215 L720,235 L810,175 L900,195 L990,130 L1080,150 L1200,70"
+            />
+          </svg>
+        </div>
+      )}
+
       {isEditing && (
         <div className={style.editTopBar}>
           <button

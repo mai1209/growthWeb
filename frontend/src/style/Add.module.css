@@ -1011,3 +1011,107 @@
   font-size: 0.95rem;
   line-height: 1;
 }
+
+/* ============================================================
+   Fondo animado: gráfico alcista que se dibuja en loop
+   ============================================================ */
+.addChartBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.addChartSvg {
+  position: absolute;
+  left: -5%;
+  bottom: 4%;
+  width: 110%;
+  height: 82%;
+  opacity: 0.5;
+  filter: drop-shadow(0 0 8px rgba(61, 255, 122, 0.45));
+  animation: addChartDrift 9s ease-in-out infinite alternate;
+}
+
+.addChartLine {
+  stroke-dasharray: 1700;
+  stroke-dashoffset: 1700;
+  animation: addChartDraw 5.5s ease-in-out infinite;
+}
+
+.addChartArea {
+  opacity: 0;
+  animation: addChartFillFade 5.5s ease-in-out infinite;
+}
+
+@keyframes addChartDraw {
+  0% {
+    stroke-dashoffset: 1700;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  55% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  82% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes addChartFillFade {
+  0%,
+  12% {
+    opacity: 0;
+  }
+  55% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes addChartDrift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-3%);
+  }
+}
+
+/* El contenido va por encima del fondo animado. */
+.container > .closePanelRow,
+.container > .editTopBar,
+.container > .modeSelector,
+.container > .formCard {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .addChartSvg {
+    animation: none;
+  }
+  .addChartLine {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .addChartArea {
+    animation: none;
+    opacity: 0.45;
+  }
+}
