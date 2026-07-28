@@ -17,6 +17,13 @@ const HANDLE_REGEX = /^[a-z0-9_]{3,20}$/;
 const normalizeHandle = (value = "") => String(value || "").trim().toLowerCase();
 const isValidHandle = (value = "") => HANDLE_REGEX.test(value);
 
+// La foto/portada puede venir como URL http(s) o como data URL (base64) cuando
+// se sube un archivo local. Limitamos el tamaño para no inflar el documento.
+const MAX_IMAGE_DATA_URL = 4_500_000; // ~4.5MB de string base64
+const isValidImageRef = (value = "") =>
+  /^https?:\/\/.+/i.test(value) ||
+  /^data:image\/(png|jpe?g|webp|gif);base64,/i.test(value);
+
 const buildAppUrl = () => {
   const explicit =
     process.env.FRONTEND_URL ||
@@ -369,15 +376,21 @@ export const updateProfile = async (req, res) => {
         business.name || business.industry || business.logoUrl || business.phone || business.address
       );
 
-    if (profilePhotoUrl && !/^https?:\/\/.+/i.test(profilePhotoUrl)) {
-      return res.status(400).json({ error: "La foto de perfil debe ser una URL válida" });
+    if (profilePhotoUrl && !isValidImageRef(profilePhotoUrl)) {
+      return res.status(400).json({ error: "La foto de perfil no es válida" });
+    }
+    if (profilePhotoUrl.length > MAX_IMAGE_DATA_URL) {
+      return res.status(400).json({ error: "La foto de perfil es demasiado grande" });
     }
     // Banner y bio: sólo se tocan si vienen en el body, así un update parcial
     // (ej: crear un negocio) no los pisa con vacío.
     if (req.body.bannerUrl !== undefined) {
       const bannerUrl = String(req.body.bannerUrl || "").trim();
-      if (bannerUrl && !/^https?:\/\/.+/i.test(bannerUrl)) {
-        return res.status(400).json({ error: "El banner debe ser una URL válida" });
+      if (bannerUrl && !isValidImageRef(bannerUrl)) {
+        return res.status(400).json({ error: "La portada no es válida" });
+      }
+      if (bannerUrl.length > MAX_IMAGE_DATA_URL) {
+        return res.status(400).json({ error: "La portada es demasiado grande" });
       }
       user.bannerUrl = bannerUrl;
     }

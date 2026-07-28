@@ -89,8 +89,10 @@ app.use(
 );
 
 // Parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Límite alto porque el perfil puede mandar la foto/portada como data URL
+// (base64) cuando se sube un archivo local en vez de una URL.
+app.use(express.json({ limit: "6mb" }));
+app.use(express.urlencoded({ extended: true, limit: "6mb" }));
 app.use(cookieParser());
 
 // Conexión a DB lazy para serverless

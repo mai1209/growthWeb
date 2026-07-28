@@ -21,6 +21,7 @@ import {
   FiRefreshCcw,
   FiSave,
   FiTrash2,
+  FiUpload,
   FiUser,
   FiX,
 } from "react-icons/fi";
@@ -60,6 +61,31 @@ const getInitials = (profile) => {
     .join("")
     .toUpperCase();
 };
+
+// Lee un archivo de imagen local y devuelve un data URL redimensionado (manteniendo
+// proporción) para no guardar imágenes gigantes en la base. Sale como JPEG.
+const fileToDataUrl = (file, maxW, maxH) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("No se pudo leer el archivo"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Archivo de imagen inválido"));
+      img.onload = () => {
+        const ratio = Math.min(1, maxW / img.width, maxH / img.height);
+        const width = Math.max(1, Math.round(img.width * ratio));
+        const height = Math.max(1, Math.round(img.height * ratio));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", 0.85));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
 
 function SettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -356,6 +382,22 @@ function SettingsPage() {
   const handleUsernameChange = (value) => {
     const clean = value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20);
     setProfile((prev) => ({ ...prev, username: clean }));
+  };
+
+  // Sube una imagen desde los archivos (Finder). La convertimos a data URL
+  // redimensionada y la guardamos en el campo correspondiente.
+  const handleImageFile = async (field, file, maxW, maxH) => {
+    if (!file) return;
+    if (!file.type?.startsWith("image/")) {
+      setError("Elegí un archivo de imagen.");
+      return;
+    }
+    try {
+      const dataUrl = await fileToDataUrl(file, maxW, maxH);
+      setProfile((prev) => ({ ...prev, [field]: dataUrl }));
+    } catch {
+      setError("No se pudo procesar la imagen.");
+    }
   };
 
   // Chequeo en vivo de disponibilidad del @usuario (con debounce), sólo mientras
@@ -801,32 +843,84 @@ function SettingsPage() {
                           />
                         </label>
 
-                        <label className={style.field}>
-                          <span>Foto de perfil URL</span>
-                          <input
-                            type="url"
-                            value={profile.profilePhotoUrl}
-                            onChange={(event) =>
-                              handleProfileChange("profilePhotoUrl", event.target.value)
-                            }
-                            placeholder="https://..."
-                            disabled={profileLoading}
-                          />
-                        </label>
-
-                        <label className={style.field}>
-                          <span>Banner / portada URL</span>
-                          <input
-                            type="url"
-                            value={profile.bannerUrl || ""}
-                            onChange={(event) =>
-                              handleProfileChange("bannerUrl", event.target.value)
-                            }
-                            placeholder="https://..."
-                            disabled={profileLoading}
-                          />
-                        </label>
                       </div>
+
+                      {/* Foto de perfil: se sube desde los archivos (Finder) */}
+                      <label className={style.field}>
+                        <span>Foto de perfil</span>
+                        <div className={style.uploadRow}>
+                          <span className={style.uploadAvatar}>
+                            {profile.profilePhotoUrl ? (
+                              <img src={profile.profilePhotoUrl} alt="Foto de perfil" />
+                            ) : (
+                              <FiUser />
+                            )}
+                          </span>
+                          <div className={style.uploadActions}>
+                            <label className={style.uploadBtn}>
+                              <FiUpload />
+                              Subir foto
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(event) =>
+                                  handleImageFile(
+                                    "profilePhotoUrl",
+                                    event.target.files?.[0],
+                                    512,
+                                    512
+                                  )
+                                }
+                                hidden
+                              />
+                            </label>
+                            {profile.profilePhotoUrl ? (
+                              <button
+                                type="button"
+                                className={style.uploadRemove}
+                                onClick={() => handleProfileChange("profilePhotoUrl", "")}
+                              >
+                                Quitar
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </label>
+
+                      {/* Portada / banner: también desde los archivos */}
+                      <label className={style.field}>
+                        <span>Portada</span>
+                        <div
+                          className={style.uploadBanner}
+                          style={
+                            profile.bannerUrl
+                              ? { backgroundImage: `url("${profile.bannerUrl}")` }
+                              : undefined
+                          }
+                        >
+                          <label className={style.uploadBtn}>
+                            <FiUpload />
+                            Subir portada
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(event) =>
+                                handleImageFile("bannerUrl", event.target.files?.[0], 1280, 480)
+                              }
+                              hidden
+                            />
+                          </label>
+                          {profile.bannerUrl ? (
+                            <button
+                              type="button"
+                              className={style.uploadRemove}
+                              onClick={() => handleProfileChange("bannerUrl", "")}
+                            >
+                              Quitar
+                            </button>
+                          ) : null}
+                        </div>
+                      </label>
 
                       <label className={style.field}>
                         <span>Bio</span>

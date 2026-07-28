@@ -1364,3 +1364,103 @@
     transform: translateY(0);
   }
 }
+
+/* ============================================================
+   Subida de foto/portada desde archivos (Finder)
+   ============================================================ */
+.uploadRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.uploadAvatar {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-surface);
+  color: var(--accent);
+}
+
+.uploadAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.uploadAvatar svg {
+  width: 26px;
+  height: 26px;
+}
+
+.uploadActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.uploadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 40px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-md);
+  background: var(--accent-surface);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.uploadBtn:hover {
+  background: var(--color-verde-soft);
+  transform: translateY(-1px);
+}
+
+.uploadRemove {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.uploadRemove:hover {
+  color: var(--color-rojo);
+}
+
+.uploadBanner {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  min-height: 116px;
+  padding: 0.8rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background-color: var(--accent-surface);
+  background-image: linear-gradient(120deg, var(--accent) 0%, rgba(0, 0, 0, 0.35) 120%);
+  background-size: cover;
+  background-position: center;
+}
+
+.uploadBanner .uploadBtn {
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.uploadBanner .uploadRemove {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
