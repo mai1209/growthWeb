@@ -14,6 +14,7 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -729,8 +730,47 @@ function NotificacionesModal({ visible, onClose, colors, styles }) {
 }
 
 /* ---------- Apoyar Growth (donaciones) ---------- */
+// Íconos de gestión decorativos del fondo (verdes, delineados, con glow), como
+// en la web. Cada uno late (crece/achica) con su propio ritmo y arranque para
+// dar un efecto aleatorio de "se prenden y apagan".
+const FONDO_DONAR = [
+  { name: "trending-up-outline", pos: { top: "3%", left: "5%" }, size: 30, dur: 3200, delay: 0 },
+  { name: "pie-chart-outline", pos: { top: "10%", right: "6%" }, size: 26, dur: 2800, delay: 400 },
+  { name: "locate-outline", pos: { top: "30%", left: "3%" }, size: 34, dur: 3900, delay: 900 },
+  { name: "bar-chart-outline", pos: { top: "45%", right: "4%" }, size: 30, dur: 3400, delay: 1300 },
+  { name: "checkbox-outline", pos: { bottom: "9%", left: "7%" }, size: 27, dur: 2600, delay: 700 },
+  { name: "calendar-outline", pos: { bottom: "14%", right: "8%" }, size: 26, dur: 4300, delay: 200 },
+  { name: "time-outline", pos: { top: "22%", right: "16%" }, size: 22, dur: 3000, delay: 1600 },
+  { name: "flag-outline", pos: { bottom: "28%", left: "13%" }, size: 24, dur: 3600, delay: 1100 },
+  { name: "cash-outline", pos: { top: "62%", left: "8%" }, size: 24, dur: 3100, delay: 500 },
+  { name: "trending-up-outline", pos: { top: "74%", right: "13%" }, size: 27, dur: 3700, delay: 1800 },
+  { name: "locate-outline", pos: { top: "15%", left: "24%" }, size: 20, dur: 2900, delay: 1400 },
+  { name: "pie-chart-outline", pos: { bottom: "40%", right: "20%" }, size: 22, dur: 3500, delay: 2000 },
+];
+
 function DonacionesModal({ visible, onClose, colors, styles }) {
   const [copiadoId, setCopiadoId] = useState(null);
+
+  // Un valor animado por ícono. Se disparan con un pequeño desfasaje para que
+  // no laten todos al mismo tiempo (efecto aleatorio como en la web).
+  const pulsos = React.useRef(FONDO_DONAR.map(() => new Animated.Value(0))).current;
+  useEffect(() => {
+    const timers = [];
+    const loops = FONDO_DONAR.map((f, i) => {
+      const loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulsos[i], { toValue: 1, duration: f.dur, useNativeDriver: true }),
+          Animated.timing(pulsos[i], { toValue: 0, duration: f.dur, useNativeDriver: true }),
+        ])
+      );
+      timers.push(setTimeout(() => loop.start(), f.delay));
+      return loop;
+    });
+    return () => {
+      timers.forEach(clearTimeout);
+      loops.forEach((l) => l.stop());
+    };
+  }, [pulsos]);
 
   const copiar = async (item) => {
     try {
@@ -753,6 +793,34 @@ function DonacionesModal({ visible, onClose, colors, styles }) {
       colors={colors}
       styles={styles}
     >
+      <View style={styles.donarBg} pointerEvents="none">
+        {FONDO_DONAR.map((f, i) => (
+          <Animated.View
+            key={i}
+            style={[
+              styles.donarBgIcon,
+              f.pos,
+              {
+                opacity: pulsos[i].interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.3, 0.85],
+                }),
+                transform: [
+                  {
+                    scale: pulsos[i].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 1.4],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <Ionicons name={f.name} size={f.size} color="#7bff4d" style={styles.donarBgGlow} />
+          </Animated.View>
+        ))}
+      </View>
+
       <Text style={styles.donarIntro}>
         Growth es y va a seguir siendo gratis. Si te suma, un aporte ayuda a
         mantenerla y mejorarla. Copiá el dato y transferí por donde te quede
@@ -1052,6 +1120,14 @@ const makeStyles = (colors) =>
     notifNota: { color: colors.muted, fontSize: 12, marginTop: 16, fontStyle: "italic" },
 
     // Apoyar Growth (donaciones)
+    // Capa decorativa detrás de las tarjetas de donación (íconos con glow).
+    donarBg: { ...StyleSheet.absoluteFillObject },
+    donarBgIcon: { position: "absolute" },
+    donarBgGlow: {
+      textShadowColor: "rgba(123,255,77,0.9)",
+      textShadowOffset: { width: 0, height: 0 },
+      textShadowRadius: 9,
+    },
     donarIntro: { color: colors.muted, fontSize: 14, lineHeight: 20, marginBottom: 16 },
     donarMetodo: {
       padding: 14,
