@@ -289,7 +289,7 @@
   max-width: 420px;
   max-height: 88vh;
   overflow-y: auto;
-  border-radius: var(--radius-xl);
+  border-radius: 22px;
   border: 1px solid var(--border-color);
   background: var(--surface-card-strong, var(--surface-card));
   box-shadow: var(--shadow-soft);
