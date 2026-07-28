@@ -960,7 +960,13 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-2xl);
   overflow: hidden;
-  background: var(--surface-card);
+  /* Look "glass": fondo más sólido/oscuro + blur, para que el contenido se lea
+     bien y la tarjeta se despegue del fondo. Con fallback si no hay color-mix. */
+  background: var(--surface-card-strong);
+  background: color-mix(in srgb, var(--surface-card-strong) 86%, transparent);
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  box-shadow: var(--shadow-md);
 }
 
 .profileBanner {
