@@ -176,6 +176,7 @@ export const authService = {
   changePassword: (data) => api.post("/api/auth/change-password", data),
   getProfile: () => api.get("/api/auth/profile"),
   updateProfile: (data) => api.put("/api/auth/profile", data),
+  checkUsername: (u) => api.get("/api/auth/username-available", { params: { u } }),
 };
 
 export default api;

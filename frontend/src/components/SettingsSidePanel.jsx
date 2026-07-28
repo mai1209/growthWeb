@@ -1,4 +1,5 @@
-import { FiFileText, FiKey, FiLink, FiLock, FiUser } from "react-icons/fi";
+import { useState } from "react";
+import { FiChevronDown, FiFileText, FiKey, FiLink, FiLock, FiUser } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 import style from "../style/SettingsSidePanel.module.css";
 
@@ -6,7 +7,7 @@ const OPTIONS = [
   {
     to: "/ajustes?tab=perfil",
     label: "Perfil",
-    description: "Nombre, foto, email y teléfono.",
+    description: "Usuario, bio, foto y datos de cuenta.",
     icon: FiUser,
   },
   {
@@ -30,20 +31,29 @@ const OPTIONS = [
 ];
 
 function SettingsSidePanel() {
+  // Arranca colapsado para ahorrar espacio: se abre al tocar el encabezado.
+  const [open, setOpen] = useState(false);
+
   return (
     <aside className={style.container}>
       <div className={style.panel}>
-        <section className={style.header}>
+        <button
+          type="button"
+          className={`${style.header} ${open ? style.headerOpen : ""}`}
+          onClick={() => setOpen((prev) => !prev)}
+          aria-expanded={open}
+        >
           <span className={style.iconWrap}>
             <FiKey />
           </span>
-          <div>
+          <div className={style.headerText}>
             <p className={style.kicker}>Ajustes</p>
             <h2>Opciones de cuenta</h2>
           </div>
-        </section>
+          <FiChevronDown className={style.headerChevron} />
+        </button>
 
-        <nav className={style.optionList}>
+        <nav className={`${style.optionList} ${open ? style.optionListOpen : ""}`}>
           {OPTIONS.map((option) => {
             const Icon = option.icon;
 

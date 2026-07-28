@@ -34,6 +34,52 @@
   gap: 0.9rem;
   align-items: center;
   box-shadow: var(--shadow-xs);
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.header:hover {
+  border-color: var(--accent-border);
+}
+
+.headerText {
+  flex: 1;
+  min-width: 0;
+}
+
+.headerChevron {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  color: var(--color-muted);
+  transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.headerOpen {
+  border-color: var(--accent-border);
+  background: var(--accent-surface);
+}
+
+.headerOpen .headerChevron {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+
+/* La lista arranca colapsada (0 alto) y se despliega al abrir el encabezado. */
+.optionList {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height var(--transition-base), opacity var(--transition-base);
+}
+
+.optionListOpen {
+  max-height: 720px;
+  opacity: 1;
 }
 
 .iconWrap {

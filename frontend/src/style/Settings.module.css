@@ -910,3 +910,311 @@
   max-width: 34ch;
   line-height: 1.5;
 }
+
+/* ============================================================
+   Perfil estilo red social (tarjeta + toggle + edición)
+   ============================================================ */
+
+/* Toggle Personal / Negocios */
+.viewToggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-pill);
+  background: var(--surface-input);
+}
+
+.viewToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.95rem;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.viewToggleBtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.viewToggleActive {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+/* Tarjeta de perfil */
+.profileCard {
+  margin-top: 1.1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  background: var(--surface-card);
+}
+
+.profileBanner {
+  height: 132px;
+  background-color: var(--accent-surface);
+  background-image: linear-gradient(120deg, var(--accent) 0%, rgba(0, 0, 0, 0.35) 120%);
+  background-size: cover;
+  background-position: center;
+}
+
+.profileTopRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0 1.1rem;
+  margin-top: -46px;
+}
+
+.profileAvatar {
+  width: 92px;
+  height: 92px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 4px solid var(--panel-background);
+  background: var(--accent-surface);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.profileAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profileAvatar span {
+  color: var(--accent);
+  font-size: 1.7rem;
+  font-weight: 800;
+}
+
+.editProfileBtn {
+  margin-top: 54px;
+  min-height: 38px;
+  padding: 0.45rem 1.05rem;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.editProfileBtn:hover {
+  background: var(--accent-surface);
+  transform: translateY(-1px);
+}
+
+.profileIdentity {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.7rem 1.2rem 1.3rem;
+}
+
+.profileName {
+  font-size: 1.32rem;
+  font-weight: 800;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
+
+.profileHandle {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+}
+
+.profileBio {
+  margin: 0.45rem 0 0.1rem;
+  color: var(--color-text);
+  line-height: 1.55;
+}
+
+.profileBioEmpty {
+  margin: 0.45rem 0 0.1rem;
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+.profileMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+  margin-top: 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+}
+
+.profileMeta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.profileMeta svg {
+  width: 15px;
+  height: 15px;
+  color: var(--accent);
+}
+
+.profileStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.3rem;
+  margin-top: 0.7rem;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.profileStats strong {
+  color: var(--color-text);
+  font-weight: 800;
+  margin-right: 0.25rem;
+}
+
+/* Formularios (edición personal / negocios) */
+.editForm {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.1rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.businessForm {
+  display: grid;
+  gap: 1.1rem;
+  margin-top: 1.1rem;
+}
+
+.businessBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Campo @usuario */
+.handleField {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0 0.7rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-input);
+  transition: border-color var(--transition-fast);
+}
+
+.handleField:focus-within {
+  border-color: var(--accent);
+}
+
+.handleAt {
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+.handleField input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0.7rem 0.4rem;
+  color: var(--color-text);
+  font: inherit;
+  outline: none;
+}
+
+.handleStatus {
+  display: inline-flex;
+  align-items: center;
+}
+
+.handleStatus svg {
+  width: 18px;
+  height: 18px;
+}
+
+.handleOk {
+  border-color: var(--color-verde);
+}
+
+.handleOk .handleStatus {
+  color: var(--color-verde);
+}
+
+.handleBad {
+  border-color: var(--color-rojo);
+}
+
+.handleBad .handleStatus {
+  color: var(--color-rojo);
+}
+
+.handleHint {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.handleSpin {
+  animation: handleSpin 0.8s linear infinite;
+}
+
+@keyframes handleSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Bio */
+.bioInput {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-input);
+  color: var(--color-text);
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 74px;
+}
+
+.bioInput:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.bioCounter {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  justify-self: end;
+}
+
+@media (max-width: 560px) {
+  .viewToggle {
+    width: 100%;
+  }
+
+  .viewToggleBtn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .editProfileBtn {
+    margin-top: 50px;
+  }
+}

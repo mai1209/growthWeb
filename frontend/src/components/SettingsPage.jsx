@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
+  FiAlertCircle,
   FiBriefcase,
   FiCalendar,
+  FiCheck,
   FiCheckCircle,
   FiChevronDown,
   FiExternalLink,
@@ -11,7 +13,10 @@ import {
   FiFileText,
   FiKey,
   FiLink,
+  FiLoader,
   FiLock,
+  FiMail,
+  FiPhone,
   FiPlus,
   FiRefreshCcw,
   FiSave,
@@ -66,6 +71,9 @@ function SettingsPage() {
     fullName: "",
     phone: "",
     profilePhotoUrl: "",
+    bannerUrl: "",
+    bio: "",
+    createdAt: null,
     businessProfile: {
       name: "",
       industry: "",
@@ -88,8 +96,13 @@ function SettingsPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
-  const [openPersonal, setOpenPersonal] = useState(false);
   const [openBusiness, setOpenBusiness] = useState(() => new Set());
+  // Vista del tab Perfil: "personal" (tarjeta estilo red social) o "negocios".
+  const [perfilView, setPerfilView] = useState("personal");
+  // Edición del perfil personal (se despliega el formulario bajo la tarjeta).
+  const [editingProfile, setEditingProfile] = useState(false);
+  // Chequeo en vivo de disponibilidad del @usuario.
+  const [usernameCheck, setUsernameCheck] = useState({ status: "idle" });
   const [google, setGoogle] = useState({
     connected: false,
     email: "",
@@ -339,6 +352,41 @@ function SettingsPage() {
     setProfile((prev) => ({ ...prev, [field]: value }));
   };
 
+  // El @usuario sólo admite minúsculas, números y guion bajo (máx. 20).
+  const handleUsernameChange = (value) => {
+    const clean = value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20);
+    setProfile((prev) => ({ ...prev, username: clean }));
+  };
+
+  // Chequeo en vivo de disponibilidad del @usuario (con debounce), sólo mientras
+  // se está editando. El backend responde "self" si es tu usuario actual.
+  useEffect(() => {
+    if (!editingProfile) return undefined;
+    const handle = (profile.username || "").trim().toLowerCase();
+    if (!handle) {
+      setUsernameCheck({ status: "idle" });
+      return undefined;
+    }
+    if (!/^[a-z0-9_]{3,20}$/.test(handle)) {
+      setUsernameCheck({ status: "invalid" });
+      return undefined;
+    }
+    setUsernameCheck({ status: "checking" });
+    const timer = setTimeout(async () => {
+      try {
+        const res = await authService.checkUsername(handle);
+        if (res.data?.available) {
+          setUsernameCheck({ status: res.data.reason === "self" ? "self" : "ok" });
+        } else {
+          setUsernameCheck({ status: res.data?.reason === "invalid" ? "invalid" : "taken" });
+        }
+      } catch {
+        setUsernameCheck({ status: "idle" });
+      }
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [profile.username, editingProfile]);
+
   const handleBusinessListChange = (index, field, value) => {
     setProfile((prev) => ({
       ...prev,
@@ -433,14 +481,19 @@ function SettingsPage() {
 
     try {
       const response = await authService.updateProfile({
+        username: profile.username,
         fullName: profile.fullName,
         phone: profile.phone,
         profilePhotoUrl: profile.profilePhotoUrl,
+        bannerUrl: profile.bannerUrl,
+        bio: profile.bio,
         businessProfile: profile.businessProfile,
         businessProfiles: profile.businessProfiles,
       });
 
       setProfile(response.data.profile);
+      setEditingProfile(false);
+      setUsernameCheck({ status: "idle" });
       window.dispatchEvent(
         new CustomEvent("growth-profile-updated", {
           detail: response.data.profile,
@@ -500,6 +553,29 @@ function SettingsPage() {
     }
   };
 
+  // "Se unió {mes año}" a partir de la fecha de creación de la cuenta.
+  const joinedLabel = profile.createdAt
+    ? new Date(profile.createdAt).toLocaleDateString("es-AR", {
+        month: "long",
+        year: "numeric",
+      })
+    : "hace poco";
+
+  // Estado visual del chequeo del @usuario.
+  const USERNAME_UI = {
+    checking: { icon: <FiLoader className={style.handleSpin} />, hint: "Verificando disponibilidad…", cls: "" },
+    ok: { icon: <FiCheck />, hint: "¡Disponible!", cls: style.handleOk },
+    self: { icon: <FiCheck />, hint: "Es tu usuario actual.", cls: style.handleOk },
+    taken: { icon: <FiAlertCircle />, hint: "Ese usuario ya está en uso.", cls: style.handleBad },
+    invalid: {
+      icon: <FiAlertCircle />,
+      hint: "3 a 20 caracteres: minúsculas, números o guion bajo.",
+      cls: style.handleBad,
+    },
+    idle: { icon: null, hint: "Tu @usuario único. Servirá para la comunidad.", cls: "" },
+  };
+  const usernameUi = USERNAME_UI[usernameCheck.status] || USERNAME_UI.idle;
+
   return (
     <section className={style.container}>
  
@@ -522,108 +598,232 @@ function SettingsPage() {
       </div>
 
       {activeTab === "perfil" ? (
-        <form className={style.card} onSubmit={handleProfileSubmit}>
-          {/* ===== Título + crear perfil ===== */}
+        <div className={style.card}>
+          {/* ===== Título + toggle Personal / Negocios ===== */}
           <div className={style.businessHeader}>
             <div>
               <p className={style.kicker}>Ajustes</p>
-              <h2>Perfiles</h2>
+              <h2>Perfil</h2>
             </div>
-            <button
-              type="button"
-              className={style.secondaryButton}
-              onClick={() => {
-                setNewProfile({ name: "", industry: "", phone: "", logoUrl: "", address: "" });
-                setShowNewProfile(true);
-              }}
-              disabled={profileLoading}
-            >
-              <FiPlus />
-              Crear perfil
-            </button>
-          </div>
-
-          {/* ===== Personal ===== */}
-          <p className={style.kicker}>Personal</p>
-          <div
-            className={`${style.accordion} ${openPersonal ? style.accordionOpen : ""} ${
-              activeWorkspace === "personal" ? style.accordionActive : ""
-            }`}
-          >
-            <div className={style.accordionHead}>
+            <div className={style.viewToggle}>
               <button
                 type="button"
-                className={style.accordionToggle}
-                onClick={() => setOpenPersonal((prev) => !prev)}
-                aria-expanded={openPersonal}
+                className={`${style.viewToggleBtn} ${perfilView === "personal" ? style.viewToggleActive : ""}`}
+                onClick={() => setPerfilView("personal")}
               >
-                <span className={style.accordionAvatar}>
-                  {profile.profilePhotoUrl ? (
-                    <img src={profile.profilePhotoUrl} alt="Foto de perfil" />
-                  ) : (
-                    <span>{profileInitials}</span>
-                  )}
-                </span>
-                <span className={style.accordionInfo}>
-                  <span className={style.accordionLabel}>Perfil personal</span>
-                  <strong className={style.accordionName}>
-                    {profile.fullName || profile.username || "Tu perfil"}
-                  </strong>
-                  <small className={style.accordionSub}>
-                    {profile.email || "Email de ingreso"}
-                  </small>
-                </span>
-                <FiChevronDown className={style.accordionChevron} />
+                <FiUser />
+                Personal
               </button>
-            </div>
-
-            <div className={style.accordionBody}>
-              <div className={style.accordionBodyInner}>
-                <div className={style.formGrid}>
-                  <label className={style.field}>
-                    <span>Nombre completo</span>
-                    <input
-                      type="text"
-                      value={profile.fullName}
-                      onChange={(event) => handleProfileChange("fullName", event.target.value)}
-                      placeholder="Nombre para mostrar"
-                      disabled={profileLoading}
-                    />
-                  </label>
-
-                  <label className={style.field}>
-                    <span>Email de ingreso</span>
-                    <input type="email" value={profile.email} disabled />
-                  </label>
-
-                  <label className={style.field}>
-                    <span>Teléfono</span>
-                    <input
-                      type="tel"
-                      value={profile.phone}
-                      onChange={(event) => handleProfileChange("phone", event.target.value)}
-                      placeholder="+54 9 ..."
-                      disabled={profileLoading}
-                    />
-                  </label>
-
-                  <label className={style.field}>
-                    <span>Foto de perfil URL</span>
-                    <input
-                      type="url"
-                      value={profile.profilePhotoUrl}
-                      onChange={(event) => handleProfileChange("profilePhotoUrl", event.target.value)}
-                      placeholder="https://..."
-                      disabled={profileLoading}
-                    />
-                  </label>
-                </div>
-              </div>
+              <button
+                type="button"
+                className={`${style.viewToggleBtn} ${perfilView === "negocios" ? style.viewToggleActive : ""}`}
+                onClick={() => setPerfilView("negocios")}
+              >
+                <FiBriefcase />
+                Ver perfiles{businessProfiles.length ? ` (${businessProfiles.length})` : ""}
+              </button>
             </div>
           </div>
 
-          {/* ===== Negocios ===== */}
-          <p className={style.kicker} style={{ marginTop: "1.4rem" }}>Negocios</p>
+          {perfilView === "personal" ? (
+            <>
+              {/* ===== Tarjeta de perfil estilo red social ===== */}
+              <div className={style.profileCard}>
+                <div
+                  className={style.profileBanner}
+                  style={
+                    profile.bannerUrl
+                      ? { backgroundImage: `url("${profile.bannerUrl}")` }
+                      : undefined
+                  }
+                />
+                <div className={style.profileTopRow}>
+                  <span className={style.profileAvatar}>
+                    {profile.profilePhotoUrl ? (
+                      <img src={profile.profilePhotoUrl} alt="Foto de perfil" />
+                    ) : (
+                      <span>{profileInitials}</span>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    className={style.editProfileBtn}
+                    onClick={() => setEditingProfile((prev) => !prev)}
+                  >
+                    {editingProfile ? "Cerrar edición" : "Editar perfil"}
+                  </button>
+                </div>
+
+                <div className={style.profileIdentity}>
+                  <strong className={style.profileName}>
+                    {profile.fullName || profile.username || "Tu perfil"}
+                  </strong>
+                  <span className={style.profileHandle}>@{profile.username || "usuario"}</span>
+                  {profile.bio ? (
+                    <p className={style.profileBio}>{profile.bio}</p>
+                  ) : (
+                    <p className={style.profileBioEmpty}>
+                      Todavía no escribiste una bio. Contá algo sobre vos.
+                    </p>
+                  )}
+                  <div className={style.profileMeta}>
+                    <span>
+                      <FiCalendar />
+                      Se unió {joinedLabel}
+                    </span>
+                    {profile.email ? (
+                      <span>
+                        <FiMail />
+                        {profile.email}
+                      </span>
+                    ) : null}
+                    {profile.phone ? (
+                      <span>
+                        <FiPhone />
+                        {profile.phone}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className={style.profileStats}>
+                    <span>
+                      <strong>{businessProfiles.length}</strong> negocios
+                    </span>
+                    <span>
+                      <strong>0</strong> seguidores
+                    </span>
+                    <span>
+                      <strong>0</strong> siguiendo
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ===== Formulario de edición (se despliega) ===== */}
+              {editingProfile ? (
+                <form className={style.editForm} onSubmit={handleProfileSubmit}>
+                  <label className={style.field}>
+                    <span>Nombre de usuario</span>
+                    <div className={`${style.handleField} ${usernameUi.cls}`}>
+                      <span className={style.handleAt}>@</span>
+                      <input
+                        type="text"
+                        value={profile.username || ""}
+                        onChange={(event) => handleUsernameChange(event.target.value)}
+                        placeholder="tu_usuario"
+                        disabled={profileLoading}
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                      />
+                      {usernameUi.icon ? (
+                        <span className={style.handleStatus}>{usernameUi.icon}</span>
+                      ) : null}
+                    </div>
+                    <small className={style.handleHint}>{usernameUi.hint}</small>
+                  </label>
+
+                  <div className={style.formGrid}>
+                    <label className={style.field}>
+                      <span>Nombre completo</span>
+                      <input
+                        type="text"
+                        value={profile.fullName}
+                        onChange={(event) => handleProfileChange("fullName", event.target.value)}
+                        placeholder="Nombre para mostrar"
+                        disabled={profileLoading}
+                      />
+                    </label>
+
+                    <label className={style.field}>
+                      <span>Email de ingreso</span>
+                      <input type="email" value={profile.email} disabled />
+                    </label>
+
+                    <label className={style.field}>
+                      <span>Teléfono</span>
+                      <input
+                        type="tel"
+                        value={profile.phone}
+                        onChange={(event) => handleProfileChange("phone", event.target.value)}
+                        placeholder="+54 9 ..."
+                        disabled={profileLoading}
+                      />
+                    </label>
+
+                    <label className={style.field}>
+                      <span>Foto de perfil URL</span>
+                      <input
+                        type="url"
+                        value={profile.profilePhotoUrl}
+                        onChange={(event) =>
+                          handleProfileChange("profilePhotoUrl", event.target.value)
+                        }
+                        placeholder="https://..."
+                        disabled={profileLoading}
+                      />
+                    </label>
+
+                    <label className={style.field}>
+                      <span>Banner / portada URL</span>
+                      <input
+                        type="url"
+                        value={profile.bannerUrl || ""}
+                        onChange={(event) => handleProfileChange("bannerUrl", event.target.value)}
+                        placeholder="https://..."
+                        disabled={profileLoading}
+                      />
+                    </label>
+                  </div>
+
+                  <label className={style.field}>
+                    <span>Bio</span>
+                    <textarea
+                      className={style.bioInput}
+                      value={profile.bio || ""}
+                      onChange={(event) =>
+                        handleProfileChange("bio", event.target.value.slice(0, 160))
+                      }
+                      placeholder="Contá algo sobre vos (máx. 160 caracteres)"
+                      rows={3}
+                      disabled={profileLoading}
+                    />
+                    <small className={style.bioCounter}>{(profile.bio || "").length}/160</small>
+                  </label>
+
+                  <button
+                    type="submit"
+                    className={style.saveButton}
+                    disabled={
+                      profileSaving ||
+                      usernameCheck.status === "taken" ||
+                      usernameCheck.status === "invalid" ||
+                      usernameCheck.status === "checking"
+                    }
+                  >
+                    <FiSave />
+                    {profileSaving ? "Guardando..." : "Guardar cambios"}
+                  </button>
+                </form>
+              ) : null}
+            </>
+          ) : (
+            <form className={style.businessForm} onSubmit={handleProfileSubmit}>
+              {/* ===== Barra: crear perfil ===== */}
+              <div className={style.businessBar}>
+                <p className={style.kicker}>Tus negocios</p>
+                <button
+                  type="button"
+                  className={style.secondaryButton}
+                  onClick={() => {
+                    setNewProfile({ name: "", industry: "", phone: "", logoUrl: "", address: "" });
+                    setShowNewProfile(true);
+                  }}
+                  disabled={profileLoading}
+                >
+                  <FiPlus />
+                  Crear perfil
+                </button>
+              </div>
 
           {businessProfiles.length ? (
             <div className={style.businessList}>
@@ -746,11 +946,13 @@ function SettingsPage() {
             </div>
           )}
 
-          <button type="submit" className={style.saveButton} disabled={profileSaving}>
-            <FiSave />
-            {profileSaving ? "Guardando..." : "Guardar cambios"}
-          </button>
-        </form>
+              <button type="submit" className={style.saveButton} disabled={profileSaving}>
+                <FiSave />
+                {profileSaving ? "Guardando..." : "Guardar cambios"}
+              </button>
+            </form>
+          )}
+        </div>
       ) : null}
 
       {activeTab === "password" ? (
