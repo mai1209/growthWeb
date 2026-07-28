@@ -452,7 +452,19 @@
 
 .libroAnimo {
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.libroAnimoEmoji {
   font-size: 1.3rem;
+}
+
+/* Texto del ánimo, en la misma tinta handwritten de la hoja. */
+.libroAnimoTexto {
+  font-size: 1.05rem;
+  color: rgba(43, 36, 22, 0.72);
 }
 
 .libroBloque {

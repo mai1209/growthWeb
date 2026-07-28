@@ -30,6 +30,15 @@ const ANIMOS = [
   { valor: 5, emoji: "😄" },
 ];
 
+// Texto del ánimo según la carita (se autoescribe al lado en el libro).
+const ANIMO_LABELS = {
+  1: "triste",
+  2: "medio bajón",
+  3: "indiferente",
+  4: "contento",
+  5: "feliz",
+};
+
 // Preguntas guiadas estilo "5 minute journal". El texto de cada una es
 // personalizable; estos son los defaults y los placeholders.
 const PREGUNTAS_DEFAULT = {
@@ -621,7 +630,15 @@ function Journaling() {
             }
           >
             <p className={style.libroFecha}>{fechaLarga(e.fecha)}</p>
-            {Number(e.animo) > 0 ? <p className={style.libroAnimo}>{emojiDe(e.animo)}</p> : null}
+            {Number(e.animo) > 0 ? (
+              <p className={style.libroAnimo}>
+                <span className={style.libroAnimoEmoji}>{emojiDe(e.animo)}</span>
+                <span className={style.libroAnimoTexto}>
+                  {e.fecha === hoyLocal() ? "Hoy me siento" : "Me sentí"}{" "}
+                  {ANIMO_LABELS[Number(e.animo)] || ""}
+                </span>
+              </p>
+            ) : null}
 
             {CAMPOS.map((p) =>
               e[p.campo] ? (
