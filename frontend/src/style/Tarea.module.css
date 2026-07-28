@@ -618,6 +618,16 @@
   text-transform: uppercase;
 }
 
+/* El subtítulo del día usa el MISMO estilo que en Calendario/Historial
+   (normal, no en mayúsculas), para que todas las vistas queden iguales. */
+.containerFecha .viewSubtitle {
+  font-size: 0.9rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  margin: 0.4rem 0 0;
+}
+
 .dayTitle {
   font-size: 2rem !important;
   line-height: 1.1 !important;
