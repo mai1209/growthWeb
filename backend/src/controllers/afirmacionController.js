@@ -82,6 +82,7 @@ const serializar = (doc, fecha) => {
   const lecturas = Array.isArray(doc.lecturas) ? doc.lecturas : [];
   return {
     lineas: Array.isArray(doc.lineas) ? doc.lineas : [],
+    resaltadas: Array.isArray(doc.resaltadas) ? doc.resaltadas : [],
     repetirDiario: doc.repetirDiario !== false,
     recordatorio: doc.recordatorio || { activo: false, hora: "08:00" },
     leidoHoy: esFecha(fecha) ? lecturas.includes(fecha) : false,
@@ -116,6 +117,13 @@ export const updateAfirmaciones = async (req, res) => {
     }
     if (typeof req.body.repetirDiario === "boolean") {
       doc.repetirDiario = req.body.repetirDiario;
+    }
+
+    // Renglones resaltados (índices). Se sincroniza entre web y app.
+    if (Array.isArray(req.body.resaltadas)) {
+      doc.resaltadas = req.body.resaltadas
+        .map((n) => Number(n))
+        .filter((n) => Number.isInteger(n) && n >= 0);
     }
 
     // Recordatorio diario { activo, hora "HH:MM" } — lo usa la app para

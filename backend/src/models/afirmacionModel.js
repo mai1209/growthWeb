@@ -18,6 +18,12 @@ const afirmacionSchema = new mongoose.Schema(
       type: [String],
       default: ["", "", "", "", ""],
     },
+    // Índices de los renglones resaltados (marcados en verde). Se sincroniza
+    // entre web y app: se guarda y se lee desde acá.
+    resaltadas: {
+      type: [Number],
+      default: [],
+    },
     // Si está en true las afirmaciones se mantienen día a día (por defecto).
     // En false cada día arranca vacío.
     repetirDiario: {

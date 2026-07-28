@@ -72,13 +72,14 @@ export default function AfirmacionesPanel({ visible, onClose }) {
   // hace falta abrir el teclado para marcarlos.
   const [resaltadas, setResaltadas] = useState(() => new Set());
 
-  const toggleResaltada = (indice) =>
-    setResaltadas((prev) => {
-      const next = new Set(prev);
-      if (next.has(indice)) next.delete(indice);
-      else next.add(indice);
-      return next;
-    });
+  const toggleResaltada = (indice) => {
+    const next = new Set(resaltadas);
+    if (next.has(indice)) next.delete(indice);
+    else next.add(indice);
+    setResaltadas(next);
+    // Se guarda en el server para sincronizar con la web.
+    afirmacionService.save({ resaltadas: [...next], fecha }).catch(() => {});
+  };
 
   useEffect(() => {
     const showEvt = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
@@ -101,6 +102,7 @@ export default function AfirmacionesPanel({ visible, onClose }) {
         ? recibidas
         : [...recibidas, ...Array(RENGLONES_INICIALES - recibidas.length).fill("")];
     setLineas(completas);
+    setResaltadas(new Set(Array.isArray(data?.resaltadas) ? data.resaltadas : []));
     setLeidoHoy(Boolean(data?.leidoHoy));
     setRacha(Number(data?.racha) || 0);
     setRepetirDiario(data?.repetirDiario !== false);
@@ -195,7 +197,7 @@ export default function AfirmacionesPanel({ visible, onClose }) {
             setLineas(vacias);
             setResaltadas(new Set());
             if (guardadoRef.current) clearTimeout(guardadoRef.current);
-            afirmacionService.save({ lineas: vacias, fecha }).catch(() => {});
+            afirmacionService.save({ lineas: vacias, resaltadas: [], fecha }).catch(() => {});
           },
         },
       ]
