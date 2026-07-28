@@ -25,6 +25,9 @@
 .content {
   flex: 1;
   min-width: 0;
+  /* El fondo de la app se extiende a toda el área de contenido, así no queda
+     una franja más oscura abajo cuando el contenido no llega hasta el final. */
+  background: var(--page-background);
 }
 
 @media (max-width: 1280px) {
