@@ -191,16 +191,26 @@ export default function TaskFormModal({
               <Text style={{ color: colors.text, fontSize: 16 }}>{toYMD(fecha)}</Text>
             </TouchableOpacity>
             {showDate && (
-              <DateTimePicker
-                value={fecha}
-                mode="date"
-                display={Platform.OS === "ios" ? "inline" : "default"}
-                themeVariant={isDark ? "dark" : "light"}
-                onChange={(e, sel) => {
-                  if (Platform.OS !== "ios") setShowDate(false);
-                  if (sel) setFecha(sel);
-                }}
-              />
+              <>
+                <DateTimePicker
+                  value={fecha}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "inline" : "default"}
+                  themeVariant={isDark ? "dark" : "light"}
+                  onChange={(e, sel) => {
+                    if (Platform.OS !== "ios") setShowDate(false);
+                    if (sel) setFecha(sel);
+                  }}
+                />
+                {Platform.OS === "ios" && (
+                  <TouchableOpacity
+                    style={styles.pickerDone}
+                    onPress={() => setShowDate(false)}
+                  >
+                    <Text style={styles.pickerDoneText}>Listo</Text>
+                  </TouchableOpacity>
+                )}
+              </>
             )}
 
             <Text style={styles.label}>Momento</Text>
@@ -236,20 +246,30 @@ export default function TaskFormModal({
               })}
             </View>
             {showTime && (
-              <DateTimePicker
-                value={exactTime}
-                mode="time"
-                is24Hour
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                themeVariant={isDark ? "dark" : "light"}
-                onChange={(e, sel) => {
-                  if (Platform.OS !== "ios") setShowTime(false);
-                  if (sel) {
-                    setExactTime(sel);
-                    setUseExact(true);
-                  }
-                }}
-              />
+              <>
+                <DateTimePicker
+                  value={exactTime}
+                  mode="time"
+                  is24Hour
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  themeVariant={isDark ? "dark" : "light"}
+                  onChange={(e, sel) => {
+                    if (Platform.OS !== "ios") setShowTime(false);
+                    if (sel) {
+                      setExactTime(sel);
+                      setUseExact(true);
+                    }
+                  }}
+                />
+                {Platform.OS === "ios" && (
+                  <TouchableOpacity
+                    style={styles.pickerDone}
+                    onPress={() => setShowTime(false)}
+                  >
+                    <Text style={styles.pickerDoneText}>Listo</Text>
+                  </TouchableOpacity>
+                )}
+              </>
             )}
 
             <Text style={styles.label}>Prioridad</Text>
@@ -394,6 +414,16 @@ const makeStyles = (colors) => StyleSheet.create({
     color: colors.text,
     fontSize: 16,
   },
+  // Botón "Listo" para cerrar el date/time picker en iOS (si no, queda abierto).
+  pickerDone: {
+    alignSelf: "flex-end",
+    marginTop: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    backgroundColor: colors.greenBright,
+  },
+  pickerDoneText: { color: "#06210a", fontSize: 14, fontWeight: "800" },
   wrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: {
     flexDirection: "row",

@@ -8,6 +8,8 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { sharedGroupsService } from "../api";
@@ -96,7 +98,10 @@ export default function CreateGroupModal({ visible, onClose, onCreated }) {
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
         <View style={styles.sheet}>
           <View style={styles.header}>
             <Text style={styles.title}>Nuevo grupo</Text>
@@ -184,7 +189,7 @@ export default function CreateGroupModal({ visible, onClose, onCreated }) {
             </TouchableOpacity>
           </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

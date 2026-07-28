@@ -8,6 +8,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
@@ -79,7 +80,10 @@ export default function SettleDebtModal({ visible, groupId, debt, onClose, onSav
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
         <View style={styles.sheet}>
           <View style={styles.header}>
             <Text style={styles.title}>Confirmar pago</Text>
@@ -155,16 +159,26 @@ export default function SettleDebtModal({ visible, groupId, debt, onClose, onSav
               <Text style={{ color: colors.text, fontSize: 16 }}>{toYMD(date)}</Text>
             </TouchableOpacity>
             {showDate && (
-              <DateTimePicker
-                value={date}
-                mode="date"
-                display={Platform.OS === "ios" ? "inline" : "default"}
-                themeVariant={isDark ? "dark" : "light"}
-                onChange={(e, sel) => {
-                  if (Platform.OS !== "ios") setShowDate(false);
-                  if (sel) setDate(sel);
-                }}
-              />
+              <>
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "inline" : "default"}
+                  themeVariant={isDark ? "dark" : "light"}
+                  onChange={(e, sel) => {
+                    if (Platform.OS !== "ios") setShowDate(false);
+                    if (sel) setDate(sel);
+                  }}
+                />
+                {Platform.OS === "ios" && (
+                  <TouchableOpacity
+                    style={styles.pickerDone}
+                    onPress={() => setShowDate(false)}
+                  >
+                    <Text style={styles.pickerDoneText}>Listo</Text>
+                  </TouchableOpacity>
+                )}
+              </>
             )}
 
             <Text style={styles.label}>Detalle</Text>
@@ -191,13 +205,22 @@ export default function SettleDebtModal({ visible, groupId, debt, onClose, onSav
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const makeStyles = (colors) => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: "rgba(11,20,15,0.4)", justifyContent: "flex-end" },
+  pickerDone: {
+    alignSelf: "flex-end",
+    marginTop: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    backgroundColor: colors.greenBright,
+  },
+  pickerDoneText: { color: "#06210a", fontSize: 14, fontWeight: "800" },
   sheet: {
     backgroundColor: colors.bg,
     borderTopLeftRadius: 24,
