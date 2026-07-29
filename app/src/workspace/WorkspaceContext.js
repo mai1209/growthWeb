@@ -20,10 +20,22 @@ export const buildProfiles = (profile) => {
       ? [{ ...profile.businessProfile, _id: "legacy" }]
       : [];
 
-  const options = [{ id: "personal", name: "Personal" }];
+  const options = [
+    {
+      id: "personal",
+      name: profile?.fullName || "Personal",
+      photo: profile?.profilePhotoUrl || "",
+      kind: "personal",
+    },
+  ];
   businesses.forEach((b, i) => {
     const id = i === 0 || b._id === "legacy" ? "business" : `business:${b._id}`;
-    options.push({ id, name: b.name || `Negocio ${i + 1}` });
+    options.push({
+      id,
+      name: b.name || `Negocio ${i + 1}`,
+      photo: b.logoUrl || "",
+      kind: "business",
+    });
   });
   return options;
 };

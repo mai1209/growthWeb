@@ -7,16 +7,46 @@ import {
   TextInput,
   StyleSheet,
   ActivityIndicator,
+  Image,
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../theme";
 import { useWorkspace } from "../workspace/WorkspaceContext";
 
+// Avatar circular chico: foto si hay, si no un ícono según el tipo de perfil.
+function ProfileAvatar({ photo, kind, size, colors, active }) {
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        overflow: "hidden",
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1.5,
+        borderColor: active ? colors.greenBright : colors.cardBorder,
+        backgroundColor: colors.greenSoft,
+      }}
+    >
+      {photo ? (
+        <Image source={{ uri: photo }} style={{ width: "100%", height: "100%" }} />
+      ) : (
+        <Ionicons
+          name={kind === "business" ? "briefcase" : "person"}
+          size={size * 0.5}
+          color={active ? colors.greenDark : colors.muted}
+        />
+      )}
+    </View>
+  );
+}
+
 export default function ProfileSwitcher() {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
-  const { workspace, profiles, switchWorkspace, addProfile } = useWorkspace();
+  const { workspace, profiles, activeProfile, switchWorkspace, addProfile } = useWorkspace();
   const [open, setOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [adding, setAdding] = useState(false);
@@ -38,7 +68,13 @@ export default function ProfileSwitcher() {
   return (
     <>
       <TouchableOpacity style={styles.trigger} onPress={() => setOpen(true)} hitSlop={10}>
-        <Ionicons name="person-outline" size={23} color={colors.muted} />
+        <ProfileAvatar
+          photo={activeProfile?.photo}
+          kind={activeProfile?.kind}
+          size={30}
+          colors={colors}
+          active
+        />
         <Ionicons name="chevron-down" size={13} color={colors.muted} />
       </TouchableOpacity>
 
@@ -58,11 +94,7 @@ export default function ProfileSwitcher() {
                     setOpen(false);
                   }}
                 >
-                  <Ionicons
-                    name={p.id === "personal" ? "person-outline" : "briefcase-outline"}
-                    size={18}
-                    color={active ? colors.greenDark : colors.muted}
-                  />
+                  <ProfileAvatar photo={p.photo} kind={p.kind} size={34} colors={colors} active={active} />
                   <Text style={[styles.rowText, active && { color: colors.greenDark }]}>{p.name}</Text>
                   {active ? <Ionicons name="checkmark" size={18} color={colors.greenDark} /> : null}
                 </TouchableOpacity>

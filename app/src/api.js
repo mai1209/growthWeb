@@ -45,6 +45,7 @@ export const authService = {
   signup: (data) => api.post("/api/auth/signup", data),
   getProfile: () => api.get("/api/auth/profile"),
   updateProfile: (data) => api.put("/api/auth/profile", data),
+  checkUsername: (u) => api.get("/api/auth/username-available", { params: { u } }),
   changePassword: (data) => api.post("/api/auth/change-password", data),
   forgotPassword: (data) => api.post("/api/auth/forgot-password", data),
   deleteAccount: () => api.delete("/api/auth/account"),

@@ -1,0 +1,577 @@
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Image,
+  Modal,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
+import { authService } from "../api";
+import { useTheme } from "../theme";
+import { useWorkspace } from "../workspace/WorkspaceContext";
+
+// Fecha "se unió {mes año}" a partir de createdAt.
+const joinedLabel = (createdAt) => {
+  if (!createdAt) return "hace poco";
+  try {
+    return new Date(createdAt).toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+  } catch {
+    return "hace poco";
+  }
+};
+
+// Elige una imagen del teléfono, la achica y la devuelve como data URL (base64).
+const pickImageAsDataUrl = async (maxW, aspect) => {
+  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!perm.granted) {
+    Alert.alert("Permiso necesario", "Permití el acceso a las fotos para elegir una imagen.");
+    return null;
+  }
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect,
+    quality: 1,
+  });
+  if (result.canceled) return null;
+  const uri = result.assets[0].uri;
+  const manip = await ImageManipulator.manipulateAsync(
+    uri,
+    [{ resize: { width: maxW } }],
+    { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+  );
+  return `data:image/jpeg;base64,${manip.base64}`;
+};
+
+const USERNAME_HINT = {
+  checking: "Verificando disponibilidad…",
+  ok: "¡Disponible!",
+  self: "Es tu usuario actual.",
+  taken: "Ese usuario ya está en uso.",
+  invalid: "3 a 20 caracteres: minúsculas, números o guion bajo.",
+  idle: "Tu @usuario único.",
+};
+
+export default function PerfilScreen({ navigation }) {
+  const { colors, isDark } = useTheme();
+  const styles = makeStyles(colors, isDark);
+  const insets = useSafeAreaInsets();
+  const { refreshProfiles } = useWorkspace();
+
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Campos editables.
+  const [username, setUsername] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [bio, setBio] = useState("");
+  const [photo, setPhoto] = useState("");
+  const [banner, setBanner] = useState("");
+  const [userStatus, setUserStatus] = useState("idle");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await authService.getProfile();
+      setProfile(res.data);
+    } catch {
+      Alert.alert("Error", "No se pudo cargar el perfil.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+    const unsub = navigation.addListener("focus", load);
+    return unsub;
+  }, [load, navigation]);
+
+  // Al abrir la edición, copiamos los valores actuales.
+  const openEdit = () => {
+    setUsername(profile?.username || "");
+    setFullName(profile?.fullName || "");
+    setPhone(profile?.phone || "");
+    setBio(profile?.bio || "");
+    setPhoto(profile?.profilePhotoUrl || "");
+    setBanner(profile?.bannerUrl || "");
+    setUserStatus("idle");
+    setEditing(true);
+  };
+
+  const onUsernameChange = (v) => {
+    setUsername(v.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20));
+  };
+
+  // Chequeo de disponibilidad del @usuario (con debounce).
+  const debounceRef = useRef(null);
+  useEffect(() => {
+    if (!editing) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const handle = (username || "").trim().toLowerCase();
+    if (!handle) {
+      setUserStatus("idle");
+      return;
+    }
+    if (!/^[a-z0-9_]{3,20}$/.test(handle)) {
+      setUserStatus("invalid");
+      return;
+    }
+    setUserStatus("checking");
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await authService.checkUsername(handle);
+        if (res.data?.available) setUserStatus(res.data.reason === "self" ? "self" : "ok");
+        else setUserStatus(res.data?.reason === "invalid" ? "invalid" : "taken");
+      } catch {
+        setUserStatus("idle");
+      }
+    }, 450);
+    return () => debounceRef.current && clearTimeout(debounceRef.current);
+  }, [username, editing]);
+
+  const pickPhoto = async () => {
+    const url = await pickImageAsDataUrl(512, [1, 1]);
+    if (url) setPhoto(url);
+  };
+  const pickBanner = async () => {
+    const url = await pickImageAsDataUrl(1280, [3, 1]);
+    if (url) setBanner(url);
+  };
+
+  const save = async () => {
+    if (userStatus === "taken" || userStatus === "invalid" || userStatus === "checking") return;
+    setSaving(true);
+    try {
+      const res = await authService.updateProfile({
+        username: username.trim(),
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        bio: bio.trim(),
+        profilePhotoUrl: photo,
+        bannerUrl: banner,
+        businessProfiles: profile?.businessProfiles || undefined,
+      });
+      setProfile(res.data?.profile || res.data);
+      setEditing(false);
+      refreshProfiles?.();
+    } catch (err) {
+      Alert.alert("Error", err.response?.data?.error || "No se pudo guardar el perfil.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const initials = (profile?.fullName || profile?.username || profile?.email || "U")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase();
+
+  const negocios = Array.isArray(profile?.businessProfiles) ? profile.businessProfiles.length : 0;
+  const userOk = userStatus === "ok" || userStatus === "self";
+  const userBad = userStatus === "taken" || userStatus === "invalid";
+
+  return (
+    <View style={[styles.safe, { paddingBottom: insets.bottom }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={10} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
+          <Text style={styles.backText}>Volver</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Perfil</Text>
+        <View style={{ width: 70 }} />
+      </View>
+
+      {loading ? (
+        <ActivityIndicator color={colors.greenBright} style={{ marginTop: 40 }} />
+      ) : (
+        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+          <View style={styles.card}>
+            {/* Banner */}
+            {profile?.bannerUrl ? (
+              <Image source={{ uri: profile.bannerUrl }} style={styles.banner} />
+            ) : (
+              <View style={[styles.banner, styles.bannerPlaceholder]} />
+            )}
+
+            {/* Avatar + editar */}
+            <View style={styles.topRow}>
+              <View style={styles.avatar}>
+                {profile?.profilePhotoUrl ? (
+                  <Image source={{ uri: profile.profilePhotoUrl }} style={styles.avatarImg} />
+                ) : (
+                  <Text style={styles.avatarInitials}>{initials}</Text>
+                )}
+              </View>
+              <TouchableOpacity style={styles.editBtn} onPress={openEdit}>
+                <Text style={styles.editBtnText}>Editar perfil</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Identidad */}
+            <View style={styles.identity}>
+              <Text style={styles.name}>{profile?.fullName || profile?.username || "Tu perfil"}</Text>
+              <Text style={styles.handle}>@{profile?.username || "usuario"}</Text>
+              {profile?.bio ? (
+                <Text style={styles.bio}>{profile.bio}</Text>
+              ) : (
+                <Text style={styles.bioEmpty}>Todavía no escribiste una bio.</Text>
+              )}
+
+              <View style={styles.metaRow}>
+                <Ionicons name="calendar-outline" size={15} color={colors.greenDark} />
+                <Text style={styles.metaText}>Se unió {joinedLabel(profile?.createdAt)}</Text>
+              </View>
+              {profile?.email ? (
+                <View style={styles.metaRow}>
+                  <Ionicons name="mail-outline" size={15} color={colors.greenDark} />
+                  <Text style={styles.metaText}>{profile.email}</Text>
+                </View>
+              ) : null}
+              {profile?.phone ? (
+                <View style={styles.metaRow}>
+                  <Ionicons name="call-outline" size={15} color={colors.greenDark} />
+                  <Text style={styles.metaText}>{profile.phone}</Text>
+                </View>
+              ) : null}
+
+              <View style={styles.stats}>
+                <Text style={styles.statText}>
+                  <Text style={styles.statNum}>{negocios}</Text> negocios
+                </Text>
+                <Text style={styles.statText}>
+                  <Text style={styles.statNum}>0</Text> seguidores
+                </Text>
+                <Text style={styles.statText}>
+                  <Text style={styles.statNum}>0</Text> siguiendo
+                </Text>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      )}
+
+      {/* ===== Modal de edición ===== */}
+      <Modal visible={editing} animationType="slide" transparent onRequestClose={() => setEditing(false)}>
+        <KeyboardAvoidingView
+          style={styles.overlay}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <View style={styles.sheet}>
+            <View style={styles.sheetHead}>
+              <TouchableOpacity onPress={() => setEditing(false)} hitSlop={10}>
+                <Ionicons name="close" size={24} color={colors.muted} />
+              </TouchableOpacity>
+              <Text style={styles.sheetTitle}>Editar perfil</Text>
+              <TouchableOpacity
+                style={[styles.saveBtn, (saving || userBad || userStatus === "checking") && { opacity: 0.5 }]}
+                onPress={save}
+                disabled={saving || userBad || userStatus === "checking"}
+              >
+                {saving ? (
+                  <ActivityIndicator color="#06210a" size="small" />
+                ) : (
+                  <Text style={styles.saveBtnText}>Guardar</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 30 }} keyboardShouldPersistTaps="handled">
+              {/* Portada */}
+              <Text style={styles.label}>Portada</Text>
+              <TouchableOpacity style={styles.bannerEdit} onPress={pickBanner} activeOpacity={0.85}>
+                {banner ? (
+                  <Image source={{ uri: banner }} style={styles.bannerEditImg} />
+                ) : (
+                  <View style={[styles.bannerEditImg, styles.bannerPlaceholder]} />
+                )}
+                <View style={styles.bannerEditOverlay}>
+                  <Ionicons name="camera-outline" size={18} color="#fff" />
+                  <Text style={styles.bannerEditText}>Cambiar portada</Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Foto */}
+              <Text style={styles.label}>Foto de perfil</Text>
+              <View style={styles.photoRow}>
+                <View style={styles.photoPreview}>
+                  {photo ? (
+                    <Image source={{ uri: photo }} style={styles.avatarImg} />
+                  ) : (
+                    <Ionicons name="person" size={26} color={colors.greenDark} />
+                  )}
+                </View>
+                <TouchableOpacity style={styles.uploadBtn} onPress={pickPhoto}>
+                  <Ionicons name="cloud-upload-outline" size={16} color={colors.greenDark} />
+                  <Text style={styles.uploadBtnText}>Subir foto</Text>
+                </TouchableOpacity>
+                {photo ? (
+                  <TouchableOpacity onPress={() => setPhoto("")}>
+                    <Text style={styles.removeText}>Quitar</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+
+              {/* Usuario */}
+              <Text style={styles.label}>Nombre de usuario</Text>
+              <View
+                style={[
+                  styles.handleField,
+                  userOk && { borderColor: colors.greenBright },
+                  userBad && { borderColor: colors.red },
+                ]}
+              >
+                <Text style={styles.handleAt}>@</Text>
+                <TextInput
+                  style={styles.handleInput}
+                  value={username}
+                  onChangeText={onUsernameChange}
+                  placeholder="tu_usuario"
+                  placeholderTextColor={colors.muted}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                {userStatus === "checking" ? (
+                  <ActivityIndicator color={colors.muted} size="small" />
+                ) : userOk ? (
+                  <Ionicons name="checkmark-circle" size={20} color={colors.greenBright} />
+                ) : userBad ? (
+                  <Ionicons name="alert-circle" size={20} color={colors.red} />
+                ) : null}
+              </View>
+              <Text style={styles.hint}>{USERNAME_HINT[userStatus] || USERNAME_HINT.idle}</Text>
+
+              {/* Nombre */}
+              <Text style={styles.label}>Nombre completo</Text>
+              <TextInput
+                style={styles.input}
+                value={fullName}
+                onChangeText={setFullName}
+                placeholder="Nombre para mostrar"
+                placeholderTextColor={colors.muted}
+              />
+
+              {/* Email (solo lectura) */}
+              <Text style={styles.label}>Email de ingreso</Text>
+              <View style={[styles.input, styles.inputDisabled]}>
+                <Text style={{ color: colors.muted, fontSize: 15 }}>{profile?.email || "—"}</Text>
+              </View>
+
+              {/* Teléfono */}
+              <Text style={styles.label}>Teléfono</Text>
+              <TextInput
+                style={styles.input}
+                value={phone}
+                onChangeText={setPhone}
+                placeholder="+54 9 ..."
+                placeholderTextColor={colors.muted}
+                keyboardType="phone-pad"
+              />
+
+              {/* Bio */}
+              <Text style={styles.label}>Bio</Text>
+              <TextInput
+                style={[styles.input, styles.bioInput]}
+                value={bio}
+                onChangeText={(v) => setBio(v.slice(0, 160))}
+                placeholder="Contá algo sobre vos (máx. 160)"
+                placeholderTextColor={colors.muted}
+                multiline
+              />
+              <Text style={styles.counter}>{bio.length}/160</Text>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+    </View>
+  );
+}
+
+const makeStyles = (colors, isDark) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 12,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.cardBorder,
+      backgroundColor: colors.card,
+    },
+    backBtn: { flexDirection: "row", alignItems: "center", gap: 2, width: 70 },
+    backText: { color: colors.text, fontWeight: "700", fontSize: 15 },
+    headerTitle: { color: colors.text, fontSize: 18, fontWeight: "800" },
+
+    card: {
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 20,
+      overflow: "hidden",
+      backgroundColor: colors.card,
+    },
+    banner: { width: "100%", height: 130, backgroundColor: colors.greenSoft },
+    bannerPlaceholder: { backgroundColor: colors.greenBright2 },
+
+    topRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      paddingHorizontal: 14,
+      marginTop: -44,
+    },
+    avatar: {
+      width: 88,
+      height: 88,
+      borderRadius: 44,
+      borderWidth: 4,
+      borderColor: colors.bg,
+      backgroundColor: colors.greenSoft,
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+    },
+    avatarImg: { width: "100%", height: "100%" },
+    avatarInitials: { color: colors.greenDark, fontSize: 30, fontWeight: "800" },
+    editBtn: {
+      marginTop: 52,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.greenDark,
+    },
+    editBtnText: { color: colors.greenDark, fontWeight: "800", fontSize: 13.5 },
+
+    identity: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 18, gap: 4 },
+    name: { color: colors.text, fontSize: 21, fontWeight: "800" },
+    handle: { color: colors.muted, fontSize: 15 },
+    bio: { color: colors.text, fontSize: 15, lineHeight: 21, marginTop: 6 },
+    bioEmpty: { color: colors.muted, fontSize: 15, fontStyle: "italic", marginTop: 6 },
+    metaRow: { flexDirection: "row", alignItems: "center", gap: 7, marginTop: 6 },
+    metaText: { color: colors.muted, fontSize: 13.5 },
+    stats: { flexDirection: "row", gap: 18, marginTop: 12 },
+    statText: { color: colors.muted, fontSize: 14 },
+    statNum: { color: colors.text, fontWeight: "800" },
+
+    /* Modal */
+    overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
+    sheet: {
+      backgroundColor: colors.bg,
+      borderTopLeftRadius: 22,
+      borderTopRightRadius: 22,
+      maxHeight: "92%",
+    },
+    sheetHead: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.cardBorder,
+    },
+    sheetTitle: { color: colors.text, fontSize: 17, fontWeight: "800", flex: 1, marginLeft: 10 },
+    saveBtn: {
+      paddingVertical: 8,
+      paddingHorizontal: 18,
+      borderRadius: 999,
+      backgroundColor: colors.greenBright,
+    },
+    saveBtnText: { color: "#06210a", fontWeight: "800", fontSize: 14 },
+
+    label: {
+      color: colors.muted,
+      fontSize: 12.5,
+      fontWeight: "700",
+      marginTop: 16,
+      marginBottom: 7,
+    },
+    input: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      color: colors.text,
+      fontSize: 15,
+    },
+    inputDisabled: { opacity: 0.7 },
+    bioInput: { minHeight: 80, textAlignVertical: "top" },
+    counter: { color: colors.muted, fontSize: 12, alignSelf: "flex-end", marginTop: 5 },
+
+    handleField: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+    },
+    handleAt: { color: colors.muted, fontWeight: "700", fontSize: 15 },
+    handleInput: { flex: 1, paddingVertical: 12, color: colors.text, fontSize: 15 },
+    hint: { color: colors.muted, fontSize: 12.5, marginTop: 6 },
+
+    photoRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+    photoPreview: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      overflow: "hidden",
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.greenDark,
+      backgroundColor: colors.greenSoft,
+    },
+    uploadBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 7,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.greenDark,
+      backgroundColor: colors.greenSoft,
+    },
+    uploadBtnText: { color: colors.greenDark, fontWeight: "800", fontSize: 14 },
+    removeText: { color: colors.muted, fontSize: 13, textDecorationLine: "underline" },
+
+    bannerEdit: { borderRadius: 14, overflow: "hidden" },
+    bannerEditImg: { width: "100%", height: 110 },
+    bannerEditOverlay: {
+      position: "absolute",
+      left: 10,
+      bottom: 10,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 7,
+      paddingVertical: 7,
+      paddingHorizontal: 12,
+      borderRadius: 999,
+      backgroundColor: "rgba(0,0,0,0.6)",
+    },
+    bannerEditText: { color: "#fff", fontWeight: "800", fontSize: 13 },
+  });

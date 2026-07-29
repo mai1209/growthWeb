@@ -22,6 +22,7 @@ import CompartidosScreen from "./src/screens/CompartidosScreen";
 import NotasScreen from "./src/screens/NotasScreen";
 import PomodoroScreen from "./src/screens/PomodoroScreen";
 import AjustesScreen from "./src/screens/AjustesScreen";
+import PerfilScreen from "./src/screens/PerfilScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -134,6 +135,7 @@ function Routes() {
         <>
           <Stack.Screen name="Main" component={MainTabs} />
           <Stack.Screen name="Ajustes" component={AjustesScreen} />
+          <Stack.Screen name="Perfil" component={PerfilScreen} />
         </>
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />
