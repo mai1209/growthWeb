@@ -7,10 +7,23 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { movimientoService } from "../api";
+import MovementFormModal from "./MovementFormModal";
+import SettlePersonalDebtModal from "./SettlePersonalDebtModal";
 import { useTheme } from "../theme";
+
+// Ícono outline por tipo de movimiento (igual que Filtros).
+const movementIcon = (m) => {
+  if (m.desdeAhorro) return "swap-horizontal-outline";
+  if (m.tipo === "ingreso") return "arrow-down-outline";
+  if (m.tipo === "ahorro") return "wallet-outline";
+  if (m.tipo === "deuda") return "card-outline";
+  return "arrow-up-outline"; // egreso
+};
 import {
   filterMovimientosByCurrency,
   getMovementTypeMeta,
@@ -58,13 +71,39 @@ const buildRange = (key) => {
   return { from: new Date(y, m, 1), to: new Date(y, m + 1, 0) };
 };
 
-export default function HistoryModal({ visible, movimientos = [], currency = "ARS", onClose }) {
+export default function HistoryModal({
+  visible,
+  movimientos = [],
+  currency = "ARS",
+  onClose,
+  onChanged,
+}) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const [range, setRange] = useState("mensual");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [openMonth, setOpenMonth] = useState(null); // 0-11 dentro de "anual"
+  const [editMov, setEditMov] = useState(null);
+  const [settleDebt, setSettleDebt] = useState(null);
+
+  const handleDelete = (mov) => {
+    Alert.alert("Eliminar movimiento", `¿Borrar "${mov.categoria || "movimiento"}"?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Eliminar",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await movimientoService.delete(mov._id);
+            onChanged?.();
+          } catch {
+            Alert.alert("Error", "No se pudo eliminar.");
+          }
+        },
+      },
+    ]);
+  };
 
   const { sections, monthCards } = useMemo(() => {
     if (range === "anual") {
@@ -121,19 +160,64 @@ export default function HistoryModal({ visible, movimientos = [], currency = "AR
           <Text style={styles.dayHeader}>{sec.title}</Text>
           {sec.data.map((item) => {
             const meta = getMovementTypeMeta(item.tipo);
+            const isDebt = item.tipo === "deuda";
+            const isPendingDebt = isDebt && item.deudaEstado !== "pagada";
+            const debtPaid = Number(item.deudaPagado) || 0;
+            const debtRemaining = (Number(item.monto) || 0) - debtPaid;
+            const isPartialDebt = isPendingDebt && debtPaid > 0;
             return (
               <View key={item._id} style={styles.movCard}>
+                <View
+                  style={[
+                    styles.movIcon,
+                    { borderColor: meta.color + "55", backgroundColor: meta.color + "1f" },
+                  ]}
+                >
+                  <Ionicons name={movementIcon(item)} size={19} color={colors.text} />
+                </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.movTitle}>{item.categoria || "Sin categoría"}</Text>
                   {item.detalle ? <Text style={styles.movDetail}>{item.detalle}</Text> : null}
+                  {isDebt && item.deudaAcreedor ? (
+                    <Text style={styles.movDetail}>Acreedor: {item.deudaAcreedor}</Text>
+                  ) : null}
+                  {isPendingDebt ? (
+                    <Text style={styles.debtRemaining}>
+                      {isPartialDebt
+                        ? `Pagado ${formatMoney(debtPaid, currency)} · resta ${formatMoney(debtRemaining, currency)}`
+                        : "Pendiente de pago"}
+                    </Text>
+                  ) : null}
                   <View style={styles.movChips}>
                     <Text style={[styles.movChip, { color: meta.color }]}>{meta.label}</Text>
+                    {isPartialDebt ? (
+                      <Text style={[styles.movChip, { color: colors.greenDark }]}>Parcial</Text>
+                    ) : null}
+                    {item.desdeAhorro ? (
+                      <Text style={[styles.movChip, { color: "#4fb6c9" }]}>Uso de ahorro</Text>
+                    ) : null}
                     {item.medio ? <Text style={styles.movChip}>{item.medio}</Text> : null}
                   </View>
+                  {isPendingDebt ? (
+                    <TouchableOpacity style={styles.payDebtBtn} onPress={() => setSettleDebt(item)}>
+                      <Ionicons name="cash-outline" size={15} color="#3a2d05" />
+                      <Text style={styles.payDebtText}>Pagar deuda</Text>
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
-                <Text style={[styles.movAmount, { color: meta.color }]}>
-                  {formatSignedMoney(item.monto, currency, item.tipo)}
-                </Text>
+                <View style={styles.movRight}>
+                  <Text style={[styles.movAmount, { color: meta.color }]}>
+                    {formatSignedMoney(item.monto, currency, item.tipo)}
+                  </Text>
+                  <View style={styles.movActions}>
+                    <TouchableOpacity onPress={() => setEditMov(item)} hitSlop={8}>
+                      <Ionicons name="pencil" size={17} color={colors.muted} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDelete(item)} hitSlop={8}>
+                      <Ionicons name="trash-outline" size={17} color={colors.red} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
             );
           })}
@@ -261,6 +345,28 @@ export default function HistoryModal({ visible, movimientos = [], currency = "AR
           )}
         </ScrollView>
       </View>
+
+      <MovementFormModal
+        visible={Boolean(editMov)}
+        editMovement={editMov}
+        defaultCurrency={currency}
+        movimientos={movimientos}
+        onClose={() => setEditMov(null)}
+        onSaved={() => {
+          setEditMov(null);
+          onChanged?.();
+        }}
+      />
+
+      <SettlePersonalDebtModal
+        visible={Boolean(settleDebt)}
+        debt={settleDebt}
+        onClose={() => setSettleDebt(null)}
+        onSaved={() => {
+          setSettleDebt(null);
+          onChanged?.();
+        }}
+      />
     </Modal>
   );
 }
@@ -404,7 +510,7 @@ const makeStyles = (colors) =>
     backText: { color: colors.text, fontSize: 16, fontWeight: "800", textTransform: "capitalize" },
     movCard: {
       flexDirection: "row",
-      alignItems: "center",
+      alignItems: "flex-start",
       gap: 10,
       backgroundColor: colors.card,
       borderWidth: 1,
@@ -418,4 +524,27 @@ const makeStyles = (colors) =>
     movChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 },
     movChip: { color: colors.muted, fontSize: 12, fontWeight: "700", textTransform: "capitalize" },
     movAmount: { fontSize: 15, fontWeight: "800" },
+    movIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      borderWidth: 1.5,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    movRight: { alignItems: "flex-end", gap: 8 },
+    movActions: { flexDirection: "row", gap: 14 },
+    debtRemaining: { color: colors.greenDark, fontSize: 12.5, fontWeight: "700", marginTop: 4 },
+    payDebtBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      alignSelf: "flex-start",
+      gap: 5,
+      marginTop: 10,
+      paddingVertical: 7,
+      paddingHorizontal: 12,
+      borderRadius: 999,
+      backgroundColor: "#e0b32e",
+    },
+    payDebtText: { color: "#3a2d05", fontWeight: "800", fontSize: 13 },
   });

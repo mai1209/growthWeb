@@ -651,6 +651,7 @@ export default function HomeScreen() {
         movimientos={movimientos}
         currency={currency}
         onClose={() => setShowHistory(false)}
+        onChanged={fetchData}
       />
 
       <Modal
