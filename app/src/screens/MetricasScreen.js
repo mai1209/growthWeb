@@ -9,7 +9,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Svg, { Circle, G } from "react-native-svg";
+import Svg, { Circle, G, Rect, Line, Text as SvgText } from "react-native-svg";
 import { movimientoService } from "../api";
 import { statAccents, useTheme } from "../theme";
 import {
@@ -181,23 +181,86 @@ export default function MetricasScreen() {
           {total === 0 ? (
             <Text style={styles.muted}>{emptyLabel}</Text>
           ) : (
-            <View style={styles.chartLayout}>
-              <Donut items={items} colors={colors} />
-              <View style={styles.legend}>
-                {data.map((it) => (
-                  <View key={it.label} style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: it.color }]} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.legendLabel} numberOfLines={1}>
-                        {it.label}
-                      </Text>
-                      <Text style={styles.legendAmt}>{formatMoney(it.value, currency)}</Text>
-                    </View>
-                    <Text style={styles.legendPct}>{((it.value / total) * 100).toFixed(0)}%</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingVertical: 6, minWidth: "100%", justifyContent: "center" }}
+            >
+              {(() => {
+                const shown = items.filter((i) => i.value > 0);
+                const maxV = Math.max(...shown.map((i) => i.value), 1);
+                const COL = 68;
+                const TOP = 22;
+                const PLOT = 120;
+                const H = 178;
+                const W = shown.length * COL;
+                const yVal = (v) => TOP + PLOT * (1 - v / maxV);
+                return (
+                  <Svg width={Math.max(W, 1)} height={H}>
+                    {[0, 0.5, 1].map((t) => (
+                      <Line
+                        key={t}
+                        x1={0}
+                        x2={W}
+                        y1={TOP + PLOT * t}
+                        y2={TOP + PLOT * t}
+                        stroke={colors.cardBorder}
+                        strokeWidth={1}
+                        opacity={0.5}
+                      />
+                    ))}
+                    {shown.map((it, i) => {
+                      const cx = i * COL + COL / 2;
+                      const bodyTop = yVal(it.value);
+                      const bodyH = Math.max(3, yVal(0) - bodyTop);
+                      const pct = ((it.value / total) * 100).toFixed(0);
+                      const name = it.label.length > 8 ? `${it.label.slice(0, 7)}…` : it.label;
+                      return (
+                        <G key={it.label}>
+                          <Line
+                            x1={cx}
+                            x2={cx}
+                            y1={yVal(maxV)}
+                            y2={yVal(0)}
+                            stroke={it.color}
+                            strokeWidth={2}
+                            opacity={0.28}
+                          />
+                          <Rect
+                            x={cx - 13}
+                            y={bodyTop}
+                            width={26}
+                            height={bodyH}
+                            rx={4}
+                            fill={it.color}
+                          />
+                          <SvgText
+                            x={cx}
+                            y={bodyTop - 6}
+                            fontSize={10}
+                            fill={colors.text}
+                            textAnchor="middle"
+                            fontWeight="800"
+                          >
+                            {`${pct}%`}
+                          </SvgText>
+                          <SvgText
+                            x={cx}
+                            y={H - 5}
+                            fontSize={9.5}
+                            fill={colors.muted}
+                            textAnchor="middle"
+                            fontWeight="700"
+                          >
+                            {name}
+                          </SvgText>
+                        </G>
+                      );
+                    })}
+                  </Svg>
+                );
+              })()}
+            </ScrollView>
           )}
         </View>
       </>
