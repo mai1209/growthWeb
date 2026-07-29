@@ -564,29 +564,26 @@ function MetricsPage({
         </div>
 
         {expenseCategoryItems.length ? (
-          <div className={style.categoryList}>
-            {expenseCategoryItems.map((item) => {
-              const maxCategory = expenseCategoryItems[0]?.value || 1;
-              const percent = (item.value / maxCategory) * 100;
-
-              return (
-                <article key={item.label} className={style.categoryRow}>
-                  <div>
-                    <strong>{item.label}</strong>
-                    <span>{getMovementTypeMeta("egreso").label}</span>
-                  </div>
-                  <div className={style.categoryBarTrack}>
-                    <span
-                      style={{
-                        width: `${Math.max(4, percent)}%`,
-                        background: item.color,
-                      }}
-                    />
-                  </div>
+          <div className={style.donutLayout}>
+            <div
+              className={style.donut}
+              style={{ background: buildConicGradient(expenseCategoryItems) }}
+              aria-label="Categorías con mayor egreso"
+            >
+              <div>
+                <strong>{expenseCategoryItems.length}</strong>
+                <span>rubros</span>
+              </div>
+            </div>
+            <div className={style.legend}>
+              {expenseCategoryItems.map((item) => (
+                <div key={item.label} className={style.legendItem}>
+                  <i style={{ background: item.color }} />
+                  <span>{item.label}</span>
                   <strong>{formatMoney(item.value, currency)}</strong>
-                </article>
-              );
-            })}
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <p className={style.emptyText}>No hay categorías de egreso en este período.</p>
