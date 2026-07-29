@@ -984,3 +984,33 @@
     flex-shrink: 0;
   }
 }
+
+/* ============================================================
+   Gráfico de velas — Avance de tus metas activas
+   ============================================================ */
+.candleScroll {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-top: 0.4rem;
+}
+
+.candleSvg {
+  display: block;
+  height: 214px;
+  flex: 0 0 auto;
+}
+
+.candleLabelText {
+  fill: var(--color-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.candleAxis {
+  fill: var(--color-muted);
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.85;
+}

@@ -942,24 +942,90 @@ function MetasPage({ activeWorkspace }) {
             {barrasAvance.length === 0 ? (
               <p className={style.vacio}>No hay metas activas para graficar.</p>
             ) : (
-              <div className={style.barList}>
-                {barrasAvance.map((b) => (
-                  <div key={b.id} className={style.barRow}>
-                    <span className={style.barNombre} title={b.titulo}>
-                      {b.titulo}
-                    </span>
-                    <div className={style.barTrack}>
-                      <div
-                        className={style.barFill}
-                        style={{
-                          width: `${b.progreso}%`,
-                          background: PLAZO_COLORS[b.horizonte] || "#5dc72d",
-                        }}
-                      />
-                    </div>
-                    <span className={style.barPct}>{b.progreso}%</span>
-                  </div>
-                ))}
+              <div className={style.candleScroll}>
+                {(() => {
+                  const LEFT = 32; // espacio para las etiquetas del eje Y (%)
+                  const COL = 54; // ancho por meta
+                  const BODY = 20; // ancho del cuerpo de la vela
+                  const TOP = 14;
+                  const PLOT = 166;
+                  const H = 214;
+                  const W = LEFT + barrasAvance.length * COL;
+                  const yVal = (pct) => TOP + PLOT * (1 - pct / 100);
+                  return (
+                    <svg
+                      className={style.candleSvg}
+                      width={W}
+                      height={H}
+                      viewBox={`0 0 ${W} ${H}`}
+                      role="img"
+                    >
+                      {/* Grilla + eje Y en % */}
+                      {[0, 25, 50, 75, 100].map((pct) => (
+                        <g key={pct}>
+                          <line
+                            x1={LEFT}
+                            x2={W}
+                            y1={yVal(pct)}
+                            y2={yVal(pct)}
+                            stroke="var(--border-color)"
+                            strokeWidth="1"
+                            opacity="0.4"
+                          />
+                          <text
+                            x={LEFT - 6}
+                            y={yVal(pct) + 3}
+                            textAnchor="end"
+                            className={style.candleAxis}
+                          >
+                            {pct}%
+                          </text>
+                        </g>
+                      ))}
+                      {/* Velas: mecha = rango hasta 100%, cuerpo = avance */}
+                      {barrasAvance.map((b, i) => {
+                        const color = PLAZO_COLORS[b.horizonte] || "#5dc72d";
+                        const cx = LEFT + i * COL + COL / 2;
+                        const bodyTop = yVal(b.progreso);
+                        const bodyH = Math.max(3, yVal(0) - bodyTop);
+                        const label =
+                          b.titulo.length > 10 ? `${b.titulo.slice(0, 9)}…` : b.titulo;
+                        return (
+                          <g key={b.id}>
+                            <title>{`${b.titulo} · ${b.progreso}%`}</title>
+                            {/* Mecha: rango completo (0–100%) tenue */}
+                            <line
+                              x1={cx}
+                              x2={cx}
+                              y1={yVal(100)}
+                              y2={yVal(0)}
+                              stroke={color}
+                              strokeWidth="2"
+                              opacity="0.3"
+                            />
+                            {/* Cuerpo: avance */}
+                            <rect
+                              x={cx - BODY / 2}
+                              y={bodyTop}
+                              width={BODY}
+                              height={bodyH}
+                              rx="3"
+                              fill={color}
+                            />
+                            <text
+                              x={cx}
+                              y={H - 6}
+                              textAnchor="middle"
+                              className={style.candleLabelText}
+                            >
+                              {label}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  );
+                })()}
               </div>
             )}
           </article>
