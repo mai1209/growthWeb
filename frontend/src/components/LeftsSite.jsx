@@ -225,7 +225,23 @@ function LeftSite({
                   </div>
                 </div>
 
-                <p className={style.ccBalance}>{hideableMoney(historicalSummary.total)}</p>
+                {(() => {
+                  // El monto se achica según su largo para que siempre entre en una línea.
+                  const saldoStr = hideableMoney(historicalSummary.total);
+                  const saldoSize =
+                    saldoStr.length > 17
+                      ? "1.35rem"
+                      : saldoStr.length > 14
+                      ? "1.65rem"
+                      : saldoStr.length > 11
+                      ? "2rem"
+                      : "2.4rem";
+                  return (
+                    <p className={style.ccBalance} style={{ fontSize: saldoSize }}>
+                      {saldoStr}
+                    </p>
+                  );
+                })()}
 
                 <div className={style.ccFooter}>
                   <span className={style.statusPill}>{monthResultLabel}</span>
