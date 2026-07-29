@@ -945,11 +945,11 @@ function MetasPage({ activeWorkspace }) {
               <div className={style.candleScroll}>
                 {(() => {
                   const LEFT = 32; // espacio para las etiquetas del eje Y (%)
-                  const COL = 54; // ancho por meta
-                  const BODY = 20; // ancho del cuerpo de la vela
-                  const TOP = 14;
-                  const PLOT = 166;
-                  const H = 214;
+                  const COL = 92; // ancho por meta (más aire para el texto)
+                  const BODY = 22; // ancho del cuerpo de la vela
+                  const TOP = 12;
+                  const PLOT = 150;
+                  const H = 210;
                   const W = LEFT + barrasAvance.length * COL;
                   const yVal = (pct) => TOP + PLOT * (1 - pct / 100);
                   return (
@@ -988,8 +988,15 @@ function MetasPage({ activeWorkspace }) {
                         const cx = LEFT + i * COL + COL / 2;
                         const bodyTop = yVal(b.progreso);
                         const bodyH = Math.max(3, yVal(0) - bodyTop);
-                        const label =
-                          b.titulo.length > 10 ? `${b.titulo.slice(0, 9)}…` : b.titulo;
+                        // Partimos el título en hasta 2 líneas para que entre debajo de la vela.
+                        const palabras = b.titulo.split(" ");
+                        let l1 = "";
+                        let l2 = "";
+                        palabras.forEach((w) => {
+                          if (!l2 && `${l1} ${w}`.trim().length <= 13) l1 = `${l1} ${w}`.trim();
+                          else l2 = `${l2} ${w}`.trim();
+                        });
+                        if (l2.length > 13) l2 = `${l2.slice(0, 12)}…`;
                         return (
                           <g key={b.id}>
                             <title>{`${b.titulo} · ${b.progreso}%`}</title>
@@ -1014,12 +1021,22 @@ function MetasPage({ activeWorkspace }) {
                             />
                             <text
                               x={cx}
-                              y={H - 6}
+                              y={H - 18}
                               textAnchor="middle"
                               className={style.candleLabelText}
                             >
-                              {label}
+                              {l1}
                             </text>
+                            {l2 ? (
+                              <text
+                                x={cx}
+                                y={H - 6}
+                                textAnchor="middle"
+                                className={style.candleLabelText}
+                              >
+                                {l2}
+                              </text>
+                            ) : null}
                           </g>
                         );
                       })}
