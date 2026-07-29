@@ -29,6 +29,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import { authService, googleService, fiscalService } from "../api";
+import PhotoCropper from "./PhotoCropper";
 import style from "../style/Settings.module.css";
 
 const TAB_META = {
@@ -136,6 +137,8 @@ function SettingsPage() {
   const [editingProfile, setEditingProfile] = useState(false);
   // Chequeo en vivo de disponibilidad del @usuario.
   const [usernameCheck, setUsernameCheck] = useState({ status: "idle" });
+  // Imagen elegida a la espera de ajustarse (recorte de la foto de perfil).
+  const [cropSrc, setCropSrc] = useState(null);
   const [google, setGoogle] = useState({
     connected: false,
     email: "",
@@ -389,6 +392,22 @@ function SettingsPage() {
   const handleUsernameChange = (value) => {
     const clean = value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20);
     setProfile((prev) => ({ ...prev, username: clean }));
+  };
+
+  // Foto de perfil: primero se abre el ajustador (mover + zoom) y recién al
+  // confirmar se guarda recortada.
+  const handlePickPhoto = async (file) => {
+    if (!file) return;
+    if (!file.type?.startsWith("image/")) {
+      setError("Elegí un archivo de imagen.");
+      return;
+    }
+    try {
+      const dataUrl = await fileToDataUrl(file, 1200, 1200);
+      setCropSrc(dataUrl);
+    } catch {
+      setError("No se pudo procesar la imagen.");
+    }
   };
 
   // Sube una imagen desde los archivos (Finder). La convertimos a data URL
@@ -885,14 +904,10 @@ function SettingsPage() {
                               <input
                                 type="file"
                                 accept="image/*"
-                                onChange={(event) =>
-                                  handleImageFile(
-                                    "profilePhotoUrl",
-                                    event.target.files?.[0],
-                                    512,
-                                    512
-                                  )
-                                }
+                                onChange={(event) => {
+                                  handlePickPhoto(event.target.files?.[0]);
+                                  event.target.value = "";
+                                }}
                                 hidden
                               />
                             </label>
@@ -1675,6 +1690,17 @@ function SettingsPage() {
             </div>
           ) : null}
         </div>
+      ) : null}
+
+      {cropSrc ? (
+        <PhotoCropper
+          src={cropSrc}
+          onCancel={() => setCropSrc(null)}
+          onSave={(dataUrl) => {
+            handleProfileChange("profilePhotoUrl", dataUrl);
+            setCropSrc(null);
+          }}
+        />
       ) : null}
 
       {showNewProfile ? (
