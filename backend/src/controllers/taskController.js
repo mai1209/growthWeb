@@ -34,11 +34,23 @@ const normalizeTipo = (value) => (TIPOS_VALIDOS.includes(value) ? value : "task"
 
 const normalizeItems = (value) =>
   Array.isArray(value)
-    ? value.map((it, index) => ({
-        id: String(it?.id ?? index),
-        text: typeof it?.text === "string" ? it.text : "",
-        done: Boolean(it?.done),
-      }))
+    ? value.map((it, index) => {
+        // Precio unitario opcional (null si no tiene) y cantidad (>=1). Se
+        // preservan para que la lista de compras no pierda los precios al guardar.
+        const precioNum =
+          it?.precio == null || it.precio === "" ? null : Number(it.precio);
+        const precio = Number.isFinite(precioNum) ? precioNum : null;
+        const cantidadNum = Number(it?.cantidad);
+        const cantidad =
+          Number.isFinite(cantidadNum) && cantidadNum > 0 ? cantidadNum : 1;
+        return {
+          id: String(it?.id ?? index),
+          text: typeof it?.text === "string" ? it.text : "",
+          done: Boolean(it?.done),
+          precio,
+          cantidad,
+        };
+      })
     : [];
 
 const normalizeTaskDate = (value) => {
