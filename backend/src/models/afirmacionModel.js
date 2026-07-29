@@ -24,6 +24,12 @@ const afirmacionSchema = new mongoose.Schema(
       type: [Number],
       default: [],
     },
+    // Día (local) al que pertenecen las resaltadas. Si el cliente pide un día
+    // distinto (más nuevo), las resaltadas se apagan solas.
+    fechaResaltadas: {
+      type: String,
+      default: "",
+    },
     // Si está en true las afirmaciones se mantienen día a día (por defecto).
     // En false cada día arranca vacío.
     repetirDiario: {

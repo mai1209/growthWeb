@@ -53,6 +53,18 @@ const obtenerDoc = async (userId) => {
 const aplicarCambioDeDia = async (doc, fecha) => {
   if (!esFecha(fecha)) return doc;
 
+  // Las afirmaciones resaltadas (verde) son del día: al cruzar a un día nuevo
+  // se apagan solas, independientemente de "guardar al día siguiente".
+  let resaltadasCambio = false;
+  if (!doc.fechaResaltadas) {
+    doc.fechaResaltadas = fecha;
+    resaltadasCambio = true;
+  } else if (doc.fechaResaltadas < fecha) {
+    doc.resaltadas = [];
+    doc.fechaResaltadas = fecha;
+    resaltadasCambio = true;
+  }
+
   // Documentos viejos (o recién creados): sólo marcamos a qué día pertenecen.
   if (!doc.fechaLineas) {
     doc.fechaLineas = fecha;
@@ -60,10 +72,16 @@ const aplicarCambioDeDia = async (doc, fecha) => {
     return doc;
   }
 
-  if (doc.repetirDiario !== false) return doc; // se mantienen: nada que hacer
+  if (doc.repetirDiario !== false) {
+    if (resaltadasCambio) await doc.save();
+    return doc; // los renglones se mantienen: nada más que hacer
+  }
   // Comparación de strings YYYY-MM-DD. Si fechaLineas no quedó atrás (mismo día,
   // o reloj del cliente hacia atrás) no tocamos nada: nunca borrar de más.
-  if (doc.fechaLineas >= fecha) return doc;
+  if (doc.fechaLineas >= fecha) {
+    if (resaltadasCambio) await doc.save();
+    return doc;
+  }
 
   const teniaContenido = doc.lineas.some((linea) => String(linea || "").trim());
   if (teniaContenido) {
@@ -119,11 +137,13 @@ export const updateAfirmaciones = async (req, res) => {
       doc.repetirDiario = req.body.repetirDiario;
     }
 
-    // Renglones resaltados (índices). Se sincroniza entre web y app.
+    // Renglones resaltados (índices). Se sincroniza entre web y app y son del día:
+    // al guardarlos quedan estampados con la fecha actual.
     if (Array.isArray(req.body.resaltadas)) {
       doc.resaltadas = req.body.resaltadas
         .map((n) => Number(n))
         .filter((n) => Number.isInteger(n) && n >= 0);
+      if (esFecha(fecha)) doc.fechaResaltadas = fecha;
     }
 
     // Recordatorio diario { activo, hora "HH:MM" } — lo usa la app para
