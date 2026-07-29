@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import Svg, { Rect, Line, G, Text as SvgText } from "react-native-svg";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useFocusEffect } from "@react-navigation/native";
 import { metaService } from "../api";
@@ -950,22 +951,104 @@ export default function MetasScreen() {
           {chartsOpen && barrasAvance.length > 0 ? (
             <View style={styles.box}>
               <Text style={styles.boxLabel}>AVANCE DE TUS METAS ACTIVAS</Text>
-              {barrasAvance.map((b) => (
-                <View key={b.id} style={styles.barRow}>
-                  <Text style={styles.barNombre} numberOfLines={1}>
-                    {b.titulo}
-                  </Text>
-                  <View style={styles.barTrack}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        { width: `${b.progreso}%`, backgroundColor: PLAZO_COLORS[b.horizonte] },
-                      ]}
-                    />
-                  </View>
-                  <Text style={styles.barPct}>{b.progreso}%</Text>
-                </View>
-              ))}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingVertical: 6 }}
+              >
+                {(() => {
+                  const LEFT = 30;
+                  const COL = 80;
+                  const BODY = 22;
+                  const TOP = 12;
+                  const PLOT = 140;
+                  const H = 202;
+                  const W = LEFT + barrasAvance.length * COL;
+                  const yVal = (pct) => TOP + PLOT * (1 - pct / 100);
+                  return (
+                    <Svg width={Math.max(W, 1)} height={H}>
+                      {[0, 25, 50, 75, 100].map((pct) => (
+                        <G key={pct}>
+                          <Line
+                            x1={LEFT}
+                            x2={W}
+                            y1={yVal(pct)}
+                            y2={yVal(pct)}
+                            stroke={colors.cardBorder}
+                            strokeWidth={1}
+                          />
+                          <SvgText
+                            x={LEFT - 5}
+                            y={yVal(pct) + 3}
+                            fontSize={9}
+                            fill={colors.muted}
+                            textAnchor="end"
+                          >
+                            {`${pct}%`}
+                          </SvgText>
+                        </G>
+                      ))}
+                      {barrasAvance.map((b, i) => {
+                        const color = PLAZO_COLORS[b.horizonte] || "#5dc72d";
+                        const cx = LEFT + i * COL + COL / 2;
+                        const bodyTop = yVal(b.progreso);
+                        const bodyH = Math.max(3, yVal(0) - bodyTop);
+                        const palabras = b.titulo.split(" ");
+                        let l1 = "";
+                        let l2 = "";
+                        palabras.forEach((w) => {
+                          if (!l2 && `${l1} ${w}`.trim().length <= 11) l1 = `${l1} ${w}`.trim();
+                          else l2 = `${l2} ${w}`.trim();
+                        });
+                        if (l2.length > 11) l2 = `${l2.slice(0, 10)}…`;
+                        return (
+                          <G key={b.id}>
+                            <Line
+                              x1={cx}
+                              x2={cx}
+                              y1={yVal(100)}
+                              y2={yVal(0)}
+                              stroke={color}
+                              strokeWidth={2}
+                              opacity={0.3}
+                            />
+                            <Rect
+                              x={cx - BODY / 2}
+                              y={bodyTop}
+                              width={BODY}
+                              height={bodyH}
+                              rx={3}
+                              fill={color}
+                            />
+                            <SvgText
+                              x={cx}
+                              y={H - 16}
+                              fontSize={9.5}
+                              fill={colors.muted}
+                              textAnchor="middle"
+                              fontWeight="700"
+                            >
+                              {l1}
+                            </SvgText>
+                            {l2 ? (
+                              <SvgText
+                                x={cx}
+                                y={H - 5}
+                                fontSize={9.5}
+                                fill={colors.muted}
+                                textAnchor="middle"
+                                fontWeight="700"
+                              >
+                                {l2}
+                              </SvgText>
+                            ) : null}
+                          </G>
+                        );
+                      })}
+                    </Svg>
+                  );
+                })()}
+              </ScrollView>
             </View>
           ) : null}
 
