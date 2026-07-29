@@ -409,45 +409,91 @@ function MetricsPage({
             <span className={style.kicker}>Evolución</span>
             <h2>Comparación mensual</h2>
           </div>
-          <p>Ingresos, egresos y ahorro del período.</p>
+          <p>Vela por mes: verde si cerró positivo (ingresos &gt; egresos), roja si negativo.</p>
         </div>
 
-        <div className={style.barChart}>
-          {monthlyBuckets.map((bucket) => (
-            <div key={bucket.key} className={style.monthColumn}>
-              <div className={style.bars}>
-                <span
-                  className={style.incomeBar}
-                  style={{ height: `${Math.max(4, (bucket.ingreso / maxMonthlyAmount) * 100)}%` }}
-                  title={`Ingresos ${formatMoney(bucket.ingreso, currency)}`}
-                />
-                <span
-                  className={style.expenseBar}
-                  style={{ height: `${Math.max(4, (bucket.egreso / maxMonthlyAmount) * 100)}%` }}
-                  title={`Egresos ${formatMoney(bucket.egreso, currency)}`}
-                />
-                <span
-                  className={style.savingsBar}
-                  style={{ height: `${Math.max(4, (bucket.ahorro / maxMonthlyAmount) * 100)}%` }}
-                  title={`Ahorro ${formatMoney(bucket.ahorro, currency)}`}
-                />
+        <div className={style.candleChart}>
+          {monthlyBuckets.length ? (
+            <>
+              <svg
+                className={style.candleSvg}
+                viewBox={`0 0 ${monthlyBuckets.length * 10} 100`}
+                preserveAspectRatio="none"
+                role="img"
+              >
+                {/* Grilla horizontal */}
+                {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+                  <line
+                    key={t}
+                    x1="0"
+                    x2={monthlyBuckets.length * 10}
+                    y1={6 + 88 * t}
+                    y2={6 + 88 * t}
+                    stroke="var(--border-color)"
+                    strokeWidth="1"
+                    vectorEffect="non-scaling-stroke"
+                    opacity="0.5"
+                  />
+                ))}
+                {/* Velas */}
+                {monthlyBuckets.map((bucket, i) => {
+                  const max = maxMonthlyAmount || 1;
+                  const yVal = (v) => 6 + 88 * (1 - v / max);
+                  const open = bucket.egreso;
+                  const close = bucket.ingreso;
+                  const high = Math.max(bucket.ingreso, bucket.egreso, bucket.ahorro);
+                  const low = Math.min(bucket.ingreso, bucket.egreso, bucket.ahorro);
+                  const up = close >= open;
+                  const color = up ? TYPE_COLORS.ingreso : TYPE_COLORS.egreso;
+                  const cx = i * 10 + 5;
+                  const bodyTop = yVal(Math.max(open, close));
+                  const bodyBot = yVal(Math.min(open, close));
+                  return (
+                    <g key={bucket.key}>
+                      <title>
+                        {`${bucket.label} · Ingresos ${formatMoney(bucket.ingreso, currency)} · Egresos ${formatMoney(bucket.egreso, currency)} · Ahorro ${formatMoney(bucket.ahorro, currency)}`}
+                      </title>
+                      <line
+                        x1={cx}
+                        x2={cx}
+                        y1={yVal(high)}
+                        y2={yVal(low)}
+                        stroke={color}
+                        strokeWidth="1.5"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      <rect
+                        x={cx - 2.7}
+                        y={bodyTop}
+                        width="5.4"
+                        height={Math.max(1.5, bodyBot - bodyTop)}
+                        fill={color}
+                        opacity="0.92"
+                      />
+                    </g>
+                  );
+                })}
+              </svg>
+              <div className={style.candleLabels}>
+                {monthlyBuckets.map((bucket) => (
+                  <span key={bucket.key}>{bucket.label}</span>
+                ))}
               </div>
-              <strong>{bucket.label}</strong>
-            </div>
-          ))}
+            </>
+          ) : (
+            <p className={style.candleEmpty}>Sin datos para graficar en este período.</p>
+          )}
         </div>
 
         <div className={style.chartLegendRow}>
-          {[
-            ["Ingresos", TYPE_COLORS.ingreso],
-            ["Egresos", TYPE_COLORS.egreso],
-            ["Ahorro", TYPE_COLORS.ahorro],
-          ].map(([label, color]) => (
-            <span key={label}>
-              <i style={{ background: color }} />
-              {label}
-            </span>
-          ))}
+          <span>
+            <i style={{ background: TYPE_COLORS.ingreso }} />
+            Mes positivo
+          </span>
+          <span>
+            <i style={{ background: TYPE_COLORS.egreso }} />
+            Mes negativo
+          </span>
         </div>
       </section>
 

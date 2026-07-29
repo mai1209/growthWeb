@@ -518,3 +518,41 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================================
+   Gráfico de velas (candlestick) — Comparación mensual
+   ============================================================ */
+.candleChart {
+  margin-top: 0.4rem;
+}
+
+.candleSvg {
+  width: 100%;
+  height: 240px;
+  display: block;
+  overflow: visible;
+}
+
+.candleLabels {
+  display: flex;
+  margin-top: 0.5rem;
+}
+
+.candleLabels span {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: capitalize;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.candleEmpty {
+  color: var(--color-muted);
+  text-align: center;
+  padding: 3rem 0;
+}
