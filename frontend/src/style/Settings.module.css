@@ -1592,3 +1592,73 @@
   width: 16px;
   height: 16px;
 }
+
+/* ============================================================
+   Perfil personal: portada que sube y cubre el encabezado,
+   con el título "Ajustes/Perfil" y el toggle flotando encima.
+   ============================================================ */
+.cardProfile {
+  padding: 0;
+  overflow: hidden;
+}
+
+.cardProfile .profileCard {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.cardProfile .profileBanner {
+  position: relative;
+  height: 220px;
+}
+
+/* Degradé oscuro arriba para que el texto/botones se lean sobre la foto. */
+.cardProfile .profileBanner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.18) 32%,
+    transparent 58%
+  );
+  pointer-events: none;
+}
+
+.profileBannerHead {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem 1.4rem;
+}
+
+.profileBannerTitle .kicker {
+  color: #daffc9;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.profileBannerTitle h2 {
+  margin: 0.2rem 0 0;
+  color: #fff;
+  font-size: 1.45rem;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+}
+
+/* Toggle flotante estilo glass sobre la portada. */
+.cardProfile .viewToggle {
+  background: rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+.cardProfile .viewToggleBtn:not(.viewToggleActive) {
+  color: rgba(255, 255, 255, 0.92);
+}

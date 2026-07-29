@@ -671,6 +671,29 @@ function SettingsPage() {
   };
   const usernameUi = USERNAME_UI[usernameCheck.status] || USERNAME_UI.idle;
 
+  // Toggle Personal / Ver perfiles (se reutiliza flotando sobre la portada en la
+  // vista personal, o en el encabezado normal en la vista negocios).
+  const viewToggle = (
+    <div className={style.viewToggle}>
+      <button
+        type="button"
+        className={`${style.viewToggleBtn} ${perfilView === "personal" ? style.viewToggleActive : ""}`}
+        onClick={() => setPerfilView("personal")}
+      >
+        <FiUser />
+        Personal
+      </button>
+      <button
+        type="button"
+        className={`${style.viewToggleBtn} ${perfilView === "negocios" ? style.viewToggleActive : ""}`}
+        onClick={() => setPerfilView("negocios")}
+      >
+        <FiBriefcase />
+        Ver perfiles{businessProfiles.length ? ` (${businessProfiles.length})` : ""}
+      </button>
+    </div>
+  );
+
   return (
     <section className={style.container}>
  
@@ -693,32 +716,18 @@ function SettingsPage() {
       </div>
 
       {activeTab === "perfil" ? (
-        <div className={style.card}>
-          {/* ===== Título + toggle Personal / Negocios ===== */}
-          <div className={style.businessHeader}>
-            <div>
-              <p className={style.kicker}>Ajustes</p>
-              <h2>Perfil</h2>
+        <div className={`${style.card} ${perfilView === "personal" ? style.cardProfile : ""}`}>
+          {/* En negocios va el encabezado normal; en personal el título + toggle
+              flotan sobre la portada. */}
+          {perfilView !== "personal" ? (
+            <div className={style.businessHeader}>
+              <div>
+                <p className={style.kicker}>Ajustes</p>
+                <h2>Perfil</h2>
+              </div>
+              {viewToggle}
             </div>
-            <div className={style.viewToggle}>
-              <button
-                type="button"
-                className={`${style.viewToggleBtn} ${perfilView === "personal" ? style.viewToggleActive : ""}`}
-                onClick={() => setPerfilView("personal")}
-              >
-                <FiUser />
-                Personal
-              </button>
-              <button
-                type="button"
-                className={`${style.viewToggleBtn} ${perfilView === "negocios" ? style.viewToggleActive : ""}`}
-                onClick={() => setPerfilView("negocios")}
-              >
-                <FiBriefcase />
-                Ver perfiles{businessProfiles.length ? ` (${businessProfiles.length})` : ""}
-              </button>
-            </div>
-          </div>
+          ) : null}
 
           {perfilView === "personal" ? (
             <>
@@ -731,7 +740,16 @@ function SettingsPage() {
                       ? { backgroundImage: `url("${profile.bannerUrl}")` }
                       : undefined
                   }
-                />
+                >
+                  {/* Título "Ajustes / Perfil" + toggle flotando sobre la portada */}
+                  <div className={style.profileBannerHead}>
+                    <div className={style.profileBannerTitle}>
+                      <p className={style.kicker}>Ajustes</p>
+                      <h2>Perfil</h2>
+                    </div>
+                    {viewToggle}
+                  </div>
+                </div>
                 <div className={style.profileTopRow}>
                   <span className={style.profileAvatar}>
                     {profile.profilePhotoUrl ? (
