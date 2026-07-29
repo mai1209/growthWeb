@@ -100,8 +100,8 @@ function MainTabs() {
         })}
       >
         <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Tareas" component={TareasScreen} />
         <Tab.Screen name="Metricas" component={MetricasScreen} options={{ tabBarLabel: "Métricas" }} />
+        <Tab.Screen name="Tareas" component={TareasScreen} />
         <Tab.Screen name="Metas" component={MetasScreen} />
         <Tab.Screen name="Compartidos" component={CompartidosScreen} />
         <Tab.Screen name="Notas" component={NotasScreen} />

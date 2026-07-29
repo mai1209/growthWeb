@@ -16,6 +16,7 @@ import {
   getMovementTypeMeta,
   formatSignedMoney,
   formatMoney,
+  summarizeByType,
   getDayKey,
   formatDayLabel,
 } from "../utils/finance";
@@ -84,18 +85,11 @@ export default function HistoryModal({ visible, movimientos = [], currency = "AR
       });
       const cards = Array.from({ length: 12 }, (_, mo) => {
         const list = byMonth.get(mo) || [];
-        const ingreso = list
-          .filter((x) => x.tipo === "ingreso")
-          .reduce((s, x) => s + (Number(x.monto) || 0), 0);
-        const egreso = list
-          .filter((x) => x.tipo === "egreso" && !x.desdeAhorro)
-          .reduce((s, x) => s + (Number(x.monto) || 0), 0);
         return {
           monthIndex: mo,
           label: new Date(selectedYear, mo, 1).toLocaleDateString("es-AR", { month: "long" }),
           count: list.length,
-          ingreso,
-          egreso,
+          summary: summarizeByType(list),
         };
       });
       return { sections: [], monthCards: cards };
@@ -194,24 +188,58 @@ export default function HistoryModal({ visible, movimientos = [], currency = "AR
               {monthCards.map((c) => (
                 <TouchableOpacity
                   key={c.monthIndex}
-                  style={styles.monthFolder}
-                  onPress={() => setOpenMonth(c.monthIndex)}
-                  activeOpacity={0.85}
+                  style={[styles.monthCard, c.count === 0 && styles.monthCardEmpty]}
+                  onPress={() => c.count > 0 && setOpenMonth(c.monthIndex)}
+                  activeOpacity={c.count > 0 ? 0.85 : 1}
                 >
-                  <Ionicons name="folder-outline" size={22} color={colors.greenDark} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.monthFolderName}>{c.label}</Text>
-                    <Text style={styles.monthFolderSub}>
-                      {c.count} movimiento{c.count === 1 ? "" : "s"}
-                    </Text>
-                  </View>
-                  {c.count > 0 ? (
-                    <View style={styles.monthFolderAmounts}>
-                      <Text style={styles.folderIn}>+{formatMoney(c.ingreso, currency)}</Text>
-                      <Text style={styles.folderOut}>-{formatMoney(c.egreso, currency)}</Text>
+                  <View style={styles.monthCardHead}>
+                    <Text style={styles.monthCardName}>{c.label}</Text>
+                    <View style={styles.monthCardCount}>
+                      <Text style={styles.monthCardCountText}>{c.count}</Text>
                     </View>
-                  ) : null}
-                  <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+                  </View>
+                  <View style={styles.monthCardStats}>
+                    <View style={styles.monthStat}>
+                      <Text style={styles.monthStatLabel}>Ingresos</Text>
+                      <Text style={[styles.monthStatValue, { color: colors.greenDark }]}>
+                        {formatMoney(c.summary.ingreso, currency)}
+                      </Text>
+                    </View>
+                    <View style={styles.monthStat}>
+                      <Text style={styles.monthStatLabel}>Egresos</Text>
+                      <Text style={[styles.monthStatValue, { color: colors.red }]}>
+                        {formatMoney(c.summary.egreso, currency)}
+                      </Text>
+                    </View>
+                    <View style={styles.monthStat}>
+                      <Text style={styles.monthStatLabel}>Ahorro</Text>
+                      <Text style={styles.monthStatValue}>
+                        {formatMoney(c.summary.ahorro, currency)}
+                      </Text>
+                    </View>
+                    <View style={styles.monthStat}>
+                      <Text style={styles.monthStatLabel}>Deuda</Text>
+                      <Text
+                        style={[
+                          styles.monthStatValue,
+                          c.summary.deudaPendiente > 0 && { color: colors.red },
+                        ]}
+                      >
+                        {formatMoney(c.summary.deudaPendiente, currency)}
+                      </Text>
+                    </View>
+                    <View style={styles.monthStat}>
+                      <Text style={styles.monthStatLabel}>Balance</Text>
+                      <Text
+                        style={[
+                          styles.monthStatValue,
+                          { color: c.summary.total >= 0 ? colors.greenDark : colors.red },
+                        ]}
+                      >
+                        {formatMoney(c.summary.total, currency)}
+                      </Text>
+                    </View>
+                  </View>
                 </TouchableOpacity>
               ))}
             </>
@@ -327,6 +355,45 @@ const makeStyles = (colors) =>
     monthFolderAmounts: { alignItems: "flex-end", gap: 2 },
     folderIn: { color: colors.greenDark, fontSize: 12.5, fontWeight: "800", fontVariant: ["tabular-nums"] },
     folderOut: { color: colors.red, fontSize: 12.5, fontWeight: "800", fontVariant: ["tabular-nums"] },
+
+    // Cards de resultados por mes (mismas que la pantalla de Filtros)
+    monthCard: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 16,
+      padding: 14,
+      gap: 12,
+      marginBottom: 10,
+    },
+    monthCardEmpty: { opacity: 0.45 },
+    monthCardHead: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+    },
+    monthCardName: { color: colors.text, fontSize: 16, fontWeight: "800", textTransform: "capitalize" },
+    monthCardCount: {
+      minWidth: 22,
+      height: 20,
+      paddingHorizontal: 6,
+      borderRadius: 999,
+      backgroundColor: colors.cardSoft,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    monthCardCountText: { color: colors.muted, fontSize: 11, fontWeight: "800" },
+    monthCardStats: { flexDirection: "row", flexWrap: "wrap" },
+    monthStat: { width: "50%", paddingVertical: 4, gap: 2 },
+    monthStatLabel: {
+      color: colors.muted,
+      fontSize: 10,
+      fontWeight: "700",
+      textTransform: "uppercase",
+      letterSpacing: 0.3,
+    },
+    monthStatValue: { color: colors.text, fontSize: 14, fontWeight: "800", fontVariant: ["tabular-nums"] },
     backRow: {
       flexDirection: "row",
       alignItems: "center",
