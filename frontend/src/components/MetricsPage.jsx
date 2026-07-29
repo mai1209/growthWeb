@@ -414,72 +414,82 @@ function MetricsPage({
 
         <div className={style.candleChart}>
           {monthlyBuckets.length ? (
-            <>
-              <svg
-                className={style.candleSvg}
-                viewBox={`0 0 ${monthlyBuckets.length * 10} 100`}
-                preserveAspectRatio="none"
-                role="img"
-              >
-                {/* Grilla horizontal */}
-                {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-                  <line
-                    key={t}
-                    x1="0"
-                    x2={monthlyBuckets.length * 10}
-                    y1={6 + 88 * t}
-                    y2={6 + 88 * t}
-                    stroke="var(--border-color)"
-                    strokeWidth="1"
-                    vectorEffect="non-scaling-stroke"
-                    opacity="0.5"
-                  />
-                ))}
-                {/* Velas */}
-                {monthlyBuckets.map((bucket, i) => {
-                  const max = maxMonthlyAmount || 1;
-                  const yVal = (v) => 6 + 88 * (1 - v / max);
-                  const open = bucket.egreso;
-                  const close = bucket.ingreso;
-                  const high = Math.max(bucket.ingreso, bucket.egreso, bucket.ahorro);
-                  const low = Math.min(bucket.ingreso, bucket.egreso, bucket.ahorro);
-                  const up = close >= open;
-                  const color = up ? TYPE_COLORS.ingreso : TYPE_COLORS.egreso;
-                  const cx = i * 10 + 5;
-                  const bodyTop = yVal(Math.max(open, close));
-                  const bodyBot = yVal(Math.min(open, close));
-                  return (
-                    <g key={bucket.key}>
-                      <title>
-                        {`${bucket.label} · Ingresos ${formatMoney(bucket.ingreso, currency)} · Egresos ${formatMoney(bucket.egreso, currency)} · Ahorro ${formatMoney(bucket.ahorro, currency)}`}
-                      </title>
+            <div className={style.candleScroll}>
+              {(() => {
+                const COL = 46; // ancho de columna por vela (px)
+                const BODY = 18; // ancho del cuerpo
+                const TOP = 12;
+                const PLOT = 186; // alto del área de ploteo
+                const H = 236;
+                const W = monthlyBuckets.length * COL;
+                const max = (maxMonthlyAmount || 1) * 1.15; // headroom para que no toque los bordes
+                const yVal = (v) => TOP + PLOT * (1 - v / max);
+                return (
+                  <svg
+                    className={style.candleSvg}
+                    width={W}
+                    height={H}
+                    viewBox={`0 0 ${W} ${H}`}
+                    role="img"
+                  >
+                    {/* Grilla horizontal */}
+                    {[0, 0.25, 0.5, 0.75, 1].map((t) => (
                       <line
-                        x1={cx}
-                        x2={cx}
-                        y1={yVal(high)}
-                        y2={yVal(low)}
-                        stroke={color}
-                        strokeWidth="1.5"
-                        vectorEffect="non-scaling-stroke"
+                        key={t}
+                        x1="0"
+                        x2={W}
+                        y1={TOP + PLOT * t}
+                        y2={TOP + PLOT * t}
+                        stroke="var(--border-color)"
+                        strokeWidth="1"
+                        opacity="0.4"
                       />
-                      <rect
-                        x={cx - 2.7}
-                        y={bodyTop}
-                        width="5.4"
-                        height={Math.max(1.5, bodyBot - bodyTop)}
-                        fill={color}
-                        opacity="0.92"
-                      />
-                    </g>
-                  );
-                })}
-              </svg>
-              <div className={style.candleLabels}>
-                {monthlyBuckets.map((bucket) => (
-                  <span key={bucket.key}>{bucket.label}</span>
-                ))}
-              </div>
-            </>
+                    ))}
+                    {/* Velas */}
+                    {monthlyBuckets.map((bucket, i) => {
+                      const open = bucket.egreso;
+                      const close = bucket.ingreso;
+                      const high = Math.max(bucket.ingreso, bucket.egreso, bucket.ahorro);
+                      const low = Math.min(bucket.ingreso, bucket.egreso, bucket.ahorro, 0);
+                      const up = close >= open;
+                      const color = up ? TYPE_COLORS.ingreso : TYPE_COLORS.egreso;
+                      const cx = i * COL + COL / 2;
+                      const bodyTop = yVal(Math.max(open, close));
+                      const bodyH = Math.max(3, yVal(Math.min(open, close)) - bodyTop);
+                      return (
+                        <g key={bucket.key}>
+                          <title>
+                            {`${bucket.label} · Ingresos ${formatMoney(bucket.ingreso, currency)} · Egresos ${formatMoney(bucket.egreso, currency)} · Ahorro ${formatMoney(bucket.ahorro, currency)}`}
+                          </title>
+                          {/* Mecha */}
+                          <line
+                            x1={cx}
+                            x2={cx}
+                            y1={yVal(high)}
+                            y2={yVal(low)}
+                            stroke={color}
+                            strokeWidth="2"
+                          />
+                          {/* Cuerpo */}
+                          <rect
+                            x={cx - BODY / 2}
+                            y={bodyTop}
+                            width={BODY}
+                            height={bodyH}
+                            rx="3"
+                            fill={color}
+                          />
+                          {/* Etiqueta del mes */}
+                          <text x={cx} y={H - 7} textAnchor="middle" className={style.candleLabelText}>
+                            {bucket.label}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                );
+              })()}
+            </div>
           ) : (
             <p className={style.candleEmpty}>Sin datos para graficar en este período.</p>
           )}
