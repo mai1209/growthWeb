@@ -154,34 +154,82 @@ const DonutChart = ({ title, subtitle, items, emptyLabel }) => {
         <strong>{total ? "100%" : "0%"}</strong>
       </div>
 
-      <div className={style.donutLayout}>
-        <div
-          className={style.donut}
-          style={{ background: buildConicGradient(items) }}
-          aria-label={title}
-        >
-          <div>
-            <strong>{items.filter((item) => item.value > 0).length}</strong>
-            <span>rubros</span>
-          </div>
+      {total ? (
+        <div className={style.donutCandleWrap}>
+          {(() => {
+            const shown = items.filter((item) => item.value > 0);
+            const maxV = Math.max(...shown.map((i) => i.value), 1);
+            const COL = 66;
+            const TOP = 24;
+            const PLOT = 132;
+            const H = 196;
+            const W = shown.length * COL;
+            const yVal = (v) => TOP + PLOT * (1 - v / maxV);
+            return (
+              <svg
+                className={style.donutCandleSvg}
+                width={W}
+                height={H}
+                viewBox={`0 0 ${W} ${H}`}
+                role="img"
+              >
+                {[0, 0.5, 1].map((t) => (
+                  <line
+                    key={t}
+                    x1="0"
+                    x2={W}
+                    y1={TOP + PLOT * t}
+                    y2={TOP + PLOT * t}
+                    stroke="var(--border-color)"
+                    strokeWidth="1"
+                    opacity="0.35"
+                  />
+                ))}
+                {shown.map((item, i) => {
+                  const cx = i * COL + COL / 2;
+                  const bodyTop = yVal(item.value);
+                  const bodyH = Math.max(3, yVal(0) - bodyTop);
+                  const pct = ((item.value / total) * 100).toFixed(1);
+                  const name =
+                    item.label.length > 9 ? `${item.label.slice(0, 8)}…` : item.label;
+                  return (
+                    <g key={item.label}>
+                      <title>{`${item.label} · ${pct}%`}</title>
+                      {/* Mecha tenue hasta el máximo */}
+                      <line
+                        x1={cx}
+                        x2={cx}
+                        y1={yVal(maxV)}
+                        y2={yVal(0)}
+                        stroke={item.color}
+                        strokeWidth="2"
+                        opacity="0.28"
+                      />
+                      {/* Cuerpo */}
+                      <rect
+                        x={cx - 13}
+                        y={bodyTop}
+                        width="26"
+                        height={bodyH}
+                        rx="4"
+                        fill={item.color}
+                      />
+                      <text x={cx} y={bodyTop - 7} textAnchor="middle" className={style.donutCandlePct}>
+                        {pct}%
+                      </text>
+                      <text x={cx} y={H - 7} textAnchor="middle" className={style.donutCandleName}>
+                        {name}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            );
+          })()}
         </div>
-
-        {total ? (
-          <div className={style.legend}>
-            {items
-              .filter((item) => item.value > 0)
-              .map((item) => (
-                <div key={item.label} className={style.legendItem}>
-                  <i style={{ background: item.color }} />
-                  <span>{item.label}</span>
-                  <strong>{((item.value / total) * 100).toFixed(1)}%</strong>
-                </div>
-              ))}
-          </div>
-        ) : (
-          <p className={style.emptyText}>{emptyLabel}</p>
-        )}
-      </div>
+      ) : (
+        <p className={style.emptyText}>{emptyLabel}</p>
+      )}
     </article>
   );
 };
