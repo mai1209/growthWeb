@@ -70,17 +70,17 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
+/* Activo estilo "barra lateral": barra verde a la izquierda + tinte suave +
+   ícono y texto verdes (en vez del bloque verde relleno). */
 .activeLink {
-  background: #5dc72d;
-  color: #0e1a0e !important;
-  box-shadow: 0 8px 18px rgba(40, 120, 30, 0.28);
+  background: rgba(93, 199, 45, 0.12);
+  color: #5dc72d !important;
+  box-shadow: inset 3px 0 0 #5dc72d;
 }
 
-/* Hover del item activo: mantener el verde (un tono más claro) en vez del
-   overlay gris que dejaba el texto oscuro sobre fondo oscuro. */
 .activeLink:hover {
-  background: #6bd83d;
-  color: #0e1a0e !important;
+  background: rgba(93, 199, 45, 0.18);
+  color: #5dc72d !important;
 }
 
 .navIcon {
@@ -577,16 +577,16 @@
   color: var(--color-text);
 }
 
+/* Activo estilo "barra lateral" (colapsado: tinte + ícono verde; la barra
+   lateral se agrega sólo en el rail expandido, ver más abajo). */
 .railLinkActive {
-  background: #5dc72d;
-  color: #0e1a0e !important;
-  box-shadow: 0 8px 18px rgba(40, 120, 30, 0.28);
+  background: rgba(93, 199, 45, 0.14);
+  color: #5dc72d !important;
 }
 
-/* Hover del item activo: seguir verde (no el overlay gris que lo ennegrecía). */
 .railLinkActive:hover {
-  background: #6bd83d;
-  color: #0e1a0e !important;
+  background: rgba(93, 199, 45, 0.2);
+  color: #5dc72d !important;
 }
 
 .railLink :global(svg) {
@@ -840,6 +840,11 @@
 /* Íconos de los items un poco más chicos en el rail expandido. */
 .railExpanded .railLink :global(svg) {
   font-size: 1.02rem;
+}
+
+/* En el rail expandido (fila horizontal) el activo suma la barra a la izquierda. */
+.railExpanded .railLinkActive {
+  box-shadow: inset 3px 0 0 #5dc72d;
 }
 
 /* Ítems un pelín más compactos para que entren los grupos. */
