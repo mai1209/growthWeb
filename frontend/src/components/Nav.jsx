@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
-import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiMoon, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiHeart, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers } from "react-icons/fi";
+import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiWatch, FiMoon, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiHeart, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers } from "react-icons/fi";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { authService } from "../api";
@@ -37,7 +37,7 @@ const NAV_GROUPS = [
     title: "Co-working",
     icon: <FiUsers className={style.navGroupIcon} />,
     items: [
-      { to: "/pomodoro?panel=tracker", label: "Registro de horas", icon: <FiClock className={style.navIcon} /> },
+      { to: "/pomodoro?panel=tracker", label: "Registro de horas", icon: <FiWatch className={style.navIcon} /> },
     ],
   },
 ];
@@ -47,8 +47,6 @@ const NAV_STANDALONE = [
   { to: "/ajustes", label: "Ajustes", icon: <FiSettings className={style.navIcon} /> },
   { to: "/apoyar", label: "Apoyar", icon: <FiHeart className={style.navIcon} /> },
 ];
-
-const NAV_FLAT = [...NAV_GROUPS.flatMap((g) => g.items), ...NAV_STANDALONE];
 
 // Acento del avatar según el color de tarjeta elegido (solo decorativo; el resto sigue verde)
 const CARD_ACCENTS = {
@@ -97,6 +95,8 @@ function Nav({
       else next.add(id);
       return next;
     });
+  // Rail colapsado: acordeón de un solo grupo. undefined = auto (abre el grupo activo).
+  const [railOpenGroup, setRailOpenGroup] = useState(undefined);
   useEffect(() => {
     const update = () => setCardAccent(readCardAccent());
     window.addEventListener("gw-card-style", update);
@@ -254,12 +254,41 @@ function Nav({
     );
   };
 
+  // Grupo que contiene la sección activa (para auto-abrirlo en el rail colapsado).
+  const activeGroupId = NAV_GROUPS.find((g) => g.items.some((it) => isItemActive(it.to)))?.id;
+  const railOpen = railOpenGroup === undefined ? activeGroupId : railOpenGroup;
+
   // --- COMPONENTES INTERNOS PARA EVITAR REPETICIÓN ---
   const NavItems = ({ rail = false } = {}) => {
-    // Rail colapsado = sólo íconos, planos (sin títulos de grupo).
     const grouped = !rail || railExpanded;
+    // Rail colapsado: sólo el ícono de cada grupo; al hacer click se despliegan
+    // los íconos de sus items (sin texto, con tooltip al pasar el mouse).
     if (!grouped) {
-      return <>{NAV_FLAT.map((item) => renderLink(item, rail))}</>;
+      return (
+        <>
+          {NAV_GROUPS.map((group) => {
+            const open = railOpen === group.id;
+            const groupActive = group.items.some((it) => isItemActive(it.to));
+            return (
+              <div key={group.id} className={style.railGroup}>
+                <button
+                  type="button"
+                  className={`${style.railLink} ${style.railGroupBtn} ${
+                    open ? style.railGroupBtnOpen : ""
+                  } ${groupActive ? style.railGroupBtnActive : ""}`}
+                  onClick={() => setRailOpenGroup(open ? null : group.id)}
+                  aria-expanded={open}
+                >
+                  {group.icon}
+                  <span className={style.tip}>{group.title}</span>
+                </button>
+                {open && group.items.map((item) => renderLink(item, true))}
+              </div>
+            );
+          })}
+          {NAV_STANDALONE.map((item) => renderLink(item, true))}
+        </>
+      );
     }
     return (
       <>
