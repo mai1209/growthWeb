@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { NavigationContainer, DefaultTheme, DarkTheme, useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -23,6 +23,22 @@ import NotasScreen from "./src/screens/NotasScreen";
 import PomodoroScreen from "./src/screens/PomodoroScreen";
 import AjustesScreen from "./src/screens/AjustesScreen";
 import PerfilScreen from "./src/screens/PerfilScreen";
+import UpdateModal from "./src/components/UpdateModal";
+import { appService } from "./src/api";
+import { APP_VERSION } from "./src/config";
+
+// Compara versiones "1.0.11" vs "1.0.12": true si `a` es más vieja que `b`.
+const isOlderVersion = (a, b) => {
+  const pa = String(a || "").split(".").map((n) => Number(n) || 0);
+  const pb = String(b || "").split(".").map((n) => Number(n) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const x = pa[i] || 0;
+    const y = pb[i] || 0;
+    if (x < y) return true;
+    if (x > y) return false;
+  }
+  return false;
+};
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -120,6 +136,24 @@ function MainTabs() {
 function Routes() {
   const { token, ready } = useAuth();
   const { colors } = useTheme();
+  const [updateInfo, setUpdateInfo] = useState(null);
+
+  // Al abrir (logueado), chequea si hay una versión más nueva y avisa.
+  useEffect(() => {
+    if (!token) return undefined;
+    let alive = true;
+    appService
+      .version()
+      .then((res) => {
+        if (alive && res.data && isOlderVersion(APP_VERSION, res.data.latest)) {
+          setUpdateInfo(res.data);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [token]);
 
   if (!ready) {
     return (
@@ -130,17 +164,25 @@ function Routes() {
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {token ? (
-        <>
-          <Stack.Screen name="Main" component={MainTabs} />
-          <Stack.Screen name="Ajustes" component={AjustesScreen} />
-          <Stack.Screen name="Perfil" component={PerfilScreen} />
-        </>
-      ) : (
-        <Stack.Screen name="Login" component={LoginScreen} />
-      )}
-    </Stack.Navigator>
+    <>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {token ? (
+          <>
+            <Stack.Screen name="Main" component={MainTabs} />
+            <Stack.Screen name="Ajustes" component={AjustesScreen} />
+            <Stack.Screen name="Perfil" component={PerfilScreen} />
+          </>
+        ) : (
+          <Stack.Screen name="Login" component={LoginScreen} />
+        )}
+      </Stack.Navigator>
+
+      <UpdateModal
+        visible={Boolean(updateInfo)}
+        info={updateInfo}
+        onClose={() => setUpdateInfo(null)}
+      />
+    </>
   );
 }
 

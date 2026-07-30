@@ -16,6 +16,7 @@ import projectRoutes from "./src/routes/projectRoutes.js";
 import afirmacionRoutes from "./src/routes/afirmacionRoutes.js";
 import metaRoutes from "./src/routes/metaRoutes.js";
 import journalRoutes from "./src/routes/journalRoutes.js";
+import appVersionRoutes from "./src/routes/appVersionRoutes.js";
 
 dotenv.config();
 
@@ -157,6 +158,7 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/afirmaciones", afirmacionRoutes);
 app.use("/api/metas", metaRoutes);
 app.use("/api/journal", journalRoutes);
+app.use("/api/app-version", appVersionRoutes);
 
 // Rutas de Google montadas de forma perezosa: si el módulo (o sus paquetes)
 // no carga en el entorno serverless, el resto de la API sigue funcionando.

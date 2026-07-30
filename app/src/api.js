@@ -51,6 +51,11 @@ export const authService = {
   deleteAccount: () => api.delete("/api/auth/account"),
 };
 
+// Info de versión para el aviso de actualización (endpoint público).
+export const appService = {
+  version: () => api.get("/api/app-version"),
+};
+
 export const googleService = {
   getStatus: () => api.get("/api/google/status"),
   getAuthUrl: () => api.get("/api/google/auth"),
