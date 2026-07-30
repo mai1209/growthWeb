@@ -70,17 +70,17 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* Activo estilo "barra lateral": barra a la izquierda + tinte suave + ícono y
-   texto en el color del selector (#EB3223). */
+/* Activo estilo "barra lateral": barra + tinte en naranja (#CF522A); el ícono
+   y el texto quedan en su color normal (no se tiñen). */
 .activeLink {
-  background: rgba(235, 50, 35, 0.12);
-  color: #eb3223 !important;
-  box-shadow: inset 3px 0 0 #eb3223;
+  background: rgba(207, 82, 42, 0.14);
+  color: var(--color-text);
+  box-shadow: inset 3px 0 0 #cf522a;
 }
 
 .activeLink:hover {
-  background: rgba(235, 50, 35, 0.18);
-  color: #eb3223 !important;
+  background: rgba(207, 82, 42, 0.2);
+  color: var(--color-text);
 }
 
 .navIcon {
@@ -583,17 +583,17 @@
   color: var(--color-text);
 }
 
-/* Activo estilo "barra lateral": tinte + ícono + barra en el color del selector
-   (#EB3223), tanto en el rail cerrado como en el expandido. */
+/* Activo estilo "barra lateral": barra + tinte naranja (#CF522A); el ícono y el
+   texto quedan en su color normal. Vale para rail cerrado y expandido. */
 .railLinkActive {
-  background: rgba(235, 50, 35, 0.14);
-  color: #eb3223 !important;
-  box-shadow: inset 3px 0 0 #eb3223;
+  background: rgba(207, 82, 42, 0.14);
+  color: var(--color-text);
+  box-shadow: inset 3px 0 0 #cf522a;
 }
 
 .railLinkActive:hover {
-  background: rgba(235, 50, 35, 0.2);
-  color: #eb3223 !important;
+  background: rgba(207, 82, 42, 0.22);
+  color: var(--color-text);
 }
 
 .railLink :global(svg) {
@@ -628,12 +628,9 @@
 }
 
 .railActionActive {
-  background: rgba(235, 50, 35, 0.14);
-  color: #eb3223 !important;
-}
-
-.railActionActive :global(svg) {
-  color: #eb3223;
+  background: rgba(207, 82, 42, 0.14);
+  color: var(--color-text);
+  box-shadow: inset 3px 0 0 #cf522a;
 }
 
 .railAction {
