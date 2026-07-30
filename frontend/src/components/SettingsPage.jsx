@@ -1735,10 +1735,10 @@ function SettingsPage() {
           src={cropSrc}
           title={cropTarget === "banner" ? "Ajustá tu portada" : "Ajustá tu foto"}
           round={cropTarget !== "banner"}
-          viewportW={cropTarget === "banner" ? 330 : 260}
-          viewportH={cropTarget === "banner" ? 110 : 260}
-          outputW={cropTarget === "banner" ? 1280 : 512}
-          outputH={cropTarget === "banner" ? 427 : 512}
+          viewportW={cropTarget === "banner" ? 288 : 260}
+          viewportH={cropTarget === "banner" ? 96 : 260}
+          outputW={cropTarget === "banner" ? 1200 : 512}
+          outputH={cropTarget === "banner" ? 400 : 512}
           onCancel={() => setCropSrc(null)}
           onSave={(dataUrl) => {
             handleProfileChange(cropTarget === "banner" ? "bannerUrl" : "profilePhotoUrl", dataUrl);

@@ -14,8 +14,9 @@
   gap: 1rem;
   justify-items: center;
   width: 100%;
-  max-width: 340px;
+  max-width: 360px;
   padding: 1.4rem;
+  box-sizing: border-box;
   border: 1px solid var(--border-color);
   border-radius: 20px;
   background: var(--surface-card-strong, var(--surface-card));
