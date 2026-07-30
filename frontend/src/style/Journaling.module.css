@@ -1141,3 +1141,16 @@
 .metricasDiaCara {
   font-size: 0.95rem;
 }
+
+/* En pantallas chicas, si algo del journaling se pasa de ancho, se puede
+   deslizar en horizontal (en vez de quedar cortado e inclickeable). */
+@media (max-width: 760px) {
+  .wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+  .cols {
+    min-width: 0;
+  }
+}
