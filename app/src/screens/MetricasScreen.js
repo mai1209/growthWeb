@@ -127,7 +127,7 @@ export default function MetricasScreen() {
     fetchData();
   }, [fetchData]);
 
-  const { summary, typeItems, expenseCats, incomeCats } = useMemo(() => {
+  const { summary, typeItems, expenseCats, incomeCats, monthlyBuckets } = useMemo(() => {
     const { from, to } = getPeriodRange(period);
     const periodMovs = filterMovimientosByCurrency(movimientos, currency, { from, to });
     const sum = summarizeByType(periodMovs);
@@ -156,11 +156,31 @@ export default function MetricasScreen() {
         }));
     };
 
+    // Buckets por mes (para el gráfico de velas de "Comparación mensual").
+    const byMonth = new Map();
+    periodMovs.forEach((m) => {
+      const d = new Date(m.fecha);
+      if (Number.isNaN(d.getTime())) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`;
+      if (!byMonth.has(key)) {
+        byMonth.set(key, { key, date: new Date(d.getFullYear(), d.getMonth(), 1), movs: [] });
+      }
+      byMonth.get(key).movs.push(m);
+    });
+    const buckets = [...byMonth.values()]
+      .sort((a, b) => a.date - b.date)
+      .map((b) => ({
+        key: b.key,
+        label: b.date.toLocaleDateString("es-AR", { month: "short" }),
+        summary: summarizeByType(b.movs),
+      }));
+
     return {
       summary: sum,
       typeItems: types,
       expenseCats: groupBy("egreso"),
       incomeCats: groupBy("ingreso"),
+      monthlyBuckets: buckets,
     };
   }, [movimientos, currency, period]);
 
@@ -339,10 +359,114 @@ export default function MetricasScreen() {
             ))}
           </ScrollView>
 
-          {/* Donuts */}
+          {/* Velas por tipo / categoría */}
           {renderChart("Distribución por tipo", typeItems, "Sin datos en este período.")}
           {renderChart("Egresos por categoría", expenseCats, "Sin egresos en este período.")}
           {renderChart("Ingresos por categoría", incomeCats, "Sin ingresos en este período.")}
+
+          {/* Comparación mensual (velas verde/roja por mes) */}
+          <Text style={styles.sectionTitle}>Comparación mensual</Text>
+          <View style={styles.card}>
+            {monthlyBuckets.length ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingVertical: 6, minWidth: "100%", justifyContent: "center" }}
+              >
+                {(() => {
+                  const COL = 54;
+                  const BODY = 20;
+                  const TOP = 12;
+                  const PLOT = 150;
+                  const H = 190;
+                  const W = monthlyBuckets.length * COL;
+                  const max =
+                    Math.max(
+                      1,
+                      ...monthlyBuckets.flatMap((b) => [
+                        b.summary.ingreso,
+                        b.summary.egreso,
+                        b.summary.ahorro,
+                      ])
+                    ) * 1.15;
+                  const yVal = (v) => TOP + PLOT * (1 - v / max);
+                  return (
+                    <Svg width={Math.max(W, 1)} height={H}>
+                      {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+                        <Line
+                          key={t}
+                          x1={0}
+                          x2={W}
+                          y1={TOP + PLOT * t}
+                          y2={TOP + PLOT * t}
+                          stroke={colors.cardBorder}
+                          strokeWidth={1}
+                          opacity={0.4}
+                        />
+                      ))}
+                      {monthlyBuckets.map((b, i) => {
+                        const open = b.summary.egreso;
+                        const close = b.summary.ingreso;
+                        const high = Math.max(b.summary.ingreso, b.summary.egreso, b.summary.ahorro);
+                        const low = Math.min(
+                          b.summary.ingreso,
+                          b.summary.egreso,
+                          b.summary.ahorro,
+                          0
+                        );
+                        const up = close >= open;
+                        const color = up ? TYPE_COLORS.ingreso : TYPE_COLORS.egreso;
+                        const cx = i * COL + COL / 2;
+                        const bodyTop = yVal(Math.max(open, close));
+                        const bodyH = Math.max(3, yVal(Math.min(open, close)) - bodyTop);
+                        return (
+                          <G key={b.key}>
+                            <Line x1={cx} x2={cx} y1={yVal(high)} y2={yVal(low)} stroke={color} strokeWidth={2} />
+                            <Rect x={cx - BODY / 2} y={bodyTop} width={BODY} height={bodyH} rx={3} fill={color} />
+                            <SvgText
+                              x={cx}
+                              y={H - 6}
+                              fontSize={9.5}
+                              fill={colors.muted}
+                              textAnchor="middle"
+                              fontWeight="700"
+                            >
+                              {b.label}
+                            </SvgText>
+                          </G>
+                        );
+                      })}
+                    </Svg>
+                  );
+                })()}
+              </ScrollView>
+            ) : (
+              <Text style={styles.muted}>Sin datos para graficar en este período.</Text>
+            )}
+          </View>
+
+          {/* Ranking: categorías con mayor egreso (donut) */}
+          <Text style={styles.sectionTitle}>Categorías con mayor egreso</Text>
+          <View style={styles.card}>
+            {expenseCats.length ? (
+              <View style={styles.chartLayout}>
+                <Donut items={expenseCats} colors={colors} />
+                <View style={styles.legend}>
+                  {expenseCats.map((it) => (
+                    <View key={it.label} style={styles.legendItem}>
+                      <View style={[styles.legendDot, { backgroundColor: it.color }]} />
+                      <Text style={[styles.legendLabel, { flex: 1 }]} numberOfLines={1}>
+                        {it.label}
+                      </Text>
+                      <Text style={styles.legendPct}>{formatMoney(it.value, currency)}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ) : (
+              <Text style={styles.muted}>No hay egresos en este período.</Text>
+            )}
+          </View>
         </ScrollView>
       )}
     </SafeAreaView>
