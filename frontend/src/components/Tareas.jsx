@@ -1062,11 +1062,11 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
             <div className={style.progressStats}>
               <p className={style.statCompletadas}>
                 <strong>{completedTasksCount}</strong>
-                completadas
+                tareas completadas
               </p>
               <p className={style.statPendientes}>
                 <strong>{pendingTasksCount}</strong>
-                pendientes
+                tareas pendientes
               </p>
             </div>
           </div>

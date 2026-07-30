@@ -273,18 +273,9 @@
 
 .tasksWorkspace {
   display: grid;
-  /* Tareas a la izquierda (ancho), gráfico/progreso a la derecha (angosto). */
-  grid-template-columns: minmax(0, 1fr) minmax(250px, 0.38fr);
+  grid-template-columns: minmax(250px, 0.38fr) minmax(0, 1fr);
   align-items: start;
   gap: 1rem;
-}
-
-.tasksWorkspace .tasksList {
-  order: 1;
-}
-
-.tasksWorkspace .progressCard {
-  order: 2;
 }
 
 .tasksList {
@@ -1634,15 +1625,6 @@
 
   .tasksWorkspace {
     grid-template-columns: 1fr;
-  }
-
-  /* En mobile el resumen/progreso queda arriba y las tareas abajo. */
-  .tasksWorkspace .progressCard {
-    order: 1;
-  }
-
-  .tasksWorkspace .tasksList {
-    order: 2;
   }
 
   .taskMeta {
