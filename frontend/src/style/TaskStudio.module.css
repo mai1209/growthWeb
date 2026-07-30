@@ -1704,11 +1704,28 @@ button.folderChip {
   width: 100%;
 }
 
-.folderSidebar {
-  position: sticky;
-  top: 84px;
+/* Columna izquierda de la vista notas: título "Tus notas" arriba del panel de
+   carpetas, para que quede a la misma altura que "Últimos 30 días" a la derecha. */
+.notesLeftCol {
   flex: 0 0 224px;
   width: 224px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  position: sticky;
+  top: 84px;
+  align-self: flex-start;
+}
+
+.notesSideTitle {
+  padding: 0 0.2rem;
+}
+
+.notesSideTitle .listTitle {
+  margin-top: 0.2rem;
+}
+
+.folderSidebar {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
