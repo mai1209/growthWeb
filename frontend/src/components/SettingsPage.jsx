@@ -100,7 +100,7 @@ const fileToDataUrl = (file, maxW, maxH) =>
     reader.readAsDataURL(file);
   });
 
-function SettingsPage({ theme, onThemeToggle, mode }) {
+function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
   const [searchParams, setSearchParams] = useSearchParams();
   // En /perfil mostramos sólo el panel de perfil; en /ajustes ya no hay perfil.
   const perfilOnly = mode === "perfil";
@@ -236,6 +236,25 @@ function SettingsPage({ theme, onThemeToggle, mode }) {
   })();
   const businessWorkspaceId = (business, index) =>
     index === 0 || business._id === "legacy" ? "business" : `business:${business._id}`;
+
+  // En /perfil mostramos el perfil del workspace activo: si entraste a un
+  // negocio (desde el menú de perfil), se abre ese negocio; si es personal,
+  // la tarjeta personal.
+  const ws = currentWorkspace || activeWorkspace;
+  useEffect(() => {
+    if (!perfilOnly) return;
+    if (ws === "personal") {
+      setPerfilView("personal");
+      setSelectedBusiness(null);
+      return;
+    }
+    const idx = businessProfiles.findIndex((b, i) => businessWorkspaceId(b, i) === ws);
+    if (idx >= 0) {
+      setPerfilView("negocios");
+      setSelectedBusiness(idx);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [perfilOnly, ws, businessProfiles.length]);
 
   useEffect(() => {
     let isMounted = true;
