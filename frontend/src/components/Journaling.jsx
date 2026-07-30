@@ -7,6 +7,7 @@ import {
   FiChevronDown,
   FiChevronLeft,
   FiChevronRight,
+  FiDownload,
   FiEdit2,
   FiFeather,
   FiGrid,
@@ -567,6 +568,105 @@ function Journaling() {
     );
   };
 
+  // ¿Hay al menos una hoja escrita para exportar?
+  const hayPaginasEscritas =
+    historial.some(tieneContenido) || tieneContenido(entrada);
+
+  // Descarga todas las hojas escritas como un PDF tipo libro (una hoja por día).
+  const descargarPDF = async () => {
+    const { jsPDF } = await import("jspdf");
+
+    const paginas = new Map();
+    historial.filter(tieneContenido).forEach((e) => paginas.set(e.fecha, e));
+    if (tieneContenido(entrada)) paginas.set(fecha, { ...entrada, fecha });
+    const hojas = [...paginas.values()].sort((a, b) => a.fecha.localeCompare(b.fecha));
+    if (!hojas.length) return;
+
+    const doc = new jsPDF({ unit: "pt", format: "a5" });
+    const W = doc.internal.pageSize.getWidth();
+    const H = doc.internal.pageSize.getHeight();
+    const M = 46;
+    const maxW = W - M * 2;
+    const fechaCorta = (f) => {
+      const [y, m, d] = f.split("-");
+      return `${d}/${m}/${y}`;
+    };
+
+    // Portada
+    doc.setFont("times", "bold");
+    doc.setFontSize(26);
+    doc.text("Mi Journaling", W / 2, H / 2 - 18, { align: "center" });
+    doc.setFont("times", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(90);
+    const rango =
+      hojas.length > 1
+        ? `${fechaCorta(hojas[0].fecha)}  —  ${fechaCorta(hojas[hojas.length - 1].fecha)}`
+        : fechaCorta(hojas[0].fecha);
+    doc.text(rango, W / 2, H / 2 + 10, { align: "center" });
+    doc.setFontSize(10);
+    doc.text(
+      `${hojas.length} ${hojas.length === 1 ? "hoja" : "hojas"}`,
+      W / 2,
+      H / 2 + 28,
+      { align: "center" }
+    );
+    doc.setTextColor(0);
+
+    hojas.forEach((e) => {
+      doc.addPage();
+      let y = M;
+      const ensure = (space) => {
+        if (y + space > H - M) {
+          doc.addPage();
+          y = M;
+        }
+      };
+      // Fecha
+      doc.setFont("times", "bold");
+      doc.setFontSize(15);
+      doc.text(fechaLarga(e.fecha), M, y);
+      y += 20;
+      doc.setDrawColor(190);
+      doc.line(M, y, W - M, y);
+      y += 18;
+      // Ánimo
+      if (Number(e.animo) > 0) {
+        doc.setFont("times", "italic");
+        doc.setFontSize(11);
+        doc.setTextColor(110);
+        doc.text(`Ánimo: ${ANIMO_LABELS[Number(e.animo)] || ""}`, M, y);
+        doc.setTextColor(0);
+        y += 20;
+      }
+      const preg = preguntasVista(e);
+      const bloque = (titulo, texto) => {
+        if (!String(texto || "").trim()) return;
+        if (titulo) {
+          doc.setFont("times", "bold");
+          doc.setFontSize(11.5);
+          const th = doc.splitTextToSize(titulo, maxW);
+          ensure(th.length * 15 + 20);
+          doc.text(th, M, y);
+          y += th.length * 15 + 3;
+        }
+        doc.setFont("times", "normal");
+        doc.setFontSize(12);
+        doc.splitTextToSize(texto, maxW).forEach((line) => {
+          ensure(16);
+          doc.text(line, M, y);
+          y += 16;
+        });
+        y += 10;
+      };
+      CAMPOS.forEach((p) => bloque(preg[p.campo], e[p.campo]));
+      (e.extras || []).forEach((x) => bloque(x.texto, x.valor));
+      if (e.libre) bloque(null, e.libre);
+    });
+
+    doc.save("mi-journaling.pdf");
+  };
+
   const renderLibro = () => {
     if (libroIdx < 0) {
       return (
@@ -580,6 +680,7 @@ function Journaling() {
     const e = entradas[libroIdx];
 
     return (
+      <>
       <div className={style.libroPage}>
         <div className={style.libroTopControles}>
           {numPagsInternas > 1 ? (
@@ -689,6 +790,16 @@ function Journaling() {
           </button>
         </div>
       </div>
+
+      {hayPaginasEscritas ? (
+        <div className={style.descargarRow}>
+          <button type="button" className={style.descargarBtn} onClick={descargarPDF}>
+            <FiDownload />
+            Descargar como PDF
+          </button>
+        </div>
+      ) : null}
+      </>
     );
   };
 
