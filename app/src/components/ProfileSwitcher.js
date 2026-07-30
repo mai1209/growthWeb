@@ -15,7 +15,8 @@ import { useTheme } from "../theme";
 import { useWorkspace } from "../workspace/WorkspaceContext";
 
 // Avatar circular chico: foto si hay, si no un ícono según el tipo de perfil.
-function ProfileAvatar({ photo, kind, size, colors, active }) {
+// borderColor override (ej: el del nav va negro en vez de verde).
+function ProfileAvatar({ photo, kind, size, colors, active, borderColor }) {
   return (
     <View
       style={{
@@ -26,7 +27,7 @@ function ProfileAvatar({ photo, kind, size, colors, active }) {
         alignItems: "center",
         justifyContent: "center",
         borderWidth: 1.5,
-        borderColor: active ? colors.greenBright : colors.cardBorder,
+        borderColor: borderColor || (active ? colors.greenBright : colors.cardBorder),
         backgroundColor: colors.greenSoft,
       }}
     >
@@ -74,6 +75,7 @@ export default function ProfileSwitcher() {
           size={30}
           colors={colors}
           active
+          borderColor="#000"
         />
         <Ionicons name="chevron-down" size={13} color={colors.muted} />
       </TouchableOpacity>
