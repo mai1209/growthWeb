@@ -572,96 +572,172 @@ function Journaling() {
   const hayPaginasEscritas =
     historial.some(tieneContenido) || tieneContenido(entrada);
 
-  // Descarga todas las hojas escritas como un PDF tipo libro (una hoja por día).
+  // Descarga todas las hojas escritas como un PDF con estilo de libro/diario:
+  // papel crema, renglones, línea de margen coral, marco y portada.
   const descargarPDF = async () => {
     const { jsPDF } = await import("jspdf");
 
-    const paginas = new Map();
-    historial.filter(tieneContenido).forEach((e) => paginas.set(e.fecha, e));
-    if (tieneContenido(entrada)) paginas.set(fecha, { ...entrada, fecha });
-    const hojas = [...paginas.values()].sort((a, b) => a.fecha.localeCompare(b.fecha));
+    const mapa = new Map();
+    historial.filter(tieneContenido).forEach((e) => mapa.set(e.fecha, e));
+    if (tieneContenido(entrada)) mapa.set(fecha, { ...entrada, fecha });
+    const hojas = [...mapa.values()].sort((a, b) => a.fecha.localeCompare(b.fecha));
     if (!hojas.length) return;
 
     const doc = new jsPDF({ unit: "pt", format: "a5" });
     const W = doc.internal.pageSize.getWidth();
     const H = doc.internal.pageSize.getHeight();
-    const M = 46;
-    const maxW = W - M * 2;
+
+    // Paleta "papel"
+    const PAPEL = [250, 245, 233];
+    const MARCO = [205, 178, 138];
+    const MARGEN = [201, 108, 86];
+    const RENGLON = [230, 221, 201];
+    const TINTA = [44, 38, 32];
+    const TINTA_SUAVE = [122, 108, 94];
+    const FECHA_TINTA = [58, 45, 36];
+    const PREGUNTA = [76, 112, 32];
+
+    const PAD = 26;
+    const CX = 54;
+    const CR = W - 40;
+    const maxW = CR - CX;
+    const LH = 19;
+    const rulesTop = 96;
+    const rulesBottom = H - 56;
+
     const fechaCorta = (f) => {
       const [y, m, d] = f.split("-");
       return `${d}/${m}/${y}`;
     };
+    const animoColor = (v) =>
+      v <= 2 ? [201, 108, 86] : v === 3 ? [212, 162, 72] : [124, 162, 72];
 
-    // Portada
+    const fondoHoja = () => {
+      doc.setFillColor(...PAPEL);
+      doc.rect(0, 0, W, H, "F");
+      doc.setDrawColor(...RENGLON);
+      doc.setLineWidth(0.5);
+      for (let yy = rulesTop; yy <= rulesBottom; yy += LH) doc.line(CX - 8, yy, CR, yy);
+      doc.setDrawColor(...MARGEN);
+      doc.setLineWidth(1);
+      doc.line(CX - 14, PAD + 6, CX - 14, H - PAD - 6);
+      doc.setDrawColor(...MARCO);
+      doc.setLineWidth(0.8);
+      doc.rect(PAD, PAD, W - PAD * 2, H - PAD * 2);
+    };
+
+    // ---- Portada ----
+    doc.setFillColor(...PAPEL);
+    doc.rect(0, 0, W, H, "F");
+    doc.setDrawColor(...MARCO);
+    doc.setLineWidth(1.4);
+    doc.rect(PAD, PAD, W - PAD * 2, H - PAD * 2);
+    doc.setLineWidth(0.6);
+    doc.rect(PAD + 6, PAD + 6, W - (PAD + 6) * 2, H - (PAD + 6) * 2);
+
+    doc.setFont("times", "italic");
+    doc.setFontSize(13);
+    doc.setTextColor(...TINTA_SUAVE);
+    doc.text("mi", W / 2, H * 0.4, { align: "center" });
     doc.setFont("times", "bold");
-    doc.setFontSize(26);
-    doc.text("Mi Journaling", W / 2, H / 2 - 18, { align: "center" });
+    doc.setFontSize(34);
+    doc.setTextColor(...FECHA_TINTA);
+    doc.text("Journaling", W / 2, H * 0.4 + 34, { align: "center" });
+
+    const dy = H * 0.4 + 62;
+    doc.setDrawColor(...MARCO);
+    doc.setLineWidth(0.8);
+    doc.line(W / 2 - 62, dy, W / 2 - 12, dy);
+    doc.line(W / 2 + 12, dy, W / 2 + 62, dy);
+    doc.setFillColor(...MARGEN);
+    doc.triangle(W / 2 - 5, dy, W / 2 + 5, dy, W / 2, dy - 6, "F");
+    doc.triangle(W / 2 - 5, dy, W / 2 + 5, dy, W / 2, dy + 6, "F");
+
     doc.setFont("times", "normal");
     doc.setFontSize(12);
-    doc.setTextColor(90);
+    doc.setTextColor(...TINTA);
     const rango =
       hojas.length > 1
-        ? `${fechaCorta(hojas[0].fecha)}  —  ${fechaCorta(hojas[hojas.length - 1].fecha)}`
+        ? `${fechaCorta(hojas[0].fecha)}   —   ${fechaCorta(hojas[hojas.length - 1].fecha)}`
         : fechaCorta(hojas[0].fecha);
-    doc.text(rango, W / 2, H / 2 + 10, { align: "center" });
+    doc.text(rango, W / 2, dy + 28, { align: "center" });
     doc.setFontSize(10);
+    doc.setTextColor(...TINTA_SUAVE);
     doc.text(
       `${hojas.length} ${hojas.length === 1 ? "hoja" : "hojas"}`,
       W / 2,
-      H / 2 + 28,
+      dy + 46,
       { align: "center" }
     );
-    doc.setTextColor(0);
+    doc.setFont("times", "italic");
+    doc.setFontSize(9);
+    doc.text("Growth", W / 2, H - PAD - 16, { align: "center" });
 
-    hojas.forEach((e) => {
+    // ---- Hojas ----
+    hojas.forEach((e, idx) => {
       doc.addPage();
-      let y = M;
-      const ensure = (space) => {
-        if (y + space > H - M) {
-          doc.addPage();
-          y = M;
-        }
-      };
-      // Fecha
+      fondoHoja();
+
       doc.setFont("times", "bold");
       doc.setFontSize(15);
-      doc.text(fechaLarga(e.fecha), M, y);
-      y += 20;
-      doc.setDrawColor(190);
-      doc.line(M, y, W - M, y);
-      y += 18;
-      // Ánimo
+      doc.setTextColor(...FECHA_TINTA);
+      doc.text(fechaLarga(e.fecha), CX - 8, 64);
+
       if (Number(e.animo) > 0) {
-        doc.setFont("times", "italic");
-        doc.setFontSize(11);
-        doc.setTextColor(110);
-        doc.text(`Ánimo: ${ANIMO_LABELS[Number(e.animo)] || ""}`, M, y);
-        doc.setTextColor(0);
-        y += 20;
+        const label = ANIMO_LABELS[Number(e.animo)] || "";
+        doc.setFont("times", "normal");
+        doc.setFontSize(9.5);
+        const tw = doc.getTextWidth(label) + 20;
+        const cx0 = CR - tw;
+        const cy0 = 50;
+        doc.setFillColor(...animoColor(Number(e.animo)));
+        doc.roundedRect(cx0, cy0, tw, 16, 8, 8, "F");
+        doc.setTextColor(45, 40, 30);
+        doc.text(label, cx0 + tw / 2, cy0 + 11, { align: "center" });
       }
-      const preg = preguntasVista(e);
+
+      doc.setDrawColor(...MARCO);
+      doc.setLineWidth(0.6);
+      doc.line(CX - 8, 76, CR, 76);
+
+      let y = rulesTop - 3;
+      const salto = () => {
+        doc.addPage();
+        fondoHoja();
+        y = rulesTop - 3;
+      };
       const bloque = (titulo, texto) => {
         if (!String(texto || "").trim()) return;
         if (titulo) {
-          doc.setFont("times", "bold");
-          doc.setFontSize(11.5);
-          const th = doc.splitTextToSize(titulo, maxW);
-          ensure(th.length * 15 + 20);
-          doc.text(th, M, y);
-          y += th.length * 15 + 3;
+          doc.setFont("times", "bolditalic");
+          doc.setFontSize(11);
+          doc.setTextColor(...PREGUNTA);
+          doc.splitTextToSize(titulo, maxW).forEach((ln) => {
+            if (y + LH > rulesBottom) salto();
+            doc.text(ln, CX, y);
+            y += LH;
+          });
         }
         doc.setFont("times", "normal");
         doc.setFontSize(12);
-        doc.splitTextToSize(texto, maxW).forEach((line) => {
-          ensure(16);
-          doc.text(line, M, y);
-          y += 16;
+        doc.setTextColor(...TINTA);
+        doc.splitTextToSize(texto, maxW).forEach((ln) => {
+          if (y + LH > rulesBottom) salto();
+          doc.text(ln, CX, y);
+          y += LH;
         });
-        y += 10;
+        y += LH * 0.5;
       };
+
+      const preg = preguntasVista(e);
       CAMPOS.forEach((p) => bloque(preg[p.campo], e[p.campo]));
       (e.extras || []).forEach((x) => bloque(x.texto, x.valor));
       if (e.libre) bloque(null, e.libre);
+
+      doc.setFont("times", "italic");
+      doc.setFontSize(9);
+      doc.setTextColor(...TINTA_SUAVE);
+      doc.text(String(idx + 1), W / 2, H - PAD - 12, { align: "center" });
     });
 
     doc.save("mi-journaling.pdf");
