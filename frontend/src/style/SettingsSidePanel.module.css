@@ -55,6 +55,10 @@
 .containerOpen {
   width: 288px;
   padding: 1.1rem;
+  /* Fondo sólido y una sombra para que el panel abierto no se mezcle con el
+     contenido de atrás (el gradiente del sidebar es casi igual al de la página). */
+  background: var(--panel-background);
+  box-shadow: 2px 0 18px rgba(0, 0, 0, 0.22);
 }
 
 .containerOpen .header {
