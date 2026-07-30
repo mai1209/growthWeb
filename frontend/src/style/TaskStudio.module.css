@@ -2,7 +2,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
-  padding: 1.4rem 1.5rem 2rem;
+  /* Menos aire arriba ahora que no está el selector de vistas. */
+  padding: 0.7rem 1.5rem 2rem;
   color: var(--color-text);
   min-height: 100vh;
   max-width: 100%;
