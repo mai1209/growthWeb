@@ -1,9 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import style from "../style/PhotoCropper.module.css";
 
-// Ajustador de foto de perfil: arrastrás para mover y con la barra hacés zoom.
-// Al guardar, recorta el círculo visible a un cuadrado y devuelve un data URL.
-export default function PhotoCropper({ src, onCancel, onSave, viewport = 260, output = 512 }) {
+// Ajustador de imagen: arrastrás para mover y con la barra hacés zoom. Al guardar,
+// recorta el área visible a un data URL. Sirve para la foto (círculo 1:1) o la
+// portada (rectángulo 3:1) según viewport/output/round.
+export default function PhotoCropper({
+  src,
+  onCancel,
+  onSave,
+  viewportW = 260,
+  viewportH = 260,
+  outputW = 512,
+  outputH = 512,
+  round = true,
+  title = "Ajustá tu foto",
+}) {
   const [img, setImg] = useState(null);
   const [scale, setScale] = useState(1);
   const [tx, setTx] = useState(0);
@@ -23,14 +34,14 @@ export default function PhotoCropper({ src, onCancel, onSave, viewport = 260, ou
 
   const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
 
-  // Tamaño mostrado: la imagen "cubre" el círculo al scale 1.
-  const baseScale = img ? Math.max(viewport / img.width, viewport / img.height) : 1;
-  const dw = img ? img.width * baseScale * scale : viewport;
-  const dh = img ? img.height * baseScale * scale : viewport;
+  // La imagen "cubre" el recuadro al scale 1.
+  const baseScale = img ? Math.max(viewportW / img.width, viewportH / img.height) : 1;
+  const dw = img ? img.width * baseScale * scale : viewportW;
+  const dh = img ? img.height * baseScale * scale : viewportH;
 
   const clampOffsets = (nx, ny, w = dw, h = dh) => {
-    const maxX = Math.max(0, (w - viewport) / 2);
-    const maxY = Math.max(0, (h - viewport) / 2);
+    const maxX = Math.max(0, (w - viewportW) / 2);
+    const maxY = Math.max(0, (h - viewportH) / 2);
     return [clamp(nx, -maxX, maxX), clamp(ny, -maxY, maxY)];
   };
 
@@ -63,27 +74,29 @@ export default function PhotoCropper({ src, onCancel, onSave, viewport = 260, ou
   const save = () => {
     if (!img) return;
     const factor = baseScale * scale;
-    const sWidth = viewport / factor;
-    const sHeight = viewport / factor;
+    const sWidth = viewportW / factor;
+    const sHeight = viewportH / factor;
     const sx = (img.width - sWidth) / 2 - tx / factor;
     const sy = (img.height - sHeight) / 2 - ty / factor;
     const canvas = document.createElement("canvas");
-    canvas.width = output;
-    canvas.height = output;
+    canvas.width = outputW;
+    canvas.height = outputH;
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, output, output);
+    ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, outputW, outputH);
     onSave(canvas.toDataURL("image/jpeg", 0.85));
   };
+
+  const radius = round ? "50%" : "14px";
 
   return (
     <div className={style.overlay} onClick={onCancel} role="presentation">
       <div className={style.card} onClick={(e) => e.stopPropagation()}>
-        <h3 className={style.title}>Ajustá tu foto</h3>
+        <h3 className={style.title}>{title}</h3>
         <p className={style.hint}>Arrastrá para mover · usá la barra para el zoom</p>
 
         <div
           className={style.viewport}
-          style={{ width: viewport, height: viewport }}
+          style={{ width: viewportW, height: viewportH, borderRadius: radius }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -104,7 +117,7 @@ export default function PhotoCropper({ src, onCancel, onSave, viewport = 260, ou
               }}
             />
           ) : null}
-          <div className={style.ring} />
+          <div className={style.ring} style={{ borderRadius: radius }} />
         </div>
 
         <input
@@ -123,7 +136,7 @@ export default function PhotoCropper({ src, onCancel, onSave, viewport = 260, ou
             Cancelar
           </button>
           <button type="button" className={style.primary} onClick={save} disabled={!img}>
-            Guardar foto
+            Guardar
           </button>
         </div>
       </div>

@@ -137,8 +137,10 @@ function SettingsPage() {
   const [editingProfile, setEditingProfile] = useState(false);
   // Chequeo en vivo de disponibilidad del @usuario.
   const [usernameCheck, setUsernameCheck] = useState({ status: "idle" });
-  // Imagen elegida a la espera de ajustarse (recorte de la foto de perfil).
+  // Imagen elegida a la espera de ajustarse (recorte). cropTarget indica si es la
+  // foto de perfil ("photo") o la portada ("banner").
   const [cropSrc, setCropSrc] = useState(null);
+  const [cropTarget, setCropTarget] = useState("photo");
   const [google, setGoogle] = useState({
     connected: false,
     email: "",
@@ -404,6 +406,23 @@ function SettingsPage() {
     }
     try {
       const dataUrl = await fileToDataUrl(file, 1200, 1200);
+      setCropTarget("photo");
+      setCropSrc(dataUrl);
+    } catch {
+      setError("No se pudo procesar la imagen.");
+    }
+  };
+
+  // Portada: también se ajusta (mover + zoom), pero con recorte 3:1.
+  const handlePickBanner = async (file) => {
+    if (!file) return;
+    if (!file.type?.startsWith("image/")) {
+      setError("Elegí un archivo de imagen.");
+      return;
+    }
+    try {
+      const dataUrl = await fileToDataUrl(file, 1600, 1600);
+      setCropTarget("banner");
       setCropSrc(dataUrl);
     } catch {
       setError("No se pudo procesar la imagen.");
@@ -959,9 +978,10 @@ function SettingsPage() {
                             <input
                               type="file"
                               accept="image/*"
-                              onChange={(event) =>
-                                handleImageFile("bannerUrl", event.target.files?.[0], 1280, 480)
-                              }
+                              onChange={(event) => {
+                                handlePickBanner(event.target.files?.[0]);
+                                event.target.value = "";
+                              }}
                               hidden
                             />
                           </label>
@@ -1713,9 +1733,15 @@ function SettingsPage() {
       {cropSrc ? (
         <PhotoCropper
           src={cropSrc}
+          title={cropTarget === "banner" ? "Ajustá tu portada" : "Ajustá tu foto"}
+          round={cropTarget !== "banner"}
+          viewportW={cropTarget === "banner" ? 330 : 260}
+          viewportH={cropTarget === "banner" ? 110 : 260}
+          outputW={cropTarget === "banner" ? 1280 : 512}
+          outputH={cropTarget === "banner" ? 427 : 512}
           onCancel={() => setCropSrc(null)}
           onSave={(dataUrl) => {
-            handleProfileChange("profilePhotoUrl", dataUrl);
+            handleProfileChange(cropTarget === "banner" ? "bannerUrl" : "profilePhotoUrl", dataUrl);
             setCropSrc(null);
           }}
         />

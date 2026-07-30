@@ -993,6 +993,11 @@
   margin-top: -52px;
 }
 
+/* El botón "Editar perfil" baja un poco para no quedar pegado a la portada. */
+.cardProfile .editProfileBtn {
+  margin-top: 70px;
+}
+
 .profileAvatar {
   width: 92px;
   height: 92px;
