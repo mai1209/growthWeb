@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
-import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiWatch, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers, FiUser, FiArrowRight } from "react-icons/fi";
+import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiWatch, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers, FiArrowRight } from "react-icons/fi";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { authService } from "../api";
@@ -348,50 +348,43 @@ function Nav({
 
       {profileMenuOpen ? (
         <div className={style.profileDropdown}>
+          <p className={style.profileDropdownHint}>Entrar al perfil</p>
+          {/* Cada perfil se entra desde acá: al tocarlo pasa a ser el principal
+              (activo) y te lleva a /perfil. Adentro podés volver a cambiar. */}
+          {profileOptions.map((option) => {
+            const isActive = option.id === activeProfile.id;
+            return (
+              <button
+                key={option.id}
+                type="button"
+                className={`${style.profileOption} ${isActive ? style.profileOptionCurrent : ""}`}
+                onClick={() => {
+                  onWorkspaceChange?.(option.id);
+                  navigate("/perfil");
+                  setProfileMenuOpen(false);
+                  if (mobile) onCloseMobileMenu?.();
+                }}
+              >
+                <ProfileAvatar option={option} />
+                <span className={style.profileOptionName}>{option.name}</span>
+                {isActive ? <span className={style.profileOptionBadge}>actual</span> : null}
+                <FiArrowRight className={style.profileEnterArrow} />
+              </button>
+            );
+          })}
+
           <button
             type="button"
-            className={style.profileEnter}
+            className={style.profileOption}
             onClick={() => {
               navigate("/perfil");
               setProfileMenuOpen(false);
               if (mobile) onCloseMobileMenu?.();
             }}
           >
-            <FiUser />
-            <span>Entrar al perfil</span>
-            <FiArrowRight className={style.profileEnterArrow} />
+            <FiBriefcase />
+            <span className={style.profileOptionName}>Agregar negocio</span>
           </button>
-
-          {availableProfiles.length ? (
-            availableProfiles.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                className={style.profileOption}
-                onClick={() => {
-                  onWorkspaceChange?.(option.id);
-                  setProfileMenuOpen(false);
-                  if (mobile) onCloseMobileMenu?.();
-                }}
-              >
-                <ProfileAvatar option={option} />
-                <span>{option.name}</span>
-              </button>
-            ))
-          ) : (
-            <button
-              type="button"
-              className={style.profileOption}
-              onClick={() => {
-                navigate("/perfil");
-                setProfileMenuOpen(false);
-                if (mobile) onCloseMobileMenu?.();
-              }}
-            >
-              <FiBriefcase />
-              <span>Agregar negocio</span>
-            </button>
-          )}
         </div>
       ) : null}
     </div>
