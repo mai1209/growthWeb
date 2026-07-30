@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
-import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiWatch, FiPieChart, FiSettings, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers } from "react-icons/fi";
+import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiWatch, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers } from "react-icons/fi";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { authService } from "../api";
@@ -29,6 +29,7 @@ const NAV_GROUPS = [
       { to: "/tareas", label: "Tareas", icon: <FiCheckSquare className={style.navIcon} /> },
       { to: "/notas", label: "Notas", icon: <FiEdit3 className={style.navIcon} /> },
       { to: "/notas?view=journal", label: "Journaling", icon: <FiFeather className={style.navIcon} /> },
+      { to: "/notas?view=afirmaciones", label: "Afirmaciones", icon: <FiSun className={style.navIcon} /> },
       { to: "/pomodoro", label: "Pomodoro", icon: <FiClock className={style.navIcon} /> },
     ],
   },
@@ -225,7 +226,7 @@ function Nav({
     // Item base (sin query): activo sólo cuando no hay un hermano con query.
     if (path === "/notas") {
       const v = current.get("view");
-      return !v || v === "notes" || v === "calendar" || v === "afirmaciones";
+      return !v || v === "notes" || v === "calendar";
     }
     if (path === "/pomodoro") return current.get("panel") !== "tracker";
     return true;

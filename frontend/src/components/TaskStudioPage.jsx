@@ -1590,49 +1590,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   </h2>
                 )}
               </div>
-              <div className={style.listHeaderActions}>
-                {/* En móvil (isCompact) mostramos Notas + Lista de compras;
-                    Calendario queda solo en desktop. */}
-                <div className={style.viewToggle} role="tablist" aria-label="Vista de notas">
-                  <button
-                    type="button"
-                    className={`${style.viewToggleButton} ${effectiveView === "notes" ? style.viewToggleButtonActive : ""}`}
-                    onClick={() => setView("notes")}
-                    aria-pressed={effectiveView === "notes"}
-                  >
-                    <FiFileText />
-                    Notas
-                  </button>
-                  {/* Herramientas extra, todas inline en la misma barra */}
-                  <button
-                    type="button"
-                    className={`${style.viewToggleButton} ${effectiveView === "shopping" ? style.viewToggleButtonActive : ""}`}
-                    onClick={() => setView("shopping")}
-                    aria-pressed={effectiveView === "shopping"}
-                  >
-                    <FiShoppingCart />
-                    Lista de compras
-                  </button>
-                  <button
-                    type="button"
-                    className={`${style.viewToggleButton} ${effectiveView === "afirmaciones" ? style.viewToggleButtonActive : ""}`}
-                    onClick={() => setView("afirmaciones")}
-                    aria-pressed={effectiveView === "afirmaciones"}
-                  >
-                    <FiBook />
-                    Afirmaciones
-                  </button>
-                  <button
-                    type="button"
-                    className={`${style.viewToggleButton} ${effectiveView === "journal" ? style.viewToggleButtonActive : ""}`}
-                    onClick={() => setView("journal")}
-                    aria-pressed={effectiveView === "journal"}
-                  >
-                    <FiFeather />
-                    Journaling
-                  </button>
-                </div>
-              </div>
             </div>
 
             {effectiveView === "calendar" ? (
