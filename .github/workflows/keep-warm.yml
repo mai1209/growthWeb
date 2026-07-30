@@ -1,0 +1,25 @@
+name: Keep backend warm
+
+# Pinguea la API cada ~10 min para evitar el "cold start" de Vercel serverless.
+# El endpoint /api/app-version pasa por el middleware que conecta a Mongo, así
+# que este ping mantiene caliente tanto la función como la conexión a la base.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API para evitar cold start
+        run: |
+          for i in 1 2; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
+              "https://www.growthmanager.app/api/app-version" || echo "000")
+            echo "ping $i -> HTTP $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 5
+          done
+          # No fallamos el job si el ping no responde: es best-effort.
+          exit 0
