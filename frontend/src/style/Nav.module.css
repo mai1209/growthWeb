@@ -61,6 +61,7 @@
   color: var(--color-muted);
   text-decoration: none;
   font-size: 0.78rem;
+  text-transform: lowercase;
   transition: all 0.2s ease;
 }
 
@@ -73,6 +74,13 @@
   background: #5dc72d;
   color: #0e1a0e !important;
   box-shadow: 0 8px 18px rgba(40, 120, 30, 0.28);
+}
+
+/* Hover del item activo: mantener el verde (un tono más claro) en vez del
+   overlay gris que dejaba el texto oscuro sobre fondo oscuro. */
+.activeLink:hover {
+  background: #6bd83d;
+  color: #0e1a0e !important;
 }
 
 .navIcon {
@@ -215,15 +223,22 @@
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
-  z-index: 30;
+  z-index: 60;
   min-width: 210px;
   padding: 0.45rem;
   display: grid;
   gap: 0.25rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  background: var(--nav-background);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+  /* Fondo 100% sólido: si no, se transparenta y se ven los items del nav
+     (ajustes/apoyar) por detrás del menú de perfil. */
+  background: #0a2029;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+:global(body[data-theme="light"]) .profileDropdown {
+  background: #ffffff;
+  border-color: rgba(12, 18, 14, 0.12);
 }
 
 .profileOption {
@@ -536,6 +551,12 @@
   box-shadow: 0 8px 18px rgba(40, 120, 30, 0.28);
 }
 
+/* Hover del item activo: seguir verde (no el overlay gris que lo ennegrecía). */
+.railLinkActive:hover {
+  background: #6bd83d;
+  color: #0e1a0e !important;
+}
+
 .railLink :global(svg) {
   font-size: 1.25rem;
 }
@@ -776,6 +797,7 @@
   color: inherit;
   font-size: 0.82rem;
   font-weight: 700;
+  text-transform: lowercase;
   pointer-events: auto;
 }
 
