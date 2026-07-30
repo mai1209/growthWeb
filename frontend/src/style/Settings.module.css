@@ -978,11 +978,19 @@
 }
 
 .profileTopRow {
+  position: relative;
+  z-index: 2; /* por encima de la portada (que ahora es position:relative) */
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   padding: 0 1.1rem;
   margin-top: -46px;
+}
+
+/* En la vista full-bleed la portada es más alta: el avatar baja un poco para
+   quedar montado sobre el borde y no perderse. */
+.cardProfile .profileTopRow {
+  margin-top: -52px;
 }
 
 .profileAvatar {

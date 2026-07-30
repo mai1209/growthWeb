@@ -561,8 +561,8 @@
 .rail .avatar {
   width: 42px;
   height: 42px;
-  border: 2px solid var(--avatarAccent, #5dc72d);
-  box-shadow: 0 0 0 3px var(--avatarAccentGlow, rgba(93, 199, 45, 0.18));
+  border: 2px solid rgba(0, 0, 0, 0.85);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
   font-size: 1rem;
 }
 
