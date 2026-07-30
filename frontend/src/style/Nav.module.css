@@ -515,6 +515,11 @@
   flex-direction: column;
   align-items: center;
   gap: 0.7rem;
+  /* Stacking context por debajo de railBottom: los labels (.tip) tienen
+     transform y se promueven a su propia capa; sin esto se pintarían por
+     encima del menú de perfil que abre desde abajo. */
+  position: relative;
+  z-index: 1;
 }
 
 .railProfile {
@@ -593,6 +598,10 @@
   flex-direction: column;
   align-items: center;
   gap: 0.55rem;
+  /* Por encima de railTop, para que el menú de perfil (que abre hacia arriba)
+     tape los labels del nav en vez de que estos se pinten por encima. */
+  position: relative;
+  z-index: 2;
 }
 
 .railAction {
