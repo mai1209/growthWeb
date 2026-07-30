@@ -643,3 +643,16 @@
   place-items: center;
   padding: 1.5rem 0;
 }
+
+/* En mobile el engranaje deja de estar absoluto y va en la fila con un espacio,
+   para que no quede pegado al switch de Pomodoro / Registro de horas. */
+@media (max-width: 560px) {
+  .header {
+    gap: 0.5rem;
+  }
+  .gearBtn {
+    position: static;
+    transform: none;
+    flex: 0 0 auto;
+  }
+}

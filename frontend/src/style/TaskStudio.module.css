@@ -1128,9 +1128,19 @@
   border: 1px solid var(--border-color);
   border-radius: 999px;
   background: var(--surface-input);
+  max-width: 100%;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+}
+
+.viewToggle::-webkit-scrollbar {
+  display: none;
 }
 
 .viewToggleButton {
+  flex: 0 0 auto;
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
