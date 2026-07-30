@@ -126,6 +126,7 @@
 .navGroupLabel {
   flex: 1;
   text-align: left;
+  white-space: nowrap;
 }
 
 .navGroupChevron {

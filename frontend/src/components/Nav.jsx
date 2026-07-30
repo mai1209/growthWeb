@@ -22,7 +22,7 @@ const NAV_GROUPS = [
   },
   {
     id: "desarrollo",
-    title: "Desarrollo personal",
+    title: "Desar. personal",
     icon: <FiTrendingUp className={style.navGroupIcon} />,
     items: [
       { to: "/metas", label: "Metas", icon: <FiFlag className={style.navIcon} /> },
