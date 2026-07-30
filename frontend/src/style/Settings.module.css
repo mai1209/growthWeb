@@ -24,6 +24,53 @@
   border-radius: var(--radius-2xl);
 }
 
+/* --- Tab Tema --- */
+.themeIntro {
+  margin: 0 1.2rem 1rem;
+  color: var(--color-muted);
+  font-size: 0.92rem;
+}
+
+.themeOptions {
+  display: flex;
+  gap: 0.9rem;
+  padding: 0 1.2rem 1.4rem;
+  flex-wrap: wrap;
+}
+
+.themeOption {
+  flex: 1 1 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.1rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg, 14px);
+  background: var(--surface-card);
+  color: var(--color-text);
+  font-weight: 700;
+  font-size: 0.98rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+}
+
+.themeOption svg {
+  width: 20px;
+  height: 20px;
+}
+
+.themeOption:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-border, #5dc72d);
+}
+
+.themeOptionActive {
+  border-color: #5dc72d;
+  background: rgba(93, 199, 45, 0.14);
+  color: var(--color-text);
+}
+
 .header {
   position: relative;
   display: flex;

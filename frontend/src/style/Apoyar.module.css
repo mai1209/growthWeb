@@ -8,6 +8,13 @@
   overflow: hidden;
 }
 
+/* Embebida dentro de un tab de Ajustes: sin alto de pantalla completa. */
+.embedded {
+  min-height: 0;
+  padding: 0;
+  border-radius: 16px;
+}
+
 /* Fondo decorativo: íconos de gestión verdes, delineados y con glow. */
 .bg {
   position: absolute;

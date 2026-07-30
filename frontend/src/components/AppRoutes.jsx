@@ -206,7 +206,7 @@ function AppRoutes({
         <Route path="metas" element={<MetasPage activeWorkspace={activeWorkspace} />} />
         <Route path="compartidos" element={<SharedExpenses />} />
         <Route path="pomodoro" element={<PomodoroPage />} />
-        <Route path="ajustes" element={<SettingsPage />} />
+        <Route path="ajustes" element={<SettingsPage theme={theme} onThemeToggle={onThemeToggle} />} />
         <Route path="apoyar" element={<ApoyarPage />} />
 
         {/* Cualquier otra ruta privada → dashboard */}

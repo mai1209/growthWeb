@@ -14,15 +14,18 @@ import {
   FiEye,
   FiEyeOff,
   FiFileText,
+  FiHeart,
   FiKey,
   FiLink,
   FiLoader,
   FiLock,
   FiMail,
+  FiMoon,
   FiPhone,
   FiPlus,
   FiRefreshCcw,
   FiSave,
+  FiSun,
   FiTrash2,
   FiUpload,
   FiUser,
@@ -30,6 +33,7 @@ import {
 } from "react-icons/fi";
 import { authService, googleService, fiscalService } from "../api";
 import PhotoCropper from "./PhotoCropper";
+import ApoyarPage from "./ApoyarPage";
 import style from "../style/Settings.module.css";
 
 const TAB_META = {
@@ -52,6 +56,16 @@ const TAB_META = {
     title: "Facturación (ARCA)",
     text: "Emití facturas de los ingresos de este perfil.",
     icon: FiFileText,
+  },
+  tema: {
+    title: "Tema",
+    text: "Elegí el modo claro u oscuro de la app.",
+    icon: FiMoon,
+  },
+  apoyar: {
+    title: "Apoyar Growth",
+    text: "Growth es gratis. Si te suma, un aporte ayuda a mantenerla.",
+    icon: FiHeart,
   },
 };
 
@@ -91,7 +105,7 @@ const fileToDataUrl = (file, maxW, maxH) =>
     reader.readAsDataURL(file);
   });
 
-function SettingsPage() {
+function SettingsPage({ theme, onThemeToggle }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = TAB_META[searchParams.get("tab")] ? searchParams.get("tab") : "perfil";
 
@@ -1557,6 +1571,38 @@ function SettingsPage() {
           </div>
         </div>
       ) : null}
+
+      {activeTab === "tema" ? (
+        <section className={style.card}>
+          <div className={style.businessHeader}>
+            <div>
+              <p className={style.kicker}>Ajustes</p>
+              <h2>Tema</h2>
+            </div>
+          </div>
+          <p className={style.themeIntro}>Elegí cómo se ve la app.</p>
+          <div className={style.themeOptions}>
+            <button
+              type="button"
+              className={`${style.themeOption} ${theme === "light" ? style.themeOptionActive : ""}`}
+              onClick={() => { if (theme !== "light") onThemeToggle?.(); }}
+            >
+              <FiSun />
+              <span>Claro</span>
+            </button>
+            <button
+              type="button"
+              className={`${style.themeOption} ${theme === "dark" ? style.themeOptionActive : ""}`}
+              onClick={() => { if (theme !== "dark") onThemeToggle?.(); }}
+            >
+              <FiMoon />
+              <span>Oscuro</span>
+            </button>
+          </div>
+        </section>
+      ) : null}
+
+      {activeTab === "apoyar" ? <ApoyarPage embedded /> : null}
 
       {false ? (
         <section className={style.card}>

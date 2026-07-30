@@ -43,7 +43,7 @@ const FONDO = [
   { Icon: FiPieChart, style: { bottom: "44%", right: "22%", width: 24, height: 24, animationDelay: "3.3s", animationDuration: "3.5s" } },
 ];
 
-function ApoyarPage() {
+function ApoyarPage({ embedded = false }) {
   const [copiadoId, setCopiadoId] = useState(null);
 
   const copiar = async (item) => {
@@ -60,7 +60,7 @@ function ApoyarPage() {
   };
 
   return (
-    <div className={style.page}>
+    <div className={`${style.page} ${embedded ? style.embedded : ""}`}>
       <div className={style.bg} aria-hidden="true">
         {FONDO.map(({ Icon, style: pos }, i) => (
           <Icon key={i} className={style.bgIcon} style={pos} />

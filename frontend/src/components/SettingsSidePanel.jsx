@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiChevronDown, FiFileText, FiKey, FiLink, FiLock, FiUser } from "react-icons/fi";
+import { FiChevronDown, FiFileText, FiHeart, FiKey, FiLink, FiLock, FiMoon, FiUser } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 import style from "../style/SettingsSidePanel.module.css";
 
@@ -27,6 +27,18 @@ const OPTIONS = [
     label: "Facturación (ARCA)",
     description: "Facturá los ingresos de este perfil.",
     icon: FiFileText,
+  },
+  {
+    to: "/ajustes?tab=tema",
+    label: "Tema",
+    description: "Modo claro u oscuro de la app.",
+    icon: FiMoon,
+  },
+  {
+    to: "/ajustes?tab=apoyar",
+    label: "Apoyar Growth",
+    description: "Colaborá para mantener la app.",
+    icon: FiHeart,
   },
 ];
 
