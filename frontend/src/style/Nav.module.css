@@ -241,6 +241,35 @@
   border-color: rgba(12, 18, 14, 0.12);
 }
 
+/* Botón "Entrar al perfil": acción principal arriba del menú de perfil. */
+.profileEnter {
+  width: 100%;
+  min-height: 40px;
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid rgba(93, 199, 45, 0.35);
+  border-radius: 12px;
+  background: rgba(93, 199, 45, 0.12);
+  color: var(--color-text);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.profileEnter:hover {
+  background: rgba(93, 199, 45, 0.2);
+  border-color: rgba(93, 199, 45, 0.55);
+}
+
+.profileEnterArrow {
+  margin-left: auto;
+  opacity: 0.7;
+}
+
 .profileOption {
   width: 100%;
   min-height: 42px;

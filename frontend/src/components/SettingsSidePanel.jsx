@@ -1,15 +1,9 @@
 import { useState } from "react";
-import { FiChevronDown, FiFileText, FiHeart, FiInfo, FiLink, FiLock, FiMoon, FiSettings, FiUser } from "react-icons/fi";
+import { FiChevronDown, FiFileText, FiHeart, FiInfo, FiLink, FiLock, FiMoon, FiSettings } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 import style from "../style/SettingsSidePanel.module.css";
 
 const OPTIONS = [
-  {
-    to: "/ajustes?tab=perfil",
-    label: "Perfil",
-    description: "Usuario, bio, foto y datos de cuenta.",
-    icon: FiUser,
-  },
   {
     to: "/ajustes?tab=password",
     label: "Cambiar contraseña",

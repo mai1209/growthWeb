@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
-import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiWatch, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers } from "react-icons/fi";
+import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiWatch, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers, FiUser, FiArrowRight } from "react-icons/fi";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { authService } from "../api";
@@ -348,6 +348,20 @@ function Nav({
 
       {profileMenuOpen ? (
         <div className={style.profileDropdown}>
+          <button
+            type="button"
+            className={style.profileEnter}
+            onClick={() => {
+              navigate("/perfil");
+              setProfileMenuOpen(false);
+              if (mobile) onCloseMobileMenu?.();
+            }}
+          >
+            <FiUser />
+            <span>Entrar al perfil</span>
+            <FiArrowRight className={style.profileEnterArrow} />
+          </button>
+
           {availableProfiles.length ? (
             availableProfiles.map((option) => (
               <button
@@ -369,7 +383,7 @@ function Nav({
               type="button"
               className={style.profileOption}
               onClick={() => {
-                navigate("/ajustes?tab=perfil");
+                navigate("/perfil");
                 setProfileMenuOpen(false);
                 if (mobile) onCloseMobileMenu?.();
               }}

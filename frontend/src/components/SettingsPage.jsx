@@ -37,11 +37,6 @@ import ApoyarPage from "./ApoyarPage";
 import style from "../style/Settings.module.css";
 
 const TAB_META = {
-  perfil: {
-    title: "Perfil de cuenta",
-    text: "Guarda los datos básicos que identifican tu cuenta en Growth.",
-    icon: FiUser,
-  },
   password: {
     title: "Cambiar contraseña",
     text: "Actualiza tu clave desde la sesión iniciada.",
@@ -105,9 +100,15 @@ const fileToDataUrl = (file, maxW, maxH) =>
     reader.readAsDataURL(file);
   });
 
-function SettingsPage({ theme, onThemeToggle }) {
+function SettingsPage({ theme, onThemeToggle, mode }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = TAB_META[searchParams.get("tab")] ? searchParams.get("tab") : "perfil";
+  // En /perfil mostramos sólo el panel de perfil; en /ajustes ya no hay perfil.
+  const perfilOnly = mode === "perfil";
+  const activeTab = perfilOnly
+    ? "perfil"
+    : TAB_META[searchParams.get("tab")]
+    ? searchParams.get("tab")
+    : "tema";
 
   const [profile, setProfile] = useState({
     username: "",
@@ -730,23 +731,25 @@ function SettingsPage({ theme, onThemeToggle }) {
   return (
     <section className={style.container}>
  
-      <div className={style.mobileTabs}>
-        {Object.entries(TAB_META).map(([key, tab]) => {
-          const Icon = tab.icon;
+      {!perfilOnly && (
+        <div className={style.mobileTabs}>
+          {Object.entries(TAB_META).map(([key, tab]) => {
+            const Icon = tab.icon;
 
-          return (
-            <button
-              key={key}
-              type="button"
-              className={`${style.mobileTab} ${activeTab === key ? style.mobileTabActive : ""}`}
-              onClick={() => handleTabChange(key)}
-            >
-              <Icon />
-              {tab.title}
-            </button>
-          );
-        })}
-      </div>
+            return (
+              <button
+                key={key}
+                type="button"
+                className={`${style.mobileTab} ${activeTab === key ? style.mobileTabActive : ""}`}
+                onClick={() => handleTabChange(key)}
+              >
+                <Icon />
+                {tab.title}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {activeTab === "perfil" ? (
         <div className={`${style.card} ${perfilView === "personal" ? style.cardProfile : ""}`}>
@@ -755,7 +758,7 @@ function SettingsPage({ theme, onThemeToggle }) {
           {perfilView !== "personal" ? (
             <div className={style.businessHeader}>
               <div>
-                <p className={style.kicker}>Ajustes</p>
+                <p className={style.kicker}>Cuenta</p>
                 <h2>Perfil</h2>
               </div>
               {viewToggle}
@@ -777,7 +780,7 @@ function SettingsPage({ theme, onThemeToggle }) {
                   {/* Título "Ajustes / Perfil" + toggle flotando sobre la portada */}
                   <div className={style.profileBannerHead}>
                     <div className={style.profileBannerTitle}>
-                      <p className={style.kicker}>Ajustes</p>
+                      <p className={style.kicker}>Cuenta</p>
                       <h2>Perfil</h2>
                     </div>
                     {viewToggle}
