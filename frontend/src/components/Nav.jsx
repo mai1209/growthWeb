@@ -86,16 +86,9 @@ function Nav({
     () => localStorage.getItem("gw-rail-expanded") === "1"
   );
   const [cardAccent, setCardAccent] = useState(readCardAccent);
-  const [openGroups, setOpenGroups] = useState(() => new Set(NAV_GROUPS.map((g) => g.id)));
-  const toggleGroup = (id) =>
-    setOpenGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  // Rail colapsado: acordeón de un solo grupo. undefined = auto (abre el grupo activo).
-  const [railOpenGroup, setRailOpenGroup] = useState(undefined);
+  // Acordeón: un solo grupo abierto a la vez (tanto colapsado como expandido).
+  // undefined = auto (abre el grupo de la sección activa); id | null.
+  const [openGroup, setOpenGroup] = useState(undefined);
   useEffect(() => {
     const update = () => setCardAccent(readCardAccent());
     window.addEventListener("gw-card-style", update);
@@ -253,9 +246,10 @@ function Nav({
     );
   };
 
-  // Grupo que contiene la sección activa (para auto-abrirlo en el rail colapsado).
+  // Grupo abierto (acordeón). Por defecto se auto-abre el de la sección activa.
   const activeGroupId = NAV_GROUPS.find((g) => g.items.some((it) => isItemActive(it.to)))?.id;
-  const railOpen = railOpenGroup === undefined ? activeGroupId : railOpenGroup;
+  const openGroupId = openGroup === undefined ? activeGroupId : openGroup;
+  const toggleGroup = (id) => setOpenGroup(openGroupId === id ? null : id);
 
   // --- COMPONENTES INTERNOS PARA EVITAR REPETICIÓN ---
   const NavItems = ({ rail = false } = {}) => {
@@ -266,7 +260,7 @@ function Nav({
       return (
         <>
           {NAV_GROUPS.map((group) => {
-            const open = railOpen === group.id;
+            const open = openGroupId === group.id;
             const groupActive = group.items.some((it) => isItemActive(it.to));
             return (
               <div key={group.id} className={style.railGroup}>
@@ -275,7 +269,7 @@ function Nav({
                   className={`${style.railLink} ${style.railGroupBtn} ${
                     open ? style.railGroupBtnOpen : ""
                   } ${groupActive ? style.railGroupBtnActive : ""}`}
-                  onClick={() => setRailOpenGroup(open ? null : group.id)}
+                  onClick={() => toggleGroup(group.id)}
                   aria-expanded={open}
                 >
                   {group.icon}
@@ -292,7 +286,7 @@ function Nav({
     return (
       <>
         {NAV_GROUPS.map((group) => {
-          const open = openGroups.has(group.id);
+          const open = openGroupId === group.id;
           return (
             <div key={group.id} className={style.navGroup}>
               <button
