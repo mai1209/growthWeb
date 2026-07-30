@@ -273,6 +273,9 @@ function Nav({
                   aria-expanded={open}
                 >
                   {group.icon}
+                  <FiChevronDown
+                    className={`${style.railGroupChevron} ${open ? style.railGroupChevronOpen : ""}`}
+                  />
                   <span className={style.tip}>{group.title}</span>
                 </button>
                 {open && group.items.map((item) => renderLink(item, true))}

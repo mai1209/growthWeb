@@ -135,8 +135,9 @@
   opacity: 0.7;
 }
 
+/* Cerrada apunta abajo; abierta apunta a la derecha. */
 .navGroupChevronOpen {
-  transform: rotate(180deg);
+  transform: rotate(-90deg);
 }
 
 .navGroupItems {
@@ -593,14 +594,34 @@
   gap: 0.25rem;
 }
 
+/* Rail cerrado: el botón de grupo muestra el ícono + una flechita al lado. */
 .railGroupBtn {
   border: none;
   background: transparent;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  width: auto;
+  min-width: 40px;
+  padding: 0 0.25rem;
 }
 
 .railGroupBtn :global(svg) {
   color: #5dc72d;
+}
+
+.railGroupBtn .railGroupChevron {
+  font-size: 0.72rem;
+  flex: 0 0 auto;
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+}
+
+/* Cerrada apunta abajo; abierta apunta a la derecha (igual que en expandido). */
+.railGroupChevronOpen {
+  transform: rotate(-90deg);
 }
 
 .railGroupBtnOpen {
@@ -612,10 +633,10 @@
   font-size: 0.98rem;
 }
 
-/* Rail cerrado: los íconos de los items desplegados van blancos brillantes
-   (el activo sigue verde por su regla con !important). */
+/* Rail cerrado: los íconos de los items desplegados usan el color de texto
+   (brillante en oscuro, oscuro en claro; el activo sigue naranja). */
 .railGroup .railLink:not(.railGroupBtn) {
-  color: #ffffff;
+  color: var(--color-text);
 }
 
 .railLink:hover {
