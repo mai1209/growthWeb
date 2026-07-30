@@ -44,6 +44,10 @@
   cursor: grab;
   touch-action: none;
   user-select: none;
+  /* Fuerza el recorte redondeado aunque el hijo tenga transform (si no, la
+     imagen se "sale" por las esquinas). */
+  transform: translateZ(0);
+  max-width: 100%;
 }
 
 .viewport:active {
