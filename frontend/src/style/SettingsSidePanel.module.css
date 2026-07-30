@@ -55,6 +55,10 @@
 .containerOpen {
   width: 288px;
   padding: 1.1rem;
+  /* Por encima del contenido (perfil) para que el tooltip de la "i" no quede
+     tapado al salir del panel. */
+  position: relative;
+  z-index: 40;
   /* Fondo sólido y una sombra para que el panel abierto no se mezcle con el
      contenido de atrás (el gradiente del sidebar es casi igual al de la página). */
   background: var(--panel-background);
@@ -109,6 +113,8 @@
 .optionListOpen {
   max-height: 720px;
   opacity: 1;
+  /* Ya desplegada dejamos que el tooltip de la "i" pueda salir del contenedor. */
+  overflow: visible;
 }
 
 .iconWrap {
@@ -147,11 +153,13 @@
   gap: 0.7rem;
 }
 
+/* Ahora cada opción es ícono + título en una sola línea; la descripción vive
+   en la "i" de info de la derecha (tooltip al pasar el mouse). */
 .optionLink {
-  padding: 1rem;
+  padding: 0.75rem 0.9rem;
   display: flex;
-  gap: 0.85rem;
-  align-items: flex-start;
+  gap: 0.7rem;
+  align-items: center;
   color: var(--color-muted);
   text-decoration: none;
   transition: transform var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast);
@@ -163,27 +171,66 @@
   color: var(--color-text);
 }
 
-.optionLink svg {
+.optionIcon {
   width: 20px;
   height: 20px;
   flex: 0 0 auto;
-  margin-top: 0.1rem;
   color: var(--accent);
 }
 
-.optionLink span {
-  display: grid;
-  gap: 0.25rem;
-}
-
-.optionLink strong {
+.optionLabel {
+  flex: 1;
+  min-width: 0;
   color: var(--color-text);
-  font-size: 0.96rem;
+  font-size: 0.94rem;
 }
 
-.optionLink small {
+.optionInfo {
+  position: relative;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
   color: var(--color-muted);
-  line-height: 1.4;
+  cursor: help;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.optionInfo svg {
+  width: 15px;
+  height: 15px;
+}
+
+.optionInfo:hover {
+  color: var(--accent);
+  background: var(--accent-surface);
+}
+
+/* Tooltip con la descripción, sale a la derecha de la "i". */
+.optionInfo:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 8px);
+  transform: translateY(-50%);
+  width: max-content;
+  max-width: 220px;
+  padding: 0.5rem 0.65rem;
+  background: #0a2029;
+  color: var(--color-text);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+  z-index: 60;
+  pointer-events: none;
+}
+
+:global(body[data-theme="light"]) .optionInfo:hover::after {
+  background: #ffffff;
 }
 
 .optionLinkActive {

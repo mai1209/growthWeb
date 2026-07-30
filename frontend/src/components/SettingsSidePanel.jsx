@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiChevronDown, FiFileText, FiHeart, FiKey, FiLink, FiLock, FiMoon, FiUser } from "react-icons/fi";
+import { FiChevronDown, FiFileText, FiHeart, FiInfo, FiLink, FiLock, FiMoon, FiSettings, FiUser } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 import style from "../style/SettingsSidePanel.module.css";
 
@@ -56,7 +56,7 @@ function SettingsSidePanel() {
           aria-expanded={open}
         >
           <span className={style.iconWrap}>
-            <FiKey />
+            <FiSettings />
           </span>
           <div className={style.headerText}>
             <p className={style.kicker}>Ajustes</p>
@@ -77,10 +77,14 @@ function SettingsSidePanel() {
                   `${style.optionLink} ${isActive ? style.optionLinkActive : ""}`
                 }
               >
-                <Icon />
-                <span>
-                  <strong>{option.label}</strong>
-                  <small>{option.description}</small>
+                <Icon className={style.optionIcon} />
+                <strong className={style.optionLabel}>{option.label}</strong>
+                <span
+                  className={style.optionInfo}
+                  data-tip={option.description}
+                  aria-label={option.description}
+                >
+                  <FiInfo />
                 </span>
               </NavLink>
             );
