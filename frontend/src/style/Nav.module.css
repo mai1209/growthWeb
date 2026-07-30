@@ -583,11 +583,12 @@
   color: var(--color-text);
 }
 
-/* Activo estilo "barra lateral" (colapsado: tinte + ícono verde; la barra
-   lateral se agrega sólo en el rail expandido, ver más abajo). */
+/* Activo estilo "barra lateral": tinte + ícono verde + barra verde a la
+   izquierda (tanto en el rail cerrado como en el expandido). */
 .railLinkActive {
   background: rgba(93, 199, 45, 0.14);
   color: #5dc72d !important;
+  box-shadow: inset 3px 0 0 #5dc72d;
 }
 
 .railLinkActive:hover {
@@ -904,10 +905,6 @@
   font-size: 1.02rem;
 }
 
-/* En el rail expandido (fila horizontal) el activo suma la barra a la izquierda. */
-.railExpanded .railLinkActive {
-  box-shadow: inset 3px 0 0 #5dc72d;
-}
 
 /* Ítems un pelín más compactos para que entren los grupos. */
 .railExpanded .railLink {
