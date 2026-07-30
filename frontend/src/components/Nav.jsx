@@ -1,24 +1,54 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
-import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiMoon, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiHeart, FiFlag } from "react-icons/fi";
+import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiMoon, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiHeart, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers } from "react-icons/fi";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { authService } from "../api";
 
-// Definición centralizada de rutas para evitar repetición
-const NAV_LINKS = [
-  { to: "/", label: "Home", icon: <FiHome className={style.navIcon} /> },
-  { to: "/filtros", label: "Filtros", icon: <FiFilter className={style.navIcon} /> },
-  { to: "/compartidos", label: "Compartidos", icon: <FiShare2 className={style.navIcon} /> },
-  { to: "/metricas", label: "Métricas", icon: <FiPieChart className={style.navIcon} /> },
-  { to: "/metas", label: "Metas", icon: <FiFlag className={style.navIcon} /> },
-  { to: "/tareas", label: "Tareas", icon: <FiCheckSquare className={style.navIcon} /> },
-  { to: "/notas", label: "Notas", icon: <FiEdit3 className={style.navIcon} /> },
-  { to: "/pomodoro", label: "Pomodoro", icon: <FiClock className={style.navIcon} /> },
+// Nav agrupado por secciones (estilo consola: se despliegan/contraen).
+const NAV_GROUPS = [
+  {
+    id: "finanzas",
+    title: "Finanzas",
+    icon: <FiDollarSign className={style.navGroupIcon} />,
+    items: [
+      { to: "/", label: "Home", icon: <FiHome className={style.navIcon} /> },
+      { to: "/filtros", label: "Filtros", icon: <FiFilter className={style.navIcon} /> },
+      { to: "/metricas", label: "Métricas", icon: <FiPieChart className={style.navIcon} /> },
+      { to: "/compartidos", label: "Compartidos", icon: <FiShare2 className={style.navIcon} /> },
+      { to: "/notas?view=shopping", label: "Lista de compras", icon: <FiShoppingCart className={style.navIcon} /> },
+    ],
+  },
+  {
+    id: "desarrollo",
+    title: "Desarrollo personal",
+    icon: <FiTrendingUp className={style.navGroupIcon} />,
+    items: [
+      { to: "/metas", label: "Metas", icon: <FiFlag className={style.navIcon} /> },
+      { to: "/tareas", label: "Tareas", icon: <FiCheckSquare className={style.navIcon} /> },
+      { to: "/notas", label: "Notas", icon: <FiEdit3 className={style.navIcon} /> },
+      { to: "/notas?view=journal", label: "Journaling", icon: <FiFeather className={style.navIcon} /> },
+      { to: "/pomodoro", label: "Pomodoro", icon: <FiClock className={style.navIcon} /> },
+    ],
+  },
+  {
+    id: "coworking",
+    title: "Co-working",
+    icon: <FiUsers className={style.navGroupIcon} />,
+    items: [
+      { to: "/pomodoro?panel=tracker", label: "Registro de horas", icon: <FiClock className={style.navIcon} /> },
+    ],
+  },
+];
+
+// Items sueltos, sin grupo.
+const NAV_STANDALONE = [
   { to: "/ajustes", label: "Ajustes", icon: <FiSettings className={style.navIcon} /> },
   { to: "/apoyar", label: "Apoyar", icon: <FiHeart className={style.navIcon} /> },
 ];
+
+const NAV_FLAT = [...NAV_GROUPS.flatMap((g) => g.items), ...NAV_STANDALONE];
 
 // Acento del avatar según el color de tarjeta elegido (solo decorativo; el resto sigue verde)
 const CARD_ACCENTS = {
@@ -59,6 +89,14 @@ function Nav({
     () => localStorage.getItem("gw-rail-expanded") === "1"
   );
   const [cardAccent, setCardAccent] = useState(readCardAccent);
+  const [openGroups, setOpenGroups] = useState(() => new Set(NAV_GROUPS.map((g) => g.id)));
+  const toggleGroup = (id) =>
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   useEffect(() => {
     const update = () => setCardAccent(readCardAccent());
     window.addEventListener("gw-card-style", update);
@@ -171,29 +209,90 @@ function Nav({
     navigate("/");
   };
 
-  const getNavLinkClass = ({ isActive }) =>
-    isActive ? `${style.navLink} ${style.activeLink}` : style.navLink;
+  // Active manual: hay items que comparten pathname y se diferencian por query
+  // (Notas / Lista de compras / Journaling → /notas; Pomodoro / Co-working → /pomodoro).
+  const isItemActive = (to) => {
+    const [path, queryString] = to.split("?");
+    if (path === "/") {
+      if (location.pathname !== "/") return false;
+    } else if (location.pathname !== path) {
+      return false;
+    }
+    const current = new URLSearchParams(location.search);
+    const itemParams = new URLSearchParams(queryString || "");
+    const itemView = itemParams.get("view");
+    const itemPanel = itemParams.get("panel");
+    if (itemView) return current.get("view") === itemView;
+    if (itemPanel) return current.get("panel") === itemPanel;
+    // Item base (sin query): activo sólo cuando no hay un hermano con query.
+    if (path === "/notas") {
+      const v = current.get("view");
+      return !v || v === "notes" || v === "calendar" || v === "afirmaciones";
+    }
+    if (path === "/pomodoro") return current.get("panel") !== "tracker";
+    return true;
+  };
 
-  const getRailLinkClass = ({ isActive }) =>
-    `${style.railLink} ${isActive ? style.railLinkActive : ""}`;
+  const renderLink = (item, rail) => {
+    const active = isItemActive(item.to);
+    const cls = rail
+      ? `${style.railLink} ${active ? style.railLinkActive : ""}`
+      : active
+      ? `${style.navLink} ${style.activeLink}`
+      : style.navLink;
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        className={cls}
+        onClick={onCloseMobileMenu}
+        end={item.to === "/"}
+      >
+        {item.icon}
+        <span className={rail ? style.tip : undefined}>{item.label}</span>
+      </NavLink>
+    );
+  };
 
   // --- COMPONENTES INTERNOS PARA EVITAR REPETICIÓN ---
-  const NavItems = ({ rail = false } = {}) => (
-    <>
-      {NAV_LINKS.map((link) => (
-        <NavLink
-          key={link.to}
-          to={link.to}
-          className={rail ? getRailLinkClass : getNavLinkClass}
-          onClick={onCloseMobileMenu}
-          end={link.to === "/"}
-        >
-          {link.icon}
-          <span className={rail ? style.tip : undefined}>{link.label}</span>
-        </NavLink>
-      ))}
-    </>
-  );
+  const NavItems = ({ rail = false } = {}) => {
+    // Rail colapsado = sólo íconos, planos (sin títulos de grupo).
+    const grouped = !rail || railExpanded;
+    if (!grouped) {
+      return <>{NAV_FLAT.map((item) => renderLink(item, rail))}</>;
+    }
+    return (
+      <>
+        {NAV_GROUPS.map((group) => {
+          const open = openGroups.has(group.id);
+          return (
+            <div key={group.id} className={style.navGroup}>
+              <button
+                type="button"
+                className={style.navGroupTitle}
+                onClick={() => toggleGroup(group.id)}
+                aria-expanded={open}
+              >
+                {group.icon}
+                <span className={style.navGroupLabel}>{group.title}</span>
+                <FiChevronDown
+                  className={`${style.navGroupChevron} ${open ? style.navGroupChevronOpen : ""}`}
+                />
+              </button>
+              {open && (
+                <div className={style.navGroupItems}>
+                  {group.items.map((item) => renderLink(item, rail))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        <div className={style.navStandalone}>
+          {NAV_STANDALONE.map((item) => renderLink(item, rail))}
+        </div>
+      </>
+    );
+  };
 
   const ProfileAvatar = ({ option = activeProfile }) => (
     <div className={style.avatar}>

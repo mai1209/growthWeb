@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   FiAlignCenter,
   FiAlignLeft,
@@ -50,6 +51,9 @@ Quill.register(SizeStyle, true);
 const MIN_FONT_PX = 8;
 const MAX_FONT_PX = 96;
 const DEFAULT_FONT_PX = 16;
+
+// Vistas del estudio (las que se pueden deep-linkear desde el nav con ?view=).
+const VALID_VIEWS = ["notes", "shopping", "afirmaciones", "journal", "calendar"];
 
 // Estilo inline para colores libres (hex) elegidos con el picker de la app.
 // El color del texto se decide por luminancia del fondo.
@@ -374,9 +378,33 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const [studyFlipped, setStudyFlipped] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [sizeInput, setSizeInput] = useState(DEFAULT_FONT_PX);
-  const [view, setView] = useState("notes");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [view, setView] = useState(() => {
+    const v = searchParams.get("view");
+    return VALID_VIEWS.includes(v) ? v : "notes";
+  });
   const [activeFolder, setActiveFolder] = useState(ALL_FOLDERS);
   const [customFolders, setCustomFolders] = useState(() => readStoredFolders(activeWorkspace));
+
+  // URL ⇄ vista: el nav deep-linkea (?view=shopping/journal) y las pestañas
+  // internas mantienen la URL en sync (así el nav resalta la sección correcta).
+  useEffect(() => {
+    const v = searchParams.get("view");
+    const next = VALID_VIEWS.includes(v) ? v : "notes";
+    setView((cur) => (cur === next ? cur : next));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  useEffect(() => {
+    const v = searchParams.get("view");
+    const fromUrl = VALID_VIEWS.includes(v) ? v : "notes";
+    if (view === fromUrl) return;
+    const next = new URLSearchParams(searchParams);
+    if (view === "notes") next.delete("view");
+    else next.set("view", view);
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
   const [isCompact, setIsCompact] = useState(
     typeof window !== "undefined" ? window.innerWidth <= 760 : false
   );
