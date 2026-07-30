@@ -163,8 +163,8 @@
 
 .progressStats strong {
   color: var(--color-text);
-  font-size: 1.18rem;
-  line-height: 1;
+  font-size: 0.95rem;
+  line-height: 1.4;
 }
 
 /* Texto comparativo de progreso (este mes vs. mes pasado). */
