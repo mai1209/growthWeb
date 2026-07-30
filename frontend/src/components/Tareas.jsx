@@ -1060,11 +1060,11 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
           <div className={style.progressCopy}>
             <span className={style.progressLabel}>Progreso</span>
             <div className={style.progressStats}>
-              <p>
+              <p className={style.statCompletadas}>
                 <strong>{completedTasksCount}</strong>
                 completadas
               </p>
-              <p>
+              <p className={style.statPendientes}>
                 <strong>{pendingTasksCount}</strong>
                 pendientes
               </p>
@@ -1080,14 +1080,10 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
           ) : null}
 
           <div className={style.fraseCard}>
-            <div className={style.fraseBg} aria-hidden="true">
-              <FiTrendingUp className={style.fraseBgIcon} style={{ top: "14%", left: "8%", animationDelay: "0s" }} />
-              <FiTarget className={style.fraseBgIcon} style={{ top: "22%", right: "10%", animationDelay: "1.2s" }} />
-              <FiCheckSquare className={style.fraseBgIcon} style={{ bottom: "16%", left: "10%", animationDelay: "0.6s" }} />
-              <FiFlag className={style.fraseBgIcon} style={{ bottom: "20%", right: "12%", animationDelay: "1.8s" }} />
-            </div>
-            <span className={style.fraseLabel}>Frase del día</span>
-            <p className={style.fraseTexto}>{fraseDelDia}</p>
+            <p className={style.fraseTexto}>
+              <span className={style.fraseLabel}>Frase del día: </span>
+              {fraseDelDia}
+            </p>
           </div>
         </aside>
 

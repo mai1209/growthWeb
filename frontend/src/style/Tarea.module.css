@@ -134,23 +134,31 @@
 }
 
 .progressStats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 
+/* Sin fondo, una abajo de la otra: el número grande + la etiqueta al lado. */
 .progressStats p {
-  min-height: 56px;
   margin: 0;
-  padding: 0.62rem 0.68rem;
-  border: 1px solid rgba(216, 241, 224, 0.08);
-  border-radius: 16px;
-  display: grid;
-  gap: 0.08rem;
-  background: rgba(255, 255, 255, 0.04);
+  padding: 0;
+  border: none;
+  background: none;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
   color: var(--color-muted);
-  font-size: 0.76rem;
+  font-size: 0.85rem;
   font-weight: 700;
+}
+
+.progressStats .statCompletadas strong {
+  color: #75f94c;
+}
+
+.progressStats .statPendientes strong {
+  color: #eb3223;
 }
 
 .progressStats strong {
@@ -229,12 +237,7 @@
 }
 
 .fraseLabel {
-  position: relative;
-  z-index: 1;
-  font-size: 0.66rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--color-verde, #5dc72d);
 }
 
@@ -270,9 +273,18 @@
 
 .tasksWorkspace {
   display: grid;
-  grid-template-columns: minmax(250px, 0.38fr) minmax(0, 1fr);
+  /* Tareas a la izquierda (ancho), gráfico/progreso a la derecha (angosto). */
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 0.38fr);
   align-items: start;
   gap: 1rem;
+}
+
+.tasksWorkspace .tasksList {
+  order: 1;
+}
+
+.tasksWorkspace .progressCard {
+  order: 2;
 }
 
 .tasksList {
@@ -1622,6 +1634,15 @@
 
   .tasksWorkspace {
     grid-template-columns: 1fr;
+  }
+
+  /* En mobile el resumen/progreso queda arriba y las tareas abajo. */
+  .tasksWorkspace .progressCard {
+    order: 1;
+  }
+
+  .tasksWorkspace .tasksList {
+    order: 2;
   }
 
   .taskMeta {
