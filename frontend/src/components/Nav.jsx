@@ -42,10 +42,9 @@ const NAV_GROUPS = [
   },
 ];
 
-// Items sueltos, sin grupo. (Apoyar y el cambio de tema viven ahora dentro de Ajustes.)
-const NAV_STANDALONE = [
-  { to: "/ajustes", label: "Ajustes", icon: <FiSettings className={style.navIcon} /> },
-];
+// Ya no hay items sueltos en la lista: Ajustes vive abajo (junto a cerrar sesión),
+// y Apoyar + tema están dentro de Ajustes.
+const NAV_STANDALONE = [];
 
 // Acento del avatar según el color de tarjeta elegido (solo decorativo; el resto sigue verde)
 const CARD_ACCENTS = {
@@ -315,9 +314,11 @@ function Nav({
             </div>
           );
         })}
-        <div className={style.navStandalone}>
-          {NAV_STANDALONE.map((item) => renderLink(item, rail))}
-        </div>
+        {NAV_STANDALONE.length > 0 && (
+          <div className={style.navStandalone}>
+            {NAV_STANDALONE.map((item) => renderLink(item, rail))}
+          </div>
+        )}
       </>
     );
   };
@@ -457,10 +458,27 @@ function Nav({
               <ProfileDropdown />
             </div>
 
-            <button onClick={handleLogout} className={style.railAction} type="button">
-              <FiLogOut />
-              <span className={style.tip}>Cerrar sesión</span>
-            </button>
+            <div className={style.railFooterActions}>
+              <button
+                onClick={handleLogout}
+                className={`${style.railAction} ${style.railLogout}`}
+                type="button"
+              >
+                <FiLogOut />
+                <span className={style.tip}>Cerrar sesión</span>
+              </button>
+
+              <NavLink
+                to="/ajustes"
+                className={({ isActive }) =>
+                  `${style.railAction} ${style.railGear} ${isActive ? style.railActionActive : ""}`
+                }
+                aria-label="Ajustes"
+                title="Ajustes"
+              >
+                <FiSettings />
+              </NavLink>
+            </div>
           </div>
         )}
       </aside>
