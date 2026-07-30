@@ -3726,3 +3726,26 @@ button.folderItem {
     gap: 0.4rem;
   }
 }
+
+/* ============================================================
+   Pestañas de Notas en mobile: que SIEMPRE se vean las 4.
+   Va al final para ganarle a la regla base (que estaba después
+   del media query y la pisaba). Wrapean a 2 filas si no entran.
+   ============================================================ */
+@media (max-width: 560px) {
+  .viewToggle {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: visible;
+    gap: 0.3rem;
+  }
+
+  .viewToggleButton {
+    flex: 0 0 auto;
+    padding: 0.42rem 0.8rem;
+    font-size: 0.82rem;
+  }
+}
