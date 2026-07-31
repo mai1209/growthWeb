@@ -277,19 +277,24 @@ export default function TareasScreen() {
             }
             ListHeaderComponent={
               <View>
+                <View style={styles.fraseCard}>
+                  <Text style={styles.fraseTexto}>
+                    <Text style={styles.fraseLabel}>Frase del día: </Text>
+                    {fraseDelDia}
+                  </Text>
+                </View>
+
                 <View style={styles.progressCard}>
                   <ProgressRing percent={progressPercent} />
                   <View style={styles.progressSide}>
                     <Text style={styles.progressKicker}>Progreso</Text>
-                    <View style={styles.progressBoxes}>
-                      <View style={styles.progressBox}>
-                        <Text style={styles.progressNum}>{completedCount}</Text>
-                        <Text style={styles.progressLbl}>completadas</Text>
-                      </View>
-                      <View style={styles.progressBox}>
-                        <Text style={styles.progressNum}>{pendingCount}</Text>
-                        <Text style={styles.progressLbl}>pendientes</Text>
-                      </View>
+                    <View style={styles.progressStats}>
+                      <Text style={styles.statLine}>
+                        <Text style={styles.statCompletadas}>{completedCount}</Text> tareas completadas
+                      </Text>
+                      <Text style={styles.statLine}>
+                        <Text style={styles.statPendientes}>{pendingCount}</Text> tareas pendientes
+                      </Text>
                     </View>
                   </View>
                 </View>
@@ -300,16 +305,6 @@ export default function TareasScreen() {
                     el mes pasado fue {comparativaMes.anterior}%
                   </Text>
                 ) : null}
-
-                <View style={styles.fraseCard}>
-                  <View style={styles.fraseBg} pointerEvents="none">
-                    <Ionicons name="trending-up-outline" size={16} color="rgba(123,255,77,0.2)" style={styles.fraseBgIcon1} />
-                    <Ionicons name="flag-outline" size={16} color="rgba(123,255,77,0.2)" style={styles.fraseBgIcon2} />
-                    <Ionicons name="checkmark-done-outline" size={16} color="rgba(123,255,77,0.2)" style={styles.fraseBgIcon3} />
-                  </View>
-                  <Text style={styles.fraseLabel}>FRASE DEL DÍA</Text>
-                  <Text style={styles.fraseTexto}>{fraseDelDia}</Text>
-                </View>
               </View>
             }
             ListEmptyComponent={<Text style={styles.empty}>No hay tareas para este día.</Text>}
@@ -523,52 +518,27 @@ const makeStyles = (colors) => StyleSheet.create({
     marginBottom: 10,
   },
   fraseCard: {
-    position: "relative",
-    overflow: "hidden",
     padding: 14,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(93,199,45,0.28)",
     backgroundColor: "rgba(93,199,45,0.09)",
     marginBottom: 12,
-    gap: 4,
-  },
-  fraseBg: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
-  fraseBgIcon1: {
-    position: "absolute",
-    top: 10,
-    left: 14,
-    textShadowColor: "rgba(123,255,77,0.6)",
-    textShadowRadius: 6,
-  },
-  fraseBgIcon2: {
-    position: "absolute",
-    bottom: 10,
-    right: 16,
-    textShadowColor: "rgba(123,255,77,0.6)",
-    textShadowRadius: 6,
-  },
-  fraseBgIcon3: {
-    position: "absolute",
-    top: 12,
-    right: 24,
-    textShadowColor: "rgba(123,255,77,0.6)",
-    textShadowRadius: 6,
   },
   fraseLabel: {
     color: colors.greenBright,
-    fontSize: 11,
     fontWeight: "800",
-    letterSpacing: 1,
-    textAlign: "center",
   },
   fraseTexto: {
     color: colors.text,
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 21,
     fontWeight: "600",
-    textAlign: "center",
   },
+  progressStats: { gap: 4, marginTop: 2 },
+  statLine: { color: colors.muted, fontSize: 13 },
+  statCompletadas: { color: "#75F94C", fontSize: 15, fontWeight: "800" },
+  statPendientes: { color: "#EB3223", fontSize: 15, fontWeight: "800" },
   progressSide: { flex: 1, gap: 8 },
   progressKicker: {
     color: colors.muted,
@@ -577,18 +547,6 @@ const makeStyles = (colors) => StyleSheet.create({
     letterSpacing: 1,
     textTransform: "uppercase",
   },
-  progressBoxes: { flexDirection: "row", gap: 8 },
-  progressBox: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 14,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  progressNum: { color: colors.text, fontSize: 20, fontWeight: "800" },
-  progressLbl: { color: colors.muted, fontSize: 11, marginTop: 2 },
 
   card: {
     borderRadius: 16,
