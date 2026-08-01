@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../theme";
 
@@ -19,6 +19,7 @@ const soloNum = (v) => v.replace(/[^0-9]/g, "");
 export default function AddComidaModal({ visible, franja, onClose, onGuardar }) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
+  const insets = useSafeAreaInsets();
 
   const [nombre, setNombre] = useState("");
   const [kcal, setKcal] = useState("");
@@ -54,7 +55,7 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={styles.safe}>
+      <View style={[styles.safe, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} hitSlop={10}>
             <Ionicons name="close" size={26} color={colors.text} />
@@ -136,7 +137,7 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
             </Text>
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }

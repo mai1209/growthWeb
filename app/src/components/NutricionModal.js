@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../theme";
 import { calcularPlan, ACTIVIDADES, OBJETIVOS } from "../utils/nutricion";
@@ -20,6 +20,7 @@ const soloNum = (v) => v.replace(/[^0-9]/g, "");
 export default function NutricionModal({ visible, onClose, onGuardar, initial, pesoSugerido }) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
+  const insets = useSafeAreaInsets();
 
   const [peso, setPeso] = useState("");
   const [altura, setAltura] = useState("");
@@ -75,7 +76,7 @@ export default function NutricionModal({ visible, onClose, onGuardar, initial, p
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={styles.safe}>
+      <View style={[styles.safe, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} hitSlop={10}>
             <Ionicons name="close" size={26} color={colors.text} />
@@ -170,7 +171,7 @@ export default function NutricionModal({ visible, onClose, onGuardar, initial, p
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }

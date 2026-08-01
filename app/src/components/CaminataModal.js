@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useTheme } from "../theme";
@@ -34,6 +34,7 @@ const fmtTiempo = (secs) => {
 export default function CaminataModal({ visible, onClose, onGuardar }) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
+  const insets = useSafeAreaInsets();
 
   const [fase, setFase] = useState("permiso"); // permiso | activo | pausado | resumen | denegado
   const [metros, setMetros] = useState(0);
@@ -116,7 +117,7 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={styles.safe}>
+      <View style={[styles.safe, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} hitSlop={10}>
             <Ionicons name="close" size={26} color={colors.text} />
@@ -194,7 +195,7 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
             )}
           </View>
         )}
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
