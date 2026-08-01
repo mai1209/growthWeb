@@ -22,6 +22,7 @@ export const NAV_GROUPS = [
     label: "Finanzas",
     short: "Finanzas",
     icon: "logo-usd",
+    iconSize: 28,
     items: [
       { label: "Home", icon: "home-outline", route: "Home" },
       { label: "Filtros", icon: "funnel-outline", route: "Filtros" },
@@ -197,7 +198,7 @@ export default function RadialTabBar({ state, navigation }) {
               else switchGroup(i);
             }}
           >
-            <Ionicons name={g.icon} size={23} color={tint} />
+            <Ionicons name={g.icon} size={g.iconSize || 23} color={tint} />
             <Text style={[styles.tabLabel, { color: tint }]} numberOfLines={1}>
               {g.short}
             </Text>
