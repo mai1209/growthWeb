@@ -296,7 +296,7 @@ const makeStyles = (colors) =>
       borderRadius: ITEM / 2,
       backgroundColor: colors.card,
       borderWidth: 1.5,
-      borderColor: "#E03525",
+      borderColor: colors.greenBright,
       alignItems: "center",
       justifyContent: "center",
       gap: 2,
