@@ -15,6 +15,8 @@ import { Pedometer } from "expo-sensors";
 import * as SecureStore from "expo-secure-store";
 import { useTheme } from "../theme";
 import CaminataModal from "../components/CaminataModal";
+import NutricionModal from "../components/NutricionModal";
+import { calcularPlan } from "../utils/nutricion";
 
 const AGUA_KEY = "salud_agua_v1";
 const CFG_KEY = "salud_config_v1";
@@ -22,6 +24,7 @@ const PASOS_HIST_KEY = "salud_pasos_hist_v1";
 const ANIMO_KEY = "salud_animo_v1";
 const PESO_KEY = "salud_peso_v1";
 const CAMINATAS_KEY = "salud_caminatas_v1";
+const NUTRI_KEY = "salud_nutricion_v1";
 const META_PASOS_DEF = 8000;
 const META_AGUA_DEF = 2000; // ml
 const DIAS_SEMANA = ["D", "L", "M", "M", "J", "V", "S"];
@@ -360,6 +363,29 @@ export default function SaludScreen() {
 
   const ultimaCaminata = caminatas[0];
 
+  // ---------------- Nutrición (plan diario) ----------------
+  const [nutriOpen, setNutriOpen] = useState(false);
+  const [nutri, setNutri] = useState(null);
+
+  useEffect(() => {
+    SecureStore.getItemAsync(NUTRI_KEY)
+      .then((raw) => {
+        if (!raw) return;
+        try {
+          const d = JSON.parse(raw);
+          if (d) setNutri(d);
+        } catch {}
+      })
+      .catch(() => {});
+  }, []);
+
+  const guardarNutri = (cfg) => {
+    setNutri(cfg);
+    SecureStore.setItemAsync(NUTRI_KEY, JSON.stringify(cfg)).catch(() => {});
+  };
+
+  const plan = calcularPlan(nutri);
+
   // ---------------- Tendencia de pasos (últimos 30 días) ----------------
   const tendencia = useMemo(() => {
     const ahora = new Date();
@@ -387,6 +413,45 @@ export default function SaludScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.kicker}>SALUD</Text>
         <Text style={styles.title}>Tu día</Text>
+
+        {/* ---- Nutrición (plan) ---- */}
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <View style={styles.cardHeadLeft}>
+              <Ionicons name="flame-outline" size={18} color={colors.red} />
+              <Text style={styles.cardTitle}>Nutrición</Text>
+            </View>
+            <TouchableOpacity style={styles.metaBtn} onPress={() => setNutriOpen(true)}>
+              <Ionicons name="create-outline" size={14} color={colors.muted} />
+              <Text style={styles.metaBtnText}>{plan ? "Editar" : "Configurar"}</Text>
+            </TouchableOpacity>
+          </View>
+          {plan ? (
+            <View>
+              <Text style={styles.nutriKcal}>
+                {plan.kcal.toLocaleString("es-AR")} <Text style={styles.nutriKcalU}>kcal / día</Text>
+              </Text>
+              <View style={styles.nutriMacros}>
+                <View style={styles.nutriMacro}>
+                  <Text style={styles.nutriMacroN}>{plan.carbG}g</Text>
+                  <Text style={styles.nutriMacroL}>Carbos</Text>
+                </View>
+                <View style={styles.nutriMacro}>
+                  <Text style={styles.nutriMacroN}>{plan.protG}g</Text>
+                  <Text style={styles.nutriMacroL}>Proteína</Text>
+                </View>
+                <View style={styles.nutriMacro}>
+                  <Text style={styles.nutriMacroN}>{plan.fatG}g</Text>
+                  <Text style={styles.nutriMacroL}>Grasa</Text>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <Text style={styles.ringSub}>
+              Configurá tu peso, altura y objetivo para ver tu norma diaria de calorías.
+            </Text>
+          )}
+        </View>
 
         {/* ---- Pasos ---- */}
         <View style={styles.card}>
@@ -636,6 +701,14 @@ export default function SaludScreen() {
         onClose={() => setCaminataOpen(false)}
         onGuardar={guardarCaminata}
       />
+
+      <NutricionModal
+        visible={nutriOpen}
+        onClose={() => setNutriOpen(false)}
+        onGuardar={guardarNutri}
+        initial={nutri}
+        pesoSugerido={pesoActual}
+      />
     </SafeAreaView>
   );
 }
@@ -797,4 +870,18 @@ const makeStyles = (colors) =>
       backgroundColor: colors.greenBright,
     },
     caminataBtnText: { color: "#06210a", fontSize: 14, fontWeight: "800" },
+
+    nutriKcal: { color: colors.text, fontSize: 30, fontWeight: "900" },
+    nutriKcalU: { color: colors.muted, fontSize: 15, fontWeight: "700" },
+    nutriMacros: { flexDirection: "row", gap: 12, marginTop: 10 },
+    nutriMacro: {
+      flex: 1,
+      alignItems: "center",
+      gap: 2,
+      paddingVertical: 10,
+      borderRadius: 12,
+      backgroundColor: colors.cardSoft,
+    },
+    nutriMacroN: { color: colors.text, fontSize: 16, fontWeight: "800" },
+    nutriMacroL: { color: colors.muted, fontSize: 11, fontWeight: "700" },
   });
