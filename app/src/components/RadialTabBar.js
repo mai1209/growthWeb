@@ -21,10 +21,10 @@ export const NAV_GROUPS = [
     id: "finanzas",
     label: "Finanzas",
     short: "Finanzas",
-    icon: "wallet-outline",
+    icon: "logo-usd",
     items: [
       { label: "Home", icon: "home-outline", route: "Home" },
-      { label: "Filtros", icon: "filter-outline", route: "Filtros" },
+      { label: "Filtros", icon: "funnel-outline", route: "Filtros" },
       { label: "Métricas", icon: "stats-chart-outline", route: "Metricas" },
       { label: "Compartidos", icon: "people-outline", route: "Compartidos" },
       { label: "Compras", icon: "cart-outline", route: "Notas", params: { view: "shopping" } },
@@ -48,7 +48,7 @@ export const NAV_GROUPS = [
     id: "coworking",
     label: "Co-working",
     short: "Co-working",
-    icon: "people-circle-outline",
+    icon: "people-outline",
     items: [
       { label: "Registro", icon: "time-outline", route: "Pomodoro", params: { panel: "tracker" } },
     ],
