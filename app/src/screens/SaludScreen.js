@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -136,32 +136,33 @@ export default function SaludScreen() {
   const [pasosSemana, setPasosSemana] = useState([]);
   const [modoPasos, setModoPasos] = useState("cargando"); // cargando | ios | android | no
 
-  // Histórico diario acumulado (para gráficas de tendencia larga más adelante).
-  // Va en un ref porque no lo mostramos todavía: solo lo persistimos.
-  const pasosHistRef = useRef({});
+  // Histórico diario acumulado (para la gráfica de tendencia larga).
+  const [pasosHist, setPasosHist] = useState({});
   useEffect(() => {
     SecureStore.getItemAsync(PASOS_HIST_KEY)
       .then((raw) => {
-        if (raw) {
-          try {
-            pasosHistRef.current = JSON.parse(raw) || {};
-          } catch {}
-        }
+        if (!raw) return;
+        try {
+          const h = JSON.parse(raw);
+          if (h) setPasosHist(h);
+        } catch {}
       })
       .catch(() => {});
   }, []);
 
   const guardarHist = useCallback((nuevos) => {
-    const merged = { ...pasosHistRef.current, ...nuevos };
-    const recortado = {};
-    Object.keys(merged)
-      .sort()
-      .slice(-400) // ~13 meses
-      .forEach((k) => {
-        recortado[k] = merged[k];
-      });
-    pasosHistRef.current = recortado;
-    SecureStore.setItemAsync(PASOS_HIST_KEY, JSON.stringify(recortado)).catch(() => {});
+    setPasosHist((prev) => {
+      const merged = { ...prev, ...nuevos };
+      const recortado = {};
+      Object.keys(merged)
+        .sort()
+        .slice(-400) // ~13 meses
+        .forEach((k) => {
+          recortado[k] = merged[k];
+        });
+      SecureStore.setItemAsync(PASOS_HIST_KEY, JSON.stringify(recortado)).catch(() => {});
+      return recortado;
+    });
   }, []);
 
   useEffect(() => {
@@ -330,6 +331,25 @@ export default function SaludScreen() {
       .catch(() => {});
   }, []);
 
+  // ---------------- Tendencia de pasos (últimos 30 días) ----------------
+  const tendencia = useMemo(() => {
+    const ahora = new Date();
+    const arr = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(ahora);
+      d.setDate(d.getDate() - i);
+      const k = dayKey(d);
+      const tiene = Object.prototype.hasOwnProperty.call(pasosHist, k);
+      arr.push({ key: k, valor: tiene ? pasosHist[k] : 0, tiene });
+    }
+    return arr;
+  }, [pasosHist]);
+  const tendConDatos = tendencia.filter((x) => x.tiene);
+  const promedioPasos = tendConDatos.length
+    ? Math.round(tendConDatos.reduce((a, x) => a + x.valor, 0) / tendConDatos.length)
+    : 0;
+  const tendMax = Math.max(metaPasos, ...tendencia.map((t) => t.valor), 1);
+
   const pctPasos = pasos != null ? Math.round((pasos / metaPasos) * 100) : 0;
   const pctAgua = Math.round((agua / metaAgua) * 100);
 
@@ -385,6 +405,46 @@ export default function SaludScreen() {
             </Text>
           ) : null}
         </View>
+
+        {/* ---- Tendencia de pasos ---- */}
+        {tendConDatos.length > 0 ? (
+          <View style={styles.card}>
+            <View style={styles.cardHead}>
+              <View style={styles.cardHeadLeft}>
+                <Ionicons name="trending-up-outline" size={18} color={colors.greenDark} />
+                <Text style={styles.cardTitle}>Tendencia de pasos</Text>
+              </View>
+              <Text style={styles.metaBtnText}>Últimos 30 días</Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.tendRow}>
+                {tendencia.map((x) => {
+                  const h = x.tiene ? Math.max(3, Math.round((x.valor / tendMax) * 90)) : 3;
+                  const cumplida = x.valor >= metaPasos;
+                  return (
+                    <View key={x.key} style={styles.tendCol}>
+                      <View
+                        style={{
+                          width: 7,
+                          height: h,
+                          borderRadius: 4,
+                          backgroundColor: x.tiene
+                            ? cumplida
+                              ? colors.greenBright
+                              : colors.greenDark
+                            : colors.cardBorder,
+                        }}
+                      />
+                    </View>
+                  );
+                })}
+              </View>
+            </ScrollView>
+            <Text style={styles.ringSub}>
+              Promedio: {promedioPasos.toLocaleString("es-AR")} pasos/día
+            </Text>
+          </View>
+        ) : null}
 
         {/* ---- Hidratación ---- */}
         <View style={styles.card}>
@@ -603,6 +663,9 @@ const makeStyles = (colors) =>
     semanaLabel: { color: colors.muted, fontSize: 10, fontWeight: "700" },
 
     aviso: { color: colors.muted, fontSize: 13, lineHeight: 18 },
+
+    tendRow: { flexDirection: "row", alignItems: "flex-end", height: 96, gap: 3 },
+    tendCol: { justifyContent: "flex-end", height: 96 },
 
     aguaBtns: { flexDirection: "row", alignItems: "center", gap: 8 },
     aguaBtn: {
