@@ -43,6 +43,7 @@ export const NAV_GROUPS = [
       { label: "Journaling", icon: "book-outline", route: "Notas", params: { view: "journal" } },
       { label: "Afirmac.", icon: "sunny-outline", route: "Notas", params: { view: "afirmaciones" } },
       { label: "Pomodoro", icon: "timer-outline", route: "Pomodoro", params: { panel: "pomodoro" } },
+      { label: "Salud", icon: "heart-outline", route: "Salud" },
     ],
   },
   {
@@ -59,7 +60,7 @@ export const NAV_GROUPS = [
 const R = 128; // radio del arco
 const ITEM = 60; // diámetro de cada ícono del dial
 const BAR_H = 46; // alto de la barra (sin el safe-area de abajo)
-const MAX_ITEMS = 6; // grupo más grande (Desar. personal)
+const MAX_ITEMS = 7; // grupo más grande (Desar. personal)
 const ROT_LIMIT = 55; // tope de rotación al arrastrar (grados)
 
 // Ángulos del arco superior (270° = arriba, centrado) según cuántos ítems haya.

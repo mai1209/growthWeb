@@ -42,6 +42,12 @@
         {
           "photosPermission": "Growth usa tus fotos para insertar imágenes en tus notas."
         }
+      ],
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Growth usa el sensor de movimiento para contar tus pasos del día."
+        }
       ]
     ]
   }

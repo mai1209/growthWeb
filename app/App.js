@@ -21,6 +21,7 @@ import MetasScreen from "./src/screens/MetasScreen";
 import CompartidosScreen from "./src/screens/CompartidosScreen";
 import NotasScreen from "./src/screens/NotasScreen";
 import PomodoroScreen from "./src/screens/PomodoroScreen";
+import SaludScreen from "./src/screens/SaludScreen";
 import AjustesScreen from "./src/screens/AjustesScreen";
 import PerfilScreen from "./src/screens/PerfilScreen";
 import UpdateModal from "./src/components/UpdateModal";
@@ -94,6 +95,7 @@ function MainTabs() {
         <Tab.Screen name="Compartidos" component={CompartidosScreen} />
         <Tab.Screen name="Notas" component={NotasScreen} />
         <Tab.Screen name="Pomodoro" component={PomodoroScreen} />
+        <Tab.Screen name="Salud" component={SaludScreen} />
         <Tab.Screen name="Filtros" component={FiltrosScreen} />
       </Tab.Navigator>
     </View>
