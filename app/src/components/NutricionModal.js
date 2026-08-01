@@ -30,9 +30,11 @@ export default function NutricionModal({ visible, onClose, onGuardar, initial, p
 
   useEffect(() => {
     if (!visible) return;
-    setPeso(String(initial?.peso || pesoSugerido || ""));
-    setAltura(String(initial?.altura || ""));
-    setEdad(String(initial?.edad || ""));
+    // Pre-cargamos con valores razonables para que la norma se calcule de una
+    // (tu peso ya registrado si hay) y vos solo ajustás.
+    setPeso(String(initial?.peso || Math.round(pesoSugerido) || 70));
+    setAltura(String(initial?.altura || 170));
+    setEdad(String(initial?.edad || 30));
     setSexo(initial?.sexo || "H");
     setActividad(initial?.actividad || "ligero");
     setObjetivo(initial?.objetivo || "mantener");
