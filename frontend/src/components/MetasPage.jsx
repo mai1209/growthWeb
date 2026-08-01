@@ -1000,16 +1000,6 @@ function MetasPage({ activeWorkspace }) {
                         return (
                           <g key={b.id}>
                             <title>{`${b.titulo} · ${b.progreso}%`}</title>
-                            {/* Mecha: rango completo (0–100%) tenue */}
-                            <line
-                              x1={cx}
-                              x2={cx}
-                              y1={yVal(100)}
-                              y2={yVal(0)}
-                              stroke={color}
-                              strokeWidth="2"
-                              opacity="0.3"
-                            />
                             {/* Cuerpo: avance */}
                             <rect
                               x={cx - BODY / 2}
@@ -1019,6 +1009,16 @@ function MetasPage({ activeWorkspace }) {
                               rx="3"
                               fill={color}
                             />
+                            {/* % arriba de la barra */}
+                            <text
+                              x={cx}
+                              y={Math.max(bodyTop - 6, 10)}
+                              textAnchor="middle"
+                              className={style.candleValue}
+                              fill={color}
+                            >
+                              {b.progreso}%
+                            </text>
                             <text
                               x={cx}
                               y={H - 18}

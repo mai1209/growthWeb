@@ -1003,15 +1003,6 @@ export default function MetasScreen() {
                         if (l2.length > 11) l2 = `${l2.slice(0, 10)}…`;
                         return (
                           <G key={b.id}>
-                            <Line
-                              x1={cx}
-                              x2={cx}
-                              y1={yVal(100)}
-                              y2={yVal(0)}
-                              stroke={color}
-                              strokeWidth={2}
-                              opacity={0.3}
-                            />
                             <Rect
                               x={cx - BODY / 2}
                               y={bodyTop}
@@ -1020,6 +1011,16 @@ export default function MetasScreen() {
                               rx={3}
                               fill={color}
                             />
+                            <SvgText
+                              x={cx}
+                              y={Math.max(bodyTop - 5, 9)}
+                              fontSize={10}
+                              fill={color}
+                              textAnchor="middle"
+                              fontWeight="800"
+                            >
+                              {`${b.progreso}%`}
+                            </SvgText>
                             <SvgText
                               x={cx}
                               y={H - 16}
