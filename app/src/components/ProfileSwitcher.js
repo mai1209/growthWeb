@@ -11,6 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "../theme";
 import { useWorkspace } from "../workspace/WorkspaceContext";
 
@@ -47,8 +48,16 @@ function ProfileAvatar({ photo, kind, size, colors, active, borderColor }) {
 export default function ProfileSwitcher() {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
+  const navigation = useNavigation();
   const { workspace, profiles, activeProfile, switchWorkspace, addProfile } = useWorkspace();
   const [open, setOpen] = useState(false);
+
+  // Entrar al perfil de un workspace: lo activa y abre la pantalla Perfil (como en la web).
+  const enterProfile = async (id) => {
+    await switchWorkspace(id);
+    setOpen(false);
+    navigation.navigate("Perfil");
+  };
   const [newName, setNewName] = useState("");
   const [adding, setAdding] = useState(false);
 
@@ -83,7 +92,7 @@ export default function ProfileSwitcher() {
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setOpen(false)}>
           <TouchableOpacity activeOpacity={1} style={styles.sheet}>
-            <Text style={styles.title}>Perfiles</Text>
+            <Text style={styles.title}>Entrar al perfil</Text>
 
             {profiles.map((p) => {
               const active = p.id === workspace;
@@ -91,14 +100,12 @@ export default function ProfileSwitcher() {
                 <TouchableOpacity
                   key={p.id}
                   style={[styles.row, active && styles.rowActive]}
-                  onPress={() => {
-                    switchWorkspace(p.id);
-                    setOpen(false);
-                  }}
+                  onPress={() => enterProfile(p.id)}
                 >
                   <ProfileAvatar photo={p.photo} kind={p.kind} size={34} colors={colors} active={active} />
                   <Text style={[styles.rowText, active && { color: colors.greenDark }]}>{p.name}</Text>
-                  {active ? <Ionicons name="checkmark" size={18} color={colors.greenDark} /> : null}
+                  {active ? <Text style={styles.badge}>actual</Text> : null}
+                  <Ionicons name="arrow-forward" size={18} color={colors.muted} />
                 </TouchableOpacity>
               );
             })}
@@ -181,6 +188,13 @@ const makeStyles = (colors) =>
     },
     rowActive: { backgroundColor: colors.greenSoft },
     rowText: { flex: 1, color: colors.text, fontSize: 15, fontWeight: "700" },
+    badge: {
+      color: colors.greenDark,
+      fontSize: 11,
+      fontWeight: "800",
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+    },
     addRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
     addInput: {
       flex: 1,

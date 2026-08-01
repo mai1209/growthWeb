@@ -67,10 +67,12 @@ export default function PerfilScreen({ navigation }) {
   const { colors, isDark } = useTheme();
   const styles = makeStyles(colors, isDark);
   const insets = useSafeAreaInsets();
-  const { refreshProfiles } = useWorkspace();
+  const { refreshProfiles, workspace, activeProfile, rawProfile } = useWorkspace();
 
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Sembramos con el perfil ya cacheado por el contexto: entra al instante y
+  // refresca en segundo plano (sin spinner) en vez de esperar la red cada vez.
+  const [profile, setProfile] = useState(rawProfile);
+  const [loading, setLoading] = useState(!rawProfile);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -84,7 +86,8 @@ export default function PerfilScreen({ navigation }) {
   const [userStatus, setUserStatus] = useState("idle");
 
   const load = useCallback(async () => {
-    setLoading(true);
+    // No bloqueamos con spinner: si ya hay datos (cacheados o de antes),
+    // se refresca en segundo plano sin interrumpir la vista.
     try {
       const res = await authService.getProfile();
       setProfile(res.data);
@@ -176,6 +179,60 @@ export default function PerfilScreen({ navigation }) {
     }
   };
 
+  // ----- Vista de negocio (cuando el workspace activo es un negocio) -----
+  const isBusiness = activeProfile?.kind === "business";
+  const businessList = Array.isArray(profile?.businessProfiles)
+    ? profile.businessProfiles
+    : profile?.businessProfile?.name
+    ? [{ ...profile.businessProfile, _id: "legacy" }]
+    : [];
+  const bizIndex = !isBusiness
+    ? -1
+    : workspace === "business"
+    ? 0
+    : businessList.findIndex((b) => String(b._id) === String(workspace).split(":")[1]);
+  const business = bizIndex >= 0 ? businessList[bizIndex] : null;
+
+  const [bizEditing, setBizEditing] = useState(false);
+  const [bizName, setBizName] = useState("");
+  const [bizLogo, setBizLogo] = useState("");
+  const [bizSaving, setBizSaving] = useState(false);
+
+  const openBizEdit = () => {
+    setBizName(business?.name || "");
+    setBizLogo(business?.logoUrl || "");
+    setBizEditing(true);
+  };
+  const pickBizLogo = async () => {
+    const url = await pickImageAsDataUrl(512, [1, 1]);
+    if (url) setBizLogo(url);
+  };
+  const saveBiz = async () => {
+    if (bizIndex < 0) return;
+    setBizSaving(true);
+    try {
+      const nextList = businessList.map((b, i) =>
+        i === bizIndex ? { ...b, name: bizName.trim(), logoUrl: bizLogo } : b
+      );
+      const res = await authService.updateProfile({
+        username: profile?.username,
+        fullName: profile?.fullName || "",
+        phone: profile?.phone || "",
+        bio: profile?.bio || "",
+        profilePhotoUrl: profile?.profilePhotoUrl || "",
+        bannerUrl: profile?.bannerUrl || "",
+        businessProfiles: nextList,
+      });
+      setProfile(res.data?.profile || res.data);
+      setBizEditing(false);
+      refreshProfiles?.();
+    } catch (err) {
+      Alert.alert("Error", err.response?.data?.error || "No se pudo guardar el negocio.");
+    } finally {
+      setBizSaving(false);
+    }
+  };
+
   const initials = (profile?.fullName || profile?.username || profile?.email || "U")
     .split(" ")
     .filter(Boolean)
@@ -203,6 +260,31 @@ export default function PerfilScreen({ navigation }) {
         <ActivityIndicator color={colors.greenBright} style={{ marginTop: 40 }} />
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+          {isBusiness && business ? (
+            <View style={styles.card}>
+              {/* Cabecera del negocio */}
+              <View style={[styles.banner, styles.bannerPlaceholder]} />
+              <View style={styles.topRow}>
+                <View style={styles.avatar}>
+                  {business.logoUrl ? (
+                    <Image source={{ uri: business.logoUrl }} style={styles.avatarImg} />
+                  ) : (
+                    <Ionicons name="briefcase" size={30} color={colors.greenDark} />
+                  )}
+                </View>
+                <TouchableOpacity style={styles.editBtn} onPress={openBizEdit}>
+                  <Text style={styles.editBtnText}>Editar negocio</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.identity}>
+                <View style={styles.bizBadge}>
+                  <Ionicons name="briefcase-outline" size={13} color={colors.greenDark} />
+                  <Text style={styles.bizBadgeText}>Negocio</Text>
+                </View>
+                <Text style={styles.name}>{business.name}</Text>
+              </View>
+            </View>
+          ) : (
           <View style={styles.card}>
             {/* Banner */}
             {profile?.bannerUrl ? (
@@ -265,6 +347,7 @@ export default function PerfilScreen({ navigation }) {
               </View>
             </View>
           </View>
+          )}
         </ScrollView>
       )}
 
@@ -400,6 +483,65 @@ export default function PerfilScreen({ navigation }) {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* ===== Modal de edición de negocio ===== */}
+      <Modal visible={bizEditing} animationType="slide" transparent onRequestClose={() => setBizEditing(false)}>
+        <KeyboardAvoidingView
+          style={styles.overlay}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <View style={styles.sheet}>
+            <View style={styles.sheetHead}>
+              <TouchableOpacity onPress={() => setBizEditing(false)} hitSlop={10}>
+                <Ionicons name="close" size={24} color={colors.muted} />
+              </TouchableOpacity>
+              <Text style={styles.sheetTitle}>Editar negocio</Text>
+              <TouchableOpacity
+                style={[styles.saveBtn, bizSaving && { opacity: 0.5 }]}
+                onPress={saveBiz}
+                disabled={bizSaving}
+              >
+                {bizSaving ? (
+                  <ActivityIndicator color="#06210a" size="small" />
+                ) : (
+                  <Text style={styles.saveBtnText}>Guardar</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 30 }} keyboardShouldPersistTaps="handled">
+              <Text style={styles.label}>Logo</Text>
+              <View style={styles.photoRow}>
+                <View style={styles.photoPreview}>
+                  {bizLogo ? (
+                    <Image source={{ uri: bizLogo }} style={styles.avatarImg} />
+                  ) : (
+                    <Ionicons name="briefcase" size={26} color={colors.greenDark} />
+                  )}
+                </View>
+                <TouchableOpacity style={styles.uploadBtn} onPress={pickBizLogo}>
+                  <Ionicons name="cloud-upload-outline" size={16} color={colors.greenDark} />
+                  <Text style={styles.uploadBtnText}>Subir logo</Text>
+                </TouchableOpacity>
+                {bizLogo ? (
+                  <TouchableOpacity onPress={() => setBizLogo("")}>
+                    <Text style={styles.removeText}>Quitar</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+
+              <Text style={styles.label}>Nombre del negocio</Text>
+              <TextInput
+                style={styles.input}
+                value={bizName}
+                onChangeText={setBizName}
+                placeholder="Nombre del negocio"
+                placeholderTextColor={colors.muted}
+              />
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -450,6 +592,24 @@ const makeStyles = (colors, isDark) =>
       overflow: "hidden",
     },
     avatarImg: { width: "100%", height: "100%" },
+    bizBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      alignSelf: "flex-start",
+      backgroundColor: colors.greenSoft,
+      borderRadius: 999,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      marginBottom: 6,
+    },
+    bizBadgeText: {
+      color: colors.greenDark,
+      fontSize: 12,
+      fontWeight: "800",
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+    },
     avatarInitials: { color: colors.greenDark, fontSize: 30, fontWeight: "800" },
     editBtn: {
       marginTop: 52,

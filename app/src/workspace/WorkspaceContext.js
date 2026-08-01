@@ -44,6 +44,9 @@ export const WorkspaceProvider = ({ children }) => {
   const { token } = useAuth();
   const [workspace, setWorkspaceState] = useState("personal");
   const [profiles, setProfiles] = useState([{ id: "personal", name: "Personal" }]);
+  // Perfil crudo del backend (personal + businessProfiles), cacheado para que
+  // PerfilScreen lo muestre al instante sin volver a esperar la red.
+  const [rawProfile, setRawProfile] = useState(null);
 
   useEffect(() => {
     getWorkspace()
@@ -55,6 +58,7 @@ export const WorkspaceProvider = ({ children }) => {
     try {
       const res = await authService.getProfile();
       setProfiles(buildProfiles(res.data));
+      setRawProfile(res.data);
       return res.data;
     } catch {
       return null;
@@ -102,7 +106,7 @@ export const WorkspaceProvider = ({ children }) => {
 
   return (
     <WorkspaceContext.Provider
-      value={{ workspace, profiles, activeProfile, switchWorkspace, addProfile, refreshProfiles }}
+      value={{ workspace, profiles, activeProfile, rawProfile, switchWorkspace, addProfile, refreshProfiles }}
     >
       {children}
     </WorkspaceContext.Provider>

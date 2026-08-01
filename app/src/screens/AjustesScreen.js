@@ -34,7 +34,6 @@ export default function AjustesScreen({ navigation }) {
   const [section, setSection] = useState(null);
 
   const ROWS = [
-    { key: "perfil", label: "Perfil", desc: "Tu nombre y datos de contacto", icon: "person-outline" },
     { key: "password", label: "Cambiar contraseña", desc: "Actualizá tu clave de acceso", icon: "lock-closed-outline" },
     { key: "notificaciones", label: "Configuración de notificaciones", desc: "Avisos de tareas y más", icon: "notifications-outline" },
     { key: "integraciones", label: "Integraciones", desc: "Google Calendar", icon: "link-outline" },
@@ -140,9 +139,7 @@ export default function AjustesScreen({ navigation }) {
               key={r.key}
               style={[styles.row, i < ROWS.length - 1 && styles.rowBorder]}
               onPress={() =>
-                r.key === "perfil"
-                  ? navigation.navigate("Perfil")
-                  : r.key === "integraciones"
+                r.key === "integraciones"
                   ? Alert.alert(
                       "Próximamente",
                       "Las integraciones (Google Calendar) van a estar disponibles muy pronto."
@@ -195,83 +192,12 @@ export default function AjustesScreen({ navigation }) {
         <Text style={styles.version}>Growth Manager · versión 1.0.0</Text>
       </ScrollView>
 
-      <PerfilModal visible={section === "perfil"} onClose={() => setSection(null)} colors={colors} styles={styles} />
       <PasswordModal visible={section === "password"} onClose={() => setSection(null)} colors={colors} styles={styles} />
       <NotificacionesModal visible={section === "notificaciones"} onClose={() => setSection(null)} colors={colors} styles={styles} />
       <DonacionesModal visible={section === "donaciones"} onClose={() => setSection(null)} colors={colors} styles={styles} />
       <IntegracionesModal visible={section === "integraciones"} onClose={() => setSection(null)} colors={colors} styles={styles} />
       <FiscalModal visible={section === "facturacion"} onClose={() => setSection(null)} colors={colors} styles={styles} />
     </View>
-  );
-}
-
-/* ---------- Perfil ---------- */
-function PerfilModal({ visible, onClose, colors, styles }) {
-  const [profile, setProfile] = useState(null);
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState("");
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setMsg("");
-    try {
-      const res = await authService.getProfile();
-      setProfile(res.data);
-      setFullName(res.data.fullName || "");
-      setPhone(res.data.phone || "");
-    } catch {
-      setMsg("No se pudo cargar el perfil.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (visible) load();
-  }, [visible, load]);
-
-  const save = async () => {
-    setSaving(true);
-    setMsg("");
-    try {
-      await authService.updateProfile({
-        fullName: fullName.trim(),
-        phone: phone.trim(),
-        profilePhotoUrl: profile?.profilePhotoUrl || "",
-        businessProfile: profile?.businessProfile || undefined,
-      });
-      setMsg("Perfil actualizado.");
-    } catch (err) {
-      setMsg(err.response?.data?.error || "No se pudo guardar.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <SheetModal visible={visible} onClose={onClose} title="Perfil" colors={colors} styles={styles}>
-      {loading ? (
-        <ActivityIndicator color={colors.green} style={{ marginTop: 20 }} />
-      ) : (
-        <>
-          <Text style={styles.label}>Email</Text>
-          <View style={[styles.input, styles.inputDisabled]}>
-            <Text style={{ color: colors.muted, fontSize: 16 }}>{profile?.email || "—"}</Text>
-          </View>
-          <Text style={styles.label}>Nombre completo</Text>
-          <TextInput style={styles.input} value={fullName} onChangeText={setFullName} placeholder="Tu nombre" placeholderTextColor={colors.muted} />
-          <Text style={styles.label}>Teléfono</Text>
-          <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Opcional" placeholderTextColor={colors.muted} keyboardType="phone-pad" />
-          {msg ? <Text style={styles.msg}>{msg}</Text> : null}
-          <TouchableOpacity style={[styles.primaryBtn, saving && { opacity: 0.6 }]} onPress={save} disabled={saving}>
-            {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Guardar cambios</Text>}
-          </TouchableOpacity>
-        </>
-      )}
-    </SheetModal>
   );
 }
 
