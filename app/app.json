@@ -48,6 +48,12 @@
         {
           "motionPermission": "Growth usa el sensor de movimiento para contar tus pasos del día."
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Growth usa tu ubicación para medir la distancia de tus caminatas."
+        }
       ]
     ]
   }

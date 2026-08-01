@@ -14,12 +14,14 @@ import Svg, { Circle } from "react-native-svg";
 import { Pedometer } from "expo-sensors";
 import * as SecureStore from "expo-secure-store";
 import { useTheme } from "../theme";
+import CaminataModal from "../components/CaminataModal";
 
 const AGUA_KEY = "salud_agua_v1";
 const CFG_KEY = "salud_config_v1";
 const PASOS_HIST_KEY = "salud_pasos_hist_v1";
 const ANIMO_KEY = "salud_animo_v1";
 const PESO_KEY = "salud_peso_v1";
+const CAMINATAS_KEY = "salud_caminatas_v1";
 const META_PASOS_DEF = 8000;
 const META_AGUA_DEF = 2000; // ml
 const DIAS_SEMANA = ["D", "L", "M", "M", "J", "V", "S"];
@@ -331,6 +333,33 @@ export default function SaludScreen() {
       .catch(() => {});
   }, []);
 
+  // ---------------- Caminatas (GPS) ----------------
+  const [caminataOpen, setCaminataOpen] = useState(false);
+  const [caminatas, setCaminatas] = useState([]);
+
+  useEffect(() => {
+    SecureStore.getItemAsync(CAMINATAS_KEY)
+      .then((raw) => {
+        if (!raw) return;
+        try {
+          const d = JSON.parse(raw);
+          if (Array.isArray(d?.lista)) setCaminatas(d.lista);
+        } catch {}
+      })
+      .catch(() => {});
+  }, []);
+
+  const guardarCaminata = (walk) => {
+    if (!walk || walk.metros <= 0) return;
+    setCaminatas((prev) => {
+      const lista = [{ fecha: hoy, metros: walk.metros, secs: walk.secs }, ...prev].slice(0, 50);
+      SecureStore.setItemAsync(CAMINATAS_KEY, JSON.stringify({ lista })).catch(() => {});
+      return lista;
+    });
+  };
+
+  const ultimaCaminata = caminatas[0];
+
   // ---------------- Tendencia de pasos (últimos 30 días) ----------------
   const tendencia = useMemo(() => {
     const ahora = new Date();
@@ -550,6 +579,28 @@ export default function SaludScreen() {
             </View>
           </View>
         </View>
+
+        {/* ---- Caminata (GPS) ---- */}
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <View style={styles.cardHeadLeft}>
+              <Ionicons name="navigate-outline" size={18} color={colors.greenDark} />
+              <Text style={styles.cardTitle}>Caminata</Text>
+            </View>
+          </View>
+          {ultimaCaminata ? (
+            <Text style={styles.ringSub}>
+              Última: {(ultimaCaminata.metros / 1000).toFixed(2)} km ·{" "}
+              {Math.floor(ultimaCaminata.secs / 60)} min
+            </Text>
+          ) : (
+            <Text style={styles.ringSub}>Registrá tu primera caminata con GPS.</Text>
+          )}
+          <TouchableOpacity style={styles.caminataBtn} onPress={() => setCaminataOpen(true)}>
+            <Ionicons name="play" size={16} color="#06210a" />
+            <Text style={styles.caminataBtnText}>Iniciar caminata</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
       {/* Editar meta */}
@@ -579,6 +630,12 @@ export default function SaludScreen() {
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
+
+      <CaminataModal
+        visible={caminataOpen}
+        onClose={() => setCaminataOpen(false)}
+        onGuardar={guardarCaminata}
+      />
     </SafeAreaView>
   );
 }
@@ -729,4 +786,15 @@ const makeStyles = (colors) =>
       backgroundColor: colors.greenBright,
     },
     pesoSaveText: { color: "#06210a", fontSize: 13, fontWeight: "800" },
+
+    caminataBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      paddingVertical: 13,
+      borderRadius: 12,
+      backgroundColor: colors.greenBright,
+    },
+    caminataBtnText: { color: "#06210a", fontSize: 14, fontWeight: "800" },
   });
