@@ -17,6 +17,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as Speech from "expo-speech";
+import * as SecureStore from "expo-secure-store";
 import { afirmacionService } from "../api";
 import { useTheme } from "../theme";
 import { syncAfirmacionesReminder } from "../utils/afirmacionesReminder";
@@ -59,6 +61,10 @@ export default function AfirmacionesPanel({ visible, onClose }) {
   const [lineas, setLineas] = useState(() => Array(RENGLONES_INICIALES).fill(""));
   const [leidoHoy, setLeidoHoy] = useState(false);
   const [racha, setRacha] = useState(0);
+  const [hablando, setHablando] = useState(false);
+  const [leyendoIdx, setLeyendoIdx] = useState(null);
+  const speakingRef = useRef(false);
+  const pausaRef = useRef(null);
   const [repetirDiario, setRepetirDiario] = useState(true);
   const [recordatorio, setRecordatorio] = useState({ activo: false, hora: "08:00" });
   const [showHoraPicker, setShowHoraPicker] = useState(false);
@@ -255,6 +261,78 @@ export default function AfirmacionesPanel({ visible, onClose }) {
     }
   };
 
+  // ---- Voz: leer las afirmaciones en voz alta con la voz del dispositivo ----
+  const detenerVoz = useCallback(() => {
+    speakingRef.current = false;
+    if (pausaRef.current) clearTimeout(pausaRef.current);
+    Speech.stop();
+    setHablando(false);
+    setLeyendoIdx(null);
+  }, []);
+
+  const reproducir = useCallback(() => {
+    const items = lineas
+      .map((linea, i) => ({ texto: (linea || "").trim(), i }))
+      .filter((x) => x.texto);
+    if (!items.length) return;
+    speakingRef.current = true;
+    setHablando(true);
+    let k = 0;
+    const siguiente = () => {
+      if (!speakingRef.current) return;
+      if (k >= items.length) {
+        speakingRef.current = false;
+        setHablando(false);
+        setLeyendoIdx(null);
+        return;
+      }
+      const { texto, i } = items[k];
+      setLeyendoIdx(i);
+      Speech.speak(texto, {
+        language: "es-AR",
+        rate: 0.82,
+        onDone: () => {
+          k += 1;
+          // Pausa mínima entre afirmaciones para que respire.
+          pausaRef.current = setTimeout(siguiente, 550);
+        },
+        onError: () => {
+          speakingRef.current = false;
+          setHablando(false);
+          setLeyendoIdx(null);
+        },
+      });
+    };
+    siguiente();
+  }, [lineas]);
+
+  const escucharAfirmaciones = useCallback(async () => {
+    if (hablando) {
+      detenerVoz();
+      return;
+    }
+    // La primera vez avisamos que el teléfono no puede estar en silencio.
+    try {
+      const visto = await SecureStore.getItemAsync("afirmaciones_voz_aviso");
+      if (!visto) {
+        SecureStore.setItemAsync("afirmaciones_voz_aviso", "1").catch(() => {});
+        Alert.alert(
+          "Para escuchar 🔊",
+          "Asegurate de que el teléfono no esté en silencio (el interruptor lateral) y subí el volumen.",
+          [{ text: "Entendido", onPress: reproducir }]
+        );
+        return;
+      }
+    } catch {}
+    reproducir();
+  }, [hablando, detenerVoz, reproducir]);
+
+  // Corta la voz al cerrar el panel o desmontar.
+  useEffect(() => {
+    if (!visible) detenerVoz();
+  }, [visible, detenerVoz]);
+  useEffect(() => () => Speech.stop(), []);
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={[styles.safe, { paddingTop: insets.top }]}>
@@ -266,11 +344,21 @@ export default function AfirmacionesPanel({ visible, onClose }) {
           <View style={{ flex: 1 }}>
             <Text style={styles.kicker}>AFIRMACIONES</Text>
           </View>
-          {racha > 0 ? (
-            <View style={styles.rachaPill}>
-              <Text style={styles.rachaText}>🔥 {racha}</Text>
-            </View>
-          ) : null}
+          <TouchableOpacity
+            style={[styles.playBtn, hablando && styles.playBtnOn, !hayEscritas && { opacity: 0.4 }]}
+            onPress={escucharAfirmaciones}
+            disabled={!hayEscritas}
+            accessibilityLabel={hablando ? "Detener la lectura" : "Escuchar tus afirmaciones"}
+          >
+            <Ionicons
+              name={hablando ? "stop" : "play"}
+              size={13}
+              color={hablando ? "#0e1a0e" : colors.green}
+            />
+            <Text style={[styles.playBtnText, hablando && styles.playBtnTextOn]}>
+              {hablando ? "Detener" : "Escuchar"}
+            </Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.resetBtn} onPress={resetearAfirmaciones}>
             <Ionicons name="refresh" size={13} color={colors.muted} />
             <Text style={styles.resetBtnText}>Reset</Text>
@@ -293,8 +381,15 @@ export default function AfirmacionesPanel({ visible, onClose }) {
             >
               {/* El día de hoy */}
               <View style={styles.fechaCard}>
-                <Ionicons name="sunny" size={20} color="#FFD60A" />
-                <Text style={styles.fecha}>{fechaLarga(fecha)}</Text>
+                <View style={styles.fechaLeft}>
+                  <Ionicons name="sunny" size={20} color="#FFD60A" />
+                  <Text style={styles.fecha}>{fechaLarga(fecha)}</Text>
+                </View>
+                {racha > 0 ? (
+                  <View style={styles.rachaPill}>
+                    <Text style={styles.rachaText}>🔥 {racha}</Text>
+                  </View>
+                ) : null}
               </View>
 
               {/* Guardarlas al día siguiente */}
@@ -421,14 +516,14 @@ export default function AfirmacionesPanel({ visible, onClose }) {
                   <View
                     style={[
                       styles.inputWrap,
-                      (focoIdx === indice || resaltadas.has(indice)) &&
+                      (focoIdx === indice || resaltadas.has(indice) || leyendoIdx === indice) &&
                         styles.inputWrapFoco,
                     ]}
                   >
                     <TextInput
                       style={[
                         styles.input,
-                        (focoIdx === indice || resaltadas.has(indice)) &&
+                        (focoIdx === indice || resaltadas.has(indice) || leyendoIdx === indice) &&
                           styles.inputTextFoco,
                       ]}
                       value={linea}
@@ -520,17 +615,33 @@ const makeStyles = (colors, isDark = false) =>
     },
     rachaText: { color: colors.green, fontSize: 13, fontWeight: "800" },
 
+    playBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.greenBorder,
+      backgroundColor: colors.greenSoft,
+    },
+    playBtnOn: { backgroundColor: colors.greenBright, borderColor: colors.greenBright },
+    playBtnText: { color: colors.green, fontSize: 12.5, fontWeight: "800" },
+    playBtnTextOn: { color: "#0e1a0e" },
+
     loading: { flex: 1, alignItems: "center", justifyContent: "center" },
     scroll: { paddingHorizontal: 16, paddingBottom: 20, gap: 10 },
 
-    // Sin caja: la fecha va centrada, suelta sobre el fondo, con el sol amarillo.
+    // La fecha va a la izquierda y la racha (fueguito) a la derecha.
     fechaCard: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
-      gap: 8,
+      justifyContent: "space-between",
       paddingVertical: 6,
+      paddingHorizontal: 2,
     },
+    fechaLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
     fecha: {
       color: colors.text,
       fontSize: 16,

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FiCheck, FiPlus, FiSun, FiTrash2 } from "react-icons/fi";
+import { FiCheck, FiPlay, FiPlus, FiSquare, FiSun, FiTrash2 } from "react-icons/fi";
 import { afirmacionService } from "../api";
 import style from "../style/Afirmaciones.module.css";
 
@@ -154,6 +154,68 @@ function Afirmaciones() {
 
   const hayEscritas = useMemo(() => lineas.some((l) => l.trim()), [lineas]);
 
+  // ---- Voz: leer las afirmaciones en voz alta con la voz del navegador ----
+  const [hablando, setHablando] = useState(false);
+  const [leyendoIdx, setLeyendoIdx] = useState(null);
+  const pausaRef = useRef(null);
+
+  const detenerVoz = useCallback(() => {
+    if (pausaRef.current) clearTimeout(pausaRef.current);
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    setHablando(false);
+    setLeyendoIdx(null);
+  }, []);
+
+  const escucharAfirmaciones = useCallback(() => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    if (hablando) {
+      detenerVoz();
+      return;
+    }
+    const items = lineas
+      .map((linea, i) => ({ texto: linea.trim(), i }))
+      .filter((x) => x.texto);
+    if (!items.length) return;
+    window.speechSynthesis.cancel();
+    setHablando(true);
+    let k = 0;
+    const siguiente = () => {
+      if (k >= items.length) {
+        setHablando(false);
+        setLeyendoIdx(null);
+        return;
+      }
+      const { texto, i } = items[k];
+      setLeyendoIdx(i);
+      const u = new SpeechSynthesisUtterance(texto);
+      u.lang = "es-AR";
+      u.rate = 0.82;
+      u.onend = () => {
+        k += 1;
+        // Pausa mínima entre afirmaciones para que respire.
+        pausaRef.current = setTimeout(siguiente, 550);
+      };
+      u.onerror = () => {
+        setHablando(false);
+        setLeyendoIdx(null);
+      };
+      window.speechSynthesis.speak(u);
+    };
+    siguiente();
+  }, [hablando, lineas, detenerVoz]);
+
+  // Corta la voz si se desmonta el componente.
+  useEffect(
+    () => () => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    },
+    []
+  );
+
   const alternarRepetir = async () => {
     const proximo = !repetirDiario;
     setRepetirDiario(proximo); // optimista
@@ -198,6 +260,17 @@ function Afirmaciones() {
 
           <button
             type="button"
+            className={`${style.playBtn} ${hablando ? style.playBtnOn : ""}`}
+            onClick={escucharAfirmaciones}
+            disabled={!hayEscritas}
+            title={hablando ? "Detener la lectura" : "Escuchar tus afirmaciones"}
+          >
+            {hablando ? <FiSquare /> : <FiPlay />}
+            {hablando ? "Detener" : "Escuchar"}
+          </button>
+
+          <button
+            type="button"
             role="switch"
             aria-checked={repetirDiario}
             className={`${style.switch} ${repetirDiario ? style.switchOn : ""}`}
@@ -233,7 +306,10 @@ function Afirmaciones() {
 
       <ol className={style.lista}>
         {lineas.map((linea, indice) => (
-          <li key={indice} className={style.item}>
+          <li
+            key={indice}
+            className={`${style.item} ${leyendoIdx === indice ? style.itemLeyendo : ""}`}
+          >
             <span
               className={`${style.numero} ${resaltadas.has(indice) ? style.numeroOn : ""}`}
               onClick={() => toggleResaltada(indice)}

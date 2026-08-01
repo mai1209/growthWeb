@@ -80,6 +80,36 @@
   white-space: nowrap;
 }
 
+.playBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-verde);
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+}
+
+.playBtn:hover:not(:disabled) {
+  border-color: var(--color-verde);
+  background: var(--accent-soft, rgba(93, 199, 45, 0.14));
+}
+
+.playBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.playBtnOn {
+  background: var(--accent-soft, rgba(93, 199, 45, 0.14));
+  border-color: var(--color-verde);
+}
+
 /* ===== Switch "guardarlas al día siguiente" ===== */
 .switch {
   display: inline-flex;
@@ -154,6 +184,13 @@
   align-items: flex-start;
   gap: 0.6rem;
   min-width: 0;
+  border-radius: 12px;
+  transition: background 0.2s ease;
+}
+
+/* Resalta la afirmación que se está leyendo en voz alta. */
+.itemLeyendo {
+  background: var(--accent-soft, rgba(93, 199, 45, 0.14));
 }
 
 .numero {
