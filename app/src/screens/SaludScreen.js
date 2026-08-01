@@ -18,9 +18,18 @@ import { useTheme } from "../theme";
 const AGUA_KEY = "salud_agua_v1";
 const CFG_KEY = "salud_config_v1";
 const PASOS_HIST_KEY = "salud_pasos_hist_v1";
+const ANIMO_KEY = "salud_animo_v1";
+const PESO_KEY = "salud_peso_v1";
 const META_PASOS_DEF = 8000;
 const META_AGUA_DEF = 2000; // ml
 const DIAS_SEMANA = ["D", "L", "M", "M", "J", "V", "S"];
+const ANIMOS = [
+  { level: 1, emoji: "😔", label: "Mal" },
+  { level: 2, emoji: "😕", label: "Bajón" },
+  { level: 3, emoji: "😐", label: "Normal" },
+  { level: 4, emoji: "🙂", label: "Bien" },
+  { level: 5, emoji: "😄", label: "Genial" },
+];
 
 const pad = (n) => String(n).padStart(2, "0");
 const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -251,6 +260,76 @@ export default function SaludScreen() {
     return arr;
   }, [aguaDias]);
 
+  // ---------------- Ánimo ----------------
+  const [animoDias, setAnimoDias] = useState({});
+  const animoHoy = animoDias[hoy];
+
+  const setAnimo = (level) => {
+    setAnimoDias((prev) => {
+      const next = { ...prev, [hoy]: level };
+      const rec = {};
+      Object.keys(next)
+        .sort()
+        .slice(-60)
+        .forEach((k) => {
+          rec[k] = next[k];
+        });
+      SecureStore.setItemAsync(ANIMO_KEY, JSON.stringify({ dias: rec })).catch(() => {});
+      return rec;
+    });
+  };
+
+  // ---------------- Peso ----------------
+  const [pesoDias, setPesoDias] = useState({});
+  const [pesoInput, setPesoInput] = useState("");
+
+  const guardarPeso = () => {
+    const kg = parseFloat(String(pesoInput).replace(",", "."));
+    if (!kg || kg <= 0) return;
+    setPesoDias((prev) => {
+      const next = { ...prev, [hoy]: kg };
+      const rec = {};
+      Object.keys(next)
+        .sort()
+        .slice(-120)
+        .forEach((k) => {
+          rec[k] = next[k];
+        });
+      SecureStore.setItemAsync(PESO_KEY, JSON.stringify({ dias: rec })).catch(() => {});
+      return rec;
+    });
+    setPesoInput("");
+  };
+
+  const pesoEntries = useMemo(
+    () => Object.keys(pesoDias).sort().map((k) => pesoDias[k]),
+    [pesoDias]
+  );
+  const pesoActual = pesoEntries.length ? pesoEntries[pesoEntries.length - 1] : null;
+  const pesoDelta =
+    pesoEntries.length >= 2 ? pesoActual - pesoEntries[pesoEntries.length - 2] : null;
+
+  useEffect(() => {
+    SecureStore.getItemAsync(ANIMO_KEY)
+      .then((raw) => {
+        if (!raw) return;
+        try {
+          const d = JSON.parse(raw);
+          if (d?.dias) setAnimoDias(d.dias);
+        } catch {}
+      })
+      .catch(() => {});
+    SecureStore.getItemAsync(PESO_KEY)
+      .then((raw) => {
+        if (!raw) return;
+        try {
+          const d = JSON.parse(raw);
+          if (d?.dias) setPesoDias(d.dias);
+        } catch {}
+      })
+      .catch(() => {});
+  }, []);
+
   const pctPasos = pasos != null ? Math.round((pasos / metaPasos) * 100) : 0;
   const pctAgua = Math.round((agua / metaAgua) * 100);
 
@@ -350,6 +429,65 @@ export default function SaludScreen() {
             <TouchableOpacity style={styles.aguaReset} onPress={() => guardarAgua(0)}>
               <Ionicons name="refresh" size={15} color={colors.muted} />
             </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* ---- Ánimo ---- */}
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <View style={styles.cardHeadLeft}>
+              <Ionicons name="happy-outline" size={18} color="#d6a92e" />
+              <Text style={styles.cardTitle}>¿Cómo te sentís hoy?</Text>
+            </View>
+          </View>
+          <View style={styles.animoRow}>
+            {ANIMOS.map((a) => (
+              <TouchableOpacity
+                key={a.level}
+                style={[styles.animoBtn, animoHoy === a.level && styles.animoBtnOn]}
+                onPress={() => setAnimo(a.level)}
+              >
+                <Text style={styles.animoEmoji}>{a.emoji}</Text>
+                <Text style={[styles.animoLabel, animoHoy === a.level && styles.animoLabelOn]}>
+                  {a.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* ---- Peso ---- */}
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <View style={styles.cardHeadLeft}>
+              <Ionicons name="body-outline" size={18} color={colors.greenDark} />
+              <Text style={styles.cardTitle}>Peso</Text>
+            </View>
+          </View>
+          <View style={styles.pesoRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.ringBig}>{pesoActual != null ? `${pesoActual} kg` : "—"}</Text>
+              {pesoDelta != null ? (
+                <Text style={[styles.pesoDelta, { color: pesoDelta <= 0 ? colors.green : colors.red }]}>
+                  {pesoDelta > 0 ? "▲" : "▼"} {Math.abs(pesoDelta).toFixed(1)} kg vs. anterior
+                </Text>
+              ) : (
+                <Text style={styles.ringSub}>Registrá tu peso de hoy</Text>
+              )}
+            </View>
+            <View style={styles.pesoInputRow}>
+              <TextInput
+                style={styles.pesoInput}
+                value={pesoInput}
+                onChangeText={(v) => setPesoInput(v.replace(/[^0-9.,]/g, ""))}
+                keyboardType="decimal-pad"
+                placeholder="kg"
+                placeholderTextColor={colors.muted}
+              />
+              <TouchableOpacity style={styles.pesoSave} onPress={guardarPeso}>
+                <Text style={styles.pesoSaveText}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -489,4 +627,43 @@ const makeStyles = (colors) =>
       alignItems: "center",
       justifyContent: "center",
     },
+
+    animoRow: { flexDirection: "row", justifyContent: "space-between", gap: 6 },
+    animoBtn: {
+      flex: 1,
+      alignItems: "center",
+      gap: 4,
+      paddingVertical: 10,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+    },
+    animoBtnOn: { borderColor: "#d6a92e", backgroundColor: "rgba(214,169,46,0.14)" },
+    animoEmoji: { fontSize: 22 },
+    animoLabel: { color: colors.muted, fontSize: 10, fontWeight: "700" },
+    animoLabelOn: { color: "#d6a92e" },
+
+    pesoRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+    pesoDelta: { fontSize: 12, fontWeight: "800", marginTop: 2 },
+    pesoInputRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    pesoInput: {
+      width: 72,
+      backgroundColor: colors.bg,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: "800",
+      textAlign: "center",
+    },
+    pesoSave: {
+      paddingHorizontal: 14,
+      paddingVertical: 11,
+      borderRadius: 12,
+      backgroundColor: colors.greenBright,
+    },
+    pesoSaveText: { color: "#06210a", fontSize: 13, fontWeight: "800" },
   });
