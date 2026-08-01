@@ -128,28 +128,10 @@ export default function PomodoroPage() {
     }
     return merged;
   });
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [panel, setPanel] = useState(
-    () => (searchParams.get("panel") === "tracker" ? "tracker" : "pomodoro")
-  ); // pomodoro | tracker
-
-  // URL ⇄ panel: el nav deep-linkea Co-working (?panel=tracker) y el toggle
-  // interno mantiene la URL sincronizada.
-  useEffect(() => {
-    const next = searchParams.get("panel") === "tracker" ? "tracker" : "pomodoro";
-    setPanel((cur) => (cur === next ? cur : next));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
-
-  useEffect(() => {
-    const fromUrl = searchParams.get("panel") === "tracker" ? "tracker" : "pomodoro";
-    if (panel === fromUrl) return;
-    const next = new URLSearchParams(searchParams);
-    if (panel === "tracker") next.set("panel", "tracker");
-    else next.delete("panel");
-    setSearchParams(next, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [panel]);
+  const [searchParams] = useSearchParams();
+  // El panel lo decide la URL: el nav deep-linkea Co-working (?panel=tracker) y
+  // Pomodoro (Desar. personal) va sin query. Ya no hay switch interno.
+  const panel = searchParams.get("panel") === "tracker" ? "tracker" : "pomodoro";
   const [mode, setMode] = useState("focus");
   const [running, setRunning] = useState(false);
   const [remaining, setRemaining] = useState(settings.focus * 60);
@@ -311,22 +293,7 @@ export default function PomodoroPage() {
   return (
     <div className={style.page}>
       <header className={style.header}>
-        <div className={style.panelSwitch}>
-          <button
-            type="button"
-            className={`${style.panelSwitchBtn} ${panel === "pomodoro" ? style.panelSwitchActive : ""}`}
-            onClick={() => setPanel("pomodoro")}
-          >
-            Pomodoro
-          </button>
-          <button
-            type="button"
-            className={`${style.panelSwitchBtn} ${panel === "tracker" ? style.panelSwitchActive : ""}`}
-            onClick={() => setPanel("tracker")}
-          >
-            Registro de horas
-          </button>
-        </div>
+        <h1>{panel === "tracker" ? "Registro de horas" : "Pomodoro"}</h1>
         {panel === "pomodoro" ? (
           <button
             type="button"
