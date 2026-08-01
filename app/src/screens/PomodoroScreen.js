@@ -10,6 +10,7 @@ import {
   Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import * as SecureStore from "expo-secure-store";
@@ -38,6 +39,13 @@ const fmt = (secs) => {
 export default function PomodoroScreen() {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
+  const route = useRoute();
+
+  // Permite abrir directamente un panel desde el menú (Co-working → Registro de horas).
+  useEffect(() => {
+    const p = route.params?.panel;
+    if (p === "tracker" || p === "pomodoro") setPanel(p);
+  }, [route.params?.panel, route.params?._navTs]);
 
   const [durations, setDurations] = useState({ focus: 25, short: 5, long: 15 });
   const [longBreakInterval, setLongBreakInterval] = useState(4);
@@ -215,24 +223,9 @@ export default function PomodoroScreen() {
     <SafeAreaView style={styles.safe} edges={[]}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <View style={styles.panelSwitch}>
-            <TouchableOpacity
-              style={[styles.panelBtn, panel === "pomodoro" && styles.panelBtnActive]}
-              onPress={() => setPanel("pomodoro")}
-            >
-              <Text style={[styles.panelText, panel === "pomodoro" && styles.panelTextActive]}>
-                Pomodoro
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.panelBtn, panel === "tracker" && styles.panelBtnActive]}
-              onPress={() => setPanel("tracker")}
-            >
-              <Text style={[styles.panelText, panel === "tracker" && styles.panelTextActive]}>
-                Registro de horas
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.headerTitle}>
+            {panel === "tracker" ? "Registro de horas" : "Pomodoro"}
+          </Text>
           {panel === "pomodoro" ? (
             <TouchableOpacity style={styles.gearBtn} onPress={() => setSettingsOpen(true)} hitSlop={8}>
               <Ionicons name="settings-outline" size={20} color={colors.muted} />
@@ -469,21 +462,9 @@ const makeStyles = (colors) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.bg },
     scroll: { padding: 16, paddingTop: 2, paddingBottom: 100 },
-    header: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginBottom: 12, position: "relative" },
+    header: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 10, marginBottom: 12, position: "relative" },
     hidden: { display: "none" },
-    panelSwitch: {
-      flexDirection: "row",
-      gap: 4,
-      padding: 3,
-      borderRadius: 999,
-      borderWidth: 1,
-      borderColor: colors.cardBorder,
-      backgroundColor: colors.card,
-    },
-    panelBtn: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999 },
-    panelBtnActive: { backgroundColor: colors.greenBright },
-    panelText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
-    panelTextActive: { color: "#0e1a0e", fontWeight: "800" },
+    headerTitle: { color: colors.text, fontWeight: "800", fontSize: 17 },
     gearBtn: {
       position: "absolute",
       right: 0,

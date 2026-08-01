@@ -24,6 +24,7 @@ import PomodoroScreen from "./src/screens/PomodoroScreen";
 import AjustesScreen from "./src/screens/AjustesScreen";
 import PerfilScreen from "./src/screens/PerfilScreen";
 import UpdateModal from "./src/components/UpdateModal";
+import RadialTabBar from "./src/components/RadialTabBar";
 import { appService } from "./src/api";
 import { APP_VERSION } from "./src/config";
 
@@ -75,16 +76,6 @@ function TopBar() {
   );
 }
 
-const TAB_ICONS = {
-  Home: "home",
-  Tareas: "checkbox",
-  Metricas: "stats-chart",
-  Metas: "flag",
-  Compartidos: "people",
-  Notas: "document-text",
-  Pomodoro: "timer",
-};
-
 function MainTabs() {
   const { colors } = useTheme();
   const { workspace } = useWorkspace();
@@ -93,41 +84,17 @@ function MainTabs() {
       <TopBar />
       <Tab.Navigator
         key={workspace}
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarActiveTintColor: colors.greenBright,
-          tabBarInactiveTintColor: colors.muted,
-          tabBarStyle: {
-            backgroundColor: colors.bg,
-            borderTopWidth: 0,
-            elevation: 0,
-            shadowOpacity: 0,
-          },
-          tabBarIcon: ({ color, size, focused }) => {
-            const base = TAB_ICONS[route.name] || "ellipse";
-            return (
-              <Ionicons
-                name={focused ? base : `${base}-outline`}
-                size={size}
-                color={color}
-              />
-            );
-          },
-        })}
+        tabBar={(props) => <RadialTabBar {...props} />}
+        screenOptions={{ headerShown: false }}
       >
         <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Metricas" component={MetricasScreen} options={{ tabBarLabel: "Métricas" }} />
+        <Tab.Screen name="Metricas" component={MetricasScreen} />
         <Tab.Screen name="Tareas" component={TareasScreen} />
         <Tab.Screen name="Metas" component={MetasScreen} />
         <Tab.Screen name="Compartidos" component={CompartidosScreen} />
         <Tab.Screen name="Notas" component={NotasScreen} />
         <Tab.Screen name="Pomodoro" component={PomodoroScreen} />
-        {/* Filtros queda accesible desde el resumen del Home, sin botón en la barra */}
-        <Tab.Screen
-          name="Filtros"
-          component={FiltrosScreen}
-          options={{ tabBarButton: () => null, tabBarItemStyle: { display: "none" } }}
-        />
+        <Tab.Screen name="Filtros" component={FiltrosScreen} />
       </Tab.Navigator>
     </View>
   );
