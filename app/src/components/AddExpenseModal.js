@@ -15,6 +15,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { sharedGroupsService } from "../api";
 import { useTheme } from "../theme";
+import MoneyInput from "./MoneyInput";
 
 const pad = (n) => String(n).padStart(2, "0");
 const toYMD = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -142,11 +143,10 @@ export default function AddExpenseModal({
             />
 
             <Text style={styles.label}>Monto</Text>
-            <TextInput
+            <MoneyInput
               style={styles.input}
               value={amount}
               onChangeText={setAmount}
-              keyboardType="decimal-pad"
               placeholder="0"
               placeholderTextColor={colors.muted}
             />

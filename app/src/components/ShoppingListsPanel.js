@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { taskService } from "../api";
 import { useTheme } from "../theme";
 import { getNoteColor } from "../utils/notes";
+import MoneyInput from "./MoneyInput";
 
 const LIST_COLORS = ["color1", "color4", "color3", "color5", "color7", "color6", "color2"];
 
@@ -415,12 +416,11 @@ function ListDetail({
 
               {priceOpenId === it.id ? (
                 <View style={styles.precioEdit}>
-                  <TextInput
+                  <MoneyInput
                     style={styles.precioInput}
                     value={priceDraft}
                     onChangeText={setPriceDraft}
                     onSubmitEditing={() => guardarPrecio(it.id)}
-                    keyboardType="numeric"
                     placeholder="$"
                     placeholderTextColor={colors.muted}
                     autoFocus

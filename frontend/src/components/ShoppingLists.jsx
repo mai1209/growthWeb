@@ -9,6 +9,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import { taskService } from "../api";
+import InputMonto from "./InputMonto";
 import colorStyle from "../style/TaskStudio.module.css";
 import style from "../style/ShoppingLists.module.css";
 
@@ -430,14 +431,12 @@ function ListDetail({
                       }
                     }}
                   >
-                    <input
+                    <InputMonto
                       className={style.precioInput}
-                      type="number"
-                      min="0"
-                      step="0.01"
                       value={priceDraft}
+                      onChange={setPriceDraft}
+                      required={false}
                       autoFocus
-                      onChange={(e) => setPriceDraft(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();

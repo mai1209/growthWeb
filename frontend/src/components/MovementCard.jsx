@@ -8,6 +8,7 @@ import {
   FiRepeat,
 } from "react-icons/fi";
 import style from "../style/MonthlyFilters.module.css";
+import InputMonto from "./InputMonto";
 import { movimientoService } from "../api";
 import {
   getDebtStatusMeta,
@@ -326,15 +327,11 @@ export default function MovementCard({
             </div>
 
             {settleMode === "partial" ? (
-              <input
-                type="number"
-                min="0"
-                step="0.01"
+              <InputMonto
                 value={settleAmount}
-                onChange={(event) => setSettleAmount(event.target.value)}
+                onChange={setSettleAmount}
                 className={style.input}
                 placeholder={`Monto (máx ${formatMoney(debtRemaining, currentCurrency)})`}
-                autoFocus
               />
             ) : null}
 

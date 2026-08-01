@@ -17,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { movimientoService, categoriesService } from "../api";
 import { formatMoney } from "../utils/finance";
 import { useTheme } from "../theme";
+import MoneyInput from "./MoneyInput";
 
 // Íconos de categoría (mismos emojis que la web)
 const CATEGORY_EMOJIS = [
@@ -294,11 +295,10 @@ export default function MovementFormModal({
             showsVerticalScrollIndicator={false}
           >
             <Text style={styles.label}>Monto</Text>
-            <TextInput
+            <MoneyInput
               style={styles.input}
               value={monto}
               onChangeText={setMonto}
-              keyboardType="decimal-pad"
               placeholder="0"
               placeholderTextColor={colors.muted}
             />

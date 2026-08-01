@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { sharedGroupsService } from "../api";
 import { useTheme } from "../theme";
 import { formatMoney } from "../utils/finance";
+import MoneyInput from "./MoneyInput";
 
 const pad = (n) => String(n).padStart(2, "0");
 const toYMD = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -129,11 +130,10 @@ export default function SettleDebtModal({ visible, groupId, debt, onClose, onSav
               ))}
             </View>
             {payMode === "partial" && (
-              <TextInput
+              <MoneyInput
                 style={[styles.input, { marginTop: 8 }]}
                 value={amount}
                 onChangeText={setAmount}
-                keyboardType="decimal-pad"
                 placeholder={`Monto (resta ${formatMoney(remaining, debt?.currency)})`}
                 placeholderTextColor={colors.muted}
               />

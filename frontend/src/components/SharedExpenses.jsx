@@ -1939,16 +1939,14 @@ function SharedExpenses() {
                                       )}
                                       )
                                     </span>
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      step="0.01"
+                                    <InputMonto
                                       className={style.input}
+                                      required={false}
                                       value={debtSettlementForm.amount}
-                                      onChange={(event) =>
+                                      onChange={(val) =>
                                         setDebtSettlementForm((prev) => ({
                                           ...prev,
-                                          amount: event.target.value,
+                                          amount: val,
                                         }))
                                       }
                                     />

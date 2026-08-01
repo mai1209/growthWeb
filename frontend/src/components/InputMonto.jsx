@@ -1,6 +1,6 @@
 import React from 'react';
 
-function InputMonto({ value, onChange, placeholder, className, disabled = false, id }) {
+function InputMonto({ value, onChange, placeholder, className, disabled = false, id, required = true, ...rest }) {
 
   const formatValue = (val) => {
     if (!val) return '';
@@ -45,16 +45,17 @@ function InputMonto({ value, onChange, placeholder, className, disabled = false,
 
   return (
     <input
+      {...rest}
       id={id}
       name="monto"
       className={className}
       type="text"
       inputMode="decimal"
       placeholder={placeholder || "Ingresar monto"}
-      required
+      required={required}
       disabled={disabled}
       value={formatValue(value)} // Mostramos el valor formateado
-      onChange={handleChange}
+      onChange={handleChange} // controlado internamente: no se puede sobrescribir por ...rest
     />
   );
 }

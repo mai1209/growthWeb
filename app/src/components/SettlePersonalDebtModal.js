@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { movimientoService } from "../api";
 import { useTheme } from "../theme";
 import { formatMoney } from "../utils/finance";
+import MoneyInput from "./MoneyInput";
 
 export default function SettlePersonalDebtModal({ visible, debt, onClose, onSaved }) {
   const { colors } = useTheme();
@@ -123,11 +124,10 @@ export default function SettlePersonalDebtModal({ visible, debt, onClose, onSave
               ))}
             </View>
             {payMode === "partial" && (
-              <TextInput
+              <MoneyInput
                 style={[styles.input, { marginTop: 8 }]}
                 value={amount}
                 onChangeText={setAmount}
-                keyboardType="decimal-pad"
                 placeholder={`Monto (máx ${formatMoney(remaining, currency)})`}
                 placeholderTextColor={colors.muted}
                 autoFocus
