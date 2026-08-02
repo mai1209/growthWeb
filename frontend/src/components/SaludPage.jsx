@@ -189,7 +189,8 @@ export default function SaludPage() {
       </header>
 
       <div className={style.grid}>
-        {/* Pasos (solo lectura, del teléfono) */}
+        {/* Pasos + Caminatas apilados en la misma columna (ambos del teléfono) */}
+        <div className={style.colStack}>
         <section className={style.card}>
           <div className={style.cardHead}>
             <h2>
@@ -210,6 +211,30 @@ export default function SaludPage() {
             />
           </div>
         </section>
+
+        {/* Caminatas (solo lectura) */}
+        <section className={style.card}>
+          <div className={style.cardHead}>
+            <h2>
+              <FiNavigation /> Caminatas
+            </h2>
+            <span className={style.badgeTel}>desde el teléfono</span>
+          </div>
+          {data?.caminatas?.length ? (
+            <ul className={style.caminatas}>
+              {data.caminatas.slice(0, 5).map((c, i) => (
+                <li key={i}>
+                  <span>{c.fecha}</span>
+                  <strong>{(c.metros / 1000).toFixed(2)} km</strong>
+                  <span>{Math.floor((c.secs || 0) / 60)} min</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className={style.hint}>Todavía no registraste caminatas desde la app.</p>
+          )}
+        </section>
+        </div>
 
         {/* Hidratación (editable) */}
         <section className={style.card}>
@@ -399,28 +424,6 @@ export default function SaludPage() {
           })}
         </section>
 
-        {/* Caminatas (solo lectura) */}
-        <section className={style.card}>
-          <div className={style.cardHead}>
-            <h2>
-              <FiNavigation /> Caminatas
-            </h2>
-            <span className={style.badgeTel}>desde el teléfono</span>
-          </div>
-          {data?.caminatas?.length ? (
-            <ul className={style.caminatas}>
-              {data.caminatas.slice(0, 5).map((c, i) => (
-                <li key={i}>
-                  <span>{c.fecha}</span>
-                  <strong>{(c.metros / 1000).toFixed(2)} km</strong>
-                  <span>{Math.floor((c.secs || 0) / 60)} min</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className={style.hint}>Todavía no registraste caminatas desde la app.</p>
-          )}
-        </section>
       </div>
     </div>
   );
