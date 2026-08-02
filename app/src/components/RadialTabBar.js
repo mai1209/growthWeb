@@ -21,8 +21,7 @@ export const NAV_GROUPS = [
     id: "finanzas",
     label: "Finanzas",
     short: "Finanzas",
-    icon: "logo-usd",
-    iconSize: 22,
+    glyph: "$", // se dibuja como texto fino en vez de ícono (más liviano que logo-usd)
     items: [
       { label: "Home", icon: "home-outline", route: "Home" },
       { label: "Filtros", icon: "funnel-outline", route: "Filtros" },
@@ -169,17 +168,26 @@ export default function RadialTabBar({ state, navigation }) {
   const rotDeg = rot.interpolate({ inputRange: [-360, 360], outputRange: ["-360deg", "360deg"] });
   const counterDeg = rot.interpolate({ inputRange: [-360, 360], outputRange: ["360deg", "-360deg"] });
 
-  const positioned = group
-    ? group.items.map((it, k) => {
-        const angs = itemAngles(group.items.length);
+  // Hasta 6 ítems van en el arco exterior; los extras pasan a un arco interior
+  // (más cerca del centro) para que no queden apretados.
+  const positioned = (() => {
+    if (!group) return [];
+    const items = group.items;
+    const exteriores = items.slice(0, 6);
+    const interiores = items.slice(6);
+    const place = (arr, radio) => {
+      const angs = itemAngles(arr.length);
+      return arr.map((it, k) => {
         const a = (angs[k] * Math.PI) / 180;
         return {
           ...it,
-          left: R + R * Math.cos(a) - ITEM / 2,
-          top: R + R * Math.sin(a) - ITEM / 2,
+          left: R + radio * Math.cos(a) - ITEM / 2,
+          top: R + radio * Math.sin(a) - ITEM / 2,
         };
-      })
-    : [];
+      });
+    };
+    return [...place(exteriores, R), ...place(interiores, R - ITEM - 12)];
+  })();
 
   // La barra queda igual (visible sobre el blur); solo el ícono del grupo activo se pinta verde.
   const renderBar = (opened) => (
@@ -199,7 +207,11 @@ export default function RadialTabBar({ state, navigation }) {
               else switchGroup(i);
             }}
           >
-            <Ionicons name={g.icon} size={g.iconSize || 23} color={tint} />
+            {g.glyph ? (
+              <Text style={[styles.tabGlyph, { color: tint }]}>{g.glyph}</Text>
+            ) : (
+              <Ionicons name={g.icon} size={23} color={tint} />
+            )}
             <Text style={[styles.tabLabel, { color: tint }]} numberOfLines={1}>
               {g.short}
             </Text>
@@ -290,6 +302,8 @@ const makeStyles = (colors) =>
       paddingVertical: 3,
     },
     tabLabel: { fontSize: 11, fontWeight: "700" },
+    // "$" fino: texto liviano en vez del ícono logo-usd (que es muy grueso).
+    tabGlyph: { fontSize: 24, fontWeight: "300", lineHeight: 25 },
     arcLayer: { position: "absolute", width: R * 2, height: R * 2 },
     itemWrap: { position: "absolute", width: ITEM, height: ITEM },
     item: {

@@ -20,6 +20,10 @@ import { tomarFotoComida, elegirFotoComida } from "../utils/foto";
 
 const soloNum = (v) => v.replace(/[^0-9]/g, "");
 
+// Análisis por foto (IA): requiere créditos de Anthropic. Lo dejamos apagado
+// por ahora; poner en true cuando la API key esté cargada en el backend.
+const IA_FOTO_HABILITADA = false;
+
 export default function AddComidaModal({ visible, franja, onClose, onGuardar }) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
@@ -109,20 +113,22 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-            <TouchableOpacity
-              style={[styles.iaBtn, analizando && { opacity: 0.7 }]}
-              onPress={analizarConFoto}
-              disabled={analizando}
-            >
-              {analizando ? (
-                <ActivityIndicator color="#06210a" />
-              ) : (
-                <>
-                  <Ionicons name="sparkles" size={16} color="#06210a" />
-                  <Text style={styles.iaBtnText}>Analizar con foto (IA)</Text>
-                </>
-              )}
-            </TouchableOpacity>
+            {IA_FOTO_HABILITADA ? (
+              <TouchableOpacity
+                style={[styles.iaBtn, analizando && { opacity: 0.7 }]}
+                onPress={analizarConFoto}
+                disabled={analizando}
+              >
+                {analizando ? (
+                  <ActivityIndicator color="#06210a" />
+                ) : (
+                  <>
+                    <Ionicons name="sparkles" size={16} color="#06210a" />
+                    <Text style={styles.iaBtnText}>Analizar con foto (IA)</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            ) : null}
 
             <Text style={styles.label}>¿Qué comiste?</Text>
             <TextInput
