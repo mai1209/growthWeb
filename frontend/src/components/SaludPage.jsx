@@ -138,6 +138,84 @@ export default function SaludPage() {
   const pesoActual = pesoEntries.length ? pesoEntries[pesoEntries.length - 1] : null;
   const pesoDelta = pesoEntries.length >= 2 ? pesoActual - pesoEntries[pesoEntries.length - 2] : null;
 
+  // "Todos los resultados" (estilo Salud de iPhone): métricas derivadas.
+  const metricas = useMemo(() => {
+    if (!data) return [];
+    const dias = ultimos7.dias;
+    const h = dias[dias.length - 1];
+    const kcalDia = (arr) => (arr || []).reduce((a, c) => a + (Number(c.kcal) || 0), 0);
+    const camDia = (k) => (data.caminatas || []).filter((c) => c.fecha === k);
+    const distDia = (k) => camDia(k).reduce((a, c) => a + (Number(c.metros) || 0), 0);
+    const minDia = (k) => camDia(k).reduce((a, c) => a + (Number(c.secs) || 0), 0) / 60;
+    const ultimaCam = (data.caminatas || [])[0];
+    const velocidad =
+      ultimaCam && ultimaCam.secs > 0 ? (ultimaCam.metros / 1000) / (ultimaCam.secs / 3600) : null;
+    const pesoKeys = Object.keys(data.peso || {}).sort();
+    const emojis = { 1: "😔", 2: "😕", 3: "😐", 4: "🙂", 5: "😄" };
+
+    return [
+      {
+        titulo: "Pasos",
+        color: "var(--color-verde, #5dc72d)",
+        valor: (Number(data.pasos?.[h]) || 0).toLocaleString("es-AR"),
+        unidad: "pasos",
+        barras: dias.map((k) => Number(data.pasos?.[k]) || 0),
+      },
+      {
+        titulo: "Distancia de caminata",
+        color: "var(--color-verde, #5dc72d)",
+        valor: (distDia(h) / 1000).toFixed(1).replace(".", ","),
+        unidad: "km",
+        barras: dias.map(distDia),
+      },
+      {
+        titulo: "Tiempo de caminata",
+        color: "var(--color-verde, #5dc72d)",
+        valor: String(Math.round(minDia(h))),
+        unidad: "min",
+        barras: dias.map(minDia),
+      },
+      {
+        titulo: "Velocidad al caminar",
+        color: "var(--color-verde, #5dc72d)",
+        valor: velocidad != null ? velocidad.toFixed(1).replace(".", ",") : "—",
+        unidad: "km/h",
+        barras: (data.caminatas || [])
+          .slice(0, 7)
+          .reverse()
+          .map((c) => (c.secs > 0 ? (c.metros / 1000) / (c.secs / 3600) : 0)),
+      },
+      {
+        titulo: "Hidratación",
+        color: "#3aa0e0",
+        valor: String(Number(data.agua?.[h]) || 0),
+        unidad: "ml",
+        barras: dias.map((k) => Number(data.agua?.[k]) || 0),
+      },
+      {
+        titulo: "Calorías consumidas",
+        color: "#e0703f",
+        valor: String(kcalDia(data.comidas?.[h])),
+        unidad: "kcal",
+        barras: dias.map((k) => kcalDia(data.comidas?.[k])),
+      },
+      {
+        titulo: "Ánimo",
+        color: "#d6a92e",
+        valor: data.animo?.[h] ? emojis[data.animo[h]] : "—",
+        unidad: data.animo?.[h] ? "hoy" : "sin registrar",
+        barras: dias.map((k) => Number(data.animo?.[k]) || 0),
+      },
+      {
+        titulo: "Peso",
+        color: "var(--color-verde, #5dc72d)",
+        valor: pesoKeys.length ? String(data.peso[pesoKeys[pesoKeys.length - 1]]).replace(".", ",") : "—",
+        unidad: "kg",
+        barras: pesoKeys.slice(-7).map((k) => Number(data.peso[k]) || 0),
+      },
+    ];
+  }, [data, ultimos7]);
+
   const comidasHoy = data?.comidas?.[hoy] || [];
   const consumido = comidasHoy.reduce((a, c) => a + (Number(c.kcal) || 0), 0);
   const consCarb = comidasHoy.reduce((a, c) => a + (Number(c.carbG) || 0), 0);
@@ -333,6 +411,43 @@ export default function SaludPage() {
           </div>
         </section>
         </div>
+
+        {/* Todos los resultados (estilo Salud de iPhone) */}
+        <section className={`${style.card} ${style.cardAncha}`}>
+          <div className={style.cardHead}>
+            <h2>Todos los resultados</h2>
+          </div>
+          <div className={style.datosGrid}>
+            {metricas.map((m) => (
+              <div key={m.titulo} className={style.dato}>
+                <p className={style.datoTitulo} style={{ color: m.color }}>
+                  {m.titulo}
+                </p>
+                <div className={style.datoBody}>
+                  <p className={style.datoValor}>
+                    {m.valor} <span>{m.unidad}</span>
+                  </p>
+                  <div className={style.datoBars}>
+                    {(m.barras.length ? m.barras : [0]).map((v, i, arr) => {
+                      const max = Math.max(...arr, 1);
+                      return (
+                        <div
+                          key={i}
+                          style={{
+                            width: 6,
+                            borderRadius: 3,
+                            height: `${Math.max(8, Math.round((v / max) * 100))}%`,
+                            background: i === arr.length - 1 && v > 0 ? m.color : "var(--border-color)",
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
         </>
         ) : (
         <>

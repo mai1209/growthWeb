@@ -17,6 +17,7 @@ import * as SecureStore from "expo-secure-store";
 import { useTheme } from "../theme";
 import { saludService } from "../api";
 import CaminataModal from "../components/CaminataModal";
+import TodosDatosModal from "../components/TodosDatosModal";
 import NutricionModal from "../components/NutricionModal";
 import AddComidaModal from "../components/AddComidaModal";
 import { calcularPlan } from "../utils/nutricion";
@@ -276,7 +277,10 @@ export default function SaludScreen() {
         if (!raw) return;
         try {
           const data = JSON.parse(raw);
-          if (data?.dias) setAguaDias(data.dias);
+          if (data?.dias) {
+            setAguaDias((prev) => ({ ...data.dias, ...prev }));
+            pushSalud({ agua: data.dias }); // sube el histórico local (espejo web)
+          }
         } catch {}
       })
       .catch(() => {});
@@ -370,7 +374,10 @@ export default function SaludScreen() {
         if (!raw) return;
         try {
           const d = JSON.parse(raw);
-          if (d?.dias) setAnimoDias(d.dias);
+          if (d?.dias) {
+            setAnimoDias((prev) => ({ ...d.dias, ...prev }));
+            pushSalud({ animo: d.dias });
+          }
         } catch {}
       })
       .catch(() => {});
@@ -379,7 +386,10 @@ export default function SaludScreen() {
         if (!raw) return;
         try {
           const d = JSON.parse(raw);
-          if (d?.dias) setPesoDias(d.dias);
+          if (d?.dias) {
+            setPesoDias((prev) => ({ ...d.dias, ...prev }));
+            pushSalud({ peso: d.dias }); // el peso ya registrado también se refleja en la web
+          }
         } catch {}
       })
       .catch(() => {});
@@ -388,6 +398,7 @@ export default function SaludScreen() {
   // ---------------- Caminatas (GPS) ----------------
   const [caminataOpen, setCaminataOpen] = useState(false);
   const [caminatas, setCaminatas] = useState([]);
+  const [datosOpen, setDatosOpen] = useState(false); // "Todos los datos"
 
   useEffect(() => {
     SecureStore.getItemAsync(CAMINATAS_KEY)
@@ -395,7 +406,10 @@ export default function SaludScreen() {
         if (!raw) return;
         try {
           const d = JSON.parse(raw);
-          if (Array.isArray(d?.lista)) setCaminatas(d.lista);
+          if (Array.isArray(d?.lista)) {
+            setCaminatas((prev) => (prev.length ? prev : d.lista));
+            pushSalud({ caminatas: d.lista });
+          }
         } catch {}
       })
       .catch(() => {});
@@ -421,7 +435,10 @@ export default function SaludScreen() {
         if (!raw) return;
         try {
           const d = JSON.parse(raw);
-          if (d) setNutri(d);
+          if (d) {
+            setNutri(d);
+            pushSalud({ nutri: d });
+          }
         } catch {}
       })
       .catch(() => {});
@@ -445,7 +462,10 @@ export default function SaludScreen() {
         if (!raw) return;
         try {
           const d = JSON.parse(raw);
-          if (d?.dias) setComidasDias(d.dias);
+          if (d?.dias) {
+            setComidasDias((prev) => ({ ...d.dias, ...prev }));
+            pushSalud({ comidas: d.dias });
+          }
         } catch {}
       })
       .catch(() => {});
@@ -878,6 +898,12 @@ export default function SaludScreen() {
             <Text style={styles.caminataBtnText}>Iniciar caminata</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Todos los datos (estilo Salud de iPhone) */}
+        <TouchableOpacity style={styles.verTodos} onPress={() => setDatosOpen(true)}>
+          <Text style={styles.verTodosText}>Ver todos los resultados</Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.greenDark} />
+        </TouchableOpacity>
         </>
         )}
       </ScrollView>
@@ -914,6 +940,17 @@ export default function SaludScreen() {
         visible={caminataOpen}
         onClose={() => setCaminataOpen(false)}
         onGuardar={guardarCaminata}
+      />
+
+      <TodosDatosModal
+        visible={datosOpen}
+        onClose={() => setDatosOpen(false)}
+        pasosHist={pasosHist}
+        aguaDias={aguaDias}
+        animoDias={animoDias}
+        pesoDias={pesoDias}
+        comidasDias={comidasDias}
+        caminatas={caminatas}
       />
 
       <NutricionModal
@@ -1091,6 +1128,15 @@ const makeStyles = (colors) =>
       backgroundColor: colors.greenBright,
     },
     caminataBtnText: { color: "#06210a", fontSize: 14, fontWeight: "800" },
+
+    verTodos: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 4,
+      paddingVertical: 12,
+    },
+    verTodosText: { color: colors.greenDark, fontSize: 14, fontWeight: "800" },
 
     nutriKcal: { color: colors.text, fontSize: 30, fontWeight: "900" },
     nutriKcalU: { color: colors.muted, fontSize: 15, fontWeight: "700" },

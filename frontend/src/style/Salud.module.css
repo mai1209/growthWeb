@@ -450,6 +450,55 @@
   flex: 1;
 }
 
+/* ===== Todos los resultados (estilo Salud de iPhone) ===== */
+.datosGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.8rem;
+}
+
+.dato {
+  border: 1px solid var(--border-color);
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.datoTitulo {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.datoBody {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.datoValor {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 900;
+}
+
+.datoValor span {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.datoBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 44px;
+}
+
 @media (max-width: 640px) {
   .fila {
     flex-direction: column;
