@@ -4,7 +4,13 @@ import Anthropic from "@anthropic-ai/sdk";
 // (mucho más barato) o "claude-sonnet-5" según el balance costo/calidad.
 const MODEL = "claude-opus-5";
 
-const client = new Anthropic(); // usa ANTHROPIC_API_KEY del entorno
+// Cliente lazy: NO se construye al importar el módulo (si no hay ANTHROPIC_API_KEY,
+// el SDK tira error y se caería todo el backend). Se crea recién al usarse.
+let client = null;
+const getClient = () => {
+  if (!client) client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  return client;
+};
 
 const SCHEMA = {
   type: "object",
@@ -28,7 +34,7 @@ export const analizarFoto = async (req, res) => {
   }
 
   try {
-    const response = await client.messages.create({
+    const response = await getClient().messages.create({
       model: MODEL,
       max_tokens: 1024,
       thinking: { type: "disabled" },
