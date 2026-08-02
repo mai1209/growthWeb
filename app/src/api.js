@@ -128,6 +128,12 @@ export const afirmacionService = {
   desmarcarLeido: (fecha) => api.delete(`/api/afirmaciones/leer?fecha=${fecha}`),
 };
 
+export const nutricionService = {
+  // Envía la foto (base64 sin prefijo) y devuelve { nombre, kcal, carbG, protG, fatG }.
+  analizarFoto: (imagenBase64, mediaType) =>
+    api.post("/api/nutricion/analizar-foto", { imagenBase64, mediaType }),
+};
+
 export const sharedGroupsService = {
   getAll: () => api.get("/api/shared-groups"),
   getById: (id) => api.get(`/api/shared-groups/${id}`),

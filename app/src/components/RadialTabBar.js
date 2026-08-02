@@ -22,7 +22,7 @@ export const NAV_GROUPS = [
     label: "Finanzas",
     short: "Finanzas",
     icon: "logo-usd",
-    iconSize: 28,
+    iconSize: 22,
     items: [
       { label: "Home", icon: "home-outline", route: "Home" },
       { label: "Filtros", icon: "funnel-outline", route: "Filtros" },

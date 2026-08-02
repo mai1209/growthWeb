@@ -9,10 +9,14 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../theme";
+import { nutricionService } from "../api";
+import { tomarFotoComida, elegirFotoComida } from "../utils/foto";
 
 const soloNum = (v) => v.replace(/[^0-9]/g, "");
 
@@ -26,6 +30,36 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
   const [carb, setCarb] = useState("");
   const [prot, setProt] = useState("");
   const [fat, setFat] = useState("");
+  const [analizando, setAnalizando] = useState(false);
+
+  const correrAnalisis = async (getter) => {
+    const foto = await getter();
+    if (!foto?.base64) return;
+    setAnalizando(true);
+    try {
+      const { data } = await nutricionService.analizarFoto(foto.base64, foto.mediaType);
+      if (data?.nombre) setNombre(data.nombre);
+      if (data?.kcal) setKcal(String(data.kcal));
+      if (data?.carbG != null) setCarb(String(data.carbG));
+      if (data?.protG != null) setProt(String(data.protG));
+      if (data?.fatG != null) setFat(String(data.fatG));
+      if (!data?.nombre && !data?.kcal) {
+        Alert.alert("Sin resultado", "No pude reconocer una comida en la foto. Probá con otra.");
+      }
+    } catch (e) {
+      Alert.alert("Error", e?.response?.data?.error || "No se pudo analizar la foto.");
+    } finally {
+      setAnalizando(false);
+    }
+  };
+
+  const analizarConFoto = () => {
+    Alert.alert("Analizar comida con foto", "¿De dónde sacamos la foto?", [
+      { text: "Cámara", onPress: () => correrAnalisis(tomarFotoComida) },
+      { text: "Galería", onPress: () => correrAnalisis(elegirFotoComida) },
+      { text: "Cancelar", style: "cancel" },
+    ]);
+  };
 
   useEffect(() => {
     if (visible) {
@@ -75,6 +109,21 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+            <TouchableOpacity
+              style={[styles.iaBtn, analizando && { opacity: 0.7 }]}
+              onPress={analizarConFoto}
+              disabled={analizando}
+            >
+              {analizando ? (
+                <ActivityIndicator color="#06210a" />
+              ) : (
+                <>
+                  <Ionicons name="sparkles" size={16} color="#06210a" />
+                  <Text style={styles.iaBtnText}>Analizar con foto (IA)</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
             <Text style={styles.label}>¿Qué comiste?</Text>
             <TextInput
               style={styles.input}
@@ -192,4 +241,15 @@ const makeStyles = (colors) =>
       textAlign: "center",
     },
     hint: { color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 14 },
+    iaBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      paddingVertical: 13,
+      borderRadius: 12,
+      backgroundColor: colors.greenBright,
+      marginBottom: 4,
+    },
+    iaBtnText: { color: "#06210a", fontSize: 14, fontWeight: "800" },
   });

@@ -40,7 +40,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Growth usa tus fotos para insertar imágenes en tus notas."
+          "photosPermission": "Growth usa tus fotos para insertar imágenes y analizar comidas.",
+          "cameraPermission": "Growth usa la cámara para sacar fotos de tus comidas y estimar calorías."
         }
       ],
       [
