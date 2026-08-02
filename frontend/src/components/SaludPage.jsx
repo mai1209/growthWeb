@@ -4,6 +4,7 @@ import {
   FiActivity,
   FiDroplet,
   FiHeart,
+  FiInfo,
   FiNavigation,
   FiPlus,
   FiRefreshCw,
@@ -516,6 +517,17 @@ export default function SaludPage() {
           <div className={style.cardHead}>
             <h2>
               <FiTrendingUp /> Comidas de hoy
+              <span
+                className={style.infoIcon}
+                tabIndex={0}
+                title="C = Carbohidratos · P = Proteína · G = Grasa (en gramos, por unidad)"
+              >
+                <FiInfo />
+                <span className={style.infoTip}>
+                  <strong>C</strong> = Carbohidratos · <strong>P</strong> = Proteína ·{" "}
+                  <strong>G</strong> = Grasa (en gramos)
+                </span>
+              </span>
             </h2>
             {plan ? (
               <span className={style.planResumen}>
@@ -622,9 +634,9 @@ export default function SaludPage() {
                       onChange={(e) => setFKcal(e.target.value)}
                       placeholder="kcal c/u"
                     />
-                    <input type="number" min="0" value={fCarb} onChange={(e) => setFCarb(e.target.value)} placeholder="C g" />
-                    <input type="number" min="0" value={fProt} onChange={(e) => setFProt(e.target.value)} placeholder="P g" />
-                    <input type="number" min="0" value={fFat} onChange={(e) => setFFat(e.target.value)} placeholder="G g" />
+                    <input type="number" min="0" value={fCarb} onChange={(e) => setFCarb(e.target.value)} placeholder="C g" title="Carbohidratos (g)" />
+                    <input type="number" min="0" value={fProt} onChange={(e) => setFProt(e.target.value)} placeholder="P g" title="Proteína (g)" />
+                    <input type="number" min="0" value={fFat} onChange={(e) => setFFat(e.target.value)} placeholder="G g" title="Grasa (g)" />
                     <button
                       type="button"
                       className={style.comidaOk}

@@ -84,6 +84,46 @@
   gap: 0.45rem;
 }
 
+.infoIcon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-muted);
+  cursor: help;
+  font-size: 0.9rem;
+}
+
+.infoTip {
+  position: absolute;
+  top: 140%;
+  left: 0;
+  z-index: 30;
+  width: max-content;
+  max-width: 260px;
+  padding: 0.5rem 0.7rem;
+  border-radius: 10px;
+  background: var(--surface-card, #14181c);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.3;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s ease;
+}
+
+.infoTip strong {
+  color: inherit;
+}
+
+.infoIcon:hover .infoTip,
+.infoIcon:focus .infoTip {
+  opacity: 1;
+  visibility: visible;
+}
+
 .badgeTel {
   font-size: 0.7rem;
   font-weight: 700;
