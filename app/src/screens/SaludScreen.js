@@ -14,6 +14,7 @@ import Svg, { Circle } from "react-native-svg";
 import { Pedometer } from "expo-sensors";
 import * as SecureStore from "expo-secure-store";
 import { useTheme } from "../theme";
+import { saludService } from "../api";
 import CaminataModal from "../components/CaminataModal";
 import NutricionModal from "../components/NutricionModal";
 import AddComidaModal from "../components/AddComidaModal";
@@ -118,6 +119,12 @@ function MacroBar({ label, val, meta, color, track, styles }) {
   );
 }
 
+// Sube secciones al backend en segundo plano (espejo en la web). Si falla, no
+// molesta: lo local sigue siendo la fuente de verdad del teléfono.
+const pushSalud = (partial) => {
+  saludService.update(partial).catch(() => {});
+};
+
 export default function SaludScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -160,6 +167,7 @@ export default function SaludScreen() {
       CFG_KEY,
       JSON.stringify({ metaPasos: nextPasos, metaAgua: nextAgua })
     ).catch(() => {});
+    pushSalud({ metas: { pasos: nextPasos, agua: nextAgua } });
     setEditando(null);
   };
 
@@ -195,6 +203,7 @@ export default function SaludScreen() {
       SecureStore.setItemAsync(PASOS_HIST_KEY, JSON.stringify(recortado)).catch(() => {});
       return recortado;
     });
+    pushSalud({ pasos: nuevos }); // espejo en la web
   }, []);
 
   useEffect(() => {
@@ -278,6 +287,7 @@ export default function SaludScreen() {
         SecureStore.setItemAsync(AGUA_KEY, JSON.stringify({ dias: recortado })).catch(() => {});
         return recortado;
       });
+      pushSalud({ agua: { [hoy]: Math.max(0, nuevoHoy) } });
     },
     [hoy]
   );
@@ -310,6 +320,7 @@ export default function SaludScreen() {
       SecureStore.setItemAsync(ANIMO_KEY, JSON.stringify({ dias: rec })).catch(() => {});
       return rec;
     });
+    pushSalud({ animo: { [hoy]: level } });
   };
 
   // ---------------- Peso ----------------
@@ -331,6 +342,7 @@ export default function SaludScreen() {
       SecureStore.setItemAsync(PESO_KEY, JSON.stringify({ dias: rec })).catch(() => {});
       return rec;
     });
+    pushSalud({ peso: { [hoy]: kg } });
     setPesoInput("");
   };
 
@@ -381,11 +393,10 @@ export default function SaludScreen() {
 
   const guardarCaminata = (walk) => {
     if (!walk || walk.metros <= 0) return;
-    setCaminatas((prev) => {
-      const lista = [{ fecha: hoy, metros: walk.metros, secs: walk.secs }, ...prev].slice(0, 50);
-      SecureStore.setItemAsync(CAMINATAS_KEY, JSON.stringify({ lista })).catch(() => {});
-      return lista;
-    });
+    const lista = [{ fecha: hoy, metros: walk.metros, secs: walk.secs }, ...caminatas].slice(0, 50);
+    setCaminatas(lista);
+    SecureStore.setItemAsync(CAMINATAS_KEY, JSON.stringify({ lista })).catch(() => {});
+    pushSalud({ caminatas: lista });
   };
 
   const ultimaCaminata = caminatas[0];
@@ -409,6 +420,7 @@ export default function SaludScreen() {
   const guardarNutri = (cfg) => {
     setNutri(cfg);
     SecureStore.setItemAsync(NUTRI_KEY, JSON.stringify(cfg)).catch(() => {});
+    pushSalud({ nutri: cfg });
   };
 
   const plan = calcularPlan(nutri);
@@ -442,19 +454,66 @@ export default function SaludScreen() {
   };
 
   const agregarComida = (meal) => {
-    setComidasDias((prev) => {
-      const hoyArr = prev[hoy] || [];
-      const item = { id: `${Date.now()}${Math.floor(Math.random() * 1000)}`, ...meal };
-      return persistirComidas({ ...prev, [hoy]: [...hoyArr, item] });
-    });
+    const item = { id: `${Date.now()}${Math.floor(Math.random() * 1000)}`, ...meal };
+    const hoyArr = [...(comidasDias[hoy] || []), item];
+    setComidasDias(persistirComidas({ ...comidasDias, [hoy]: hoyArr }));
+    pushSalud({ comidas: { [hoy]: hoyArr } });
   };
 
   const borrarComida = (id) => {
-    setComidasDias((prev) => {
-      const hoyArr = (prev[hoy] || []).filter((c) => c.id !== id);
-      return persistirComidas({ ...prev, [hoy]: hoyArr });
-    });
+    const hoyArr = (comidasDias[hoy] || []).filter((c) => c.id !== id);
+    setComidasDias(persistirComidas({ ...comidasDias, [hoy]: hoyArr }));
+    pushSalud({ comidas: { [hoy]: hoyArr } });
   };
+
+  // ---------------- Pull del backend (lo cargado desde la web) ----------------
+  // Merge conservador: lo local gana; el servidor solo rellena lo que falta.
+  // Excepciones de hoy: agua = máximo de ambos; comidas = unión por id.
+  useEffect(() => {
+    saludService
+      .get()
+      .then(({ data }) => {
+        if (!data) return;
+        setAguaDias((prev) => {
+          const next = { ...(data.agua || {}), ...prev };
+          if (data.agua?.[hoy] != null) next[hoy] = Math.max(prev[hoy] || 0, data.agua[hoy] || 0);
+          SecureStore.setItemAsync(AGUA_KEY, JSON.stringify({ dias: next })).catch(() => {});
+          return next;
+        });
+        setAnimoDias((prev) => {
+          const next = { ...(data.animo || {}), ...prev };
+          SecureStore.setItemAsync(ANIMO_KEY, JSON.stringify({ dias: next })).catch(() => {});
+          return next;
+        });
+        setPesoDias((prev) => {
+          const next = { ...(data.peso || {}), ...prev };
+          SecureStore.setItemAsync(PESO_KEY, JSON.stringify({ dias: next })).catch(() => {});
+          return next;
+        });
+        setPasosHist((prev) => {
+          const next = { ...(data.pasos || {}), ...prev };
+          SecureStore.setItemAsync(PASOS_HIST_KEY, JSON.stringify(next)).catch(() => {});
+          return next;
+        });
+        setComidasDias((prev) => {
+          const next = { ...(data.comidas || {}), ...prev };
+          const serverHoy = data.comidas?.[hoy] || [];
+          if (serverHoy.length) {
+            const localHoy = prev[hoy] || [];
+            const ids = new Set(localHoy.map((c) => c.id));
+            next[hoy] = [...localHoy, ...serverHoy.filter((c) => !ids.has(c.id))];
+          }
+          SecureStore.setItemAsync(COMIDAS_KEY, JSON.stringify({ dias: next })).catch(() => {});
+          return next;
+        });
+        setCaminatas((prev) => (prev.length ? prev : data.caminatas || []));
+        if (data.nutri) setNutri((prev) => prev || data.nutri);
+        if (data.metas?.pasos > 0) setMetaPasos((prev) => (prev === META_PASOS_DEF ? data.metas.pasos : prev));
+        if (data.metas?.agua > 0) setMetaAgua((prev) => (prev === META_AGUA_DEF ? data.metas.agua : prev));
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const comidasHoy = comidasDias[hoy] || [];
   const consumido = comidasHoy.reduce((a, c) => a + (c.kcal || 0), 0);

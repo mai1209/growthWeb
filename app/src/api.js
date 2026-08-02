@@ -128,6 +128,12 @@ export const afirmacionService = {
   desmarcarLeido: (fecha) => api.delete(`/api/afirmaciones/leer?fecha=${fecha}`),
 };
 
+export const saludService = {
+  get: () => api.get("/api/salud"),
+  // Manda solo las secciones a actualizar; el backend mergea por día.
+  update: (data) => api.put("/api/salud", data),
+};
+
 export const nutricionService = {
   // Envía la foto (base64 sin prefijo) y devuelve { nombre, kcal, carbG, protG, fatG }.
   analizarFoto: (imagenBase64, mediaType) =>
