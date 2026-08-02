@@ -685,6 +685,12 @@ export default function SaludScreen() {
         </>
         ) : (
         <>
+        {/* Todos los datos (estilo Salud de iPhone) */}
+        <TouchableOpacity style={styles.verTodosTop} onPress={() => setDatosOpen(true)}>
+          <Text style={styles.verTodosText}>Ver todos los resultados</Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.greenDark} />
+        </TouchableOpacity>
+
         {/* ---- Pasos ---- */}
         <View style={styles.card}>
           <View style={styles.cardHead}>
@@ -899,11 +905,6 @@ export default function SaludScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Todos los datos (estilo Salud de iPhone) */}
-        <TouchableOpacity style={styles.verTodos} onPress={() => setDatosOpen(true)}>
-          <Text style={styles.verTodosText}>Ver todos los resultados</Text>
-          <Ionicons name="chevron-forward" size={16} color={colors.greenDark} />
-        </TouchableOpacity>
         </>
         )}
       </ScrollView>
@@ -1129,12 +1130,12 @@ const makeStyles = (colors) =>
     },
     caminataBtnText: { color: "#06210a", fontSize: 14, fontWeight: "800" },
 
-    verTodos: {
+    verTodosTop: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
       gap: 4,
-      paddingVertical: 12,
+      paddingVertical: 2,
+      marginBottom: 2,
     },
     verTodosText: { color: colors.greenDark, fontSize: 14, fontWeight: "800" },
 
