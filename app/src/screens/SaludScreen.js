@@ -33,6 +33,7 @@ const COMIDAS_KEY = "salud_comidas_v1";
 const FRANJAS = [
   { key: "desayuno", label: "Desayuno", icon: "cafe-outline" },
   { key: "almuerzo", label: "Almuerzo", icon: "restaurant-outline" },
+  { key: "merienda", label: "Merienda", icon: "ice-cream-outline" },
   { key: "cena", label: "Cena", icon: "moon-outline" },
   { key: "aperitivo", label: "Aperitivo", icon: "fast-food-outline" },
 ];

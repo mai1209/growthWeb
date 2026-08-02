@@ -21,6 +21,8 @@ import { tomarFotoComida, elegirFotoComida } from "../utils/foto";
 import { BASE_COMIDAS } from "../utils/comidasBase";
 
 const soloNum = (v) => v.replace(/[^0-9]/g, "");
+// Permite decimales con coma o punto (para "0,5 pote").
+const soloDec = (v) => v.replace(/[^0-9.,]/g, "").replace(",", ".").replace(/(\..*)\./g, "$1");
 
 // Análisis por foto (IA): requiere créditos de Anthropic. Lo dejamos apagado
 // por ahora; poner en true cuando la API key esté cargada en el backend.
@@ -37,6 +39,9 @@ const norm = (s) =>
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
 
+// Formatea la cantidad: 0.5 -> "0,5", 2 -> "2", 1.5 -> "1,5".
+const fmtCant = (n) => (Number.isInteger(n) ? String(n) : String(n).replace(".", ","));
+
 export default function AddComidaModal({ visible, franja, onClose, onGuardar }) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
@@ -47,7 +52,8 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
   const [carb, setCarb] = useState("");
   const [prot, setProt] = useState("");
   const [fat, setFat] = useState("");
-  const [cant, setCant] = useState("1"); // cantidad (multiplica kcal y macros)
+  const [cant, setCant] = useState("1"); // cantidad (multiplica kcal y macros; admite decimales)
+  const [unidad, setUnidad] = useState(""); // porción (pote, puñado, cucharada…)
   const [analizando, setAnalizando] = useState(false);
 
   const correrAnalisis = async (getter) => {
@@ -87,6 +93,7 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
       setProt("");
       setFat("");
       setCant("1");
+      setUnidad("");
       setElegida(false);
     }
   }, [visible]);
@@ -150,20 +157,27 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
     setCarb(String(s.carbG || ""));
     setProt(String(s.protG || ""));
     setFat(String(s.fatG || ""));
+    setUnidad(s.unidad || "");
     setElegida(true);
   };
+
+  const cantNum = parseFloat(String(cant).replace(",", ".")) || 1;
 
   const guardar = () => {
     const k = parseInt(kcal, 10) || 0;
     if (!nombre.trim() || k <= 0) return;
-    const c = Math.max(1, parseInt(cant, 10) || 1);
+    const factor = cantNum > 0 ? cantNum : 1;
+    const base = nombre.trim();
+    let nombreFinal = base;
+    if (unidad) nombreFinal = `${base} · ${fmtCant(cantNum)} ${unidad}`;
+    else if (cantNum !== 1) nombreFinal = `${base} ×${fmtCant(cantNum)}`;
     onGuardar?.({
       franja: franja?.key,
-      nombre: c > 1 ? `${nombre.trim()} ×${c}` : nombre.trim(),
-      kcal: k * c,
-      carbG: (parseInt(carb, 10) || 0) * c,
-      protG: (parseInt(prot, 10) || 0) * c,
-      fatG: (parseInt(fat, 10) || 0) * c,
+      nombre: nombreFinal,
+      kcal: Math.round(k * factor),
+      carbG: Math.round((parseInt(carb, 10) || 0) * factor),
+      protG: Math.round((parseInt(prot, 10) || 0) * factor),
+      fatG: Math.round((parseInt(fat, 10) || 0) * factor),
     });
     onClose?.();
   };
@@ -216,6 +230,7 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
               onChangeText={(v) => {
                 setNombre(v);
                 setElegida(false);
+                setUnidad("");
               }}
               placeholder="Ej: Milanesa con puré"
               placeholderTextColor={colors.muted}
@@ -237,6 +252,7 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
                     />
                     <Text style={styles.sugNombre} numberOfLines={1}>
                       {s.nombre}
+                      {s.unidad ? <Text style={styles.sugUnidad}> · {s.unidad}</Text> : null}
                     </Text>
                     <Text style={styles.sugKcal}>{s.kcal} kcal</Text>
                   </TouchableOpacity>
@@ -246,7 +262,7 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
 
             <View style={styles.filaDoble}>
               <View style={styles.campoDoble}>
-                <Text style={styles.label}>Calorías (por unidad)</Text>
+                <Text style={styles.label}>Calorías (por {unidad || "unidad"})</Text>
                 <TextInput
                   style={styles.input}
                   value={kcal}
@@ -257,25 +273,25 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
                 />
               </View>
               <View style={styles.campoCant}>
-                <Text style={styles.label}>Cantidad</Text>
+                <Text style={styles.label}>Cantidad{unidad ? ` (${unidad})` : ""}</Text>
                 <View style={styles.cantRow}>
                   <TouchableOpacity
                     style={styles.cantBtn}
-                    onPress={() => setCant(String(Math.max(1, (parseInt(cant, 10) || 1) - 1)))}
+                    onPress={() => setCant(fmtCant(Math.max(0.5, Math.round((cantNum - 0.5) * 2) / 2)))}
                   >
                     <Ionicons name="remove" size={18} color={colors.text} />
                   </TouchableOpacity>
                   <TextInput
                     style={styles.cantInput}
                     value={cant}
-                    onChangeText={(v) => setCant(soloNum(v) || "")}
-                    keyboardType="number-pad"
+                    onChangeText={(v) => setCant(soloDec(v))}
+                    keyboardType="decimal-pad"
                     placeholder="1"
                     placeholderTextColor={colors.muted}
                   />
                   <TouchableOpacity
                     style={styles.cantBtn}
-                    onPress={() => setCant(String((parseInt(cant, 10) || 1) + 1))}
+                    onPress={() => setCant(fmtCant(Math.round((cantNum + 0.5) * 2) / 2))}
                   >
                     <Ionicons name="add" size={18} color={colors.text} />
                   </TouchableOpacity>
@@ -283,9 +299,18 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
               </View>
             </View>
 
-            {(parseInt(cant, 10) || 1) > 1 && (parseInt(kcal, 10) || 0) > 0 ? (
+            <View style={styles.cantChips}>
+              {["0.5", "1", "2", "3"].map((v) => (
+                <TouchableOpacity key={v} style={styles.cantChip} onPress={() => setCant(v)}>
+                  <Text style={styles.cantChipText}>{v === "0.5" ? "½" : v}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {cantNum !== 1 && (parseInt(kcal, 10) || 0) > 0 ? (
               <Text style={styles.totalHint}>
-                Total: {(parseInt(kcal, 10) || 0) * (parseInt(cant, 10) || 1)} kcal
+                Total: {Math.round((parseInt(kcal, 10) || 0) * cantNum)} kcal
+                {unidad ? ` · ${fmtCant(cantNum)} ${unidad}` : ""}
               </Text>
             ) : null}
 
@@ -397,6 +422,16 @@ const makeStyles = (colors) =>
       textAlign: "center",
     },
     totalHint: { color: colors.greenBright, fontSize: 13, fontWeight: "800", marginTop: 8 },
+    cantChips: { flexDirection: "row", gap: 8, marginTop: 10 },
+    cantChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+    },
+    cantChipText: { color: colors.text, fontSize: 14, fontWeight: "800" },
     macrosRow: { flexDirection: "row", gap: 10 },
     macroCampo: { flex: 1 },
     macroLabel: { color: colors.muted, fontSize: 12, fontWeight: "700", marginBottom: 4 },
@@ -442,5 +477,6 @@ const makeStyles = (colors) =>
     },
     sugRowBorder: { borderTopWidth: 1, borderTopColor: colors.cardBorder },
     sugNombre: { flex: 1, color: colors.text, fontSize: 14, fontWeight: "600" },
+    sugUnidad: { color: colors.muted, fontWeight: "600" },
     sugKcal: { color: colors.muted, fontSize: 12, fontWeight: "700" },
   });

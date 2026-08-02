@@ -29,9 +29,13 @@ const DIAS_SEMANA = ["D", "L", "M", "M", "J", "V", "S"];
 const FRANJAS = [
   { key: "desayuno", label: "Desayuno" },
   { key: "almuerzo", label: "Almuerzo" },
+  { key: "merienda", label: "Merienda" },
   { key: "cena", label: "Cena" },
   { key: "aperitivo", label: "Aperitivo" },
 ];
+
+// Formatea la cantidad: 0.5 -> "0,5", 2 -> "2", 1.5 -> "1,5".
+const fmtCant = (n) => (Number.isInteger(n) ? String(n) : String(n).replace(".", ","));
 const ANIMOS = [
   { level: 1, emoji: "😔", label: "Mal" },
   { level: 2, emoji: "😕", label: "Bajón" },
@@ -104,7 +108,8 @@ export default function SaludPage() {
   const [fCarb, setFCarb] = useState("");
   const [fProt, setFProt] = useState("");
   const [fFat, setFFat] = useState("");
-  const [fCant, setFCant] = useState("1"); // cantidad (multiplica kcal y macros)
+  const [fCant, setFCant] = useState("1"); // cantidad (multiplica kcal y macros; admite decimales)
+  const [fUnidad, setFUnidad] = useState(""); // unidad de la porción (pote, puñado, cucharada…)
   const [elegida, setElegida] = useState(false); // ya eligió sugerencia → ocultar lista
 
   const hoy = dayKey(new Date());
@@ -271,6 +276,7 @@ export default function SaludPage() {
     setFCarb(String(s.carbG || ""));
     setFProt(String(s.protG || ""));
     setFFat(String(s.fatG || ""));
+    setFUnidad(s.unidad || "");
     setElegida(true);
   };
 
@@ -295,21 +301,27 @@ export default function SaludPage() {
     setFProt("");
     setFFat("");
     setFCant("1");
+    setFUnidad("");
     setElegida(false);
   };
 
   const agregarComida = () => {
     const k = parseInt(fKcal, 10) || 0;
     if (!fNombre.trim() || k <= 0) return;
-    const cant = Math.max(1, parseInt(fCant, 10) || 1);
+    const cant = parseFloat(String(fCant).replace(",", ".")) || 1;
+    const factor = cant > 0 ? cant : 1;
+    const base = fNombre.trim();
+    let nombre = base;
+    if (fUnidad) nombre = `${base} · ${fmtCant(cant)} ${fUnidad}`;
+    else if (cant !== 1) nombre = `${base} ×${fmtCant(cant)}`;
     const item = {
       id: `${Date.now()}`,
       franja: formFranja,
-      nombre: cant > 1 ? `${fNombre.trim()} ×${cant}` : fNombre.trim(),
-      kcal: k * cant,
-      carbG: (parseInt(fCarb, 10) || 0) * cant,
-      protG: (parseInt(fProt, 10) || 0) * cant,
-      fatG: (parseInt(fFat, 10) || 0) * cant,
+      nombre,
+      kcal: Math.round(k * factor),
+      carbG: Math.round((parseInt(fCarb, 10) || 0) * factor),
+      protG: Math.round((parseInt(fProt, 10) || 0) * factor),
+      fatG: Math.round((parseInt(fFat, 10) || 0) * factor),
     };
     mutate({ comidas: { [hoy]: [...comidasHoy, item] } });
     setFormFranja(null);
@@ -567,6 +579,7 @@ export default function SaludPage() {
                         onChange={(e) => {
                           setFNombre(e.target.value);
                           setElegida(false);
+                          setFUnidad("");
                         }}
                         placeholder="¿Qué comiste?"
                         autoFocus
@@ -577,7 +590,10 @@ export default function SaludPage() {
                             <li key={i}>
                               <button type="button" onClick={() => usarSugerencia(s)}>
                                 <span className={style.sugIcono}>{s.propia ? "⏱" : "🍽"}</span>
-                                <span className={style.sugNombre}>{s.nombre}</span>
+                                <span className={style.sugNombre}>
+                                  {s.nombre}
+                                  {s.unidad ? <em className={style.sugUnidad}> · {s.unidad}</em> : null}
+                                </span>
                                 <span className={style.sugKcal}>{s.kcal} kcal</span>
                               </button>
                             </li>
@@ -586,22 +602,35 @@ export default function SaludPage() {
                       ) : null}
                     </div>
                     <div className={style.cantWrap}>
-                      <span className={style.cantX}>×</span>
                       <input
                         type="number"
-                        min="1"
+                        min="0"
+                        step="0.5"
                         value={fCant}
                         onChange={(e) => setFCant(e.target.value)}
                         className={style.cantInput}
                         title="Cantidad"
                       />
+                      <span className={style.cantUnidad}>{fUnidad || "u."}</span>
+                      <span className={style.cantChips}>
+                        {["0.5", "1", "2"].map((v) => (
+                          <button
+                            key={v}
+                            type="button"
+                            className={style.cantChip}
+                            onClick={() => setFCant(v)}
+                          >
+                            {v === "0.5" ? "½" : v}
+                          </button>
+                        ))}
+                      </span>
                     </div>
                     <input
                       type="number"
                       min="0"
                       value={fKcal}
                       onChange={(e) => setFKcal(e.target.value)}
-                      placeholder="kcal c/u"
+                      placeholder={fUnidad ? `kcal x ${fUnidad}` : "kcal c/u"}
                     />
                     <input type="number" min="0" value={fCarb} onChange={(e) => setFCarb(e.target.value)} placeholder="C g" title="Carbohidratos (g)" />
                     <input type="number" min="0" value={fProt} onChange={(e) => setFProt(e.target.value)} placeholder="P g" title="Proteína (g)" />

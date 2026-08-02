@@ -557,6 +557,41 @@
   font-weight: 700;
 }
 
+.cantUnidad {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  min-width: 42px;
+}
+
+.cantChips {
+  display: inline-flex;
+  gap: 0.2rem;
+}
+
+.cantChip {
+  min-width: 26px;
+  padding: 0.35rem 0.35rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 800;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.cantChip:hover {
+  color: inherit;
+  border-color: var(--color-verde, #5dc72d);
+}
+
+.sugUnidad {
+  color: var(--color-muted);
+  font-style: normal;
+  font-weight: 600;
+}
+
 .comidaOk:disabled {
   opacity: 0.45;
   cursor: not-allowed;
