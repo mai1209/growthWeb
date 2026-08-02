@@ -12,6 +12,7 @@ import SettingsPage from "./SettingsPage";
 import MetricsPage from "./MetricsPage";
 import MetasPage from "./MetasPage";
 import PomodoroPage from "./PomodoroPage";
+import SaludPage from "./SaludPage";
 import ApoyarPage from "./ApoyarPage";
 
 import LoginPage from "./LoginPage";
@@ -206,6 +207,7 @@ function AppRoutes({
         <Route path="metas" element={<MetasPage activeWorkspace={activeWorkspace} />} />
         <Route path="compartidos" element={<SharedExpenses />} />
         <Route path="pomodoro" element={<PomodoroPage />} />
+        <Route path="salud" element={<SaludPage />} />
         <Route path="ajustes" element={<SettingsPage theme={theme} onThemeToggle={onThemeToggle} />} />
         <Route path="perfil" element={<SettingsPage mode="perfil" currentWorkspace={activeWorkspace} theme={theme} onThemeToggle={onThemeToggle} />} />
         <Route path="apoyar" element={<ApoyarPage />} />

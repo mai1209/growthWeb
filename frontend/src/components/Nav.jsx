@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
-import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiWatch, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers, FiArrowRight } from "react-icons/fi";
+import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiWatch, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers, FiArrowRight, FiHeart } from "react-icons/fi";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { authService } from "../api";
@@ -31,6 +31,7 @@ const NAV_GROUPS = [
       { to: "/notas?view=journal", label: "Journaling", icon: <FiFeather className={style.navIcon} /> },
       { to: "/notas?view=afirmaciones", label: "Afirmaciones", icon: <FiSun className={style.navIcon} /> },
       { to: "/pomodoro", label: "Pomodoro", icon: <FiClock className={style.navIcon} /> },
+      { to: "/salud", label: "Salud", icon: <FiHeart className={style.navIcon} /> },
     ],
   },
   {

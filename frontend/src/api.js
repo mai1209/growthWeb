@@ -157,6 +157,12 @@ export const journalService = {
   savePreguntas: (data) => api.put("/api/journal/preguntas", data),
 };
 
+export const saludService = {
+  get: () => api.get("/api/salud"),
+  // Manda solo las secciones a actualizar; el backend mergea por día.
+  update: (data) => api.put("/api/salud", data),
+};
+
 export const afirmacionService = {
   // `fecha` es la fecha local del cliente (YYYY-MM-DD): el "hoy" lo define el
   // dispositivo, no el servidor.
