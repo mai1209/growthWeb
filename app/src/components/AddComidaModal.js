@@ -47,6 +47,7 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
   const [carb, setCarb] = useState("");
   const [prot, setProt] = useState("");
   const [fat, setFat] = useState("");
+  const [cant, setCant] = useState("1"); // cantidad (multiplica kcal y macros)
   const [analizando, setAnalizando] = useState(false);
 
   const correrAnalisis = async (getter) => {
@@ -85,6 +86,7 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
       setCarb("");
       setProt("");
       setFat("");
+      setCant("1");
       setElegida(false);
     }
   }, [visible]);
@@ -154,13 +156,14 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
   const guardar = () => {
     const k = parseInt(kcal, 10) || 0;
     if (!nombre.trim() || k <= 0) return;
+    const c = Math.max(1, parseInt(cant, 10) || 1);
     onGuardar?.({
       franja: franja?.key,
-      nombre: nombre.trim(),
-      kcal: k,
-      carbG: parseInt(carb, 10) || 0,
-      protG: parseInt(prot, 10) || 0,
-      fatG: parseInt(fat, 10) || 0,
+      nombre: c > 1 ? `${nombre.trim()} ×${c}` : nombre.trim(),
+      kcal: k * c,
+      carbG: (parseInt(carb, 10) || 0) * c,
+      protG: (parseInt(prot, 10) || 0) * c,
+      fatG: (parseInt(fat, 10) || 0) * c,
     });
     onClose?.();
   };
@@ -241,17 +244,52 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
               </View>
             ) : null}
 
-            <Text style={styles.label}>Calorías</Text>
-            <TextInput
-              style={styles.input}
-              value={kcal}
-              onChangeText={(v) => setKcal(soloNum(v))}
-              keyboardType="number-pad"
-              placeholder="0"
-              placeholderTextColor={colors.muted}
-            />
+            <View style={styles.filaDoble}>
+              <View style={styles.campoDoble}>
+                <Text style={styles.label}>Calorías (por unidad)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={kcal}
+                  onChangeText={(v) => setKcal(soloNum(v))}
+                  keyboardType="number-pad"
+                  placeholder="0"
+                  placeholderTextColor={colors.muted}
+                />
+              </View>
+              <View style={styles.campoCant}>
+                <Text style={styles.label}>Cantidad</Text>
+                <View style={styles.cantRow}>
+                  <TouchableOpacity
+                    style={styles.cantBtn}
+                    onPress={() => setCant(String(Math.max(1, (parseInt(cant, 10) || 1) - 1)))}
+                  >
+                    <Ionicons name="remove" size={18} color={colors.text} />
+                  </TouchableOpacity>
+                  <TextInput
+                    style={styles.cantInput}
+                    value={cant}
+                    onChangeText={(v) => setCant(soloNum(v) || "")}
+                    keyboardType="number-pad"
+                    placeholder="1"
+                    placeholderTextColor={colors.muted}
+                  />
+                  <TouchableOpacity
+                    style={styles.cantBtn}
+                    onPress={() => setCant(String((parseInt(cant, 10) || 1) + 1))}
+                  >
+                    <Ionicons name="add" size={18} color={colors.text} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
 
-            <Text style={styles.label}>Macros (opcional, en gramos)</Text>
+            {(parseInt(cant, 10) || 1) > 1 && (parseInt(kcal, 10) || 0) > 0 ? (
+              <Text style={styles.totalHint}>
+                Total: {(parseInt(kcal, 10) || 0) * (parseInt(cant, 10) || 1)} kcal
+              </Text>
+            ) : null}
+
+            <Text style={styles.label}>Macros (opcional, en gramos — por unidad)</Text>
             <View style={styles.macrosRow}>
               <View style={styles.macroCampo}>
                 <Text style={styles.macroLabel}>Carbos</Text>
@@ -332,6 +370,33 @@ const makeStyles = (colors) =>
       fontSize: 16,
       fontWeight: "700",
     },
+    filaDoble: { flexDirection: "row", gap: 10, alignItems: "flex-start" },
+    campoDoble: { flex: 1 },
+    campoCant: { width: 132 },
+    cantRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+    cantBtn: {
+      width: 38,
+      height: 44,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    cantInput: {
+      flex: 1,
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 12,
+      paddingVertical: 12,
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: "800",
+      textAlign: "center",
+    },
+    totalHint: { color: colors.greenBright, fontSize: 13, fontWeight: "800", marginTop: 8 },
     macrosRow: { flexDirection: "row", gap: 10 },
     macroCampo: { flex: 1 },
     macroLabel: { color: colors.muted, fontSize: 12, fontWeight: "700", marginBottom: 4 },

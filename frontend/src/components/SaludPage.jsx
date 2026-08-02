@@ -103,6 +103,7 @@ export default function SaludPage() {
   const [fCarb, setFCarb] = useState("");
   const [fProt, setFProt] = useState("");
   const [fFat, setFFat] = useState("");
+  const [fCant, setFCant] = useState("1"); // cantidad (multiplica kcal y macros)
   const [elegida, setElegida] = useState(false); // ya eligió sugerencia → ocultar lista
 
   const hoy = dayKey(new Date());
@@ -292,20 +293,22 @@ export default function SaludPage() {
     setFCarb("");
     setFProt("");
     setFFat("");
+    setFCant("1");
     setElegida(false);
   };
 
   const agregarComida = () => {
     const k = parseInt(fKcal, 10) || 0;
     if (!fNombre.trim() || k <= 0) return;
+    const cant = Math.max(1, parseInt(fCant, 10) || 1);
     const item = {
       id: `${Date.now()}`,
       franja: formFranja,
-      nombre: fNombre.trim(),
-      kcal: k,
-      carbG: parseInt(fCarb, 10) || 0,
-      protG: parseInt(fProt, 10) || 0,
-      fatG: parseInt(fFat, 10) || 0,
+      nombre: cant > 1 ? `${fNombre.trim()} ×${cant}` : fNombre.trim(),
+      kcal: k * cant,
+      carbG: (parseInt(fCarb, 10) || 0) * cant,
+      protG: (parseInt(fProt, 10) || 0) * cant,
+      fatG: (parseInt(fFat, 10) || 0) * cant,
     };
     mutate({ comidas: { [hoy]: [...comidasHoy, item] } });
     setFormFranja(null);
@@ -601,12 +604,23 @@ export default function SaludPage() {
                         </ul>
                       ) : null}
                     </div>
+                    <div className={style.cantWrap}>
+                      <span className={style.cantX}>×</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={fCant}
+                        onChange={(e) => setFCant(e.target.value)}
+                        className={style.cantInput}
+                        title="Cantidad"
+                      />
+                    </div>
                     <input
                       type="number"
                       min="0"
                       value={fKcal}
                       onChange={(e) => setFKcal(e.target.value)}
-                      placeholder="kcal"
+                      placeholder="kcal c/u"
                     />
                     <input type="number" min="0" value={fCarb} onChange={(e) => setFCarb(e.target.value)} placeholder="C g" />
                     <input type="number" min="0" value={fProt} onChange={(e) => setFProt(e.target.value)} placeholder="P g" />
