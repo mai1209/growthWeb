@@ -383,38 +383,6 @@ export default function SaludPage() {
         </section>
         </div>
 
-        {/* Hidratación (editable) */}
-        <section className={style.card}>
-          <div className={style.cardHead}>
-            <h2>
-              <FiDroplet /> Hidratación
-            </h2>
-          </div>
-          <div className={style.fila}>
-            <Ring percent={(agua / metaAgua) * 100} color="#3aa0e0">
-              <strong>{agua}</strong>
-              <small>de {metaAgua} ml</small>
-            </Ring>
-            <Semana
-              dias={ultimos7.labels}
-              valores={ultimos7.dias.map((k) => Number(data?.agua?.[k]) || 0)}
-              meta={metaAgua}
-              color="#3aa0e0"
-            />
-          </div>
-          <div className={style.acciones}>
-            <button type="button" className={style.aguaBtn} onClick={() => mutate({ agua: { [hoy]: agua + 250 } })}>
-              <FiPlus /> Vaso · 250
-            </button>
-            <button type="button" className={style.aguaBtn} onClick={() => mutate({ agua: { [hoy]: agua + 500 } })}>
-              <FiPlus /> Botella · 500
-            </button>
-            <button type="button" className={style.resetBtn} onClick={() => mutate({ agua: { [hoy]: 0 } })} title="Reiniciar">
-              <FiRefreshCw />
-            </button>
-          </div>
-        </section>
-
         {/* Ánimo + Peso apilados en la misma columna */}
         <div className={style.colStack}>
         <section className={style.card}>
@@ -653,6 +621,38 @@ export default function SaludPage() {
               </div>
             );
           })}
+        </section>
+
+        {/* Hidratación (editable) — el agua es parte de lo que consumís */}
+        <section className={style.card}>
+          <div className={style.cardHead}>
+            <h2>
+              <FiDroplet /> Hidratación
+            </h2>
+          </div>
+          <div className={style.fila}>
+            <Ring percent={(agua / metaAgua) * 100} color="#3aa0e0">
+              <strong>{agua}</strong>
+              <small>de {metaAgua} ml</small>
+            </Ring>
+            <Semana
+              dias={ultimos7.labels}
+              valores={ultimos7.dias.map((k) => Number(data?.agua?.[k]) || 0)}
+              meta={metaAgua}
+              color="#3aa0e0"
+            />
+          </div>
+          <div className={style.acciones}>
+            <button type="button" className={style.aguaBtn} onClick={() => mutate({ agua: { [hoy]: agua + 250 } })}>
+              <FiPlus /> Vaso · 250
+            </button>
+            <button type="button" className={style.aguaBtn} onClick={() => mutate({ agua: { [hoy]: agua + 500 } })}>
+              <FiPlus /> Botella · 500
+            </button>
+            <button type="button" className={style.resetBtn} onClick={() => mutate({ agua: { [hoy]: 0 } })} title="Reiniciar">
+              <FiRefreshCw />
+            </button>
+          </div>
         </section>
         </>
         )}

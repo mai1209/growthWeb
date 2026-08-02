@@ -663,6 +663,52 @@ export default function SaludScreen() {
             </Text>
           )}
         </View>
+
+        {/* ---- Hidratación ---- */}
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <View style={styles.cardHeadLeft}>
+              <Ionicons name="water-outline" size={18} color="#3aa0e0" />
+              <Text style={styles.cardTitle}>Hidratación</Text>
+            </View>
+            <TouchableOpacity style={styles.metaBtn} onPress={() => abrirEdicion("agua")}>
+              <Ionicons name="create-outline" size={14} color={colors.muted} />
+              <Text style={styles.metaBtnText}>Meta</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.pasosBody}>
+            <Ring percent={pctAgua} color="#3aa0e0" track={colors.cardBorder}>
+              <View style={styles.ringCenter}>
+                <Text style={styles.ringBig}>{agua}</Text>
+                <Text style={styles.ringSub}>de {metaAgua} ml</Text>
+              </View>
+            </Ring>
+            <View style={{ flex: 1 }}>
+              <BarrasSemana
+                valores={aguaSemana}
+                meta={metaAgua}
+                color="#3aa0e0"
+                track={colors.cardBorder}
+                styles={styles}
+              />
+            </View>
+          </View>
+
+          <View style={styles.aguaBtns}>
+            <TouchableOpacity style={styles.aguaBtn} onPress={() => guardarAgua(agua + 250)}>
+              <Ionicons name="add" size={16} color="#3aa0e0" />
+              <Text style={styles.aguaBtnText}>Vaso · 250</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.aguaBtn} onPress={() => guardarAgua(agua + 500)}>
+              <Ionicons name="add" size={16} color="#3aa0e0" />
+              <Text style={styles.aguaBtnText}>Botella · 500</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.aguaReset} onPress={() => guardarAgua(0)}>
+              <Ionicons name="refresh" size={15} color={colors.muted} />
+            </TouchableOpacity>
+          </View>
+        </View>
         </>
         ) : (
         <>
@@ -752,52 +798,6 @@ export default function SaludScreen() {
               completo.
             </Text>
           ) : null}
-        </View>
-
-        {/* ---- Hidratación ---- */}
-        <View style={styles.card}>
-          <View style={styles.cardHead}>
-            <View style={styles.cardHeadLeft}>
-              <Ionicons name="water-outline" size={18} color="#3aa0e0" />
-              <Text style={styles.cardTitle}>Hidratación</Text>
-            </View>
-            <TouchableOpacity style={styles.metaBtn} onPress={() => abrirEdicion("agua")}>
-              <Ionicons name="create-outline" size={14} color={colors.muted} />
-              <Text style={styles.metaBtnText}>Meta</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.pasosBody}>
-            <Ring percent={pctAgua} color="#3aa0e0" track={colors.cardBorder}>
-              <View style={styles.ringCenter}>
-                <Text style={styles.ringBig}>{agua}</Text>
-                <Text style={styles.ringSub}>de {metaAgua} ml</Text>
-              </View>
-            </Ring>
-            <View style={{ flex: 1 }}>
-              <BarrasSemana
-                valores={aguaSemana}
-                meta={metaAgua}
-                color="#3aa0e0"
-                track={colors.cardBorder}
-                styles={styles}
-              />
-            </View>
-          </View>
-
-          <View style={styles.aguaBtns}>
-            <TouchableOpacity style={styles.aguaBtn} onPress={() => guardarAgua(agua + 250)}>
-              <Ionicons name="add" size={16} color="#3aa0e0" />
-              <Text style={styles.aguaBtnText}>Vaso · 250</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.aguaBtn} onPress={() => guardarAgua(agua + 500)}>
-              <Ionicons name="add" size={16} color="#3aa0e0" />
-              <Text style={styles.aguaBtnText}>Botella · 500</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.aguaReset} onPress={() => guardarAgua(0)}>
-              <Ionicons name="refresh" size={15} color={colors.muted} />
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* ---- Ánimo ---- */}
