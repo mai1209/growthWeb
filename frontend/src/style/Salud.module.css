@@ -53,6 +53,23 @@
   grid-column: 1 / -1;
 }
 
+/* Vista Calorías: Comidas (principal) + Hidratación (lateral) lado a lado. */
+.calWrap {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.calMain {
+  flex: 2 1 420px;
+}
+
+.calAside {
+  flex: 1 1 300px;
+}
+
 /* Apila dos tarjetas (Ánimo + Peso) en una misma celda de la grilla. */
 .colStack {
   display: flex;

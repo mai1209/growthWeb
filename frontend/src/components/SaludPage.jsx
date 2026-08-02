@@ -480,8 +480,9 @@ export default function SaludPage() {
         </>
         ) : (
         <>
+        <div className={style.calWrap}>
         {/* Nutrición + comidas (editable) */}
-        <section className={`${style.card} ${style.cardAncha}`}>
+        <section className={`${style.card} ${style.calMain}`}>
           <div className={style.cardHead}>
             <h2>
               <FiTrendingUp /> Comidas de hoy
@@ -624,7 +625,7 @@ export default function SaludPage() {
         </section>
 
         {/* Hidratación (editable) — el agua es parte de lo que consumís */}
-        <section className={style.card}>
+        <section className={`${style.card} ${style.calAside}`}>
           <div className={style.cardHead}>
             <h2>
               <FiDroplet /> Hidratación
@@ -654,6 +655,7 @@ export default function SaludPage() {
             </button>
           </div>
         </section>
+        </div>
         </>
         )}
       </div>
