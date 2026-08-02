@@ -13,7 +13,16 @@ import {
 } from "react-icons/fi";
 import { saludService } from "../api";
 import { calcularPlan } from "../utils/nutricion";
+import { BASE_COMIDAS } from "../utils/comidasBase";
 import style from "../style/Salud.module.css";
+
+// Normaliza para comparar sin acentos ni mayúsculas.
+const norm = (s) =>
+  String(s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
 
 const DIAS_SEMANA = ["D", "L", "M", "M", "J", "V", "S"];
 const FRANJAS = [
@@ -94,6 +103,7 @@ export default function SaludPage() {
   const [fCarb, setFCarb] = useState("");
   const [fProt, setFProt] = useState("");
   const [fFat, setFFat] = useState("");
+  const [elegida, setElegida] = useState(false); // ya eligió sugerencia → ocultar lista
 
   const hoy = dayKey(new Date());
 
@@ -216,6 +226,52 @@ export default function SaludPage() {
     ];
   }, [data, ultimos7]);
 
+  // Autocompletado: tu historial (promedio de registros previos) + base local.
+  const historial = useMemo(() => {
+    const map = new Map();
+    Object.values(data?.comidas || {}).forEach((arr) => {
+      (arr || []).forEach((c) => {
+        const key = norm(c.nombre);
+        if (!key) return;
+        const e = map.get(key) || { nombre: c.nombre, n: 0, kcal: 0, carbG: 0, protG: 0, fatG: 0 };
+        e.nombre = c.nombre;
+        e.n += 1;
+        e.kcal += Number(c.kcal) || 0;
+        e.carbG += Number(c.carbG) || 0;
+        e.protG += Number(c.protG) || 0;
+        e.fatG += Number(c.fatG) || 0;
+        map.set(key, e);
+      });
+    });
+    return [...map.values()].map((e) => ({
+      nombre: e.nombre,
+      kcal: Math.round(e.kcal / e.n),
+      carbG: Math.round(e.carbG / e.n),
+      protG: Math.round(e.protG / e.n),
+      fatG: Math.round(e.fatG / e.n),
+      propia: true,
+    }));
+  }, [data]);
+
+  const sugerencias = useMemo(() => {
+    const q = norm(fNombre);
+    if (elegida || q.length < 2) return [];
+    const delHistorial = historial.filter((h) => norm(h.nombre).includes(q));
+    const deLaBase = BASE_COMIDAS.filter(
+      (b) => norm(b.nombre).includes(q) && !delHistorial.some((h) => norm(h.nombre) === norm(b.nombre))
+    );
+    return [...delHistorial, ...deLaBase].slice(0, 6);
+  }, [fNombre, historial, elegida]);
+
+  const usarSugerencia = (s) => {
+    setFNombre(s.nombre);
+    setFKcal(String(s.kcal || ""));
+    setFCarb(String(s.carbG || ""));
+    setFProt(String(s.protG || ""));
+    setFFat(String(s.fatG || ""));
+    setElegida(true);
+  };
+
   const comidasHoy = data?.comidas?.[hoy] || [];
   const consumido = comidasHoy.reduce((a, c) => a + (Number(c.kcal) || 0), 0);
   const consCarb = comidasHoy.reduce((a, c) => a + (Number(c.carbG) || 0), 0);
@@ -236,6 +292,7 @@ export default function SaludPage() {
     setFCarb("");
     setFProt("");
     setFFat("");
+    setElegida(false);
   };
 
   const agregarComida = () => {
@@ -520,12 +577,30 @@ export default function SaludPage() {
                 ))}
                 {formFranja === f.key ? (
                   <div className={style.comidaForm}>
-                    <input
-                      value={fNombre}
-                      onChange={(e) => setFNombre(e.target.value)}
-                      placeholder="¿Qué comiste?"
-                      autoFocus
-                    />
+                    <div className={style.nombreWrap}>
+                      <input
+                        value={fNombre}
+                        onChange={(e) => {
+                          setFNombre(e.target.value);
+                          setElegida(false);
+                        }}
+                        placeholder="¿Qué comiste?"
+                        autoFocus
+                      />
+                      {sugerencias.length > 0 ? (
+                        <ul className={style.sugerencias}>
+                          {sugerencias.map((s, i) => (
+                            <li key={i}>
+                              <button type="button" onClick={() => usarSugerencia(s)}>
+                                <span className={style.sugIcono}>{s.propia ? "⏱" : "🍽"}</span>
+                                <span className={style.sugNombre}>{s.nombre}</span>
+                                <span className={style.sugKcal}>{s.kcal} kcal</span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
                     <input
                       type="number"
                       min="0"
@@ -536,7 +611,12 @@ export default function SaludPage() {
                     <input type="number" min="0" value={fCarb} onChange={(e) => setFCarb(e.target.value)} placeholder="C g" />
                     <input type="number" min="0" value={fProt} onChange={(e) => setFProt(e.target.value)} placeholder="P g" />
                     <input type="number" min="0" value={fFat} onChange={(e) => setFFat(e.target.value)} placeholder="G g" />
-                    <button type="button" className={style.comidaOk} onClick={agregarComida}>
+                    <button
+                      type="button"
+                      className={style.comidaOk}
+                      onClick={agregarComida}
+                      disabled={!fNombre.trim() || (parseInt(fKcal, 10) || 0) <= 0}
+                    >
                       Agregar
                     </button>
                     <button type="button" className={style.comidaCancel} onClick={() => setFormFranja(null)}>

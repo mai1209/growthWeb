@@ -402,13 +402,83 @@
   font-size: 0.85rem;
 }
 
-.comidaForm input:first-child {
+.nombreWrap {
+  position: relative;
   flex: 2;
-  min-width: 160px;
+  min-width: 180px;
+}
+
+.nombreWrap input {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
+  color: inherit;
+  font-size: 0.85rem;
+}
+
+.sugerencias {
+  list-style: none;
+  margin: 0.3rem 0 0;
+  padding: 0.25rem;
+  position: absolute;
+  z-index: 20;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--surface-card, #14181c);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.sugerencias li button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.sugerencias li button:hover {
+  background: var(--surface-input, rgba(255, 255, 255, 0.06));
+}
+
+.sugIcono {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.sugNombre {
+  flex: 1;
+  font-weight: 600;
+}
+
+.sugKcal {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .comidaForm input[type="number"] {
   width: 72px;
+}
+
+.comidaOk:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .comidaOk {
