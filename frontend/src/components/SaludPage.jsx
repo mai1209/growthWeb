@@ -243,7 +243,8 @@ export default function SaludPage() {
           </div>
         </section>
 
-        {/* Ánimo (editable) */}
+        {/* Ánimo + Peso apilados en la misma columna */}
+        <div className={style.colStack}>
         <section className={style.card}>
           <div className={style.cardHead}>
             <h2>
@@ -298,6 +299,7 @@ export default function SaludPage() {
             </div>
           </div>
         </section>
+        </div>
 
         {/* Nutrición + comidas (editable) */}
         <section className={`${style.card} ${style.cardAncha}`}>

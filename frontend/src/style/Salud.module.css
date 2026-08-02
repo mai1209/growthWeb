@@ -53,6 +53,13 @@
   grid-column: 1 / -1;
 }
 
+/* Apila dos tarjetas (Ánimo + Peso) en una misma celda de la grilla. */
+.colStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .cardHead {
   display: flex;
   align-items: center;
