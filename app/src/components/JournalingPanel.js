@@ -763,6 +763,7 @@ export default function JournalingPanel({ visible, onClose }) {
                             onChangeText={(v) => editar(p.campo, v)}
                             placeholder={p.placeholder}
                             placeholderTextColor="rgba(43, 36, 22, 0.35)"
+                            autoCapitalize="sentences"
                             multiline
                             editable={!editandoPreguntas}
                           />
@@ -816,6 +817,7 @@ export default function JournalingPanel({ visible, onClose }) {
                               onChangeText={(v) => editarExtra(x.id, v)}
                               placeholder="Escribí tu respuesta…"
                               placeholderTextColor="rgba(43, 36, 22, 0.35)"
+                              autoCapitalize="sentences"
                               multiline
                             />
                           </View>
@@ -828,6 +830,7 @@ export default function JournalingPanel({ visible, onClose }) {
                         onChangeText={(v) => editar("libre", v)}
                         placeholder="Notas libres de este día…"
                         placeholderTextColor="rgba(43, 36, 22, 0.35)"
+                        autoCapitalize="sentences"
                         multiline
                         editable={!editandoPreguntas}
                       />

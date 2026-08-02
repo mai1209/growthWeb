@@ -103,6 +103,21 @@ const ENTRADA_VACIA = { animo: 0, gratitud: "", mejor: "", distinto: "", libre: 
 let extraSeq = 0;
 const nuevoId = () => `x${Date.now().toString(36)}${(extraSeq++).toString(36)}`;
 
+// Capitaliza la primera letra de cada oración mientras escribís (como en Notas):
+// solo actúa sobre el caracter recién tipeado si arranca oración (inicio, o tras . ! ? o salto de línea).
+const autoCapitalizar = (oldVal, newVal, caret) => {
+  if (newVal.length !== (oldVal ? oldVal.length : 0) + 1) return newVal; // solo 1 char tipeado (no pegado)
+  const i = caret - 1;
+  if (i < 0 || i >= newVal.length) return newVal;
+  const ch = newVal[i];
+  const up = ch.toUpperCase();
+  if (up === ch) return newVal; // no es letra minúscula
+  const before = newVal.slice(0, i).replace(/[^\S\n]+$/, ""); // recorta espacios/tabs, no saltos
+  const arranca = before === "" || /[.!?\n]$/.test(before);
+  if (!arranca) return newVal;
+  return newVal.slice(0, i) + up + newVal.slice(i + 1);
+};
+
 const WEEKDAYS = ["L", "M", "M", "J", "V", "S", "D"];
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -234,6 +249,21 @@ function Journaling() {
     pendienteRef.current[campo] = valor;
     setEntrada((prev) => ({ ...prev, [campo]: valor }));
     guardarDiferido();
+  };
+
+  // onChange que capitaliza el inicio de oración y mantiene el cursor donde estaba.
+  const onCap = (oldVal, aplicar) => (e) => {
+    const el = e.target;
+    const caret = el.selectionStart;
+    const capped = autoCapitalizar(oldVal, el.value, caret);
+    aplicar(capped);
+    if (capped !== el.value && el.setSelectionRange) {
+      requestAnimationFrame(() => {
+        try {
+          el.setSelectionRange(caret, caret);
+        } catch {}
+      });
+    }
   };
 
   const valorExtra = (id) => (entrada.extras || []).find((x) => x.id === id)?.valor || "";
@@ -1124,8 +1154,9 @@ function Journaling() {
                   <textarea
                     className={style.input}
                     value={entrada[p.campo]}
-                    onChange={(e) => editar(p.campo, e.target.value)}
+                    onChange={onCap(entrada[p.campo], (v) => editar(p.campo, v))}
                     placeholder={p.placeholder}
+                    autoCapitalize="sentences"
                     rows={2}
                   />
                 </label>
@@ -1136,8 +1167,9 @@ function Journaling() {
                   <textarea
                     className={style.input}
                     value={valorExtra(x.id)}
-                    onChange={(e) => editarExtra(x.id, e.target.value)}
+                    onChange={onCap(valorExtra(x.id), (v) => editarExtra(x.id, v))}
                     placeholder="Escribí tu respuesta…"
+                    autoCapitalize="sentences"
                     rows={2}
                   />
                 </label>
@@ -1150,8 +1182,9 @@ function Journaling() {
             <textarea
               className={`${style.input} ${style.inputLibre}`}
               value={entrada.libre}
-              onChange={(e) => editar("libre", e.target.value)}
+              onChange={onCap(entrada.libre, (v) => editar("libre", v))}
               placeholder="Lo que quieras dejar escrito de este día…"
+              autoCapitalize="sentences"
               rows={4}
             />
           </label>
