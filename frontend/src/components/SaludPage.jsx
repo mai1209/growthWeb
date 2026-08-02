@@ -280,6 +280,16 @@ export default function SaludPage() {
     setElegida(true);
   };
 
+  // Cantidad como número (admite "0,5") para la vista previa del total.
+  const cantNum = parseFloat(String(fCant).replace(",", ".")) || 1;
+  const kcalUnit = parseInt(fKcal, 10) || 0;
+  const previewTotal = {
+    kcal: Math.round(kcalUnit * cantNum),
+    carb: Math.round((parseInt(fCarb, 10) || 0) * cantNum),
+    prot: Math.round((parseInt(fProt, 10) || 0) * cantNum),
+    fat: Math.round((parseInt(fFat, 10) || 0) * cantNum),
+  };
+
   const comidasHoy = data?.comidas?.[hoy] || [];
   const consumido = comidasHoy.reduce((a, c) => a + (Number(c.kcal) || 0), 0);
   const consCarb = comidasHoy.reduce((a, c) => a + (Number(c.carbG) || 0), 0);
@@ -306,22 +316,19 @@ export default function SaludPage() {
   };
 
   const agregarComida = () => {
-    const k = parseInt(fKcal, 10) || 0;
-    if (!fNombre.trim() || k <= 0) return;
-    const cant = parseFloat(String(fCant).replace(",", ".")) || 1;
-    const factor = cant > 0 ? cant : 1;
+    if (!fNombre.trim() || kcalUnit <= 0) return;
     const base = fNombre.trim();
     let nombre = base;
-    if (fUnidad) nombre = `${base} · ${fmtCant(cant)} ${fUnidad}`;
-    else if (cant !== 1) nombre = `${base} ×${fmtCant(cant)}`;
+    if (fUnidad) nombre = `${base} · ${fmtCant(cantNum)} ${fUnidad}`;
+    else if (cantNum !== 1) nombre = `${base} ×${fmtCant(cantNum)}`;
     const item = {
       id: `${Date.now()}`,
       franja: formFranja,
       nombre,
-      kcal: Math.round(k * factor),
-      carbG: Math.round((parseInt(fCarb, 10) || 0) * factor),
-      protG: Math.round((parseInt(fProt, 10) || 0) * factor),
-      fatG: Math.round((parseInt(fFat, 10) || 0) * factor),
+      kcal: previewTotal.kcal,
+      carbG: previewTotal.carb,
+      protG: previewTotal.prot,
+      fatG: previewTotal.fat,
     };
     mutate({ comidas: { [hoy]: [...comidasHoy, item] } });
     setFormFranja(null);
@@ -632,14 +639,25 @@ export default function SaludPage() {
                       onChange={(e) => setFKcal(e.target.value)}
                       placeholder={fUnidad ? `kcal x ${fUnidad}` : "kcal c/u"}
                     />
-                    <input type="number" min="0" value={fCarb} onChange={(e) => setFCarb(e.target.value)} placeholder="C g" title="Carbohidratos (g)" />
-                    <input type="number" min="0" value={fProt} onChange={(e) => setFProt(e.target.value)} placeholder="P g" title="Proteína (g)" />
-                    <input type="number" min="0" value={fFat} onChange={(e) => setFFat(e.target.value)} placeholder="G g" title="Grasa (g)" />
+                    <input type="number" min="0" value={fCarb} onChange={(e) => setFCarb(e.target.value)} placeholder="C g" title="Carbohidratos (g) por porción" />
+                    <input type="number" min="0" value={fProt} onChange={(e) => setFProt(e.target.value)} placeholder="P g" title="Proteína (g) por porción" />
+                    <input type="number" min="0" value={fFat} onChange={(e) => setFFat(e.target.value)} placeholder="G g" title="Grasa (g) por porción" />
+                    {kcalUnit > 0 ? (
+                      <span className={style.comidaTotal}>
+                        = {previewTotal.kcal} kcal · C {previewTotal.carb} · P {previewTotal.prot} · G{" "}
+                        {previewTotal.fat} g
+                        {fUnidad
+                          ? ` · ${fmtCant(cantNum)} ${fUnidad}`
+                          : cantNum !== 1
+                          ? ` · ×${fmtCant(cantNum)}`
+                          : ""}
+                      </span>
+                    ) : null}
                     <button
                       type="button"
                       className={style.comidaOk}
                       onClick={agregarComida}
-                      disabled={!fNombre.trim() || (parseInt(fKcal, 10) || 0) <= 0}
+                      disabled={!fNombre.trim() || kcalUnit <= 0}
                     >
                       Agregar
                     </button>

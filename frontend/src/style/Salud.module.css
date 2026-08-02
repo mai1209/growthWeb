@@ -597,6 +597,13 @@
   cursor: not-allowed;
 }
 
+.comidaTotal {
+  flex-basis: 100%;
+  color: var(--color-verde, #5dc72d);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .comidaOk {
   padding: 0.5rem 0.9rem;
   border-radius: 10px;
