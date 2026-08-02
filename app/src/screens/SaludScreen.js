@@ -9,6 +9,7 @@ import {
   TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import { Pedometer } from "expo-sensors";
@@ -128,6 +129,15 @@ const pushSalud = (partial) => {
 export default function SaludScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const route = useRoute();
+
+  // Dos vistas, deep-linkeadas desde el menú: Movilidad y Calorías diarias.
+  const [vista, setVista] = useState("movilidad");
+  useEffect(() => {
+    const v = route.params?.view;
+    if (v === "movilidad" || v === "calorias") setVista(v);
+  }, [route.params?.view, route.params?._navTs]);
+  const esCalorias = vista === "calorias";
 
   // ---------------- Metas configurables ----------------
   const [metaPasos, setMetaPasos] = useState(META_PASOS_DEF);
@@ -549,8 +559,10 @@ export default function SaludScreen() {
     <SafeAreaView style={styles.safe} edges={[]}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.kicker}>SALUD</Text>
-        <Text style={styles.title}>Tu día</Text>
+        <Text style={styles.title}>{esCalorias ? "Calorías diarias" : "Movilidad"}</Text>
 
+        {esCalorias ? (
+        <>
         {/* ---- Nutrición (plan) ---- */}
         <View style={styles.card}>
           <View style={styles.cardHead}>
@@ -650,7 +662,9 @@ export default function SaludScreen() {
             </Text>
           )}
         </View>
-
+        </>
+        ) : (
+        <>
         {/* ---- Pasos ---- */}
         <View style={styles.card}>
           <View style={styles.cardHead}>
@@ -864,6 +878,8 @@ export default function SaludScreen() {
             <Text style={styles.caminataBtnText}>Iniciar caminata</Text>
           </TouchableOpacity>
         </View>
+        </>
+        )}
       </ScrollView>
 
       {/* Editar meta */}

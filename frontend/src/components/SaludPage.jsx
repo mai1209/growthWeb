@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   FiActivity,
   FiDroplet,
@@ -81,6 +82,9 @@ function Semana({ dias, valores, meta, color }) {
 }
 
 export default function SaludPage() {
+  // El nav deep-linkea las dos vistas: /salud (Movilidad) y /salud?view=calorias.
+  const [searchParams] = useSearchParams();
+  const esCalorias = searchParams.get("view") === "calorias";
   const [data, setData] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [pesoInput, setPesoInput] = useState("");
@@ -182,13 +186,17 @@ export default function SaludPage() {
     <div className={style.wrap}>
       <header className={style.header}>
         <p className={style.kicker}>SALUD</p>
-        <h1>Tu día</h1>
+        <h1>{esCalorias ? "Calorías diarias" : "Movilidad"}</h1>
         <p className={style.subtitulo}>
-          Los pasos y caminatas se miden desde el teléfono; lo demás también lo podés cargar acá.
+          {esCalorias
+            ? "Anotá tus comidas y mirá cuánto te queda del día."
+            : "Los pasos y caminatas se miden desde el teléfono; lo demás también lo podés cargar acá."}
         </p>
       </header>
 
       <div className={style.grid}>
+        {!esCalorias ? (
+        <>
         {/* Pasos + Caminatas apilados en la misma columna (ambos del teléfono) */}
         <div className={style.colStack}>
         <section className={style.card}>
@@ -325,7 +333,9 @@ export default function SaludPage() {
           </div>
         </section>
         </div>
-
+        </>
+        ) : (
+        <>
         {/* Nutrición + comidas (editable) */}
         <section className={`${style.card} ${style.cardAncha}`}>
           <div className={style.cardHead}>
@@ -423,7 +433,8 @@ export default function SaludPage() {
             );
           })}
         </section>
-
+        </>
+        )}
       </div>
     </div>
   );
