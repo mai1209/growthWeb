@@ -17,6 +17,7 @@ import afirmacionRoutes from "./src/routes/afirmacionRoutes.js";
 import metaRoutes from "./src/routes/metaRoutes.js";
 import journalRoutes from "./src/routes/journalRoutes.js";
 import appVersionRoutes from "./src/routes/appVersionRoutes.js";
+import saludRoutes from "./src/routes/saludRoutes.js";
 // NOTA: la ruta de nutrición (IA por foto) queda desconectada por ahora.
 // Se reactiva cuando esté cargada ANTHROPIC_API_KEY en Vercel y verificado que
 // el bundle incluye @anthropic-ai/sdk. Reactivar: descomentar el import + el app.use.
@@ -163,6 +164,7 @@ app.use("/api/afirmaciones", afirmacionRoutes);
 app.use("/api/metas", metaRoutes);
 app.use("/api/journal", journalRoutes);
 app.use("/api/app-version", appVersionRoutes);
+app.use("/api/salud", saludRoutes);
 // app.use("/api/nutricion", nutricionRoutes); // desconectada (ver import arriba)
 
 // Rutas de Google montadas de forma perezosa: si el módulo (o sus paquetes)
