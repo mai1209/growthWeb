@@ -52,8 +52,10 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
   const [carb, setCarb] = useState("");
   const [prot, setProt] = useState("");
   const [fat, setFat] = useState("");
-  const [cant, setCant] = useState("1"); // cantidad (multiplica kcal y macros; admite decimales)
+  const [cant, setCant] = useState("1"); // cantidad (porciones o gramos según modo; admite decimales)
   const [unidad, setUnidad] = useState(""); // porción (pote, puñado, cucharada…)
+  const [gramos, setGramos] = useState(0); // gramos que pesa 1 porción (0 = desconocido)
+  const [modo, setModo] = useState("porcion"); // "porcion" | "g"
   const [analizando, setAnalizando] = useState(false);
 
   const correrAnalisis = async (getter) => {
@@ -94,6 +96,8 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
       setFat("");
       setCant("1");
       setUnidad("");
+      setGramos(0);
+      setModo("porcion");
       setElegida(false);
     }
   }, [visible]);
@@ -158,23 +162,36 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
     setProt(String(s.protG || ""));
     setFat(String(s.fatG || ""));
     setUnidad(s.unidad || "");
+    setGramos(Number(s.gramos) || 0);
+    setModo("porcion");
+    setCant("1");
     setElegida(true);
   };
 
-  const cantNum = parseFloat(String(cant).replace(",", ".")) || 1;
+  const cambiarModo = (m) => {
+    if (m === modo) return;
+    setModo(m);
+    setCant(m === "g" ? String(gramos || 100) : "1");
+  };
+
+  const cantNum = parseFloat(String(cant).replace(",", ".")) || 0;
+  // En modo gramos, factor = gramos consumidos / gramos por porción.
+  const factor = modo === "g" && gramos > 0 ? cantNum / gramos : cantNum || 1;
+  const kcalUnit = parseInt(kcal, 10) || 0;
+  const totalKcal = Math.round(kcalUnit * factor);
+  const kcal100 = gramos > 0 ? Math.round((kcalUnit / gramos) * 100) : 0;
 
   const guardar = () => {
-    const k = parseInt(kcal, 10) || 0;
-    if (!nombre.trim() || k <= 0) return;
-    const factor = cantNum > 0 ? cantNum : 1;
+    if (!nombre.trim() || kcalUnit <= 0 || cantNum <= 0) return;
     const base = nombre.trim();
     let nombreFinal = base;
-    if (unidad) nombreFinal = `${base} · ${fmtCant(cantNum)} ${unidad}`;
+    if (modo === "g") nombreFinal = `${base} · ${fmtCant(cantNum)} g`;
+    else if (unidad) nombreFinal = `${base} · ${fmtCant(cantNum)} ${unidad}`;
     else if (cantNum !== 1) nombreFinal = `${base} ×${fmtCant(cantNum)}`;
     onGuardar?.({
       franja: franja?.key,
       nombre: nombreFinal,
-      kcal: Math.round(k * factor),
+      kcal: totalKcal,
       carbG: Math.round((parseInt(carb, 10) || 0) * factor),
       protG: Math.round((parseInt(prot, 10) || 0) * factor),
       fatG: Math.round((parseInt(fat, 10) || 0) * factor),
@@ -182,7 +199,7 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
     onClose?.();
   };
 
-  const puedeGuardar = nombre.trim() && (parseInt(kcal, 10) || 0) > 0;
+  const puedeGuardar = nombre.trim() && kcalUnit > 0 && cantNum > 0;
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -231,6 +248,8 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
                 setNombre(v);
                 setElegida(false);
                 setUnidad("");
+                setGramos(0);
+                setModo("porcion");
               }}
               placeholder="Ej: Milanesa con puré"
               placeholderTextColor={colors.muted}
@@ -252,7 +271,12 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
                     />
                     <Text style={styles.sugNombre} numberOfLines={1}>
                       {s.nombre}
-                      {s.unidad ? <Text style={styles.sugUnidad}> · {s.unidad}</Text> : null}
+                      {s.unidad ? (
+                        <Text style={styles.sugUnidad}>
+                          {" "}· {s.unidad}
+                          {s.gramos ? ` ≈${s.gramos} g` : ""}
+                        </Text>
+                      ) : null}
                     </Text>
                     <Text style={styles.sugKcal}>{s.kcal} kcal</Text>
                   </TouchableOpacity>
@@ -271,13 +295,20 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
                   placeholder="0"
                   placeholderTextColor={colors.muted}
                 />
+                {gramos > 0 ? (
+                  <Text style={styles.kcal100Hint}>≈ {kcal100} kcal / 100 g</Text>
+                ) : null}
               </View>
               <View style={styles.campoCant}>
-                <Text style={styles.label}>Cantidad{unidad ? ` (${unidad})` : ""}</Text>
+                <Text style={styles.label}>Cantidad ({modo === "g" ? "g" : unidad || "u."})</Text>
                 <View style={styles.cantRow}>
                   <TouchableOpacity
                     style={styles.cantBtn}
-                    onPress={() => setCant(fmtCant(Math.max(0.5, Math.round((cantNum - 0.5) * 2) / 2)))}
+                    onPress={() => {
+                      const paso = modo === "g" ? 10 : 0.5;
+                      const min = modo === "g" ? 0 : 0.5;
+                      setCant(fmtCant(Math.max(min, Math.round((cantNum - paso) / paso) * paso)));
+                    }}
                   >
                     <Ionicons name="remove" size={18} color={colors.text} />
                   </TouchableOpacity>
@@ -291,7 +322,10 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
                   />
                   <TouchableOpacity
                     style={styles.cantBtn}
-                    onPress={() => setCant(fmtCant(Math.round((cantNum + 0.5) * 2) / 2))}
+                    onPress={() => {
+                      const paso = modo === "g" ? 10 : 0.5;
+                      setCant(fmtCant(Math.round((cantNum + paso) / paso) * paso));
+                    }}
                   >
                     <Ionicons name="add" size={18} color={colors.text} />
                   </TouchableOpacity>
@@ -299,18 +333,43 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
               </View>
             </View>
 
-            <View style={styles.cantChips}>
-              {["0.5", "1", "2", "3"].map((v) => (
-                <TouchableOpacity key={v} style={styles.cantChip} onPress={() => setCant(v)}>
-                  <Text style={styles.cantChipText}>{v === "0.5" ? "½" : v}</Text>
+            {gramos > 0 ? (
+              <View style={styles.modoToggle}>
+                <TouchableOpacity
+                  style={[styles.modoBtn, modo === "porcion" && styles.modoBtnOn]}
+                  onPress={() => cambiarModo("porcion")}
+                >
+                  <Text style={[styles.modoText, modo === "porcion" && styles.modoTextOn]}>
+                    Por {unidad}
+                  </Text>
                 </TouchableOpacity>
-              ))}
-            </View>
+                <TouchableOpacity
+                  style={[styles.modoBtn, modo === "g" && styles.modoBtnOn]}
+                  onPress={() => cambiarModo("g")}
+                >
+                  <Text style={[styles.modoText, modo === "g" && styles.modoTextOn]}>Gramos</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.cantChips}>
+                {["0.5", "1", "2", "3"].map((v) => (
+                  <TouchableOpacity key={v} style={styles.cantChip} onPress={() => setCant(v)}>
+                    <Text style={styles.cantChipText}>{v === "0.5" ? "½" : v}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
 
-            {cantNum !== 1 && (parseInt(kcal, 10) || 0) > 0 ? (
+            {cantNum > 0 && kcalUnit > 0 && (modo === "g" || cantNum !== 1) ? (
               <Text style={styles.totalHint}>
-                Total: {Math.round((parseInt(kcal, 10) || 0) * cantNum)} kcal
-                {unidad ? ` · ${fmtCant(cantNum)} ${unidad}` : ""}
+                Total: {totalKcal} kcal
+                {modo === "g"
+                  ? ` · ${fmtCant(cantNum)} g${
+                      gramos > 0 ? ` (≈ ${fmtCant(Math.round((cantNum / gramos) * 10) / 10)} ${unidad})` : ""
+                    }`
+                  : unidad
+                  ? ` · ${fmtCant(cantNum)} ${unidad}`
+                  : ""}
               </Text>
             ) : null}
 
@@ -422,6 +481,20 @@ const makeStyles = (colors) =>
       textAlign: "center",
     },
     totalHint: { color: colors.greenBright, fontSize: 13, fontWeight: "800", marginTop: 8 },
+    kcal100Hint: { color: colors.muted, fontSize: 11, fontWeight: "700", marginTop: 4 },
+    modoToggle: {
+      flexDirection: "row",
+      marginTop: 10,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 999,
+      overflow: "hidden",
+      alignSelf: "flex-start",
+    },
+    modoBtn: { paddingHorizontal: 16, paddingVertical: 8 },
+    modoBtnOn: { backgroundColor: colors.greenBright },
+    modoText: { color: colors.muted, fontSize: 13, fontWeight: "800" },
+    modoTextOn: { color: "#06210a" },
     cantChips: { flexDirection: "row", gap: 8, marginTop: 10 },
     cantChip: {
       paddingHorizontal: 14,

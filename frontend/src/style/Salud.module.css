@@ -564,6 +564,32 @@
   min-width: 42px;
 }
 
+.modoToggle {
+  display: inline-flex;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.modoOn,
+.modoOff {
+  padding: 0.35rem 0.7rem;
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.modoOn {
+  background: var(--color-verde, #5dc72d);
+  color: #06210a;
+}
+
+.modoOff {
+  color: var(--color-muted);
+}
+
 .cantChips {
   display: inline-flex;
   gap: 0.2rem;

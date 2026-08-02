@@ -108,8 +108,10 @@ export default function SaludPage() {
   const [fCarb, setFCarb] = useState("");
   const [fProt, setFProt] = useState("");
   const [fFat, setFFat] = useState("");
-  const [fCant, setFCant] = useState("1"); // cantidad (multiplica kcal y macros; admite decimales)
+  const [fCant, setFCant] = useState("1"); // cantidad (porciones o gramos según fModo; admite decimales)
   const [fUnidad, setFUnidad] = useState(""); // unidad de la porción (pote, puñado, cucharada…)
+  const [fGramos, setFGramos] = useState(0); // gramos que pesa 1 porción (0 = desconocido)
+  const [fModo, setFModo] = useState("porcion"); // "porcion" | "g"
   const [elegida, setElegida] = useState(false); // ya eligió sugerencia → ocultar lista
 
   const hoy = dayKey(new Date());
@@ -277,18 +279,30 @@ export default function SaludPage() {
     setFProt(String(s.protG || ""));
     setFFat(String(s.fatG || ""));
     setFUnidad(s.unidad || "");
+    setFGramos(Number(s.gramos) || 0);
+    setFModo("porcion");
+    setFCant("1");
     setElegida(true);
   };
 
-  // Cantidad como número (admite "0,5") para la vista previa del total.
-  const cantNum = parseFloat(String(fCant).replace(",", ".")) || 1;
-  const kcalUnit = parseInt(fKcal, 10) || 0;
-  const previewTotal = {
-    kcal: Math.round(kcalUnit * cantNum),
-    carb: Math.round((parseInt(fCarb, 10) || 0) * cantNum),
-    prot: Math.round((parseInt(fProt, 10) || 0) * cantNum),
-    fat: Math.round((parseInt(fFat, 10) || 0) * cantNum),
+  // Cambia entre contar porciones (pote, puñado…) y gramos exactos.
+  const cambiarModo = (modo) => {
+    if (modo === fModo) return;
+    setFModo(modo);
+    setFCant(modo === "g" ? String(fGramos || 100) : "1");
   };
+
+  // Cantidad como número (admite "0,5"). En modo gramos, factor = gramos / gramosPorPorción.
+  const cantNum = parseFloat(String(fCant).replace(",", ".")) || 0;
+  const factor = fModo === "g" && fGramos > 0 ? cantNum / fGramos : cantNum || 1;
+  const kcalUnit = parseInt(fKcal, 10) || 0; // kcal por porción
+  const previewTotal = {
+    kcal: Math.round(kcalUnit * factor),
+    carb: Math.round((parseInt(fCarb, 10) || 0) * factor),
+    prot: Math.round((parseInt(fProt, 10) || 0) * factor),
+    fat: Math.round((parseInt(fFat, 10) || 0) * factor),
+  };
+  const kcal100 = fGramos > 0 ? Math.round((kcalUnit / fGramos) * 100) : 0; // kcal por 100 g
 
   const comidasHoy = data?.comidas?.[hoy] || [];
   const consumido = comidasHoy.reduce((a, c) => a + (Number(c.kcal) || 0), 0);
@@ -312,14 +326,17 @@ export default function SaludPage() {
     setFFat("");
     setFCant("1");
     setFUnidad("");
+    setFGramos(0);
+    setFModo("porcion");
     setElegida(false);
   };
 
   const agregarComida = () => {
-    if (!fNombre.trim() || kcalUnit <= 0) return;
+    if (!fNombre.trim() || kcalUnit <= 0 || cantNum <= 0) return;
     const base = fNombre.trim();
     let nombre = base;
-    if (fUnidad) nombre = `${base} · ${fmtCant(cantNum)} ${fUnidad}`;
+    if (fModo === "g") nombre = `${base} · ${fmtCant(cantNum)} g`;
+    else if (fUnidad) nombre = `${base} · ${fmtCant(cantNum)} ${fUnidad}`;
     else if (cantNum !== 1) nombre = `${base} ×${fmtCant(cantNum)}`;
     const item = {
       id: `${Date.now()}`,
@@ -587,6 +604,8 @@ export default function SaludPage() {
                           setFNombre(e.target.value);
                           setElegida(false);
                           setFUnidad("");
+                          setFGramos(0);
+                          setFModo("porcion");
                         }}
                         placeholder="¿Qué comiste?"
                         autoFocus
@@ -599,7 +618,12 @@ export default function SaludPage() {
                                 <span className={style.sugIcono}>{s.propia ? "⏱" : "🍽"}</span>
                                 <span className={style.sugNombre}>
                                   {s.nombre}
-                                  {s.unidad ? <em className={style.sugUnidad}> · {s.unidad}</em> : null}
+                                  {s.unidad ? (
+                                    <em className={style.sugUnidad}>
+                                      {" "}· {s.unidad}
+                                      {s.gramos ? ` ≈${s.gramos} g` : ""}
+                                    </em>
+                                  ) : null}
                                 </span>
                                 <span className={style.sugKcal}>{s.kcal} kcal</span>
                               </button>
@@ -609,18 +633,38 @@ export default function SaludPage() {
                       ) : null}
                     </div>
                     <div className={style.cantWrap}>
+                      {fGramos > 0 ? (
+                        <span className={style.modoToggle}>
+                          <button
+                            type="button"
+                            className={fModo === "porcion" ? style.modoOn : style.modoOff}
+                            onClick={() => cambiarModo("porcion")}
+                          >
+                            {fUnidad || "porción"}
+                          </button>
+                          <button
+                            type="button"
+                            className={fModo === "g" ? style.modoOn : style.modoOff}
+                            onClick={() => cambiarModo("g")}
+                          >
+                            gramos
+                          </button>
+                        </span>
+                      ) : null}
                       <input
                         type="number"
                         min="0"
-                        step="0.5"
+                        step={fModo === "g" ? "10" : "0.5"}
                         value={fCant}
                         onChange={(e) => setFCant(e.target.value)}
                         className={style.cantInput}
                         title="Cantidad"
                       />
-                      <span className={style.cantUnidad}>{fUnidad || "u."}</span>
+                      <span className={style.cantUnidad}>
+                        {fModo === "g" ? "g" : fUnidad || "u."}
+                      </span>
                       <span className={style.cantChips}>
-                        {["0.5", "1", "2"].map((v) => (
+                        {(fModo === "g" ? ["50", "100", "150", "200"] : ["0.5", "1", "2"]).map((v) => (
                           <button
                             key={v}
                             type="button"
@@ -638,15 +682,24 @@ export default function SaludPage() {
                       value={fKcal}
                       onChange={(e) => setFKcal(e.target.value)}
                       placeholder={fUnidad ? `kcal x ${fUnidad}` : "kcal c/u"}
+                      title={
+                        fGramos > 0
+                          ? `${fKcal || 0} kcal por ${fUnidad} (≈${kcal100} kcal/100 g)`
+                          : "kcal por porción"
+                      }
                     />
                     <input type="number" min="0" value={fCarb} onChange={(e) => setFCarb(e.target.value)} placeholder="C g" title="Carbohidratos (g) por porción" />
                     <input type="number" min="0" value={fProt} onChange={(e) => setFProt(e.target.value)} placeholder="P g" title="Proteína (g) por porción" />
                     <input type="number" min="0" value={fFat} onChange={(e) => setFFat(e.target.value)} placeholder="G g" title="Grasa (g) por porción" />
-                    {kcalUnit > 0 ? (
+                    {kcalUnit > 0 && cantNum > 0 ? (
                       <span className={style.comidaTotal}>
                         = {previewTotal.kcal} kcal · C {previewTotal.carb} · P {previewTotal.prot} · G{" "}
                         {previewTotal.fat} g
-                        {fUnidad
+                        {fModo === "g"
+                          ? ` · ${fmtCant(cantNum)} g${
+                              fGramos > 0 ? ` (≈ ${fmtCant(Math.round((cantNum / fGramos) * 10) / 10)} ${fUnidad})` : ""
+                            }`
+                          : fUnidad
                           ? ` · ${fmtCant(cantNum)} ${fUnidad}`
                           : cantNum !== 1
                           ? ` · ×${fmtCant(cantNum)}`
@@ -657,7 +710,7 @@ export default function SaludPage() {
                       type="button"
                       className={style.comidaOk}
                       onClick={agregarComida}
-                      disabled={!fNombre.trim() || kcalUnit <= 0}
+                      disabled={!fNombre.trim() || kcalUnit <= 0 || cantNum <= 0}
                     >
                       Agregar
                     </button>
