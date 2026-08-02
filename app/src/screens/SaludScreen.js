@@ -688,7 +688,7 @@ export default function SaludScreen() {
                   {pesoDelta > 0 ? "▲" : "▼"} {Math.abs(pesoDelta).toFixed(1)} kg vs. anterior
                 </Text>
               ) : (
-                <Text style={styles.ringSub}>Registrá tu peso de hoy</Text>
+                <Text style={styles.ringSub}>Cargalo cuando quieras</Text>
               )}
             </View>
             <View style={styles.pesoInputRow}>

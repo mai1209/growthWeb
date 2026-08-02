@@ -453,7 +453,7 @@ export default function SaludPage() {
                   {pesoDelta > 0 ? "▲" : "▼"} {Math.abs(pesoDelta).toFixed(1)} kg vs. anterior
                 </p>
               ) : (
-                <p className={style.hint}>Registrá tu peso de hoy</p>
+                <p className={style.hint}>Cargalo cuando quieras</p>
               )}
             </div>
             <div className={style.pesoForm}>
