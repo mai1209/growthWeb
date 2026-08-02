@@ -6,14 +6,17 @@ import {
   Modal,
   StyleSheet,
   ActivityIndicator,
+  AppState,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
+import * as TaskManager from "expo-task-manager";
 import { useTheme } from "../theme";
 
 const R_TIERRA = 6371000; // metros
 const toRad = (x) => (x * Math.PI) / 180;
+const TASK = "growth-caminata-track";
 
 function haversine(a, b) {
   const dLat = toRad(b.latitude - a.latitude);
@@ -24,6 +27,39 @@ function haversine(a, b) {
     Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
   return 2 * R_TIERRA * Math.asin(Math.sqrt(h));
 }
+
+// Acumulador de la caminata en curso. Vive a nivel de módulo para que el task
+// de segundo plano pueda seguir sumando aunque la UI no esté visible.
+const track = { last: null, metros: 0, activo: false };
+
+const sumarPunto = (coords) => {
+  if (!track.activo) return;
+  if (track.last) {
+    const d = haversine(track.last, coords);
+    // Filtramos micro-ruido (<1m) y saltos irreales (>100m entre lecturas).
+    if (d > 1 && d < 100) track.metros += d;
+  }
+  track.last = coords;
+};
+
+// Task de ubicación en segundo plano: recibe puntos aunque la app esté
+// bloqueada o minimizada y los suma al acumulador.
+TaskManager.defineTask(TASK, ({ data, error }) => {
+  if (error) return;
+  (data?.locations || []).forEach((loc) => sumarPunto(loc.coords));
+});
+
+const detenerFuentes = async (subRef) => {
+  if (subRef.current) {
+    subRef.current.remove();
+    subRef.current = null;
+  }
+  try {
+    if (await Location.hasStartedLocationUpdatesAsync(TASK)) {
+      await Location.stopLocationUpdatesAsync(TASK);
+    }
+  } catch {}
+};
 
 const fmtTiempo = (secs) => {
   const m = Math.floor(secs / 60);
@@ -39,47 +75,86 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
   const [fase, setFase] = useState("permiso"); // permiso | activo | pausado | resumen | denegado
   const [metros, setMetros] = useState(0);
   const [secs, setSecs] = useState(0);
+  const [enFondo, setEnFondo] = useState(false); // true si el tracking sigue en segundo plano
 
-  const subRef = useRef(null);
-  const lastCoordRef = useRef(null);
+  const subRef = useRef(null); // watchPosition (modo foreground / Expo Go)
   const timerRef = useRef(null);
+  const elapsedBaseRef = useRef(0); // ms acumulados de tramos anteriores (pausas)
+  const segStartRef = useRef(null); // inicio del tramo actual
 
-  const detenerTracking = () => {
-    if (subRef.current) {
-      subRef.current.remove();
-      subRef.current = null;
+  const sincronizar = () => {
+    setMetros(track.metros);
+    if (segStartRef.current != null) {
+      setSecs(Math.floor((elapsedBaseRef.current + (Date.now() - segStartRef.current)) / 1000));
+    } else {
+      setSecs(Math.floor(elapsedBaseRef.current / 1000));
+    }
+  };
+
+  const arrancarTracking = async () => {
+    track.last = null; // tras una pausa no contamos el hueco como distancia
+    track.activo = true;
+    segStartRef.current = Date.now();
+
+    // Intento seguir en segundo plano (requiere build nativo + permiso "Siempre").
+    let backgroundOk = false;
+    try {
+      const bg = await Location.requestBackgroundPermissionsAsync();
+      if (bg.status === "granted") {
+        await Location.startLocationUpdatesAsync(TASK, {
+          accuracy: Location.Accuracy.High,
+          distanceInterval: 5,
+          timeInterval: 3000,
+          pausesUpdatesAutomatically: false,
+          showsBackgroundLocationIndicator: true,
+          foregroundService: {
+            notificationTitle: "Caminata en curso 🚶",
+            notificationBody: "Growth sigue midiendo tu caminata. Abrí la app para pausar o finalizar.",
+            notificationColor: "#5dc72d",
+          },
+        });
+        backgroundOk = true;
+      }
+    } catch {}
+
+    if (!backgroundOk) {
+      // Expo Go o sin permiso "Siempre": medimos con la app abierta, como antes.
+      subRef.current = await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.High, distanceInterval: 5, timeInterval: 2000 },
+        (loc) => sumarPunto(loc.coords)
+      );
+    }
+    setEnFondo(backgroundOk);
+
+    timerRef.current = setInterval(sincronizar, 1000);
+    setFase("activo");
+  };
+
+  const cortarTramo = async () => {
+    track.activo = false;
+    if (segStartRef.current != null) {
+      elapsedBaseRef.current += Date.now() - segStartRef.current;
+      segStartRef.current = null;
     }
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    await detenerFuentes(subRef);
+    sincronizar();
   };
 
-  const arrancarTracking = async () => {
-    lastCoordRef.current = null;
-    subRef.current = await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.High, distanceInterval: 5, timeInterval: 2000 },
-      (loc) => {
-        const c = loc.coords;
-        if (lastCoordRef.current) {
-          const d = haversine(lastCoordRef.current, c);
-          // Filtramos micro-ruido (<1m) y saltos irreales (>100m entre lecturas).
-          if (d > 1 && d < 100) setMetros((m) => m + d);
-        }
-        lastCoordRef.current = c;
-      }
-    );
-    timerRef.current = setInterval(() => setSecs((s) => s + 1), 1000);
-    setFase("activo");
-  };
-
-  // Al abrir: pedimos permiso y arrancamos el tracking.
+  // Al abrir: reset + permisos + arrancar.
   useEffect(() => {
     let vivo = true;
     if (visible) {
       setFase("permiso");
       setMetros(0);
       setSecs(0);
+      track.metros = 0;
+      track.last = null;
+      elapsedBaseRef.current = 0;
+      segStartRef.current = null;
       (async () => {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (!vivo) return;
@@ -92,28 +167,40 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
     }
     return () => {
       vivo = false;
-      detenerTracking();
+      track.activo = false;
+      if (timerRef.current) clearInterval(timerRef.current);
+      detenerFuentes(subRef);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
-  const pausar = () => {
-    detenerTracking();
+  // Al volver del fondo, sincronizamos al toque (el interval no corre suspendido).
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (st) => {
+      if (st === "active") sincronizar();
+    });
+    return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const pausar = async () => {
+    await cortarTramo();
     setFase("pausado");
   };
   const reanudar = () => {
     arrancarTracking();
   };
-  const finalizar = () => {
-    detenerTracking();
+  const finalizar = async () => {
+    await cortarTramo();
     setFase("resumen");
   };
   const guardar = () => {
-    onGuardar?.({ metros: Math.round(metros), secs });
+    onGuardar?.({ metros: Math.round(track.metros), secs });
     onClose?.();
   };
 
   const km = metros / 1000;
-  const ritmo = km > 0.02 ? secs / 60 / km : 0; // min/km
+  const ritmo = km > 0.02 && secs > 0 ? secs / 60 / km : 0; // min/km
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -190,6 +277,11 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
 
             {fase === "resumen" ? (
               <Text style={styles.resumenTxt}>¡Buena caminata! Guardala en tu historial.</Text>
+            ) : enFondo ? (
+              <Text style={styles.resumenTxt}>
+                Podés bloquear el teléfono o usar otras apps: la caminata sigue midiéndose. Volvé
+                acá para pausar o finalizar.
+              </Text>
             ) : (
               <Text style={styles.resumenTxt}>Mantené la pantalla abierta mientras caminás.</Text>
             )}
@@ -255,5 +347,11 @@ const makeStyles = (colors) =>
       backgroundColor: colors.red,
     },
     btnStopText: { color: "#fff", fontSize: 15, fontWeight: "800" },
-    resumenTxt: { color: colors.muted, fontSize: 13, marginTop: 20, textAlign: "center" },
+    resumenTxt: {
+      color: colors.muted,
+      fontSize: 13,
+      marginTop: 20,
+      textAlign: "center",
+      paddingHorizontal: 10,
+    },
   });

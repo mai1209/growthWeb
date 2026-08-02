@@ -553,25 +553,6 @@ export default function SaludScreen() {
   const restantes = plan ? plan.kcal - consumido : 0;
   const consumidoPct = plan && plan.kcal > 0 ? Math.min(100, (consumido / plan.kcal) * 100) : 0;
 
-  // ---------------- Tendencia de pasos (últimos 30 días) ----------------
-  const tendencia = useMemo(() => {
-    const ahora = new Date();
-    const arr = [];
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(ahora);
-      d.setDate(d.getDate() - i);
-      const k = dayKey(d);
-      const tiene = Object.prototype.hasOwnProperty.call(pasosHist, k);
-      arr.push({ key: k, valor: tiene ? pasosHist[k] : 0, tiene });
-    }
-    return arr;
-  }, [pasosHist]);
-  const tendConDatos = tendencia.filter((x) => x.tiene);
-  const promedioPasos = tendConDatos.length
-    ? Math.round(tendConDatos.reduce((a, x) => a + x.valor, 0) / tendConDatos.length)
-    : 0;
-  const tendMax = Math.max(metaPasos, ...tendencia.map((t) => t.valor), 1);
-
   const pctPasos = pasos != null ? Math.round((pasos / metaPasos) * 100) : 0;
   const pctAgua = Math.round((agua / metaAgua) * 100);
 
@@ -691,6 +672,41 @@ export default function SaludScreen() {
           <Ionicons name="chevron-forward" size={16} color={colors.greenDark} />
         </TouchableOpacity>
 
+        {/* ---- Peso ---- */}
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <View style={styles.cardHeadLeft}>
+              <Ionicons name="body-outline" size={18} color={colors.greenDark} />
+              <Text style={styles.cardTitle}>Peso</Text>
+            </View>
+          </View>
+          <View style={styles.pesoRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.ringBig}>{pesoActual != null ? `${pesoActual} kg` : "—"}</Text>
+              {pesoDelta != null ? (
+                <Text style={[styles.pesoDelta, { color: pesoDelta <= 0 ? colors.green : colors.red }]}>
+                  {pesoDelta > 0 ? "▲" : "▼"} {Math.abs(pesoDelta).toFixed(1)} kg vs. anterior
+                </Text>
+              ) : (
+                <Text style={styles.ringSub}>Registrá tu peso de hoy</Text>
+              )}
+            </View>
+            <View style={styles.pesoInputRow}>
+              <TextInput
+                style={styles.pesoInput}
+                value={pesoInput}
+                onChangeText={(v) => setPesoInput(v.replace(/[^0-9.,]/g, ""))}
+                keyboardType="decimal-pad"
+                placeholder="kg"
+                placeholderTextColor={colors.muted}
+              />
+              <TouchableOpacity style={styles.pesoSave} onPress={guardarPeso}>
+                <Text style={styles.pesoSaveText}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
         {/* ---- Pasos ---- */}
         <View style={styles.card}>
           <View style={styles.cardHead}>
@@ -737,46 +753,6 @@ export default function SaludScreen() {
             </Text>
           ) : null}
         </View>
-
-        {/* ---- Tendencia de pasos ---- */}
-        {tendConDatos.length > 0 ? (
-          <View style={styles.card}>
-            <View style={styles.cardHead}>
-              <View style={styles.cardHeadLeft}>
-                <Ionicons name="trending-up-outline" size={18} color={colors.greenDark} />
-                <Text style={styles.cardTitle}>Tendencia de pasos</Text>
-              </View>
-              <Text style={styles.metaBtnText}>Últimos 30 días</Text>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={styles.tendRow}>
-                {tendencia.map((x) => {
-                  const h = x.tiene ? Math.max(3, Math.round((x.valor / tendMax) * 90)) : 3;
-                  const cumplida = x.valor >= metaPasos;
-                  return (
-                    <View key={x.key} style={styles.tendCol}>
-                      <View
-                        style={{
-                          width: 7,
-                          height: h,
-                          borderRadius: 4,
-                          backgroundColor: x.tiene
-                            ? cumplida
-                              ? colors.greenBright
-                              : colors.greenDark
-                            : colors.cardBorder,
-                        }}
-                      />
-                    </View>
-                  );
-                })}
-              </View>
-            </ScrollView>
-            <Text style={styles.ringSub}>
-              Promedio: {promedioPasos.toLocaleString("es-AR")} pasos/día
-            </Text>
-          </View>
-        ) : null}
 
         {/* ---- Hidratación ---- */}
         <View style={styles.card}>
@@ -845,41 +821,6 @@ export default function SaludScreen() {
                 </Text>
               </TouchableOpacity>
             ))}
-          </View>
-        </View>
-
-        {/* ---- Peso ---- */}
-        <View style={styles.card}>
-          <View style={styles.cardHead}>
-            <View style={styles.cardHeadLeft}>
-              <Ionicons name="body-outline" size={18} color={colors.greenDark} />
-              <Text style={styles.cardTitle}>Peso</Text>
-            </View>
-          </View>
-          <View style={styles.pesoRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.ringBig}>{pesoActual != null ? `${pesoActual} kg` : "—"}</Text>
-              {pesoDelta != null ? (
-                <Text style={[styles.pesoDelta, { color: pesoDelta <= 0 ? colors.green : colors.red }]}>
-                  {pesoDelta > 0 ? "▲" : "▼"} {Math.abs(pesoDelta).toFixed(1)} kg vs. anterior
-                </Text>
-              ) : (
-                <Text style={styles.ringSub}>Registrá tu peso de hoy</Text>
-              )}
-            </View>
-            <View style={styles.pesoInputRow}>
-              <TextInput
-                style={styles.pesoInput}
-                value={pesoInput}
-                onChangeText={(v) => setPesoInput(v.replace(/[^0-9.,]/g, ""))}
-                keyboardType="decimal-pad"
-                placeholder="kg"
-                placeholderTextColor={colors.muted}
-              />
-              <TouchableOpacity style={styles.pesoSave} onPress={guardarPeso}>
-                <Text style={styles.pesoSaveText}>Guardar</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         </View>
 
@@ -1053,8 +994,6 @@ const makeStyles = (colors) =>
 
     aviso: { color: colors.muted, fontSize: 13, lineHeight: 18 },
 
-    tendRow: { flexDirection: "row", alignItems: "flex-end", height: 96, gap: 3 },
-    tendCol: { justifyContent: "flex-end", height: 96 },
 
     aguaBtns: { flexDirection: "row", alignItems: "center", gap: 8 },
     aguaBtn: {

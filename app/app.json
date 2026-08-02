@@ -53,7 +53,10 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Growth usa tu ubicación para medir la distancia de tus caminatas."
+          "locationWhenInUsePermission": "Growth usa tu ubicación para medir la distancia de tus caminatas.",
+          "locationAlwaysAndWhenInUsePermission": "Growth usa tu ubicación para seguir midiendo tu caminata aunque la app esté en segundo plano.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true
         }
       ]
     ]
