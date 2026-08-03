@@ -53,6 +53,46 @@
   grid-column: 1 / -1;
 }
 
+/* Fila superior: Tendencia (izquierda) + Ánimo (derecha, sin fondo). */
+.topRow {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.topMain {
+  flex: 2 1 420px;
+}
+
+.topAside {
+  flex: 1 1 260px;
+  padding-top: 0.4rem;
+}
+
+.animoTitulo {
+  margin: 0 0 0.9rem;
+  font-size: 1.02rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* Dos tarjetas lado a lado (Peso + Caminatas). */
+.parRow {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.parRow > section {
+  flex: 1 1 300px;
+}
+
 /* ===== Tendencia por período (D/S/M/A) + gráfico de línea ===== */
 .periodoSel {
   display: inline-flex;

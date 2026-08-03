@@ -583,10 +583,33 @@ export default function SaludPage() {
       <div className={style.grid}>
         {!esCalorias ? (
         <>
-        {renderTendencia(METRICAS_MOV, metricaMov, setMetricaMov)}
-        {/* Pasos + Caminatas apilados en la misma columna (ambos del teléfono) */}
-        <div className={style.colStack}>
-        <section className={style.card}>
+        {/* Tendencia (izquierda) + Ánimo (derecha, sin fondo) */}
+        <div className={style.topRow}>
+          <div className={style.topMain}>
+            {renderTendencia(METRICAS_MOV, metricaMov, setMetricaMov)}
+          </div>
+          <div className={style.topAside}>
+            <h2 className={style.animoTitulo}>
+              <FiSmile /> ¿Cómo te sentís hoy?
+            </h2>
+            <div className={style.animoRow}>
+              {ANIMOS.map((a) => (
+                <button
+                  key={a.level}
+                  type="button"
+                  className={`${style.animoBtn} ${animoHoy === a.level ? style.animoBtnOn : ""}`}
+                  onClick={() => mutate({ animo: { [hoy]: a.level } })}
+                >
+                  <span className={style.animoEmoji}>{a.emoji}</span>
+                  <span>{a.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Pasos de hoy */}
+        <section className={`${style.card} ${style.cardAncha}`}>
           <div className={style.cardHead}>
             <h2>
               <FiActivity /> Pasos de hoy
@@ -607,86 +630,62 @@ export default function SaludPage() {
           </div>
         </section>
 
-        {/* Caminatas (solo lectura) */}
-        <section className={style.card}>
-          <div className={style.cardHead}>
-            <h2>
-              <FiNavigation /> Caminatas
-            </h2>
-            <span className={style.badgeTel}>desde el teléfono</span>
-          </div>
-          {data?.caminatas?.length ? (
-            <ul className={style.caminatas}>
-              {data.caminatas.slice(0, 5).map((c, i) => (
-                <li key={i}>
-                  <span>{c.fecha}</span>
-                  <strong>{(c.metros / 1000).toFixed(2)} km</strong>
-                  <span>{Math.floor((c.secs || 0) / 60)} min</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className={style.hint}>Todavía no registraste caminatas desde la app.</p>
-          )}
-        </section>
-        </div>
-
-        {/* Ánimo + Peso apilados en la misma columna */}
-        <div className={style.colStack}>
-        <section className={style.card}>
-          <div className={style.cardHead}>
-            <h2>
-              <FiSmile /> ¿Cómo te sentís hoy?
-            </h2>
-          </div>
-          <div className={style.animoRow}>
-            {ANIMOS.map((a) => (
-              <button
-                key={a.level}
-                type="button"
-                className={`${style.animoBtn} ${animoHoy === a.level ? style.animoBtnOn : ""}`}
-                onClick={() => mutate({ animo: { [hoy]: a.level } })}
-              >
-                <span className={style.animoEmoji}>{a.emoji}</span>
-                <span>{a.label}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* Peso (editable) */}
-        <section className={style.card}>
-          <div className={style.cardHead}>
-            <h2>
-              <FiHeart /> Peso
-            </h2>
-          </div>
-          <div className={style.pesoFila}>
-            <div>
-              <strong className={style.pesoNum}>{pesoActual != null ? `${pesoActual} kg` : "—"}</strong>
-              {pesoDelta != null ? (
-                <p className={style.pesoDelta} style={{ color: pesoDelta <= 0 ? "var(--color-verde, #5dc72d)" : "#e66565" }}>
-                  {pesoDelta > 0 ? "▲" : "▼"} {Math.abs(pesoDelta).toFixed(1)} kg vs. anterior
-                </p>
-              ) : (
-                <p className={style.hint}>Cargalo cuando quieras</p>
-              )}
+        {/* Peso + Caminatas lado a lado */}
+        <div className={style.parRow}>
+          <section className={style.card}>
+            <div className={style.cardHead}>
+              <h2>
+                <FiHeart /> Peso
+              </h2>
             </div>
-            <div className={style.pesoForm}>
-              <input
-                type="number"
-                min="1"
-                step="0.1"
-                value={pesoInput}
-                onChange={(e) => setPesoInput(e.target.value)}
-                placeholder="kg"
-              />
-              <button type="button" onClick={guardarPeso}>
-                Guardar
-              </button>
+            <div className={style.pesoFila}>
+              <div>
+                <strong className={style.pesoNum}>{pesoActual != null ? `${pesoActual} kg` : "—"}</strong>
+                {pesoDelta != null ? (
+                  <p className={style.pesoDelta} style={{ color: pesoDelta <= 0 ? "var(--color-verde, #5dc72d)" : "#e66565" }}>
+                    {pesoDelta > 0 ? "▲" : "▼"} {Math.abs(pesoDelta).toFixed(1)} kg vs. anterior
+                  </p>
+                ) : (
+                  <p className={style.hint}>Cargalo cuando quieras</p>
+                )}
+              </div>
+              <div className={style.pesoForm}>
+                <input
+                  type="number"
+                  min="1"
+                  step="0.1"
+                  value={pesoInput}
+                  onChange={(e) => setPesoInput(e.target.value)}
+                  placeholder="kg"
+                />
+                <button type="button" onClick={guardarPeso}>
+                  Guardar
+                </button>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+
+          <section className={style.card}>
+            <div className={style.cardHead}>
+              <h2>
+                <FiNavigation /> Caminatas
+              </h2>
+              <span className={style.badgeTel}>desde el teléfono</span>
+            </div>
+            {data?.caminatas?.length ? (
+              <ul className={style.caminatas}>
+                {data.caminatas.slice(0, 5).map((c, i) => (
+                  <li key={i}>
+                    <span>{c.fecha}</span>
+                    <strong>{(c.metros / 1000).toFixed(2)} km</strong>
+                    <span>{Math.floor((c.secs || 0) / 60)} min</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className={style.hint}>Todavía no registraste caminatas desde la app.</p>
+            )}
+          </section>
         </div>
 
         {/* Todos los resultados (estilo Salud de iPhone) */}
