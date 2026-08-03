@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,6 +6,16 @@ import { useTheme } from "../theme";
 
 const pad = (n) => String(n).padStart(2, "0");
 const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const addDays = (key, delta) => {
+  const d = new Date(`${key}T00:00:00`);
+  d.setDate(d.getDate() + delta);
+  return dayKey(d);
+};
+const fechaLabel = (key, hoy) => {
+  if (key === hoy) return "Hoy";
+  if (key === addDays(hoy, -1)) return "Ayer";
+  return new Date(`${key}T00:00:00`).toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" });
+};
 const ANIMO_EMOJI = { 1: "😔", 2: "😕", 3: "😐", 4: "🙂", 5: "😄" };
 
 // Mini gráfico de barras (estilo Salud de iPhone): la última barra va acentuada.
@@ -42,18 +52,26 @@ export default function TodosDatosModal({
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  // Últimos 7 días (claves) para las series.
+  const hoyReal = dayKey(new Date());
+  const [fecha, setFecha] = useState(hoyReal);
+  // Al abrir el modal, arranca en el día de hoy.
+  useEffect(() => {
+    if (visible) setFecha(dayKey(new Date()));
+  }, [visible]);
+
+  // 7 días que terminan en la fecha elegida.
   const dias7 = useMemo(() => {
     const arr = [];
+    const base = new Date(`${fecha}T00:00:00`);
     for (let i = 6; i >= 0; i--) {
-      const d = new Date();
+      const d = new Date(base);
       d.setDate(d.getDate() - i);
       arr.push(dayKey(d));
     }
     return arr;
-  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fecha]);
 
-  const hoy = dias7[dias7.length - 1];
+  const hoy = fecha;
   const serie = (mapa, fn = (v) => Number(v) || 0) => dias7.map((k) => fn(mapa?.[k]));
 
   const kcalDia = (arr) => (arr || []).reduce((a, c) => a + (Number(c.kcal) || 0), 0);
@@ -61,11 +79,13 @@ export default function TodosDatosModal({
   const distDia = (k) => camDia(k).reduce((a, c) => a + (Number(c.metros) || 0), 0);
   const minDia = (k) => camDia(k).reduce((a, c) => a + (Number(c.secs) || 0), 0) / 60;
 
-  const ultimaCam = (caminatas || [])[0];
-  const velocidad =
-    ultimaCam && ultimaCam.secs > 0 ? (ultimaCam.metros / 1000) / (ultimaCam.secs / 3600) : null;
+  const camRef = camDia(fecha)[0];
+  const velocidad = camRef && camRef.secs > 0 ? (camRef.metros / 1000) / (camRef.secs / 3600) : null;
 
-  const pesoKeys = Object.keys(pesoDias || {}).sort();
+  // Peso: última medición registrada hasta la fecha elegida (se arrastra).
+  const pesoKeys = Object.keys(pesoDias || {})
+    .filter((k) => k <= fecha)
+    .sort();
   const pesoUlt = pesoKeys.length ? Number(pesoDias[pesoKeys[pesoKeys.length - 1]]) : null;
 
   const animoHoy = animoDias?.[hoy];
@@ -152,7 +172,19 @@ export default function TodosDatosModal({
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll}>
-          <Text style={styles.seccion}>Hoy</Text>
+          <View style={styles.dateNav}>
+            <TouchableOpacity style={styles.dateBtn} onPress={() => setFecha(addDays(fecha, -1))}>
+              <Ionicons name="chevron-back" size={20} color={colors.text} />
+            </TouchableOpacity>
+            <Text style={styles.seccion}>{fechaLabel(fecha, hoyReal)}</Text>
+            <TouchableOpacity
+              style={styles.dateBtn}
+              disabled={fecha >= hoyReal}
+              onPress={() => fecha < hoyReal && setFecha(addDays(fecha, 1))}
+            >
+              <Ionicons name="chevron-forward" size={20} color={fecha >= hoyReal ? colors.cardBorder : colors.text} />
+            </TouchableOpacity>
+          </View>
           {METRICAS.map((m) => (
             <View key={m.titulo} style={styles.card}>
               <View style={styles.cardHead}>
@@ -193,7 +225,17 @@ const makeStyles = (colors) =>
     backBtn: { padding: 4 },
     title: { color: colors.text, fontSize: 18, fontWeight: "800" },
     scroll: { padding: 16, paddingBottom: 40, gap: 10 },
-    seccion: { color: colors.text, fontSize: 22, fontWeight: "900", marginBottom: 2 },
+    seccion: { color: colors.text, fontSize: 20, fontWeight: "900", textTransform: "capitalize", minWidth: 120, textAlign: "center" },
+    dateNav: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
+    dateBtn: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+    },
 
     card: {
       backgroundColor: colors.card,

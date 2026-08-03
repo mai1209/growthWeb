@@ -60,6 +60,16 @@ const ANIMOS = [
 const pad = (n) => String(n).padStart(2, "0");
 const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+const addDays = (key, delta) => {
+  const d = new Date(`${key}T00:00:00`);
+  d.setDate(d.getDate() + delta);
+  return dayKey(d);
+};
+const fechaLabel = (key, hoy) => {
+  if (key === hoy) return "Hoy";
+  if (key === addDays(hoy, -1)) return "Ayer";
+  return new Date(`${key}T00:00:00`).toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" });
+};
 
 // Anillo reutilizable con contenido custom en el centro.
 function Ring({ percent, size = 140, stroke = 13, color, track, children }) {
@@ -355,6 +365,7 @@ export default function SaludScreen() {
 
   // ---------------- Agua ----------------
   const hoy = dayKey(new Date());
+  const [fechaCal, setFechaCal] = useState(dayKey(new Date())); // día que se ve en Comidas
   const [aguaDias, setAguaDias] = useState({});
   const agua = aguaDias[hoy] || 0;
 
@@ -572,15 +583,15 @@ export default function SaludScreen() {
 
   const agregarComida = (meal) => {
     const item = { id: `${Date.now()}${Math.floor(Math.random() * 1000)}`, ...meal };
-    const hoyArr = [...(comidasDias[hoy] || []), item];
-    setComidasDias(persistirComidas({ ...comidasDias, [hoy]: hoyArr }));
-    pushSalud({ comidas: { [hoy]: hoyArr } });
+    const arr = [...(comidasDias[fechaCal] || []), item];
+    setComidasDias(persistirComidas({ ...comidasDias, [fechaCal]: arr }));
+    pushSalud({ comidas: { [fechaCal]: arr } });
   };
 
   const borrarComida = (id) => {
-    const hoyArr = (comidasDias[hoy] || []).filter((c) => c.id !== id);
-    setComidasDias(persistirComidas({ ...comidasDias, [hoy]: hoyArr }));
-    pushSalud({ comidas: { [hoy]: hoyArr } });
+    const arr = (comidasDias[fechaCal] || []).filter((c) => c.id !== id);
+    setComidasDias(persistirComidas({ ...comidasDias, [fechaCal]: arr }));
+    pushSalud({ comidas: { [fechaCal]: arr } });
   };
 
   // ---------------- Pull del backend (lo cargado desde la web) ----------------
@@ -632,11 +643,11 @@ export default function SaludScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const comidasHoy = comidasDias[hoy] || [];
-  const consumido = comidasHoy.reduce((a, c) => a + (c.kcal || 0), 0);
-  const consCarb = comidasHoy.reduce((a, c) => a + (c.carbG || 0), 0);
-  const consProt = comidasHoy.reduce((a, c) => a + (c.protG || 0), 0);
-  const consFat = comidasHoy.reduce((a, c) => a + (c.fatG || 0), 0);
+  const comidasDelDia = comidasDias[fechaCal] || [];
+  const consumido = comidasDelDia.reduce((a, c) => a + (c.kcal || 0), 0);
+  const consCarb = comidasDelDia.reduce((a, c) => a + (c.carbG || 0), 0);
+  const consProt = comidasDelDia.reduce((a, c) => a + (c.protG || 0), 0);
+  const consFat = comidasDelDia.reduce((a, c) => a + (c.fatG || 0), 0);
   const restantes = plan ? plan.kcal - consumido : 0;
   const consumidoPct = plan && plan.kcal > 0 ? Math.min(100, (consumido / plan.kcal) * 100) : 0;
 
@@ -802,12 +813,25 @@ export default function SaludScreen() {
           )}
         </View>
 
-        {/* ---- Comidas de hoy ---- */}
+        {/* ---- Comidas (con historial por fecha) ---- */}
         <View style={styles.card}>
           <View style={styles.cardHead}>
             <View style={styles.cardHeadLeft}>
               <Ionicons name="restaurant-outline" size={18} color={colors.greenDark} />
-              <Text style={styles.cardTitle}>Comidas de hoy</Text>
+              <Text style={styles.cardTitle}>Comidas</Text>
+            </View>
+            <View style={styles.dateNav}>
+              <TouchableOpacity style={styles.dateBtn} onPress={() => setFechaCal(addDays(fechaCal, -1))}>
+                <Ionicons name="chevron-back" size={16} color={colors.text} />
+              </TouchableOpacity>
+              <Text style={styles.dateText}>{fechaLabel(fechaCal, hoy)}</Text>
+              <TouchableOpacity
+                style={styles.dateBtn}
+                disabled={fechaCal >= hoy}
+                onPress={() => fechaCal < hoy && setFechaCal(addDays(fechaCal, 1))}
+              >
+                <Ionicons name="chevron-forward" size={16} color={fechaCal >= hoy ? colors.cardBorder : colors.text} />
+              </TouchableOpacity>
             </View>
           </View>
           {plan ? (
@@ -827,7 +851,7 @@ export default function SaludScreen() {
               </View>
 
               {FRANJAS.map((f) => {
-                const items = comidasHoy.filter((c) => c.franja === f.key);
+                const items = comidasDelDia.filter((c) => c.franja === f.key);
                 const tot = items.reduce((a, c) => a + (c.kcal || 0), 0);
                 return (
                   <View key={f.key} style={styles.franja}>
@@ -1144,6 +1168,25 @@ const makeStyles = (colors) =>
     periodoBtnOn: { backgroundColor: colors.greenBright },
     periodoText: { color: colors.muted, fontSize: 12, fontWeight: "800" },
     periodoTextOn: { color: "#06210a" },
+    dateNav: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 999,
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+    },
+    dateBtn: { width: 26, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center" },
+    dateText: {
+      minWidth: 78,
+      textAlign: "center",
+      color: colors.text,
+      fontSize: 12,
+      fontWeight: "800",
+      textTransform: "capitalize",
+    },
     metricaSel: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 },
     metricaChip: {
       paddingHorizontal: 12,
