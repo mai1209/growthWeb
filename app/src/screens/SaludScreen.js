@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import Svg, { Circle, Polyline, Text as SvgText } from "react-native-svg";
+import Svg, { Circle, Path, Text as SvgText } from "react-native-svg";
 import { Pedometer } from "expo-sensors";
 import * as SecureStore from "expo-secure-store";
 import { useTheme } from "../theme";
@@ -112,12 +112,32 @@ function BarrasSemana({ valores, meta, color, track, styles }) {
   );
 }
 
-// Gráfico de línea simple (tendencia por período) en react-native-svg.
-function LineaTendencia({ points, color, track }) {
+// Path SVG suavizado (curvas) a partir de puntos [x,y].
+function smoothPathApp(pts) {
+  if (pts.length < 2) return pts.length ? `M ${pts[0][0]} ${pts[0][1]}` : "";
+  let d = `M ${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] || p2;
+    const c1x = p1[0] + (p2[0] - p0[0]) / 6;
+    const c1y = p1[1] + (p2[1] - p0[1]) / 6;
+    const c2x = p2[0] - (p3[0] - p1[0]) / 6;
+    const c2y = p2[1] - (p3[1] - p1[1]) / 6;
+    d += ` C ${c1x} ${c1y} ${c2x} ${c2y} ${p2[0]} ${p2[1]}`;
+  }
+  return d;
+}
+
+// Gráfico de línea suavizado (tendencia por período). Tocá un punto para ver el valor.
+function LineaTendencia({ points, color, track, unidad }) {
+  const [sel, setSel] = useState(null);
+  const [ancho, setAncho] = useState(0);
   const W = 320;
   const H = 130;
-  const padX = 10;
-  const padTop = 12;
+  const padX = 8;
+  const padTop = 14;
   const padBottom = 22;
   const n = points.length;
   const max = Math.max(...points.map((p) => p.value), 1);
@@ -125,24 +145,47 @@ function LineaTendencia({ points, color, track }) {
   const innerH = H - padTop - padBottom;
   const x = (i) => (n <= 1 ? W / 2 : padX + (i / (n - 1)) * innerW);
   const y = (v) => padTop + innerH - (v / max) * innerH;
-  const linePts = points.map((p, i) => `${x(i)},${y(p.value)}`).join(" ");
+  const xy = points.map((p, i) => [x(i), y(p.value)]);
+  const linea = smoothPathApp(xy);
+  const area = n >= 2 ? `${linea} L ${xy[n - 1][0]} ${padTop + innerH} L ${xy[0][0]} ${padTop + innerH} Z` : "";
   const step = n > 12 ? Math.ceil(n / 6) : 1;
+
+  const tocar = (e) => {
+    if (!ancho) return;
+    const px = e.nativeEvent.locationX;
+    const rel = Math.max(0, Math.min(1, px / ancho));
+    setSel(n <= 1 ? 0 : Math.round(rel * (n - 1)));
+  };
+
   return (
-    <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`}>
-      <Polyline points={linePts} fill="none" stroke={color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
-      {points.map((p, i) =>
-        p.value > 0 && (i === n - 1 || n <= 12) ? (
-          <Circle key={i} cx={x(i)} cy={y(p.value)} r={i === n - 1 ? 4 : 2.5} fill={color} />
-        ) : null
-      )}
-      {points.map((p, i) =>
-        i % step === 0 || i === n - 1 ? (
-          <SvgText key={`t${i}`} x={x(i)} y={H - 6} fontSize={11} fontWeight="700" fill={track} textAnchor="middle">
-            {p.label}
-          </SvgText>
-        ) : null
-      )}
-    </Svg>
+    <View
+      onLayout={(e) => setAncho(e.nativeEvent.layout.width)}
+      onStartShouldSetResponder={() => true}
+      onMoveShouldSetResponder={() => true}
+      onResponderGrant={tocar}
+      onResponderMove={tocar}
+      onResponderRelease={() => setSel(null)}
+    >
+      <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+        {area ? <Path d={area} fill={color} opacity={0.13} /> : null}
+        <Path d={linea} fill="none" stroke={color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+        {sel != null && points[sel] ? <Circle cx={xy[sel][0]} cy={xy[sel][1]} r={4.5} fill={color} /> : null}
+        {points.map((p, i) =>
+          i % step === 0 || i === n - 1 ? (
+            <SvgText key={`t${i}`} x={x(i)} y={H - 5} fontSize={9} fontWeight="700" fill={track} textAnchor="middle">
+              {p.label}
+            </SvgText>
+          ) : null
+        )}
+      </Svg>
+      {sel != null && points[sel] ? (
+        <View style={{ position: "absolute", top: 0, left: 0, right: 0, alignItems: "center" }}>
+          <Text style={{ color, fontWeight: "800", fontSize: 12 }}>
+            {points[sel].value.toLocaleString("es-AR")} {unidad}
+          </Text>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -630,12 +673,14 @@ export default function SaludScreen() {
     return arr;
   }, [periodo]);
 
-  const construirTendencia = (getVal) => {
-    const points = buckets.map((b) => {
+  // soloConDatos=true (mediciones como el peso): omite días sin registro en vez de mostrar 0.
+  const construirTendencia = (getVal, soloConDatos = false) => {
+    let points = buckets.map((b) => {
       const vals = b.dias.map(getVal).filter((v) => v > 0);
       const value = vals.length ? Math.round(vals.reduce((a, c) => a + c, 0) / vals.length) : 0;
       return { label: b.label, value };
     });
+    if (soloConDatos) points = points.filter((p) => p.value > 0);
     const activos = points.filter((p) => p.value > 0);
     const promedio = activos.length
       ? Math.round(activos.reduce((a, c) => a + c.value, 0) / activos.length)
@@ -643,42 +688,71 @@ export default function SaludScreen() {
     return { points, promedio };
   };
 
-  const tendPasos = useMemo(() => construirTendencia((k) => Number(pasosHist[k]) || 0), [buckets, pasosHist]); // eslint-disable-line react-hooks/exhaustive-deps
-  const tendKcal = useMemo(
-    () => construirTendencia((k) => (comidasDias[k] || []).reduce((a, c) => a + (Number(c.kcal) || 0), 0)),
-    [buckets, comidasDias] // eslint-disable-line react-hooks/exhaustive-deps
-  );
+  const [metricaMov, setMetricaMov] = useState("pasos");
+  const [metricaCal, setMetricaCal] = useState("kcal");
+  const METRICAS_MOV = [
+    { key: "pasos", label: "Pasos", color: colors.greenBright, unidad: "pasos", getVal: (k) => Number(pasosHist[k]) || 0 },
+    { key: "peso", label: "Peso", color: colors.greenBright, unidad: "kg", medicion: true, getVal: (k) => Number(pesoDias[k]) || 0 },
+    {
+      key: "dist",
+      label: "Distancia",
+      color: colors.greenBright,
+      unidad: "km",
+      getVal: (k) => caminatas.filter((c) => c.fecha === k).reduce((a, c) => a + (Number(c.metros) || 0), 0) / 1000,
+    },
+  ];
+  const METRICAS_CAL = [
+    { key: "kcal", label: "Calorías", color: "#e0703f", unidad: "kcal", getVal: (k) => (comidasDias[k] || []).reduce((a, c) => a + (Number(c.kcal) || 0), 0) },
+    { key: "agua", label: "Hidratación", color: "#3aa0e0", unidad: "ml", getVal: (k) => Number(aguaDias[k]) || 0 },
+  ];
 
-  const renderTendencia = (titulo, tend, color, unidad) => (
-    <View style={styles.card}>
-      <View style={styles.cardHead}>
-        <View style={styles.cardHeadLeft}>
-          <Ionicons name="trending-up-outline" size={18} color={color} />
-          <Text style={styles.cardTitle}>{titulo}</Text>
+  const renderTendencia = (metrics, sel, setSel) => {
+    const m = metrics.find((x) => x.key === sel) || metrics[0];
+    const tend = construirTendencia(m.getVal, m.medicion);
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardHead}>
+          <View style={styles.cardHeadLeft}>
+            <Ionicons name="trending-up-outline" size={18} color={m.color} />
+            <Text style={styles.cardTitle}>Tendencia</Text>
+          </View>
+          <View style={styles.periodoSel}>
+            {PERIODOS.map((p) => (
+              <TouchableOpacity
+                key={p.key}
+                style={[styles.periodoBtn, periodo === p.key && styles.periodoBtnOn]}
+                onPress={() => setPeriodo(p.key)}
+              >
+                <Text style={[styles.periodoText, periodo === p.key && styles.periodoTextOn]}>{p.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
-        <View style={styles.periodoSel}>
-          {PERIODOS.map((p) => (
-            <TouchableOpacity
-              key={p.key}
-              style={[styles.periodoBtn, periodo === p.key && styles.periodoBtnOn]}
-              onPress={() => setPeriodo(p.key)}
-            >
-              <Text style={[styles.periodoText, periodo === p.key && styles.periodoTextOn]}>{p.label}</Text>
-            </TouchableOpacity>
-          ))}
+        {metrics.length > 1 ? (
+          <View style={styles.metricaSel}>
+            {metrics.map((x) => (
+              <TouchableOpacity
+                key={x.key}
+                style={[styles.metricaChip, sel === x.key && styles.metricaChipOn]}
+                onPress={() => setSel(x.key)}
+              >
+                <Text style={[styles.metricaText, sel === x.key && styles.metricaTextOn]}>{x.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
+        <View style={styles.tendResumen}>
+          <Text style={[styles.tendNum, { color: m.color }]}>{tend.promedio.toLocaleString("es-AR")}</Text>
+          <Text style={styles.tendUnidad}>{periodo === "dia" ? m.unidad : `${m.unidad} · promedio`}</Text>
         </View>
+        {periodo === "dia" ? (
+          <Text style={styles.ringSub}>Elegí Semana, Mes o Año para ver la tendencia.</Text>
+        ) : (
+          <LineaTendencia points={tend.points} color={m.color} track={colors.muted} unidad={m.unidad} />
+        )}
       </View>
-      <View style={styles.tendResumen}>
-        <Text style={[styles.tendNum, { color }]}>{tend.promedio.toLocaleString("es-AR")}</Text>
-        <Text style={styles.tendUnidad}>{periodo === "dia" ? unidad : `${unidad} · promedio`}</Text>
-      </View>
-      {periodo === "dia" ? (
-        <Text style={styles.ringSub}>Elegí Semana, Mes o Año para ver la tendencia.</Text>
-      ) : (
-        <LineaTendencia points={tend.points} color={color} track={colors.muted} />
-      )}
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={[]}>
@@ -688,7 +762,7 @@ export default function SaludScreen() {
 
         {esCalorias ? (
         <>
-        {renderTendencia("Tendencia de calorías", tendKcal, "#e0703f", "kcal")}
+        {renderTendencia(METRICAS_CAL, metricaCal, setMetricaCal)}
         {/* ---- Nutrición (plan) ---- */}
         <View style={styles.card}>
           <View style={styles.cardHead}>
@@ -843,7 +917,7 @@ export default function SaludScreen() {
           <Ionicons name="chevron-forward" size={16} color={colors.greenDark} />
         </TouchableOpacity>
 
-        {renderTendencia("Tendencia de pasos", tendPasos, colors.greenBright, "pasos")}
+        {renderTendencia(METRICAS_MOV, metricaMov, setMetricaMov)}
 
         {/* ---- Peso ---- */}
         <View style={styles.card}>
@@ -1070,6 +1144,17 @@ const makeStyles = (colors) =>
     periodoBtnOn: { backgroundColor: colors.greenBright },
     periodoText: { color: colors.muted, fontSize: 12, fontWeight: "800" },
     periodoTextOn: { color: "#06210a" },
+    metricaSel: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 },
+    metricaChip: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+    },
+    metricaChipOn: { borderColor: colors.greenBright, backgroundColor: "rgba(93,199,45,0.14)" },
+    metricaText: { color: colors.muted, fontSize: 12, fontWeight: "700" },
+    metricaTextOn: { color: colors.greenBright },
     tendResumen: { flexDirection: "row", alignItems: "flex-end", gap: 8, marginTop: 4 },
     tendNum: { fontSize: 30, fontWeight: "900" },
     tendUnidad: { color: colors.muted, fontSize: 13, fontWeight: "700", marginBottom: 4 },
