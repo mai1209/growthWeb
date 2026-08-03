@@ -134,6 +134,11 @@ export const saludService = {
   update: (data) => api.put("/api/salud", data),
 };
 
+export const gymService = {
+  get: () => api.get("/api/gym"),
+  update: (data) => api.put("/api/gym", data),
+};
+
 export const nutricionService = {
   // Envía la foto (base64 sin prefijo) y devuelve { nombre, kcal, carbG, protG, fatG }.
   analizarFoto: (imagenBase64, mediaType) =>
