@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  FiActivity,
   FiChevronLeft,
   FiChevronRight,
   FiPlus,
@@ -9,6 +8,7 @@ import {
   FiEdit2,
   FiX,
 } from "react-icons/fi";
+import { TbBarbell } from "react-icons/tb";
 import { gymService } from "../api";
 import { EJERCICIOS_BASE } from "../utils/ejerciciosBase";
 import style from "../style/Gym.module.css";
@@ -25,6 +25,7 @@ const fechaLabel = (key) => {
   const hoy = hoyKey();
   if (key === hoy) return "Hoy";
   if (key === addDays(hoy, -1)) return "Ayer";
+  if (key === addDays(hoy, 1)) return "Mañana";
   return new Date(`${key}T00:00:00`).toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "short" });
 };
 const norm = (s) =>
@@ -122,7 +123,7 @@ export default function GymView() {
     <div className={style.wrap}>
       <header className={style.header}>
         <h1>
-          <FiActivity /> Gym
+          <TbBarbell /> Gym
         </h1>
         <div className={style.tabs}>
           {[
@@ -173,7 +174,6 @@ function MiniCalendario({ fecha, setFecha, entrenos }) {
   const dim = new Date(y, m + 1, 0).getDate();
   const primerDow = (new Date(y, m, 1).getDay() + 6) % 7; // lunes = 0
   const celdas = [...Array(primerDow).fill(null), ...Array.from({ length: dim }, (_, i) => i + 1)];
-  const esMesActual = hoy.startsWith(`${y}-${pad(m + 1)}`);
 
   return (
     <div className={style.cal}>
@@ -182,7 +182,7 @@ function MiniCalendario({ fecha, setFecha, entrenos }) {
           <FiChevronLeft />
         </button>
         <span>{mes.toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</span>
-        <button type="button" disabled={esMesActual} onClick={() => setMes(new Date(y, m + 1, 1))} aria-label="Mes siguiente">
+        <button type="button" onClick={() => setMes(new Date(y, m + 1, 1))} aria-label="Mes siguiente">
           <FiChevronRight />
         </button>
       </div>
@@ -197,13 +197,12 @@ function MiniCalendario({ fecha, setFecha, entrenos }) {
           const k = `${y}-${pad(m + 1)}-${pad(d)}`;
           const tiene = (entrenos[k] || []).length > 0;
           const sel = k === fecha;
-          const futuro = k > hoy;
+          const esHoy = k === hoy;
           return (
             <button
               key={i}
               type="button"
-              disabled={futuro}
-              className={`${style.calDia} ${sel ? style.calDiaSel : ""}`}
+              className={`${style.calDia} ${sel ? style.calDiaSel : ""} ${esHoy && !sel ? style.calDiaHoy : ""}`}
               onClick={() => setFecha(k)}
             >
               {d}
@@ -225,6 +224,7 @@ function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, bo
 
   const totalSeries = dia.reduce((a, e) => a + e.sets.filter((s) => s.hecha).length, 0);
   const sinEntreno = dia.length === 0;
+  const esFuturo = fecha > hoyKey();
 
   return (
     <>
@@ -233,23 +233,27 @@ function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, bo
       <div className={style.dayBar}>
         <span className={style.diaSel}>{fechaLabel(fecha)}</span>
         {dia.length ? (
-          <span className={style.resumenDia}>{totalSeries} series hechas</span>
+          <span className={style.resumenDia}>
+            {esFuturo ? `${dia.length} ejercicios planificados` : `${totalSeries} series hechas`}
+          </span>
         ) : null}
       </div>
 
-      {/* Día vacío: el entrenamiento arranca eligiendo una rutina (o vacío). */}
+      {/* Día vacío: hoy/pasado se entrena; futuro se planifica asignando una rutina. */}
       {sinEntreno && !agregando ? (
         <div className={style.entrenarHero}>
           {!eligiendoRutina ? (
             <>
-              <p className={style.vacio}>Todavía no entrenaste este día.</p>
+              <p className={style.vacio}>
+                {esFuturo ? "Este día todavía no tiene rutina asignada." : "Todavía no entrenaste este día."}
+              </p>
               <button type="button" className={style.entrenarBtn} onClick={() => setEligiendoRutina(true)}>
-                Entrenar
+                {esFuturo ? "Asignar rutina" : "Entrenar"}
               </button>
             </>
           ) : (
             <div className={style.rutinaMenu}>
-              <p className={style.rutinaMenuTitulo}>¿Qué entrenás hoy?</p>
+              <p className={style.rutinaMenuTitulo}>{esFuturo ? "¿Qué vas a entrenar ese día?" : "¿Qué entrenás hoy?"}</p>
               {rutinas.map((r) => (
                 <button
                   key={r.id}
