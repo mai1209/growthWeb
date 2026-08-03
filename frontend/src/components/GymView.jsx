@@ -559,28 +559,94 @@ function Progreso({ entrenos }) {
   const [sel, setSel] = useState("");
   const elegido = sel || ejercicios[0] || "";
 
-  // Series por sesión para el ejercicio elegido.
-  const porSesion = useMemo(() => {
-    if (!elegido) return [];
-    const dias = Object.keys(entrenos || {}).sort();
-    const out = [];
-    dias.forEach((k) => {
-      const ej = (entrenos[k] || []).find((e) => norm(e.nombre) === norm(elegido));
-      if (!ej) return;
-      const maxKg = Math.max(0, ...ej.sets.map((s) => Number(s.kg) || 0));
-      const reps = ej.sets.reduce((a, s) => a + (Number(s.reps) || 0), 0);
-      if (maxKg > 0 || reps > 0) out.push({ fecha: k, maxKg, reps });
+  const [periodo, setPeriodo] = useState("mes"); // semana | mes | anio
+  const [metrica, setMetrica] = useState("kg"); // kg | reps | series
+
+  // Datos del ejercicio elegido en un día: máximo kg, reps y series.
+  const datosDia = (k) => {
+    const ej = (entrenos[k] || []).find((e) => norm(e.nombre) === norm(elegido));
+    if (!ej) return null;
+    return {
+      maxKg: Math.max(0, ...ej.sets.map((s) => Number(s.kg) || 0)),
+      reps: ej.sets.reduce((a, s) => a + (Number(s.reps) || 0), 0),
+      series: ej.sets.length,
+    };
+  };
+
+  // Buckets por período, como la Tendencia de Movilidad (semana / mes / año).
+  const buckets = useMemo(() => {
+    const ahora = new Date();
+    if (periodo === "anio") {
+      const arr = [];
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
+        const y = d.getFullYear();
+        const m = d.getMonth();
+        const dim = new Date(y, m + 1, 0).getDate();
+        const dias = [];
+        for (let dd = 1; dd <= dim; dd++) dias.push(`${y}-${pad(m + 1)}-${pad(dd)}`);
+        arr.push({ label: MESES_G[m], dias });
+      }
+      return arr;
+    }
+    const n = periodo === "mes" ? 30 : 7;
+    const arr = [];
+    for (let i = n - 1; i >= 0; i--) {
+      const d = new Date(ahora);
+      d.setDate(d.getDate() - i);
+      arr.push({ label: periodo === "semana" ? DIAS_G[d.getDay()] : String(d.getDate()), dias: [dayKey(d)] });
+    }
+    return arr;
+  }, [periodo]);
+
+  // Puntos del gráfico: solo los días/meses con entreno (como el peso en Movilidad).
+  const { points, sesiones } = useMemo(() => {
+    let ses = 0;
+    const pts = [];
+    buckets.forEach((b) => {
+      let vKg = 0;
+      let vReps = 0;
+      let vSeries = 0;
+      let tiene = false;
+      b.dias.forEach((k) => {
+        const d = datosDia(k);
+        if (!d) return;
+        tiene = true;
+        ses += 1;
+        vKg = Math.max(vKg, d.maxKg);
+        vReps += d.reps;
+        vSeries += d.series;
+      });
+      if (!tiene) return;
+      const value = metrica === "kg" ? vKg : metrica === "reps" ? vReps : vSeries;
+      if (value > 0) pts.push({ label: b.label, value });
     });
-    return out.slice(-20);
+    return { points: pts, sesiones: ses };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buckets, entrenos, elegido, metrica]);
+
+  // Récord histórico y comparación de las últimas dos sesiones (siempre en kg).
+  const sesionesKg = useMemo(() => {
+    const out = [];
+    Object.keys(entrenos || {})
+      .sort()
+      .forEach((k) => {
+        const d = datosDia(k);
+        if (d && d.maxKg > 0) out.push(d.maxKg);
+      });
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entrenos, elegido]);
+  const record = sesionesKg.length ? Math.max(...sesionesKg) : 0;
+  const delta = sesionesKg.length >= 2 ? sesionesKg[sesionesKg.length - 1] - sesionesKg[sesionesKg.length - 2] : null;
 
-  const serieKg = porSesion.filter((p) => p.maxKg > 0).map((p) => ({ label: fmtCorta(p.fecha), value: p.maxKg }));
-  const serieReps = porSesion.filter((p) => p.reps > 0).map((p) => ({ label: fmtCorta(p.fecha), value: p.reps }));
-
-  const ultimo = serieKg.length ? serieKg[serieKg.length - 1].value : 0;
-  const anterior = serieKg.length >= 2 ? serieKg[serieKg.length - 2].value : null;
-  const delta = anterior != null ? ultimo - anterior : null;
-  const record = serieKg.length ? Math.max(...serieKg.map((p) => p.value)) : 0;
+  const grande = !points.length ? 0 : metrica === "kg" ? Math.max(...points.map((p) => p.value)) : points.reduce((a, p) => a + p.value, 0);
+  const M_INFO = {
+    kg: { unidad: "kg", texto: "máximo del período", color: "var(--color-verde, #5dc72d)" },
+    reps: { unidad: "reps", texto: "total del período", color: "#3aa0e0" },
+    series: { unidad: "series", texto: "total del período", color: "#d6a92e" },
+  };
+  const info = M_INFO[metrica];
 
   if (!ejercicios.length) {
     return <p className={style.vacio}>Cuando registres entrenamientos, acá vas a ver tu progreso por ejercicio.</p>;
@@ -597,48 +663,68 @@ function Progreso({ entrenos }) {
       </select>
 
       <section className={style.progresoCard}>
+        <div className={style.progHead}>
+          <div className={style.chips}>
+            {[
+              { k: "kg", label: "Peso máximo" },
+              { k: "reps", label: "Repeticiones" },
+              { k: "series", label: "Series" },
+            ].map((m) => (
+              <button key={m.k} type="button" className={metrica === m.k ? style.chipOn : style.chipOff} onClick={() => setMetrica(m.k)}>
+                {m.label}
+              </button>
+            ))}
+          </div>
+          <div className={style.periodoSel}>
+            {[
+              { k: "semana", label: "S" },
+              { k: "mes", label: "M" },
+              { k: "anio", label: "A" },
+            ].map((p) => (
+              <button key={p.k} type="button" className={periodo === p.k ? style.periodoOn : style.periodoOff} onClick={() => setPeriodo(p.k)}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className={style.progresoTop}>
           <div>
-            <p className={style.progresoValor}>
-              {ultimo} kg
-              {delta != null && delta !== 0 ? (
+            <p className={style.progresoValor} style={{ color: info.color }}>
+              {grande.toLocaleString("es-AR")} {info.unidad}
+              {metrica === "kg" && delta != null && delta !== 0 ? (
                 <span className={delta > 0 ? style.deltaUp : style.deltaDown}>
                   {delta > 0 ? "▲" : "▼"} {Math.abs(delta)} kg
                 </span>
               ) : null}
             </p>
             <span className={style.progresoLabel}>
-              peso máximo de tu última sesión
-              {delta != null ? " · vs la anterior" : ""}
+              {info.texto}
+              {metrica === "kg" && delta != null ? " · vs tu sesión anterior" : ""}
             </span>
           </div>
           <div className={style.progresoDer}>
-            <span className={style.progresoSesiones}>{porSesion.length} sesiones</span>
+            <span className={style.progresoSesiones}>
+              {sesiones} {sesiones === 1 ? "sesión" : "sesiones"} en el período
+            </span>
             {record > 0 ? <span className={style.progresoRecord}>🏆 récord: {record} kg</span> : null}
           </div>
         </div>
 
-        {serieKg.length >= 2 ? (
-          <ChartLinea titulo="Peso máximo por sesión" points={serieKg} unidad="kg" color="var(--color-verde, #5dc72d)" />
+        {points.length >= 2 ? (
+          <ChartLinea points={points} unidad={info.unidad} color={info.color} />
         ) : (
-          <p className={style.hint}>Registrá al menos 2 sesiones de este ejercicio para ver la curva.</p>
+          <p className={style.hint}>
+            Entrená este ejercicio al menos 2 veces en el período para ver la curva. Probá cambiando a M o A arriba a la derecha.
+          </p>
         )}
       </section>
-
-      {serieReps.length >= 2 ? (
-        <section className={style.progresoCard}>
-          <ChartLinea titulo="Repeticiones totales por sesión" points={serieReps} unidad="reps" color="#3aa0e0" />
-        </section>
-      ) : null}
     </>
   );
 }
 
-// Fecha corta para etiquetas del gráfico: "3/8".
-function fmtCorta(key) {
-  const d = new Date(`${key}T00:00:00`);
-  return `${d.getDate()}/${d.getMonth() + 1}`;
-}
+const DIAS_G = ["D", "L", "M", "M", "J", "V", "S"];
+const MESES_G = ["E", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
 
 // Path SVG suavizado (curvas), igual que en Salud.
 function smoothPath(pts) {
@@ -663,7 +749,8 @@ function ChartLinea({ titulo, points, unidad, color }) {
   const padTop = 12;
   const padBottom = 8;
   const n = points.length;
-  const max = Math.max(...points.map((p) => p.value), 1);
+  // 15% de aire arriba: una serie plana no queda pegada al techo del gráfico.
+  const max = Math.max(...points.map((p) => p.value), 1) * 1.15;
   const innerH = H - padTop - padBottom;
   const xy = points.map((p, i) => [n <= 1 ? W / 2 : (i / (n - 1)) * W, padTop + innerH - (p.value / max) * innerH]);
   const line = smoothPath(xy);
@@ -681,7 +768,7 @@ function ChartLinea({ titulo, points, unidad, color }) {
 
   return (
     <div>
-      <p className={style.chartTitulo}>{titulo}</p>
+      {titulo ? <p className={style.chartTitulo}>{titulo}</p> : null}
       <div
         className={style.chartWrap}
         onMouseMove={(e) => setHover(idxFrom(e))}
