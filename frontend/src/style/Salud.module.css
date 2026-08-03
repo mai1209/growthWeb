@@ -53,6 +53,63 @@
   grid-column: 1 / -1;
 }
 
+/* ===== Tendencia por período (D/S/M/A) + gráfico de línea ===== */
+.periodoSel {
+  display: inline-flex;
+  gap: 0.2rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 0.15rem;
+}
+
+.periodoOn,
+.periodoOff {
+  width: 30px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 800;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.periodoOn {
+  background: var(--color-verde, #5dc72d);
+  color: #06210a;
+}
+
+.tendResumen {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.tendResumen strong {
+  font-size: 1.9rem;
+  font-weight: 900;
+}
+
+.tendResumen span {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.lineSvg {
+  width: 100%;
+  height: 140px;
+  display: block;
+  overflow: visible;
+}
+
+.lineLbl {
+  fill: var(--color-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
 /* Vista Calorías: Comidas (principal) + Hidratación (lateral) lado a lado. */
 .calWrap {
   grid-column: 1 / -1;

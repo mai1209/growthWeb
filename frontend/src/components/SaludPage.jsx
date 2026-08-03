@@ -26,6 +26,13 @@ const norm = (s) =>
     .trim();
 
 const DIAS_SEMANA = ["D", "L", "M", "M", "J", "V", "S"];
+const MESES = ["E", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+const PERIODOS = [
+  { key: "dia", label: "D" },
+  { key: "semana", label: "S" },
+  { key: "mes", label: "M" },
+  { key: "anio", label: "A" },
+];
 const FRANJAS = [
   { key: "desayuno", label: "Desayuno" },
   { key: "almuerzo", label: "Almuerzo" },
@@ -95,12 +102,50 @@ function Semana({ dias, valores, meta, color }) {
   );
 }
 
+// Gráfico de línea simple en SVG (para la tendencia por período).
+function LineChart({ points, color, unidad }) {
+  const W = 320;
+  const H = 130;
+  const padX = 8;
+  const padTop = 12;
+  const padBottom = 22;
+  const n = points.length;
+  const max = Math.max(...points.map((p) => p.value), 1);
+  const innerW = W - padX * 2;
+  const innerH = H - padTop - padBottom;
+  const x = (i) => (n <= 1 ? W / 2 : padX + (i / (n - 1)) * innerW);
+  const y = (v) => padTop + innerH - (v / max) * innerH;
+  const linePts = points.map((p, i) => `${x(i)},${y(p.value)}`).join(" ");
+  const areaPts = `${x(0)},${padTop + innerH} ${linePts} ${x(n - 1)},${padTop + innerH}`;
+  // Menos etiquetas si hay muchos puntos (mes = 30 días).
+  const step = n > 12 ? Math.ceil(n / 6) : 1;
+  return (
+    <svg className={style.lineSvg} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img">
+      <polyline points={areaPts} fill={color} opacity="0.12" stroke="none" />
+      <polyline points={linePts} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+      {points.map((p, i) =>
+        p.value > 0 && (i === n - 1 || n <= 12) ? (
+          <circle key={i} cx={x(i)} cy={y(p.value)} r={i === n - 1 ? 3.5 : 2.2} fill={color} />
+        ) : null
+      )}
+      {points.map((p, i) =>
+        i % step === 0 || i === n - 1 ? (
+          <text key={`t${i}`} x={x(i)} y={H - 6} textAnchor="middle" className={style.lineLbl}>
+            {p.label}
+          </text>
+        ) : null
+      )}
+    </svg>
+  );
+}
+
 export default function SaludPage() {
   // El nav deep-linkea las dos vistas: /salud (Movilidad) y /salud?view=calorias.
   const [searchParams] = useSearchParams();
   const esCalorias = searchParams.get("view") === "calorias";
   const [data, setData] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [periodo, setPeriodo] = useState("semana"); // dia | semana | mes | anio
   const [pesoInput, setPesoInput] = useState("");
   const [formFranja, setFormFranja] = useState(null); // franja abierta para agregar
   const [fNombre, setFNombre] = useState("");
@@ -234,6 +279,87 @@ export default function SaludPage() {
       },
     ];
   }, [data, ultimos7]);
+
+  // ----- Tendencia por período (D/S/M/A) -----
+  // Buckets: día = hoy; semana = 7 días; mes = 30 días; año = 12 meses.
+  const buckets = useMemo(() => {
+    const now = new Date();
+    if (periodo === "dia") return [{ label: "Hoy", dias: [dayKey(now)] }];
+    if (periodo === "anio") {
+      const arr = [];
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const y = d.getFullYear();
+        const m = d.getMonth();
+        const dim = new Date(y, m + 1, 0).getDate();
+        const dias = [];
+        for (let dd = 1; dd <= dim; dd++) dias.push(`${y}-${pad(m + 1)}-${pad(dd)}`);
+        arr.push({ label: MESES[m], dias });
+      }
+      return arr;
+    }
+    const n = periodo === "mes" ? 30 : 7;
+    const arr = [];
+    for (let i = n - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      arr.push({
+        label: periodo === "semana" ? DIAS_SEMANA[d.getDay()] : String(d.getDate()),
+        dias: [dayKey(d)],
+      });
+    }
+    return arr;
+  }, [periodo]);
+
+  // Construye {points, promedio} para una métrica diaria (getVal por clave de día).
+  const construirTendencia = (getVal) => {
+    const points = buckets.map((b) => {
+      const vals = b.dias.map(getVal).filter((v) => v > 0);
+      // día/semana/mes: 1 día por bucket. año: promedio por día activo del mes.
+      const value = vals.length ? Math.round(vals.reduce((a, c) => a + c, 0) / vals.length) : 0;
+      return { label: b.label, value };
+    });
+    const activos = points.filter((p) => p.value > 0);
+    const promedio = activos.length
+      ? Math.round(activos.reduce((a, c) => a + c.value, 0) / activos.length)
+      : 0;
+    return { points, promedio };
+  };
+
+  const kcalDiaFn = (k) => (data?.comidas?.[k] || []).reduce((a, c) => a + (Number(c.kcal) || 0), 0);
+  const tendPasos = useMemo(() => construirTendencia((k) => Number(data?.pasos?.[k]) || 0), [buckets, data]); // eslint-disable-line react-hooks/exhaustive-deps
+  const tendKcal = useMemo(() => construirTendencia(kcalDiaFn), [buckets, data]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const NOMBRE_PERIODO = { dia: "Día", semana: "Semana", mes: "Mes", anio: "Año" };
+  const renderTendencia = (titulo, tend, color, unidad) => (
+    <section className={`${style.card} ${style.cardAncha}`}>
+      <div className={style.cardHead}>
+        <h2>{titulo}</h2>
+        <div className={style.periodoSel}>
+          {PERIODOS.map((p) => (
+            <button
+              key={p.key}
+              type="button"
+              className={periodo === p.key ? style.periodoOn : style.periodoOff}
+              onClick={() => setPeriodo(p.key)}
+              title={NOMBRE_PERIODO[p.key]}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className={style.tendResumen}>
+        <strong style={{ color }}>{tend.promedio.toLocaleString("es-AR")}</strong>
+        <span>{periodo === "dia" ? unidad : `${unidad} · promedio`}</span>
+      </div>
+      {periodo === "dia" ? (
+        <p className={style.hint}>Elegí Semana, Mes o Año para ver la tendencia.</p>
+      ) : (
+        <LineChart points={tend.points} color={color} unidad={unidad} />
+      )}
+    </section>
+  );
 
   // Autocompletado: tu historial (promedio de registros previos) + base local.
   const historial = useMemo(() => {
@@ -372,6 +498,7 @@ export default function SaludPage() {
       <div className={style.grid}>
         {!esCalorias ? (
         <>
+        {renderTendencia("Tendencia de pasos", tendPasos, "var(--color-verde, #5dc72d)", "pasos")}
         {/* Pasos + Caminatas apilados en la misma columna (ambos del teléfono) */}
         <div className={style.colStack}>
         <section className={style.card}>
@@ -516,6 +643,7 @@ export default function SaludPage() {
         </>
         ) : (
         <>
+        {renderTendencia("Tendencia de calorías", tendKcal, "#e0703f", "kcal")}
         <div className={style.calWrap}>
         {/* Nutrición + comidas (editable) */}
         <section className={`${style.card} ${style.calMain}`}>
