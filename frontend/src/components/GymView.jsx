@@ -188,7 +188,7 @@ function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, bo
         <Ejercicio key={ej.id} ej={ej} onSets={(sets) => editarSets(ej.id, sets)} onBorrar={() => borrarEjercicio(ej.id)} />
       ))}
 
-      {dia.length === 0 ? <p className={style.vacio}>No registraste ejercicios este día. Agregá el primero 👇</p> : null}
+      {dia.length === 0 ? <p className={style.vacio}>Todavía no registraste ejercicios este día.</p> : null}
 
       {agregando ? (
         <div className={style.addBox}>
