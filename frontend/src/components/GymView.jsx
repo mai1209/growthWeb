@@ -45,7 +45,11 @@ export default function GymView() {
   useEffect(() => {
     gymService
       .get()
-      .then(({ data: d }) => setData({ ejercicios: d?.ejercicios || [], rutinas: d?.rutinas || [], entrenos: d?.entrenos || {} }))
+      .then(({ data: d }) => {
+        setData({ ejercicios: d?.ejercicios || [], rutinas: d?.rutinas || [], entrenos: d?.entrenos || {} });
+        // Sin rutinas todavía → arrancamos en el paso 1 (creá tu rutina).
+        if (!(d?.rutinas || []).length) setTab("rutinas");
+      })
       .catch(() => {})
       .finally(() => setCargando(false));
   }, []);
@@ -122,8 +126,8 @@ export default function GymView() {
         </h1>
         <div className={style.tabs}>
           {[
-            { k: "registro", label: "Entrenar" },
-            { k: "rutinas", label: "Mis rutinas" },
+            { k: "rutinas", label: "1 · Creá tu rutina" },
+            { k: "registro", label: "2 · Entrenar" },
             { k: "progreso", label: "Progreso" },
           ].map((t) => (
             <button key={t.k} type="button" className={tab === t.k ? style.tabOn : style.tabOff} onClick={() => setTab(t.k)}>
@@ -144,6 +148,7 @@ export default function GymView() {
           editarSets={editarSets}
           rutinas={data.rutinas}
           usarRutina={usarRutina}
+          entrenos={data.entrenos}
         />
       ) : tab === "rutinas" ? (
         <Rutinas rutinas={data.rutinas} guardarRutinas={guardarRutinas} buscarEjercicios={buscarEjercicios} />
@@ -154,8 +159,65 @@ export default function GymView() {
   );
 }
 
+/* ============================ Calendario ============================ */
+// Mini calendario: los días con entrenamiento llevan un puntito; tocás un día
+// y abajo se muestra (o completás) el entreno de ese día.
+function MiniCalendario({ fecha, setFecha, entrenos }) {
+  const [mes, setMes] = useState(() => {
+    const d = new Date(`${fecha}T00:00:00`);
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const hoy = hoyKey();
+  const y = mes.getFullYear();
+  const m = mes.getMonth();
+  const dim = new Date(y, m + 1, 0).getDate();
+  const primerDow = (new Date(y, m, 1).getDay() + 6) % 7; // lunes = 0
+  const celdas = [...Array(primerDow).fill(null), ...Array.from({ length: dim }, (_, i) => i + 1)];
+  const esMesActual = hoy.startsWith(`${y}-${pad(m + 1)}`);
+
+  return (
+    <div className={style.cal}>
+      <div className={style.calHead}>
+        <button type="button" onClick={() => setMes(new Date(y, m - 1, 1))} aria-label="Mes anterior">
+          <FiChevronLeft />
+        </button>
+        <span>{mes.toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</span>
+        <button type="button" disabled={esMesActual} onClick={() => setMes(new Date(y, m + 1, 1))} aria-label="Mes siguiente">
+          <FiChevronRight />
+        </button>
+      </div>
+      <div className={style.calGrid}>
+        {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
+          <span key={`d${i}`} className={style.calDow}>
+            {d}
+          </span>
+        ))}
+        {celdas.map((d, i) => {
+          if (d == null) return <span key={i} />;
+          const k = `${y}-${pad(m + 1)}-${pad(d)}`;
+          const tiene = (entrenos[k] || []).length > 0;
+          const sel = k === fecha;
+          const futuro = k > hoy;
+          return (
+            <button
+              key={i}
+              type="button"
+              disabled={futuro}
+              className={`${style.calDia} ${sel ? style.calDiaSel : ""}`}
+              onClick={() => setFecha(k)}
+            >
+              {d}
+              {tiene ? <span className={style.calDot} /> : null}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ============================ Registro ============================ */
-function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, borrarEjercicio, editarSets, rutinas, usarRutina }) {
+function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, borrarEjercicio, editarSets, rutinas, usarRutina, entrenos }) {
   const [agregando, setAgregando] = useState(false);
   const [q, setQ] = useState("");
   const [eligiendoRutina, setEligiendoRutina] = useState(false);
@@ -166,16 +228,10 @@ function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, bo
 
   return (
     <>
+      <MiniCalendario fecha={fecha} setFecha={setFecha} entrenos={entrenos} />
+
       <div className={style.dayBar}>
-        <div className={style.dateNav}>
-          <button type="button" onClick={() => setFecha(addDays(fecha, -1))} aria-label="Día anterior">
-            <FiChevronLeft />
-          </button>
-          <span>{fechaLabel(fecha)}</span>
-          <button type="button" disabled={fecha >= hoyKey()} onClick={() => fecha < hoyKey() && setFecha(addDays(fecha, 1))} aria-label="Día siguiente">
-            <FiChevronRight />
-          </button>
-        </div>
+        <span className={style.diaSel}>{fechaLabel(fecha)}</span>
         {dia.length ? (
           <span className={style.resumenDia}>{totalSeries} series hechas</span>
         ) : null}
@@ -497,25 +553,28 @@ function Progreso({ entrenos }) {
   const [sel, setSel] = useState("");
   const elegido = sel || ejercicios[0] || "";
 
-  // Peso máximo levantado por sesión (día) para el ejercicio elegido.
-  const serie = useMemo(() => {
+  // Series por sesión para el ejercicio elegido.
+  const porSesion = useMemo(() => {
     if (!elegido) return [];
     const dias = Object.keys(entrenos || {}).sort();
     const out = [];
     dias.forEach((k) => {
       const ej = (entrenos[k] || []).find((e) => norm(e.nombre) === norm(elegido));
       if (!ej) return;
-      const best = Math.max(0, ...ej.sets.map((s) => Number(s.kg) || 0));
-      if (best > 0) out.push({ fecha: k, valor: best });
+      const maxKg = Math.max(0, ...ej.sets.map((s) => Number(s.kg) || 0));
+      const reps = ej.sets.reduce((a, s) => a + (Number(s.reps) || 0), 0);
+      if (maxKg > 0 || reps > 0) out.push({ fecha: k, maxKg, reps });
     });
     return out.slice(-20);
   }, [entrenos, elegido]);
 
-  const max = Math.max(...serie.map((p) => p.valor), 1);
-  const ultimo = serie.length ? serie[serie.length - 1].valor : 0;
-  const anterior = serie.length >= 2 ? serie[serie.length - 2].valor : null;
+  const serieKg = porSesion.filter((p) => p.maxKg > 0).map((p) => ({ label: fmtCorta(p.fecha), value: p.maxKg }));
+  const serieReps = porSesion.filter((p) => p.reps > 0).map((p) => ({ label: fmtCorta(p.fecha), value: p.reps }));
+
+  const ultimo = serieKg.length ? serieKg[serieKg.length - 1].value : 0;
+  const anterior = serieKg.length >= 2 ? serieKg[serieKg.length - 2].value : null;
   const delta = anterior != null ? ultimo - anterior : null;
-  const record = serie.length ? Math.max(...serie.map((p) => p.valor)) : 0;
+  const record = serieKg.length ? Math.max(...serieKg.map((p) => p.value)) : 0;
 
   if (!ejercicios.length) {
     return <p className={style.vacio}>Cuando registres entrenamientos, acá vas a ver tu progreso por ejercicio.</p>;
@@ -548,27 +607,103 @@ function Progreso({ entrenos }) {
             </span>
           </div>
           <div className={style.progresoDer}>
-            <span className={style.progresoSesiones}>{serie.length} sesiones</span>
+            <span className={style.progresoSesiones}>{porSesion.length} sesiones</span>
             {record > 0 ? <span className={style.progresoRecord}>🏆 récord: {record} kg</span> : null}
           </div>
         </div>
 
-        {serie.length >= 2 ? (
-          <svg className={style.progresoSvg} viewBox="0 0 100 60" preserveAspectRatio="none">
-            <polyline
-              points={serie.map((p, i) => `${(i / (serie.length - 1)) * 100},${54 - (p.valor / max) * 48}`).join(" ")}
-              fill="none"
-              stroke="var(--color-verde, #5dc72d)"
-              strokeWidth="2.5"
-              vectorEffect="non-scaling-stroke"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
-          </svg>
+        {serieKg.length >= 2 ? (
+          <ChartLinea titulo="Peso máximo por sesión" points={serieKg} unidad="kg" color="var(--color-verde, #5dc72d)" />
         ) : (
           <p className={style.hint}>Registrá al menos 2 sesiones de este ejercicio para ver la curva.</p>
         )}
       </section>
+
+      {serieReps.length >= 2 ? (
+        <section className={style.progresoCard}>
+          <ChartLinea titulo="Repeticiones totales por sesión" points={serieReps} unidad="reps" color="#3aa0e0" />
+        </section>
+      ) : null}
     </>
+  );
+}
+
+// Fecha corta para etiquetas del gráfico: "3/8".
+function fmtCorta(key) {
+  const d = new Date(`${key}T00:00:00`);
+  return `${d.getDate()}/${d.getMonth() + 1}`;
+}
+
+// Path SVG suavizado (curvas), igual que en Salud.
+function smoothPath(pts) {
+  if (pts.length < 2) return pts.length ? `M ${pts[0][0]} ${pts[0][1]}` : "";
+  let d = `M ${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] || p2;
+    d += ` C ${p1[0] + (p2[0] - p0[0]) / 6} ${p1[1] + (p2[1] - p0[1]) / 6} ${p2[0] - (p3[0] - p1[0]) / 6} ${p2[1] - (p3[1] - p1[1]) / 6} ${p2[0]} ${p2[1]}`;
+  }
+  return d;
+}
+
+// Gráfico de línea suavizado con tooltip (mismo estilo que Movilidad/Calorías).
+function ChartLinea({ titulo, points, unidad, color }) {
+  const [hover, setHover] = useState(null);
+  const [pinned, setPinned] = useState(null);
+  const W = 100;
+  const H = 110;
+  const padTop = 12;
+  const padBottom = 8;
+  const n = points.length;
+  const max = Math.max(...points.map((p) => p.value), 1);
+  const innerH = H - padTop - padBottom;
+  const xy = points.map((p, i) => [n <= 1 ? W / 2 : (i / (n - 1)) * W, padTop + innerH - (p.value / max) * innerH]);
+  const line = smoothPath(xy);
+  const area = n >= 2 ? `${line} L ${xy[n - 1][0]} ${H} L ${xy[0][0]} ${H} Z` : "";
+  const step = n > 8 ? Math.ceil(n / 5) : 1;
+
+  const idxFrom = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const rel = Math.max(0, Math.min(1, cx / rect.width));
+    return n <= 1 ? 0 : Math.round(rel * (n - 1));
+  };
+  const sel = hover != null ? hover : pinned != null ? pinned : n - 1;
+  const h = sel != null && points[sel] ? { p: points[sel], x: xy[sel][0], y: xy[sel][1] } : null;
+
+  return (
+    <div>
+      <p className={style.chartTitulo}>{titulo}</p>
+      <div
+        className={style.chartWrap}
+        onMouseMove={(e) => setHover(idxFrom(e))}
+        onMouseLeave={() => setHover(null)}
+        onClick={(e) => {
+          const i = idxFrom(e);
+          setPinned((prev) => (prev === i ? null : i));
+        }}
+      >
+        <svg className={style.chartSvg} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img">
+          {area ? <path d={area} fill={color} opacity="0.13" /> : null}
+          <path d={line} fill="none" stroke={color} strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
+        </svg>
+        {h ? (
+          <>
+            <div className={style.chartGuide} style={{ left: `${h.x}%` }} />
+            <div className={style.chartDot} style={{ left: `${h.x}%`, top: `${h.y}px`, background: color }} />
+            <div className={style.chartTip} style={{ left: `${h.x}%`, borderColor: color }}>
+              <strong>{h.p.value.toLocaleString("es-AR")}</strong> {unidad} · {h.p.label}
+            </div>
+          </>
+        ) : null}
+        <div className={style.chartLabels}>
+          {points.map((p, i) => (
+            <span key={i}>{i % step === 0 || i === n - 1 ? p.label : ""}</span>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

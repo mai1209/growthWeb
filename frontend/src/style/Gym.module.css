@@ -58,6 +58,108 @@
   color: #06210a;
 }
 
+/* ---- Calendario ---- */
+.cal {
+  border: 1px solid var(--border-color);
+  background: var(--surface-card, rgba(255, 255, 255, 0.03));
+  border-radius: 16px;
+  padding: 0.8rem 0.9rem;
+}
+
+.calHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.calHead span {
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.calHead button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: inherit;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.calHead button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.calGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.2rem;
+}
+
+.calDow {
+  text-align: center;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: var(--color-muted);
+  padding: 0.2rem 0;
+}
+
+.calDia {
+  position: relative;
+  aspect-ratio: 1;
+  max-height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.calDia:hover:not(:disabled) {
+  background: var(--surface-input, rgba(255, 255, 255, 0.06));
+}
+
+.calDia:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.calDiaSel {
+  background: var(--color-verde, #5dc72d) !important;
+  color: #06210a;
+}
+
+.calDot {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-verde, #5dc72d);
+}
+
+.calDiaSel .calDot {
+  background: #06210a;
+}
+
+.diaSel {
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
 /* ---- Barra de día ---- */
 .dayBar {
   display: flex;
@@ -509,4 +611,79 @@
   height: 120px;
   display: block;
   margin-top: 0.4rem;
+}
+
+/* ---- Gráficos de línea (mismo estilo que Salud) ---- */
+.chartTitulo {
+  margin: 0 0 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--color-muted);
+}
+
+.chartWrap {
+  position: relative;
+  cursor: pointer;
+}
+
+.chartSvg {
+  width: 100%;
+  height: 110px;
+  display: block;
+}
+
+.chartLabels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.3rem;
+}
+
+.chartLabels span {
+  flex: 1;
+  text-align: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.chartGuide {
+  position: absolute;
+  top: 0;
+  height: 110px;
+  width: 1px;
+  background: var(--border-color);
+  transform: translateX(-0.5px);
+  pointer-events: none;
+}
+
+.chartDot {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 3px var(--surface-card, rgba(20, 24, 28, 0.9));
+  pointer-events: none;
+}
+
+.chartTip {
+  position: absolute;
+  top: -4px;
+  transform: translate(-50%, -100%);
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid;
+  background: var(--surface-card, #14181c);
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  z-index: 5;
+}
+
+.chartTip strong {
+  color: inherit;
+  font-size: 0.82rem;
 }
