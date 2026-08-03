@@ -222,6 +222,31 @@
   font-weight: 700;
 }
 
+.dayBarDer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.vaciarBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.vaciarBtn:hover {
+  color: #e66565;
+  border-color: rgba(230, 101, 101, 0.5);
+}
+
 /* ---- Ejercicio (registro) ---- */
 .ejercicio,
 .rutinaCard,
@@ -665,6 +690,15 @@
   color: var(--color-muted);
   font-size: 0.78rem;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Copa del récord: blanca en tema oscuro (sigue el color del texto en claro). */
+.trofeo {
+  color: var(--color-text, #fff);
+  font-size: 1rem;
 }
 
 .deltaUp,

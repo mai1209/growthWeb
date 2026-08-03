@@ -8,7 +8,7 @@ import {
   FiEdit2,
   FiX,
 } from "react-icons/fi";
-import { TbBarbell } from "react-icons/tb";
+import { TbBarbell, TbTrophy } from "react-icons/tb";
 import { gymService } from "../api";
 import { EJERCICIOS_BASE } from "../utils/ejerciciosBase";
 import style from "../style/Gym.module.css";
@@ -151,6 +151,7 @@ export default function GymView() {
             rutinas={data.rutinas}
             usarRutina={usarRutina}
             entrenos={data.entrenos}
+            vaciarDia={() => guardarDia([])}
           />
         ) : tab === "rutinas" ? (
           <Rutinas rutinas={data.rutinas} guardarRutinas={guardarRutinas} buscarEjercicios={buscarEjercicios} />
@@ -218,7 +219,7 @@ function MiniCalendario({ fecha, setFecha, entrenos }) {
 }
 
 /* ============================ Registro ============================ */
-function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, borrarEjercicio, editarSets, rutinas, usarRutina, entrenos }) {
+function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, borrarEjercicio, editarSets, rutinas, usarRutina, entrenos, vaciarDia }) {
   const [agregando, setAgregando] = useState(false);
   const [q, setQ] = useState("");
   const [eligiendoRutina, setEligiendoRutina] = useState(false);
@@ -235,8 +236,22 @@ function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, bo
       <div className={style.dayBar}>
         <span className={style.diaSel}>{fechaLabel(fecha)}</span>
         {dia.length ? (
-          <span className={style.resumenDia}>
-            {esFuturo ? `${dia.length} ejercicios planificados` : `${totalSeries} series hechas`}
+          <span className={style.dayBarDer}>
+            <span className={style.resumenDia}>
+              {esFuturo ? `${dia.length} ejercicios planificados` : `${totalSeries} series hechas`}
+            </span>
+            {/* Si asignaste la rutina equivocada: vaciás el día y elegís otra. */}
+            <button
+              type="button"
+              className={style.vaciarBtn}
+              onClick={() => {
+                if (window.confirm("¿Vaciar este día? Se borran los ejercicios cargados y podés asignar otra rutina.")) {
+                  vaciarDia();
+                }
+              }}
+            >
+              <FiTrash2 /> Vaciar día
+            </button>
           </span>
         ) : null}
       </div>
@@ -641,10 +656,12 @@ function Progreso({ entrenos }) {
   const delta = sesionesKg.length >= 2 ? sesionesKg[sesionesKg.length - 1] - sesionesKg[sesionesKg.length - 2] : null;
 
   const grande = !points.length ? 0 : metrica === "kg" ? Math.max(...points.map((p) => p.value)) : points.reduce((a, p) => a + p.value, 0);
+  // "Período" = el rango elegido con S/M/A, dicho con todas las letras.
+  const RANGO = { semana: "los últimos 7 días", mes: "los últimos 30 días", anio: "los últimos 12 meses" };
   const M_INFO = {
-    kg: { unidad: "kg", texto: "máximo del período", color: "var(--color-verde, #5dc72d)" },
-    reps: { unidad: "reps", texto: "total del período", color: "#3aa0e0" },
-    series: { unidad: "series", texto: "total del período", color: "#d6a92e" },
+    kg: { unidad: "kg", texto: `máximo de ${RANGO[periodo]}`, color: "var(--color-verde, #5dc72d)" },
+    reps: { unidad: "reps", texto: `total de ${RANGO[periodo]}`, color: "#3aa0e0" },
+    series: { unidad: "series", texto: `total de ${RANGO[periodo]}`, color: "#d6a92e" },
   };
   const info = M_INFO[metrica];
 
@@ -705,17 +722,26 @@ function Progreso({ entrenos }) {
           </div>
           <div className={style.progresoDer}>
             <span className={style.progresoSesiones}>
-              {sesiones} {sesiones === 1 ? "sesión" : "sesiones"} en el período
+              {sesiones} {sesiones === 1 ? "sesión" : "sesiones"} en {RANGO[periodo]}
             </span>
-            {record > 0 ? <span className={style.progresoRecord}>🏆 récord: {record} kg</span> : null}
+            {record > 0 ? (
+              <span className={style.progresoRecord}>
+                <TbTrophy className={style.trofeo} /> récord: {record} kg
+              </span>
+            ) : null}
           </div>
         </div>
 
-        {points.length >= 2 ? (
-          <ChartLinea points={points} unidad={info.unidad} color={info.color} />
+        {points.length >= 1 ? (
+          <>
+            <ChartLinea points={points} unidad={info.unidad} color={info.color} />
+            {points.length === 1 ? (
+              <p className={style.hint}>Cada punto es una sesión: a medida que entrenes más veces, se va dibujando la curva.</p>
+            ) : null}
+          </>
         ) : (
           <p className={style.hint}>
-            Entrená este ejercicio al menos 2 veces en el período para ver la curva. Probá cambiando a M o A arriba a la derecha.
+            No entrenaste este ejercicio en {RANGO[periodo]}. Probá con M o A arriba a la derecha para ver más atrás.
           </p>
         )}
       </section>
