@@ -106,7 +106,8 @@ export default function GymView() {
       id: uid(),
       nombre: e.nombre,
       grupo: e.grupo || "",
-      sets: Array.from({ length: Math.max(1, e.series || 1) }, () => ({ kg: 0, reps: e.reps || 0, hecha: false })),
+      // El peso de la rutina viene precargado; en el entrenamiento lo ajustás si hace falta.
+      sets: Array.from({ length: Math.max(1, e.series || 1) }, () => ({ kg: e.kg || 0, reps: e.reps || 0, hecha: false })),
     }));
     guardarDia([...dia, ...nuevos]);
   };
@@ -394,6 +395,7 @@ function Rutinas({ rutinas, guardarRutinas, buscarEjercicios }) {
                 <span>{e.nombre}</span>
                 <span className={style.rutinaEjMeta}>
                   {e.series || 0} × {e.reps || 0}
+                  {e.kg ? ` · ${e.kg} kg` : ""}
                 </span>
               </li>
             ))}
@@ -412,7 +414,7 @@ function RutinaEditor({ rutina, onGuardar, onCancelar, buscarEjercicios }) {
   const sugerencias = q.length >= 1 ? buscarEjercicios(q) : [];
 
   const addEj = (ej) => {
-    setEjercicios([...ejercicios, { nombre: ej.nombre, grupo: ej.grupo || "", series: 3, reps: 10 }]);
+    setEjercicios([...ejercicios, { nombre: ej.nombre, grupo: ej.grupo || "", series: 3, reps: 10, kg: 0 }]);
     setQ("");
   };
   const setEj = (i, campo, val) => setEjercicios(ejercicios.map((e, j) => (j === i ? { ...e, [campo]: val } : e)));
@@ -430,12 +432,23 @@ function RutinaEditor({ rutina, onGuardar, onCancelar, buscarEjercicios }) {
         ))}
       </select>
 
+      {ejercicios.length ? (
+        <div className={style.rutinaEjEditHead}>
+          <span />
+          <span>Series</span>
+          <span />
+          <span>Reps</span>
+          <span>Kg</span>
+          <span />
+        </div>
+      ) : null}
       {ejercicios.map((e, i) => (
         <div key={i} className={style.rutinaEjEdit}>
           <span className={style.rutinaEjNombre}>{e.nombre}</span>
           <input type="number" min="1" value={e.series || ""} onChange={(ev) => setEj(i, "series", Number(ev.target.value) || 0)} title="Series" />
           <span>×</span>
           <input type="number" min="1" value={e.reps || ""} onChange={(ev) => setEj(i, "reps", Number(ev.target.value) || 0)} title="Reps" />
+          <input type="number" min="0" value={e.kg || ""} onChange={(ev) => setEj(i, "kg", Number(ev.target.value) || 0)} title="Peso (kg)" placeholder="kg" />
           <button type="button" className={style.iconBtnSm} onClick={() => delEj(i)}>
             <FiX />
           </button>
@@ -444,7 +457,7 @@ function RutinaEditor({ rutina, onGuardar, onCancelar, buscarEjercicios }) {
 
       <div className={style.addBox}>
         <input className={style.addInput} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Agregar ejercicio…" />
-        {sugerencias.length ? (
+        {q.trim() || sugerencias.length ? (
           <div className={style.sugList}>
             {sugerencias.map((s, i) => (
               <button key={i} type="button" className={style.sugRow} onClick={() => addEj(s)}>
@@ -454,7 +467,7 @@ function RutinaEditor({ rutina, onGuardar, onCancelar, buscarEjercicios }) {
             ))}
             {q.trim() && !sugerencias.some((s) => norm(s.nombre) === norm(q)) ? (
               <button type="button" className={style.sugRow} onClick={() => addEj({ nombre: q.trim(), grupo: "" })}>
-                ➕ Crear "{q.trim()}"
+                <span className={style.sugNombre}>➕ Crear "{q.trim()}"</span>
               </button>
             ) : null}
           </div>

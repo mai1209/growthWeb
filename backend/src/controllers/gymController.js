@@ -56,6 +56,7 @@ const limpiarRutinas = (arr) =>
       grupo: str(e?.grupo, 40),
       series: num(e?.series),
       reps: num(e?.reps),
+      kg: num(e?.kg),
     })),
   }));
 

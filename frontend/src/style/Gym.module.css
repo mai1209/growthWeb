@@ -401,13 +401,26 @@
   font-weight: 700;
   font-size: 0.8rem;
 }
-.rutinaEjEdit {
-  display: flex;
+.rutinaEjEdit,
+.rutinaEjEditHead {
+  display: grid;
+  grid-template-columns: 1fr 56px 0.8rem 56px 56px 32px;
   align-items: center;
   gap: 0.4rem;
 }
+.rutinaEjEditHead {
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
 .rutinaEjNombre {
-  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.88rem;
   font-weight: 600;
 }
@@ -420,6 +433,10 @@
   color: inherit;
   text-align: center;
   font-weight: 700;
+}
+.rutinaEjEdit > span:not(.rutinaEjNombre) {
+  text-align: center;
+  color: var(--color-muted);
 }
 .editorActions {
   display: flex;
