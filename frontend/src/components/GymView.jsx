@@ -138,24 +138,26 @@ export default function GymView() {
         </div>
       </header>
 
-      {tab === "registro" ? (
-        <Registro
-          dia={dia}
-          fecha={fecha}
-          setFecha={setFecha}
-          buscarEjercicios={buscarEjercicios}
-          agregarEjercicio={agregarEjercicio}
-          borrarEjercicio={borrarEjercicio}
-          editarSets={editarSets}
-          rutinas={data.rutinas}
-          usarRutina={usarRutina}
-          entrenos={data.entrenos}
-        />
-      ) : tab === "rutinas" ? (
-        <Rutinas rutinas={data.rutinas} guardarRutinas={guardarRutinas} buscarEjercicios={buscarEjercicios} />
-      ) : (
-        <Progreso entrenos={data.entrenos} />
-      )}
+      <div className={style.inner}>
+        {tab === "registro" ? (
+          <Registro
+            dia={dia}
+            fecha={fecha}
+            setFecha={setFecha}
+            buscarEjercicios={buscarEjercicios}
+            agregarEjercicio={agregarEjercicio}
+            borrarEjercicio={borrarEjercicio}
+            editarSets={editarSets}
+            rutinas={data.rutinas}
+            usarRutina={usarRutina}
+            entrenos={data.entrenos}
+          />
+        ) : tab === "rutinas" ? (
+          <Rutinas rutinas={data.rutinas} guardarRutinas={guardarRutinas} buscarEjercicios={buscarEjercicios} />
+        ) : (
+          <Progreso entrenos={data.entrenos} />
+        )}
+      </div>
     </div>
   );
 }
