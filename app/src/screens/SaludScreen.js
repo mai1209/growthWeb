@@ -769,8 +769,29 @@ export default function SaludScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={[]}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.kicker}>SALUD</Text>
-        <Text style={styles.title}>{esCalorias ? "Calorías diarias" : "Movilidad"}</Text>
+        <View style={styles.headerRow}>
+          <View style={styles.headerTitle}>
+            <Ionicons
+              name={esCalorias ? "flash-outline" : "pulse-outline"}
+              size={22}
+              color={colors.greenBright}
+            />
+            <Text style={styles.title}>{esCalorias ? "Calorías diarias" : "Movilidad"}</Text>
+          </View>
+          {!esCalorias ? (
+            <View style={styles.animoTop}>
+              {ANIMOS.map((a) => (
+                <TouchableOpacity
+                  key={a.level}
+                  style={[styles.animoTopBtn, animoHoy === a.level && styles.animoTopBtnOn]}
+                  onPress={() => setAnimo(a.level)}
+                >
+                  <Text style={styles.animoTopEmoji}>{a.emoji}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null}
+        </View>
 
         {esCalorias ? (
         <>
@@ -944,6 +965,28 @@ export default function SaludScreen() {
 
         {renderTendencia(METRICAS_MOV, metricaMov, setMetricaMov)}
 
+        {/* ---- Caminata (GPS) ---- */}
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <View style={styles.cardHeadLeft}>
+              <Ionicons name="navigate-outline" size={18} color={colors.greenDark} />
+              <Text style={styles.cardTitle}>Caminata</Text>
+            </View>
+          </View>
+          {ultimaCaminata ? (
+            <Text style={styles.ringSub}>
+              Última: {(ultimaCaminata.metros / 1000).toFixed(2)} km ·{" "}
+              {Math.floor(ultimaCaminata.secs / 60)} min
+            </Text>
+          ) : (
+            <Text style={styles.ringSub}>Registrá tu primera caminata con GPS.</Text>
+          )}
+          <TouchableOpacity style={styles.caminataBtn} onPress={() => setCaminataOpen(true)}>
+            <Ionicons name="play" size={16} color="#06210a" />
+            <Text style={styles.caminataBtnText}>Iniciar caminata</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* ---- Peso ---- */}
         <View style={styles.card}>
           <View style={styles.cardHead}>
@@ -1026,52 +1069,6 @@ export default function SaludScreen() {
           ) : null}
         </View>
 
-        {/* ---- Ánimo ---- */}
-        <View style={styles.card}>
-          <View style={styles.cardHead}>
-            <View style={styles.cardHeadLeft}>
-              <Ionicons name="happy-outline" size={18} color="#d6a92e" />
-              <Text style={styles.cardTitle}>¿Cómo te sentís hoy?</Text>
-            </View>
-          </View>
-          <View style={styles.animoRow}>
-            {ANIMOS.map((a) => (
-              <TouchableOpacity
-                key={a.level}
-                style={[styles.animoBtn, animoHoy === a.level && styles.animoBtnOn]}
-                onPress={() => setAnimo(a.level)}
-              >
-                <Text style={styles.animoEmoji}>{a.emoji}</Text>
-                <Text style={[styles.animoLabel, animoHoy === a.level && styles.animoLabelOn]}>
-                  {a.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* ---- Caminata (GPS) ---- */}
-        <View style={styles.card}>
-          <View style={styles.cardHead}>
-            <View style={styles.cardHeadLeft}>
-              <Ionicons name="navigate-outline" size={18} color={colors.greenDark} />
-              <Text style={styles.cardTitle}>Caminata</Text>
-            </View>
-          </View>
-          {ultimaCaminata ? (
-            <Text style={styles.ringSub}>
-              Última: {(ultimaCaminata.metros / 1000).toFixed(2)} km ·{" "}
-              {Math.floor(ultimaCaminata.secs / 60)} min
-            </Text>
-          ) : (
-            <Text style={styles.ringSub}>Registrá tu primera caminata con GPS.</Text>
-          )}
-          <TouchableOpacity style={styles.caminataBtn} onPress={() => setCaminataOpen(true)}>
-            <Ionicons name="play" size={16} color="#06210a" />
-            <Text style={styles.caminataBtnText}>Iniciar caminata</Text>
-          </TouchableOpacity>
-        </View>
-
         </>
         )}
       </ScrollView>
@@ -1144,7 +1141,28 @@ const makeStyles = (colors) =>
     safe: { flex: 1, backgroundColor: colors.bg },
     scroll: { padding: 16, paddingTop: 2, paddingBottom: 100, gap: 12 },
     kicker: { color: colors.greenDark, fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
-    title: { color: colors.text, fontSize: 22, fontWeight: "800", marginBottom: 4 },
+    title: { color: colors.text, fontSize: 22, fontWeight: "800" },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+      marginBottom: 6,
+      flexWrap: "wrap",
+    },
+    headerTitle: { flexDirection: "row", alignItems: "center", gap: 8 },
+    animoTop: { flexDirection: "row", gap: 4 },
+    animoTopBtn: {
+      width: 34,
+      height: 34,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    animoTopBtnOn: { borderColor: "#d6a92e", backgroundColor: "rgba(214,169,46,0.16)" },
+    animoTopEmoji: { fontSize: 18 },
 
     card: {
       backgroundColor: colors.card,

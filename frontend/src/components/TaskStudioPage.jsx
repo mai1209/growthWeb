@@ -1745,7 +1745,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
               <div className={style.notesLayout}>
                 <div className={style.notesLeftCol}>
                   <div className={style.notesSideTitle}>
-                    <p className={style.cardKicker}>Notas</p>
                     <h2 className={style.listTitle}>
                       Tus notas
                       {boardTasks.length ? (

@@ -139,7 +139,6 @@ export default function NotasScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.kicker}>NOTAS</Text>
           <View style={styles.titleRow}>
             <Text style={styles.title}>Tus notas</Text>
             <View style={styles.countBadge}>

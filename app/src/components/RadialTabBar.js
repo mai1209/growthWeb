@@ -59,7 +59,7 @@ export const NAV_GROUPS = [
     short: "Salud",
     icon: "heart-outline",
     items: [
-      { label: "Movilidad", icon: "walk-outline", route: "Salud", params: { view: "movilidad" } },
+      { label: "Movilidad", icon: "pulse-outline", route: "Salud", params: { view: "movilidad" } },
       { label: "Calorías", icon: "flame-outline", route: "Salud", params: { view: "calorias" } },
     ],
   },

@@ -616,7 +616,6 @@ export default function SaludPage() {
     <div className={style.wrap}>
       <header className={style.header}>
         <div>
-          <p className={style.kicker}>SALUD</p>
           <h1>{esCalorias ? "Calorías diarias" : "Movilidad"}</h1>
           <p className={style.subtitulo}>
             {esCalorias
