@@ -315,6 +315,36 @@
   cursor: pointer;
 }
 
+/* ---- Hero "Entrenar" (día vacío) ---- */
+.entrenarHero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.entrenarBtn {
+  align-self: center;
+  padding: 0.9rem 2.6rem;
+  border-radius: 999px;
+  border: none;
+  background: var(--color-verde, #5dc72d);
+  color: #06210a;
+  font-weight: 900;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.entrenarBtn:hover {
+  filter: brightness(1.08);
+}
+
+.rutinaMenuTitulo {
+  margin: 0 0 0.2rem;
+  padding: 0 0.2rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
 /* ---- Menú de rutinas (registro) ---- */
 .rutinaMenu {
   display: flex;
@@ -427,6 +457,35 @@
   color: var(--color-muted);
   font-size: 0.82rem;
   font-weight: 700;
+}
+
+.progresoDer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.progresoRecord {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.deltaUp,
+.deltaDown {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  vertical-align: middle;
+}
+
+.deltaUp {
+  color: var(--color-verde, #5dc72d);
+}
+
+.deltaDown {
+  color: #e66565;
 }
 .progresoSvg {
   width: 100%;

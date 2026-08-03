@@ -34,8 +34,6 @@ const norm = (s) =>
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
 const uid = () => `${Date.now()}${Math.floor(Math.random() * 1000)}`;
-// Estimación de 1RM (Epley) para el gráfico de progreso.
-const est1RM = (kg, reps) => (reps > 0 ? Math.round(kg * (1 + reps / 30)) : kg);
 
 export default function GymView() {
   const [data, setData] = useState({ ejercicios: [], rutinas: [], entrenos: {} });
@@ -123,8 +121,8 @@ export default function GymView() {
         </h1>
         <div className={style.tabs}>
           {[
-            { k: "registro", label: "Registro" },
-            { k: "rutinas", label: "Rutinas" },
+            { k: "registro", label: "Entrenar" },
+            { k: "rutinas", label: "Mis rutinas" },
             { k: "progreso", label: "Progreso" },
           ].map((t) => (
             <button key={t.k} type="button" className={tab === t.k ? style.tabOn : style.tabOff} onClick={() => setTab(t.k)}>
@@ -159,11 +157,11 @@ export default function GymView() {
 function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, borrarEjercicio, editarSets, rutinas, usarRutina }) {
   const [agregando, setAgregando] = useState(false);
   const [q, setQ] = useState("");
-  const [rutinaOpen, setRutinaOpen] = useState(false);
+  const [eligiendoRutina, setEligiendoRutina] = useState(false);
   const sugerencias = agregando ? buscarEjercicios(q) : [];
 
   const totalSeries = dia.reduce((a, e) => a + e.sets.filter((s) => s.hecha).length, 0);
-  const volumen = dia.reduce((a, e) => a + e.sets.reduce((x, s) => x + (s.hecha ? s.kg * s.reps : 0), 0), 0);
+  const sinEntreno = dia.length === 0;
 
   return (
     <>
@@ -178,17 +176,62 @@ function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, bo
           </button>
         </div>
         {dia.length ? (
-          <span className={style.resumenDia}>
-            {totalSeries} series · {volumen.toLocaleString("es-AR")} kg de volumen
-          </span>
+          <span className={style.resumenDia}>{totalSeries} series hechas</span>
         ) : null}
       </div>
+
+      {/* Día vacío: el entrenamiento arranca eligiendo una rutina (o vacío). */}
+      {sinEntreno && !agregando ? (
+        <div className={style.entrenarHero}>
+          {!eligiendoRutina ? (
+            <>
+              <p className={style.vacio}>Todavía no entrenaste este día.</p>
+              <button type="button" className={style.entrenarBtn} onClick={() => setEligiendoRutina(true)}>
+                Entrenar
+              </button>
+            </>
+          ) : (
+            <div className={style.rutinaMenu}>
+              <p className={style.rutinaMenuTitulo}>¿Qué entrenás hoy?</p>
+              {rutinas.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  className={style.rutinaMenuItem}
+                  onClick={() => {
+                    usarRutina(r);
+                    setEligiendoRutina(false);
+                  }}
+                >
+                  <strong>{r.nombre}</strong>
+                  <span>
+                    {r.dia ? `${r.dia} · ` : ""}
+                    {(r.ejercicios || []).length} ej.
+                  </span>
+                </button>
+              ))}
+              <button
+                type="button"
+                className={style.rutinaMenuItem}
+                onClick={() => {
+                  setEligiendoRutina(false);
+                  setAgregando(true);
+                }}
+              >
+                <strong>Empezar vacío</strong>
+                <span>elegís los ejercicios uno a uno</span>
+              </button>
+              {rutinas.length === 0 ? (
+                <p className={style.hint}>Tip: en "Mis rutinas" podés armar tu rutina para cargarla de un toque.</p>
+              ) : null}
+            </div>
+          )}
+        </div>
+      ) : null}
 
       {dia.map((ej) => (
         <Ejercicio key={ej.id} ej={ej} onSets={(sets) => editarSets(ej.id, sets)} onBorrar={() => borrarEjercicio(ej.id)} />
       ))}
-
-      {dia.length === 0 ? <p className={style.vacio}>Todavía no registraste ejercicios este día.</p> : null}
 
       {agregando ? (
         <div className={style.addBox}>
@@ -227,35 +270,11 @@ function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, bo
             Cancelar
           </button>
         </div>
-      ) : (
+      ) : !sinEntreno ? (
         <div className={style.addActions}>
           <button type="button" className={style.addBtn} onClick={() => setAgregando(true)}>
             <FiPlus /> Agregar ejercicio
           </button>
-          {rutinas.length ? (
-            <button type="button" className={style.rutinaBtn} onClick={() => setRutinaOpen((o) => !o)}>
-              Desde una rutina
-            </button>
-          ) : null}
-        </div>
-      )}
-
-      {rutinaOpen ? (
-        <div className={style.rutinaMenu}>
-          {rutinas.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              className={style.rutinaMenuItem}
-              onClick={() => {
-                usarRutina(r);
-                setRutinaOpen(false);
-              }}
-            >
-              <strong>{r.nombre}</strong>
-              <span>{(r.ejercicios || []).length} ej.</span>
-            </button>
-          ))}
         </div>
       ) : null}
     </>
@@ -465,7 +484,7 @@ function Progreso({ entrenos }) {
   const [sel, setSel] = useState("");
   const elegido = sel || ejercicios[0] || "";
 
-  // Serie de mejor 1RM estimado por día para el ejercicio elegido.
+  // Peso máximo levantado por sesión (día) para el ejercicio elegido.
   const serie = useMemo(() => {
     if (!elegido) return [];
     const dias = Object.keys(entrenos || {}).sort();
@@ -473,14 +492,17 @@ function Progreso({ entrenos }) {
     dias.forEach((k) => {
       const ej = (entrenos[k] || []).find((e) => norm(e.nombre) === norm(elegido));
       if (!ej) return;
-      const best = Math.max(0, ...ej.sets.map((s) => est1RM(Number(s.kg) || 0, Number(s.reps) || 0)));
+      const best = Math.max(0, ...ej.sets.map((s) => Number(s.kg) || 0));
       if (best > 0) out.push({ fecha: k, valor: best });
     });
     return out.slice(-20);
   }, [entrenos, elegido]);
 
   const max = Math.max(...serie.map((p) => p.valor), 1);
-  const mejor = serie.length ? Math.max(...serie.map((p) => p.valor)) : 0;
+  const ultimo = serie.length ? serie[serie.length - 1].valor : 0;
+  const anterior = serie.length >= 2 ? serie[serie.length - 2].valor : null;
+  const delta = anterior != null ? ultimo - anterior : null;
+  const record = serie.length ? Math.max(...serie.map((p) => p.valor)) : 0;
 
   if (!ejercicios.length) {
     return <p className={style.vacio}>Cuando registres entrenamientos, acá vas a ver tu progreso por ejercicio.</p>;
@@ -499,10 +521,23 @@ function Progreso({ entrenos }) {
       <section className={style.progresoCard}>
         <div className={style.progresoTop}>
           <div>
-            <p className={style.progresoValor}>{mejor} kg</p>
-            <span className={style.progresoLabel}>1RM estimado (mejor)</span>
+            <p className={style.progresoValor}>
+              {ultimo} kg
+              {delta != null && delta !== 0 ? (
+                <span className={delta > 0 ? style.deltaUp : style.deltaDown}>
+                  {delta > 0 ? "▲" : "▼"} {Math.abs(delta)} kg
+                </span>
+              ) : null}
+            </p>
+            <span className={style.progresoLabel}>
+              peso máximo de tu última sesión
+              {delta != null ? " · vs la anterior" : ""}
+            </span>
           </div>
-          <span className={style.progresoSesiones}>{serie.length} sesiones</span>
+          <div className={style.progresoDer}>
+            <span className={style.progresoSesiones}>{serie.length} sesiones</span>
+            {record > 0 ? <span className={style.progresoRecord}>🏆 récord: {record} kg</span> : null}
+          </div>
         </div>
 
         {serie.length >= 2 ? (
