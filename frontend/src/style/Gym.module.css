@@ -1,0 +1,436 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  padding: 1.5rem clamp(1rem, 4vw, 2.5rem) 3rem;
+  max-width: 780px;
+}
+
+.cargando,
+.vacio,
+.hint {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+.vacio {
+  padding: 1.2rem 0;
+  text-align: center;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 0.2rem;
+}
+.tabOn,
+.tabOff {
+  padding: 0.4rem 0.9rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 800;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.tabOn {
+  background: var(--color-verde, #5dc72d);
+  color: #06210a;
+}
+
+/* ---- Barra de día ---- */
+.dayBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.dateNav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 0.2rem 0.35rem;
+}
+.dateNav span {
+  min-width: 6.5rem;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+.dateNav button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.dateNav button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.resumenDia {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+/* ---- Ejercicio (registro) ---- */
+.ejercicio,
+.rutinaCard,
+.progresoCard {
+  border: 1px solid var(--border-color);
+  background: var(--surface-card, rgba(255, 255, 255, 0.03));
+  border-radius: 16px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.ejHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.ejNombre {
+  font-size: 1rem;
+  font-weight: 800;
+}
+.ejGrupo {
+  margin-left: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-verde, #5dc72d);
+  background: rgba(93, 199, 45, 0.14);
+  border-radius: 999px;
+  padding: 0.12rem 0.5rem;
+}
+
+.setsHead {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 1fr 5rem;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 0.2rem;
+}
+.setRow {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 1fr 5rem;
+  gap: 0.5rem;
+  align-items: center;
+}
+.setRow input {
+  padding: 0.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
+  color: inherit;
+  font-weight: 700;
+  text-align: center;
+}
+.setRowOn input {
+  border-color: rgba(93, 199, 45, 0.5);
+  background: rgba(93, 199, 45, 0.08);
+}
+.setNum {
+  text-align: center;
+  font-weight: 800;
+  color: var(--color-muted);
+}
+.setActions {
+  display: flex;
+  gap: 0.3rem;
+  justify-content: flex-end;
+}
+.checkOn,
+.checkOff {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-muted);
+}
+.checkOn {
+  background: var(--color-verde, #5dc72d);
+  border-color: var(--color-verde, #5dc72d);
+  color: #06210a;
+}
+.iconBtn,
+.iconBtnSm {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+}
+.iconBtn {
+  width: 34px;
+  height: 34px;
+}
+.iconBtnSm {
+  width: 32px;
+  height: 32px;
+}
+.iconBtn:hover,
+.iconBtnSm:hover {
+  color: #e66565;
+}
+
+.addSet {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 10px;
+  border: 1px dashed var(--border-color);
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+/* ---- Agregar ejercicio ---- */
+.addActions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.addBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  border: none;
+  background: var(--color-verde, #5dc72d);
+  color: #06210a;
+  font-weight: 800;
+  cursor: pointer;
+}
+.rutinaBtn {
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-text);
+  font-weight: 800;
+  cursor: pointer;
+}
+.addBox {
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.addInput,
+.diaSelect {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
+  color: inherit;
+  font-size: 0.9rem;
+}
+.sugList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.sugRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.6rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.88rem;
+}
+.sugRow:hover {
+  background: var(--surface-input, rgba(255, 255, 255, 0.06));
+}
+.sugNombre {
+  font-weight: 600;
+}
+.sugGrupo {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+  font-weight: 700;
+}
+.addCancel {
+  align-self: flex-start;
+  padding: 0.5rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---- Menú de rutinas (registro) ---- */
+.rutinaMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 0.5rem;
+}
+.rutinaMenuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.7rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.rutinaMenuItem:hover {
+  background: var(--surface-input, rgba(255, 255, 255, 0.06));
+}
+.rutinaMenuItem span {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* ---- Rutinas (tab) ---- */
+.rutinaCardActions {
+  display: flex;
+  gap: 0.3rem;
+}
+.rutinaEjList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.rutinaEjList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
+  font-size: 0.88rem;
+}
+.rutinaEjMeta {
+  color: var(--color-muted);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+.rutinaEjEdit {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.rutinaEjNombre {
+  flex: 1;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.rutinaEjEdit input {
+  width: 56px;
+  padding: 0.45rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
+  color: inherit;
+  text-align: center;
+  font-weight: 700;
+}
+.editorActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.guardarBtn {
+  padding: 0.6rem 1.1rem;
+  border-radius: 12px;
+  border: none;
+  background: var(--color-verde, #5dc72d);
+  color: #06210a;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* ---- Progreso ---- */
+.progresoTop {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.progresoValor {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--color-verde, #5dc72d);
+}
+.progresoLabel {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.progresoSesiones {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.progresoSvg {
+  width: 100%;
+  height: 120px;
+  display: block;
+  margin-top: 0.4rem;
+}

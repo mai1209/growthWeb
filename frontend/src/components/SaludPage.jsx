@@ -15,6 +15,7 @@ import {
 import { saludService } from "../api";
 import { calcularPlan } from "../utils/nutricion";
 import { BASE_COMIDAS } from "../utils/comidasBase";
+import GymView from "./GymView";
 import style from "../style/Salud.module.css";
 
 // Normaliza para comparar sin acentos ni mayúsculas.
@@ -228,6 +229,7 @@ export default function SaludPage() {
   // El nav deep-linkea las dos vistas: /salud (Movilidad) y /salud?view=calorias.
   const [searchParams] = useSearchParams();
   const esCalorias = searchParams.get("view") === "calorias";
+  const esGym = searchParams.get("view") === "gym";
   const [data, setData] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [periodo, setPeriodo] = useState("semana"); // dia | semana | mes | anio
@@ -610,6 +612,7 @@ export default function SaludPage() {
     mutate({ comidas: { [fechaCal]: comidasDia.filter((c) => c.id !== id) } });
   };
 
+  if (esGym) return <GymView />;
   if (cargando) return <p className={style.cargando}>Cargando tu salud…</p>;
 
   return (

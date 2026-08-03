@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
 import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiWatch, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers, FiArrowRight, FiHeart, FiActivity, FiZap } from "react-icons/fi";
+import { TbBarbell } from "react-icons/tb";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { authService } from "../api";
@@ -48,6 +49,7 @@ const NAV_GROUPS = [
     items: [
       { to: "/salud", label: "Movilidad", icon: <FiActivity className={style.navIcon} /> },
       { to: "/salud?view=calorias", label: "Calorías diarias", icon: <FiZap className={style.navIcon} /> },
+      { to: "/salud?view=gym", label: "Gym", icon: <TbBarbell className={style.navIcon} /> },
     ],
   },
 ];
@@ -231,7 +233,10 @@ function Nav({
       return !v || v === "notes" || v === "calendar";
     }
     if (path === "/pomodoro") return current.get("panel") !== "tracker";
-    if (path === "/salud") return current.get("view") !== "calorias";
+    if (path === "/salud") {
+      const v = current.get("view");
+      return !v || v === "movilidad";
+    }
     return true;
   };
 
