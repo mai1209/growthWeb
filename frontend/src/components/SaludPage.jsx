@@ -53,6 +53,36 @@ const ANIMOS = [
 
 const pad = (n) => String(n).padStart(2, "0");
 const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const addDays = (key, delta) => {
+  const d = new Date(`${key}T00:00:00`);
+  d.setDate(d.getDate() + delta);
+  return dayKey(d);
+};
+const fechaLabel = (key, hoy) => {
+  if (key === hoy) return "Hoy";
+  if (key === addDays(hoy, -1)) return "Ayer";
+  return new Date(`${key}T00:00:00`).toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "short" });
+};
+
+// Navegador de día (‹ Ayer ›) para ver el historial. No deja pasar del día de hoy.
+function DateNav({ fecha, setFecha, hoy }) {
+  return (
+    <div className={style.dateNav}>
+      <button type="button" onClick={() => setFecha(addDays(fecha, -1))} aria-label="Día anterior">
+        ‹
+      </button>
+      <span>{fechaLabel(fecha, hoy)}</span>
+      <button
+        type="button"
+        onClick={() => fecha < hoy && setFecha(addDays(fecha, 1))}
+        disabled={fecha >= hoy}
+        aria-label="Día siguiente"
+      >
+        ›
+      </button>
+    </div>
+  );
+}
 
 function Ring({ percent, size = 130, stroke = 12, color, children }) {
   const r = (size - stroke) / 2;
@@ -213,6 +243,8 @@ export default function SaludPage() {
   const [elegida, setElegida] = useState(false); // ya eligió sugerencia → ocultar lista
 
   const hoy = dayKey(new Date());
+  const [fechaCal, setFechaCal] = useState(hoy); // día que se ve en Comidas
+  const [fechaMov, setFechaMov] = useState(hoy); // día que se ve en Todos los resultados
 
   useEffect(() => {
     saludService
@@ -255,20 +287,27 @@ export default function SaludPage() {
   const pesoActual = pesoEntries.length ? pesoEntries[pesoEntries.length - 1] : null;
   const pesoDelta = pesoEntries.length >= 2 ? pesoActual - pesoEntries[pesoEntries.length - 2] : null;
 
-  // "Todos los resultados" (estilo Salud de iPhone): métricas derivadas.
-  const metricas = useMemo(() => {
+  // "Todos los resultados" para un día de referencia (ventana de 7 días que termina ahí).
+  const metricasDe = (refKey) => {
     if (!data) return [];
-    const dias = ultimos7.dias;
-    const h = dias[dias.length - 1];
+    const dias = [];
+    const base = new Date(`${refKey}T00:00:00`);
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(base);
+      d.setDate(d.getDate() - i);
+      dias.push(dayKey(d));
+    }
+    const h = refKey;
     const kcalDia = (arr) => (arr || []).reduce((a, c) => a + (Number(c.kcal) || 0), 0);
     const camDia = (k) => (data.caminatas || []).filter((c) => c.fecha === k);
     const distDia = (k) => camDia(k).reduce((a, c) => a + (Number(c.metros) || 0), 0);
     const minDia = (k) => camDia(k).reduce((a, c) => a + (Number(c.secs) || 0), 0) / 60;
-    const ultimaCam = (data.caminatas || [])[0];
-    const velocidad =
-      ultimaCam && ultimaCam.secs > 0 ? (ultimaCam.metros / 1000) / (ultimaCam.secs / 3600) : null;
-    const pesoKeys = Object.keys(data.peso || {}).sort();
+    const camRef = camDia(h)[0];
+    const velocidad = camRef && camRef.secs > 0 ? (camRef.metros / 1000) / (camRef.secs / 3600) : null;
     const emojis = { 1: "😔", 2: "😕", 3: "😐", 4: "🙂", 5: "😄" };
+    // Peso: última medición registrada hasta el día de referencia (se arrastra).
+    const pesoHasta = Object.keys(data.peso || {}).filter((k) => k <= refKey).sort();
+    const pesoRef = pesoHasta.length ? Number(data.peso[pesoHasta[pesoHasta.length - 1]]) : null;
 
     return [
       {
@@ -297,10 +336,10 @@ export default function SaludPage() {
         color: "var(--color-verde, #5dc72d)",
         valor: velocidad != null ? velocidad.toFixed(1).replace(".", ",") : "—",
         unidad: "km/h",
-        barras: (data.caminatas || [])
-          .slice(0, 7)
-          .reverse()
-          .map((c) => (c.secs > 0 ? (c.metros / 1000) / (c.secs / 3600) : 0)),
+        barras: dias.map((k) => {
+          const c = camDia(k)[0];
+          return c && c.secs > 0 ? (c.metros / 1000) / (c.secs / 3600) : 0;
+        }),
       },
       {
         titulo: "Hidratación",
@@ -320,18 +359,19 @@ export default function SaludPage() {
         titulo: "Ánimo",
         color: "#d6a92e",
         valor: data.animo?.[h] ? emojis[data.animo[h]] : "—",
-        unidad: data.animo?.[h] ? "hoy" : "sin registrar",
+        unidad: data.animo?.[h] ? "registrado" : "sin registrar",
         barras: dias.map((k) => Number(data.animo?.[k]) || 0),
       },
       {
         titulo: "Peso",
         color: "var(--color-verde, #5dc72d)",
-        valor: pesoKeys.length ? String(data.peso[pesoKeys[pesoKeys.length - 1]]).replace(".", ",") : "—",
+        valor: pesoRef != null ? String(pesoRef).replace(".", ",") : "—",
         unidad: "kg",
-        barras: pesoKeys.slice(-7).map((k) => Number(data.peso[k]) || 0),
+        barras: pesoHasta.slice(-7).map((k) => Number(data.peso[k]) || 0),
       },
     ];
-  }, [data, ultimos7]);
+  };
+  const metricas = metricasDe(fechaMov);
 
   // ----- Tendencia por período (D/S/M/A) -----
   // Buckets: día = hoy; semana = 7 días; mes = 30 días; año = 12 meses.
@@ -515,11 +555,11 @@ export default function SaludPage() {
   };
   const kcal100 = fGramos > 0 ? Math.round((kcalUnit / fGramos) * 100) : 0; // kcal por 100 g
 
-  const comidasHoy = data?.comidas?.[hoy] || [];
-  const consumido = comidasHoy.reduce((a, c) => a + (Number(c.kcal) || 0), 0);
-  const consCarb = comidasHoy.reduce((a, c) => a + (Number(c.carbG) || 0), 0);
-  const consProt = comidasHoy.reduce((a, c) => a + (Number(c.protG) || 0), 0);
-  const consFat = comidasHoy.reduce((a, c) => a + (Number(c.fatG) || 0), 0);
+  const comidasDia = data?.comidas?.[fechaCal] || [];
+  const consumido = comidasDia.reduce((a, c) => a + (Number(c.kcal) || 0), 0);
+  const consCarb = comidasDia.reduce((a, c) => a + (Number(c.carbG) || 0), 0);
+  const consProt = comidasDia.reduce((a, c) => a + (Number(c.protG) || 0), 0);
+  const consFat = comidasDia.reduce((a, c) => a + (Number(c.fatG) || 0), 0);
 
   const guardarPeso = () => {
     const kg = parseFloat(String(pesoInput).replace(",", "."));
@@ -558,12 +598,12 @@ export default function SaludPage() {
       protG: previewTotal.prot,
       fatG: previewTotal.fat,
     };
-    mutate({ comidas: { [hoy]: [...comidasHoy, item] } });
+    mutate({ comidas: { [fechaCal]: [...comidasDia, item] } });
     setFormFranja(null);
   };
 
   const borrarComida = (id) => {
-    mutate({ comidas: { [hoy]: comidasHoy.filter((c) => c.id !== id) } });
+    mutate({ comidas: { [fechaCal]: comidasDia.filter((c) => c.id !== id) } });
   };
 
   if (cargando) return <p className={style.cargando}>Cargando tu salud…</p>;
@@ -571,24 +611,17 @@ export default function SaludPage() {
   return (
     <div className={style.wrap}>
       <header className={style.header}>
-        <p className={style.kicker}>SALUD</p>
-        <h1>{esCalorias ? "Calorías diarias" : "Movilidad"}</h1>
-        <p className={style.subtitulo}>
-          {esCalorias
-            ? "Anotá tus comidas y mirá cuánto te queda del día."
-            : "Los pasos y caminatas se miden desde el teléfono; lo demás también lo podés cargar acá."}
-        </p>
-      </header>
-
-      <div className={style.grid}>
+        <div>
+          <p className={style.kicker}>SALUD</p>
+          <h1>{esCalorias ? "Calorías diarias" : "Movilidad"}</h1>
+          <p className={style.subtitulo}>
+            {esCalorias
+              ? "Anotá tus comidas y mirá cuánto te queda del día."
+              : "Los pasos y caminatas se miden desde el teléfono; lo demás también lo podés cargar acá."}
+          </p>
+        </div>
         {!esCalorias ? (
-        <>
-        {/* Tendencia (izquierda) + Ánimo (derecha, sin fondo) */}
-        <div className={style.topRow}>
-          <div className={style.topMain}>
-            {renderTendencia(METRICAS_MOV, metricaMov, setMetricaMov)}
-          </div>
-          <div className={style.topAside}>
+          <div className={style.animoHeader}>
             <h2 className={style.animoTitulo}>
               <FiSmile /> ¿Cómo te sentís hoy?
             </h2>
@@ -606,32 +639,38 @@ export default function SaludPage() {
               ))}
             </div>
           </div>
-        </div>
+        ) : null}
+      </header>
 
-        {/* Pasos de hoy */}
-        <section className={`${style.card} ${style.cardAncha}`}>
-          <div className={style.cardHead}>
-            <h2>
-              <FiActivity /> Pasos de hoy
-            </h2>
-            <span className={style.badgeTel}>desde el teléfono</span>
-          </div>
-          <div className={style.fila}>
-            <Ring percent={(pasosHoy / metaPasos) * 100} color="var(--color-verde, #5dc72d)">
-              <strong>{pasosHoy.toLocaleString("es-AR")}</strong>
-              <small>de {metaPasos.toLocaleString("es-AR")}</small>
-            </Ring>
-            <Semana
-              dias={ultimos7.labels}
-              valores={ultimos7.dias.map((k) => Number(data?.pasos?.[k]) || 0)}
-              meta={metaPasos}
-              color="var(--color-verde, #5dc72d)"
-            />
-          </div>
-        </section>
+      <div className={style.grid}>
+        {!esCalorias ? (
+        <>
+        {/* Tendencia (full width) */}
+        {renderTendencia(METRICAS_MOV, metricaMov, setMetricaMov)}
 
-        {/* Peso + Caminatas lado a lado */}
-        <div className={style.parRow}>
+        {/* Pasos de hoy + Peso + Caminatas — tres lado a lado */}
+        <div className={style.trioRow}>
+          <section className={style.card}>
+            <div className={style.cardHead}>
+              <h2>
+                <FiActivity /> Pasos de hoy
+              </h2>
+              <span className={style.badgeTel}>desde el teléfono</span>
+            </div>
+            <div className={style.fila}>
+              <Ring percent={(pasosHoy / metaPasos) * 100} color="var(--color-verde, #5dc72d)">
+                <strong>{pasosHoy.toLocaleString("es-AR")}</strong>
+                <small>de {metaPasos.toLocaleString("es-AR")}</small>
+              </Ring>
+              <Semana
+                dias={ultimos7.labels}
+                valores={ultimos7.dias.map((k) => Number(data?.pasos?.[k]) || 0)}
+                meta={metaPasos}
+                color="var(--color-verde, #5dc72d)"
+              />
+            </div>
+          </section>
+
           <section className={style.card}>
             <div className={style.cardHead}>
               <h2>
@@ -692,6 +731,7 @@ export default function SaludPage() {
         <section className={`${style.card} ${style.cardAncha}`}>
           <div className={style.cardHead}>
             <h2>Todos los resultados</h2>
+            <DateNav fecha={fechaMov} setFecha={setFechaMov} hoy={hoy} />
           </div>
           <div className={style.datosGrid}>
             {metricas.map((m) => (
@@ -733,7 +773,7 @@ export default function SaludPage() {
         <section className={`${style.card} ${style.calMain}`}>
           <div className={style.cardHead}>
             <h2>
-              <FiTrendingUp /> Comidas de hoy
+              <FiTrendingUp /> Comidas
               <span
                 className={style.infoIcon}
                 tabIndex={0}
@@ -746,6 +786,7 @@ export default function SaludPage() {
                 </span>
               </span>
             </h2>
+            <DateNav fecha={fechaCal} setFecha={setFechaCal} hoy={hoy} />
             {plan ? (
               <span className={style.planResumen}>
                 Plan: {plan.kcal.toLocaleString("es-AR")} kcal · C {plan.carbG}g · P {plan.protG}g · G {plan.fatG}g
@@ -787,7 +828,7 @@ export default function SaludPage() {
           ) : null}
 
           {FRANJAS.map((f) => {
-            const items = comidasHoy.filter((c) => c.franja === f.key);
+            const items = comidasDia.filter((c) => c.franja === f.key);
             const tot = items.reduce((a, c) => a + (Number(c.kcal) || 0), 0);
             return (
               <div key={f.key} className={style.franja}>

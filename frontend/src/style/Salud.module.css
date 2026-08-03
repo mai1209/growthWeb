@@ -11,6 +11,19 @@
   padding: 2rem 0;
 }
 
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.animoHeader {
+  flex: 1 1 320px;
+  max-width: 540px;
+}
+
 .header .kicker {
   margin: 0;
   color: var(--color-verde, #5dc72d);
@@ -80,8 +93,8 @@
   gap: 0.45rem;
 }
 
-/* Dos tarjetas lado a lado (Peso + Caminatas). */
-.parRow {
+/* Tres tarjetas lado a lado (Pasos + Peso + Caminatas). */
+.trioRow {
   grid-column: 1 / -1;
   display: flex;
   gap: 1rem;
@@ -89,8 +102,8 @@
   flex-wrap: wrap;
 }
 
-.parRow > section {
-  flex: 1 1 300px;
+.trioRow > section {
+  flex: 1 1 260px;
 }
 
 /* ===== Tendencia por período (D/S/M/A) + gráfico de línea ===== */
@@ -318,6 +331,44 @@
 .infoIcon:focus .infoTip {
   opacity: 1;
   visibility: visible;
+}
+
+.dateNav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 0.2rem 0.35rem;
+}
+
+.dateNav span {
+  min-width: 6.5rem;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.dateNav button {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dateNav button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.dateNav button:not(:disabled):hover {
+  background: var(--surface-input, rgba(255, 255, 255, 0.06));
 }
 
 .badgeTel {
