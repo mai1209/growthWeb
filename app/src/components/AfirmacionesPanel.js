@@ -67,6 +67,7 @@ export default function AfirmacionesPanel({ visible, onClose }) {
   const pausaRef = useRef(null);
   const [repetirDiario, setRepetirDiario] = useState(true);
   const [recordatorio, setRecordatorio] = useState({ activo: false, hora: "08:00" });
+  const [ajustesOpen, setAjustesOpen] = useState(false); // desplegable de la campanita
   const [showHoraPicker, setShowHoraPicker] = useState(false);
   // Hora provisoria mientras la ruedita está abierta (iOS): se guarda al tocar Listo.
   const [horaTemp, setHoraTemp] = useState("08:00");
@@ -385,62 +386,80 @@ export default function AfirmacionesPanel({ visible, onClose }) {
                   <Ionicons name="sunny" size={20} color="#FFD60A" />
                   <Text style={styles.fecha}>{fechaLarga(fecha)}</Text>
                 </View>
-                {racha > 0 ? (
-                  <View style={styles.rachaPill}>
-                    <Text style={styles.rachaText}>🔥 {racha}</Text>
-                  </View>
-                ) : null}
-              </View>
-
-              {/* Guardarlas al día siguiente */}
-              <View style={styles.switchRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.switchTitulo}>Guardarlas al día siguiente</Text>
-                  <Text style={styles.switchDetalle}>
-                    {repetirDiario
-                      ? "Mañana vas a encontrar estas mismas afirmaciones."
-                      : "Mañana vas a empezar con los renglones vacíos."}
-                  </Text>
-                </View>
-                <Switch
-                  value={repetirDiario}
-                  onValueChange={alternarRepetir}
-                  trackColor={{ false: colors.cardBorder, true: colors.greenSoft }}
-                  thumbColor={repetirDiario ? colors.greenBright : colors.muted}
-                />
-              </View>
-
-              {/* Recordatorio diario con la afirmación del día */}
-              <View style={styles.switchRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.switchTitulo}>Recordatorio diario</Text>
-                  <Text style={styles.switchDetalle}>
-                    {recordatorio.activo
-                      ? "Te llega una notificación con tu afirmación del día."
-                      : "Activalo para que te llegue una afirmación por día."}
-                  </Text>
-                  {recordatorio.activo ? (
-                    <TouchableOpacity
-                      style={styles.horaBtn}
-                      onPress={() => {
-                        setHoraTemp(recordatorio.hora);
-                        setShowHoraPicker(true);
-                      }}
-                    >
-                      <Ionicons name="time-outline" size={14} color={colors.green} />
-                      <Text style={styles.horaBtnText}>{recordatorio.hora} hs · cambiar</Text>
-                    </TouchableOpacity>
+                <View style={styles.fechaRight}>
+                  {racha > 0 ? (
+                    <View style={styles.rachaPill}>
+                      <Text style={styles.rachaText}>🔥 {racha}</Text>
+                    </View>
                   ) : null}
+                  <TouchableOpacity
+                    style={[styles.bellBtn, ajustesOpen && styles.bellBtnOn]}
+                    onPress={() => setAjustesOpen((o) => !o)}
+                    hitSlop={8}
+                  >
+                    <Ionicons
+                      name={ajustesOpen ? "notifications" : "notifications-outline"}
+                      size={19}
+                      color={ajustesOpen ? colors.greenBright : colors.muted}
+                    />
+                  </TouchableOpacity>
                 </View>
-                <Switch
-                  value={recordatorio.activo}
-                  onValueChange={(valor) =>
-                    guardarRecordatorio({ ...recordatorio, activo: valor })
-                  }
-                  trackColor={{ false: colors.cardBorder, true: colors.greenSoft }}
-                  thumbColor={recordatorio.activo ? colors.greenBright : colors.muted}
-                />
               </View>
+
+              {/* Ajustes (se despliegan desde la campanita) */}
+              {ajustesOpen ? (
+                <View style={styles.ajustesCard}>
+                  {/* Guardarlas al día siguiente */}
+                  <View style={styles.switchRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.switchTitulo}>Guardarlas al día siguiente</Text>
+                      <Text style={styles.switchDetalle}>
+                        {repetirDiario
+                          ? "Mañana vas a encontrar estas mismas afirmaciones."
+                          : "Mañana vas a empezar con los renglones vacíos."}
+                      </Text>
+                    </View>
+                    <Switch
+                      value={repetirDiario}
+                      onValueChange={alternarRepetir}
+                      trackColor={{ false: colors.cardBorder, true: colors.greenSoft }}
+                      thumbColor={repetirDiario ? colors.greenBright : colors.muted}
+                    />
+                  </View>
+
+                  {/* Recordatorio diario con la afirmación del día */}
+                  <View style={styles.switchRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.switchTitulo}>Recordatorio diario</Text>
+                      <Text style={styles.switchDetalle}>
+                        {recordatorio.activo
+                          ? "Te llega una notificación con tu afirmación del día."
+                          : "Activalo para que te llegue una afirmación por día."}
+                      </Text>
+                      {recordatorio.activo ? (
+                        <TouchableOpacity
+                          style={styles.horaBtn}
+                          onPress={() => {
+                            setHoraTemp(recordatorio.hora);
+                            setShowHoraPicker(true);
+                          }}
+                        >
+                          <Ionicons name="time-outline" size={14} color={colors.green} />
+                          <Text style={styles.horaBtnText}>{recordatorio.hora} hs · cambiar</Text>
+                        </TouchableOpacity>
+                      ) : null}
+                    </View>
+                    <Switch
+                      value={recordatorio.activo}
+                      onValueChange={(valor) =>
+                        guardarRecordatorio({ ...recordatorio, activo: valor })
+                      }
+                      trackColor={{ false: colors.cardBorder, true: colors.greenSoft }}
+                      thumbColor={recordatorio.activo ? colors.greenBright : colors.muted}
+                    />
+                  </View>
+                </View>
+              ) : null}
 
               {showHoraPicker ? (
                 Platform.OS === "ios" ? (
@@ -614,6 +633,19 @@ const makeStyles = (colors, isDark = false) =>
       backgroundColor: colors.greenSoft,
     },
     rachaText: { color: colors.green, fontSize: 13, fontWeight: "800" },
+
+    fechaRight: { flexDirection: "row", alignItems: "center", gap: 8 },
+    bellBtn: {
+      width: 34,
+      height: 34,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    bellBtnOn: { borderColor: colors.greenBright, backgroundColor: colors.greenSoft },
+    ajustesCard: { gap: 10 },
 
     playBtn: {
       flexDirection: "row",
