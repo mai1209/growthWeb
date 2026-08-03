@@ -174,7 +174,6 @@ function LineaTendencia({ points, color, track, unidad }) {
       onMoveShouldSetResponder={() => true}
       onResponderGrant={tocar}
       onResponderMove={tocar}
-      onResponderRelease={() => setSel(null)}
     >
       <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
         {area ? <Path d={area} fill={color} opacity={0.13} /> : null}

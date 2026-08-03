@@ -154,6 +154,7 @@ function smoothPath(pts) {
 // Al pasar el mouse/tocar muestra el valor del día (tooltip).
 function LineChart({ points, color, unidad }) {
   const [hover, setHover] = useState(null);
+  const [pinned, setPinned] = useState(null); // día fijado con click/toque
   const W = 100;
   const H = 120;
   const padTop = 10;
@@ -169,23 +170,27 @@ function LineChart({ points, color, unidad }) {
   const area = n >= 2 ? `${line} L ${xy[n - 1][0]} ${H} L ${xy[0][0]} ${H} Z` : "";
   const step = n > 12 ? Math.ceil(n / 6) : 1;
 
-  const posicionar = (e) => {
+  const idxFrom = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
     const rel = Math.max(0, Math.min(1, cx / rect.width));
-    setHover(n <= 1 ? 0 : Math.round(rel * (n - 1)));
+    return n <= 1 ? 0 : Math.round(rel * (n - 1));
   };
 
-  const h = hover != null && points[hover] ? { p: points[hover], x: xy[hover][0], y: xy[hover][1] } : null;
+  // Selección efectiva: el hover del mouse manda; si no, el día fijado con click/toque.
+  const sel = hover != null ? hover : pinned;
+  const h = sel != null && points[sel] ? { p: points[sel], x: xy[sel][0], y: xy[sel][1] } : null;
 
   return (
     <div
       className={style.chartWrap}
-      onMouseMove={posicionar}
+      style={{ cursor: "pointer" }}
+      onMouseMove={(e) => setHover(idxFrom(e))}
       onMouseLeave={() => setHover(null)}
-      onTouchStart={posicionar}
-      onTouchMove={posicionar}
-      onTouchEnd={() => setHover(null)}
+      onClick={(e) => {
+        const i = idxFrom(e);
+        setPinned((prev) => (prev === i ? null : i));
+      }}
     >
       <svg className={style.lineSvg} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img">
         {area ? <path d={area} fill={color} opacity="0.13" /> : null}
@@ -203,17 +208,14 @@ function LineChart({ points, color, unidad }) {
         <>
           <div className={style.chartGuide} style={{ left: `${h.x}%` }} />
           <div className={style.chartDot} style={{ left: `${h.x}%`, top: `${h.y}px`, background: color }} />
-          <div
-            className={style.chartTip}
-            style={{ left: `${h.x}%`, borderColor: color }}
-          >
+          <div className={style.chartTip} style={{ left: `${h.x}%`, borderColor: color }}>
             <strong>{h.p.value.toLocaleString("es-AR")}</strong> {unidad}
           </div>
         </>
       ) : null}
       <div className={style.lineLabels}>
         {points.map((p, i) => (
-          <span key={i} className={hover === i ? style.lineLblOn : undefined}>
+          <span key={i} className={sel === i ? style.lineLblOn : undefined}>
             {i % step === 0 || i === n - 1 ? p.label : ""}
           </span>
         ))}
