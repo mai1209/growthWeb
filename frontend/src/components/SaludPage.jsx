@@ -102,40 +102,93 @@ function Semana({ dias, valores, meta, color }) {
   );
 }
 
-// Gráfico de línea simple en SVG (para la tendencia por período).
+// Devuelve un path SVG suavizado (curvas) a partir de puntos [x,y].
+function smoothPath(pts) {
+  if (pts.length < 2) return pts.length ? `M ${pts[0][0]} ${pts[0][1]}` : "";
+  let d = `M ${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] || p2;
+    const c1x = p1[0] + (p2[0] - p0[0]) / 6;
+    const c1y = p1[1] + (p2[1] - p0[1]) / 6;
+    const c2x = p2[0] - (p3[0] - p1[0]) / 6;
+    const c2y = p2[1] - (p3[1] - p1[1]) / 6;
+    d += ` C ${c1x} ${c1y} ${c2x} ${c2y} ${p2[0]} ${p2[1]}`;
+  }
+  return d;
+}
+
+// Gráfico de línea suavizado en SVG. Las etiquetas van como HTML (nítidas y chicas).
+// Al pasar el mouse/tocar muestra el valor del día (tooltip).
 function LineChart({ points, color, unidad }) {
-  const W = 320;
-  const H = 130;
-  const padX = 8;
-  const padTop = 12;
-  const padBottom = 22;
+  const [hover, setHover] = useState(null);
+  const W = 100;
+  const H = 120;
+  const padTop = 10;
+  const padBottom = 8;
   const n = points.length;
   const max = Math.max(...points.map((p) => p.value), 1);
-  const innerW = W - padX * 2;
   const innerH = H - padTop - padBottom;
-  const x = (i) => (n <= 1 ? W / 2 : padX + (i / (n - 1)) * innerW);
-  const y = (v) => padTop + innerH - (v / max) * innerH;
-  const linePts = points.map((p, i) => `${x(i)},${y(p.value)}`).join(" ");
-  const areaPts = `${x(0)},${padTop + innerH} ${linePts} ${x(n - 1)},${padTop + innerH}`;
-  // Menos etiquetas si hay muchos puntos (mes = 30 días).
+  const xy = points.map((p, i) => [
+    n <= 1 ? W / 2 : (i / (n - 1)) * W,
+    padTop + innerH - (p.value / max) * innerH,
+  ]);
+  const line = smoothPath(xy);
+  const area = n >= 2 ? `${line} L ${xy[n - 1][0]} ${H} L ${xy[0][0]} ${H} Z` : "";
   const step = n > 12 ? Math.ceil(n / 6) : 1;
+
+  const posicionar = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const rel = Math.max(0, Math.min(1, cx / rect.width));
+    setHover(n <= 1 ? 0 : Math.round(rel * (n - 1)));
+  };
+
+  const h = hover != null && points[hover] ? { p: points[hover], x: xy[hover][0], y: xy[hover][1] } : null;
+
   return (
-    <svg className={style.lineSvg} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img">
-      <polyline points={areaPts} fill={color} opacity="0.12" stroke="none" />
-      <polyline points={linePts} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-      {points.map((p, i) =>
-        p.value > 0 && (i === n - 1 || n <= 12) ? (
-          <circle key={i} cx={x(i)} cy={y(p.value)} r={i === n - 1 ? 3.5 : 2.2} fill={color} />
-        ) : null
-      )}
-      {points.map((p, i) =>
-        i % step === 0 || i === n - 1 ? (
-          <text key={`t${i}`} x={x(i)} y={H - 6} textAnchor="middle" className={style.lineLbl}>
-            {p.label}
-          </text>
-        ) : null
-      )}
-    </svg>
+    <div
+      className={style.chartWrap}
+      onMouseMove={posicionar}
+      onMouseLeave={() => setHover(null)}
+      onTouchStart={posicionar}
+      onTouchMove={posicionar}
+      onTouchEnd={() => setHover(null)}
+    >
+      <svg className={style.lineSvg} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img">
+        {area ? <path d={area} fill={color} opacity="0.13" /> : null}
+        <path
+          d={line}
+          fill="none"
+          stroke={color}
+          strokeWidth="2.5"
+          vectorEffect="non-scaling-stroke"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+      </svg>
+      {h ? (
+        <>
+          <div className={style.chartGuide} style={{ left: `${h.x}%` }} />
+          <div className={style.chartDot} style={{ left: `${h.x}%`, top: `${h.y}px`, background: color }} />
+          <div
+            className={style.chartTip}
+            style={{ left: `${h.x}%`, borderColor: color }}
+          >
+            <strong>{h.p.value.toLocaleString("es-AR")}</strong> {unidad}
+          </div>
+        </>
+      ) : null}
+      <div className={style.lineLabels}>
+        {points.map((p, i) => (
+          <span key={i} className={hover === i ? style.lineLblOn : undefined}>
+            {i % step === 0 || i === n - 1 ? p.label : ""}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -312,13 +365,15 @@ export default function SaludPage() {
   }, [periodo]);
 
   // Construye {points, promedio} para una métrica diaria (getVal por clave de día).
-  const construirTendencia = (getVal) => {
-    const points = buckets.map((b) => {
+  // soloConDatos=true (mediciones como el peso): omite días sin registro en vez de mostrar 0.
+  const construirTendencia = (getVal, soloConDatos = false) => {
+    let points = buckets.map((b) => {
       const vals = b.dias.map(getVal).filter((v) => v > 0);
       // día/semana/mes: 1 día por bucket. año: promedio por día activo del mes.
       const value = vals.length ? Math.round(vals.reduce((a, c) => a + c, 0) / vals.length) : 0;
       return { label: b.label, value };
     });
+    if (soloConDatos) points = points.filter((p) => p.value > 0);
     const activos = points.filter((p) => p.value > 0);
     const promedio = activos.length
       ? Math.round(activos.reduce((a, c) => a + c.value, 0) / activos.length)
@@ -327,39 +382,69 @@ export default function SaludPage() {
   };
 
   const kcalDiaFn = (k) => (data?.comidas?.[k] || []).reduce((a, c) => a + (Number(c.kcal) || 0), 0);
-  const tendPasos = useMemo(() => construirTendencia((k) => Number(data?.pasos?.[k]) || 0), [buckets, data]); // eslint-disable-line react-hooks/exhaustive-deps
-  const tendKcal = useMemo(() => construirTendencia(kcalDiaFn), [buckets, data]); // eslint-disable-line react-hooks/exhaustive-deps
+  const distDiaFn = (k) =>
+    (data?.caminatas || []).filter((c) => c.fecha === k).reduce((a, c) => a + (Number(c.metros) || 0), 0) / 1000;
+
+  const [metricaMov, setMetricaMov] = useState("pasos");
+  const [metricaCal, setMetricaCal] = useState("kcal");
+  const METRICAS_MOV = [
+    { key: "pasos", label: "Pasos", color: "var(--color-verde, #5dc72d)", unidad: "pasos", getVal: (k) => Number(data?.pasos?.[k]) || 0 },
+    { key: "peso", label: "Peso", color: "var(--color-verde, #5dc72d)", unidad: "kg", medicion: true, getVal: (k) => Number(data?.peso?.[k]) || 0 },
+    { key: "dist", label: "Distancia", color: "var(--color-verde, #5dc72d)", unidad: "km", getVal: distDiaFn },
+  ];
+  const METRICAS_CAL = [
+    { key: "kcal", label: "Calorías", color: "#e0703f", unidad: "kcal", getVal: kcalDiaFn },
+    { key: "agua", label: "Hidratación", color: "#3aa0e0", unidad: "ml", getVal: (k) => Number(data?.agua?.[k]) || 0 },
+  ];
 
   const NOMBRE_PERIODO = { dia: "Día", semana: "Semana", mes: "Mes", anio: "Año" };
-  const renderTendencia = (titulo, tend, color, unidad) => (
-    <section className={`${style.card} ${style.cardAncha}`}>
-      <div className={style.cardHead}>
-        <h2>{titulo}</h2>
-        <div className={style.periodoSel}>
-          {PERIODOS.map((p) => (
-            <button
-              key={p.key}
-              type="button"
-              className={periodo === p.key ? style.periodoOn : style.periodoOff}
-              onClick={() => setPeriodo(p.key)}
-              title={NOMBRE_PERIODO[p.key]}
-            >
-              {p.label}
-            </button>
-          ))}
+  const renderTendencia = (metrics, sel, setSel) => {
+    const m = metrics.find((x) => x.key === sel) || metrics[0];
+    const tend = construirTendencia(m.getVal, m.medicion);
+    return (
+      <section className={`${style.card} ${style.cardAncha}`}>
+        <div className={style.cardHead}>
+          <h2>Tendencia</h2>
+          <div className={style.periodoSel}>
+            {PERIODOS.map((p) => (
+              <button
+                key={p.key}
+                type="button"
+                className={periodo === p.key ? style.periodoOn : style.periodoOff}
+                onClick={() => setPeriodo(p.key)}
+                title={NOMBRE_PERIODO[p.key]}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
-      <div className={style.tendResumen}>
-        <strong style={{ color }}>{tend.promedio.toLocaleString("es-AR")}</strong>
-        <span>{periodo === "dia" ? unidad : `${unidad} · promedio`}</span>
-      </div>
-      {periodo === "dia" ? (
-        <p className={style.hint}>Elegí Semana, Mes o Año para ver la tendencia.</p>
-      ) : (
-        <LineChart points={tend.points} color={color} unidad={unidad} />
-      )}
-    </section>
-  );
+        {metrics.length > 1 ? (
+          <div className={style.metricaSel}>
+            {metrics.map((x) => (
+              <button
+                key={x.key}
+                type="button"
+                className={sel === x.key ? style.metricaOn : style.metricaOff}
+                onClick={() => setSel(x.key)}
+              >
+                {x.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <div className={style.tendResumen}>
+          <strong style={{ color: m.color }}>{tend.promedio.toLocaleString("es-AR")}</strong>
+          <span>{periodo === "dia" ? m.unidad : `${m.unidad} · promedio`}</span>
+        </div>
+        {periodo === "dia" ? (
+          <p className={style.hint}>Elegí Semana, Mes o Año para ver la tendencia.</p>
+        ) : (
+          <LineChart points={tend.points} color={m.color} unidad={m.unidad} />
+        )}
+      </section>
+    );
+  };
 
   // Autocompletado: tu historial (promedio de registros previos) + base local.
   const historial = useMemo(() => {
@@ -498,7 +583,7 @@ export default function SaludPage() {
       <div className={style.grid}>
         {!esCalorias ? (
         <>
-        {renderTendencia("Tendencia de pasos", tendPasos, "var(--color-verde, #5dc72d)", "pasos")}
+        {renderTendencia(METRICAS_MOV, metricaMov, setMetricaMov)}
         {/* Pasos + Caminatas apilados en la misma columna (ambos del teléfono) */}
         <div className={style.colStack}>
         <section className={style.card}>
@@ -643,7 +728,7 @@ export default function SaludPage() {
         </>
         ) : (
         <>
-        {renderTendencia("Tendencia de calorías", tendKcal, "#e0703f", "kcal")}
+        {renderTendencia(METRICAS_CAL, metricaCal, setMetricaCal)}
         <div className={style.calWrap}>
         {/* Nutrición + comidas (editable) */}
         <section className={`${style.card} ${style.calMain}`}>
