@@ -64,4 +64,113 @@ export const BASE_COMIDAS = [
   { nombre: "Fruta", unidad: "unidad", gramos: 120, kcal: 80, carbG: 20, protG: 1, fatG: 0 },
   { nombre: "Frutos secos", unidad: "puñado", gramos: 30, kcal: 170, carbG: 6, protG: 5, fatG: 15 },
   { nombre: "Barrita de cereal", unidad: "unidad", gramos: 25, kcal: 110, carbG: 20, protG: 2, fatG: 3 },
+
+  // ---- Cortes de carne vacuna (escribí "carne" y aparecen todos) ----
+  { nombre: "Bife de chorizo", alias: "carne res vaca", unidad: "porción", gramos: 200, kcal: 500, carbG: 0, protG: 44, fatG: 36 },
+  { nombre: "Bife de lomo", alias: "carne res vaca", unidad: "porción", gramos: 200, kcal: 440, carbG: 0, protG: 46, fatG: 28 },
+  { nombre: "Ojo de bife", alias: "carne res vaca", unidad: "porción", gramos: 200, kcal: 480, carbG: 0, protG: 44, fatG: 34 },
+  { nombre: "Vacío", alias: "carne res vaca", unidad: "porción", gramos: 200, kcal: 480, carbG: 0, protG: 42, fatG: 34 },
+  { nombre: "Asado de tira", alias: "carne res vaca costilla", unidad: "porción", gramos: 200, kcal: 560, carbG: 0, protG: 40, fatG: 44 },
+  { nombre: "Entraña", alias: "carne res vaca", unidad: "porción", gramos: 200, kcal: 460, carbG: 0, protG: 42, fatG: 32 },
+  { nombre: "Matambre", alias: "carne res vaca", unidad: "porción", gramos: 150, kcal: 420, carbG: 2, protG: 32, fatG: 32 },
+  { nombre: "Cuadril", alias: "carne res vaca", unidad: "porción", gramos: 200, kcal: 420, carbG: 0, protG: 44, fatG: 26 },
+  { nombre: "Nalga", alias: "carne res vaca", unidad: "porción", gramos: 200, kcal: 360, carbG: 0, protG: 46, fatG: 18 },
+  { nombre: "Peceto", alias: "carne res vaca", unidad: "porción", gramos: 200, kcal: 340, carbG: 0, protG: 44, fatG: 16 },
+  { nombre: "Colita de cuadril", alias: "carne res vaca", unidad: "porción", gramos: 200, kcal: 440, carbG: 0, protG: 42, fatG: 30 },
+  { nombre: "Tapa de asado", alias: "carne res vaca", unidad: "porción", gramos: 200, kcal: 520, carbG: 0, protG: 38, fatG: 40 },
+  { nombre: "Bife a la plancha", alias: "carne res vaca", unidad: "porción", gramos: 180, kcal: 320, carbG: 0, protG: 42, fatG: 16 },
+  { nombre: "Carne picada", alias: "carne molida res", unidad: "porción", gramos: 100, kcal: 250, carbG: 0, protG: 26, fatG: 16 },
+  { nombre: "Hamburguesa casera", alias: "carne medallon", unidad: "unidad", gramos: 120, kcal: 300, carbG: 0, protG: 24, fatG: 22 },
+
+  // ---- Cerdo y cordero ----
+  { nombre: "Costeleta de cerdo", alias: "carne cerdo chancho", unidad: "porción", gramos: 180, kcal: 420, carbG: 0, protG: 42, fatG: 28 },
+  { nombre: "Costeleta de cordero", alias: "carne cordero", unidad: "porción", gramos: 150, kcal: 380, carbG: 0, protG: 30, fatG: 28 },
+  { nombre: "Bondiola de cerdo", alias: "carne cerdo chancho", unidad: "porción", gramos: 200, kcal: 500, carbG: 0, protG: 38, fatG: 38 },
+  { nombre: "Costillar de cerdo", alias: "carne cerdo chancho costilla", unidad: "porción", gramos: 200, kcal: 500, carbG: 0, protG: 40, fatG: 38 },
+  { nombre: "Chorizo", alias: "carne embutido choripan", unidad: "unidad", gramos: 100, kcal: 330, carbG: 1, protG: 18, fatG: 28 },
+  { nombre: "Morcilla", alias: "embutido", unidad: "unidad", gramos: 100, kcal: 370, carbG: 4, protG: 14, fatG: 32 },
+
+  // ---- Pollo (escribí "pollo") ----
+  { nombre: "Pechuga de pollo", alias: "pollo", unidad: "porción", gramos: 150, kcal: 250, carbG: 0, protG: 46, fatG: 6 },
+  { nombre: "Pata muslo de pollo", alias: "pollo", unidad: "porción", gramos: 150, kcal: 290, carbG: 0, protG: 38, fatG: 15 },
+  { nombre: "Pollo a la plancha", alias: "pollo", unidad: "porción", gramos: 150, kcal: 250, carbG: 0, protG: 44, fatG: 7 },
+  { nombre: "Suprema de pollo", alias: "pollo milanesa", unidad: "unidad", gramos: 200, kcal: 450, carbG: 20, protG: 38, fatG: 24 },
+  { nombre: "Milanesa de pollo", alias: "pollo", unidad: "unidad", gramos: 150, kcal: 380, carbG: 20, protG: 30, fatG: 20 },
+  { nombre: "Nuggets de pollo", alias: "pollo", unidad: "porción", gramos: 100, kcal: 300, carbG: 16, protG: 15, fatG: 20 },
+
+  // ---- Pescado y mariscos (escribí "pescado") ----
+  { nombre: "Merluza", alias: "pescado", unidad: "porción", gramos: 150, kcal: 140, carbG: 0, protG: 30, fatG: 2 },
+  { nombre: "Salmón", alias: "pescado", unidad: "porción", gramos: 150, kcal: 300, carbG: 0, protG: 34, fatG: 18 },
+  { nombre: "Atún al natural", alias: "pescado lata", unidad: "lata", gramos: 120, kcal: 130, carbG: 0, protG: 28, fatG: 2 },
+  { nombre: "Atún en aceite", alias: "pescado lata", unidad: "lata", gramos: 120, kcal: 230, carbG: 0, protG: 26, fatG: 14 },
+  { nombre: "Camarones", alias: "pescado marisco", unidad: "porción", gramos: 100, kcal: 100, carbG: 1, protG: 20, fatG: 1 },
+
+  // ---- Huevos y lácteos ----
+  { nombre: "Huevo", alias: "huevo", unidad: "unidad", gramos: 55, kcal: 78, carbG: 1, protG: 6, fatG: 5 },
+  { nombre: "Huevo frito", alias: "huevo", unidad: "unidad", gramos: 60, kcal: 95, carbG: 0, protG: 6, fatG: 7 },
+  { nombre: "Queso cremoso", alias: "queso lacteo", unidad: "feta", gramos: 30, kcal: 100, carbG: 1, protG: 6, fatG: 8 },
+  { nombre: "Queso rallado", alias: "queso lacteo", unidad: "cucharada", gramos: 10, kcal: 40, carbG: 0, protG: 3, fatG: 3 },
+  { nombre: "Ricota", alias: "queso lacteo", unidad: "porción", gramos: 100, kcal: 170, carbG: 3, protG: 11, fatG: 13 },
+  { nombre: "Manteca", alias: "lacteo", unidad: "cucharada", gramos: 10, kcal: 72, carbG: 0, protG: 0, fatG: 8 },
+  { nombre: "Leche descremada", alias: "lacteo", unidad: "vaso", gramos: 200, kcal: 70, carbG: 10, protG: 7, fatG: 0 },
+
+  // ---- Guarniciones y legumbres ----
+  { nombre: "Arroz blanco", alias: "arroz guarnicion", unidad: "porción", gramos: 150, kcal: 200, carbG: 44, protG: 4, fatG: 0 },
+  { nombre: "Fideos", alias: "pasta tallarines", unidad: "porción", gramos: 150, kcal: 220, carbG: 43, protG: 8, fatG: 1 },
+  { nombre: "Papa hervida", alias: "papa guarnicion", unidad: "porción", gramos: 150, kcal: 130, carbG: 30, protG: 3, fatG: 0 },
+  { nombre: "Puré de papa", alias: "papa guarnicion", unidad: "porción", gramos: 200, kcal: 200, carbG: 30, protG: 4, fatG: 7 },
+  { nombre: "Batata", alias: "guarnicion", unidad: "porción", gramos: 150, kcal: 130, carbG: 30, protG: 2, fatG: 0 },
+  { nombre: "Lentejas", alias: "legumbre guiso", unidad: "porción", gramos: 200, kcal: 230, carbG: 40, protG: 15, fatG: 1 },
+  { nombre: "Garbanzos", alias: "legumbre", unidad: "porción", gramos: 200, kcal: 300, carbG: 45, protG: 15, fatG: 5 },
+  { nombre: "Porotos", alias: "legumbre", unidad: "porción", gramos: 200, kcal: 260, carbG: 45, protG: 15, fatG: 1 },
+  { nombre: "Choclo", alias: "maiz verdura", unidad: "unidad", gramos: 150, kcal: 130, carbG: 27, protG: 5, fatG: 2 },
+
+  // ---- Verduras (escribí "verdura") ----
+  { nombre: "Tomate", alias: "verdura ensalada", unidad: "unidad", gramos: 120, kcal: 22, carbG: 5, protG: 1, fatG: 0 },
+  { nombre: "Lechuga", alias: "verdura ensalada", unidad: "porción", gramos: 50, kcal: 8, carbG: 2, protG: 1, fatG: 0 },
+  { nombre: "Zanahoria", alias: "verdura", unidad: "unidad", gramos: 80, kcal: 30, carbG: 7, protG: 1, fatG: 0 },
+  { nombre: "Brócoli", alias: "verdura", unidad: "porción", gramos: 100, kcal: 35, carbG: 7, protG: 3, fatG: 0 },
+  { nombre: "Zapallo", alias: "verdura calabaza", unidad: "porción", gramos: 150, kcal: 45, carbG: 10, protG: 1, fatG: 0 },
+  { nombre: "Verduras al horno", alias: "verdura", unidad: "porción", gramos: 200, kcal: 150, carbG: 25, protG: 4, fatG: 5 },
+  { nombre: "Palta", alias: "fruta aguacate", unidad: "mitad", gramos: 100, kcal: 160, carbG: 9, protG: 2, fatG: 15 },
+
+  // ---- Frutas (escribí "fruta") ----
+  { nombre: "Naranja", alias: "fruta", unidad: "unidad", gramos: 130, kcal: 62, carbG: 15, protG: 1, fatG: 0 },
+  { nombre: "Pera", alias: "fruta", unidad: "unidad", gramos: 170, kcal: 100, carbG: 27, protG: 1, fatG: 0 },
+  { nombre: "Durazno", alias: "fruta", unidad: "unidad", gramos: 150, kcal: 60, carbG: 15, protG: 1, fatG: 0 },
+  { nombre: "Mandarina", alias: "fruta", unidad: "unidad", gramos: 100, kcal: 47, carbG: 12, protG: 1, fatG: 0 },
+  { nombre: "Kiwi", alias: "fruta", unidad: "unidad", gramos: 75, kcal: 42, carbG: 10, protG: 1, fatG: 0 },
+  { nombre: "Frutillas", alias: "fruta", unidad: "taza", gramos: 150, kcal: 50, carbG: 12, protG: 1, fatG: 0 },
+  { nombre: "Uvas", alias: "fruta", unidad: "taza", gramos: 150, kcal: 100, carbG: 27, protG: 1, fatG: 0 },
+  { nombre: "Ananá", alias: "fruta piña", unidad: "rodaja", gramos: 80, kcal: 40, carbG: 10, protG: 0, fatG: 0 },
+
+  // ---- Platos y otros ----
+  { nombre: "Canelones", alias: "pasta", unidad: "porción", gramos: 300, kcal: 450, carbG: 45, protG: 22, fatG: 20 },
+  { nombre: "Lasaña", alias: "pasta", unidad: "porción", gramos: 300, kcal: 500, carbG: 45, protG: 25, fatG: 24 },
+  { nombre: "Tarta de jamón y queso", unidad: "porción", gramos: 150, kcal: 350, carbG: 28, protG: 15, fatG: 20 },
+  { nombre: "Empanada de pollo", alias: "empanada pollo", unidad: "unidad", gramos: 100, kcal: 280, carbG: 26, protG: 12, fatG: 14 },
+  { nombre: "Empanada de verdura", alias: "empanada verdura", unidad: "unidad", gramos: 100, kcal: 250, carbG: 27, protG: 8, fatG: 12 },
+  { nombre: "Empanada árabe", alias: "empanada", unidad: "unidad", gramos: 100, kcal: 260, carbG: 24, protG: 12, fatG: 13 },
+  { nombre: "Provoleta", alias: "queso", unidad: "porción", gramos: 100, kcal: 350, carbG: 2, protG: 22, fatG: 28 },
+  { nombre: "Locro", unidad: "porción", gramos: 350, kcal: 450, carbG: 55, protG: 20, fatG: 16 },
+  { nombre: "Fainá", alias: "faina", unidad: "porción", gramos: 100, kcal: 200, carbG: 25, protG: 6, fatG: 8 },
+  { nombre: "Wrap de pollo", alias: "pollo", unidad: "unidad", gramos: 250, kcal: 500, carbG: 45, protG: 30, fatG: 22 },
+  { nombre: "Ensalada de atún", alias: "pescado", unidad: "porción", gramos: 200, kcal: 250, carbG: 10, protG: 22, fatG: 12 },
+
+  // ---- Bebidas ----
+  { nombre: "Gaseosa", alias: "bebida coca", unidad: "vaso", gramos: 250, kcal: 105, carbG: 27, protG: 0, fatG: 0 },
+  { nombre: "Gaseosa light", alias: "bebida coca", unidad: "vaso", gramos: 250, kcal: 1, carbG: 0, protG: 0, fatG: 0 },
+  { nombre: "Jugo de naranja", alias: "bebida", unidad: "vaso", gramos: 250, kcal: 110, carbG: 26, protG: 2, fatG: 0 },
+  { nombre: "Cerveza", alias: "bebida alcohol", unidad: "porrón", gramos: 330, kcal: 140, carbG: 11, protG: 1, fatG: 0 },
+  { nombre: "Vino", alias: "bebida alcohol", unidad: "copa", gramos: 150, kcal: 125, carbG: 4, protG: 0, fatG: 0 },
+  { nombre: "Fernet con coca", alias: "bebida alcohol", unidad: "vaso", gramos: 300, kcal: 180, carbG: 22, protG: 0, fatG: 0 },
+
+  // ---- Dulces y snacks ----
+  { nombre: "Chocolate", alias: "golosina", unidad: "barra", gramos: 40, kcal: 220, carbG: 24, protG: 3, fatG: 13 },
+  { nombre: "Papas fritas de paquete", alias: "snack chips", unidad: "paquete", gramos: 50, kcal: 270, carbG: 26, protG: 3, fatG: 17 },
+  { nombre: "Palitos salados", alias: "snack", unidad: "puñado", gramos: 30, kcal: 120, carbG: 20, protG: 3, fatG: 3 },
+  { nombre: "Flan", alias: "postre", unidad: "porción", gramos: 120, kcal: 180, carbG: 28, protG: 5, fatG: 5 },
+  { nombre: "Gelatina", alias: "postre", unidad: "porción", gramos: 120, kcal: 70, carbG: 16, protG: 2, fatG: 0 },
+  { nombre: "Budín", alias: "postre torta", unidad: "porción", gramos: 60, kcal: 220, carbG: 32, protG: 3, fatG: 9 },
+  { nombre: "Torta", alias: "postre", unidad: "porción", gramos: 100, kcal: 350, carbG: 45, protG: 5, fatG: 16 },
 ];

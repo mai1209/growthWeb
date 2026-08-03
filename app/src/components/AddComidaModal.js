@@ -150,9 +150,11 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
     if (elegida || q.length < 2) return [];
     const delHistorial = historial.filter((h) => norm(h.nombre).includes(q));
     const deLaBase = BASE_COMIDAS.filter(
-      (b) => norm(b.nombre).includes(q) && !delHistorial.some((h) => norm(h.nombre) === norm(b.nombre))
+      (b) =>
+        (norm(b.nombre).includes(q) || (b.alias && norm(b.alias).includes(q))) &&
+        !delHistorial.some((h) => norm(h.nombre) === norm(b.nombre))
     );
-    return [...delHistorial, ...deLaBase].slice(0, 5);
+    return [...delHistorial, ...deLaBase].slice(0, 8);
   }, [nombre, historial, elegida]);
 
   const usarSugerencia = (s) => {

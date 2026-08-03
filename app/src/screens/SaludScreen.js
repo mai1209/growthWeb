@@ -159,6 +159,8 @@ function LineaTendencia({ points, color, track, unidad }) {
   const linea = smoothPathApp(xy);
   const area = n >= 2 ? `${linea} L ${xy[n - 1][0]} ${padTop + innerH} L ${xy[0][0]} ${padTop + innerH} Z` : "";
   const step = n > 12 ? Math.ceil(n / 6) : 1;
+  // Por defecto se muestra el último día; al tocar, ese día.
+  const selEff = sel != null ? sel : n - 1;
 
   const tocar = (e) => {
     if (!ancho) return;
@@ -178,7 +180,7 @@ function LineaTendencia({ points, color, track, unidad }) {
       <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
         {area ? <Path d={area} fill={color} opacity={0.13} /> : null}
         <Path d={linea} fill="none" stroke={color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
-        {sel != null && points[sel] ? <Circle cx={xy[sel][0]} cy={xy[sel][1]} r={4.5} fill={color} /> : null}
+        {points[selEff] ? <Circle cx={xy[selEff][0]} cy={xy[selEff][1]} r={4.5} fill={color} /> : null}
         {points.map((p, i) =>
           i % step === 0 || i === n - 1 ? (
             <SvgText key={`t${i}`} x={x(i)} y={H - 5} fontSize={9} fontWeight="700" fill={track} textAnchor="middle">
@@ -187,10 +189,10 @@ function LineaTendencia({ points, color, track, unidad }) {
           ) : null
         )}
       </Svg>
-      {sel != null && points[sel] ? (
+      {points[selEff] ? (
         <View style={{ position: "absolute", top: 0, left: 0, right: 0, alignItems: "center" }}>
           <Text style={{ color, fontWeight: "800", fontSize: 12 }}>
-            {points[sel].value.toLocaleString("es-AR")} {unidad}
+            {points[selEff].value.toLocaleString("es-AR")} {unidad}
           </Text>
         </View>
       ) : null}

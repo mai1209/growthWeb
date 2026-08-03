@@ -177,8 +177,8 @@ function LineChart({ points, color, unidad }) {
     return n <= 1 ? 0 : Math.round(rel * (n - 1));
   };
 
-  // Selección efectiva: el hover del mouse manda; si no, el día fijado con click/toque.
-  const sel = hover != null ? hover : pinned;
+  // Selección efectiva: hover del mouse → día fijado con click → por defecto el último día.
+  const sel = hover != null ? hover : pinned != null ? pinned : n - 1;
   const h = sel != null && points[sel] ? { p: points[sel], x: xy[sel][0], y: xy[sel][1] } : null;
 
   return (
@@ -520,9 +520,11 @@ export default function SaludPage() {
     if (elegida || q.length < 2) return [];
     const delHistorial = historial.filter((h) => norm(h.nombre).includes(q));
     const deLaBase = BASE_COMIDAS.filter(
-      (b) => norm(b.nombre).includes(q) && !delHistorial.some((h) => norm(h.nombre) === norm(b.nombre))
+      (b) =>
+        (norm(b.nombre).includes(q) || (b.alias && norm(b.alias).includes(q))) &&
+        !delHistorial.some((h) => norm(h.nombre) === norm(b.nombre))
     );
-    return [...delHistorial, ...deLaBase].slice(0, 6);
+    return [...delHistorial, ...deLaBase].slice(0, 8);
   }, [fNombre, historial, elegida]);
 
   const usarSugerencia = (s) => {
