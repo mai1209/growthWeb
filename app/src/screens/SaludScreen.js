@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import Svg, { Circle } from "react-native-svg";
+import Svg, { Circle, Polyline, Text as SvgText } from "react-native-svg";
 import { Pedometer } from "expo-sensors";
 import * as SecureStore from "expo-secure-store";
 import { useTheme } from "../theme";
@@ -41,6 +41,14 @@ const MACRO_COLORS = { carb: "#d6a92e", prot: "#e0703f", fat: "#3aa0e0" };
 const META_PASOS_DEF = 8000;
 const META_AGUA_DEF = 2000; // ml
 const DIAS_SEMANA = ["D", "L", "M", "M", "J", "V", "S"];
+const MESES = ["E", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+const PERIODOS = [
+  { key: "dia", label: "D" },
+  { key: "semana", label: "S" },
+  { key: "mes", label: "M" },
+  { key: "anio", label: "A" },
+];
+const NOMBRE_PERIODO = { dia: "Día", semana: "Semana", mes: "Mes", anio: "Año" };
 const ANIMOS = [
   { level: 1, emoji: "😔", label: "Mal" },
   { level: 2, emoji: "😕", label: "Bajón" },
@@ -104,6 +112,40 @@ function BarrasSemana({ valores, meta, color, track, styles }) {
   );
 }
 
+// Gráfico de línea simple (tendencia por período) en react-native-svg.
+function LineaTendencia({ points, color, track }) {
+  const W = 320;
+  const H = 130;
+  const padX = 10;
+  const padTop = 12;
+  const padBottom = 22;
+  const n = points.length;
+  const max = Math.max(...points.map((p) => p.value), 1);
+  const innerW = W - padX * 2;
+  const innerH = H - padTop - padBottom;
+  const x = (i) => (n <= 1 ? W / 2 : padX + (i / (n - 1)) * innerW);
+  const y = (v) => padTop + innerH - (v / max) * innerH;
+  const linePts = points.map((p, i) => `${x(i)},${y(p.value)}`).join(" ");
+  const step = n > 12 ? Math.ceil(n / 6) : 1;
+  return (
+    <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`}>
+      <Polyline points={linePts} fill="none" stroke={color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+      {points.map((p, i) =>
+        p.value > 0 && (i === n - 1 || n <= 12) ? (
+          <Circle key={i} cx={x(i)} cy={y(p.value)} r={i === n - 1 ? 4 : 2.5} fill={color} />
+        ) : null
+      )}
+      {points.map((p, i) =>
+        i % step === 0 || i === n - 1 ? (
+          <SvgText key={`t${i}`} x={x(i)} y={H - 6} fontSize={11} fontWeight="700" fill={track} textAnchor="middle">
+            {p.label}
+          </SvgText>
+        ) : null
+      )}
+    </Svg>
+  );
+}
+
 // Barra de progreso de un macro (consumido / meta).
 function MacroBar({ label, val, meta, color, track, styles }) {
   const pct = meta > 0 ? Math.min(100, Math.round((val / meta) * 100)) : 0;
@@ -140,6 +182,7 @@ export default function SaludScreen() {
     if (v === "movilidad" || v === "calorias") setVista(v);
   }, [route.params?.view, route.params?._navTs]);
   const esCalorias = vista === "calorias";
+  const [periodo, setPeriodo] = useState("semana"); // dia | semana | mes | anio
 
   // ---------------- Metas configurables ----------------
   const [metaPasos, setMetaPasos] = useState(META_PASOS_DEF);
@@ -557,6 +600,86 @@ export default function SaludScreen() {
   const pctPasos = pasos != null ? Math.round((pasos / metaPasos) * 100) : 0;
   const pctAgua = Math.round((agua / metaAgua) * 100);
 
+  // ----- Tendencia por período (D/S/M/A) -----
+  const buckets = useMemo(() => {
+    const ahora = new Date();
+    if (periodo === "dia") return [{ label: "Hoy", dias: [dayKey(ahora)] }];
+    if (periodo === "anio") {
+      const arr = [];
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
+        const y = d.getFullYear();
+        const m = d.getMonth();
+        const dim = new Date(y, m + 1, 0).getDate();
+        const dias = [];
+        for (let dd = 1; dd <= dim; dd++) dias.push(`${y}-${pad(m + 1)}-${pad(dd)}`);
+        arr.push({ label: MESES[m], dias });
+      }
+      return arr;
+    }
+    const n = periodo === "mes" ? 30 : 7;
+    const arr = [];
+    for (let i = n - 1; i >= 0; i--) {
+      const d = new Date(ahora);
+      d.setDate(d.getDate() - i);
+      arr.push({
+        label: periodo === "semana" ? DIAS_SEMANA[d.getDay()] : String(d.getDate()),
+        dias: [dayKey(d)],
+      });
+    }
+    return arr;
+  }, [periodo]);
+
+  const construirTendencia = (getVal) => {
+    const points = buckets.map((b) => {
+      const vals = b.dias.map(getVal).filter((v) => v > 0);
+      const value = vals.length ? Math.round(vals.reduce((a, c) => a + c, 0) / vals.length) : 0;
+      return { label: b.label, value };
+    });
+    const activos = points.filter((p) => p.value > 0);
+    const promedio = activos.length
+      ? Math.round(activos.reduce((a, c) => a + c.value, 0) / activos.length)
+      : 0;
+    return { points, promedio };
+  };
+
+  const tendPasos = useMemo(() => construirTendencia((k) => Number(pasosHist[k]) || 0), [buckets, pasosHist]); // eslint-disable-line react-hooks/exhaustive-deps
+  const tendKcal = useMemo(
+    () => construirTendencia((k) => (comidasDias[k] || []).reduce((a, c) => a + (Number(c.kcal) || 0), 0)),
+    [buckets, comidasDias] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const renderTendencia = (titulo, tend, color, unidad) => (
+    <View style={styles.card}>
+      <View style={styles.cardHead}>
+        <View style={styles.cardHeadLeft}>
+          <Ionicons name="trending-up-outline" size={18} color={color} />
+          <Text style={styles.cardTitle}>{titulo}</Text>
+        </View>
+        <View style={styles.periodoSel}>
+          {PERIODOS.map((p) => (
+            <TouchableOpacity
+              key={p.key}
+              style={[styles.periodoBtn, periodo === p.key && styles.periodoBtnOn]}
+              onPress={() => setPeriodo(p.key)}
+            >
+              <Text style={[styles.periodoText, periodo === p.key && styles.periodoTextOn]}>{p.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+      <View style={styles.tendResumen}>
+        <Text style={[styles.tendNum, { color }]}>{tend.promedio.toLocaleString("es-AR")}</Text>
+        <Text style={styles.tendUnidad}>{periodo === "dia" ? unidad : `${unidad} · promedio`}</Text>
+      </View>
+      {periodo === "dia" ? (
+        <Text style={styles.ringSub}>Elegí Semana, Mes o Año para ver la tendencia.</Text>
+      ) : (
+        <LineaTendencia points={tend.points} color={color} track={colors.muted} />
+      )}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.safe} edges={[]}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -565,6 +688,7 @@ export default function SaludScreen() {
 
         {esCalorias ? (
         <>
+        {renderTendencia("Tendencia de calorías", tendKcal, "#e0703f", "kcal")}
         {/* ---- Nutrición (plan) ---- */}
         <View style={styles.card}>
           <View style={styles.cardHead}>
@@ -718,6 +842,8 @@ export default function SaludScreen() {
           <Text style={styles.verTodosText}>Ver todos los resultados</Text>
           <Ionicons name="chevron-forward" size={16} color={colors.greenDark} />
         </TouchableOpacity>
+
+        {renderTendencia("Tendencia de pasos", tendPasos, colors.greenBright, "pasos")}
 
         {/* ---- Peso ---- */}
         <View style={styles.card}>
@@ -932,6 +1058,21 @@ const makeStyles = (colors) =>
     cardHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
     cardHeadLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
     cardTitle: { color: colors.text, fontSize: 16, fontWeight: "800" },
+    periodoSel: {
+      flexDirection: "row",
+      gap: 2,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 999,
+      padding: 2,
+    },
+    periodoBtn: { width: 30, height: 26, borderRadius: 999, alignItems: "center", justifyContent: "center" },
+    periodoBtnOn: { backgroundColor: colors.greenBright },
+    periodoText: { color: colors.muted, fontSize: 12, fontWeight: "800" },
+    periodoTextOn: { color: "#06210a" },
+    tendResumen: { flexDirection: "row", alignItems: "flex-end", gap: 8, marginTop: 4 },
+    tendNum: { fontSize: 30, fontWeight: "900" },
+    tendUnidad: { color: colors.muted, fontSize: 13, fontWeight: "700", marginBottom: 4 },
     metaBtn: {
       flexDirection: "row",
       alignItems: "center",
