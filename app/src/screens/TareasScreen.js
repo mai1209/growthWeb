@@ -277,6 +277,16 @@ export default function TareasScreen() {
         <TaskHistory tasks={allTasks} />
       ) : (
         <>
+          {/* Frase del día, arriba de todo (entre el switch y el header del día) */}
+          <View style={styles.fraseWrap}>
+            <View style={styles.fraseCard}>
+              <Text style={styles.fraseTexto}>
+                <Text style={styles.fraseLabel}>Frase del día: </Text>
+                {fraseDelDia}
+              </Text>
+            </View>
+          </View>
+
           {/* Día seleccionado (se cambia desde el Calendario) */}
           <View style={styles.dayHeader}>
             <Ionicons name="calendar-outline" size={16} color={colors.greenDark} />
@@ -292,13 +302,6 @@ export default function TareasScreen() {
             }
             ListHeaderComponent={
               <View>
-                <View style={styles.fraseCard}>
-                  <Text style={styles.fraseTexto}>
-                    <Text style={styles.fraseLabel}>Frase del día: </Text>
-                    {fraseDelDia}
-                  </Text>
-                </View>
-
                 <View style={styles.progressCard}>
                   <ProgressRing percent={progressPercent} />
                   <View style={styles.progressSide}>
@@ -532,6 +535,7 @@ const makeStyles = (colors) => StyleSheet.create({
     textAlign: "center",
     marginBottom: 10,
   },
+  fraseWrap: { paddingHorizontal: 16, paddingTop: 12 },
   fraseCard: {
     padding: 14,
     borderRadius: 16,

@@ -109,6 +109,10 @@ struct FilaTarea: View {
           .monospacedDigit()
           .foregroundColor(fg.opacity(0.85))
       }
+      // Círculo vacío: solo visual (los widgets comunes no se pueden tildar).
+      Image(systemName: "circle")
+        .font(.system(size: 11, weight: .semibold))
+        .foregroundColor(fg.opacity(0.6))
     }
     .padding(.horizontal, 9)
     .padding(.vertical, 6)
@@ -123,7 +127,7 @@ struct NotasWidgetEntryView: View {
   var entry: NotasEntry
 
   var body: some View {
-    let count = family == .systemSmall ? 4 : 5
+    let count = 4
     let items = Array(entry.notas.prefix(count))
     VStack(alignment: .leading, spacing: 5) {
       HStack(spacing: 5) {
@@ -161,14 +165,16 @@ struct NotasWidget: Widget {
     StaticConfiguration(kind: "NotasWidget", provider: NotasProvider()) { entry in
       if #available(iOS 17.0, *) {
         NotasWidgetEntryView(entry: entry)
+          .padding(14)
           .containerBackground(.fill.tertiary, for: .widget)
       } else {
         NotasWidgetEntryView(entry: entry)
-          .padding()
+          .padding(14)
       }
     }
     .configurationDisplayName("Tareas")
     .description("Tus tareas pendientes de hoy, con el color de cada una.")
     .supportedFamilies([.systemSmall, .systemMedium])
+    .contentMarginsDisabled()
   }
 }
