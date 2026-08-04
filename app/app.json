@@ -22,7 +22,9 @@
     "android": {
       "package": "app.growthmanager.mobile",
       "versionCode": 22,
-      "permissions": ["android.permission.health.READ_STEPS"],
+      "permissions": [
+        "android.permission.health.READ_STEPS"
+      ],
       "config": {
         "googleMaps": {
           "apiKey": "REEMPLAZAR_CON_TU_GOOGLE_MAPS_ANDROID_KEY"
@@ -74,6 +76,14 @@
           "locationAlwaysAndWhenInUsePermission": "Growth usa tu ubicación para seguir midiendo tu caminata aunque la app esté en segundo plano.",
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
         }
       ]
     ]
