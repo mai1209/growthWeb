@@ -3,11 +3,12 @@ import express from "express";
 const router = express.Router();
 
 // Info de versión para el aviso de "actualizá la app".
-// 👉 En cada release nuevo: subí `latest` a la versión que publicás en la store
-//    y actualizá `changes`. La app compara su versión contra `latest`: si es
-//    menor, muestra el popup.
+// 👉 `latest` = la versión que YA está PUBLICADA en la App Store (que el usuario
+//    puede descargar). Debe usar el MISMO número que la store (1.0.x) y coincidir
+//    con app.json / config.js APP_VERSION. Subilo recién cuando la nueva versión
+//    esté aprobada y live en la store. La app avisa si su versión es menor a esta.
 const APP_INFO = {
-  latest: "1.1.0", // ← subir en cada release (debe coincidir con app.json)
+  latest: "1.0.10", // ← versión LIVE en la store hoy (subir a 1.0.11 cuando se apruebe)
   ios: "https://apps.apple.com/app/id6781464707",
   android: "",
   title: "¡Nueva versión disponible!",
