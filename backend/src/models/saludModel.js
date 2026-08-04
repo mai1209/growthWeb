@@ -16,8 +16,10 @@ const saludSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
-    // día → pasos (número). Solo lo escribe el teléfono.
+    // día → pasos (número). Solo lo escribe el teléfono (podómetro).
     pasos: { type: mongoose.Schema.Types.Mixed, default: {} },
+    // día → pasos cargados a mano (se SUMAN a los del sensor). Ej: caminaste sin el teléfono.
+    pasosManual: { type: mongoose.Schema.Types.Mixed, default: {} },
     // día → ml de agua.
     agua: { type: mongoose.Schema.Types.Mixed, default: {} },
     // día → ánimo (1 a 5).

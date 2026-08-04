@@ -26,6 +26,7 @@ import { calcularPlan } from "../utils/nutricion";
 const AGUA_KEY = "salud_agua_v1";
 const CFG_KEY = "salud_config_v1";
 const PASOS_HIST_KEY = "salud_pasos_hist_v1";
+const PASOS_MANUAL_KEY = "salud_pasos_manual_v1";
 const ANIMO_KEY = "salud_animo_v1";
 const PESO_KEY = "salud_peso_v1";
 const CAMINATAS_KEY = "salud_caminatas_v1";
@@ -260,11 +261,22 @@ export default function SaludScreen() {
   }, []);
 
   const abrirEdicion = (cual) => {
-    setEditValor(String(cual === "pasos" ? metaPasos : metaAgua));
+    if (cual === "manual") {
+      const actual = Number(pasosManual[dayKey(new Date())]) || 0;
+      setEditValor(actual ? String(actual) : "");
+    } else {
+      setEditValor(String(cual === "pasos" ? metaPasos : metaAgua));
+    }
     setEditando(cual);
   };
 
   const guardarMeta = () => {
+    if (editando === "manual") {
+      const n = parseInt(editValor, 10) || 0;
+      guardarPasosManual(dayKey(new Date()), n);
+      setEditando(null);
+      return;
+    }
     const n = parseInt(editValor, 10);
     if (!n || n <= 0) {
       setEditando(null);
@@ -315,6 +327,33 @@ export default function SaludScreen() {
       return recortado;
     });
     pushSalud({ pasos: nuevos }); // espejo en la web
+  }, []);
+
+  // Pasos cargados a mano (se SUMAN a los del sensor). Ej: caminaste sin el teléfono.
+  const [pasosManual, setPasosManual] = useState({});
+  useEffect(() => {
+    SecureStore.getItemAsync(PASOS_MANUAL_KEY)
+      .then((raw) => {
+        if (!raw) return;
+        try {
+          const m = JSON.parse(raw);
+          if (m) {
+            setPasosManual(m);
+            pushSalud({ pasosManual: m });
+          }
+        } catch {}
+      })
+      .catch(() => {});
+  }, []);
+
+  const guardarPasosManual = useCallback((dia, valor) => {
+    setPasosManual((prev) => {
+      const next = { ...prev, [dia]: Math.max(0, Math.round(valor) || 0) };
+      if (!next[dia]) delete next[dia];
+      SecureStore.setItemAsync(PASOS_MANUAL_KEY, JSON.stringify(next)).catch(() => {});
+      pushSalud({ pasosManual: next });
+      return next;
+    });
   }, []);
 
   useEffect(() => {
@@ -626,6 +665,11 @@ export default function SaludScreen() {
           SecureStore.setItemAsync(PASOS_HIST_KEY, JSON.stringify(next)).catch(() => {});
           return next;
         });
+        setPasosManual((prev) => {
+          const next = { ...(data.pasosManual || {}), ...prev };
+          SecureStore.setItemAsync(PASOS_MANUAL_KEY, JSON.stringify(next)).catch(() => {});
+          return next;
+        });
         setComidasDias((prev) => {
           const next = { ...(data.comidas || {}), ...prev };
           const serverHoy = data.comidas?.[hoy] || [];
@@ -654,7 +698,18 @@ export default function SaludScreen() {
   const restantes = plan ? plan.kcal - consumido : 0;
   const consumidoPct = plan && plan.kcal > 0 ? Math.min(100, (consumido / plan.kcal) * 100) : 0;
 
-  const pctPasos = pasos != null ? Math.round((pasos / metaPasos) * 100) : 0;
+  // Pasos totales = sensor + carga manual. Se usa para el anillo, la tendencia y "Todos los datos".
+  const pasosHoyTotal = (pasos || 0) + (Number(pasosManual[hoy]) || 0);
+  const manualHoy = Number(pasosManual[hoy]) || 0;
+  const pasosHistCombinado = useMemo(() => {
+    const out = { ...pasosHist };
+    Object.keys(pasosManual).forEach((k) => {
+      out[k] = (Number(out[k]) || 0) + (Number(pasosManual[k]) || 0);
+    });
+    return out;
+  }, [pasosHist, pasosManual]);
+
+  const pctPasos = pasos != null ? Math.round((pasosHoyTotal / metaPasos) * 100) : 0;
   const pctAgua = Math.round((agua / metaAgua) * 100);
 
   // ----- Tendencia por período (D/S/M/A) -----
@@ -705,7 +760,7 @@ export default function SaludScreen() {
   const [metricaMov, setMetricaMov] = useState("pasos");
   const [metricaCal, setMetricaCal] = useState("kcal");
   const METRICAS_MOV = [
-    { key: "pasos", label: "Pasos", color: colors.greenBright, unidad: "pasos", getVal: (k) => Number(pasosHist[k]) || 0 },
+    { key: "pasos", label: "Pasos", color: colors.greenBright, unidad: "pasos", getVal: (k) => Number(pasosHistCombinado[k]) || 0 },
     { key: "peso", label: "Peso", color: colors.greenBright, unidad: "kg", medicion: true, getVal: (k) => Number(pesoDias[k]) || 0 },
     {
       key: "dist",
@@ -1033,10 +1088,16 @@ export default function SaludScreen() {
               <Ionicons name="walk-outline" size={18} color={colors.greenDark} />
               <Text style={styles.cardTitle}>Pasos de hoy</Text>
             </View>
-            <TouchableOpacity style={styles.metaBtn} onPress={() => abrirEdicion("pasos")}>
-              <Ionicons name="create-outline" size={14} color={colors.muted} />
-              <Text style={styles.metaBtnText}>Meta</Text>
-            </TouchableOpacity>
+            <View style={styles.pasosBtns}>
+              <TouchableOpacity style={styles.metaBtn} onPress={() => abrirEdicion("manual")}>
+                <Ionicons name="add-circle-outline" size={14} color={colors.muted} />
+                <Text style={styles.metaBtnText}>Manual</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.metaBtn} onPress={() => abrirEdicion("pasos")}>
+                <Ionicons name="create-outline" size={14} color={colors.muted} />
+                <Text style={styles.metaBtnText}>Meta</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {modoPasos === "no" ? (
@@ -1046,9 +1107,12 @@ export default function SaludScreen() {
               <Ring percent={pctPasos} color={colors.greenBright} track={colors.cardBorder}>
                 <View style={styles.ringCenter}>
                   <Text style={styles.ringBig}>
-                    {pasos != null ? pasos.toLocaleString("es-AR") : "—"}
+                    {pasos != null ? pasosHoyTotal.toLocaleString("es-AR") : "—"}
                   </Text>
                   <Text style={styles.ringSub}>de {metaPasos.toLocaleString("es-AR")}</Text>
+                  {manualHoy > 0 ? (
+                    <Text style={styles.manualHint}>+{manualHoy.toLocaleString("es-AR")} manual</Text>
+                  ) : null}
                 </View>
               </Ring>
               {modoPasos === "ios" && pasosSemana.length > 0 ? (
@@ -1082,14 +1146,24 @@ export default function SaludScreen() {
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setEditando(null)}>
           <TouchableOpacity activeOpacity={1} style={styles.modalCard}>
             <Text style={styles.modalTitle}>
-              {editando === "pasos" ? "Meta de pasos por día" : "Meta de agua por día (ml)"}
+              {editando === "manual"
+                ? "Pasos cargados a mano (hoy)"
+                : editando === "pasos"
+                ? "Meta de pasos por día"
+                : "Meta de agua por día (ml)"}
             </Text>
+            {editando === "manual" ? (
+              <Text style={styles.modalSub}>
+                Se suman a los que cuenta el teléfono. Útil si caminaste sin el celular. Poné 0 para
+                sacarlos.
+              </Text>
+            ) : null}
             <TextInput
               style={styles.modalInput}
               value={editValor}
               onChangeText={(v) => setEditValor(v.replace(/[^0-9]/g, ""))}
               keyboardType="number-pad"
-              placeholder={editando === "pasos" ? "8000" : "2000"}
+              placeholder={editando === "pasos" ? "8000" : editando === "manual" ? "0" : "2000"}
               placeholderTextColor={colors.muted}
               autoFocus
             />
@@ -1114,7 +1188,7 @@ export default function SaludScreen() {
       <TodosDatosModal
         visible={datosOpen}
         onClose={() => setDatosOpen(false)}
-        pasosHist={pasosHist}
+        pasosHist={pasosHistCombinado}
         aguaDias={aguaDias}
         animoDias={animoDias}
         pesoDias={pesoDias}
@@ -1253,6 +1327,9 @@ const makeStyles = (colors) =>
       gap: 12,
     },
     modalTitle: { color: colors.text, fontSize: 16, fontWeight: "800" },
+    modalSub: { color: colors.muted, fontSize: 12.5, lineHeight: 18, marginTop: 6 },
+    pasosBtns: { flexDirection: "row", gap: 6 },
+    manualHint: { color: colors.greenBright, fontSize: 11, fontWeight: "800", marginTop: 2 },
     modalInput: {
       backgroundColor: colors.card,
       borderWidth: 1,

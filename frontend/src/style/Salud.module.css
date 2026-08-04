@@ -371,6 +371,30 @@
   background: var(--surface-input, rgba(255, 255, 255, 0.06));
 }
 
+.pasosManualBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pasosManualBtn:hover {
+  color: var(--color-verde, #5dc72d);
+  border-color: var(--color-verde, #5dc72d);
+}
+
+.manualHint {
+  color: var(--color-verde, #5dc72d) !important;
+  font-weight: 800;
+}
+
 .badgeTel {
   font-size: 0.7rem;
   font-weight: 700;

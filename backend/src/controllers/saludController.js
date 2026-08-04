@@ -7,7 +7,7 @@ const num = (v) => {
 };
 
 // Cuántos días guardamos por sección (con orden cronológico de clave alcanza).
-const MAX_DIAS = { pasos: 400, agua: 60, animo: 120, peso: 400, comidas: 60 };
+const MAX_DIAS = { pasos: 400, pasosManual: 400, agua: 60, animo: 120, peso: 400, comidas: 60 };
 const MAX_CAMINATAS = 100;
 const MAX_COMIDAS_DIA = 40;
 
@@ -50,6 +50,7 @@ const obtenerDoc = async (userId) => {
 
 const serializar = (doc) => ({
   pasos: doc.pasos || {},
+  pasosManual: doc.pasosManual || {},
   agua: doc.agua || {},
   animo: doc.animo || {},
   peso: doc.peso || {},
@@ -80,6 +81,10 @@ export const updateSalud = async (req, res) => {
     if (body.pasos && typeof body.pasos === "object") {
       doc.pasos = mergeDias(doc.pasos, body.pasos, num, MAX_DIAS.pasos);
       doc.markModified("pasos");
+    }
+    if (body.pasosManual && typeof body.pasosManual === "object") {
+      doc.pasosManual = mergeDias(doc.pasosManual, body.pasosManual, num, MAX_DIAS.pasosManual);
+      doc.markModified("pasosManual");
     }
     if (body.agua && typeof body.agua === "object") {
       doc.agua = mergeDias(doc.agua, body.agua, num, MAX_DIAS.agua);

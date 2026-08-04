@@ -267,7 +267,9 @@ export default function SaludPage() {
 
   const metaPasos = data?.metas?.pasos > 0 ? data.metas.pasos : 8000;
   const metaAgua = data?.metas?.agua > 0 ? data.metas.agua : 2000;
-  const pasosHoy = Number(data?.pasos?.[hoy]) || 0;
+  // Pasos totales del día = sensor (del teléfono) + carga manual.
+  const pasosDe = (k) => (Number(data?.pasos?.[k]) || 0) + (Number(data?.pasosManual?.[k]) || 0);
+  const pasosHoy = pasosDe(hoy);
   const agua = Number(data?.agua?.[hoy]) || 0;
   const animoHoy = data?.animo?.[hoy];
   const plan = useMemo(() => calcularPlan(data?.nutri), [data]);
@@ -317,9 +319,9 @@ export default function SaludPage() {
       {
         titulo: "Pasos",
         color: "var(--color-verde, #5dc72d)",
-        valor: (Number(data.pasos?.[h]) || 0).toLocaleString("es-AR"),
+        valor: pasosDe(h).toLocaleString("es-AR"),
         unidad: "pasos",
-        barras: dias.map((k) => Number(data.pasos?.[k]) || 0),
+        barras: dias.map((k) => pasosDe(k)),
       },
       {
         titulo: "Distancia de caminata",
@@ -432,7 +434,7 @@ export default function SaludPage() {
   const [metricaMov, setMetricaMov] = useState("pasos");
   const [metricaCal, setMetricaCal] = useState("kcal");
   const METRICAS_MOV = [
-    { key: "pasos", label: "Pasos", color: "var(--color-verde, #5dc72d)", unidad: "pasos", getVal: (k) => Number(data?.pasos?.[k]) || 0 },
+    { key: "pasos", label: "Pasos", color: "var(--color-verde, #5dc72d)", unidad: "pasos", getVal: (k) => pasosDe(k) },
     { key: "peso", label: "Peso", color: "var(--color-verde, #5dc72d)", unidad: "kg", medicion: true, getVal: (k) => Number(data?.peso?.[k]) || 0 },
     { key: "dist", label: "Distancia", color: "var(--color-verde, #5dc72d)", unidad: "km", getVal: distDiaFn },
   ];
@@ -661,16 +663,35 @@ export default function SaludPage() {
               <h2>
                 <FiActivity /> Pasos de hoy
               </h2>
-              <span className={style.badgeTel}>desde el teléfono</span>
+              <button
+                type="button"
+                className={style.pasosManualBtn}
+                title="Cargar pasos a mano (se suman a los del teléfono)"
+                onClick={() => {
+                  const actual = Number(data?.pasosManual?.[hoy]) || 0;
+                  const v = window.prompt(
+                    "Pasos cargados a mano para hoy (se suman a los del teléfono). Poné 0 para sacarlos:",
+                    actual ? String(actual) : ""
+                  );
+                  if (v == null) return;
+                  const n = Math.max(0, parseInt(v, 10) || 0);
+                  mutate({ pasosManual: { [hoy]: n } });
+                }}
+              >
+                <FiPlus /> Manual
+              </button>
             </div>
             <div className={style.fila}>
               <Ring percent={(pasosHoy / metaPasos) * 100} color="var(--color-verde, #5dc72d)">
                 <strong>{pasosHoy.toLocaleString("es-AR")}</strong>
                 <small>de {metaPasos.toLocaleString("es-AR")}</small>
+                {Number(data?.pasosManual?.[hoy]) > 0 ? (
+                  <small className={style.manualHint}>+{Number(data.pasosManual[hoy]).toLocaleString("es-AR")} manual</small>
+                ) : null}
               </Ring>
               <Semana
                 dias={ultimos7.labels}
-                valores={ultimos7.dias.map((k) => Number(data?.pasos?.[k]) || 0)}
+                valores={ultimos7.dias.map((k) => pasosDe(k))}
                 meta={metaPasos}
                 color="var(--color-verde, #5dc72d)"
               />
