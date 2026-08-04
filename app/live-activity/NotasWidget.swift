@@ -118,7 +118,7 @@ struct FilaTarea: View {
     }
     .padding(.horizontal, 11)
     .padding(.vertical, 11)
-    .frame(maxWidth: .infinity, alignment: .topLeading)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading) // estira la altura
     .background(bg)
     .clipShape(RoundedRectangle(cornerRadius: 10))
   }
@@ -129,11 +129,10 @@ struct NotasWidgetEntryView: View {
   var entry: NotasEntry
 
   var body: some View {
-    // Chico 3, mediano 2 (tarjetas más grandes), grande 5.
-    let count = family == .systemLarge ? 5 : (family == .systemMedium ? 2 : 3)
+    // Chico 3, mediano 2 (tarjetas más grandes), grande 4.
+    let count = family == .systemLarge ? 4 : (family == .systemMedium ? 2 : 3)
     let items = Array(entry.notas.prefix(count))
     VStack(alignment: .leading, spacing: 8) {
-      Spacer(minLength: 0) // espacio arriba
       HStack(spacing: 6) {
         Image("GrowthLogo")
           .resizable()
@@ -163,9 +162,8 @@ struct NotasWidgetEntryView: View {
             .padding(.top, 1)
         }
       }
-      Spacer(minLength: 0) // espacio abajo
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
   }
 }
 
