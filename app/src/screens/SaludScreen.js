@@ -1046,42 +1046,7 @@ export default function SaludScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ---- Peso ---- */}
-        <View style={styles.card}>
-          <View style={styles.cardHead}>
-            <View style={styles.cardHeadLeft}>
-              <Ionicons name="body-outline" size={18} color={colors.greenDark} />
-              <Text style={styles.cardTitle}>Peso</Text>
-            </View>
-          </View>
-          <View style={styles.pesoRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.ringBig}>{pesoActual != null ? `${pesoActual} kg` : "—"}</Text>
-              {pesoDelta != null ? (
-                <Text style={[styles.pesoDelta, { color: pesoDelta <= 0 ? colors.green : colors.red }]}>
-                  {pesoDelta > 0 ? "▲" : "▼"} {Math.abs(pesoDelta).toFixed(1)} kg vs. anterior
-                </Text>
-              ) : (
-                <Text style={styles.ringSub}>Cargalo cuando quieras</Text>
-              )}
-            </View>
-            <View style={styles.pesoInputRow}>
-              <TextInput
-                style={styles.pesoInput}
-                value={pesoInput}
-                onChangeText={(v) => setPesoInput(v.replace(/[^0-9.,]/g, ""))}
-                keyboardType="decimal-pad"
-                placeholder="kg"
-                placeholderTextColor={colors.muted}
-              />
-              <TouchableOpacity style={styles.pesoSave} onPress={guardarPeso}>
-                <Text style={styles.pesoSaveText}>Guardar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        {/* ---- Pasos ---- */}
+        {/* ---- Pasos de hoy (debajo de la caminata GPS) ---- */}
         <View style={styles.card}>
           <View style={styles.cardHead}>
             <View style={styles.cardHeadLeft}>
@@ -1135,6 +1100,41 @@ export default function SaludScreen() {
               completo.
             </Text>
           ) : null}
+        </View>
+
+        {/* ---- Peso ---- */}
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <View style={styles.cardHeadLeft}>
+              <Ionicons name="body-outline" size={18} color={colors.greenDark} />
+              <Text style={styles.cardTitle}>Peso</Text>
+            </View>
+          </View>
+          <View style={styles.pesoRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.ringBig}>{pesoActual != null ? `${pesoActual} kg` : "—"}</Text>
+              {pesoDelta != null ? (
+                <Text style={[styles.pesoDelta, { color: pesoDelta <= 0 ? colors.green : colors.red }]}>
+                  {pesoDelta > 0 ? "▲" : "▼"} {Math.abs(pesoDelta).toFixed(1)} kg vs. anterior
+                </Text>
+              ) : (
+                <Text style={styles.ringSub}>Cargalo cuando quieras</Text>
+              )}
+            </View>
+            <View style={styles.pesoInputRow}>
+              <TextInput
+                style={styles.pesoInput}
+                value={pesoInput}
+                onChangeText={(v) => setPesoInput(v.replace(/[^0-9.,]/g, ""))}
+                keyboardType="decimal-pad"
+                placeholder="kg"
+                placeholderTextColor={colors.muted}
+              />
+              <TouchableOpacity style={styles.pesoSave} onPress={guardarPeso}>
+                <Text style={styles.pesoSaveText}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
         </>
