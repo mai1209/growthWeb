@@ -1080,7 +1080,7 @@ export default function SaludScreen() {
           <View style={styles.cardHead}>
             <View style={styles.cardHeadLeft}>
               <Ionicons name="walk-outline" size={18} color={colors.greenDark} />
-              <Text style={styles.cardTitle}>Pasos de hoy</Text>
+              <Text style={styles.cardTitle}>Pasos</Text>
             </View>
             <View style={styles.pasosBtns}>
               <TouchableOpacity style={styles.metaBtnIcon} onPress={() => setRecorridosOpen(true)} accessibilityLabel="Ver recorridos en el mapa">
@@ -1339,14 +1339,14 @@ const makeStyles = (colors) =>
     metaBtn: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 4,
-      paddingHorizontal: 10,
+      gap: 3,
+      paddingHorizontal: 9,
       paddingVertical: 5,
       borderRadius: 999,
       borderWidth: 1,
       borderColor: colors.cardBorder,
     },
-    metaBtnText: { color: colors.muted, fontSize: 12, fontWeight: "700" },
+    metaBtnText: { color: colors.muted, fontSize: 11, fontWeight: "700" },
     metaBtnIcon: {
       width: 32,
       height: 30,
@@ -1375,7 +1375,7 @@ const makeStyles = (colors) =>
     },
     modalTitle: { color: colors.text, fontSize: 16, fontWeight: "800" },
     modalSub: { color: colors.muted, fontSize: 12.5, lineHeight: 18, marginTop: 6 },
-    pasosBtns: { flexDirection: "row", gap: 6 },
+    pasosBtns: { flexDirection: "row", gap: 5 },
     manualHint: { color: colors.greenBright, fontSize: 11, fontWeight: "800", marginTop: 2 },
     modalInput: {
       backgroundColor: colors.card,
