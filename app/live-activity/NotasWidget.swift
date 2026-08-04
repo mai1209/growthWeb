@@ -127,9 +127,10 @@ struct NotasWidgetEntryView: View {
   var entry: NotasEntry
 
   var body: some View {
-    let count = 3
+    let count = family == .systemLarge ? 7 : 3
     let items = Array(entry.notas.prefix(count))
     VStack(alignment: .leading, spacing: 6) {
+      Spacer(minLength: 0) // espacio arriba
       HStack(spacing: 6) {
         Image("GrowthLogo")
           .resizable()
@@ -141,13 +142,13 @@ struct NotasWidgetEntryView: View {
           Text("\(entry.notas.count)").font(.caption.weight(.bold)).foregroundColor(brand)
         }
       }
+      .padding(.horizontal, 10) // alinea con el contenido de las tarjetas
+
       if items.isEmpty {
-        Spacer(minLength: 0)
         Text("¡Sin tareas pendientes! 🎉")
           .font(.footnote)
           .foregroundColor(.secondary)
           .frame(maxWidth: .infinity, alignment: .center)
-        Spacer(minLength: 0)
       } else {
         ForEach(items, id: \.self) { FilaTarea(item: $0) }
         if entry.notas.count > items.count {
@@ -155,12 +156,13 @@ struct NotasWidgetEntryView: View {
             .font(.caption2.weight(.semibold))
             .foregroundColor(.secondary)
             .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.horizontal, 10) // alinea con el contenido de las tarjetas
             .padding(.top, 1)
         }
-        Spacer(minLength: 0)
       }
+      Spacer(minLength: 0) // espacio abajo
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
   }
 }
 
@@ -178,7 +180,7 @@ struct NotasWidget: Widget {
     }
     .configurationDisplayName("Tareas")
     .description("Tus tareas pendientes de hoy, con el color de cada una.")
-    .supportedFamilies([.systemSmall, .systemMedium])
+    .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     .contentMarginsDisabled()
   }
 }
