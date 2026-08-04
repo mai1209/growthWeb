@@ -7,13 +7,13 @@ import { NativeModules, Platform } from "react-native";
 const { NotasWidgetModule } = NativeModules;
 const disponible = Platform.OS === "ios" && !!NotasWidgetModule;
 
-// tareas: array de { titulo }. Se recorta a 7 (lo que muestra el widget).
+// tareas: array de { titulo, hora }. Se recorta a 7 (lo que muestra el widget).
 export function guardarTareasWidget(tareas) {
   if (!disponible) return;
   try {
     const items = (tareas || []).slice(0, 7).map((t) => ({
       titulo: String(t?.titulo || "").slice(0, 80),
-      texto: "",
+      hora: String(t?.hora || "").slice(0, 12),
     }));
     NotasWidgetModule.setNotas(JSON.stringify(items));
   } catch {}

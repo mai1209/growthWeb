@@ -1,14 +1,13 @@
 //
 //  NotasWidget.swift
-//  Widget de home screen que muestra las TAREAS pendientes de hoy de Growth.
-//  Pertenece SOLO al target del widget ("GrowthWidgetExtension").
+//  Widget de home screen que muestra las TAREAS pendientes de hoy de Growth,
+//  ordenadas por horario. Pertenece SOLO al target del widget ("GrowthWidgetExtension").
 //
 //  (El nombre de archivo/struct quedó como "Notas" por compatibilidad con el
 //  proyecto ya cableado, pero muestra tareas.)
 //
 //  Lee las tareas desde el App Group compartido "group.app.growthmanager.mobile"
-//  (las escribe la app con NotasWidgetModule). Requiere que el App Group esté
-//  activado en Signing & Capabilities de la app y del widget.
+//  (las escribe la app con NotasWidgetModule).
 //
 import WidgetKit
 import SwiftUI
@@ -19,7 +18,7 @@ private let itemsKey = "notas"
 
 struct NotaItem: Codable, Hashable {
   var titulo: String
-  var texto: String
+  var hora: String?
 }
 
 struct NotasEntry: TimelineEntry {
@@ -30,15 +29,14 @@ struct NotasEntry: TimelineEntry {
 struct NotasProvider: TimelineProvider {
   func placeholder(in context: Context) -> NotasEntry {
     NotasEntry(date: Date(), notas: [
-      NotaItem(titulo: "Tomar agua", texto: ""),
-      NotaItem(titulo: "Entrenar", texto: ""),
+      NotaItem(titulo: "Hacer gym / caminar", hora: "08:00"),
+      NotaItem(titulo: "Tomar magnesio", hora: "Noche"),
     ])
   }
   func getSnapshot(in context: Context, completion: @escaping (NotasEntry) -> Void) {
     completion(leerEntry())
   }
   func getTimeline(in context: Context, completion: @escaping (Timeline<NotasEntry>) -> Void) {
-    // La app fuerza el refresco al guardar; igual pedimos una actualización por hora.
     let next = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
     completion(Timeline(entries: [leerEntry()], policy: .after(next)))
   }
@@ -53,6 +51,25 @@ struct NotasProvider: TimelineProvider {
   }
 }
 
+struct FilaTarea: View {
+  let item: NotaItem
+  var body: some View {
+    HStack(alignment: .firstTextBaseline, spacing: 8) {
+      Text((item.hora ?? "").isEmpty ? "·" : item.hora!)
+        .font(.caption2.weight(.bold))
+        .monospacedDigit()
+        .foregroundColor(brand)
+        .frame(width: 46, alignment: .leading)
+        .lineLimit(1)
+      Text(item.titulo.isEmpty ? "Sin título" : item.titulo)
+        .font(.footnote)
+        .lineLimit(1)
+        .foregroundColor(.primary)
+      Spacer(minLength: 0)
+    }
+  }
+}
+
 struct NotasWidgetEntryView: View {
   @Environment(\.widgetFamily) var family
   var entry: NotasEntry
@@ -60,28 +77,32 @@ struct NotasWidgetEntryView: View {
   var body: some View {
     let count = family == .systemSmall ? 4 : 7
     let items = Array(entry.notas.prefix(count))
-    VStack(alignment: .leading, spacing: 7) {
+    VStack(alignment: .leading, spacing: 0) {
       HStack(spacing: 5) {
-        Image(systemName: "checklist").font(.caption2).foregroundColor(brand)
+        Image(systemName: "checklist").font(.caption2.weight(.bold)).foregroundColor(brand)
         Text("Tareas de hoy").font(.caption2.weight(.bold)).foregroundColor(.secondary)
+        Spacer(minLength: 0)
+        if !items.isEmpty {
+          Text("\(entry.notas.count)")
+            .font(.caption2.weight(.bold))
+            .foregroundColor(brand)
+        }
       }
+      .padding(.bottom, 7)
+
       if items.isEmpty {
+        Spacer(minLength: 0)
         Text("¡Sin tareas pendientes! 🎉")
           .font(.footnote)
           .foregroundColor(.secondary)
+          .frame(maxWidth: .infinity, alignment: .center)
+        Spacer(minLength: 0)
       } else {
-        ForEach(items, id: \.self) { t in
-          HStack(alignment: .center, spacing: 7) {
-            Image(systemName: "circle")
-              .font(.system(size: 12))
-              .foregroundColor(brand)
-            Text(t.titulo.isEmpty ? "Sin título" : t.titulo)
-              .font(.footnote)
-              .lineLimit(1)
-          }
+        VStack(alignment: .leading, spacing: 6) {
+          ForEach(items, id: \.self) { FilaTarea(item: $0) }
         }
+        Spacer(minLength: 0)
       }
-      Spacer(minLength: 0)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
   }
@@ -99,7 +120,7 @@ struct NotasWidget: Widget {
       }
     }
     .configurationDisplayName("Tareas")
-    .description("Tus tareas pendientes de hoy en Growth.")
+    .description("Tus tareas pendientes de hoy, ordenadas por horario.")
     .supportedFamilies([.systemSmall, .systemMedium])
   }
 }

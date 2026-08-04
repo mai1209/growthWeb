@@ -110,11 +110,16 @@ export default function TareasScreen() {
       const res = await taskService.getAll({ tipo: "task" });
       const list = Array.isArray(res.data) ? res.data : [];
       setAllTasks(list);
-      // Espeja las tareas pendientes de hoy al widget de iOS (App Group).
+      // Espeja las tareas pendientes de hoy al widget de iOS (App Group),
+      // ordenadas por horario y con la hora que muestra el widget.
       const hoy = new Date();
       const pendientesHoy = filterTasksForDate(list, hoy)
         .filter((t) => !isTaskCompletedOnDate(t, hoy))
-        .map((t) => ({ titulo: t.meta || "" }));
+        .sort((a, b) => agendaKey(a) - agendaKey(b))
+        .map((t) => {
+          const lbl = agendaLabel(t.horario);
+          return { titulo: t.meta || "", hora: lbl === "Sin hora" ? "" : lbl };
+        });
       guardarTareasWidget(pendientesHoy);
       // Reprogramamos los recordatorios "X min antes" con las tareas frescas.
       loadNotifSettings()
