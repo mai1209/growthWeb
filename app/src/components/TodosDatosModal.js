@@ -192,7 +192,6 @@ export default function TodosDatosModal({
                   <Ionicons name={m.icon} size={16} color={m.color} />
                   <Text style={[styles.cardTitulo, { color: m.color }]}>{m.titulo}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.muted} />
               </View>
               <View style={styles.cardBody}>
                 <Text style={styles.valor}>

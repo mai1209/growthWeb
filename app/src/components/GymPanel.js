@@ -157,7 +157,12 @@ export default function GymPanel() {
       {cargando ? (
         <Text style={styles.muted}>Cargando tu gym…</Text>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={[styles.scroll, tab === "rutinas" && styles.scrollFill]}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+          keyboardDismissMode="interactive"
+        >
           {tab === "registro" ? (
             <Registro
               styles={styles}
@@ -187,11 +192,84 @@ export default function GymPanel() {
 
 /* ---------------- Calendario ---------------- */
 function Calendario({ styles, colors, fecha, setFecha, entrenos }) {
+  const [expandido, setExpandido] = useState(false);
   const [mes, setMes] = useState(() => {
     const d = new Date(`${fecha}T00:00:00`);
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
   const hoy = hoyKey();
+
+  const shiftFecha = (n) => {
+    const d = new Date(`${fecha}T00:00:00`);
+    d.setDate(d.getDate() + n);
+    setFecha(dayKey(d));
+  };
+
+  const renderDia = (dObj, key) => {
+    const k = dayKey(dObj);
+    const tiene = (entrenos[k] || []).length > 0;
+    const sel = k === fecha;
+    const esHoy = k === hoy;
+    return (
+      <View key={key} style={styles.calCell}>
+        <TouchableOpacity
+          style={[styles.calDia, sel && styles.calDiaSel, esHoy && !sel && styles.calDiaHoy]}
+          onPress={() => setFecha(k)}
+        >
+          <Text style={[styles.calDiaText, sel && styles.calDiaTextSel]}>{dObj.getDate()}</Text>
+          {tiene ? <View style={[styles.calDot, sel && styles.calDotSel]} /> : null}
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const dowHeader = ["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
+    <View key={`d${i}`} style={styles.calCell}>
+      <Text style={styles.calDow}>{d}</Text>
+    </View>
+  ));
+
+  // ----- Colapsado: solo la semana de la fecha seleccionada -----
+  if (!expandido) {
+    const sel = new Date(`${fecha}T00:00:00`);
+    const dow = (sel.getDay() + 6) % 7; // 0 = lunes
+    const lunes = new Date(sel);
+    lunes.setDate(sel.getDate() - dow);
+    const semana = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(lunes);
+      d.setDate(lunes.getDate() + i);
+      return d;
+    });
+    return (
+      <View style={styles.card}>
+        <View style={styles.calHead}>
+          <TouchableOpacity onPress={() => shiftFecha(-7)} hitSlop={8}>
+            <Ionicons name="chevron-back" size={18} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.calMes}>{sel.toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</Text>
+          <TouchableOpacity onPress={() => shiftFecha(7)} hitSlop={8}>
+            <Ionicons name="chevron-forward" size={18} color={colors.text} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.calGrid}>
+          {dowHeader}
+          {semana.map((d, i) => renderDia(d, i))}
+        </View>
+        <TouchableOpacity
+          style={styles.calToggle}
+          onPress={() => {
+            setMes(new Date(sel.getFullYear(), sel.getMonth(), 1));
+            setExpandido(true);
+          }}
+        >
+          <Ionicons name="chevron-down" size={16} color={colors.muted} />
+          <Text style={styles.calToggleText}>Ver mes</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // ----- Expandido: mes completo -----
   const y = mes.getFullYear();
   const m = mes.getMonth();
   const dim = new Date(y, m + 1, 0).getDate();
@@ -210,30 +288,13 @@ function Calendario({ styles, colors, fecha, setFecha, entrenos }) {
         </TouchableOpacity>
       </View>
       <View style={styles.calGrid}>
-        {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
-          <View key={`d${i}`} style={styles.calCell}>
-            <Text style={styles.calDow}>{d}</Text>
-          </View>
-        ))}
-        {celdas.map((d, i) => {
-          if (d == null) return <View key={i} style={styles.calCell} />;
-          const k = `${y}-${pad(m + 1)}-${pad(d)}`;
-          const tiene = (entrenos[k] || []).length > 0;
-          const sel = k === fecha;
-          const esHoy = k === hoy;
-          return (
-            <View key={i} style={styles.calCell}>
-              <TouchableOpacity
-                style={[styles.calDia, sel && styles.calDiaSel, esHoy && !sel && styles.calDiaHoy]}
-                onPress={() => setFecha(k)}
-              >
-                <Text style={[styles.calDiaText, sel && styles.calDiaTextSel]}>{d}</Text>
-                {tiene ? <View style={[styles.calDot, sel && styles.calDotSel]} /> : null}
-              </TouchableOpacity>
-            </View>
-          );
-        })}
+        {dowHeader}
+        {celdas.map((d, i) => (d == null ? <View key={i} style={styles.calCell} /> : renderDia(new Date(y, m, d), i)))}
       </View>
+      <TouchableOpacity style={styles.calToggle} onPress={() => setExpandido(false)}>
+        <Ionicons name="chevron-up" size={16} color={colors.muted} />
+        <Text style={styles.calToggleText}>Ver semana</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -495,7 +556,7 @@ function RutinaEditor({ styles, colors, rutina, onGuardar, onCancelar, buscarEje
   const DIAS = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, styles.editorFill]}>
       <TextInput style={styles.input} value={nombre} onChangeText={setNombre} placeholder="Nombre (ej: Push)" placeholderTextColor={colors.muted} />
       <View style={styles.diaChips}>
         {DIAS.map((d) => (
@@ -507,16 +568,28 @@ function RutinaEditor({ styles, colors, rutina, onGuardar, onCancelar, buscarEje
 
       {ejercicios.map((e, i) => (
         <View key={i} style={styles.rutinaEjEdit}>
-          <Text style={styles.rutinaEjNombre} numberOfLines={1}>
-            {e.nombre}
-          </Text>
-          <TextInput style={styles.miniInput} value={e.series ? String(e.series) : ""} onChangeText={(v) => setEj(i, "series", Number(soloNum(v)) || 0)} keyboardType="number-pad" placeholder="ser" placeholderTextColor={colors.muted} />
-          <Text style={styles.muted}>×</Text>
-          <TextInput style={styles.miniInput} value={e.reps ? String(e.reps) : ""} onChangeText={(v) => setEj(i, "reps", Number(soloNum(v)) || 0)} keyboardType="number-pad" placeholder="rep" placeholderTextColor={colors.muted} />
-          <TextInput style={styles.miniInput} value={e.kg ? String(e.kg) : ""} onChangeText={(v) => setEj(i, "kg", Number(soloNum(v)) || 0)} keyboardType="decimal-pad" placeholder="kg" placeholderTextColor={colors.muted} />
-          <TouchableOpacity onPress={() => delEj(i)} hitSlop={6}>
-            <Ionicons name="close" size={16} color={colors.muted} />
-          </TouchableOpacity>
+          <View style={styles.rutinaEjTop}>
+            <Text style={styles.rutinaEjNombreBig} numberOfLines={1}>
+              {e.nombre}
+            </Text>
+            <TouchableOpacity onPress={() => delEj(i)} hitSlop={8}>
+              <Ionicons name="close" size={18} color={colors.muted} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.campoRow}>
+            <View style={styles.campo}>
+              <Text style={styles.campoLabel}>Series</Text>
+              <TextInput style={styles.campoInput} value={e.series ? String(e.series) : ""} onChangeText={(v) => setEj(i, "series", Number(soloNum(v)) || 0)} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} />
+            </View>
+            <View style={styles.campo}>
+              <Text style={styles.campoLabel}>Reps</Text>
+              <TextInput style={styles.campoInput} value={e.reps ? String(e.reps) : ""} onChangeText={(v) => setEj(i, "reps", Number(soloNum(v)) || 0)} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} />
+            </View>
+            <View style={styles.campo}>
+              <Text style={styles.campoLabel}>Kg</Text>
+              <TextInput style={styles.campoInput} value={e.kg ? String(e.kg) : ""} onChangeText={(v) => setEj(i, "kg", Number(soloNum(v)) || 0)} keyboardType="decimal-pad" placeholder="0" placeholderTextColor={colors.muted} />
+            </View>
+          </View>
         </View>
       ))}
 
@@ -532,6 +605,8 @@ function RutinaEditor({ styles, colors, rutina, onGuardar, onCancelar, buscarEje
           <Text style={styles.sugNombre}>➕ Crear "{q.trim()}"</Text>
         </TouchableOpacity>
       ) : null}
+
+      <View style={styles.editorSpacer} />
 
       <View style={styles.editorActions}>
         <TouchableOpacity style={styles.linkRow} onPress={onCancelar}>
@@ -783,6 +858,7 @@ const makeStyles = (colors) =>
     tabText: { color: colors.muted, fontWeight: "800", fontSize: 12 },
     tabTextOn: { color: "#06210a" },
     scroll: { paddingHorizontal: 16, paddingBottom: 120, gap: 10 },
+    scrollFill: { flexGrow: 1 },
     muted: { color: colors.muted, fontSize: 13, fontWeight: "600" },
 
     card: {
@@ -808,6 +884,17 @@ const makeStyles = (colors) =>
     calDiaTextSel: { color: "#06210a" },
     calDot: { position: "absolute", bottom: 4, width: 5, height: 5, borderRadius: 3, backgroundColor: colors.greenBright },
     calDotSel: { backgroundColor: "#06210a" },
+    calToggle: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 5,
+      marginTop: 4,
+      paddingTop: 8,
+      borderTopWidth: 1,
+      borderTopColor: colors.cardBorder,
+    },
+    calToggleText: { color: colors.muted, fontSize: 12, fontWeight: "700" },
 
     dayBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
     diaSel: { color: colors.text, fontSize: 15, fontWeight: "800", textTransform: "capitalize" },
@@ -922,7 +1009,32 @@ const makeStyles = (colors) =>
       paddingVertical: 8,
     },
     rutinaEjNombre: { color: colors.text, fontSize: 13, fontWeight: "600", flex: 1 },
-    rutinaEjEdit: { flexDirection: "row", alignItems: "center", gap: 6 },
+    rutinaEjEdit: {
+      backgroundColor: colors.bg,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 12,
+      padding: 12,
+      gap: 10,
+    },
+    rutinaEjTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+    rutinaEjNombreBig: { color: colors.text, fontSize: 15, fontWeight: "800", flex: 1 },
+    campoRow: { flexDirection: "row", gap: 8 },
+    campo: { flex: 1, gap: 4 },
+    campoLabel: { color: colors.muted, fontSize: 10, fontWeight: "800", textTransform: "uppercase", textAlign: "center" },
+    campoInput: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 10,
+      paddingVertical: 13,
+      color: colors.text,
+      fontWeight: "800",
+      textAlign: "center",
+      fontSize: 17,
+    },
+    editorFill: { flex: 1 },
+    editorSpacer: { flexGrow: 1, minHeight: 8 },
     miniInput: {
       width: 48,
       backgroundColor: colors.bg,

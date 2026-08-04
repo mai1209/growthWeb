@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
-import { startWalkActivity, updateWalkActivity, endWalkActivity } from "../../modules/growth-live-activity";
+import { iniciarCaminataLA, actualizarCaminataLA, terminarCaminataLA } from "../services/liveActivity";
 import * as TaskManager from "expo-task-manager";
 import { useTheme } from "../theme";
 
@@ -91,7 +91,7 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
         : Math.floor(elapsedBaseRef.current / 1000);
     setSecs(segs);
     // Refresca la tarjeta (Live Activity) con los km y el tiempo actuales.
-    if (track.activo) updateWalkActivity(track.metros, segs);
+    if (track.activo) actualizarCaminataLA(track.metros, segs);
   };
 
   const arrancarTracking = async () => {
@@ -130,7 +130,7 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
     setEnFondo(backgroundOk);
 
     // Enciende la Live Activity (si el equipo la soporta; si no, no hace nada).
-    startWalkActivity(track.metros, Math.floor(elapsedBaseRef.current / 1000));
+    iniciarCaminataLA(track.metros, Math.floor(elapsedBaseRef.current / 1000));
 
     timerRef.current = setInterval(sincronizar, 1000);
     setFase("activo");
@@ -176,7 +176,7 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
       track.activo = false;
       if (timerRef.current) clearInterval(timerRef.current);
       detenerFuentes(subRef);
-      endWalkActivity(); // al cerrar la caminata, cerramos la tarjeta
+      terminarCaminataLA(); // al cerrar la caminata, cerramos la tarjeta
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -199,7 +199,7 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
   };
   const finalizar = async () => {
     await cortarTramo();
-    endWalkActivity(); // termina la Live Activity
+    terminarCaminataLA(); // termina la Live Activity
     setFase("resumen");
   };
   const guardar = () => {
