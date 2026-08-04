@@ -222,17 +222,8 @@ const makeStyles = (colors) =>
     fechaSelTxt: { color: colors.muted, fontSize: 13, fontWeight: "800", textTransform: "capitalize" },
 
     statCards: { flexDirection: "row", gap: 8, paddingHorizontal: 16 },
-    statCard: {
-      flex: 1,
-      alignItems: "center",
-      gap: 3,
-      paddingVertical: 12,
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: colors.cardBorder,
-      backgroundColor: colors.card,
-    },
-    statCardNum: { color: colors.text, fontSize: 20, fontWeight: "900" },
+    statCard: { flex: 1, alignItems: "center", gap: 4, paddingVertical: 6 },
+    statCardNum: { color: colors.text, fontSize: 22, fontWeight: "900" },
     statCardLbl: { color: colors.muted, fontSize: 11, fontWeight: "700" },
 
     listaTitulo: {

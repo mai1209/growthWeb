@@ -454,18 +454,9 @@ const makeStyles = (colors) =>
     kmUnit: { color: colors.text, fontSize: 18, fontWeight: "800", marginBottom: 9 },
     kmLabel: { color: colors.muted, fontSize: 15, fontWeight: "700", marginBottom: 24 },
 
-    statCards: { flexDirection: "row", gap: 8, alignSelf: "stretch", marginTop: 2 },
-    statCard: {
-      flex: 1,
-      alignItems: "center",
-      gap: 3,
-      paddingVertical: 12,
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: colors.cardBorder,
-      backgroundColor: colors.card,
-    },
-    statCardNum: { color: colors.text, fontSize: 20, fontWeight: "900" },
+    statCards: { flexDirection: "row", gap: 8, alignSelf: "stretch", marginTop: 4 },
+    statCard: { flex: 1, alignItems: "center", gap: 4, paddingVertical: 6 },
+    statCardNum: { color: colors.text, fontSize: 22, fontWeight: "900" },
     statCardLbl: { color: colors.muted, fontSize: 11, fontWeight: "700" },
 
     stats: { flexDirection: "row", gap: 40, marginBottom: 4 },

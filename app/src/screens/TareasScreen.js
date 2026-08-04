@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import * as SecureStore from "expo-secure-store";
 import { taskService } from "../api";
 import { useTheme } from "../theme";
 import { guardarTareasWidget } from "../services/tareasWidget";
@@ -103,6 +104,18 @@ export default function TareasScreen() {
   const [formDate, setFormDate] = useState(null);
   const [editTask, setEditTask] = useState(null);
   const [openMenu, setOpenMenu] = useState(null);
+  const [tipWidget, setTipWidget] = useState(false); // aviso "agregá el widget"
+
+  // Mostrar el aviso del widget una sola vez (hasta que lo cierren).
+  useEffect(() => {
+    SecureStore.getItemAsync("tip_widget_tareas")
+      .then((v) => setTipWidget(v !== "1"))
+      .catch(() => {});
+  }, []);
+  const cerrarTipWidget = () => {
+    setTipWidget(false);
+    SecureStore.setItemAsync("tip_widget_tareas", "1").catch(() => {});
+  };
 
   const fetchTasks = useCallback(async () => {
     setError("");
@@ -302,6 +315,22 @@ export default function TareasScreen() {
             }
             ListHeaderComponent={
               <View>
+                {tipWidget ? (
+                  <View style={styles.tipCard}>
+                    <Ionicons name="phone-portrait-outline" size={20} color={colors.greenBright} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.tipTitulo}>Sumá el widget de Tareas 📱</Text>
+                      <Text style={styles.tipTexto}>
+                        Mirá tus tareas de hoy desde la pantalla de inicio: mantené apretada la home →
+                        botón + → buscá “Growth”.
+                      </Text>
+                    </View>
+                    <TouchableOpacity onPress={cerrarTipWidget} hitSlop={8}>
+                      <Ionicons name="close" size={18} color={colors.muted} />
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
+
                 <View style={styles.progressCard}>
                   <ProgressRing percent={progressPercent} />
                   <View style={styles.progressSide}>
@@ -519,6 +548,20 @@ const makeStyles = (colors) => StyleSheet.create({
     borderColor: colors.bg,
   },
   cardFlex: { flex: 1 },
+
+  tipCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(93,199,45,0.30)",
+    backgroundColor: "rgba(93,199,45,0.08)",
+    marginBottom: 12,
+  },
+  tipTitulo: { color: colors.text, fontSize: 14, fontWeight: "800" },
+  tipTexto: { color: colors.muted, fontSize: 12.5, lineHeight: 18, fontWeight: "600", marginTop: 2 },
 
   progressCard: {
     flexDirection: "row",
