@@ -97,14 +97,15 @@ struct FilaTarea: View {
   var body: some View {
     let bg = Color(growthHex: item.color)
     let fg = growthContrast(item.color)
-    HStack(alignment: .top, spacing: 8) {
+    // Centrado: si el título ocupa 2 líneas, la hora y el círculo quedan al medio.
+    HStack(alignment: .center, spacing: 8) {
       Text(item.titulo.isEmpty ? "Sin título" : item.titulo)
         .font(.subheadline.weight(.semibold))
         .lineLimit(3)                                  // texto largo baja de renglón
         .fixedSize(horizontal: false, vertical: true)
         .foregroundColor(fg)
       Spacer(minLength: 4)
-      // Hora/momento + círculo, siempre visibles a la derecha (arriba).
+      // Hora/momento + círculo, siempre visibles a la derecha (centrados).
       if let h = item.hora, !h.isEmpty {
         Text(h)
           .font(.caption.weight(.bold))
@@ -112,9 +113,8 @@ struct FilaTarea: View {
           .foregroundColor(fg.opacity(0.85))
       }
       Image(systemName: "circle")
-        .font(.system(size: 12, weight: .semibold))
+        .font(.system(size: 15, weight: .semibold))
         .foregroundColor(fg.opacity(0.6))
-        .padding(.top, 1)
     }
     .padding(.horizontal, 11)
     .padding(.vertical, 11)
