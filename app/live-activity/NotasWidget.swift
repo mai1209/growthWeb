@@ -19,6 +19,21 @@ private let itemsKey = "notas"
 struct NotaItem: Codable, Hashable {
   var titulo: String
   var hora: String?
+
+  enum CodingKeys: String, CodingKey { case titulo, hora }
+
+  init(titulo: String, hora: String?) {
+    self.titulo = titulo
+    self.hora = hora
+  }
+
+  // Decode tolerante: si falta algún campo (o sobran, como el viejo "texto"),
+  // no rompe — así un cambio de formato nunca deja el widget vacío.
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    titulo = (try? c.decode(String.self, forKey: .titulo)) ?? ""
+    hora = try? c.decode(String.self, forKey: .hora)
+  }
 }
 
 struct NotasEntry: TimelineEntry {

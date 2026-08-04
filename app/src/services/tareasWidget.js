@@ -14,6 +14,9 @@ export function guardarTareasWidget(tareas) {
     const items = (tareas || []).slice(0, 7).map((t) => ({
       titulo: String(t?.titulo || "").slice(0, 80),
       hora: String(t?.hora || "").slice(0, 12),
+      // `texto` va por compatibilidad con la versión anterior del widget que
+      // pueda quedar cacheada en iOS (su decode requería ese campo).
+      texto: "",
     }));
     NotasWidgetModule.setNotas(JSON.stringify(items));
   } catch {}
