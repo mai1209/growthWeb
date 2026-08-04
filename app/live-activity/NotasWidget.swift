@@ -99,23 +99,23 @@ struct FilaTarea: View {
     let fg = growthContrast(item.color)
     HStack(spacing: 6) {
       Text(item.titulo.isEmpty ? "Sin título" : item.titulo)
-        .font(.caption.weight(.semibold))
+        .font(.subheadline.weight(.semibold))
         .lineLimit(1)
         .foregroundColor(fg)
       Spacer(minLength: 4)
       if let h = item.hora, !h.isEmpty {
         Text(h)
-          .font(.caption2.weight(.bold))
+          .font(.caption.weight(.bold))
           .monospacedDigit()
           .foregroundColor(fg.opacity(0.85))
       }
       // Círculo vacío: solo visual (los widgets comunes no se pueden tildar).
       Image(systemName: "circle")
-        .font(.system(size: 11, weight: .semibold))
+        .font(.system(size: 12, weight: .semibold))
         .foregroundColor(fg.opacity(0.6))
     }
-    .padding(.horizontal, 9)
-    .padding(.vertical, 6)
+    .padding(.horizontal, 10)
+    .padding(.vertical, 8)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(bg)
     .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -127,15 +127,18 @@ struct NotasWidgetEntryView: View {
   var entry: NotasEntry
 
   var body: some View {
-    let count = 4
+    let count = 3
     let items = Array(entry.notas.prefix(count))
-    VStack(alignment: .leading, spacing: 5) {
-      HStack(spacing: 5) {
-        Image(systemName: "checklist").font(.caption2.weight(.bold)).foregroundColor(brand)
-        Text("Tareas de hoy").font(.caption2.weight(.bold)).foregroundColor(.secondary)
+    VStack(alignment: .leading, spacing: 6) {
+      HStack(spacing: 6) {
+        Image("GrowthLogo")
+          .resizable()
+          .aspectRatio(contentMode: .fit)
+          .frame(width: 18, height: 18)
+        Text("Tareas de hoy").font(.caption.weight(.bold)).foregroundColor(.secondary)
         Spacer(minLength: 0)
         if !items.isEmpty {
-          Text("\(entry.notas.count)").font(.caption2.weight(.bold)).foregroundColor(brand)
+          Text("\(entry.notas.count)").font(.caption.weight(.bold)).foregroundColor(brand)
         }
       }
       if items.isEmpty {
@@ -151,6 +154,7 @@ struct NotasWidgetEntryView: View {
           Text("+\(entry.notas.count - items.count) más")
             .font(.caption2.weight(.semibold))
             .foregroundColor(.secondary)
+            .frame(maxWidth: .infinity, alignment: .trailing)
             .padding(.top, 1)
         }
         Spacer(minLength: 0)
