@@ -28,6 +28,9 @@ import UpdateModal from "./src/components/UpdateModal";
 import RadialTabBar from "./src/components/RadialTabBar";
 import { appService } from "./src/api";
 import { APP_VERSION } from "./src/config";
+import * as SecureStore from "expo-secure-store";
+
+const UPDATE_SEEN_KEY = "update_aviso_visto_v"; // guarda la última versión ya avisada
 
 // Compara versiones "1.0.11" vs "1.0.12": true si `a` es más vieja que `b`.
 const isOlderVersion = (a, b) => {
@@ -107,22 +110,34 @@ function Routes() {
   const { colors } = useTheme();
   const [updateInfo, setUpdateInfo] = useState(null);
 
-  // Al abrir (logueado), chequea si hay una versión más nueva y avisa.
+  // Al abrir (logueado), chequea si hay una versión más nueva y avisa UNA sola vez
+  // por versión: si ya cerraste el aviso de esa versión, no vuelve a aparecer.
   useEffect(() => {
     if (!token) return undefined;
     let alive = true;
     appService
       .version()
-      .then((res) => {
-        if (alive && res.data && isOlderVersion(APP_VERSION, res.data.latest)) {
-          setUpdateInfo(res.data);
-        }
+      .then(async (res) => {
+        if (!alive || !res.data) return;
+        const latest = res.data.latest;
+        if (!isOlderVersion(APP_VERSION, latest)) return;
+        const visto = await SecureStore.getItemAsync(UPDATE_SEEN_KEY).catch(() => null);
+        if (visto === latest) return; // ya avisamos esta versión
+        setUpdateInfo(res.data);
       })
       .catch(() => {});
     return () => {
       alive = false;
     };
   }, [token]);
+
+  // Marca la versión como avisada y cierra (no vuelve a aparecer para esta versión).
+  const cerrarUpdate = () => {
+    if (updateInfo?.latest) {
+      SecureStore.setItemAsync(UPDATE_SEEN_KEY, updateInfo.latest).catch(() => {});
+    }
+    setUpdateInfo(null);
+  };
 
   if (!ready) {
     return (
@@ -146,11 +161,7 @@ function Routes() {
         )}
       </Stack.Navigator>
 
-      <UpdateModal
-        visible={Boolean(updateInfo)}
-        info={updateInfo}
-        onClose={() => setUpdateInfo(null)}
-      />
+      <UpdateModal visible={Boolean(updateInfo)} info={updateInfo} onClose={cerrarUpdate} />
     </>
   );
 }

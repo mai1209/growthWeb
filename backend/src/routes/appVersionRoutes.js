@@ -10,11 +10,11 @@ const APP_INFO = {
   latest: "1.1.0", // ← subir en cada release (debe coincidir con app.json)
   ios: "https://apps.apple.com/app/id6781464707",
   android: "",
-  title: "¡Nueva versión disponible! 🚀",
+  title: "¡Nueva versión disponible!",
   message:
     "Actualizá Growth para ver las últimas mejoras. La app no se actualiza sola: tocá “Actualizar” y bajá la nueva versión de la store.",
   changes: [
-    "Nueva sección Salud 🌱: pasos, caminatas por GPS, peso y ánimo",
+    "Nueva sección Salud: pasos, caminatas por GPS, peso y ánimo",
     "Calorías diarias: plan + registro de comidas con autocompletar",
     "Gráficos de tendencia (día/semana/mes/año) y “Todos los datos”",
     "El diario arranca cada oración en mayúscula",

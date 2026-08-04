@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   Linking,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../theme";
@@ -19,6 +20,7 @@ export default function UpdateModal({ visible, info, onClose }) {
   const openStore = () => {
     const url = info.ios || info.android;
     if (url) Linking.openURL(url).catch(() => {});
+    onClose?.(); // marca la versión como avisada: no vuelve a aparecer
   };
 
   return (
@@ -26,7 +28,11 @@ export default function UpdateModal({ visible, info, onClose }) {
       <View style={styles.overlay}>
         <View style={styles.card}>
           <View style={styles.iconWrap}>
-            <Ionicons name="rocket-outline" size={26} color={colors.greenDark} />
+            <Image
+              source={require("../../assets/growth-logo.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
           </View>
           <Text style={styles.title}>{info.title || "Nueva versión disponible"}</Text>
           {info.message ? <Text style={styles.message}>{info.message}</Text> : null}
@@ -86,6 +92,7 @@ const makeStyles = (colors) =>
       borderWidth: 1,
       borderColor: colors.cardBorder,
     },
+    logo: { width: 32, height: 32 },
     title: { color: colors.text, fontSize: 19, fontWeight: "900", textAlign: "center" },
     message: {
       color: colors.muted,
