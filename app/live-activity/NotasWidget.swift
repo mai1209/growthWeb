@@ -1,7 +1,8 @@
 //
 //  NotasWidget.swift
-//  Widget de home screen que muestra las TAREAS pendientes de hoy de Growth,
-//  ordenadas por horario. Pertenece SOLO al target del widget ("GrowthWidgetExtension").
+//  Widget de home screen que muestra las TAREAS pendientes de hoy de Growth
+//  con el MISMO estilo que la app/web: cada tarea es una tarjeta con su color.
+//  Pertenece SOLO al target del widget ("GrowthWidgetExtension").
 //
 //  (El nombre de archivo/struct quedó como "Notas" por compatibilidad con el
 //  proyecto ya cableado, pero muestra tareas.)
@@ -16,18 +17,25 @@ private let brand = Color(red: 0.36, green: 0.78, blue: 0.18) // verde Growth #5
 private let appGroup = "group.app.growthmanager.mobile"
 private let itemsKey = "notas"
 
-// Color desde hex ("#rrggbb"). Si no parsea, usa el verde de marca.
+// RGB (0..1) desde hex "#rrggbb". nil si no parsea.
+private func growthRGB(_ hex: String?) -> (Double, Double, Double)? {
+  let s = (hex ?? "").trimmingCharacters(in: CharacterSet(charactersIn: "# ")).uppercased()
+  var v: UInt64 = 0
+  guard s.count == 6, Scanner(string: s).scanHexInt64(&v) else { return nil }
+  return (Double((v >> 16) & 0xFF) / 255.0, Double((v >> 8) & 0xFF) / 255.0, Double(v & 0xFF) / 255.0)
+}
+
 extension Color {
   init(growthHex hex: String?) {
-    let s = (hex ?? "").trimmingCharacters(in: CharacterSet(charactersIn: "# ")).uppercased()
-    var v: UInt64 = 0
-    guard s.count == 6, Scanner(string: s).scanHexInt64(&v) else { self = brand; return }
-    self = Color(
-      red: Double((v >> 16) & 0xFF) / 255.0,
-      green: Double((v >> 8) & 0xFF) / 255.0,
-      blue: Double(v & 0xFF) / 255.0
-    )
+    if let (r, g, b) = growthRGB(hex) { self = Color(red: r, green: g, blue: b) } else { self = brand }
   }
+}
+
+// Texto oscuro sobre colores claros, blanco sobre oscuros (como en la app).
+private func growthContrast(_ hex: String?) -> Color {
+  guard let (r, g, b) = growthRGB(hex) else { return Color(red: 0.086, green: 0.14, blue: 0.114) }
+  let lum = 0.299 * r + 0.587 * g + 0.114 * b
+  return lum > 0.6 ? Color(red: 0.086, green: 0.14, blue: 0.114) : .white
 }
 
 struct NotaItem: Codable, Hashable {
@@ -61,8 +69,8 @@ struct NotasEntry: TimelineEntry {
 struct NotasProvider: TimelineProvider {
   func placeholder(in context: Context) -> NotasEntry {
     NotasEntry(date: Date(), notas: [
-      NotaItem(titulo: "Hacer gym / caminar", hora: "08:00"),
-      NotaItem(titulo: "Tomar magnesio", hora: "Noche"),
+      NotaItem(titulo: "Hacer gym / caminar", hora: "08:00", color: "#f0c419"),
+      NotaItem(titulo: "Tomar magnesio", hora: "Noche", color: "#3f9fe7"),
     ])
   }
   func getSnapshot(in context: Context, completion: @escaping (NotasEntry) -> Void) {
@@ -83,26 +91,30 @@ struct NotasProvider: TimelineProvider {
   }
 }
 
+// Tarjeta de tarea con su color de fondo, igual que en la app.
 struct FilaTarea: View {
   let item: NotaItem
   var body: some View {
-    let c = Color(growthHex: item.color)
-    HStack(alignment: .firstTextBaseline, spacing: 8) {
-      RoundedRectangle(cornerRadius: 1.5)
-        .fill(c)
-        .frame(width: 3, height: 13)
-      Text((item.hora ?? "").isEmpty ? "·" : item.hora!)
-        .font(.caption2.weight(.bold))
-        .monospacedDigit()
-        .foregroundColor(c)
-        .frame(width: 46, alignment: .leading)
-        .lineLimit(1)
+    let bg = Color(growthHex: item.color)
+    let fg = growthContrast(item.color)
+    HStack(spacing: 6) {
       Text(item.titulo.isEmpty ? "Sin título" : item.titulo)
-        .font(.footnote)
+        .font(.caption.weight(.semibold))
         .lineLimit(1)
-        .foregroundColor(.primary)
-      Spacer(minLength: 0)
+        .foregroundColor(fg)
+      Spacer(minLength: 4)
+      if let h = item.hora, !h.isEmpty {
+        Text(h)
+          .font(.caption2.weight(.bold))
+          .monospacedDigit()
+          .foregroundColor(fg.opacity(0.85))
+      }
     }
+    .padding(.horizontal, 9)
+    .padding(.vertical, 6)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(bg)
+    .clipShape(RoundedRectangle(cornerRadius: 8))
   }
 }
 
@@ -111,21 +123,17 @@ struct NotasWidgetEntryView: View {
   var entry: NotasEntry
 
   var body: some View {
-    let count = family == .systemSmall ? 4 : 7
+    let count = family == .systemSmall ? 4 : 5
     let items = Array(entry.notas.prefix(count))
-    VStack(alignment: .leading, spacing: 0) {
+    VStack(alignment: .leading, spacing: 5) {
       HStack(spacing: 5) {
         Image(systemName: "checklist").font(.caption2.weight(.bold)).foregroundColor(brand)
         Text("Tareas de hoy").font(.caption2.weight(.bold)).foregroundColor(.secondary)
         Spacer(minLength: 0)
         if !items.isEmpty {
-          Text("\(entry.notas.count)")
-            .font(.caption2.weight(.bold))
-            .foregroundColor(brand)
+          Text("\(entry.notas.count)").font(.caption2.weight(.bold)).foregroundColor(brand)
         }
       }
-      .padding(.bottom, 7)
-
       if items.isEmpty {
         Spacer(minLength: 0)
         Text("¡Sin tareas pendientes! 🎉")
@@ -134,8 +142,12 @@ struct NotasWidgetEntryView: View {
           .frame(maxWidth: .infinity, alignment: .center)
         Spacer(minLength: 0)
       } else {
-        VStack(alignment: .leading, spacing: 6) {
-          ForEach(items, id: \.self) { FilaTarea(item: $0) }
+        ForEach(items, id: \.self) { FilaTarea(item: $0) }
+        if entry.notas.count > items.count {
+          Text("+\(entry.notas.count - items.count) más")
+            .font(.caption2.weight(.semibold))
+            .foregroundColor(.secondary)
+            .padding(.top, 1)
         }
         Spacer(minLength: 0)
       }
@@ -156,7 +168,7 @@ struct NotasWidget: Widget {
       }
     }
     .configurationDisplayName("Tareas")
-    .description("Tus tareas pendientes de hoy, ordenadas por horario.")
+    .description("Tus tareas pendientes de hoy, con el color de cada una.")
     .supportedFamilies([.systemSmall, .systemMedium])
   }
 }
