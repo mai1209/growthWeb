@@ -3,7 +3,9 @@
 // como: export const API_BASE_URL = "http://192.168.0.10:3000";
 export const API_BASE_URL = "https://www.growthmanager.app";
 
-// Versión de ESTE build (debe coincidir con la de app.json). Se compara contra
-// la "latest" del backend para avisar cuando hay que actualizar. Subila en cada
-// release, junto con app.json y el `latest` del backend.
-export const APP_VERSION = "1.0.11";
+// Versión de ESTE build: se lee AUTOMÁTICAMENTE del build nativo (la que ponés
+// en Xcode → General → Version). Ya no hay que tocarla a mano acá. Se compara
+// contra la "latest" del backend para avisar cuando hay que actualizar.
+// El fallback solo aplica en Expo Go / web, donde no hay versión nativa.
+import * as Application from "expo-application";
+export const APP_VERSION = Application.nativeApplicationVersion || "1.0.11";

@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Modal,
   TextInput,
+  AppState,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
@@ -358,7 +359,45 @@ export default function SaludScreen() {
 
   useEffect(() => {
     let sub;
+    let intervalo;
+    let appSub;
     let vivo = true;
+
+    // Solo el total de hoy (barato): se usa para el refresco automático.
+    const refrescarHoy = async () => {
+      const ahora = new Date();
+      const hoy = await Pedometer.getStepCountAsync(startOfDay(ahora), ahora).catch(() => null);
+      if (vivo && hoy) setPasos(hoy.steps ?? 0);
+    };
+
+    // Total de hoy + serie de los últimos 7 días + histórico.
+    const cargarTodo = async () => {
+      const ahora = new Date();
+      const hoy = await Pedometer.getStepCountAsync(startOfDay(ahora), ahora).catch(() => null);
+      if (!vivo) return;
+      if (hoy) setPasos(hoy.steps ?? 0);
+      const dias = [];
+      const nuevos = {}; // { "YYYY-MM-DD": pasos } de los últimos 7 días
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(ahora);
+        d.setDate(d.getDate() - i);
+        const ini = startOfDay(d);
+        const fin = i === 0 ? ahora : new Date(ini.getTime() + 86399999);
+        let steps = 0;
+        try {
+          const r = await Pedometer.getStepCountAsync(ini, fin);
+          steps = r?.steps ?? 0;
+        } catch {}
+        dias.push({ label: DIAS_SEMANA[d.getDay()], valor: steps });
+        nuevos[dayKey(d)] = steps;
+      }
+      if (vivo) {
+        setPasosSemana(dias);
+        setModoPasos("ios");
+        guardarHist(nuevos); // acumulamos para tendencias largas
+      }
+    };
+
     (async () => {
       const disponible = await Pedometer.isAvailableAsync().catch(() => false);
       if (!vivo) return;
@@ -366,31 +405,10 @@ export default function SaludScreen() {
         setModoPasos("no");
         return;
       }
-      const ahora = new Date();
       try {
-        const hoy = await Pedometer.getStepCountAsync(startOfDay(ahora), ahora);
-        if (!vivo) return;
-        setPasos(hoy?.steps ?? 0);
-        const dias = [];
-        const nuevos = {}; // { "YYYY-MM-DD": pasos } de los últimos 7 días
-        for (let i = 6; i >= 0; i--) {
-          const d = new Date(ahora);
-          d.setDate(d.getDate() - i);
-          const ini = startOfDay(d);
-          const fin = i === 0 ? ahora : new Date(ini.getTime() + 86399999);
-          let steps = 0;
-          try {
-            const r = await Pedometer.getStepCountAsync(ini, fin);
-            steps = r?.steps ?? 0;
-          } catch {}
-          dias.push({ label: DIAS_SEMANA[d.getDay()], valor: steps });
-          nuevos[dayKey(d)] = steps;
-        }
-        if (vivo) {
-          setPasosSemana(dias);
-          setModoPasos("ios");
-          guardarHist(nuevos); // acumulamos para tendencias largas
-        }
+        await cargarTodo();
+        // Refresco automático mientras la pantalla está abierta (sin cerrar la app).
+        intervalo = setInterval(refrescarHoy, 25000);
       } catch {
         // Android: sin histórico → contamos en vivo desde que se abre la app.
         if (!vivo) return;
@@ -399,9 +417,17 @@ export default function SaludScreen() {
         sub = Pedometer.watchStepCount((res) => setPasos(res?.steps ?? 0));
       }
     })();
+
+    // Al volver a la app (foreground), recargamos todo al instante.
+    appSub = AppState.addEventListener("change", (estado) => {
+      if (estado === "active") cargarTodo();
+    });
+
     return () => {
       vivo = false;
       if (sub) sub.remove();
+      if (intervalo) clearInterval(intervalo);
+      if (appSub) appSub.remove();
     };
   }, []);
 
