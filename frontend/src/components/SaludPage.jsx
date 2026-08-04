@@ -15,6 +15,7 @@ import {
 import { saludService } from "../api";
 import { calcularPlan } from "../utils/nutricion";
 import { BASE_COMIDAS } from "../utils/comidasBase";
+import { buscarComidasOFF } from "../utils/openFoodFacts";
 import GymView from "./GymView";
 import style from "../style/Salud.module.css";
 
@@ -294,6 +295,7 @@ export default function SaludPage() {
   const [fGramos, setFGramos] = useState(0); // gramos que pesa 1 porción (0 = desconocido)
   const [fModo, setFModo] = useState("porcion"); // "porcion" | "g"
   const [elegida, setElegida] = useState(false); // ya eligió sugerencia → ocultar lista
+  const [onlineComidas, setOnlineComidas] = useState([]); // resultados de Open Food Facts
 
   const hoy = dayKey(new Date());
   const [fechaCal, setFechaCal] = useState(hoy); // día que se ve en Comidas
@@ -597,6 +599,24 @@ export default function SaludPage() {
     }));
   }, [data]);
 
+  // Busca en Open Food Facts (con debounce) como respaldo del listado local.
+  useEffect(() => {
+    const q = fNombre.trim();
+    if (elegida || q.length < 3) {
+      setOnlineComidas([]);
+      return undefined;
+    }
+    let cancel = false;
+    const t = setTimeout(async () => {
+      const r = await buscarComidasOFF(q);
+      if (!cancel) setOnlineComidas(r);
+    }, 500);
+    return () => {
+      cancel = true;
+      clearTimeout(t);
+    };
+  }, [fNombre, elegida]);
+
   const sugerencias = useMemo(() => {
     const q = norm(fNombre);
     if (elegida || q.length < 2) return [];
@@ -606,8 +626,11 @@ export default function SaludPage() {
         (norm(b.nombre).includes(q) || (b.alias && norm(b.alias).includes(q))) &&
         !delHistorial.some((h) => norm(h.nombre) === norm(b.nombre))
     );
-    return [...delHistorial, ...deLaBase].slice(0, 8);
-  }, [fNombre, historial, elegida]);
+    const locales = [...delHistorial, ...deLaBase].slice(0, 6);
+    const yaHay = new Set(locales.map((x) => norm(x.nombre)));
+    const web = onlineComidas.filter((o) => !yaHay.has(norm(o.nombre))).slice(0, 6);
+    return [...locales, ...web];
+  }, [fNombre, historial, elegida, onlineComidas]);
 
   const usarSugerencia = (s) => {
     setFNombre(s.nombre);
@@ -982,7 +1005,7 @@ export default function SaludPage() {
                           {sugerencias.map((s, i) => (
                             <li key={i}>
                               <button type="button" onClick={() => usarSugerencia(s)}>
-                                <span className={style.sugIcono}>{s.propia ? "⏱" : "🍽"}</span>
+                                <span className={style.sugIcono}>{s.online ? "🌐" : s.propia ? "⏱" : "🍽"}</span>
                                 <span className={style.sugNombre}>
                                   {s.nombre}
                                   {s.unidad ? (

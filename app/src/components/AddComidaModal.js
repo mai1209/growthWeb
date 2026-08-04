@@ -19,6 +19,7 @@ import { useTheme } from "../theme";
 import { nutricionService } from "../api";
 import { tomarFotoComida, elegirFotoComida } from "../utils/foto";
 import { BASE_COMIDAS } from "../utils/comidasBase";
+import { buscarComidasOFF } from "../utils/openFoodFacts";
 
 const soloNum = (v) => v.replace(/[^0-9]/g, "");
 // Permite decimales con coma o punto (para "0,5 pote").
@@ -105,6 +106,25 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
   // ---- Autocompletado: tu historial (promedio de registros previos) + base local ----
   const [historial, setHistorial] = useState([]);
   const [elegida, setElegida] = useState(false); // ya eligió una sugerencia → ocultar lista
+  const [online, setOnline] = useState([]); // resultados de Open Food Facts
+
+  // Busca en Open Food Facts (con debounce) mientras escribís, como respaldo.
+  useEffect(() => {
+    const q = nombre.trim();
+    if (elegida || q.length < 3) {
+      setOnline([]);
+      return undefined;
+    }
+    let cancel = false;
+    const t = setTimeout(async () => {
+      const r = await buscarComidasOFF(q);
+      if (!cancel) setOnline(r);
+    }, 500);
+    return () => {
+      cancel = true;
+      clearTimeout(t);
+    };
+  }, [nombre, elegida]);
 
   useEffect(() => {
     if (!visible) return;
@@ -154,8 +174,12 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
         (norm(b.nombre).includes(q) || (b.alias && norm(b.alias).includes(q))) &&
         !delHistorial.some((h) => norm(h.nombre) === norm(b.nombre))
     );
-    return [...delHistorial, ...deLaBase].slice(0, 8);
-  }, [nombre, historial, elegida]);
+    const locales = [...delHistorial, ...deLaBase].slice(0, 6);
+    // Resultados de internet (Open Food Facts) que no estén ya en los locales.
+    const yaHay = new Set(locales.map((x) => norm(x.nombre)));
+    const web = online.filter((o) => !yaHay.has(norm(o.nombre))).slice(0, 6);
+    return [...locales, ...web];
+  }, [nombre, historial, elegida, online]);
 
   const usarSugerencia = (s) => {
     setNombre(s.nombre);
@@ -267,9 +291,9 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
                     onPress={() => usarSugerencia(s)}
                   >
                     <Ionicons
-                      name={s.propia ? "time-outline" : "restaurant-outline"}
+                      name={s.online ? "globe-outline" : s.propia ? "time-outline" : "restaurant-outline"}
                       size={14}
-                      color={s.propia ? colors.greenDark : colors.muted}
+                      color={s.online ? colors.greenBright : s.propia ? colors.greenDark : colors.muted}
                     />
                     <Text style={styles.sugNombre} numberOfLines={1}>
                       {s.nombre}
