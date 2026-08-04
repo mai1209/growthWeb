@@ -1083,9 +1083,8 @@ export default function SaludScreen() {
               <Text style={styles.cardTitle}>Pasos de hoy</Text>
             </View>
             <View style={styles.pasosBtns}>
-              <TouchableOpacity style={styles.metaBtn} onPress={() => setRecorridosOpen(true)}>
-                <Ionicons name="map-outline" size={14} color={colors.muted} />
-                <Text style={styles.metaBtnText}>Mapa</Text>
+              <TouchableOpacity style={styles.metaBtnIcon} onPress={() => setRecorridosOpen(true)} accessibilityLabel="Ver recorridos en el mapa">
+                <Ionicons name="map-outline" size={16} color={colors.muted} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.metaBtn} onPress={() => abrirEdicion("manual")}>
                 <Ionicons name="add-circle-outline" size={14} color={colors.muted} />
@@ -1348,6 +1347,15 @@ const makeStyles = (colors) =>
       borderColor: colors.cardBorder,
     },
     metaBtnText: { color: colors.muted, fontSize: 12, fontWeight: "700" },
+    metaBtnIcon: {
+      width: 32,
+      height: 30,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
 
     modalOverlay: {
       flex: 1,
