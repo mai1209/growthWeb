@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
+import MapView, { Polyline } from "react-native-maps";
 import { iniciarCaminataLA, actualizarCaminataLA, terminarCaminataLA } from "../services/liveActivity";
 import * as TaskManager from "expo-task-manager";
 import { useTheme } from "../theme";
@@ -18,6 +19,13 @@ import { useTheme } from "../theme";
 const R_TIERRA = 6371000; // metros
 const toRad = (x) => (x * Math.PI) / 180;
 const TASK = "growth-caminata-track";
+// Región inicial del mapa (se recentra en tu ubicación al fijar el GPS).
+const REGION_DEFAULT = {
+  latitude: -31.6333,
+  longitude: -60.7,
+  latitudeDelta: 0.01,
+  longitudeDelta: 0.01,
+};
 
 function haversine(a, b) {
   const dLat = toRad(b.latitude - a.latitude);
@@ -31,14 +39,20 @@ function haversine(a, b) {
 
 // Acumulador de la caminata en curso. Vive a nivel de módulo para que el task
 // de segundo plano pueda seguir sumando aunque la UI no esté visible.
-const track = { last: null, metros: 0, activo: false };
+const track = { last: null, metros: 0, activo: false, puntos: [] };
 
 const sumarPunto = (coords) => {
   if (!track.activo) return;
+  const punto = { latitude: coords.latitude, longitude: coords.longitude };
   if (track.last) {
     const d = haversine(track.last, coords);
     // Filtramos micro-ruido (<1m) y saltos irreales (>100m entre lecturas).
-    if (d > 1 && d < 100) track.metros += d;
+    if (d > 1 && d < 100) {
+      track.metros += d;
+      track.puntos.push(punto); // el trazado del recorrido (para el mapa)
+    }
+  } else {
+    track.puntos.push(punto); // primer punto
   }
   track.last = coords;
 };
@@ -76,6 +90,7 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
   const [fase, setFase] = useState("permiso"); // permiso | activo | pausado | resumen | denegado
   const [metros, setMetros] = useState(0);
   const [secs, setSecs] = useState(0);
+  const [ruta, setRuta] = useState([]); // trazado del recorrido para el mapa
   const [enFondo, setEnFondo] = useState(false); // true si el tracking sigue en segundo plano
 
   const subRef = useRef(null); // watchPosition (modo foreground / Expo Go)
@@ -85,6 +100,7 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
 
   const sincronizar = () => {
     setMetros(track.metros);
+    setRuta(track.puntos.slice()); // refresca la línea del mapa
     const segs =
       segStartRef.current != null
         ? Math.floor((elapsedBaseRef.current + (Date.now() - segStartRef.current)) / 1000)
@@ -157,8 +173,10 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
       setFase("permiso");
       setMetros(0);
       setSecs(0);
+      setRuta([]);
       track.metros = 0;
       track.last = null;
+      track.puntos = [];
       elapsedBaseRef.current = 0;
       segStartRef.current = null;
       (async () => {
@@ -203,7 +221,7 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
     setFase("resumen");
   };
   const guardar = () => {
-    onGuardar?.({ metros: Math.round(track.metros), secs });
+    onGuardar?.({ metros: Math.round(track.metros), secs, ruta: track.puntos.slice() });
     onClose?.();
   };
 
@@ -236,10 +254,32 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
           </View>
         ) : (
           <View style={styles.body}>
-            <Text style={styles.kmBig}>{km.toFixed(2)}</Text>
-            <Text style={styles.kmLabel}>kilómetros</Text>
+            <MapView
+              style={styles.map}
+              showsUserLocation
+              followsUserLocation={fase === "activo" || fase === "pausado"}
+              initialRegion={REGION_DEFAULT}
+              showsMyLocationButton={false}
+              toolbarEnabled={false}
+            >
+              {ruta.length > 1 ? (
+                <Polyline
+                  coordinates={ruta}
+                  strokeColor={colors.greenBright}
+                  strokeWidth={5}
+                  lineCap="round"
+                  lineJoin="round"
+                />
+              ) : null}
+            </MapView>
 
-            <View style={styles.stats}>
+            <View style={styles.panel}>
+              <View style={styles.kmRow}>
+                <Text style={styles.kmBig}>{km.toFixed(2)}</Text>
+                <Text style={styles.kmUnit}>km</Text>
+              </View>
+
+              <View style={styles.stats}>
               <View style={styles.stat}>
                 <Text style={styles.statNum}>{fmtTiempo(secs)}</Text>
                 <Text style={styles.statLbl}>tiempo</Text>
@@ -293,6 +333,7 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
             ) : (
               <Text style={styles.resumenTxt}>Mantené la pantalla abierta mientras caminás.</Text>
             )}
+            </View>
           </View>
         )}
       </View>
@@ -314,11 +355,15 @@ const makeStyles = (colors) =>
     center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 14, padding: 32 },
     hint: { color: colors.muted, fontSize: 14, lineHeight: 20, textAlign: "center" },
 
-    body: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6, padding: 24 },
-    kmBig: { color: colors.text, fontSize: 72, fontWeight: "900", letterSpacing: -1 },
+    body: { flex: 1 },
+    map: { flex: 1, minHeight: 200 },
+    panel: { paddingHorizontal: 24, paddingTop: 14, paddingBottom: 20, alignItems: "center", gap: 10 },
+    kmRow: { flexDirection: "row", alignItems: "flex-end", gap: 6 },
+    kmBig: { color: colors.text, fontSize: 46, fontWeight: "900", letterSpacing: -1 },
+    kmUnit: { color: colors.muted, fontSize: 16, fontWeight: "700", marginBottom: 8 },
     kmLabel: { color: colors.muted, fontSize: 15, fontWeight: "700", marginBottom: 24 },
 
-    stats: { flexDirection: "row", gap: 40, marginBottom: 36 },
+    stats: { flexDirection: "row", gap: 40, marginBottom: 4 },
     stat: { alignItems: "center", gap: 4 },
     statNum: { color: colors.text, fontSize: 28, fontWeight: "800" },
     statLbl: { color: colors.muted, fontSize: 12, fontWeight: "700" },
