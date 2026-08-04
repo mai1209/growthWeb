@@ -12,6 +12,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@afipsdk/afip.js": "^1.2.3",
     "@anthropic-ai/sdk": "^0.115.0",
     "@googleapis/calendar": "^15.0.0",
     "bcrypt": "^5.1.1",
