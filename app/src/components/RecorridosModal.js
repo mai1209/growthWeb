@@ -25,6 +25,9 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
     if (visible) setIdx(0);
   }, [visible]);
   const sel = conRuta[idx];
+  const kmSel = sel ? sel.metros / 1000 : 0;
+  const minSel = sel ? Math.floor((sel.secs || 0) / 60) : 0;
+  const ritmoSel = sel && kmSel > 0.02 && sel.secs > 0 ? sel.secs / 60 / kmSel : 0;
 
   const ajustar = () => {
     if (mapRef.current && sel?.ruta?.length > 1) {
@@ -98,14 +101,36 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
               {isDark ? <View pointerEvents="none" style={styles.mapDim} /> : null}
             </View>
 
-            <View style={styles.info}>
-              <Text style={styles.infoKm}>{(sel.metros / 1000).toFixed(2)} km</Text>
-              <Text style={styles.infoSub}>
-                {fmtFecha(sel.fecha)} · {Math.floor((sel.secs || 0) / 60)} min
-              </Text>
+            <View style={styles.fechaSel}>
+              <Ionicons name="calendar-outline" size={13} color={colors.muted} />
+              <Text style={styles.fechaSelTxt}>{fmtFecha(sel.fecha)}</Text>
             </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+            <View style={styles.statCards}>
+              <View style={styles.statCard}>
+                <Ionicons name="walk-outline" size={17} color={colors.greenBright} />
+                <Text style={[styles.statCardNum, { color: colors.greenBright }]}>{kmSel.toFixed(2)}</Text>
+                <Text style={styles.statCardLbl}>km</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Ionicons name="time-outline" size={17} color={colors.greenBright} />
+                <Text style={styles.statCardNum}>{minSel}</Text>
+                <Text style={styles.statCardLbl}>min</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Ionicons name="speedometer-outline" size={17} color={colors.greenBright} />
+                <Text style={styles.statCardNum}>{ritmoSel > 0 ? ritmoSel.toFixed(1) : "—"}</Text>
+                <Text style={styles.statCardLbl}>min/km</Text>
+              </View>
+            </View>
+
+            <Text style={styles.listaTitulo}>Tus caminatas</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.chipsWrap}
+              contentContainerStyle={styles.chips}
+            >
               {conRuta.map((c, i) => (
                 <TouchableOpacity
                   key={i}
@@ -115,7 +140,12 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
                     setTimeout(ajustar, 350);
                   }}
                 >
-                  <Text style={[styles.chipTxt, i === idx && styles.chipTxtOn]}>{fmtFecha(c.fecha)}</Text>
+                  <Ionicons
+                    name="navigate"
+                    size={14}
+                    color={i === idx ? colors.greenBright : colors.muted}
+                  />
+                  <Text style={[styles.chipFecha, i === idx && styles.chipTxtOn]}>{fmtFecha(c.fecha)}</Text>
                   <Text style={[styles.chipKm, i === idx && styles.chipTxtOn]}>
                     {(c.metros / 1000).toFixed(1)} km
                   </Text>
@@ -156,23 +186,54 @@ const makeStyles = (colors) =>
     map: { flex: 1 },
     mapDim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.28)" },
 
-    info: { alignItems: "center", paddingVertical: 12, gap: 2 },
-    infoKm: { color: colors.text, fontSize: 30, fontWeight: "900" },
-    infoSub: { color: colors.muted, fontSize: 13, fontWeight: "700", textTransform: "capitalize" },
+    fechaSel: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      alignSelf: "center",
+      paddingTop: 12,
+      paddingBottom: 8,
+    },
+    fechaSelTxt: { color: colors.muted, fontSize: 13, fontWeight: "800", textTransform: "capitalize" },
 
-    chips: { gap: 8, paddingHorizontal: 12, paddingBottom: 18 },
-    chip: {
-      paddingHorizontal: 14,
-      paddingVertical: 8,
-      borderRadius: 14,
+    statCards: { flexDirection: "row", gap: 8, paddingHorizontal: 16 },
+    statCard: {
+      flex: 1,
+      alignItems: "center",
+      gap: 3,
+      paddingVertical: 12,
+      borderRadius: 16,
       borderWidth: 1,
       borderColor: colors.cardBorder,
-      alignItems: "center",
-      gap: 2,
+      backgroundColor: colors.card,
     },
-    chipOn: { borderColor: colors.greenBright, backgroundColor: "rgba(93,199,45,0.14)" },
-    chipTxt: { color: colors.muted, fontSize: 12, fontWeight: "700", textTransform: "capitalize" },
-    chipKm: { color: colors.text, fontSize: 13, fontWeight: "800" },
+    statCardNum: { color: colors.text, fontSize: 20, fontWeight: "900" },
+    statCardLbl: { color: colors.muted, fontSize: 11, fontWeight: "700" },
+
+    listaTitulo: {
+      color: colors.text,
+      fontSize: 13,
+      fontWeight: "800",
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 8,
+    },
+    chipsWrap: { flexGrow: 0 },
+    chips: { gap: 8, paddingHorizontal: 16, paddingBottom: 18 },
+    chip: {
+      height: 64,
+      minWidth: 96,
+      justifyContent: "center",
+      paddingHorizontal: 14,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      gap: 3,
+    },
+    chipOn: { borderColor: colors.greenBright, backgroundColor: "rgba(93,199,45,0.12)" },
+    chipFecha: { color: colors.muted, fontSize: 12, fontWeight: "700", textTransform: "capitalize" },
+    chipKm: { color: colors.text, fontSize: 15, fontWeight: "800" },
     chipTxtOn: { color: colors.greenBright },
 
     dotStart: {

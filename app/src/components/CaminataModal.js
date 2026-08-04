@@ -228,6 +228,7 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
 
   const km = metros / 1000;
   const ritmo = km > 0.02 && secs > 0 ? secs / 60 / km : 0; // min/km
+  const vel = secs > 0 ? km / (secs / 3600) : 0; // km/h
   const ultimoPunto = ruta.length ? ruta[ruta.length - 1] : null;
 
   // El mapa sigue tu posición (punto verde) mientras caminás.
@@ -298,21 +299,42 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
             </View>
 
             <View style={styles.panel}>
+              {fase !== "resumen" ? (
+                <View style={[styles.estado, fase === "pausado" && styles.estadoPausa]}>
+                  <View style={[styles.estadoDot, fase === "pausado" && styles.estadoDotPausa]} />
+                  <Text style={[styles.estadoTxt, fase === "pausado" && styles.estadoTxtPausa]}>
+                    {fase === "activo" ? "EN CURSO" : "EN PAUSA"}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.estado}>
+                  <Ionicons name="checkmark-circle" size={14} color={colors.greenBright} />
+                  <Text style={styles.estadoTxt}>CAMINATA LISTA</Text>
+                </View>
+              )}
+
               <View style={styles.kmRow}>
                 <Text style={styles.kmBig}>{km.toFixed(2)}</Text>
                 <Text style={styles.kmUnit}>km</Text>
               </View>
 
-              <View style={styles.stats}>
-              <View style={styles.stat}>
-                <Text style={styles.statNum}>{fmtTiempo(secs)}</Text>
-                <Text style={styles.statLbl}>tiempo</Text>
+              <View style={styles.statCards}>
+                <View style={styles.statCard}>
+                  <Ionicons name="time-outline" size={17} color={colors.greenBright} />
+                  <Text style={styles.statCardNum}>{fmtTiempo(secs)}</Text>
+                  <Text style={styles.statCardLbl}>tiempo</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Ionicons name="speedometer-outline" size={17} color={colors.greenBright} />
+                  <Text style={styles.statCardNum}>{ritmo > 0 ? ritmo.toFixed(1) : "—"}</Text>
+                  <Text style={styles.statCardLbl}>min/km</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Ionicons name="flash-outline" size={17} color={colors.greenBright} />
+                  <Text style={styles.statCardNum}>{vel > 0 ? vel.toFixed(1) : "—"}</Text>
+                  <Text style={styles.statCardLbl}>km/h</Text>
+                </View>
               </View>
-              <View style={styles.stat}>
-                <Text style={styles.statNum}>{ritmo > 0 ? ritmo.toFixed(1) : "—"}</Text>
-                <Text style={styles.statLbl}>min/km</Text>
-              </View>
-            </View>
 
             {fase === "activo" ? (
               <View style={styles.acciones}>
@@ -408,11 +430,43 @@ const makeStyles = (colors) =>
       borderWidth: 2,
       borderColor: "#fff",
     },
-    panel: { paddingHorizontal: 24, paddingTop: 14, paddingBottom: 20, alignItems: "center", gap: 10 },
-    kmRow: { flexDirection: "row", alignItems: "flex-end", gap: 6 },
-    kmBig: { color: colors.text, fontSize: 46, fontWeight: "900", letterSpacing: -1 },
-    kmUnit: { color: colors.muted, fontSize: 16, fontWeight: "700", marginBottom: 8 },
+    panel: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 18, alignItems: "center", gap: 10 },
+
+    estado: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingHorizontal: 12,
+      paddingVertical: 5,
+      borderRadius: 999,
+      backgroundColor: "rgba(93,199,45,0.14)",
+      borderWidth: 1,
+      borderColor: "rgba(93,199,45,0.4)",
+    },
+    estadoPausa: { backgroundColor: "rgba(214,169,46,0.14)", borderColor: "rgba(214,169,46,0.45)" },
+    estadoDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.greenBright },
+    estadoDotPausa: { backgroundColor: "#d6a92e" },
+    estadoTxt: { color: colors.greenBright, fontSize: 11, fontWeight: "900", letterSpacing: 1 },
+    estadoTxtPausa: { color: "#d6a92e" },
+
+    kmRow: { flexDirection: "row", alignItems: "flex-end", gap: 6, marginTop: 2 },
+    kmBig: { color: colors.greenBright, fontSize: 52, fontWeight: "900", letterSpacing: -1.5 },
+    kmUnit: { color: colors.text, fontSize: 18, fontWeight: "800", marginBottom: 9 },
     kmLabel: { color: colors.muted, fontSize: 15, fontWeight: "700", marginBottom: 24 },
+
+    statCards: { flexDirection: "row", gap: 8, alignSelf: "stretch", marginTop: 2 },
+    statCard: {
+      flex: 1,
+      alignItems: "center",
+      gap: 3,
+      paddingVertical: 12,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+    },
+    statCardNum: { color: colors.text, fontSize: 20, fontWeight: "900" },
+    statCardLbl: { color: colors.muted, fontSize: 11, fontWeight: "700" },
 
     stats: { flexDirection: "row", gap: 40, marginBottom: 4 },
     stat: { alignItems: "center", gap: 4 },
