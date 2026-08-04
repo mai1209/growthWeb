@@ -120,9 +120,15 @@ function Routes() {
       .then(async (res) => {
         if (!alive || !res.data) return;
         const latest = res.data.latest;
+        // Guard: sin versiones válidas no avisamos (evita mostrarlo por datos vacíos).
+        if (!APP_VERSION || !latest) return;
         if (!isOlderVersion(APP_VERSION, latest)) return;
         const visto = await SecureStore.getItemAsync(UPDATE_SEEN_KEY).catch(() => null);
         if (visto === latest) return; // ya avisamos esta versión
+        if (!alive) return;
+        // Marcamos como visto APENAS se muestra: así aparece una sola vez por
+        // versión aunque el usuario cierre la app sin tocar el botón.
+        SecureStore.setItemAsync(UPDATE_SEEN_KEY, latest).catch(() => {});
         setUpdateInfo(res.data);
       })
       .catch(() => {});
