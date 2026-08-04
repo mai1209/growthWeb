@@ -11,7 +11,7 @@ const fmtFecha = (k) =>
 
 // Visor de recorridos de caminata guardados (mapa con el trazado + selector).
 export default function RecorridosModal({ visible, onClose, caminatas }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const mapRef = useRef(null);
@@ -66,6 +66,7 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
                     : REGION_DEFAULT
                 }
                 onMapReady={ajustar}
+                userInterfaceStyle={isDark ? "dark" : "light"}
                 pitchEnabled={false}
                 rotateEnabled={false}
                 toolbarEnabled={false}

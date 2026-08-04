@@ -83,7 +83,7 @@ const fmtTiempo = (secs) => {
 };
 
 export default function CaminataModal({ visible, onClose, onGuardar }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
 
@@ -270,6 +270,7 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
                 ref={mapRef}
                 style={styles.map}
                 initialRegion={REGION_DEFAULT}
+                userInterfaceStyle={isDark ? "dark" : "light"}
                 showsUserLocation={false}
                 showsMyLocationButton={false}
                 toolbarEnabled={false}
