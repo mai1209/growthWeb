@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   AppState,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -267,6 +268,14 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
         ) : (
           <View style={styles.body}>
             <View style={styles.mapWrap}>
+              {Platform.OS === "android" ? (
+                <View style={styles.mapSoon}>
+                  <Ionicons name="map-outline" size={34} color={colors.muted} />
+                  <Text style={styles.mapSoonText}>Mapa próximamente en Android</Text>
+                  <Text style={styles.mapSoonSub}>Por ahora disponible solo en iOS</Text>
+                </View>
+              ) : (
+                <>
               <MapView
                 ref={mapRef}
                 style={styles.map}
@@ -296,6 +305,8 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
                 ) : null}
               </MapView>
               {isDark ? <View pointerEvents="none" style={styles.mapDim} /> : null}
+                </>
+              )}
             </View>
 
             <View style={styles.panel}>
@@ -414,6 +425,9 @@ const makeStyles = (colors) =>
     },
     map: { flex: 1 },
     mapDim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.28)" },
+    mapSoon: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6, padding: 20, backgroundColor: colors.card },
+    mapSoonText: { color: colors.text, fontSize: 15, fontWeight: "800" },
+    mapSoonSub: { color: colors.muted, fontSize: 12.5, fontWeight: "600" },
     dotOuter: {
       width: 22,
       height: 22,

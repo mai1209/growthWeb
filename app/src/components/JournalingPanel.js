@@ -249,7 +249,10 @@ export default function JournalingPanel({ visible, onClose }) {
 
   // Al abrir el panel volvemos siempre al día de hoy.
   useEffect(() => {
-    if (visible) setFecha(hoyLocal());
+    if (visible) {
+      setFecha(hoyLocal());
+      setVista("libro"); // al abrir, siempre mostramos la hoja para escribir
+    }
   }, [visible]);
 
   // Cargamos el día activo (hoy o el que se abra del calendario/flechas).

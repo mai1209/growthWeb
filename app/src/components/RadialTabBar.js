@@ -260,7 +260,7 @@ export default function RadialTabBar({ state, navigation }) {
           {group && (
             <Animated.View
               {...pan.panHandlers}
-              style={[styles.arcLayer, { left: cx - R, top: cy - R, transform: [{ rotate: rotDeg }] }]}
+              style={[styles.arcLayer, { left: cx - R, bottom: barPad + BAR_H + 30 - R, transform: [{ rotate: rotDeg }] }]}
             >
               {positioned.map((it, k) => (
                 <Animated.View

@@ -366,17 +366,22 @@ export default function SaludScreen() {
 
     // Solo el total de hoy (barato): se usa para el refresco automático.
     const refrescarHoy = async () => {
-      const ahora = new Date();
-      const hoy = await Pedometer.getStepCountAsync(startOfDay(ahora), ahora).catch(() => null);
-      if (vivo && hoy) setPasos(hoy.steps ?? 0);
+      try {
+        const ahora = new Date();
+        const hoy = await Pedometer.getStepCountAsync(startOfDay(ahora), ahora);
+        if (vivo && hoy) setPasos(hoy.steps ?? 0);
+      } catch {}
     };
 
     // Total de hoy + serie de los últimos 7 días + histórico.
+    // OJO: el primer getStepCountAsync NO se atrapa acá a propósito: en Android
+    // lanza (no soporta rango histórico) y así caemos al modo android, sin
+    // sincronizar 0 al backend (que borraría los pasos reales).
     const cargarTodo = async () => {
       const ahora = new Date();
-      const hoy = await Pedometer.getStepCountAsync(startOfDay(ahora), ahora).catch(() => null);
+      const hoy = await Pedometer.getStepCountAsync(startOfDay(ahora), ahora);
       if (!vivo) return;
-      if (hoy) setPasos(hoy.steps ?? 0);
+      setPasos(hoy?.steps ?? 0);
       const dias = [];
       const nuevos = {}; // { "YYYY-MM-DD": pasos } de los últimos 7 días
       for (let i = 6; i >= 0; i--) {
@@ -421,7 +426,7 @@ export default function SaludScreen() {
 
     // Al volver a la app (foreground), recargamos todo al instante.
     appSub = AppState.addEventListener("change", (estado) => {
-      if (estado === "active") cargarTodo();
+      if (estado === "active") cargarTodo().catch(() => {});
     });
 
     return () => {

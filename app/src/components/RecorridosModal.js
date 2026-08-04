@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import MapView, { Polyline, Marker } from "react-native-maps";
@@ -86,6 +86,14 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
         ) : (
           <>
             <View style={styles.mapWrap}>
+              {Platform.OS === "android" ? (
+                <View style={styles.mapSoon}>
+                  <Ionicons name="map-outline" size={34} color={colors.muted} />
+                  <Text style={styles.mapSoonText}>Mapa próximamente en Android</Text>
+                  <Text style={styles.mapSoonSub}>Por ahora disponible solo en iOS</Text>
+                </View>
+              ) : (
+                <>
               <MapView
                 ref={mapRef}
                 style={styles.map}
@@ -125,6 +133,8 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
                 ) : null}
               </MapView>
               {isDark ? <View pointerEvents="none" style={styles.mapDim} /> : null}
+                </>
+              )}
             </View>
 
             <View style={styles.fechaSel}>
@@ -210,6 +220,9 @@ const makeStyles = (colors) =>
     },
     map: { flex: 1 },
     mapDim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.28)" },
+    mapSoon: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6, padding: 20, backgroundColor: colors.card },
+    mapSoonText: { color: colors.text, fontSize: 15, fontWeight: "800" },
+    mapSoonSub: { color: colors.muted, fontSize: 12.5, fontWeight: "600" },
 
     fechaSel: {
       flexDirection: "row",
