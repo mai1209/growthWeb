@@ -22,6 +22,11 @@
     "android": {
       "package": "app.growthmanager.mobile",
       "versionCode": 21,
+      "config": {
+        "googleMaps": {
+          "apiKey": "REEMPLAZAR_CON_TU_GOOGLE_MAPS_ANDROID_KEY"
+        }
+      },
       "adaptiveIcon": {
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/android-icon-foreground.png"
