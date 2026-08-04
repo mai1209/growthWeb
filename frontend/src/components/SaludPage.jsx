@@ -225,6 +225,55 @@ function LineChart({ points, color, unidad }) {
   );
 }
 
+// Historial completo de una métrica: gráfico de toda la serie + lista de cada
+// registro (más nuevo primero). Se abre desde "Todos los resultados".
+function HistorialModal({ metric, hoy, onClose }) {
+  if (!metric) return null;
+  const { titulo, color, unidad, getVal, keys, fmt, emoji } = metric;
+  const fechas = [...new Set(keys())]
+    .filter(Boolean)
+    .filter((k) => getVal(k) > 0)
+    .sort();
+  const serie = fechas.map((k) => ({
+    label: new Date(`${k}T00:00:00`).toLocaleDateString("es-AR", { day: "numeric", month: "short" }),
+    value: getVal(k),
+  }));
+  const lista = [...fechas].reverse();
+  const fmtValor = (v) => (emoji ? emoji[Math.round(v)] || "—" : fmt(v));
+
+  return (
+    <div className={style.histOverlay} onClick={onClose}>
+      <div className={style.histModal} onClick={(e) => e.stopPropagation()}>
+        <div className={style.histHead}>
+          <h3 style={{ color }}>{titulo}</h3>
+          <button type="button" onClick={onClose} aria-label="Cerrar">
+            ✕
+          </button>
+        </div>
+        {serie.length >= 2 ? (
+          <LineChart points={serie.slice(-30)} color={color} unidad={unidad} />
+        ) : (
+          <p className={style.hint}>Necesitás al menos 2 registros para ver el gráfico.</p>
+        )}
+        <div className={style.histLista}>
+          {lista.length ? (
+            lista.map((k) => (
+              <div key={k} className={style.histFila}>
+                <span className={style.histFecha}>{fechaLabel(k, hoy)}</span>
+                <strong className={style.histValor} style={{ color }}>
+                  {fmtValor(getVal(k))} {!emoji ? <small>{unidad}</small> : null}
+                </strong>
+              </div>
+            ))
+          ) : (
+            <p className={style.hint}>Todavía no hay registros de {titulo.toLowerCase()}.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SaludPage() {
   // El nav deep-linkea las dos vistas: /salud (Movilidad) y /salud?view=calorias.
   const [searchParams] = useSearchParams();
@@ -249,6 +298,7 @@ export default function SaludPage() {
   const hoy = dayKey(new Date());
   const [fechaCal, setFechaCal] = useState(hoy); // día que se ve en Comidas
   const [fechaMov, setFechaMov] = useState(hoy); // día que se ve en Todos los resultados
+  const [histTitulo, setHistTitulo] = useState(null); // métrica abierta en el historial completo
 
   useEffect(() => {
     saludService
@@ -315,6 +365,7 @@ export default function SaludPage() {
     const pesoHasta = Object.keys(data.peso || {}).filter((k) => k <= refKey).sort();
     const pesoRef = pesoHasta.length ? Number(data.peso[pesoHasta[pesoHasta.length - 1]]) : null;
 
+    const keysCaminatas = () => (data.caminatas || []).map((c) => c.fecha);
     return [
       {
         titulo: "Pasos",
@@ -322,6 +373,9 @@ export default function SaludPage() {
         valor: pasosDe(h).toLocaleString("es-AR"),
         unidad: "pasos",
         barras: dias.map((k) => pasosDe(k)),
+        getVal: (k) => pasosDe(k),
+        keys: () => [...Object.keys(data.pasos || {}), ...Object.keys(data.pasosManual || {})],
+        fmt: (v) => Math.round(v).toLocaleString("es-AR"),
       },
       {
         titulo: "Distancia de caminata",
@@ -329,6 +383,9 @@ export default function SaludPage() {
         valor: (distDia(h) / 1000).toFixed(1).replace(".", ","),
         unidad: "km",
         barras: dias.map(distDia),
+        getVal: (k) => distDia(k) / 1000,
+        keys: keysCaminatas,
+        fmt: (v) => v.toFixed(2).replace(".", ","),
       },
       {
         titulo: "Tiempo de caminata",
@@ -336,6 +393,9 @@ export default function SaludPage() {
         valor: String(Math.round(minDia(h))),
         unidad: "min",
         barras: dias.map(minDia),
+        getVal: (k) => minDia(k),
+        keys: keysCaminatas,
+        fmt: (v) => String(Math.round(v)),
       },
       {
         titulo: "Velocidad al caminar",
@@ -346,6 +406,12 @@ export default function SaludPage() {
           const c = camDia(k)[0];
           return c && c.secs > 0 ? (c.metros / 1000) / (c.secs / 3600) : 0;
         }),
+        getVal: (k) => {
+          const c = camDia(k)[0];
+          return c && c.secs > 0 ? (c.metros / 1000) / (c.secs / 3600) : 0;
+        },
+        keys: keysCaminatas,
+        fmt: (v) => v.toFixed(1).replace(".", ","),
       },
       {
         titulo: "Hidratación",
@@ -353,6 +419,9 @@ export default function SaludPage() {
         valor: String(Number(data.agua?.[h]) || 0),
         unidad: "ml",
         barras: dias.map((k) => Number(data.agua?.[k]) || 0),
+        getVal: (k) => Number(data.agua?.[k]) || 0,
+        keys: () => Object.keys(data.agua || {}),
+        fmt: (v) => Math.round(v).toLocaleString("es-AR"),
       },
       {
         titulo: "Calorías consumidas",
@@ -360,6 +429,9 @@ export default function SaludPage() {
         valor: String(kcalDia(data.comidas?.[h])),
         unidad: "kcal",
         barras: dias.map((k) => kcalDia(data.comidas?.[k])),
+        getVal: (k) => kcalDia(data.comidas?.[k]),
+        keys: () => Object.keys(data.comidas || {}),
+        fmt: (v) => Math.round(v).toLocaleString("es-AR"),
       },
       {
         titulo: "Ánimo",
@@ -367,6 +439,9 @@ export default function SaludPage() {
         valor: data.animo?.[h] ? emojis[data.animo[h]] : "—",
         unidad: data.animo?.[h] ? "registrado" : "sin registrar",
         barras: dias.map((k) => Number(data.animo?.[k]) || 0),
+        getVal: (k) => Number(data.animo?.[k]) || 0,
+        keys: () => Object.keys(data.animo || {}),
+        emoji: emojis,
       },
       {
         titulo: "Peso",
@@ -374,6 +449,9 @@ export default function SaludPage() {
         valor: pesoRef != null ? String(pesoRef).replace(".", ",") : "—",
         unidad: "kg",
         barras: pesoHasta.slice(-7).map((k) => Number(data.peso[k]) || 0),
+        getVal: (k) => Number(data.peso?.[k]) || 0,
+        keys: () => Object.keys(data.peso || {}),
+        fmt: (v) => String(v).replace(".", ","),
       },
     ];
   };
@@ -765,7 +843,13 @@ export default function SaludPage() {
           </div>
           <div className={style.datosGrid}>
             {metricas.map((m) => (
-              <div key={m.titulo} className={style.dato}>
+              <button
+                key={m.titulo}
+                type="button"
+                className={style.dato}
+                onClick={() => setHistTitulo(m.titulo)}
+                title={`Ver historial de ${m.titulo.toLowerCase()}`}
+              >
                 <p className={style.datoTitulo} style={{ color: m.color }}>
                   {m.titulo}
                 </p>
@@ -790,7 +874,7 @@ export default function SaludPage() {
                     })}
                   </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </section>
@@ -1041,6 +1125,12 @@ export default function SaludPage() {
         </div>
         </>
         )}
+
+        <HistorialModal
+          metric={histTitulo ? metricas.find((m) => m.titulo === histTitulo) : null}
+          hoy={hoy}
+          onClose={() => setHistTitulo(null)}
+        />
       </div>
     </div>
   );
