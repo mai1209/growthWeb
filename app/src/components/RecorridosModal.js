@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from "rea
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import MapView, { Polyline, Marker } from "react-native-maps";
+import CalendarioFechas from "./CalendarioFechas";
 import { useTheme } from "../theme";
 
 const REGION_DEFAULT = { latitude: -31.6333, longitude: -60.7, latitudeDelta: 0.02, longitudeDelta: 0.02 };
@@ -21,8 +22,12 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
     [caminatas]
   );
   const [idx, setIdx] = useState(0);
+  const [calAbierto, setCalAbierto] = useState(false);
   useEffect(() => {
-    if (visible) setIdx(0);
+    if (visible) {
+      setIdx(0);
+      setCalAbierto(false);
+    }
   }, [visible]);
   const sel = conRuta[idx];
   const kmSel = sel ? sel.metros / 1000 : 0;
@@ -46,7 +51,13 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
             <Ionicons name="close" size={26} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.title}>Recorridos GPS</Text>
-          <View style={{ width: 26 }} />
+          {conRuta.length ? (
+            <TouchableOpacity onPress={() => setCalAbierto((v) => !v)} hitSlop={10}>
+              <Ionicons name={calAbierto ? "close" : "calendar-outline"} size={22} color={colors.muted} />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ width: 26 }} />
+          )}
         </View>
 
         {!conRuta.length ? (
@@ -56,6 +67,21 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
               Todavía no tenés caminatas con recorrido guardado. Iniciá una caminata con GPS y el
               trazado va a aparecer acá.
             </Text>
+          </View>
+        ) : calAbierto ? (
+          <View style={{ padding: 12 }}>
+            <CalendarioFechas
+              fechaSel={sel?.fecha}
+              tieneDatos={(k) => conRuta.some((c) => c.fecha === k)}
+              onSelect={(k) => {
+                const i = conRuta.findIndex((c) => c.fecha === k);
+                if (i >= 0) {
+                  setIdx(i);
+                  setTimeout(ajustar, 350);
+                }
+                setCalAbierto(false);
+              }}
+            />
           </View>
         ) : (
           <>

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from "rea
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
+import CalendarioFechas from "./CalendarioFechas";
 import { useTheme } from "../theme";
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -137,9 +138,22 @@ export default function TodosDatosModal({
   const hoyReal = dayKey(new Date());
   const [fecha, setFecha] = useState(hoyReal);
   const [histSel, setHistSel] = useState(null); // métrica abierta en el historial completo
+  const [calAbierto, setCalAbierto] = useState(false); // calendario para saltar de fecha
+
+  // ¿Ese día tiene algún dato cargado? (para el puntito del calendario)
+  const tieneDatos = (k) =>
+    (Number(pasosHist?.[k]) || 0) > 0 ||
+    (Number(aguaDias?.[k]) || 0) > 0 ||
+    !!animoDias?.[k] ||
+    (Number(pesoDias?.[k]) || 0) > 0 ||
+    (Array.isArray(comidasDias?.[k]) && comidasDias[k].length > 0) ||
+    (caminatas || []).some((c) => c.fecha === k);
   // Al abrir el modal, arranca en el día de hoy.
   useEffect(() => {
-    if (visible) setFecha(dayKey(new Date()));
+    if (visible) {
+      setFecha(dayKey(new Date()));
+      setCalAbierto(false);
+    }
   }, [visible]);
 
   // 7 días que terminan en la fecha elegida.
@@ -289,7 +303,14 @@ export default function TodosDatosModal({
             <TouchableOpacity style={styles.dateBtn} onPress={() => setFecha(addDays(fecha, -1))}>
               <Ionicons name="chevron-back" size={20} color={colors.text} />
             </TouchableOpacity>
-            <Text style={styles.seccion}>{fechaLabel(fecha, hoyReal)}</Text>
+            <TouchableOpacity style={styles.fechaBtn} onPress={() => setCalAbierto((v) => !v)} activeOpacity={0.7}>
+              <Text style={styles.seccion}>{fechaLabel(fecha, hoyReal)}</Text>
+              <Ionicons
+                name={calAbierto ? "chevron-up" : "calendar-outline"}
+                size={16}
+                color={colors.muted}
+              />
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.dateBtn}
               disabled={fecha >= hoyReal}
@@ -298,6 +319,19 @@ export default function TodosDatosModal({
               <Ionicons name="chevron-forward" size={20} color={fecha >= hoyReal ? colors.cardBorder : colors.text} />
             </TouchableOpacity>
           </View>
+
+          {calAbierto ? (
+            <View style={{ marginBottom: 10 }}>
+              <CalendarioFechas
+                fechaSel={fecha}
+                tieneDatos={tieneDatos}
+                onSelect={(k) => {
+                  setFecha(k);
+                  setCalAbierto(false);
+                }}
+              />
+            </View>
+          ) : null}
           {METRICAS.map((m) => (
             <TouchableOpacity
               key={m.titulo}
@@ -351,7 +385,8 @@ const makeStyles = (colors) =>
     backBtn: { padding: 4 },
     title: { color: colors.text, fontSize: 18, fontWeight: "800" },
     scroll: { padding: 16, paddingBottom: 40, gap: 10 },
-    seccion: { color: colors.text, fontSize: 20, fontWeight: "900", textTransform: "capitalize", minWidth: 120, textAlign: "center" },
+    seccion: { color: colors.text, fontSize: 20, fontWeight: "900", textTransform: "capitalize", textAlign: "center" },
+    fechaBtn: { flexDirection: "row", alignItems: "center", gap: 6 },
     dateNav: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
     dateBtn: {
       width: 38,
