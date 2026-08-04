@@ -45,7 +45,7 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
           <TouchableOpacity onPress={onClose} hitSlop={10}>
             <Ionicons name="close" size={26} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Recorridos</Text>
+          <Text style={styles.title}>Recorridos GPS</Text>
           <View style={{ width: 26 }} />
         </View>
 
@@ -174,8 +174,7 @@ const makeStyles = (colors) =>
     hint: { color: colors.muted, fontSize: 14, lineHeight: 20, textAlign: "center" },
 
     mapWrap: {
-      flex: 1,
-      minHeight: 220,
+      height: 280,
       marginHorizontal: 10,
       marginTop: 4,
       borderRadius: 22,
