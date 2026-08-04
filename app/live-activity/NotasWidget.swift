@@ -97,28 +97,30 @@ struct FilaTarea: View {
   var body: some View {
     let bg = Color(growthHex: item.color)
     let fg = growthContrast(item.color)
-    HStack(spacing: 6) {
+    HStack(alignment: .top, spacing: 8) {
       Text(item.titulo.isEmpty ? "Sin título" : item.titulo)
         .font(.subheadline.weight(.semibold))
-        .lineLimit(1)
+        .lineLimit(3)                                  // texto largo baja de renglón
+        .fixedSize(horizontal: false, vertical: true)
         .foregroundColor(fg)
       Spacer(minLength: 4)
+      // Hora/momento + círculo, siempre visibles a la derecha (arriba).
       if let h = item.hora, !h.isEmpty {
         Text(h)
           .font(.caption.weight(.bold))
           .monospacedDigit()
           .foregroundColor(fg.opacity(0.85))
       }
-      // Círculo vacío: solo visual (los widgets comunes no se pueden tildar).
       Image(systemName: "circle")
         .font(.system(size: 12, weight: .semibold))
         .foregroundColor(fg.opacity(0.6))
+        .padding(.top, 1)
     }
-    .padding(.horizontal, 10)
-    .padding(.vertical, 8)
-    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.horizontal, 11)
+    .padding(.vertical, 11)
+    .frame(maxWidth: .infinity, alignment: .topLeading)
     .background(bg)
-    .clipShape(RoundedRectangle(cornerRadius: 8))
+    .clipShape(RoundedRectangle(cornerRadius: 10))
   }
 }
 
@@ -127,9 +129,10 @@ struct NotasWidgetEntryView: View {
   var entry: NotasEntry
 
   var body: some View {
-    let count = family == .systemLarge ? 7 : 3
+    // Chico 3, mediano 2 (tarjetas más grandes), grande 5.
+    let count = family == .systemLarge ? 5 : (family == .systemMedium ? 2 : 3)
     let items = Array(entry.notas.prefix(count))
-    VStack(alignment: .leading, spacing: 6) {
+    VStack(alignment: .leading, spacing: 8) {
       Spacer(minLength: 0) // espacio arriba
       HStack(spacing: 6) {
         Image("GrowthLogo")
@@ -142,7 +145,7 @@ struct NotasWidgetEntryView: View {
           Text("\(entry.notas.count)").font(.caption.weight(.bold)).foregroundColor(brand)
         }
       }
-      .padding(.horizontal, 10) // alinea con el contenido de las tarjetas
+      .padding(.horizontal, 11) // alinea con el contenido de las tarjetas
 
       if items.isEmpty {
         Text("¡Sin tareas pendientes! 🎉")
@@ -156,7 +159,7 @@ struct NotasWidgetEntryView: View {
             .font(.caption2.weight(.semibold))
             .foregroundColor(.secondary)
             .frame(maxWidth: .infinity, alignment: .trailing)
-            .padding(.horizontal, 10) // alinea con el contenido de las tarjetas
+            .padding(.horizontal, 11) // alinea con el contenido de las tarjetas
             .padding(.top, 1)
         }
       }
