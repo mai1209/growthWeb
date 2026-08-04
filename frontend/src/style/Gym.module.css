@@ -9,7 +9,7 @@
 /* El título queda al borde izquierdo; solo el contenido va centrado. */
 .inner {
   width: 100%;
-  max-width: 820px;
+  max-width: 900px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -65,6 +65,52 @@
 .tabOn {
   background: var(--color-verde, #5dc72d);
   color: #06210a;
+}
+
+/* ---- Entrenar: contenido a la izquierda, calendario a la derecha ---- */
+.registroGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem 1.25rem;
+  align-items: start;
+}
+.registroMain {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+/* En pantallas chicas: header del día, después calendario, después ejercicios. */
+.dayBar {
+  order: 0;
+}
+.registroCal {
+  order: 1;
+}
+.registroMain {
+  order: 2;
+}
+@media (min-width: 860px) {
+  .registroGrid {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-rows: auto 1fr;
+  }
+  /* El header "Hoy" ocupa solo la columna izquierda, arriba de los ejercicios. */
+  .dayBar {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .registroMain {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  /* El calendario arranca a la altura de la primera tarjeta, no del header. */
+  .registroCal {
+    grid-column: 2;
+    grid-row: 2;
+    position: sticky;
+    top: 1rem;
+  }
 }
 
 /* ---- Calendario ---- */
@@ -126,13 +172,13 @@
 
 .calDia {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   border: none;
   border-radius: 10px;
   background: transparent;
   color: inherit;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
   display: grid;
@@ -185,6 +231,11 @@
   justify-content: space-between;
   gap: 0.8rem;
   flex-wrap: wrap;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.dayBar .diaSel {
+  font-size: 1.05rem;
 }
 .dateNav {
   display: inline-flex;

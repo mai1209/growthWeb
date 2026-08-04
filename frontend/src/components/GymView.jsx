@@ -230,9 +230,7 @@ function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, bo
   const esFuturo = fecha > hoyKey();
 
   return (
-    <>
-      <MiniCalendario fecha={fecha} setFecha={setFecha} entrenos={entrenos} />
-
+    <div className={style.registroGrid}>
       <div className={style.dayBar}>
         <span className={style.diaSel}>{fechaLabel(fecha)}</span>
         {dia.length ? (
@@ -256,6 +254,7 @@ function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, bo
         ) : null}
       </div>
 
+      <div className={style.registroMain}>
       {/* Día vacío: hoy/pasado se entrena; futuro se planifica asignando una rutina. */}
       {sinEntreno && !agregando ? (
         <div className={style.entrenarHero}>
@@ -355,7 +354,11 @@ function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, bo
           </button>
         </div>
       ) : null}
-    </>
+      </div>
+      <aside className={style.registroCal}>
+        <MiniCalendario fecha={fecha} setFecha={setFecha} entrenos={entrenos} />
+      </aside>
+    </div>
   );
 }
 

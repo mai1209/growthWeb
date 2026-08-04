@@ -656,48 +656,8 @@ export default function SaludPage() {
         {/* Tendencia (full width) */}
         {renderTendencia(METRICAS_MOV, metricaMov, setMetricaMov)}
 
-        {/* Pasos de hoy + Peso + Caminatas — tres lado a lado */}
+        {/* Peso + Caminatas lado a lado; Pasos de hoy va debajo. */}
         <div className={style.trioRow}>
-          <section className={style.card}>
-            <div className={style.cardHead}>
-              <h2>
-                <FiActivity /> Pasos de hoy
-              </h2>
-              <button
-                type="button"
-                className={style.pasosManualBtn}
-                title="Cargar pasos a mano (se suman a los del teléfono)"
-                onClick={() => {
-                  const actual = Number(data?.pasosManual?.[hoy]) || 0;
-                  const v = window.prompt(
-                    "Pasos cargados a mano para hoy (se suman a los del teléfono). Poné 0 para sacarlos:",
-                    actual ? String(actual) : ""
-                  );
-                  if (v == null) return;
-                  const n = Math.max(0, parseInt(v, 10) || 0);
-                  mutate({ pasosManual: { [hoy]: n } });
-                }}
-              >
-                <FiPlus /> Manual
-              </button>
-            </div>
-            <div className={style.fila}>
-              <Ring percent={(pasosHoy / metaPasos) * 100} color="var(--color-verde, #5dc72d)">
-                <strong>{pasosHoy.toLocaleString("es-AR")}</strong>
-                <small>de {metaPasos.toLocaleString("es-AR")}</small>
-                {Number(data?.pasosManual?.[hoy]) > 0 ? (
-                  <small className={style.manualHint}>+{Number(data.pasosManual[hoy]).toLocaleString("es-AR")} manual</small>
-                ) : null}
-              </Ring>
-              <Semana
-                dias={ultimos7.labels}
-                valores={ultimos7.dias.map((k) => pasosDe(k))}
-                meta={metaPasos}
-                color="var(--color-verde, #5dc72d)"
-              />
-            </div>
-          </section>
-
           <section className={style.card}>
             <div className={style.cardHead}>
               <h2>
@@ -751,6 +711,49 @@ export default function SaludPage() {
             ) : (
               <p className={style.hint}>Todavía no registraste caminatas desde la app.</p>
             )}
+          </section>
+        </div>
+
+        {/* Pasos de hoy — debajo de Caminatas (ambos vienen del teléfono). */}
+        <div className={style.trioRow}>
+          <section className={style.card}>
+            <div className={style.cardHead}>
+              <h2>
+                <FiActivity /> Pasos de hoy
+              </h2>
+              <button
+                type="button"
+                className={style.pasosManualBtn}
+                title="Cargar pasos a mano (se suman a los del teléfono)"
+                onClick={() => {
+                  const actual = Number(data?.pasosManual?.[hoy]) || 0;
+                  const v = window.prompt(
+                    "Pasos cargados a mano para hoy (se suman a los del teléfono). Poné 0 para sacarlos:",
+                    actual ? String(actual) : ""
+                  );
+                  if (v == null) return;
+                  const n = Math.max(0, parseInt(v, 10) || 0);
+                  mutate({ pasosManual: { [hoy]: n } });
+                }}
+              >
+                <FiPlus /> Manual
+              </button>
+            </div>
+            <div className={style.fila}>
+              <Ring percent={(pasosHoy / metaPasos) * 100} color="var(--color-verde, #5dc72d)">
+                <strong>{pasosHoy.toLocaleString("es-AR")}</strong>
+                <small>de {metaPasos.toLocaleString("es-AR")}</small>
+                {Number(data?.pasosManual?.[hoy]) > 0 ? (
+                  <small className={style.manualHint}>+{Number(data.pasosManual[hoy]).toLocaleString("es-AR")} manual</small>
+                ) : null}
+              </Ring>
+              <Semana
+                dias={ultimos7.labels}
+                valores={ultimos7.dias.map((k) => pasosDe(k))}
+                meta={metaPasos}
+                color="var(--color-verde, #5dc72d)"
+              />
+            </div>
           </section>
         </div>
 
