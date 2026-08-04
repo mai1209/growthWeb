@@ -22,6 +22,7 @@
     "android": {
       "package": "app.growthmanager.mobile",
       "versionCode": 22,
+      "permissions": ["android.permission.health.READ_STEPS"],
       "config": {
         "googleMaps": {
           "apiKey": "REEMPLAZAR_CON_TU_GOOGLE_MAPS_ANDROID_KEY"
@@ -38,6 +39,12 @@
     "plugins": [
       "expo-secure-store",
       "@react-native-community/datetimepicker",
+      [
+        "react-native-health-connect",
+        {
+          "minSdkVersion": 26
+        }
+      ],
       [
         "expo-splash-screen",
         {

@@ -8,6 +8,7 @@ import {
   Modal,
   TextInput,
   AppState,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
@@ -15,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle, Path, Text as SvgText } from "react-native-svg";
 import { Pedometer } from "expo-sensors";
 import * as SecureStore from "expo-secure-store";
+import { iniciarHealthConnect, pasosHoyHC, pasosSemanaHC } from "../services/healthConnectPasos";
 import { useTheme } from "../theme";
 import { saludService } from "../api";
 import CaminataModal from "../components/CaminataModal";
@@ -363,8 +365,9 @@ export default function SaludScreen() {
     let intervalo;
     let appSub;
     let vivo = true;
+    let hcOk = false; // Health Connect activo (Android)
 
-    // Solo el total de hoy (barato): se usa para el refresco automático.
+    // Solo el total de hoy (barato): refresco automático en iOS.
     const refrescarHoy = async () => {
       try {
         const ahora = new Date();
@@ -373,9 +376,9 @@ export default function SaludScreen() {
       } catch {}
     };
 
-    // Total de hoy + serie de los últimos 7 días + histórico.
+    // iOS: total de hoy + serie de 7 días + histórico.
     // OJO: el primer getStepCountAsync NO se atrapa acá a propósito: en Android
-    // lanza (no soporta rango histórico) y así caemos al modo android, sin
+    // lanza (no soporta rango histórico) y así caemos al fallback, sin
     // sincronizar 0 al backend (que borraría los pasos reales).
     const cargarTodo = async () => {
       const ahora = new Date();
@@ -404,7 +407,52 @@ export default function SaludScreen() {
       }
     };
 
+    // Android: pasos reales del día desde Health Connect (segundo plano).
+    const cargarHC = async () => {
+      const hoyPasos = await pasosHoyHC();
+      if (!vivo) return;
+      setPasos(hoyPasos);
+      const semana = await pasosSemanaHC();
+      if (!vivo) return;
+      const dias = Object.keys(semana)
+        .sort()
+        .map((k) => ({
+          label: DIAS_SEMANA[new Date(`${k}T00:00:00`).getDay()],
+          valor: Number(semana[k]) || 0,
+        }));
+      setPasosSemana(dias);
+      setModoPasos("ios"); // tiene histórico → misma UI + sync que iOS
+      guardarHist(semana);
+    };
+    const refrescarHC = async () => {
+      const p = await pasosHoyHC();
+      if (vivo) setPasos(p);
+    };
+
     (async () => {
+      // ---- Android: Health Connect ----
+      if (Platform.OS === "android") {
+        hcOk = await iniciarHealthConnect();
+        if (!vivo) return;
+        if (hcOk) {
+          await cargarHC();
+          intervalo = setInterval(refrescarHC, 25000);
+        } else {
+          // Sin Health Connect / sin permiso → contador en vivo (app abierta).
+          const disp = await Pedometer.isAvailableAsync().catch(() => false);
+          if (!vivo) return;
+          if (disp) {
+            setModoPasos("android");
+            setPasos(0);
+            sub = Pedometer.watchStepCount((res) => setPasos(res?.steps ?? 0));
+          } else {
+            setModoPasos("no");
+          }
+        }
+        return;
+      }
+
+      // ---- iOS: podómetro (CoreMotion) ----
       const disponible = await Pedometer.isAvailableAsync().catch(() => false);
       if (!vivo) return;
       if (!disponible) {
@@ -413,10 +461,8 @@ export default function SaludScreen() {
       }
       try {
         await cargarTodo();
-        // Refresco automático mientras la pantalla está abierta (sin cerrar la app).
         intervalo = setInterval(refrescarHoy, 25000);
       } catch {
-        // Android: sin histórico → contamos en vivo desde que se abre la app.
         if (!vivo) return;
         setModoPasos("android");
         setPasos(0);
@@ -424,9 +470,14 @@ export default function SaludScreen() {
       }
     })();
 
-    // Al volver a la app (foreground), recargamos todo al instante.
+    // Al volver a la app (foreground), recargamos al instante.
     appSub = AppState.addEventListener("change", (estado) => {
-      if (estado === "active") cargarTodo().catch(() => {});
+      if (estado !== "active") return;
+      if (Platform.OS === "android") {
+        if (hcOk) cargarHC().catch(() => {});
+      } else {
+        cargarTodo().catch(() => {});
+      }
     });
 
     return () => {
