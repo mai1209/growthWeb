@@ -106,7 +106,17 @@ export const updateSalud = async (req, res) => {
       doc.caminatas = body.caminatas
         .filter((c) => c && esFecha(c.fecha))
         .slice(0, MAX_CAMINATAS)
-        .map((c) => ({ fecha: c.fecha, metros: num(c.metros), secs: num(c.secs) }));
+        .map((c) => ({
+          fecha: c.fecha,
+          metros: num(c.metros),
+          secs: num(c.secs),
+          ruta: Array.isArray(c.ruta)
+            ? c.ruta
+                .filter((p) => p && Number.isFinite(Number(p.latitude)) && Number.isFinite(Number(p.longitude)))
+                .slice(0, 500)
+                .map((p) => ({ latitude: Number(p.latitude), longitude: Number(p.longitude) }))
+            : undefined,
+        }));
     }
     if (body.nutri && typeof body.nutri === "object") {
       doc.nutri = {

@@ -28,8 +28,19 @@ const saludSchema = new mongoose.Schema(
     peso: { type: mongoose.Schema.Types.Mixed, default: {} },
     // día → [{ id, franja, nombre, kcal, carbG, protG, fatG }]
     comidas: { type: mongoose.Schema.Types.Mixed, default: {} },
-    // [{ fecha, metros, secs }] — solo del teléfono (GPS).
-    caminatas: { type: [{ _id: false, fecha: String, metros: Number, secs: Number }], default: [] },
+    // [{ fecha, metros, secs, ruta:[{latitude,longitude}] }] — solo del teléfono (GPS).
+    caminatas: {
+      type: [
+        {
+          _id: false,
+          fecha: String,
+          metros: Number,
+          secs: Number,
+          ruta: { type: [{ _id: false, latitude: Number, longitude: Number }], default: undefined },
+        },
+      ],
+      default: [],
+    },
     // Plan nutricional: { peso, altura, edad, sexo, actividad, objetivo }
     nutri: { type: mongoose.Schema.Types.Mixed, default: null },
     // Metas: { pasos, agua }

@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
-import MapView, { Polyline } from "react-native-maps";
+import MapView, { Polyline, Marker } from "react-native-maps";
 import { iniciarCaminataLA, actualizarCaminataLA, terminarCaminataLA } from "../services/liveActivity";
 import * as TaskManager from "expo-task-manager";
 import { useTheme } from "../theme";
@@ -94,6 +94,7 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
   const [enFondo, setEnFondo] = useState(false); // true si el tracking sigue en segundo plano
 
   const subRef = useRef(null); // watchPosition (modo foreground / Expo Go)
+  const mapRef = useRef(null);
   const timerRef = useRef(null);
   const elapsedBaseRef = useRef(0); // ms acumulados de tramos anteriores (pausas)
   const segStartRef = useRef(null); // inicio del tramo actual
@@ -227,6 +228,16 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
 
   const km = metros / 1000;
   const ritmo = km > 0.02 && secs > 0 ? secs / 60 / km : 0; // min/km
+  const ultimoPunto = ruta.length ? ruta[ruta.length - 1] : null;
+
+  // El mapa sigue tu posición (punto verde) mientras caminás.
+  useEffect(() => {
+    if (!ultimoPunto || !mapRef.current) return;
+    if (fase === "activo" || fase === "pausado") {
+      mapRef.current.animateCamera({ center: ultimoPunto }, { duration: 600 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ultimoPunto?.latitude, ultimoPunto?.longitude, fase]);
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -254,24 +265,35 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
           </View>
         ) : (
           <View style={styles.body}>
-            <MapView
-              style={styles.map}
-              showsUserLocation
-              followsUserLocation={fase === "activo" || fase === "pausado"}
-              initialRegion={REGION_DEFAULT}
-              showsMyLocationButton={false}
-              toolbarEnabled={false}
-            >
-              {ruta.length > 1 ? (
-                <Polyline
-                  coordinates={ruta}
-                  strokeColor={colors.greenBright}
-                  strokeWidth={5}
-                  lineCap="round"
-                  lineJoin="round"
-                />
-              ) : null}
-            </MapView>
+            <View style={styles.mapWrap}>
+              <MapView
+                ref={mapRef}
+                style={styles.map}
+                initialRegion={REGION_DEFAULT}
+                showsUserLocation={false}
+                showsMyLocationButton={false}
+                toolbarEnabled={false}
+                pitchEnabled={false}
+                rotateEnabled={false}
+              >
+                {ruta.length > 1 ? (
+                  <Polyline
+                    coordinates={ruta}
+                    strokeColor={colors.greenBright}
+                    strokeWidth={5}
+                    lineCap="round"
+                    lineJoin="round"
+                  />
+                ) : null}
+                {ultimoPunto ? (
+                  <Marker coordinate={ultimoPunto} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
+                    <View style={styles.dotOuter}>
+                      <View style={styles.dotInner} />
+                    </View>
+                  </Marker>
+                ) : null}
+              </MapView>
+            </View>
 
             <View style={styles.panel}>
               <View style={styles.kmRow}>
@@ -356,7 +378,33 @@ const makeStyles = (colors) =>
     hint: { color: colors.muted, fontSize: 14, lineHeight: 20, textAlign: "center" },
 
     body: { flex: 1 },
-    map: { flex: 1, minHeight: 200 },
+    mapWrap: {
+      flex: 1,
+      minHeight: 200,
+      marginHorizontal: 10,
+      marginTop: 8,
+      borderRadius: 22,
+      overflow: "hidden",
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+    },
+    map: { flex: 1 },
+    dotOuter: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: "rgba(93,199,45,0.30)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    dotInner: {
+      width: 14,
+      height: 14,
+      borderRadius: 7,
+      backgroundColor: colors.greenBright,
+      borderWidth: 2,
+      borderColor: "#fff",
+    },
     panel: { paddingHorizontal: 24, paddingTop: 14, paddingBottom: 20, alignItems: "center", gap: 10 },
     kmRow: { flexDirection: "row", alignItems: "flex-end", gap: 6 },
     kmBig: { color: colors.text, fontSize: 46, fontWeight: "900", letterSpacing: -1 },

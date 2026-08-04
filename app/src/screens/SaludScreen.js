@@ -18,6 +18,7 @@ import * as SecureStore from "expo-secure-store";
 import { useTheme } from "../theme";
 import { saludService } from "../api";
 import CaminataModal from "../components/CaminataModal";
+import RecorridosModal from "../components/RecorridosModal";
 import TodosDatosModal from "../components/TodosDatosModal";
 import GymPanel from "../components/GymPanel";
 import NutricionModal from "../components/NutricionModal";
@@ -563,6 +564,7 @@ export default function SaludScreen() {
 
   // ---------------- Caminatas (GPS) ----------------
   const [caminataOpen, setCaminataOpen] = useState(false);
+  const [recorridosOpen, setRecorridosOpen] = useState(false);
   const [caminatas, setCaminatas] = useState([]);
   const [datosOpen, setDatosOpen] = useState(false); // "Todos los datos"
 
@@ -583,7 +585,8 @@ export default function SaludScreen() {
 
   const guardarCaminata = (walk) => {
     if (!walk || walk.metros <= 0) return;
-    const lista = [{ fecha: hoy, metros: walk.metros, secs: walk.secs }, ...caminatas].slice(0, 50);
+    const ruta = Array.isArray(walk.ruta) ? walk.ruta.slice(0, 500) : [];
+    const lista = [{ fecha: hoy, metros: walk.metros, secs: walk.secs, ruta }, ...caminatas].slice(0, 50);
     setCaminatas(lista);
     SecureStore.setItemAsync(CAMINATAS_KEY, JSON.stringify({ lista })).catch(() => {});
     pushSalud({ caminatas: lista });
@@ -1080,6 +1083,10 @@ export default function SaludScreen() {
               <Text style={styles.cardTitle}>Pasos de hoy</Text>
             </View>
             <View style={styles.pasosBtns}>
+              <TouchableOpacity style={styles.metaBtn} onPress={() => setRecorridosOpen(true)}>
+                <Ionicons name="map-outline" size={14} color={colors.muted} />
+                <Text style={styles.metaBtnText}>Mapa</Text>
+              </TouchableOpacity>
               <TouchableOpacity style={styles.metaBtn} onPress={() => abrirEdicion("manual")}>
                 <Ionicons name="add-circle-outline" size={14} color={colors.muted} />
                 <Text style={styles.metaBtnText}>Manual</Text>
@@ -1209,6 +1216,12 @@ export default function SaludScreen() {
         visible={caminataOpen}
         onClose={() => setCaminataOpen(false)}
         onGuardar={guardarCaminata}
+      />
+
+      <RecorridosModal
+        visible={recorridosOpen}
+        onClose={() => setRecorridosOpen(false)}
+        caminatas={caminatas}
       />
 
       <TodosDatosModal
