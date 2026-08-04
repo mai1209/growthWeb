@@ -95,6 +95,7 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
                   </>
                 ) : null}
               </MapView>
+              {isDark ? <View pointerEvents="none" style={styles.mapDim} /> : null}
             </View>
 
             <View style={styles.info}>
@@ -153,6 +154,7 @@ const makeStyles = (colors) =>
       borderColor: colors.cardBorder,
     },
     map: { flex: 1 },
+    mapDim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.28)" },
 
     info: { alignItems: "center", paddingVertical: 12, gap: 2 },
     infoKm: { color: colors.text, fontSize: 30, fontWeight: "900" },
