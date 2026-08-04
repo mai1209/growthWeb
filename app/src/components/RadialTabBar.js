@@ -61,6 +61,7 @@ export const NAV_GROUPS = [
     items: [
       { label: "Movilidad", icon: "pulse-outline", route: "Salud", params: { view: "movilidad" } },
       { label: "Calorías", icon: "flame-outline", route: "Salud", params: { view: "calorias" } },
+      { label: "Gym", icon: "barbell-outline", route: "Salud", params: { view: "gym" } },
     ],
   },
 ];

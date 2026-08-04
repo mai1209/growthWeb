@@ -18,6 +18,7 @@ import { useTheme } from "../theme";
 import { saludService } from "../api";
 import CaminataModal from "../components/CaminataModal";
 import TodosDatosModal from "../components/TodosDatosModal";
+import GymPanel from "../components/GymPanel";
 import NutricionModal from "../components/NutricionModal";
 import AddComidaModal from "../components/AddComidaModal";
 import { calcularPlan } from "../utils/nutricion";
@@ -229,13 +230,14 @@ export default function SaludScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const route = useRoute();
 
-  // Dos vistas, deep-linkeadas desde el menú: Movilidad y Calorías diarias.
+  // Vistas deep-linkeadas desde el menú: Movilidad, Calorías diarias y Gym.
   const [vista, setVista] = useState("movilidad");
   useEffect(() => {
     const v = route.params?.view;
-    if (v === "movilidad" || v === "calorias") setVista(v);
+    if (v === "movilidad" || v === "calorias" || v === "gym") setVista(v);
   }, [route.params?.view, route.params?._navTs]);
   const esCalorias = vista === "calorias";
+  const esGym = vista === "gym";
   const [periodo, setPeriodo] = useState("semana"); // dia | semana | mes | anio
 
   // ---------------- Metas configurables ----------------
@@ -765,6 +767,8 @@ export default function SaludScreen() {
       </View>
     );
   };
+
+  if (esGym) return <GymPanel />;
 
   return (
     <SafeAreaView style={styles.safe} edges={[]}>
