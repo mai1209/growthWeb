@@ -26,7 +26,6 @@ import ShoppingListsPanel from "../components/ShoppingListsPanel";
 import AfirmacionesPanel from "../components/AfirmacionesPanel";
 import JournalingPanel from "../components/JournalingPanel";
 import { getCustomFolders, setCustomFolders } from "../storage";
-import { guardarNotasWidget } from "../services/notasWidget";
 
 const ALL_FOLDERS = "__all__";
 
@@ -84,12 +83,6 @@ export default function NotasScreen() {
       const res = await taskService.getAll({ tipo: "note" });
       const list = Array.isArray(res.data) ? res.data : res.data?.tasks || [];
       setNotes(list);
-      // Espeja las 3 notas más recientes al widget de iOS (App Group).
-      const recientes = [...list]
-        .sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0))
-        .slice(0, 3)
-        .map((n) => ({ titulo: n.meta || "", texto: notePreview(n.contenido, 140) }));
-      guardarNotasWidget(recientes);
     } catch {
       // noop
     } finally {

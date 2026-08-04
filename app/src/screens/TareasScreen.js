@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { taskService } from "../api";
 import { useTheme } from "../theme";
+import { guardarTareasWidget } from "../services/tareasWidget";
 import {
   filterTasksForDate,
   isTaskCompletedOnDate,
@@ -109,6 +110,12 @@ export default function TareasScreen() {
       const res = await taskService.getAll({ tipo: "task" });
       const list = Array.isArray(res.data) ? res.data : [];
       setAllTasks(list);
+      // Espeja las tareas pendientes de hoy al widget de iOS (App Group).
+      const hoy = new Date();
+      const pendientesHoy = filterTasksForDate(list, hoy)
+        .filter((t) => !isTaskCompletedOnDate(t, hoy))
+        .map((t) => ({ titulo: t.meta || "" }));
+      guardarTareasWidget(pendientesHoy);
       // Reprogramamos los recordatorios "X min antes" con las tareas frescas.
       loadNotifSettings()
         .then((s) => syncTaskReminders(list, s))
