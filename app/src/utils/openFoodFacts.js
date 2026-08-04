@@ -2,7 +2,9 @@
 // del listado local. Devuelve items con el mismo formato que BASE_COMIDAS
 // ({ nombre, unidad, gramos, kcal, carbG, protG, fatG, online:true }).
 // Si falla la red o no hay resultados, devuelve [] (no rompe nada).
-const OFF_URL = "https://world.openfoodfacts.org/cgi/search.pl";
+// Search-a-licious: el buscador nuevo de Open Food Facts (más rápido y estable
+// que el clásico search.pl). Devuelve { hits: [...] }.
+const OFF_URL = "https://search.openfoodfacts.org/search";
 
 function normalizar(p) {
   const n = p.nutriments || {};
@@ -48,16 +50,15 @@ export async function buscarComidasOFF(query) {
   const q = String(query || "").trim();
   if (q.length < 3) return [];
   const url =
-    `${OFF_URL}?search_terms=${encodeURIComponent(q)}` +
-    `&search_simple=1&action=process&json=1&page_size=20` +
-    `&fields=product_name,brands,nutriments,serving_quantity`;
+    `${OFF_URL}?q=${encodeURIComponent(q)}` +
+    `&page_size=20&fields=product_name,brands,nutriments,serving_quantity`;
   try {
     const res = await fetch(url, { headers: { Accept: "application/json" } });
     if (!res.ok) return [];
     const data = await res.json();
     const vistos = new Set();
     const out = [];
-    for (const p of data.products || []) {
+    for (const p of data.hits || []) {
       const item = normalizar(p);
       if (!item) continue;
       const key = item.nombre.toLowerCase();
