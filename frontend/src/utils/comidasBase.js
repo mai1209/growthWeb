@@ -108,6 +108,8 @@ export const BASE_COMIDAS = [
   // ---- Huevos y lácteos ----
   { nombre: "Huevo", alias: "huevo", unidad: "unidad", gramos: 55, kcal: 78, carbG: 1, protG: 6, fatG: 5 },
   { nombre: "Huevo frito", alias: "huevo", unidad: "unidad", gramos: 60, kcal: 95, carbG: 0, protG: 6, fatG: 7 },
+  { nombre: "Huevo revuelto", alias: "huevo", unidad: "unidad", gramos: 60, kcal: 90, carbG: 1, protG: 6, fatG: 7 },
+  { nombre: "Clara de huevo", alias: "huevo", unidad: "unidad", gramos: 33, kcal: 17, carbG: 0, protG: 4, fatG: 0 },
   { nombre: "Queso cremoso", alias: "queso lacteo", unidad: "feta", gramos: 30, kcal: 100, carbG: 1, protG: 6, fatG: 8 },
   { nombre: "Queso rallado", alias: "queso lacteo", unidad: "cucharada", gramos: 10, kcal: 40, carbG: 0, protG: 3, fatG: 3 },
   { nombre: "Ricota", alias: "queso lacteo", unidad: "porción", gramos: 100, kcal: 170, carbG: 3, protG: 11, fatG: 13 },
