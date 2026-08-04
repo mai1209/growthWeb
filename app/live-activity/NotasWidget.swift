@@ -16,15 +16,31 @@ private let brand = Color(red: 0.36, green: 0.78, blue: 0.18) // verde Growth #5
 private let appGroup = "group.app.growthmanager.mobile"
 private let itemsKey = "notas"
 
+// Color desde hex ("#rrggbb"). Si no parsea, usa el verde de marca.
+extension Color {
+  init(growthHex hex: String?) {
+    let s = (hex ?? "").trimmingCharacters(in: CharacterSet(charactersIn: "# ")).uppercased()
+    var v: UInt64 = 0
+    guard s.count == 6, Scanner(string: s).scanHexInt64(&v) else { self = brand; return }
+    self = Color(
+      red: Double((v >> 16) & 0xFF) / 255.0,
+      green: Double((v >> 8) & 0xFF) / 255.0,
+      blue: Double(v & 0xFF) / 255.0
+    )
+  }
+}
+
 struct NotaItem: Codable, Hashable {
   var titulo: String
   var hora: String?
+  var color: String?
 
-  enum CodingKeys: String, CodingKey { case titulo, hora }
+  enum CodingKeys: String, CodingKey { case titulo, hora, color }
 
-  init(titulo: String, hora: String?) {
+  init(titulo: String, hora: String?, color: String? = nil) {
     self.titulo = titulo
     self.hora = hora
+    self.color = color
   }
 
   // Decode tolerante: si falta algún campo (o sobran, como el viejo "texto"),
@@ -33,6 +49,7 @@ struct NotaItem: Codable, Hashable {
     let c = try decoder.container(keyedBy: CodingKeys.self)
     titulo = (try? c.decode(String.self, forKey: .titulo)) ?? ""
     hora = try? c.decode(String.self, forKey: .hora)
+    color = try? c.decode(String.self, forKey: .color)
   }
 }
 
@@ -69,11 +86,15 @@ struct NotasProvider: TimelineProvider {
 struct FilaTarea: View {
   let item: NotaItem
   var body: some View {
+    let c = Color(growthHex: item.color)
     HStack(alignment: .firstTextBaseline, spacing: 8) {
+      RoundedRectangle(cornerRadius: 1.5)
+        .fill(c)
+        .frame(width: 3, height: 13)
       Text((item.hora ?? "").isEmpty ? "·" : item.hora!)
         .font(.caption2.weight(.bold))
         .monospacedDigit()
-        .foregroundColor(brand)
+        .foregroundColor(c)
         .frame(width: 46, alignment: .leading)
         .lineLimit(1)
       Text(item.titulo.isEmpty ? "Sin título" : item.titulo)

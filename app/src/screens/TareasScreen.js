@@ -118,7 +118,10 @@ export default function TareasScreen() {
         .sort((a, b) => agendaKey(a) - agendaKey(b))
         .map((t) => {
           const lbl = agendaLabel(t.horario);
-          return { titulo: t.meta || "", hora: lbl === "Sin hora" ? "" : lbl };
+          const color =
+            TASK_COLORS[t.color] ||
+            (typeof t.color === "string" && t.color.startsWith("#") ? t.color : TASK_COLORS.color1);
+          return { titulo: t.meta || "", hora: lbl === "Sin hora" ? "" : lbl, color };
         });
       guardarTareasWidget(pendientesHoy);
       // Reprogramamos los recordatorios "X min antes" con las tareas frescas.
