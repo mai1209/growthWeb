@@ -6,6 +6,8 @@ import {
   FiCreditCard,
   FiPocket,
   FiRepeat,
+  FiEdit2,
+  FiTrash2,
 } from "react-icons/fi";
 import style from "../style/MonthlyFilters.module.css";
 import InputMonto from "./InputMonto";
@@ -219,15 +221,15 @@ export default function MovementCard({
             onClick={handleEdit}
             aria-label="Editar movimiento"
           >
-            <img src="/edit.png" alt="edit" />
+            <FiEdit2 />
           </button>
           <button
             type="button"
-            className={style.actionButton}
+            className={`${style.actionButton} ${style.actionButtonDanger}`}
             onClick={handleDelete}
             aria-label="Eliminar movimiento"
           >
-            <img src="/trush.png" alt="delete" />
+            <FiTrash2 />
           </button>
         </div>
       </div>

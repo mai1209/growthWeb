@@ -616,35 +616,35 @@
    negro en claro). El circulito conserva el tinte según el tipo. */
 .rowIcon {
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
+  /* Sin fondo: el color va en el propio ícono, igual que en la app. */
   color: var(--color-text);
 }
 
 .rowIcon svg {
-  width: 18px;
-  height: 18px;
-  stroke-width: 2.2;
+  width: 23px;
+  height: 23px;
+  stroke-width: 2.4;
 }
 
+/* El ícono coloreado (no el fondo): verde ingreso, rojo egreso, amarillo deuda. */
 .incomeRow .rowIcon {
-  background: var(--income-surface);
+  color: #2fa56f;
 }
 
 .expenseRow .rowIcon {
-  background: var(--expense-surface);
+  color: #e0654f;
 }
 
 .savingsRow .rowIcon {
-  background: rgba(47, 179, 137, 0.16);
+  color: #2fb389;
 }
 
 .debtRow .rowIcon {
-  background: rgba(201, 162, 58, 0.18);
+  color: #d3a63a;
 }
 
 .rowText {
@@ -685,20 +685,31 @@
 }
 
 .actionButton {
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--border-color);
+  width: 34px;
+  height: 34px;
+  border: none;
   border-radius: 50%;
   display: inline-grid;
   place-items: center;
-  background: var(--surface-card);
+  background: transparent;
+  color: var(--color-muted);
   cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.actionButton svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.2;
 }
 
 .actionButton:hover {
-  border-color: var(--accent-border);
+  color: var(--color-text);
   background: var(--accent-surface);
+}
+
+.actionButtonDanger:hover {
+  color: #e0654f;
 }
 
 .rowBadges {
