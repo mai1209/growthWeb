@@ -122,22 +122,26 @@ function CalendarioWeb({ fechaSel, hoy, tieneDatos, onSelect, onClose }) {
 function DateNav({ fecha, setFecha, hoy, tieneDatos }) {
   const [calOpen, setCalOpen] = useState(false);
   return (
-    <div className={style.dateNav}>
-      <button type="button" onClick={() => setFecha(addDays(fecha, -1))} aria-label="Día anterior">
-        ‹
-      </button>
-      <button type="button" className={style.dateNavLabel} onClick={() => setCalOpen((v) => !v)}>
-        <span>{fechaLabel(fecha, hoy)}</span>
-        <FiCalendar className={style.dateNavCal} />
-      </button>
-      <button
-        type="button"
-        onClick={() => fecha < hoy && setFecha(addDays(fecha, 1))}
-        disabled={fecha >= hoy}
-        aria-label="Día siguiente"
-      >
-        ›
-      </button>
+    <>
+      <div className={style.dateNav}>
+        <button type="button" onClick={() => setFecha(addDays(fecha, -1))} aria-label="Día anterior">
+          ‹
+        </button>
+        <button type="button" className={style.dateNavLabel} onClick={() => setCalOpen((v) => !v)}>
+          <span>{fechaLabel(fecha, hoy)}</span>
+          <FiCalendar className={style.dateNavCal} />
+        </button>
+        <button
+          type="button"
+          onClick={() => fecha < hoy && setFecha(addDays(fecha, 1))}
+          disabled={fecha >= hoy}
+          aria-label="Día siguiente"
+        >
+          ›
+        </button>
+      </div>
+      {/* El calendario va FUERA del .dateNav: es un modal (overlay fijo) y así
+          no hereda las reglas `.dateNav span/button` que le rompían la grilla. */}
       {calOpen ? (
         <CalendarioWeb
           fechaSel={fecha}
@@ -150,7 +154,7 @@ function DateNav({ fecha, setFecha, hoy, tieneDatos }) {
           onClose={() => setCalOpen(false)}
         />
       ) : null}
-    </div>
+    </>
   );
 }
 

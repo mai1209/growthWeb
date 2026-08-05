@@ -378,7 +378,7 @@
   padding: 1rem 1.1rem 1.2rem;
   border-radius: 22px;
   border: 1px solid var(--border-color);
-  background: var(--surface-card, #14181c);
+  background: var(--surface-card-strong, #081c23);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
 }
 .calHead {
@@ -625,7 +625,7 @@
 .recModal {
   width: 100%;
   max-width: 560px;
-  background: var(--surface-card, #14181c);
+  background: var(--surface-card-strong, #081c23);
   border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 1.3rem;
