@@ -77,6 +77,7 @@ export const movimientoService = {
   update: (id, data) => api.put(`/api/add/${id}`, data),
   delete: (id) => api.delete(`/api/add/${id}`),
   settleDebt: (id, data) => api.post(`/api/add/${id}/settle-debt`, data),
+  emitirFactura: (id) => api.post(`/api/add/${id}/factura`),
 };
 
 export const categoriesService = {

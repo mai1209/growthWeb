@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { movimientoService } from "../api";
+import { movimientoService, fiscalService } from "../api";
 import MovementFormModal from "../components/MovementFormModal";
 import SettlePersonalDebtModal from "../components/SettlePersonalDebtModal";
 import { statAccents, useTheme } from "../theme";
@@ -61,6 +61,10 @@ export default function FiltrosScreen() {
   const [type, setType] = useState("all");
   const [editMov, setEditMov] = useState(null);
   const [settleDebt, setSettleDebt] = useState(null);
+  // Facturación (ARCA): si el perfil la tiene activa mostramos "Emitir factura"
+  // en los ingresos. `emitiendo` guarda el _id del movimiento en curso.
+  const [fiscalOn, setFiscalOn] = useState(false);
+  const [emitiendo, setEmitiendo] = useState(null);
 
   const handleDelete = (mov) => {
     Alert.alert("Eliminar movimiento", `¿Borrar "${mov.categoria || "movimiento"}"?`, [
@@ -95,6 +99,37 @@ export default function FiltrosScreen() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // ¿El perfil activo tiene la facturación ARCA activada? (para mostrar el botón)
+  useEffect(() => {
+    fiscalService
+      .get()
+      .then((res) => setFiscalOn(Boolean(res.data?.activo)))
+      .catch(() => setFiscalOn(false));
+  }, []);
+
+  const handleEmitirFactura = (mov) => {
+    if (emitiendo) return;
+    setEmitiendo(mov._id);
+    movimientoService
+      .emitirFactura(mov._id)
+      .then((res) => {
+        setMovimientos((prev) =>
+          prev.map((m) => (m._id === mov._id ? res.data : m))
+        );
+        const f = res.data?.factura;
+        Alert.alert(
+          "Factura emitida",
+          f
+            ? `${f.tipoNombre} N° ${f.numero}\nCAE ${f.cae}${f.homologacion ? "\n(homologación / prueba)" : ""}`
+            : "Factura emitida."
+        );
+      })
+      .catch((err) =>
+        Alert.alert("No se pudo emitir", err.response?.data?.error || "Intentá de nuevo.")
+      )
+      .finally(() => setEmitiendo(null));
+  };
 
   // Filtro entrante desde el Home (tarjetas de stats)
   useEffect(() => {
@@ -489,6 +524,33 @@ export default function FiltrosScreen() {
                       <Text style={styles.payDebtText}>Pagar deuda</Text>
                     </TouchableOpacity>
                   ) : null}
+                  {/* Facturación (ARCA): solo en ingresos. Badge si ya tiene CAE;
+                      botón para emitir si el perfil tiene la facturación activa. */}
+                  {item.tipo === "ingreso" ? (
+                    item.factura && item.factura.cae ? (
+                      <View style={styles.facturaBadge}>
+                        <Ionicons name="receipt-outline" size={13} color={colors.green} />
+                        <Text style={styles.facturaBadgeText}>
+                          {item.factura.tipoNombre} N° {item.factura.numero}
+                        </Text>
+                      </View>
+                    ) : fiscalOn ? (
+                      <TouchableOpacity
+                        style={styles.facturaBtn}
+                        onPress={() => handleEmitirFactura(item)}
+                        disabled={emitiendo === item._id}
+                      >
+                        {emitiendo === item._id ? (
+                          <ActivityIndicator size="small" color={colors.green} />
+                        ) : (
+                          <>
+                            <Ionicons name="receipt-outline" size={15} color={colors.green} />
+                            <Text style={styles.facturaBtnText}>Emitir factura</Text>
+                          </>
+                        )}
+                      </TouchableOpacity>
+                    ) : null
+                  ) : null}
                 </View>
                 <View style={styles.movRight}>
                   <Text style={[styles.movAmount, { color: meta.color }]}>
@@ -797,4 +859,31 @@ const makeStyles = (colors) => StyleSheet.create({
     backgroundColor: "#e0b32e",
   },
   payDebtText: { color: "#3a2d05", fontWeight: "800", fontSize: 13 },
+  facturaBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
+    marginTop: 10,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.green,
+    backgroundColor: colors.greenSoft,
+    minHeight: 32,
+  },
+  facturaBtnText: { color: colors.green, fontWeight: "800", fontSize: 13 },
+  facturaBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 5,
+    marginTop: 10,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: colors.greenSoft,
+  },
+  facturaBadgeText: { color: colors.green, fontWeight: "700", fontSize: 12 },
 });
