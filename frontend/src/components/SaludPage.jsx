@@ -66,14 +66,68 @@ const fechaLabel = (key, hoy) => {
   return new Date(`${key}T00:00:00`).toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "short" });
 };
 
-// Navegador de día (‹ Ayer ›) para ver el historial. No deja pasar del día de hoy.
-function DateNav({ fecha, setFecha, hoy }) {
+// Calendario de mes (popover) para saltar a cualquier fecha. Puntito en los días con datos.
+function CalendarioWeb({ fechaSel, hoy, tieneDatos, onSelect, onClose }) {
+  const [mes, setMes] = useState(() => {
+    const d = new Date(`${fechaSel}T00:00:00`);
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const y = mes.getFullYear();
+  const m = mes.getMonth();
+  const pad = (n) => String(n).padStart(2, "0");
+  const dim = new Date(y, m + 1, 0).getDate();
+  const primerDow = (new Date(y, m, 1).getDay() + 6) % 7;
+  const celdas = [...Array(primerDow).fill(null), ...Array.from({ length: dim }, (_, i) => i + 1)];
+  return (
+    <>
+      <div className={style.calOverlay} onClick={onClose} />
+      <div className={style.calPop}>
+        <div className={style.calHead}>
+          <button type="button" onClick={() => setMes(new Date(y, m - 1, 1))}>‹</button>
+          <span>{mes.toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</span>
+          <button type="button" onClick={() => setMes(new Date(y, m + 1, 1))}>›</button>
+        </div>
+        <div className={style.calGrid}>
+          {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
+            <span key={`d${i}`} className={style.calDow}>{d}</span>
+          ))}
+          {celdas.map((d, i) => {
+            if (d == null) return <span key={i} />;
+            const k = `${y}-${pad(m + 1)}-${pad(d)}`;
+            const futuro = k > hoy;
+            const tiene = !futuro && tieneDatos && tieneDatos(k);
+            const sel = k === fechaSel;
+            return (
+              <button
+                key={i}
+                type="button"
+                disabled={futuro}
+                className={`${style.calDiaBtn} ${sel ? style.calDiaSel : ""} ${k === hoy && !sel ? style.calDiaHoy : ""}`}
+                onClick={() => onSelect(k)}
+              >
+                {d}
+                {tiene ? <span className={style.calDotDia} /> : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// Navegador de día (‹ Ayer ›) para ver el historial. La fecha abre un calendario.
+function DateNav({ fecha, setFecha, hoy, tieneDatos }) {
+  const [calOpen, setCalOpen] = useState(false);
   return (
     <div className={style.dateNav}>
       <button type="button" onClick={() => setFecha(addDays(fecha, -1))} aria-label="Día anterior">
         ‹
       </button>
-      <span>{fechaLabel(fecha, hoy)}</span>
+      <button type="button" className={style.dateNavLabel} onClick={() => setCalOpen((v) => !v)}>
+        <span>{fechaLabel(fecha, hoy)}</span>
+        <span className={style.dateNavCal}>📅</span>
+      </button>
       <button
         type="button"
         onClick={() => fecha < hoy && setFecha(addDays(fecha, 1))}
@@ -82,6 +136,18 @@ function DateNav({ fecha, setFecha, hoy }) {
       >
         ›
       </button>
+      {calOpen ? (
+        <CalendarioWeb
+          fechaSel={fecha}
+          hoy={hoy}
+          tieneDatos={tieneDatos}
+          onSelect={(k) => {
+            setFecha(k);
+            setCalOpen(false);
+          }}
+          onClose={() => setCalOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }
@@ -336,6 +402,17 @@ export default function SaludPage() {
   // Pasos totales del día = sensor (del teléfono) + carga manual.
   const pasosDe = (k) => (Number(data?.pasos?.[k]) || 0) + (Number(data?.pasosManual?.[k]) || 0);
   const pasosHoy = pasosDe(hoy);
+
+  // ¿Ese día tiene datos? (para el puntito del calendario)
+  const tieneDatosMov = (k) =>
+    pasosDe(k) > 0 ||
+    (Number(data?.agua?.[k]) || 0) > 0 ||
+    !!data?.animo?.[k] ||
+    (Number(data?.peso?.[k]) || 0) > 0 ||
+    (data?.comidas?.[k] || []).length > 0 ||
+    (data?.caminatas || []).some((c) => c.fecha === k);
+  const tieneDatosCal = (k) =>
+    (data?.comidas?.[k] || []).length > 0 || (Number(data?.agua?.[k]) || 0) > 0;
   const agua = Number(data?.agua?.[hoy]) || 0;
   const animoHoy = data?.animo?.[hoy];
   const plan = useMemo(() => calcularPlan(data?.nutri), [data]);
@@ -876,7 +953,7 @@ export default function SaludPage() {
         <section className={`${style.card} ${style.cardAncha}`}>
           <div className={style.cardHead}>
             <h2>Todos los resultados</h2>
-            <DateNav fecha={fechaMov} setFecha={setFechaMov} hoy={hoy} />
+            <DateNav fecha={fechaMov} setFecha={setFechaMov} hoy={hoy} tieneDatos={tieneDatosMov} />
           </div>
           <div className={style.datosGrid}>
             {metricas.map((m) => (
@@ -937,7 +1014,7 @@ export default function SaludPage() {
                 </span>
               </span>
             </h2>
-            <DateNav fecha={fechaCal} setFecha={setFechaCal} hoy={hoy} />
+            <DateNav fecha={fechaCal} setFecha={setFechaCal} hoy={hoy} tieneDatos={tieneDatosCal} />
             {plan ? (
               <span className={style.planResumen}>
                 Plan: {plan.kcal.toLocaleString("es-AR")} kcal · C {plan.carbG}g · P {plan.protG}g · G {plan.fatG}g
