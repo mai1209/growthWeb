@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   FiActivity,
+  FiCalendar,
   FiMap,
   FiDroplet,
   FiHeart,
@@ -10,6 +11,7 @@ import {
   FiPlus,
   FiRefreshCw,
   FiSmile,
+  FiTrash2,
   FiTrendingUp,
   FiX,
 } from "react-icons/fi";
@@ -80,13 +82,12 @@ function CalendarioWeb({ fechaSel, hoy, tieneDatos, onSelect, onClose }) {
   const primerDow = (new Date(y, m, 1).getDay() + 6) % 7;
   const celdas = [...Array(primerDow).fill(null), ...Array.from({ length: dim }, (_, i) => i + 1)];
   return (
-    <>
-      <div className={style.calOverlay} onClick={onClose} />
-      <div className={style.calPop}>
+    <div className={style.calOverlay} onClick={onClose}>
+      <div className={style.calModal} onClick={(e) => e.stopPropagation()}>
         <div className={style.calHead}>
-          <button type="button" onClick={() => setMes(new Date(y, m - 1, 1))}>‹</button>
+          <button type="button" onClick={() => setMes(new Date(y, m - 1, 1))} aria-label="Mes anterior">‹</button>
           <span>{mes.toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</span>
-          <button type="button" onClick={() => setMes(new Date(y, m + 1, 1))}>›</button>
+          <button type="button" onClick={() => setMes(new Date(y, m + 1, 1))} aria-label="Mes siguiente">›</button>
         </div>
         <div className={style.calGrid}>
           {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
@@ -113,7 +114,7 @@ function CalendarioWeb({ fechaSel, hoy, tieneDatos, onSelect, onClose }) {
           })}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -127,7 +128,7 @@ function DateNav({ fecha, setFecha, hoy, tieneDatos }) {
       </button>
       <button type="button" className={style.dateNavLabel} onClick={() => setCalOpen((v) => !v)}>
         <span>{fechaLabel(fecha, hoy)}</span>
-        <span className={style.dateNavCal}>📅</span>
+        <FiCalendar className={style.dateNavCal} />
       </button>
       <button
         type="button"
@@ -357,9 +358,9 @@ function RecorridosModalWeb({ hoy, onClose }) {
 
   const svg = useMemo(() => {
     if (!sel?.ruta || sel.ruta.length < 2) return null;
-    const W = 320;
-    const H = 240;
-    const pad = 26;
+    const W = 560;
+    const H = 360;
+    const pad = 36;
     const lats = sel.ruta.map((p) => p.latitude);
     const lngs = sel.ruta.map((p) => p.longitude);
     const minLat = Math.min(...lats);
@@ -383,13 +384,30 @@ function RecorridosModalWeb({ hoy, onClose }) {
   const fechaCorta = (k) =>
     new Date(`${k}T00:00:00`).toLocaleDateString("es-AR", { day: "numeric", month: "short" });
 
+  const [borrando, setBorrando] = useState(false);
+  const borrar = () => {
+    if (!sel || borrando) return;
+    setBorrando(true);
+    saludService
+      .borrarRecorrido({ fecha: sel.fecha, metros: sel.metros, secs: sel.secs })
+      .then(({ data }) => {
+        const nuevos = data?.recorridos || [];
+        setRecorridos(nuevos);
+        setIdx((i) => Math.max(0, Math.min(i, nuevos.length - 1)));
+      })
+      .catch(() => {})
+      .finally(() => setBorrando(false));
+  };
+
   return (
     <div className={style.recOverlay} onClick={onClose}>
       <div className={style.recModal} onClick={(e) => e.stopPropagation()}>
         <div className={style.recHead}>
-          <h3>Recorridos GPS</h3>
-          <button type="button" className={style.recClose} onClick={onClose}>
-            ✕
+          <h3>
+            <FiMap /> Recorridos GPS
+          </h3>
+          <button type="button" className={style.recClose} onClick={onClose} aria-label="Cerrar">
+            <FiX />
           </button>
         </div>
         {recorridos === null ? (
@@ -403,24 +421,43 @@ function RecorridosModalWeb({ hoy, onClose }) {
             <div className={style.recMapa}>
               {svg ? (
                 <svg viewBox={`0 0 ${svg.W} ${svg.H}`} width="100%" preserveAspectRatio="xMidYMid meet">
+                  <defs>
+                    <linearGradient id="recRuta" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#7ee787" />
+                      <stop offset="100%" stopColor="var(--color-verde, #5dc72d)" />
+                    </linearGradient>
+                  </defs>
                   <path
                     d={svg.d}
                     fill="none"
-                    stroke="var(--color-verde, #5dc72d)"
-                    strokeWidth="4"
+                    stroke="url(#recRuta)"
+                    strokeWidth="6"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
-                  <circle cx={svg.ini[0]} cy={svg.ini[1]} r="5" fill="#fff" stroke="var(--color-verde, #5dc72d)" strokeWidth="3" />
-                  <circle cx={svg.fin[0]} cy={svg.fin[1]} r="6" fill="var(--color-verde, #5dc72d)" stroke="#fff" strokeWidth="2" />
+                  <circle cx={svg.ini[0]} cy={svg.ini[1]} r="8" fill="#fff" stroke="var(--color-verde, #5dc72d)" strokeWidth="3" />
+                  <circle cx={svg.fin[0]} cy={svg.fin[1]} r="9" fill="var(--color-verde, #5dc72d)" stroke="#fff" strokeWidth="3" />
                 </svg>
-              ) : null}
+              ) : (
+                <p className={style.hint}>Este recorrido no tiene trazado guardado.</p>
+              )}
             </div>
             <div className={style.recInfo}>
-              <strong>{(sel.metros / 1000).toFixed(2)} km</strong>
-              <span>
-                {fechaLabel(sel.fecha, hoy)} · {Math.floor((sel.secs || 0) / 60)} min
-              </span>
+              <div className={style.recInfoTxt}>
+                <strong>{(sel.metros / 1000).toFixed(2)} km</strong>
+                <span>
+                  {fechaLabel(sel.fecha, hoy)} · {Math.floor((sel.secs || 0) / 60)} min
+                </span>
+              </div>
+              <button
+                type="button"
+                className={style.recBorrar}
+                onClick={borrar}
+                disabled={borrando}
+                aria-label="Borrar este recorrido"
+              >
+                <FiTrash2 /> {borrando ? "Borrando…" : "Borrar"}
+              </button>
             </div>
             <div className={style.recChips}>
               {recorridos.map((c, i) => (

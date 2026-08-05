@@ -101,6 +101,49 @@ export const getRecorridos = async (req, res) => {
   }
 };
 
+// DELETE /api/salud/recorridos — borra UNA caminata (por fecha + metros + secs,
+// que es lo que identifica al recorrido que se está viendo en el visor web).
+// Devuelve la lista de recorridos actualizada.
+export const deleteRecorrido = async (req, res) => {
+  try {
+    const { fecha, metros, secs } = req.body || {};
+    if (!esFecha(fecha)) return res.status(400).json({ error: "Fecha inválida." });
+    const doc = await obtenerDoc(req.userId);
+    const arr = Array.isArray(doc.caminatas) ? doc.caminatas : [];
+    const mMetros = Math.round(num(metros));
+    const mSecs = num(secs);
+    let removed = false;
+    doc.caminatas = arr.filter((c) => {
+      if (removed) return true;
+      const coincide =
+        c.fecha === fecha &&
+        Math.round(num(c.metros)) === mMetros &&
+        num(c.secs) === mSecs;
+      if (coincide) {
+        removed = true;
+        return false;
+      }
+      return true;
+    });
+    if (removed) {
+      doc.markModified("caminatas");
+      await doc.save();
+    }
+    const recorridos = (doc.caminatas || [])
+      .filter((c) => Array.isArray(c.ruta) && c.ruta.length > 1)
+      .map((c) => ({
+        fecha: c.fecha,
+        metros: c.metros,
+        secs: c.secs,
+        ruta: c.ruta.map((p) => ({ latitude: p.latitude, longitude: p.longitude })),
+      }));
+    return res.json({ recorridos, removed });
+  } catch (err) {
+    console.error("[salud] deleteRecorrido:", err.message);
+    return res.status(500).json({ error: "No se pudo borrar el recorrido." });
+  }
+};
+
 // PUT /api/salud — el body trae solo las secciones que quiere actualizar.
 export const updateSalud = async (req, res) => {
   try {

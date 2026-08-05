@@ -163,6 +163,8 @@ export const saludService = {
   update: (data) => api.put("/api/salud", data),
   // Caminatas con su trazado GPS (aparte, para el visor de recorridos).
   recorridos: () => api.get("/api/salud/recorridos"),
+  // Borra una caminata puntual (por fecha + metros + secs).
+  borrarRecorrido: (data) => api.delete("/api/salud/recorridos", { data }),
 };
 
 export const gymService = {
