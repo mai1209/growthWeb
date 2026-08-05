@@ -1184,8 +1184,9 @@ export default function SaludScreen() {
 
           {modoPasos === "android" ? (
             <Text style={styles.aviso}>
-              En Android por ahora contamos los pasos desde que abrís la app. Pronto: histórico
-              completo.
+              Para ver el histórico completo y que cuente en segundo plano, activá{" "}
+              <Text style={{ fontWeight: "800" }}>Health Connect</Text> y dale permiso de pasos a
+              Growth. Sin eso, contamos solo desde que abrís la app.
             </Text>
           ) : null}
         </View>

@@ -303,9 +303,23 @@ export default function SaludPage() {
   const [histTitulo, setHistTitulo] = useState(null); // métrica abierta en el historial completo
 
   useEffect(() => {
+    // Mostramos al instante lo último cacheado (evita el "Cargando" en cada visita)
+    // y refrescamos por detrás. La base gratis (Atlas M0) puede tardar el 1er request.
+    try {
+      const cache = localStorage.getItem("salud_cache_v1");
+      if (cache) {
+        setData(JSON.parse(cache));
+        setCargando(false);
+      }
+    } catch {}
     saludService
       .get()
-      .then(({ data: d }) => setData(d))
+      .then(({ data: d }) => {
+        setData(d);
+        try {
+          localStorage.setItem("salud_cache_v1", JSON.stringify(d));
+        } catch {}
+      })
       .catch(() => {})
       .finally(() => setCargando(false));
   }, []);

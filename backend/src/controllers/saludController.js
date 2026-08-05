@@ -55,7 +55,13 @@ const serializar = (doc) => ({
   animo: doc.animo || {},
   peso: doc.peso || {},
   comidas: doc.comidas || {},
-  caminatas: doc.caminatas || [],
+  // La `ruta` (recorrido GPS) NO se manda en la carga general: puede ser grande
+  // y solo la usa el visor de recorridos en el teléfono (que la guarda local).
+  caminatas: (doc.caminatas || []).map((c) => ({
+    fecha: c.fecha,
+    metros: c.metros,
+    secs: c.secs,
+  })),
   nutri: doc.nutri || null,
   metas: doc.metas || null,
   updatedAt: doc.updatedAt,
