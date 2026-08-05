@@ -617,9 +617,9 @@ export default function JournalingPanel({ visible, onClose }) {
               </View>
 
               {vista === "metricas" ? (
-                renderMetricas()
+                <React.Fragment key="v-metricas">{renderMetricas()}</React.Fragment>
               ) : vista === "calendario" ? (
-                <View style={styles.calBox}>
+                <View key="v-calendario" style={styles.calBox}>
                   <View style={styles.calNav}>
                     <TouchableOpacity
                       style={styles.calNavBtn}
@@ -690,14 +690,14 @@ export default function JournalingPanel({ visible, onClose }) {
                   </Text>
                 </View>
               ) : libroIdx < 0 ? (
-                <View style={styles.libroVacio}>
+                <View key="v-libro-vacio" style={styles.libroVacio}>
                   <Ionicons name="book-outline" size={26} color={colors.green} />
                   <Text style={styles.libroVacioText}>
                     Todavía no hay páginas escritas. Lo que escribas hoy va a aparecer acá.
                   </Text>
                 </View>
               ) : (
-                <View style={styles.libroPage}>
+                <View key="v-libro" style={styles.libroPage}>
                   <View style={styles.libroMargen} />
                   {racha > 0 ? (
                     <View style={styles.rachaEnHoja}>
