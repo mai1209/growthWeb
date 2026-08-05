@@ -13,11 +13,14 @@ const MAX_COMIDAS_DIA = 40;
 
 // Mergea una sección por-día: toma el objeto guardado y le pisa las claves que
 // vienen en el body (el que escribe un día gana ese día), recortando al máximo.
-const mergeDias = (actual, entrante, limpiarValor, max) => {
+// `combinar(anterior, entrante)` permite decidir cómo se resuelve un día que ya
+// existía; por defecto gana el entrante (last-write-wins).
+const mergeDias = (actual, entrante, limpiarValor, max, combinar) => {
   const base = actual && typeof actual === "object" ? { ...actual } : {};
   Object.keys(entrante || {}).forEach((k) => {
     if (!esFecha(k)) return;
-    base[k] = limpiarValor(entrante[k]);
+    const limpio = limpiarValor(entrante[k]);
+    base[k] = combinar && k in base ? combinar(base[k], limpio) : limpio;
   });
   const recortado = {};
   Object.keys(base)
@@ -105,7 +108,12 @@ export const updateSalud = async (req, res) => {
     const doc = await obtenerDoc(req.userId);
 
     if (body.pasos && typeof body.pasos === "object") {
-      doc.pasos = mergeDias(doc.pasos, body.pasos, num, MAX_DIAS.pasos);
+      // Los pasos automáticos de un día son acumulativos (solo suben). Nos
+      // quedamos con el MÁXIMO para que un dispositivo con lectura vieja o en 0
+      // (p. ej. el otro teléfono) nunca pise los pasos reales ya guardados.
+      doc.pasos = mergeDias(doc.pasos, body.pasos, num, MAX_DIAS.pasos, (prev, next) =>
+        Math.max(Number(prev) || 0, next)
+      );
       doc.markModified("pasos");
     }
     if (body.pasosManual && typeof body.pasosManual === "object") {
