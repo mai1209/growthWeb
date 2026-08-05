@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { movimientoService, fiscalService } from "../api";
+import { ARCA_HABILITADO } from "../config";
 import MovementFormModal from "../components/MovementFormModal";
 import SettlePersonalDebtModal from "../components/SettlePersonalDebtModal";
 import { statAccents, useTheme } from "../theme";
@@ -101,7 +102,9 @@ export default function FiltrosScreen() {
   }, [fetchData]);
 
   // ¿El perfil activo tiene la facturación ARCA activada? (para mostrar el botón)
+  // Solo consultamos si la feature está habilitada (por ahora oculta).
   useEffect(() => {
+    if (!ARCA_HABILITADO) return;
     fiscalService
       .get()
       .then((res) => setFiscalOn(Boolean(res.data?.activo)))
@@ -525,8 +528,9 @@ export default function FiltrosScreen() {
                     </TouchableOpacity>
                   ) : null}
                   {/* Facturación (ARCA): solo en ingresos. Badge si ya tiene CAE;
-                      botón para emitir si el perfil tiene la facturación activa. */}
-                  {item.tipo === "ingreso" ? (
+                      botón para emitir si el perfil tiene la facturación activa.
+                      Oculto hasta habilitar ARCA (ARCA_HABILITADO). */}
+                  {ARCA_HABILITADO && item.tipo === "ingreso" ? (
                     item.factura && item.factura.cae ? (
                       <View style={styles.facturaBadge}>
                         <Ionicons name="receipt-outline" size={13} color={colors.green} />

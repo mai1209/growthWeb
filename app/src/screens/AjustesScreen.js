@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { authService, googleService, fiscalService, taskService } from "../api";
+import { ARCA_HABILITADO } from "../config";
 import { useTheme } from "../theme";
 import { useAuth } from "../auth/AuthContext";
 import { loadNotifSettings, saveNotifSettings } from "../utils/notifSettings";
@@ -230,7 +231,7 @@ function FiscalModal({ visible, onClose, colors, styles }) {
   }, []);
 
   useEffect(() => {
-    if (visible) load();
+    if (visible && ARCA_HABILITADO) load();
   }, [visible, load]);
 
   const set = (k, v) => setCfg((p) => ({ ...p, [k]: v }));
@@ -258,6 +259,25 @@ function FiscalModal({ visible, onClose, colors, styles }) {
     ["manual", "Manual"],
     ["automatico", "Automático"],
   ];
+
+  // Mientras ARCA no esté habilitado (falta el plan pago de AfipSDK), mostramos
+  // "Próximamente". Todo el circuito de abajo queda armado para activarlo luego.
+  if (!ARCA_HABILITADO) {
+    return (
+      <SheetModal visible={visible} onClose={onClose} title="Facturación (ARCA)" colors={colors} styles={styles}>
+        <View style={styles.comingSoon}>
+          <Text style={styles.comingSoonBadge}>Próximamente</Text>
+          <Text style={styles.comingSoonText}>
+            La facturación electrónica con ARCA está en camino. Muy pronto vas a poder emitir
+            tickets y facturas de tus ingresos desde acá.
+          </Text>
+          <TouchableOpacity style={styles.primaryBtn} onPress={onClose}>
+            <Text style={styles.primaryText}>Entendido</Text>
+          </TouchableOpacity>
+        </View>
+      </SheetModal>
+    );
+  }
 
   return (
     <SheetModal visible={visible} onClose={onClose} title="Facturación (ARCA)" colors={colors} styles={styles}>

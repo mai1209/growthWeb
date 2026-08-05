@@ -10,6 +10,7 @@ import {
   FiTrash2,
 } from "react-icons/fi";
 import style from "../style/MonthlyFilters.module.css";
+import { ARCA_HABILITADO } from "../featureFlags";
 import InputMonto from "./InputMonto";
 import { movimientoService } from "../api";
 import {
@@ -237,7 +238,7 @@ export default function MovementCard({
       <div className={style.rowFooter}>
         <div className={style.rowBadges}>
           <span className={style.badge}>{typeMeta.label}</span>
-          {movimiento.tipo === "ingreso" ? (
+          {ARCA_HABILITADO && movimiento.tipo === "ingreso" ? (
             movimiento.factura && movimiento.factura.cae ? (
               <span className={style.badgeAccent}>
                 {movimiento.factura.tipoNombre} N° {movimiento.factura.numero}

@@ -9,3 +9,8 @@ export const API_BASE_URL = "https://www.growthmanager.app";
 // El fallback solo aplica en Expo Go / web, donde no hay versión nativa.
 import * as Application from "expo-application";
 export const APP_VERSION = Application.nativeApplicationVersion || "1.0.11";
+
+// Facturación electrónica (ARCA): todo el circuito está armado (config + emitir),
+// pero queda OCULTO tras "Próximamente" hasta tener un plan pago de AfipSDK.
+// Cuando exista el sistema de planes, cambiar a true para activarlo entero.
+export const ARCA_HABILITADO = false;
