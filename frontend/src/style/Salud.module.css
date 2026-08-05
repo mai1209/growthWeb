@@ -594,6 +594,115 @@
   cursor: default;
 }
 
+/* ===== Visor de recorridos GPS (web) ===== */
+.pasosBtns {
+  display: inline-flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.recOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.recModal {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface-card, #14181c);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.recHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.recHead h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+.recClose {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.recMapa {
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--surface-input, rgba(255, 255, 255, 0.03));
+  padding: 0.6rem;
+}
+.recInfo {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.recInfo strong {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--color-verde, #5dc72d);
+}
+.recInfo span {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.recChips {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+}
+.recChip,
+.recChipOn {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  cursor: pointer;
+}
+.recChip span,
+.recChipOn span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: capitalize;
+}
+.recChip strong,
+.recChipOn strong {
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+.recChipOn {
+  border-color: var(--color-verde, #5dc72d);
+  background: rgba(93, 199, 45, 0.12);
+}
+.recChipOn span,
+.recChipOn strong {
+  color: var(--color-verde, #5dc72d);
+}
+
 .dateNav span {
   min-width: 6.5rem;
   text-align: center;

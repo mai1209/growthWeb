@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   FiActivity,
+  FiMap,
   FiDroplet,
   FiHeart,
   FiInfo,
@@ -341,6 +342,106 @@ function HistorialModal({ metric, hoy, onClose }) {
   );
 }
 
+// Visor de recorridos GPS: dibuja el trazado de cada caminata en SVG (sin mapa,
+// solo la forma del recorrido) + fecha/km. Trae la ruta de un endpoint aparte.
+function RecorridosModalWeb({ hoy, onClose }) {
+  const [recorridos, setRecorridos] = useState(null); // null = cargando
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    saludService
+      .recorridos()
+      .then(({ data }) => setRecorridos(data?.recorridos || []))
+      .catch(() => setRecorridos([]));
+  }, []);
+  const sel = recorridos && recorridos[idx];
+
+  const svg = useMemo(() => {
+    if (!sel?.ruta || sel.ruta.length < 2) return null;
+    const W = 320;
+    const H = 240;
+    const pad = 26;
+    const lats = sel.ruta.map((p) => p.latitude);
+    const lngs = sel.ruta.map((p) => p.longitude);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    const kx = Math.cos((((minLat + maxLat) / 2) * Math.PI) / 180) || 1;
+    const spanLng = (maxLng - minLng) * kx || 1e-6;
+    const spanLat = maxLat - minLat || 1e-6;
+    const scale = Math.min((W - 2 * pad) / spanLng, (H - 2 * pad) / spanLat);
+    const offX = (W - spanLng * scale) / 2;
+    const offY = (H - spanLat * scale) / 2;
+    const pts = sel.ruta.map((p) => [
+      offX + (p.longitude - minLng) * kx * scale,
+      H - offY - (p.latitude - minLat) * scale,
+    ]);
+    const d = "M " + pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" L ");
+    return { W, H, d, ini: pts[0], fin: pts[pts.length - 1] };
+  }, [sel]);
+
+  const fechaCorta = (k) =>
+    new Date(`${k}T00:00:00`).toLocaleDateString("es-AR", { day: "numeric", month: "short" });
+
+  return (
+    <div className={style.recOverlay} onClick={onClose}>
+      <div className={style.recModal} onClick={(e) => e.stopPropagation()}>
+        <div className={style.recHead}>
+          <h3>Recorridos GPS</h3>
+          <button type="button" className={style.recClose} onClick={onClose}>
+            ✕
+          </button>
+        </div>
+        {recorridos === null ? (
+          <p className={style.hint}>Cargando recorridos…</p>
+        ) : !recorridos.length ? (
+          <p className={style.hint}>
+            Todavía no tenés caminatas con recorrido. Se graban desde la app al caminar con GPS.
+          </p>
+        ) : (
+          <>
+            <div className={style.recMapa}>
+              {svg ? (
+                <svg viewBox={`0 0 ${svg.W} ${svg.H}`} width="100%" preserveAspectRatio="xMidYMid meet">
+                  <path
+                    d={svg.d}
+                    fill="none"
+                    stroke="var(--color-verde, #5dc72d)"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx={svg.ini[0]} cy={svg.ini[1]} r="5" fill="#fff" stroke="var(--color-verde, #5dc72d)" strokeWidth="3" />
+                  <circle cx={svg.fin[0]} cy={svg.fin[1]} r="6" fill="var(--color-verde, #5dc72d)" stroke="#fff" strokeWidth="2" />
+                </svg>
+              ) : null}
+            </div>
+            <div className={style.recInfo}>
+              <strong>{(sel.metros / 1000).toFixed(2)} km</strong>
+              <span>
+                {fechaLabel(sel.fecha, hoy)} · {Math.floor((sel.secs || 0) / 60)} min
+              </span>
+            </div>
+            <div className={style.recChips}>
+              {recorridos.map((c, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={i === idx ? style.recChipOn : style.recChip}
+                  onClick={() => setIdx(i)}
+                >
+                  <span>{fechaCorta(c.fecha)}</span>
+                  <strong>{(c.metros / 1000).toFixed(1)} km</strong>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Editor de la meta de calorías (mismo cálculo que la app). Guarda `nutri`.
 function PlanModal({ initial, pesoSugerido, onClose, onGuardar }) {
   const [peso, setPeso] = useState(String(initial?.peso || (pesoSugerido ? Math.round(pesoSugerido) : 70)));
@@ -450,6 +551,7 @@ export default function SaludPage() {
   const [pesoInput, setPesoInput] = useState("");
   const [formFranja, setFormFranja] = useState(null); // franja abierta para agregar
   const [planOpen, setPlanOpen] = useState(false); // editor de la meta de calorías
+  const [recorridosOpen, setRecorridosOpen] = useState(false); // visor de recorridos GPS
   const [fNombre, setFNombre] = useState("");
   const [fKcal, setFKcal] = useState("");
   const [fCarb, setFCarb] = useState("");
@@ -1012,23 +1114,33 @@ export default function SaludPage() {
               <h2>
                 <FiActivity /> Pasos de hoy
               </h2>
-              <button
-                type="button"
-                className={style.pasosManualBtn}
-                title="Cargar pasos a mano (se suman a los del teléfono)"
-                onClick={() => {
-                  const actual = Number(data?.pasosManual?.[hoy]) || 0;
-                  const v = window.prompt(
-                    "Pasos cargados a mano para hoy (se suman a los del teléfono). Poné 0 para sacarlos:",
-                    actual ? String(actual) : ""
-                  );
-                  if (v == null) return;
-                  const n = Math.max(0, parseInt(v, 10) || 0);
-                  mutate({ pasosManual: { [hoy]: n } });
-                }}
-              >
-                <FiPlus /> Manual
-              </button>
+              <div className={style.pasosBtns}>
+                <button
+                  type="button"
+                  className={style.pasosManualBtn}
+                  title="Ver los recorridos de tus caminatas por GPS"
+                  onClick={() => setRecorridosOpen(true)}
+                >
+                  <FiMap /> Recorridos
+                </button>
+                <button
+                  type="button"
+                  className={style.pasosManualBtn}
+                  title="Cargar pasos a mano (se suman a los del teléfono)"
+                  onClick={() => {
+                    const actual = Number(data?.pasosManual?.[hoy]) || 0;
+                    const v = window.prompt(
+                      "Pasos cargados a mano para hoy (se suman a los del teléfono). Poné 0 para sacarlos:",
+                      actual ? String(actual) : ""
+                    );
+                    if (v == null) return;
+                    const n = Math.max(0, parseInt(v, 10) || 0);
+                    mutate({ pasosManual: { [hoy]: n } });
+                  }}
+                >
+                  <FiPlus /> Manual
+                </button>
+              </div>
             </div>
             <div className={style.fila}>
               <Ring percent={(pasosHoy / metaPasos) * 100} color="var(--color-verde, #5dc72d)">
@@ -1355,6 +1467,10 @@ export default function SaludPage() {
             onClose={() => setPlanOpen(false)}
             onGuardar={(nutri) => mutate({ nutri })}
           />
+        ) : null}
+
+        {recorridosOpen ? (
+          <RecorridosModalWeb hoy={hoy} onClose={() => setRecorridosOpen(false)} />
         ) : null}
       </div>
     </div>

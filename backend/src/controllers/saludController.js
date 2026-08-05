@@ -78,6 +78,26 @@ export const getSalud = async (req, res) => {
   }
 };
 
+// GET /api/salud/recorridos — caminatas CON su trazado GPS (aparte del GET general,
+// que no lo manda para ser liviano). Lo usa el visor de recorridos.
+export const getRecorridos = async (req, res) => {
+  try {
+    const doc = await obtenerDoc(req.userId);
+    const recorridos = (doc.caminatas || [])
+      .filter((c) => Array.isArray(c.ruta) && c.ruta.length > 1)
+      .map((c) => ({
+        fecha: c.fecha,
+        metros: c.metros,
+        secs: c.secs,
+        ruta: c.ruta.map((p) => ({ latitude: p.latitude, longitude: p.longitude })),
+      }));
+    return res.json({ recorridos });
+  } catch (err) {
+    console.error("[salud] recorridos:", err.message);
+    return res.status(500).json({ error: "No se pudieron cargar los recorridos." });
+  }
+};
+
 // PUT /api/salud — el body trae solo las secciones que quiere actualizar.
 export const updateSalud = async (req, res) => {
   try {
