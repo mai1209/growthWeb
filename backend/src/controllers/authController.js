@@ -5,6 +5,16 @@ import IngresoEgreso from "../models/ingresoEgresoModel.js";
 import SharedGroup from "../models/sharedGroupModel.js";
 import SharedExpense from "../models/sharedExpenseModel.js";
 import SharedDebt from "../models/sharedDebtModel.js";
+import Afirmacion from "../models/afirmacionModel.js";
+import Category from "../models/categoryModel.js";
+import FiscalConfig from "../models/fiscalConfigModel.js";
+import Gym from "../models/gymModel.js";
+import JournalConfig from "../models/journalConfigModel.js";
+import Journal from "../models/journalModel.js";
+import Meta from "../models/metaModel.js";
+import Project from "../models/projectModel.js";
+import Salud from "../models/saludModel.js";
+import TimeEntry from "../models/timeEntryModel.js";
 import { generateToken } from "../utils/jwt.js";
 
 const RESET_TOKEN_MINUTES = 60;
@@ -463,9 +473,19 @@ export const deleteAccount = async (req, res) => {
       await SharedGroup.deleteMany({ _id: { $in: groupIds } });
     }
 
-    // Datos personales del usuario
+    // Datos personales del usuario (todas las secciones de la app).
     await Task.deleteMany({ user: userId });
     await IngresoEgreso.deleteMany({ usuario: userId });
+    await Category.deleteMany({ usuario: userId });
+    await TimeEntry.deleteMany({ usuario: userId });
+    await Project.deleteMany({ usuario: userId });
+    await Meta.deleteMany({ usuario: userId });
+    await FiscalConfig.deleteMany({ usuario: userId });
+    await Salud.deleteMany({ usuario: userId });
+    await Gym.deleteMany({ usuario: userId });
+    await Journal.deleteMany({ usuario: userId });
+    await JournalConfig.deleteMany({ usuario: userId });
+    await Afirmacion.deleteMany({ usuario: userId });
 
     // Finalmente, la cuenta
     await User.findByIdAndDelete(userId);
