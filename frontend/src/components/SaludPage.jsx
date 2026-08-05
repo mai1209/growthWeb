@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
 import {
   FiActivity,
@@ -81,7 +82,7 @@ function CalendarioWeb({ fechaSel, hoy, tieneDatos, onSelect, onClose }) {
   const dim = new Date(y, m + 1, 0).getDate();
   const primerDow = (new Date(y, m, 1).getDay() + 6) % 7;
   const celdas = [...Array(primerDow).fill(null), ...Array.from({ length: dim }, (_, i) => i + 1)];
-  return (
+  return createPortal(
     <div className={style.calOverlay} onClick={onClose}>
       <div className={style.calModal} onClick={(e) => e.stopPropagation()}>
         <div className={style.calHead}>
@@ -114,7 +115,8 @@ function CalendarioWeb({ fechaSel, hoy, tieneDatos, onSelect, onClose }) {
           })}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

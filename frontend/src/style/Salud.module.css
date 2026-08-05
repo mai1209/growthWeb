@@ -762,7 +762,7 @@
   color: var(--color-verde, #5dc72d);
 }
 
-.dateNav span {
+.dateNavLabel span {
   min-width: 6.5rem;
   text-align: center;
   font-size: 0.8rem;
