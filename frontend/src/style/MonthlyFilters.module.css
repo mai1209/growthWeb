@@ -685,8 +685,8 @@
 }
 
 .actionButton {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   border: none;
   border-radius: 50%;
   display: inline-grid;
@@ -698,9 +698,9 @@
 }
 
 .actionButton svg {
-  width: 18px;
-  height: 18px;
-  stroke-width: 2.2;
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.8;
 }
 
 .actionButton:hover {

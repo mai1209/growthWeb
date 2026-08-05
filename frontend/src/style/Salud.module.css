@@ -368,8 +368,11 @@
   position: absolute;
   z-index: 50;
   top: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
+  /* Anclado a la derecha (el DateNav está pegado al borde derecho de la tarjeta):
+     se abre hacia la izquierda y no se sale de la pantalla. */
+  right: 0;
+  left: auto;
+  transform: none;
   width: 260px;
   padding: 0.7rem;
   border-radius: 14px;
