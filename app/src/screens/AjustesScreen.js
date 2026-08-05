@@ -230,8 +230,7 @@ function FiscalModal({ visible, onClose, colors, styles }) {
   }, []);
 
   useEffect(() => {
-    // Facturación (ARCA) en preparación: no cargamos config todavía.
-    // if (visible) load();
+    if (visible) load();
   }, [visible, load]);
 
   const set = (k, v) => setCfg((p) => ({ ...p, [k]: v }));
@@ -260,23 +259,6 @@ function FiscalModal({ visible, onClose, colors, styles }) {
     ["automatico", "Automático"],
   ];
 
-  // Facturación (ARCA) todavía en preparación: mostramos "Próximamente".
-  return (
-    <SheetModal visible={visible} onClose={onClose} title="Facturación (ARCA)" colors={colors} styles={styles}>
-      <View style={styles.comingSoon}>
-        <Text style={styles.comingSoonBadge}>Próximamente</Text>
-        <Text style={styles.comingSoonText}>
-          La facturación electrónica con ARCA está en camino. Muy pronto vas a poder emitir
-          tickets y facturas de tus ingresos desde acá.
-        </Text>
-        <TouchableOpacity style={styles.primaryBtn} onPress={onClose}>
-          <Text style={styles.primaryText}>Entendido</Text>
-        </TouchableOpacity>
-      </View>
-    </SheetModal>
-  );
-
-  // eslint-disable-next-line no-unreachable
   return (
     <SheetModal visible={visible} onClose={onClose} title="Facturación (ARCA)" colors={colors} styles={styles}>
       {loading ? (
