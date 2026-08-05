@@ -450,6 +450,150 @@
   background: #06210a;
 }
 
+/* ===== Editor de la meta de calorías ===== */
+.planBtn {
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-muted);
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.planBtn:hover {
+  border-color: var(--color-verde, #5dc72d);
+}
+.planBtn strong {
+  color: var(--color-text, #fff);
+}
+.planEdit {
+  color: var(--color-verde, #5dc72d);
+  font-weight: 800;
+  margin-left: 0.3rem;
+}
+.planOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.planModal {
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface-card, #14181c);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.planTitulo {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+.planCampos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+.planCampo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+.planCampo input,
+.planCampo select {
+  padding: 0.5rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-input, rgba(255, 255, 255, 0.04));
+  color: var(--color-text, #fff);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.planGrupo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.planGrupoLbl {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.planChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.planChip,
+.planChipOn {
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.planChipOn {
+  border-color: var(--color-verde, #5dc72d);
+  background: rgba(93, 199, 45, 0.14);
+  color: var(--color-verde, #5dc72d);
+}
+.planPreview {
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  background: rgba(93, 199, 45, 0.09);
+  border: 1px solid rgba(93, 199, 45, 0.28);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.planPreview strong {
+  color: var(--color-verde, #5dc72d);
+  font-size: 1.05rem;
+}
+.planAcciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+.planCancel {
+  padding: 0.55rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+.planOk {
+  padding: 0.55rem 1.3rem;
+  border-radius: 12px;
+  border: none;
+  background: var(--color-verde, #5dc72d);
+  color: #06210a;
+  font-weight: 800;
+  cursor: pointer;
+}
+.planOk:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .dateNav span {
   min-width: 6.5rem;
   text-align: center;

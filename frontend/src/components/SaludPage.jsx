@@ -13,7 +13,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import { saludService } from "../api";
-import { calcularPlan } from "../utils/nutricion";
+import { calcularPlan, ACTIVIDADES, OBJETIVOS } from "../utils/nutricion";
 import { BASE_COMIDAS } from "../utils/comidasBase";
 import { buscarComidasOFF } from "../utils/openFoodFacts";
 import GymView from "./GymView";
@@ -341,6 +341,104 @@ function HistorialModal({ metric, hoy, onClose }) {
   );
 }
 
+// Editor de la meta de calorías (mismo cálculo que la app). Guarda `nutri`.
+function PlanModal({ initial, pesoSugerido, onClose, onGuardar }) {
+  const [peso, setPeso] = useState(String(initial?.peso || (pesoSugerido ? Math.round(pesoSugerido) : 70)));
+  const [altura, setAltura] = useState(String(initial?.altura || 170));
+  const [edad, setEdad] = useState(String(initial?.edad || 30));
+  const [sexo, setSexo] = useState(initial?.sexo || "H");
+  const [actividad, setActividad] = useState(initial?.actividad || "ligero");
+  const [objetivo, setObjetivo] = useState(initial?.objetivo || "mantener");
+  const preview = calcularPlan({ peso, altura, edad, sexo, actividad, objetivo });
+  const guardar = () => {
+    onGuardar({
+      peso: Number(peso),
+      altura: Number(altura),
+      edad: Number(edad),
+      sexo,
+      actividad,
+      objetivo,
+    });
+    onClose();
+  };
+  return (
+    <div className={style.planOverlay} onClick={onClose}>
+      <div className={style.planModal} onClick={(e) => e.stopPropagation()}>
+        <h3 className={style.planTitulo}>Tu meta de calorías</h3>
+        <div className={style.planCampos}>
+          <label className={style.planCampo}>
+            Peso (kg)
+            <input type="number" value={peso} onChange={(e) => setPeso(e.target.value)} />
+          </label>
+          <label className={style.planCampo}>
+            Altura (cm)
+            <input type="number" value={altura} onChange={(e) => setAltura(e.target.value)} />
+          </label>
+          <label className={style.planCampo}>
+            Edad
+            <input type="number" value={edad} onChange={(e) => setEdad(e.target.value)} />
+          </label>
+          <label className={style.planCampo}>
+            Sexo
+            <select value={sexo} onChange={(e) => setSexo(e.target.value)}>
+              <option value="H">Hombre</option>
+              <option value="M">Mujer</option>
+            </select>
+          </label>
+        </div>
+        <div className={style.planGrupo}>
+          <span className={style.planGrupoLbl}>Actividad</span>
+          <div className={style.planChips}>
+            {ACTIVIDADES.map((a) => (
+              <button
+                key={a.key}
+                type="button"
+                className={actividad === a.key ? style.planChipOn : style.planChip}
+                onClick={() => setActividad(a.key)}
+              >
+                {a.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={style.planGrupo}>
+          <span className={style.planGrupoLbl}>Objetivo</span>
+          <div className={style.planChips}>
+            {OBJETIVOS.map((o) => (
+              <button
+                key={o.key}
+                type="button"
+                className={objetivo === o.key ? style.planChipOn : style.planChip}
+                onClick={() => setObjetivo(o.key)}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={style.planPreview}>
+          {preview ? (
+            <>
+              Tu meta: <strong>{preview.kcal.toLocaleString("es-AR")}</strong> kcal/día · C{" "}
+              {preview.carbG} · P {preview.protG} · G {preview.fatG} g
+            </>
+          ) : (
+            "Completá peso, altura y edad."
+          )}
+        </div>
+        <div className={style.planAcciones}>
+          <button type="button" className={style.planCancel} onClick={onClose}>
+            Cancelar
+          </button>
+          <button type="button" className={style.planOk} onClick={guardar} disabled={!preview}>
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SaludPage() {
   // El nav deep-linkea las dos vistas: /salud (Movilidad) y /salud?view=calorias.
   const [searchParams] = useSearchParams();
@@ -351,6 +449,7 @@ export default function SaludPage() {
   const [periodo, setPeriodo] = useState("semana"); // dia | semana | mes | anio
   const [pesoInput, setPesoInput] = useState("");
   const [formFranja, setFormFranja] = useState(null); // franja abierta para agregar
+  const [planOpen, setPlanOpen] = useState(false); // editor de la meta de calorías
   const [fNombre, setFNombre] = useState("");
   const [fKcal, setFKcal] = useState("");
   const [fCarb, setFCarb] = useState("");
@@ -1015,13 +1114,16 @@ export default function SaludPage() {
               </span>
             </h2>
             <DateNav fecha={fechaCal} setFecha={setFechaCal} hoy={hoy} tieneDatos={tieneDatosCal} />
-            {plan ? (
-              <span className={style.planResumen}>
-                Plan: {plan.kcal.toLocaleString("es-AR")} kcal · C {plan.carbG}g · P {plan.protG}g · G {plan.fatG}g
-              </span>
-            ) : (
-              <span className={style.hint}>Configurá tu plan desde la app</span>
-            )}
+            <button type="button" className={style.planBtn} onClick={() => setPlanOpen(true)}>
+              {plan ? (
+                <>
+                  Plan: <strong>{plan.kcal.toLocaleString("es-AR")}</strong> kcal · C {plan.carbG}g · P{" "}
+                  {plan.protG}g · G {plan.fatG}g <span className={style.planEdit}>✎ editar</span>
+                </>
+              ) : (
+                <>Configurá tu meta de calorías ✎</>
+              )}
+            </button>
           </div>
 
           {plan ? (
@@ -1245,6 +1347,15 @@ export default function SaludPage() {
           hoy={hoy}
           onClose={() => setHistTitulo(null)}
         />
+
+        {planOpen ? (
+          <PlanModal
+            initial={data?.nutri}
+            pesoSugerido={pesoActual}
+            onClose={() => setPlanOpen(false)}
+            onGuardar={(nutri) => mutate({ nutri })}
+          />
+        ) : null}
       </div>
     </div>
   );
