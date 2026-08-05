@@ -173,6 +173,7 @@
 .calDia {
   position: relative;
   width: 100%;
+  max-width: 46px; /* que no se hagan cuadrados gigantes en pantallas anchas */
   aspect-ratio: 1 / 1;
   border: none;
   border-radius: 10px;
@@ -216,6 +217,27 @@
 
 .calDiaSel .calDot {
   background: #06210a;
+}
+
+/* Toggle "Ver mes / Ver semana" (calendario colapsable, igual que la app). */
+.calToggle {
+  width: 100%;
+  margin-top: 0.55rem;
+  padding: 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.calToggle:hover {
+  color: var(--color-text);
 }
 
 .diaSel {

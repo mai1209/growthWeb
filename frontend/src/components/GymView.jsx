@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FiChevronLeft,
   FiChevronRight,
+  FiChevronDown,
+  FiChevronUp,
   FiPlus,
   FiTrash2,
   FiCheck,
@@ -171,7 +173,84 @@ function MiniCalendario({ fecha, setFecha, entrenos }) {
     const d = new Date(`${fecha}T00:00:00`);
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
+  // Colapsado (solo la semana) por defecto, como en la app: en el celular el mes
+  // entero se veía gigante. "Ver mes" lo despliega.
+  const [expandido, setExpandido] = useState(false);
   const hoy = hoyKey();
+
+  // Mueve la fecha seleccionada N días (para navegar de a semanas colapsado).
+  const shiftFecha = (delta) => {
+    const d = new Date(`${fecha}T00:00:00`);
+    d.setDate(d.getDate() + delta);
+    setFecha(dayKey(d));
+  };
+
+  const dowHeader = ["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
+    <span key={`d${i}`} className={style.calDow}>
+      {d}
+    </span>
+  ));
+
+  const renderDia = (dateObj, i) => {
+    const k = dayKey(dateObj);
+    const tiene = (entrenos[k] || []).length > 0;
+    const sel = k === fecha;
+    const esHoy = k === hoy;
+    return (
+      <button
+        key={i}
+        type="button"
+        className={`${style.calDia} ${sel ? style.calDiaSel : ""} ${esHoy && !sel ? style.calDiaHoy : ""}`}
+        onClick={() => setFecha(k)}
+      >
+        {dateObj.getDate()}
+        {tiene ? <span className={style.calDot} /> : null}
+      </button>
+    );
+  };
+
+  // ----- Colapsado: solo la semana de la fecha seleccionada -----
+  if (!expandido) {
+    const sel = new Date(`${fecha}T00:00:00`);
+    const dow = (sel.getDay() + 6) % 7; // lunes = 0
+    const lunes = new Date(sel);
+    lunes.setDate(sel.getDate() - dow);
+    const semana = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(lunes);
+      d.setDate(lunes.getDate() + i);
+      return d;
+    });
+    return (
+      <div className={style.cal}>
+        <div className={style.calHead}>
+          <button type="button" onClick={() => shiftFecha(-7)} aria-label="Semana anterior">
+            <FiChevronLeft />
+          </button>
+          <span>{sel.toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</span>
+          <button type="button" onClick={() => shiftFecha(7)} aria-label="Semana siguiente">
+            <FiChevronRight />
+          </button>
+        </div>
+        <div className={style.calGrid}>
+          {dowHeader}
+          {semana.map((d, i) => renderDia(d, i))}
+        </div>
+        <button
+          type="button"
+          className={style.calToggle}
+          onClick={() => {
+            setMes(new Date(sel.getFullYear(), sel.getMonth(), 1));
+            setExpandido(true);
+          }}
+        >
+          <FiChevronDown />
+          Ver mes
+        </button>
+      </div>
+    );
+  }
+
+  // ----- Expandido: mes completo -----
   const y = mes.getFullYear();
   const m = mes.getMonth();
   const dim = new Date(y, m + 1, 0).getDate();
@@ -190,30 +269,15 @@ function MiniCalendario({ fecha, setFecha, entrenos }) {
         </button>
       </div>
       <div className={style.calGrid}>
-        {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
-          <span key={`d${i}`} className={style.calDow}>
-            {d}
-          </span>
-        ))}
-        {celdas.map((d, i) => {
-          if (d == null) return <span key={i} />;
-          const k = `${y}-${pad(m + 1)}-${pad(d)}`;
-          const tiene = (entrenos[k] || []).length > 0;
-          const sel = k === fecha;
-          const esHoy = k === hoy;
-          return (
-            <button
-              key={i}
-              type="button"
-              className={`${style.calDia} ${sel ? style.calDiaSel : ""} ${esHoy && !sel ? style.calDiaHoy : ""}`}
-              onClick={() => setFecha(k)}
-            >
-              {d}
-              {tiene ? <span className={style.calDot} /> : null}
-            </button>
-          );
-        })}
+        {dowHeader}
+        {celdas.map((d, i) =>
+          d == null ? <span key={i} /> : renderDia(new Date(y, m, d), i)
+        )}
       </div>
+      <button type="button" className={style.calToggle} onClick={() => setExpandido(false)}>
+        <FiChevronUp />
+        Ver semana
+      </button>
     </div>
   );
 }
