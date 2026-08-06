@@ -682,6 +682,7 @@ export default function SaludPage() {
   const [formFranja, setFormFranja] = useState(null); // franja abierta para agregar
   const [planOpen, setPlanOpen] = useState(false); // editor de la meta de calorías
   const [recorridosOpen, setRecorridosOpen] = useState(false); // visor de recorridos GPS
+  const [resumenPeriodo, setResumenPeriodo] = useState("semana"); // semana | mes | todo
   const [fNombre, setFNombre] = useState("");
   const [fKcal, setFKcal] = useState("");
   const [fCarb, setFCarb] = useState("");
@@ -748,6 +749,27 @@ export default function SaludPage() {
   // Pasos totales del día = sensor (del teléfono) + carga manual.
   const pasosDe = (k) => (Number(data?.pasos?.[k]) || 0) + (Number(data?.pasosManual?.[k]) || 0);
   const pasosHoy = pasosDe(hoy);
+
+  // Resumen de actividad (caminatas/carreras/salidas en bici) por período.
+  const cutoffSemana = addDays(hoy, -6);
+  const resumen = (data?.caminatas || [])
+    .filter((c) => {
+      if (resumenPeriodo === "todo") return true;
+      if (resumenPeriodo === "mes") return String(c.fecha).slice(0, 7) === hoy.slice(0, 7);
+      return c.fecha >= cutoffSemana; // semana: últimos 7 días
+    })
+    .reduce(
+      (a, c) => {
+        a.metros += Number(c.metros) || 0;
+        a.secs += Number(c.secs) || 0;
+        a.kcal += Number(c.kcal) || 0;
+        a.count += 1;
+        const t = c.tipo || "caminata";
+        a.tipos[t] = (a.tipos[t] || 0) + 1;
+        return a;
+      },
+      { metros: 0, secs: 0, kcal: 0, count: 0, tipos: {} }
+    );
 
   // ¿Ese día tiene datos? (para el puntito del calendario)
   const tieneDatosMov = (k) =>
@@ -1291,6 +1313,64 @@ export default function SaludPage() {
             )}
           </section>
         </div>
+
+        {/* Resumen de actividad (estilo diario de entrenamiento) */}
+        <section className={style.card}>
+          <div className={style.cardHead}>
+            <h2>
+              <FiTrendingUp /> Resumen de actividad
+            </h2>
+            <span className={style.periodoToggle}>
+              {[
+                ["semana", "Semana"],
+                ["mes", "Mes"],
+                ["todo", "Todo"],
+              ].map(([k, l]) => (
+                <button
+                  key={k}
+                  type="button"
+                  className={resumenPeriodo === k ? style.periodoOn : style.periodoOff}
+                  onClick={() => setResumenPeriodo(k)}
+                >
+                  {l}
+                </button>
+              ))}
+            </span>
+          </div>
+          {resumen.count ? (
+            <>
+              <div className={style.resumenTiles}>
+                <div className={style.resTile}>
+                  <strong>{(resumen.metros / 1000).toFixed(1)}</strong>
+                  <small>km</small>
+                </div>
+                <div className={style.resTile}>
+                  <strong>{Math.round(resumen.secs / 60)}</strong>
+                  <small>min</small>
+                </div>
+                <div className={style.resTile}>
+                  <strong>{resumen.kcal}</strong>
+                  <small>kcal</small>
+                </div>
+                <div className={style.resTile}>
+                  <strong>{resumen.count}</strong>
+                  <small>{resumen.count === 1 ? "actividad" : "actividades"}</small>
+                </div>
+              </div>
+              <div className={style.resumenTipos}>
+                {["caminata", "carrera", "bici"]
+                  .filter((t) => resumen.tipos[t])
+                  .map((t) => (
+                    <span key={t} className={style.resTipo}>
+                      <ActIcon tipo={t} className={style.resTipoIcon} /> {resumen.tipos[t]} {actMeta(t).label}
+                    </span>
+                  ))}
+              </div>
+            </>
+          ) : (
+            <p className={style.hint}>Sin actividades en este período. Grabá una caminata desde la app.</p>
+          )}
+        </section>
 
         {/* Pasos de hoy — debajo de Caminatas (ambos vienen del teléfono). */}
         <div className={style.trioRow}>

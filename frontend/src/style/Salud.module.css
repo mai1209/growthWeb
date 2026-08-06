@@ -1522,6 +1522,80 @@
   align-items: center;
   gap: 0.25rem;
 }
+
+/* Resumen de actividad */
+.periodoToggle {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+}
+.periodoOff,
+.periodoOn {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.periodoOn {
+  background: var(--color-verde, #5dc72d);
+  color: #06210a;
+}
+.resumenTiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+.resTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.8rem 0.4rem;
+  border-radius: 14px;
+  background: var(--surface-input, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-color);
+}
+.resTile strong {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--color-verde, #5dc72d);
+  line-height: 1;
+}
+.resTile small {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.resumenTipos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.8rem;
+}
+.resTipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.resTipoIcon {
+  color: var(--color-verde, #5dc72d);
+  font-size: 1rem;
+}
+@media (max-width: 560px) {
+  .resumenTiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 .recTipoIcon {
   color: var(--color-verde, #5dc72d);
   font-size: 1rem;
