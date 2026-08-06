@@ -1122,7 +1122,7 @@ export default function SaludScreen() {
           <View style={styles.cardHead}>
             <View style={styles.cardHeadLeft}>
               <Ionicons name="navigate-outline" size={18} color={colors.greenDark} />
-              <Text style={styles.cardTitle}>Caminata</Text>
+              <Text style={styles.cardTitle}>Actividad</Text>
             </View>
           </View>
           {ultimaCaminata ? (
@@ -1131,11 +1131,11 @@ export default function SaludScreen() {
               {Math.floor(ultimaCaminata.secs / 60)} min
             </Text>
           ) : (
-            <Text style={styles.ringSub}>Registrá tu primera caminata con GPS.</Text>
+            <Text style={styles.ringSub}>Registrá tu primera actividad (caminata, carrera o bici) con GPS.</Text>
           )}
           <TouchableOpacity style={styles.caminataBtn} onPress={() => setCaminataOpen(true)}>
             <Ionicons name="play" size={16} color="#06210a" />
-            <Text style={styles.caminataBtnText}>Iniciar caminata</Text>
+            <Text style={styles.caminataBtnText}>Iniciar actividad</Text>
           </TouchableOpacity>
         </View>
 

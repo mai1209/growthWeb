@@ -197,7 +197,8 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
           setFase("denegado");
           return;
         }
-        await arrancarTracking();
+        // No arrancamos solos: quedamos "listos" para que elija el tipo y toque Iniciar.
+        setFase("listo");
       })();
     }
     return () => {
@@ -338,7 +339,12 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
                   </TouchableOpacity>
                 ))}
               </View>
-              {fase !== "resumen" ? (
+              {fase === "listo" ? (
+                <View style={styles.estado}>
+                  <Ionicons name="location" size={14} color={colors.greenBright} />
+                  <Text style={styles.estadoTxt}>GPS LISTO</Text>
+                </View>
+              ) : fase !== "resumen" ? (
                 <View style={[styles.estado, fase === "pausado" && styles.estadoPausa]}>
                   <View style={[styles.estadoDot, fase === "pausado" && styles.estadoDotPausa]} />
                   <Text style={[styles.estadoTxt, fase === "pausado" && styles.estadoTxtPausa]}>
@@ -348,7 +354,7 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
               ) : (
                 <View style={styles.estado}>
                   <Ionicons name="checkmark-circle" size={14} color={colors.greenBright} />
-                  <Text style={styles.estadoTxt}>CAMINATA LISTA</Text>
+                  <Text style={styles.estadoTxt}>{act.label.toUpperCase()} LISTA</Text>
                 </View>
               )}
 
@@ -383,7 +389,14 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
                 </View>
               </View>
 
-            {fase === "activo" ? (
+            {fase === "listo" ? (
+              <View style={styles.acciones}>
+                <TouchableOpacity style={styles.btnPrim} onPress={arrancarTracking}>
+                  <Ionicons name="play" size={20} color="#06210a" />
+                  <Text style={styles.btnPrimText}>Iniciar {act.label.toLowerCase()}</Text>
+                </TouchableOpacity>
+              </View>
+            ) : fase === "activo" ? (
               <View style={styles.acciones}>
                 <TouchableOpacity style={styles.btnSec} onPress={pausar}>
                   <Ionicons name="pause" size={20} color={colors.text} />
@@ -416,11 +429,15 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
               </View>
             ) : null}
 
-            {fase === "resumen" ? (
-              <Text style={styles.resumenTxt}>¡Buena caminata! Guardala en tu historial.</Text>
+            {fase === "listo" ? (
+              <Text style={styles.resumenTxt}>
+                Elegí la actividad arriba y tocá Iniciar cuando estés listo/a.
+              </Text>
+            ) : fase === "resumen" ? (
+              <Text style={styles.resumenTxt}>¡Buena {act.label.toLowerCase()}! Guardala en tu historial.</Text>
             ) : enFondo ? (
               <Text style={styles.resumenTxt}>
-                Podés bloquear el teléfono o usar otras apps: la caminata sigue midiéndose. Volvé
+                Podés bloquear el teléfono o usar otras apps: la actividad sigue midiéndose. Volvé
                 acá para pausar o finalizar.
               </Text>
             ) : (

@@ -1315,7 +1315,7 @@ export default function SaludPage() {
         </div>
 
         {/* Resumen de actividad (estilo diario de entrenamiento) */}
-        <section className={style.card}>
+        <section className={`${style.card} ${style.cardFull}`}>
           <div className={style.cardHead}>
             <h2>
               <FiTrendingUp /> Resumen de actividad

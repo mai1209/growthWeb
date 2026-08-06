@@ -1524,12 +1524,16 @@
 }
 
 /* Resumen de actividad */
+.cardFull {
+  grid-column: 1 / -1;
+}
 .periodoToggle {
   display: inline-flex;
   gap: 0.25rem;
   padding: 0.2rem;
   border-radius: 999px;
   border: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 .periodoOff,
 .periodoOn {
@@ -1538,9 +1542,10 @@
   color: var(--color-muted);
   font-size: 0.78rem;
   font-weight: 800;
-  padding: 0.3rem 0.7rem;
+  padding: 0.3rem 0.8rem;
   border-radius: 999px;
   cursor: pointer;
+  white-space: nowrap;
 }
 .periodoOn {
   background: var(--color-verde, #5dc72d);
