@@ -1120,8 +1120,13 @@
 
 .comidaForm {
   display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  padding: 0.9rem;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-input, rgba(255, 255, 255, 0.03));
 }
 
 .comidaForm input {
@@ -1135,8 +1140,88 @@
 
 .nombreWrap {
   position: relative;
-  flex: 2;
-  min-width: 180px;
+  width: 100%;
+}
+/* Paso 1 — buscar */
+.buscarAcciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.cargarManual {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 10px;
+  border: 1px dashed var(--border-color);
+  background: transparent;
+  color: var(--color-verde, #5dc72d);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.cargarManual:hover {
+  background: rgba(93, 199, 45, 0.08);
+}
+.buscarHint {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+/* Paso 2 — cantidad / macros */
+.elegidoRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.elegidoNombre {
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+.cambiarBtn {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 0.2rem 0.35rem;
+  white-space: nowrap;
+}
+.cambiarBtn:hover {
+  color: var(--color-text, #fff);
+}
+.nombreManual {
+  flex: 1;
+}
+.macrosEdit {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.macrosEdit input {
+  flex: 1;
+  min-width: 68px;
+}
+.editValoresLink {
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+.editValoresLink:hover {
+  color: var(--color-verde, #5dc72d);
+}
+.servirAcciones {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
 }
 
 .nombreWrap input {

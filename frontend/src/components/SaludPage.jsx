@@ -605,7 +605,10 @@ export default function SaludPage() {
   const [fUnidad, setFUnidad] = useState(""); // unidad de la porción (pote, puñado, cucharada…)
   const [fGramos, setFGramos] = useState(0); // gramos que pesa 1 porción (0 = desconocido)
   const [fModo, setFModo] = useState("porcion"); // "porcion" | "g"
-  const [elegida, setElegida] = useState(false); // ya eligió sugerencia → ocultar lista
+  const [elegida, setElegida] = useState(false); // ya eligió/definió comida → paso 2 (cantidad)
+  const [manual, setManual] = useState(false); // comida cargada a mano (no está en la base)
+  const [editValores, setEditValores] = useState(false); // mostrar inputs kcal/C/P/G en paso 2
+  const [sugAbierta, setSugAbierta] = useState(true); // dropdown de sugerencias visible
   const [onlineComidas, setOnlineComidas] = useState([]); // resultados de Open Food Facts
 
   const hoy = dayKey(new Date());
@@ -990,7 +993,33 @@ export default function SaludPage() {
     setFGramos(Number(s.gramos) || 0);
     setFModo("porcion");
     setFCant("1");
-    setElegida(true);
+    setManual(false);
+    setEditValores(false);
+    setElegida(true); // → paso 2
+  };
+
+  // Cargar una comida a mano (la que escribió no está en la base): paso 2 con los
+  // campos de kcal/macros abiertos para completar.
+  const activarManual = () => {
+    setFKcal("");
+    setFCarb("");
+    setFProt("");
+    setFFat("");
+    setFUnidad("");
+    setFGramos(0);
+    setFModo("porcion");
+    setFCant("1");
+    setManual(true);
+    setEditValores(true);
+    setElegida(true); // → paso 2
+  };
+
+  // Volver del paso 2 (cantidad) al paso 1 (buscar).
+  const volverABuscar = () => {
+    setElegida(false);
+    setManual(false);
+    setEditValores(false);
+    setSugAbierta(true);
   };
 
   // Cambia entre contar porciones (pote, puñado…) y gramos exactos.
@@ -1037,6 +1066,9 @@ export default function SaludPage() {
     setFGramos(0);
     setFModo("porcion");
     setElegida(false);
+    setManual(false);
+    setEditValores(false);
+    setSugAbierta(true);
   };
 
   const agregarComida = () => {
@@ -1357,126 +1389,165 @@ export default function SaludPage() {
                 ))}
                 {formFranja === f.key ? (
                   <div className={style.comidaForm}>
-                    <div className={style.nombreWrap}>
-                      <input
-                        value={fNombre}
-                        onChange={(e) => {
-                          setFNombre(e.target.value);
-                          setElegida(false);
-                          setFUnidad("");
-                          setFGramos(0);
-                          setFModo("porcion");
-                        }}
-                        placeholder="¿Qué comiste?"
-                        autoFocus
-                      />
-                      {sugerencias.length > 0 ? (
-                        <ul className={style.sugerencias}>
-                          {sugerencias.map((s, i) => (
-                            <li key={i}>
-                              <button type="button" onClick={() => usarSugerencia(s)}>
-                                <span className={style.sugIcono}>{s.online ? "🌐" : s.propia ? "⏱" : "🍽"}</span>
-                                <span className={style.sugNombre}>
-                                  {s.nombre}
-                                  {s.unidad ? (
-                                    <em className={style.sugUnidad}>
-                                      {" "}· {s.unidad}
-                                      {s.gramos ? ` ≈${s.gramos} g` : ""}
-                                    </em>
-                                  ) : null}
-                                </span>
-                                <span className={style.sugKcal}>{s.kcal} kcal</span>
+                    {!elegida ? (
+                      /* PASO 1 — buscar el alimento */
+                      <>
+                        <div className={style.nombreWrap}>
+                          <input
+                            value={fNombre}
+                            onChange={(e) => {
+                              setFNombre(e.target.value);
+                              setSugAbierta(true);
+                            }}
+                            onFocus={() => setSugAbierta(true)}
+                            onBlur={() => setTimeout(() => setSugAbierta(false), 150)}
+                            placeholder="Buscá qué comiste…"
+                            autoFocus
+                          />
+                          {sugAbierta && sugerencias.length > 0 ? (
+                            <ul className={style.sugerencias}>
+                              {sugerencias.map((s, i) => (
+                                <li key={i}>
+                                  <button
+                                    type="button"
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => usarSugerencia(s)}
+                                  >
+                                    <span className={style.sugIcono}>{s.online ? "🌐" : s.propia ? "⏱" : "🍽"}</span>
+                                    <span className={style.sugNombre}>
+                                      {s.nombre}
+                                      {s.unidad ? (
+                                        <em className={style.sugUnidad}>
+                                          {" "}· {s.unidad}
+                                          {s.gramos ? ` ≈${s.gramos} g` : ""}
+                                        </em>
+                                      ) : null}
+                                    </span>
+                                    <span className={style.sugKcal}>{s.kcal} kcal</span>
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : null}
+                        </div>
+                        <div className={style.buscarAcciones}>
+                          {fNombre.trim().length >= 2 ? (
+                            <button type="button" className={style.cargarManual} onClick={activarManual}>
+                              <FiPlus /> Cargar “{fNombre.trim()}” a mano
+                            </button>
+                          ) : (
+                            <span className={style.buscarHint}>Escribí y elegí de la lista.</span>
+                          )}
+                          <button type="button" className={style.comidaCancel} onClick={() => setFormFranja(null)}>
+                            Cancelar
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      /* PASO 2 — cantidad y (opcional) editar valores */
+                      <>
+                        <div className={style.elegidoRow}>
+                          <button type="button" className={style.cambiarBtn} onClick={volverABuscar}>
+                            ‹ cambiar
+                          </button>
+                          {manual ? (
+                            <input
+                              className={style.nombreManual}
+                              value={fNombre}
+                              onChange={(e) => setFNombre(e.target.value)}
+                              placeholder="Nombre de la comida"
+                              autoFocus
+                            />
+                          ) : (
+                            <span className={style.elegidoNombre}>{fNombre}</span>
+                          )}
+                        </div>
+                        <div className={style.cantWrap}>
+                          {fGramos > 0 ? (
+                            <span className={style.modoToggle}>
+                              <button
+                                type="button"
+                                className={fModo === "porcion" ? style.modoOn : style.modoOff}
+                                onClick={() => cambiarModo("porcion")}
+                              >
+                                {fUnidad || "porción"}
                               </button>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </div>
-                    <div className={style.cantWrap}>
-                      {fGramos > 0 ? (
-                        <span className={style.modoToggle}>
+                              <button
+                                type="button"
+                                className={fModo === "g" ? style.modoOn : style.modoOff}
+                                onClick={() => cambiarModo("g")}
+                              >
+                                gramos
+                              </button>
+                            </span>
+                          ) : null}
+                          <input
+                            type="number"
+                            min="0"
+                            step={fModo === "g" ? "10" : "0.5"}
+                            value={fCant}
+                            onChange={(e) => setFCant(e.target.value)}
+                            className={style.cantInput}
+                            title="Cantidad"
+                          />
+                          <span className={style.cantUnidad}>{fModo === "g" ? "g" : fUnidad || "u."}</span>
+                          <span className={style.cantChips}>
+                            {(fModo === "g" ? ["50", "100", "150", "200"] : ["0.5", "1", "2"]).map((v) => (
+                              <button key={v} type="button" className={style.cantChip} onClick={() => setFCant(v)}>
+                                {v === "0.5" ? "½" : v}
+                              </button>
+                            ))}
+                          </span>
+                        </div>
+                        {editValores ? (
+                          <div className={style.macrosEdit}>
+                            <input
+                              type="number"
+                              min="0"
+                              value={fKcal}
+                              onChange={(e) => setFKcal(e.target.value)}
+                              placeholder={fUnidad ? `kcal x ${fUnidad}` : "kcal c/u"}
+                              title="Calorías por porción"
+                            />
+                            <input type="number" min="0" value={fCarb} onChange={(e) => setFCarb(e.target.value)} placeholder="C g" title="Carbohidratos (g) por porción" />
+                            <input type="number" min="0" value={fProt} onChange={(e) => setFProt(e.target.value)} placeholder="P g" title="Proteína (g) por porción" />
+                            <input type="number" min="0" value={fFat} onChange={(e) => setFFat(e.target.value)} placeholder="G g" title="Grasa (g) por porción" />
+                          </div>
+                        ) : (
+                          <button type="button" className={style.editValoresLink} onClick={() => setEditValores(true)}>
+                            ✎ editar calorías y macros
+                          </button>
+                        )}
+                        {kcalUnit > 0 && cantNum > 0 ? (
+                          <span className={style.comidaTotal}>
+                            = {previewTotal.kcal} kcal · C {previewTotal.carb} · P {previewTotal.prot} · G{" "}
+                            {previewTotal.fat} g
+                            {fModo === "g"
+                              ? ` · ${fmtCant(cantNum)} g${
+                                  fGramos > 0 ? ` (≈ ${fmtCant(Math.round((cantNum / fGramos) * 10) / 10)} ${fUnidad})` : ""
+                                }`
+                              : fUnidad
+                              ? ` · ${fmtCant(cantNum)} ${fUnidad}`
+                              : cantNum !== 1
+                              ? ` · ×${fmtCant(cantNum)}`
+                              : ""}
+                          </span>
+                        ) : null}
+                        <div className={style.servirAcciones}>
                           <button
                             type="button"
-                            className={fModo === "porcion" ? style.modoOn : style.modoOff}
-                            onClick={() => cambiarModo("porcion")}
+                            className={style.comidaOk}
+                            onClick={agregarComida}
+                            disabled={!fNombre.trim() || kcalUnit <= 0 || cantNum <= 0}
                           >
-                            {fUnidad || "porción"}
+                            Agregar
                           </button>
-                          <button
-                            type="button"
-                            className={fModo === "g" ? style.modoOn : style.modoOff}
-                            onClick={() => cambiarModo("g")}
-                          >
-                            gramos
+                          <button type="button" className={style.comidaCancel} onClick={() => setFormFranja(null)}>
+                            Cancelar
                           </button>
-                        </span>
-                      ) : null}
-                      <input
-                        type="number"
-                        min="0"
-                        step={fModo === "g" ? "10" : "0.5"}
-                        value={fCant}
-                        onChange={(e) => setFCant(e.target.value)}
-                        className={style.cantInput}
-                        title="Cantidad"
-                      />
-                      <span className={style.cantUnidad}>
-                        {fModo === "g" ? "g" : fUnidad || "u."}
-                      </span>
-                      <span className={style.cantChips}>
-                        {(fModo === "g" ? ["50", "100", "150", "200"] : ["0.5", "1", "2"]).map((v) => (
-                          <button
-                            key={v}
-                            type="button"
-                            className={style.cantChip}
-                            onClick={() => setFCant(v)}
-                          >
-                            {v === "0.5" ? "½" : v}
-                          </button>
-                        ))}
-                      </span>
-                    </div>
-                    <input
-                      type="number"
-                      min="0"
-                      value={fKcal}
-                      onChange={(e) => setFKcal(e.target.value)}
-                      placeholder={fUnidad ? `kcal x ${fUnidad}` : "kcal c/u"}
-                      title={
-                        fGramos > 0
-                          ? `${fKcal || 0} kcal por ${fUnidad} (≈${kcal100} kcal/100 g)`
-                          : "kcal por porción"
-                      }
-                    />
-                    <input type="number" min="0" value={fCarb} onChange={(e) => setFCarb(e.target.value)} placeholder="C g" title="Carbohidratos (g) por porción" />
-                    <input type="number" min="0" value={fProt} onChange={(e) => setFProt(e.target.value)} placeholder="P g" title="Proteína (g) por porción" />
-                    <input type="number" min="0" value={fFat} onChange={(e) => setFFat(e.target.value)} placeholder="G g" title="Grasa (g) por porción" />
-                    {kcalUnit > 0 && cantNum > 0 ? (
-                      <span className={style.comidaTotal}>
-                        = {previewTotal.kcal} kcal · C {previewTotal.carb} · P {previewTotal.prot} · G{" "}
-                        {previewTotal.fat} g
-                        {fModo === "g"
-                          ? ` · ${fmtCant(cantNum)} g${
-                              fGramos > 0 ? ` (≈ ${fmtCant(Math.round((cantNum / fGramos) * 10) / 10)} ${fUnidad})` : ""
-                            }`
-                          : fUnidad
-                          ? ` · ${fmtCant(cantNum)} ${fUnidad}`
-                          : cantNum !== 1
-                          ? ` · ×${fmtCant(cantNum)}`
-                          : ""}
-                      </span>
-                    ) : null}
-                    <button
-                      type="button"
-                      className={style.comidaOk}
-                      onClick={agregarComida}
-                      disabled={!fNombre.trim() || kcalUnit <= 0 || cantNum <= 0}
-                    >
-                      Agregar
-                    </button>
-                    <button type="button" className={style.comidaCancel} onClick={() => setFormFranja(null)}>
-                      Cancelar
-                    </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : null}
               </div>
