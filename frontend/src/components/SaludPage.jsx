@@ -839,7 +839,7 @@ export default function SaludPage() {
         fmt: (v) => Math.round(v).toLocaleString("es-AR"),
       },
       {
-        titulo: "Distancia de caminata",
+        titulo: "Distancia (actividad)",
         color: "var(--color-verde, #5dc72d)",
         valor: (distDia(h) / 1000).toFixed(1).replace(".", ","),
         unidad: "km",
@@ -849,7 +849,7 @@ export default function SaludPage() {
         fmt: (v) => v.toFixed(2).replace(".", ","),
       },
       {
-        titulo: "Tiempo de caminata",
+        titulo: "Tiempo (actividad)",
         color: "var(--color-verde, #5dc72d)",
         valor: String(Math.round(minDia(h))),
         unidad: "min",
@@ -859,7 +859,7 @@ export default function SaludPage() {
         fmt: (v) => String(Math.round(v)),
       },
       {
-        titulo: "Velocidad al caminar",
+        titulo: "Velocidad promedio",
         color: "var(--color-verde, #5dc72d)",
         valor: velocidad != null ? velocidad.toFixed(1).replace(".", ",") : "—",
         unidad: "km/h",
@@ -1319,6 +1319,10 @@ export default function SaludPage() {
           <div className={style.cardHead}>
             <h2>
               <FiTrendingUp /> Resumen de actividad
+              <FiInfo
+                className={style.infoIcon}
+                title="Distancia, tiempo y velocidad salen de las actividades con GPS que grabás desde la app (caminata, carrera o bici). Los pasos vienen del sensor del teléfono. Correr quema más calorías que caminar, por eso conviene elegir bien el tipo al grabar."
+              />
             </h2>
             <span className={style.periodoToggle}>
               {[

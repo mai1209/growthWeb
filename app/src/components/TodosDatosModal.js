@@ -206,7 +206,7 @@ export default function TodosDatosModal({
       fmt: (v) => Math.round(v).toLocaleString("es-AR"),
     },
     {
-      titulo: "Distancia de caminata",
+      titulo: "Distancia (actividad)",
       icon: "navigate-outline",
       color: colors.greenBright,
       valor: (distDia(hoy) / 1000).toFixed(1).replace(".", ","),
@@ -217,7 +217,7 @@ export default function TodosDatosModal({
       fmt: (v) => v.toFixed(2).replace(".", ","),
     },
     {
-      titulo: "Tiempo de caminata",
+      titulo: "Tiempo (actividad)",
       icon: "time-outline",
       color: colors.greenBright,
       valor: String(Math.round(minDia(hoy))),
@@ -228,7 +228,7 @@ export default function TodosDatosModal({
       fmt: (v) => String(Math.round(v)),
     },
     {
-      titulo: "Velocidad al caminar",
+      titulo: "Velocidad promedio",
       icon: "speedometer-outline",
       color: colors.greenBright,
       valor: velocidad != null ? velocidad.toFixed(1).replace(".", ",") : "—",

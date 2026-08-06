@@ -1527,6 +1527,12 @@
 .cardFull {
   grid-column: 1 / -1;
 }
+.infoIcon {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  cursor: help;
+  margin-left: 0.15rem;
+}
 .periodoToggle {
   display: inline-flex;
   flex-shrink: 0;

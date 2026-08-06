@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   AppState,
   Platform,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -244,6 +245,14 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
     onClose?.();
   };
 
+  const infoActividad = () => {
+    Alert.alert(
+      "¿Qué actividad elegir?",
+      "Elegí según lo que hacés:\n\n🚶  Caminata — paso tranquilo.\n🏃  Carrera — si corrés (con o sin pausas de caminata, va como Carrera).\n🚴  Bici.\n\nLa distancia y el tiempo se miden igual en las 3 (por GPS). Lo que cambia son las CALORÍAS: correr quema más del doble que caminar. Si corrés y elegís Caminata, te cuenta de menos.\n\n¿Mitad y mitad? Elegí Carrera (como en Strava).",
+      [{ text: "Entendido" }]
+    );
+  };
+
   // El mapa sigue tu posición (punto verde) mientras caminás.
   useEffect(() => {
     if (!ultimoPunto || !mapRef.current) return;
@@ -339,6 +348,10 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
                   </TouchableOpacity>
                 ))}
               </View>
+              <TouchableOpacity style={styles.infoLink} onPress={infoActividad} hitSlop={8}>
+                <Ionicons name="information-circle-outline" size={14} color={colors.muted} />
+                <Text style={styles.infoLinkText}>¿Cuál elegir? Influye en las calorías</Text>
+              </TouchableOpacity>
               {fase === "listo" ? (
                 <View style={styles.estado}>
                   <Ionicons name="location" size={14} color={colors.greenBright} />
@@ -518,6 +531,8 @@ const makeStyles = (colors) =>
     actChipOn: { borderColor: colors.greenBright, backgroundColor: "rgba(93,199,45,0.14)" },
     actLabel: { color: colors.muted, fontSize: 13, fontWeight: "800" },
     actLabelOn: { color: colors.greenBright },
+    infoLink: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
+    infoLinkText: { color: colors.muted, fontSize: 12, fontWeight: "600" },
 
     estado: {
       flexDirection: "row",
