@@ -178,13 +178,15 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
                 >
                   <Ionicons
                     name="navigate"
-                    size={14}
+                    size={16}
                     color={i === idx ? colors.greenBright : colors.muted}
                   />
-                  <Text style={[styles.chipFecha, i === idx && styles.chipTxtOn]}>{fmtFecha(c.fecha)}</Text>
-                  <Text style={[styles.chipKm, i === idx && styles.chipTxtOn]}>
-                    {(c.metros / 1000).toFixed(1)} km
-                  </Text>
+                  <View style={styles.chipTxt}>
+                    <Text style={[styles.chipFecha, i === idx && styles.chipTxtOn]}>{fmtFecha(c.fecha)}</Text>
+                    <Text style={[styles.chipKm, i === idx && styles.chipTxtOn]}>
+                      {(c.metros / 1000).toFixed(1)} km
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -252,14 +254,17 @@ const makeStyles = (colors) =>
     chip: {
       height: 64,
       minWidth: 96,
+      flexDirection: "row",
+      alignItems: "center",
       justifyContent: "center",
       paddingHorizontal: 14,
       borderRadius: 16,
       borderWidth: 1,
       borderColor: colors.cardBorder,
       backgroundColor: colors.card,
-      gap: 3,
+      gap: 8,
     },
+    chipTxt: { gap: 2 },
     chipOn: { borderColor: colors.greenBright, backgroundColor: "rgba(93,199,45,0.12)" },
     chipFecha: { color: colors.muted, fontSize: 12, fontWeight: "700", textTransform: "capitalize" },
     chipKm: { color: colors.text, fontSize: 15, fontWeight: "800" },
