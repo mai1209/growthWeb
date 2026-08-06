@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
-import { authService } from "../api";
+import { authService, communityService } from "../api";
 import { COMUNIDAD_HABILITADA } from "../config";
 import { useTheme } from "../theme";
 import { useWorkspace } from "../workspace/WorkspaceContext";
@@ -104,6 +104,20 @@ export default function PerfilScreen({ navigation }) {
     const unsub = navigation.addListener("focus", load);
     return unsub;
   }, [load, navigation]);
+
+  // Stats de comunidad (posteos/seguidores/siguiendo) para el perfil personal.
+  const [comuStats, setComuStats] = useState(null);
+  useEffect(() => {
+    if (!COMUNIDAD_HABILITADA) return undefined;
+    const traer = () =>
+      communityService
+        .getMiPerfil()
+        .then(({ data }) => setComuStats(data?.stats || null))
+        .catch(() => {});
+    traer();
+    const unsub = navigation.addListener("focus", traer);
+    return unsub;
+  }, [navigation]);
 
   // Al abrir la edición, copiamos los valores actuales.
   const openEdit = () => {
@@ -294,7 +308,7 @@ export default function PerfilScreen({ navigation }) {
               <View style={[styles.banner, styles.bannerPlaceholder]} />
             )}
 
-            {/* Avatar + editar */}
+            {/* Avatar (solo, encima de la portada) */}
             <View style={styles.topRow}>
               <View style={styles.avatar}>
                 {profile?.profilePhotoUrl ? (
@@ -303,6 +317,9 @@ export default function PerfilScreen({ navigation }) {
                   <Text style={styles.avatarInitials}>{initials}</Text>
                 )}
               </View>
+            </View>
+            {/* Botones a la izquierda, apilados, fuera de la portada */}
+            <View style={styles.perfilBtns}>
               <TouchableOpacity style={styles.editBtn} onPress={openEdit}>
                 <Text style={styles.editBtnText}>Editar perfil</Text>
               </TouchableOpacity>
@@ -327,32 +344,15 @@ export default function PerfilScreen({ navigation }) {
                 <Text style={styles.bioEmpty}>Todavía no escribiste una bio.</Text>
               )}
 
-              <View style={styles.metaRow}>
-                <Ionicons name="calendar-outline" size={15} color={colors.greenDark} />
-                <Text style={styles.metaText}>Se unió {joinedLabel(profile?.createdAt)}</Text>
-              </View>
-              {profile?.email ? (
-                <View style={styles.metaRow}>
-                  <Ionicons name="mail-outline" size={15} color={colors.greenDark} />
-                  <Text style={styles.metaText}>{profile.email}</Text>
-                </View>
-              ) : null}
-              {profile?.phone ? (
-                <View style={styles.metaRow}>
-                  <Ionicons name="call-outline" size={15} color={colors.greenDark} />
-                  <Text style={styles.metaText}>{profile.phone}</Text>
-                </View>
-              ) : null}
-
               <View style={styles.stats}>
                 <Text style={styles.statText}>
-                  <Text style={styles.statNum}>{negocios}</Text> negocios
+                  <Text style={styles.statNum}>{comuStats?.posteos ?? 0}</Text> posteos
                 </Text>
                 <Text style={styles.statText}>
-                  <Text style={styles.statNum}>0</Text> seguidores
+                  <Text style={styles.statNum}>{comuStats?.seguidores ?? 0}</Text> seguidores
                 </Text>
                 <Text style={styles.statText}>
-                  <Text style={styles.statNum}>0</Text> siguiendo
+                  <Text style={styles.statNum}>{comuStats?.siguiendo ?? 0}</Text> siguiendo
                 </Text>
               </View>
             </View>
@@ -621,8 +621,13 @@ const makeStyles = (colors, isDark) =>
       letterSpacing: 0.4,
     },
     avatarInitials: { color: colors.greenDark, fontSize: 30, fontWeight: "800" },
+    perfilBtns: {
+      paddingHorizontal: 14,
+      marginTop: 10,
+      gap: 8,
+      alignItems: "flex-start",
+    },
     editBtn: {
-      marginTop: 52,
       paddingVertical: 8,
       paddingHorizontal: 16,
       borderRadius: 999,
@@ -631,7 +636,6 @@ const makeStyles = (colors, isDark) =>
     },
     editBtnText: { color: colors.greenDark, fontWeight: "800", fontSize: 13.5 },
     comunidadBtn: {
-      marginTop: 8,
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
