@@ -14,3 +14,8 @@ export const APP_VERSION = Application.nativeApplicationVersion || "1.0.11";
 // pero queda OCULTO tras "Próximamente" hasta tener un plan pago de AfipSDK.
 // Cuando exista el sistema de planes, cambiar a true para activarlo entero.
 export const ARCA_HABILITADO = false;
+
+// Comunidad (perfiles, seguir, feed). En desarrollo: dejar en true para probar.
+// IMPORTANTE: poner en false antes de publicar en las tiendas hasta tener
+// moderación + reportar/bloquear y la declaración de "interacción social".
+export const COMUNIDAD_HABILITADA = true;

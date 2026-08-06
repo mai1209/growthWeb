@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { authService } from "../api";
+import { COMUNIDAD_HABILITADA } from "../config";
 import { useTheme } from "../theme";
 import { useWorkspace } from "../workspace/WorkspaceContext";
 
@@ -305,6 +306,15 @@ export default function PerfilScreen({ navigation }) {
               <TouchableOpacity style={styles.editBtn} onPress={openEdit}>
                 <Text style={styles.editBtnText}>Editar perfil</Text>
               </TouchableOpacity>
+              {COMUNIDAD_HABILITADA ? (
+                <TouchableOpacity
+                  style={styles.comunidadBtn}
+                  onPress={() => navigation.navigate("Comunidad")}
+                >
+                  <Ionicons name="globe-outline" size={16} color={colors.greenBright} />
+                  <Text style={styles.comunidadBtnText}>Comunidad</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
 
             {/* Identidad */}
@@ -620,6 +630,19 @@ const makeStyles = (colors, isDark) =>
       borderColor: colors.greenDark,
     },
     editBtnText: { color: colors.greenDark, fontWeight: "800", fontSize: 13.5 },
+    comunidadBtn: {
+      marginTop: 8,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      borderRadius: 999,
+      backgroundColor: "rgba(93,199,45,0.14)",
+      borderWidth: 1,
+      borderColor: colors.greenBright,
+    },
+    comunidadBtnText: { color: colors.greenBright, fontWeight: "800", fontSize: 13.5 },
 
     identity: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 18, gap: 4 },
     name: { color: colors.text, fontSize: 21, fontWeight: "800" },

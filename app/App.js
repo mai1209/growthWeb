@@ -24,6 +24,7 @@ import PomodoroScreen from "./src/screens/PomodoroScreen";
 import SaludScreen from "./src/screens/SaludScreen";
 import AjustesScreen from "./src/screens/AjustesScreen";
 import PerfilScreen from "./src/screens/PerfilScreen";
+import ComunidadScreen from "./src/screens/ComunidadScreen";
 import UpdateModal from "./src/components/UpdateModal";
 import RadialTabBar from "./src/components/RadialTabBar";
 import { appService } from "./src/api";
@@ -161,6 +162,7 @@ function Routes() {
             <Stack.Screen name="Main" component={MainTabs} />
             <Stack.Screen name="Ajustes" component={AjustesScreen} />
             <Stack.Screen name="Perfil" component={PerfilScreen} />
+            <Stack.Screen name="Comunidad" component={ComunidadScreen} />
           </>
         ) : (
           <Stack.Screen name="Login" component={LoginScreen} />
