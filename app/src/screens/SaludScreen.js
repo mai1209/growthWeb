@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Svg, { Circle, Path, Text as SvgText } from "react-native-svg";
 import { Pedometer } from "expo-sensors";
 import * as SecureStore from "expo-secure-store";
@@ -65,6 +65,10 @@ const ANIMOS = [
 
 const pad = (n) => String(n).padStart(2, "0");
 const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+// Tipo de actividad (para el resumen): etiqueta e ícono.
+const ACT_LABEL = { caminata: "Caminata", carrera: "Carrera", bici: "Bici" };
+const ACT_ICON = { caminata: "walk", carrera: "run", bici: "bike" };
 const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
 const addDays = (key, delta) => {
   const d = new Date(`${key}T00:00:00`);
@@ -622,6 +626,7 @@ export default function SaludScreen() {
   const [caminataOpen, setCaminataOpen] = useState(false);
   const [recorridosOpen, setRecorridosOpen] = useState(false);
   const [caminatas, setCaminatas] = useState([]);
+  const [resumenPeriodo, setResumenPeriodo] = useState("semana"); // semana | mes | todo
   const [datosOpen, setDatosOpen] = useState(false); // "Todos los datos"
 
   useEffect(() => {
@@ -657,6 +662,27 @@ export default function SaludScreen() {
   };
 
   const ultimaCaminata = caminatas[0];
+
+  // Resumen de actividad (totales por período: semana / mes / todo).
+  const cutoffSemana = addDays(hoy, -6);
+  const resumen = caminatas
+    .filter((c) => {
+      if (resumenPeriodo === "todo") return true;
+      if (resumenPeriodo === "mes") return String(c.fecha).slice(0, 7) === hoy.slice(0, 7);
+      return c.fecha >= cutoffSemana; // últimos 7 días
+    })
+    .reduce(
+      (a, c) => {
+        a.metros += Number(c.metros) || 0;
+        a.secs += Number(c.secs) || 0;
+        a.kcal += Number(c.kcal) || 0;
+        a.count += 1;
+        const t = c.tipo || "caminata";
+        a.tipos[t] = (a.tipos[t] || 0) + 1;
+        return a;
+      },
+      { metros: 0, secs: 0, kcal: 0, count: 0, tipos: {} }
+    );
 
   // ---------------- Nutrición (plan diario) ----------------
   const [nutriOpen, setNutriOpen] = useState(false);
@@ -1139,6 +1165,67 @@ export default function SaludScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* ---- Resumen de actividad ---- */}
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <View style={styles.cardHeadLeft}>
+              <Ionicons name="trending-up-outline" size={18} color={colors.greenDark} />
+              <Text style={styles.cardTitle}>Resumen</Text>
+            </View>
+            <View style={styles.periodoToggle}>
+              {[
+                ["semana", "Sem"],
+                ["mes", "Mes"],
+                ["todo", "Todo"],
+              ].map(([k, l]) => (
+                <TouchableOpacity
+                  key={k}
+                  style={[styles.periodoBtn, resumenPeriodo === k && styles.periodoBtnOn]}
+                  onPress={() => setResumenPeriodo(k)}
+                >
+                  <Text style={[styles.periodoText, resumenPeriodo === k && styles.periodoTextOn]}>{l}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          {resumen.count ? (
+            <>
+              <View style={styles.resTiles}>
+                <View style={styles.resTile}>
+                  <Text style={styles.resTileNum}>{(resumen.metros / 1000).toFixed(1)}</Text>
+                  <Text style={styles.resTileLbl}>km</Text>
+                </View>
+                <View style={styles.resTile}>
+                  <Text style={styles.resTileNum}>{Math.round(resumen.secs / 60)}</Text>
+                  <Text style={styles.resTileLbl}>min</Text>
+                </View>
+                <View style={styles.resTile}>
+                  <Text style={styles.resTileNum}>{resumen.kcal}</Text>
+                  <Text style={styles.resTileLbl}>kcal</Text>
+                </View>
+                <View style={styles.resTile}>
+                  <Text style={styles.resTileNum}>{resumen.count}</Text>
+                  <Text style={styles.resTileLbl}>{resumen.count === 1 ? "activ." : "activs."}</Text>
+                </View>
+              </View>
+              <View style={styles.resTipos}>
+                {["caminata", "carrera", "bici"]
+                  .filter((t) => resumen.tipos[t])
+                  .map((t) => (
+                    <View key={t} style={styles.resTipoItem}>
+                      <MaterialCommunityIcons name={ACT_ICON[t]} size={15} color={colors.greenBright} />
+                      <Text style={styles.resTipoText}>
+                        {resumen.tipos[t]} {ACT_LABEL[t]}
+                      </Text>
+                    </View>
+                  ))}
+              </View>
+            </>
+          ) : (
+            <Text style={styles.aviso}>Sin actividades en este período.</Text>
+          )}
+        </View>
+
         {/* ---- Pasos de hoy (debajo de la caminata GPS) ---- */}
         <View style={styles.card}>
           <View style={styles.cardHead}>
@@ -1551,6 +1638,36 @@ const makeStyles = (colors) =>
       backgroundColor: colors.greenBright,
     },
     caminataBtnText: { color: "#06210a", fontSize: 14, fontWeight: "800" },
+
+    // Resumen de actividad
+    periodoToggle: {
+      flexDirection: "row",
+      gap: 2,
+      padding: 2,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+    },
+    periodoBtn: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
+    periodoBtnOn: { backgroundColor: colors.greenBright },
+    periodoText: { color: colors.muted, fontSize: 12, fontWeight: "800" },
+    periodoTextOn: { color: "#06210a" },
+    resTiles: { flexDirection: "row", gap: 8, marginTop: 12 },
+    resTile: {
+      flex: 1,
+      alignItems: "center",
+      gap: 2,
+      paddingVertical: 12,
+      borderRadius: 14,
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+    },
+    resTileNum: { color: colors.greenBright, fontSize: 20, fontWeight: "900" },
+    resTileLbl: { color: colors.muted, fontSize: 11, fontWeight: "700" },
+    resTipos: { flexDirection: "row", flexWrap: "wrap", gap: 14, marginTop: 12 },
+    resTipoItem: { flexDirection: "row", alignItems: "center", gap: 5 },
+    resTipoText: { color: colors.muted, fontSize: 13, fontWeight: "700" },
 
     verTodosTop: {
       flexDirection: "row",
