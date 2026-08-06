@@ -383,6 +383,7 @@ function HistorialModal({ metric, hoy, onClose }) {
 function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
   const [recorridos, setRecorridos] = useState(null); // null = cargando
   const [idx, setIdx] = useState(0);
+  const [vista, setVista] = useState("uno"); // "uno" (un recorrido) | "calor" (heatmap)
   useEffect(() => {
     saludService
       .recorridos()
@@ -415,6 +416,42 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
     const d = "M " + pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" L ");
     return { W, H, d, pts, ini: pts[0], fin: pts[pts.length - 1] };
   }, [sel]);
+
+  // Mapa de calor personal: proyecta TODOS los recorridos a un mismo SVG.
+  // Al superponer líneas semi-transparentes, donde más pasás queda más brillante.
+  const heat = useMemo(() => {
+    const rutas = (recorridos || [])
+      .map((r) => r.ruta)
+      .filter((r) => Array.isArray(r) && r.length > 1);
+    if (!rutas.length) return null;
+    const W = 560;
+    const H = 360;
+    const pad = 30;
+    const lats = rutas.flatMap((r) => r.map((p) => p.latitude));
+    const lngs = rutas.flatMap((r) => r.map((p) => p.longitude));
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    const kx = Math.cos((((minLat + maxLat) / 2) * Math.PI) / 180) || 1;
+    const spanLng = (maxLng - minLng) * kx || 1e-6;
+    const spanLat = maxLat - minLat || 1e-6;
+    const scale = Math.min((W - 2 * pad) / spanLng, (H - 2 * pad) / spanLat);
+    const offX = (W - spanLng * scale) / 2;
+    const offY = (H - spanLat * scale) / 2;
+    const paths = rutas.map(
+      (r) =>
+        "M " +
+        r
+          .map((p) => {
+            const x = offX + (p.longitude - minLng) * kx * scale;
+            const y = H - offY - (p.latitude - minLat) * scale;
+            return `${x.toFixed(1)},${y.toFixed(1)}`;
+          })
+          .join(" L ")
+    );
+    return { W, H, paths };
+  }, [recorridos]);
 
   const fechaCorta = (k) =>
     new Date(`${k}T00:00:00`).toLocaleDateString("es-AR", { day: "numeric", month: "short" });
@@ -485,6 +522,62 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
           </p>
         ) : (
           <>
+            <div className={style.recVistaToggle}>
+              <button
+                type="button"
+                className={vista === "uno" ? style.recVistaOn : style.recVistaOff}
+                onClick={() => setVista("uno")}
+              >
+                Recorrido
+              </button>
+              <button
+                type="button"
+                className={vista === "calor" ? style.recVistaOn : style.recVistaOff}
+                onClick={() => setVista("calor")}
+              >
+                Mapa de calor
+              </button>
+            </div>
+            {vista === "calor" ? (
+              <>
+                <div className={style.recMapa}>
+                  {heat ? (
+                    <svg viewBox={`0 0 ${heat.W} ${heat.H}`} width="100%" preserveAspectRatio="xMidYMid meet">
+                      {heat.paths.map((d, i) => (
+                        <path
+                          key={`g${i}`}
+                          d={d}
+                          fill="none"
+                          stroke="var(--color-verde, #5dc72d)"
+                          strokeOpacity="0.16"
+                          strokeWidth="10"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      ))}
+                      {heat.paths.map((d, i) => (
+                        <path
+                          key={`c${i}`}
+                          d={d}
+                          fill="none"
+                          stroke="#7ee787"
+                          strokeOpacity="0.42"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      ))}
+                    </svg>
+                  ) : (
+                    <p className={style.hint}>Sin recorridos con trazado para el mapa de calor.</p>
+                  )}
+                </div>
+                <p className={style.recHeatHint}>
+                  🔥 Se superponen tus {recorridos.length} recorridos: donde más pasás, más brillante.
+                </p>
+              </>
+            ) : (
+              <>
             <div className={style.recMapa}>
               {svg ? (
                 <>
@@ -570,6 +663,8 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
                 </button>
               ))}
             </div>
+              </>
+            )}
           </>
         )}
       </div>
