@@ -1529,23 +1529,27 @@
 }
 .periodoToggle {
   display: inline-flex;
-  gap: 0.25rem;
-  padding: 0.2rem;
+  flex-shrink: 0;
+  gap: 3px;
+  padding: 3px;
   border-radius: 999px;
   border: 1px solid var(--border-color);
-  flex-shrink: 0;
+  background: var(--surface-input, rgba(255, 255, 255, 0.03));
 }
 .periodoOff,
 .periodoOn {
   border: none;
   background: transparent;
   color: var(--color-muted);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 800;
-  padding: 0.3rem 0.8rem;
+  min-width: 3.6rem;
+  text-align: center;
+  padding: 0.34rem 0.4rem;
   border-radius: 999px;
   cursor: pointer;
   white-space: nowrap;
+  flex: 0 0 auto;
 }
 .periodoOn {
   background: var(--color-verde, #5dc72d);
