@@ -351,7 +351,7 @@ function HistorialModal({ metric, hoy, onClose }) {
 
 // Visor de recorridos GPS: dibuja el trazado de cada caminata en SVG (sin mapa,
 // solo la forma del recorrido) + fecha/km. Trae la ruta de un endpoint aparte.
-function RecorridosModalWeb({ hoy, onClose }) {
+function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
   const [recorridos, setRecorridos] = useState(null); // null = cargando
   const [idx, setIdx] = useState(0);
   useEffect(() => {
@@ -400,6 +400,7 @@ function RecorridosModalWeb({ hoy, onClose }) {
         const nuevos = data?.recorridos || [];
         setRecorridos(nuevos);
         setIdx((i) => Math.max(0, Math.min(i, nuevos.length - 1)));
+        onCaminatas?.(data?.caminatas || []);
       })
       .catch(() => {})
       .finally(() => setBorrando(false));
@@ -638,6 +639,18 @@ export default function SaludPage() {
     try {
       const { data: d } = await saludService.update(partial);
       setData(d);
+    } catch {}
+  };
+
+  // Borra una caminata (queda tombstone en el backend: no vuelve con el re-sync).
+  const borrarCaminata = async (c) => {
+    try {
+      const { data: d } = await saludService.borrarRecorrido({
+        fecha: c.fecha,
+        metros: c.metros,
+        secs: c.secs,
+      });
+      setData((prev) => (prev ? { ...prev, caminatas: d.caminatas } : prev));
     } catch {}
   };
 
@@ -1141,6 +1154,15 @@ export default function SaludPage() {
                     <span>{c.fecha}</span>
                     <strong>{(c.metros / 1000).toFixed(2)} km</strong>
                     <span>{Math.floor((c.secs || 0) / 60)} min</span>
+                    <button
+                      type="button"
+                      className={style.caminataDel}
+                      onClick={() => borrarCaminata(c)}
+                      aria-label="Borrar caminata"
+                      title="Borrar caminata"
+                    >
+                      <FiTrash2 />
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -1513,7 +1535,11 @@ export default function SaludPage() {
         ) : null}
 
         {recorridosOpen ? (
-          <RecorridosModalWeb hoy={hoy} onClose={() => setRecorridosOpen(false)} />
+          <RecorridosModalWeb
+            hoy={hoy}
+            onClose={() => setRecorridosOpen(false)}
+            onCaminatas={(cams) => setData((prev) => (prev ? { ...prev, caminatas: cams } : prev))}
+          />
         ) : null}
       </div>
     </div>

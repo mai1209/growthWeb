@@ -41,6 +41,10 @@ const saludSchema = new mongoose.Schema(
       ],
       default: [],
     },
+    // Firmas ("fecha|metros|secs") de caminatas borradas desde la web. Sirven de
+    // "tombstone": si la app vuelve a sincronizar una caminata borrada, el
+    // backend la descarta (si no, el borrado web no quedaría).
+    caminatasBorradas: { type: [String], default: [] },
     // Plan nutricional: { peso, altura, edad, sexo, actividad, objetivo }
     nutri: { type: mongoose.Schema.Types.Mixed, default: null },
     // Metas: { pasos, agua }

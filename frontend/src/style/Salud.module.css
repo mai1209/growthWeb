@@ -1350,6 +1350,22 @@
 .caminatas li strong {
   flex: 1;
 }
+.caminataDel {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  display: inline-grid;
+  place-items: center;
+  padding: 4px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: color 0.15s, background 0.15s;
+}
+.caminataDel:hover {
+  color: #e25a5a;
+  background: rgba(226, 90, 90, 0.12);
+}
 
 /* ===== Todos los resultados (estilo Salud de iPhone) ===== */
 .datosGrid {

@@ -6,6 +6,10 @@ const num = (v) => {
   return Number.isFinite(n) && n >= 0 ? n : 0;
 };
 
+// Firma estable de una caminata para poder marcarla como borrada (tombstone).
+const firmaCaminata = (c) => `${c?.fecha}|${Math.round(num(c?.metros))}|${num(c?.secs)}`;
+const MAX_CAMINATAS_BORRADAS = 300;
+
 // Cuántos días guardamos por sección (con orden cronológico de clave alcanza).
 const MAX_DIAS = { pasos: 400, pasosManual: 400, agua: 60, animo: 120, peso: 400, comidas: 60 };
 const MAX_CAMINATAS = 100;
@@ -101,32 +105,31 @@ export const getRecorridos = async (req, res) => {
   }
 };
 
-// DELETE /api/salud/recorridos — borra UNA caminata (por fecha + metros + secs,
-// que es lo que identifica al recorrido que se está viendo en el visor web).
-// Devuelve la lista de recorridos actualizada.
+// DELETE /api/salud/recorridos — borra UNA caminata (por fecha + metros + secs).
+// Además la marca como borrada (tombstone) para que un re-sync de la app no la
+// vuelva a subir. Devuelve la lista de recorridos Y de caminatas actualizadas.
 export const deleteRecorrido = async (req, res) => {
   try {
     const { fecha, metros, secs } = req.body || {};
     if (!esFecha(fecha)) return res.status(400).json({ error: "Fecha inválida." });
     const doc = await obtenerDoc(req.userId);
     const arr = Array.isArray(doc.caminatas) ? doc.caminatas : [];
-    const mMetros = Math.round(num(metros));
-    const mSecs = num(secs);
+    const firma = firmaCaminata({ fecha, metros, secs });
     let removed = false;
     doc.caminatas = arr.filter((c) => {
       if (removed) return true;
-      const coincide =
-        c.fecha === fecha &&
-        Math.round(num(c.metros)) === mMetros &&
-        num(c.secs) === mSecs;
-      if (coincide) {
+      if (firmaCaminata(c) === firma) {
         removed = true;
         return false;
       }
       return true;
     });
     if (removed) {
+      const borradas = Array.isArray(doc.caminatasBorradas) ? doc.caminatasBorradas : [];
+      if (!borradas.includes(firma)) borradas.push(firma);
+      doc.caminatasBorradas = borradas.slice(-MAX_CAMINATAS_BORRADAS);
       doc.markModified("caminatas");
+      doc.markModified("caminatasBorradas");
       await doc.save();
     }
     const recorridos = (doc.caminatas || [])
@@ -137,7 +140,12 @@ export const deleteRecorrido = async (req, res) => {
         secs: c.secs,
         ruta: c.ruta.map((p) => ({ latitude: p.latitude, longitude: p.longitude })),
       }));
-    return res.json({ recorridos, removed });
+    const caminatas = (doc.caminatas || []).map((c) => ({
+      fecha: c.fecha,
+      metros: c.metros,
+      secs: c.secs,
+    }));
+    return res.json({ recorridos, caminatas, removed });
   } catch (err) {
     console.error("[salud] deleteRecorrido:", err.message);
     return res.status(500).json({ error: "No se pudo borrar el recorrido." });
@@ -180,8 +188,11 @@ export const updateSalud = async (req, res) => {
       doc.markModified("comidas");
     }
     if (Array.isArray(body.caminatas)) {
+      // Tombstones: caminatas borradas desde la web no vuelven aunque la app las re-suba.
+      const borradas = new Set(Array.isArray(doc.caminatasBorradas) ? doc.caminatasBorradas : []);
       doc.caminatas = body.caminatas
         .filter((c) => c && esFecha(c.fecha))
+        .filter((c) => !borradas.has(firmaCaminata({ fecha: c.fecha, metros: c.metros, secs: c.secs })))
         .slice(0, MAX_CAMINATAS)
         .map((c) => ({
           fecha: c.fecha,
