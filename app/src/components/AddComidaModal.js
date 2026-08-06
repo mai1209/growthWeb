@@ -57,6 +57,8 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
   const [unidad, setUnidad] = useState(""); // porción (pote, puñado, cucharada…)
   const [gramos, setGramos] = useState(0); // gramos que pesa 1 porción (0 = desconocido)
   const [modo, setModo] = useState("porcion"); // "porcion" | "g"
+  const [manual, setManual] = useState(false); // comida cargada a mano (no está en la base)
+  const [editValores, setEditValores] = useState(false); // mostrar kcal/macros en el paso 2
   const [analizando, setAnalizando] = useState(false);
 
   const correrAnalisis = async (getter) => {
@@ -100,6 +102,8 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
       setGramos(0);
       setModo("porcion");
       setElegida(false);
+      setManual(false);
+      setEditValores(false);
     }
   }, [visible]);
 
@@ -191,7 +195,31 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
     setGramos(Number(s.gramos) || 0);
     setModo("porcion");
     setCant("1");
-    setElegida(true);
+    setManual(false);
+    setEditValores(false);
+    setElegida(true); // → paso 2
+  };
+
+  // Cargar a mano lo que escribiste (no está en la base): paso 2 con kcal/macros abiertos.
+  const activarManual = () => {
+    setKcal("");
+    setCarb("");
+    setProt("");
+    setFat("");
+    setUnidad("");
+    setGramos(0);
+    setModo("porcion");
+    setCant("1");
+    setManual(true);
+    setEditValores(true);
+    setElegida(true); // → paso 2
+  };
+
+  // Volver del paso 2 (cantidad) al paso 1 (buscar).
+  const volverABuscar = () => {
+    setElegida(false);
+    setManual(false);
+    setEditValores(false);
   };
 
   const cambiarModo = (m) => {
@@ -213,7 +241,7 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
     let nombreFinal = base;
     if (modo === "g") nombreFinal = `${base} · ${fmtCant(cantNum)} g`;
     else if (unidad) nombreFinal = `${base} · ${fmtCant(cantNum)} ${unidad}`;
-    else if (cantNum !== 1) nombreFinal = `${base} ×${fmtCant(cantNum)}`;
+    else if (cantNum !== 1) nombreFinal = `${base} · ${fmtCant(cantNum)} porciones`;
     onGuardar?.({
       franja: franja?.key,
       nombre: nombreFinal,
@@ -249,84 +277,102 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-            {IA_FOTO_HABILITADA ? (
-              <TouchableOpacity
-                style={[styles.iaBtn, analizando && { opacity: 0.7 }]}
-                onPress={analizarConFoto}
-                disabled={analizando}
-              >
-                {analizando ? (
-                  <ActivityIndicator color="#06210a" />
-                ) : (
-                  <>
-                    <Ionicons name="sparkles" size={16} color="#06210a" />
-                    <Text style={styles.iaBtnText}>Analizar con foto (IA)</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            ) : null}
-
-            <Text style={styles.label}>¿Qué comiste?</Text>
-            <TextInput
-              style={styles.input}
-              value={nombre}
-              onChangeText={(v) => {
-                setNombre(v);
-                setElegida(false);
-                setUnidad("");
-                setGramos(0);
-                setModo("porcion");
-              }}
-              placeholder="Ej: Milanesa con puré"
-              placeholderTextColor={colors.muted}
-              autoFocus
-            />
-
-            {sugerencias.length > 0 ? (
-              <View style={styles.sugList}>
-                {sugerencias.map((s, i) => (
+            {!elegida ? (
+              /* PASO 1 — buscar el alimento */
+              <>
+                {IA_FOTO_HABILITADA ? (
                   <TouchableOpacity
-                    key={`${s.nombre}-${i}`}
-                    style={[styles.sugRow, i > 0 && styles.sugRowBorder]}
-                    onPress={() => usarSugerencia(s)}
+                    style={[styles.iaBtn, analizando && { opacity: 0.7 }]}
+                    onPress={analizarConFoto}
+                    disabled={analizando}
                   >
-                    <Ionicons
-                      name={s.online ? "globe-outline" : s.propia ? "time-outline" : "restaurant-outline"}
-                      size={14}
-                      color={s.online ? colors.greenBright : s.propia ? colors.greenDark : colors.muted}
-                    />
-                    <Text style={styles.sugNombre} numberOfLines={1}>
-                      {s.nombre}
-                      {s.unidad ? (
-                        <Text style={styles.sugUnidad}>
-                          {" "}· {s.unidad}
-                          {s.gramos ? ` ≈${s.gramos} g` : ""}
-                        </Text>
-                      ) : null}
-                    </Text>
-                    <Text style={styles.sugKcal}>{s.kcal} kcal</Text>
+                    {analizando ? (
+                      <ActivityIndicator color="#06210a" />
+                    ) : (
+                      <>
+                        <Ionicons name="sparkles" size={16} color="#06210a" />
+                        <Text style={styles.iaBtnText}>Analizar con foto (IA)</Text>
+                      </>
+                    )}
                   </TouchableOpacity>
-                ))}
-              </View>
-            ) : null}
+                ) : null}
 
-            <View style={styles.filaDoble}>
-              <View style={styles.campoDoble}>
-                <Text style={styles.label}>Calorías (por {unidad || "unidad"})</Text>
+                <Text style={styles.label}>¿Qué comiste?</Text>
                 <TextInput
                   style={styles.input}
-                  value={kcal}
-                  onChangeText={(v) => setKcal(soloNum(v))}
-                  keyboardType="number-pad"
-                  placeholder="0"
+                  value={nombre}
+                  onChangeText={setNombre}
+                  placeholder="Buscá: milanesa, yogur, helado…"
                   placeholderTextColor={colors.muted}
+                  autoFocus
                 />
-                {gramos > 0 ? (
-                  <Text style={styles.kcal100Hint}>≈ {kcal100} kcal / 100 g</Text>
+
+                {sugerencias.length > 0 || nombre.trim().length >= 2 ? (
+                  <View style={styles.sugList}>
+                    {sugerencias.map((s, i) => (
+                      <TouchableOpacity
+                        key={`${s.nombre}-${i}`}
+                        style={[styles.sugRow, i > 0 && styles.sugRowBorder]}
+                        onPress={() => usarSugerencia(s)}
+                      >
+                        <Ionicons
+                          name={s.online ? "globe-outline" : s.propia ? "time-outline" : "restaurant-outline"}
+                          size={14}
+                          color={s.online ? colors.greenBright : s.propia ? colors.greenDark : colors.muted}
+                        />
+                        <Text style={styles.sugNombre} numberOfLines={1}>
+                          {s.nombre}
+                          {s.unidad ? (
+                            <Text style={styles.sugUnidad}>
+                              {" "}· {s.unidad}
+                              {s.gramos ? ` ≈${s.gramos} g` : ""}
+                            </Text>
+                          ) : null}
+                        </Text>
+                        <Text style={styles.sugKcal}>{s.kcal} kcal</Text>
+                      </TouchableOpacity>
+                    ))}
+                    {nombre.trim().length >= 2 ? (
+                      <TouchableOpacity
+                        style={[styles.sugRow, sugerencias.length > 0 && styles.sugRowBorder]}
+                        onPress={activarManual}
+                      >
+                        <Ionicons name="add-circle-outline" size={16} color={colors.greenBright} />
+                        <Text style={[styles.sugNombre, styles.sugManual]} numberOfLines={1}>
+                          Cargar “{nombre.trim()}” a mano
+                        </Text>
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
                 ) : null}
-              </View>
-              <View style={styles.campoCant}>
-                <Text style={styles.label}>Cantidad ({modo === "g" ? "g" : unidad || "u."})</Text>
+              </>
+            ) : (
+              /* PASO 2 — cantidad y (opcional) editar valores */
+              <>
+                <View style={styles.elegidoRow}>
+                  <TouchableOpacity style={styles.cambiarBtn} onPress={volverABuscar} hitSlop={8}>
+                    <Ionicons name="chevron-back" size={16} color={colors.muted} />
+                    <Text style={styles.cambiarText}>cambiar</Text>
+                  </TouchableOpacity>
+                  {manual ? (
+                    <TextInput
+                      style={[styles.input, { flex: 1 }]}
+                      value={nombre}
+                      onChangeText={setNombre}
+                      placeholder="Nombre de la comida"
+                      placeholderTextColor={colors.muted}
+                      autoFocus
+                    />
+                  ) : (
+                    <Text style={styles.elegidoNombre} numberOfLines={2}>
+                      {nombre}
+                    </Text>
+                  )}
+                </View>
+
+                <Text style={styles.label}>
+                  Cantidad ({modo === "g" ? "g" : unidad || (cantNum === 1 ? "porción" : "porciones")})
+                </Text>
                 <View style={styles.cantRow}>
                   <TouchableOpacity
                     style={styles.cantBtn}
@@ -356,89 +402,90 @@ export default function AddComidaModal({ visible, franja, onClose, onGuardar }) 
                     <Ionicons name="add" size={18} color={colors.text} />
                   </TouchableOpacity>
                 </View>
-              </View>
-            </View>
 
-            {gramos > 0 ? (
-              <View style={styles.modoToggle}>
-                <TouchableOpacity
-                  style={[styles.modoBtn, modo === "porcion" && styles.modoBtnOn]}
-                  onPress={() => cambiarModo("porcion")}
-                >
-                  <Text style={[styles.modoText, modo === "porcion" && styles.modoTextOn]}>
-                    Por {unidad}
+                {gramos > 0 ? (
+                  <View style={styles.modoToggle}>
+                    <TouchableOpacity
+                      style={[styles.modoBtn, modo === "porcion" && styles.modoBtnOn]}
+                      onPress={() => cambiarModo("porcion")}
+                    >
+                      <Text style={[styles.modoText, modo === "porcion" && styles.modoTextOn]}>
+                        Por {unidad}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.modoBtn, modo === "g" && styles.modoBtnOn]}
+                      onPress={() => cambiarModo("g")}
+                    >
+                      <Text style={[styles.modoText, modo === "g" && styles.modoTextOn]}>Gramos</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.cantChips}>
+                    {["0.5", "1", "2", "3"].map((v) => (
+                      <TouchableOpacity key={v} style={styles.cantChip} onPress={() => setCant(v)}>
+                        <Text style={styles.cantChipText}>{v === "0.5" ? "½" : v}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+
+                {!manual && !unidad && gramos === 0 && nombre.trim() ? (
+                  <Text style={styles.cantNota}>1 porción = «{nombre}»</Text>
+                ) : null}
+
+                {cantNum > 0 && kcalUnit > 0 ? (
+                  <Text style={styles.totalHint}>
+                    Total: {totalKcal} kcal
+                    {modo === "g"
+                      ? ` · ${fmtCant(cantNum)} g${
+                          gramos > 0 ? ` (≈ ${fmtCant(Math.round((cantNum / gramos) * 10) / 10)} ${unidad})` : ""
+                        }`
+                      : unidad
+                      ? ` · ${fmtCant(cantNum)} ${unidad}`
+                      : cantNum !== 1
+                      ? ` · ${fmtCant(cantNum)} porciones`
+                      : ""}
                   </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modoBtn, modo === "g" && styles.modoBtnOn]}
-                  onPress={() => cambiarModo("g")}
-                >
-                  <Text style={[styles.modoText, modo === "g" && styles.modoTextOn]}>Gramos</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.cantChips}>
-                {["0.5", "1", "2", "3"].map((v) => (
-                  <TouchableOpacity key={v} style={styles.cantChip} onPress={() => setCant(v)}>
-                    <Text style={styles.cantChipText}>{v === "0.5" ? "½" : v}</Text>
+                ) : null}
+
+                {editValores ? (
+                  <>
+                    <Text style={styles.label}>Calorías (por {unidad || "porción"})</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={kcal}
+                      onChangeText={(v) => setKcal(soloNum(v))}
+                      keyboardType="number-pad"
+                      placeholder="0"
+                      placeholderTextColor={colors.muted}
+                    />
+                    {gramos > 0 ? <Text style={styles.kcal100Hint}>≈ {kcal100} kcal / 100 g</Text> : null}
+
+                    <Text style={styles.label}>Macros (opcional, en gramos — por porción)</Text>
+                    <View style={styles.macrosRow}>
+                      <View style={styles.macroCampo}>
+                        <Text style={styles.macroLabel}>Carbos</Text>
+                        <TextInput style={styles.macroInput} value={carb} onChangeText={(v) => setCarb(soloNum(v))} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} />
+                      </View>
+                      <View style={styles.macroCampo}>
+                        <Text style={styles.macroLabel}>Proteína</Text>
+                        <TextInput style={styles.macroInput} value={prot} onChangeText={(v) => setProt(soloNum(v))} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} />
+                      </View>
+                      <View style={styles.macroCampo}>
+                        <Text style={styles.macroLabel}>Grasa</Text>
+                        <TextInput style={styles.macroInput} value={fat} onChangeText={(v) => setFat(soloNum(v))} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} />
+                      </View>
+                    </View>
+                  </>
+                ) : (
+                  <TouchableOpacity style={styles.editLinkBtn} onPress={() => setEditValores(true)}>
+                    <Ionicons name="create-outline" size={15} color={colors.muted} />
+                    <Text style={styles.editLinkText}>Editar calorías y macros</Text>
                   </TouchableOpacity>
-                ))}
-              </View>
+                )}
+              </>
             )}
-
-            {cantNum > 0 && kcalUnit > 0 && (modo === "g" || cantNum !== 1) ? (
-              <Text style={styles.totalHint}>
-                Total: {totalKcal} kcal
-                {modo === "g"
-                  ? ` · ${fmtCant(cantNum)} g${
-                      gramos > 0 ? ` (≈ ${fmtCant(Math.round((cantNum / gramos) * 10) / 10)} ${unidad})` : ""
-                    }`
-                  : unidad
-                  ? ` · ${fmtCant(cantNum)} ${unidad}`
-                  : ""}
-              </Text>
-            ) : null}
-
-            <Text style={styles.label}>Macros (opcional, en gramos — por unidad)</Text>
-            <View style={styles.macrosRow}>
-              <View style={styles.macroCampo}>
-                <Text style={styles.macroLabel}>Carbos</Text>
-                <TextInput
-                  style={styles.macroInput}
-                  value={carb}
-                  onChangeText={(v) => setCarb(soloNum(v))}
-                  keyboardType="number-pad"
-                  placeholder="0"
-                  placeholderTextColor={colors.muted}
-                />
-              </View>
-              <View style={styles.macroCampo}>
-                <Text style={styles.macroLabel}>Proteína</Text>
-                <TextInput
-                  style={styles.macroInput}
-                  value={prot}
-                  onChangeText={(v) => setProt(soloNum(v))}
-                  keyboardType="number-pad"
-                  placeholder="0"
-                  placeholderTextColor={colors.muted}
-                />
-              </View>
-              <View style={styles.macroCampo}>
-                <Text style={styles.macroLabel}>Grasa</Text>
-                <TextInput
-                  style={styles.macroInput}
-                  value={fat}
-                  onChangeText={(v) => setFat(soloNum(v))}
-                  keyboardType="number-pad"
-                  placeholder="0"
-                  placeholderTextColor={colors.muted}
-                />
-              </View>
-            </View>
-
-            <Text style={styles.hint}>
-              Más adelante vas a poder sacar una foto o mandar un audio y que se complete solo.
-            </Text>
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
@@ -578,4 +625,14 @@ const makeStyles = (colors) =>
     sugNombre: { flex: 1, color: colors.text, fontSize: 14, fontWeight: "600" },
     sugUnidad: { color: colors.muted, fontWeight: "600" },
     sugKcal: { color: colors.muted, fontSize: 12, fontWeight: "700" },
+    sugManual: { color: colors.greenBright, fontWeight: "700" },
+
+    // Paso 2
+    elegidoRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4 },
+    cambiarBtn: { flexDirection: "row", alignItems: "center", gap: 2 },
+    cambiarText: { color: colors.muted, fontSize: 13, fontWeight: "700" },
+    elegidoNombre: { flex: 1, color: colors.text, fontSize: 17, fontWeight: "800" },
+    cantNota: { color: colors.muted, fontSize: 12, fontWeight: "600", marginTop: 8 },
+    editLinkBtn: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 14, alignSelf: "flex-start" },
+    editLinkText: { color: colors.muted, fontSize: 13, fontWeight: "700", textDecorationLine: "underline" },
   });
