@@ -68,6 +68,8 @@ const serializar = (doc) => ({
     fecha: c.fecha,
     metros: c.metros,
     secs: c.secs,
+    tipo: c.tipo || "caminata",
+    kcal: c.kcal || 0,
   })),
   nutri: doc.nutri || null,
   metas: doc.metas || null,
@@ -96,6 +98,8 @@ export const getRecorridos = async (req, res) => {
         fecha: c.fecha,
         metros: c.metros,
         secs: c.secs,
+        tipo: c.tipo || "caminata",
+        kcal: c.kcal || 0,
         ruta: c.ruta.map((p) => ({ latitude: p.latitude, longitude: p.longitude })),
       }));
     return res.json({ recorridos });
@@ -138,12 +142,16 @@ export const deleteRecorrido = async (req, res) => {
         fecha: c.fecha,
         metros: c.metros,
         secs: c.secs,
+        tipo: c.tipo || "caminata",
+        kcal: c.kcal || 0,
         ruta: c.ruta.map((p) => ({ latitude: p.latitude, longitude: p.longitude })),
       }));
     const caminatas = (doc.caminatas || []).map((c) => ({
       fecha: c.fecha,
       metros: c.metros,
       secs: c.secs,
+      tipo: c.tipo || "caminata",
+      kcal: c.kcal || 0,
     }));
     return res.json({ recorridos, caminatas, removed });
   } catch (err) {
@@ -198,6 +206,8 @@ export const updateSalud = async (req, res) => {
           fecha: c.fecha,
           metros: num(c.metros),
           secs: num(c.secs),
+          tipo: ["caminata", "carrera", "bici"].includes(c.tipo) ? c.tipo : "caminata",
+          kcal: num(c.kcal),
           ruta: Array.isArray(c.ruta)
             ? c.ruta
                 .filter((p) => p && Number.isFinite(Number(p.latitude)) && Number.isFinite(Number(p.longitude)))

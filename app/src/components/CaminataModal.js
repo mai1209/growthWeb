@@ -28,6 +28,14 @@ const REGION_DEFAULT = {
   longitudeDelta: 0.01,
 };
 
+// Tipos de actividad (como en Strava): cambia la métrica principal (ritmo vs
+// velocidad) y el gasto calórico (MET). No cambia el GPS ni el trazado.
+const ACTIVIDADES = [
+  { key: "caminata", label: "Caminata", emoji: "🚶", met: 3.5, metrica: "ritmo" },
+  { key: "carrera", label: "Carrera", emoji: "🏃", met: 9.0, metrica: "ritmo" },
+  { key: "bici", label: "Bici", emoji: "🚴", met: 6.0, metrica: "velocidad" },
+];
+
 function haversine(a, b) {
   const dLat = toRad(b.latitude - a.latitude);
   const dLon = toRad(b.longitude - a.longitude);
@@ -83,7 +91,7 @@ const fmtTiempo = (secs) => {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 };
 
-export default function CaminataModal({ visible, onClose, onGuardar }) {
+export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70 }) {
   const { colors, isDark } = useTheme();
   const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
@@ -93,6 +101,7 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
   const [secs, setSecs] = useState(0);
   const [ruta, setRuta] = useState([]); // trazado del recorrido para el mapa
   const [enFondo, setEnFondo] = useState(false); // true si el tracking sigue en segundo plano
+  const [tipo, setTipo] = useState("caminata"); // tipo de actividad (recuerda la última)
 
   const subRef = useRef(null); // watchPosition (modo foreground / Expo Go)
   const mapRef = useRef(null);
@@ -222,15 +231,17 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
     terminarCaminataLA(); // termina la Live Activity
     setFase("resumen");
   };
-  const guardar = () => {
-    onGuardar?.({ metros: Math.round(track.metros), secs, ruta: track.puntos.slice() });
-    onClose?.();
-  };
-
+  const act = ACTIVIDADES.find((a) => a.key === tipo) || ACTIVIDADES[0];
   const km = metros / 1000;
   const ritmo = km > 0.02 && secs > 0 ? secs / 60 / km : 0; // min/km
   const vel = secs > 0 ? km / (secs / 3600) : 0; // km/h
+  const kcal = Math.round(act.met * (pesoKg || 70) * (secs / 3600)); // MET × peso × horas
   const ultimoPunto = ruta.length ? ruta[ruta.length - 1] : null;
+
+  const guardar = () => {
+    onGuardar?.({ metros: Math.round(track.metros), secs, ruta: track.puntos.slice(), tipo, kcal });
+    onClose?.();
+  };
 
   // El mapa sigue tu posición (punto verde) mientras caminás.
   useEffect(() => {
@@ -248,7 +259,7 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
           <TouchableOpacity onPress={onClose} hitSlop={10}>
             <Ionicons name="close" size={26} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Caminata</Text>
+          <Text style={styles.title}>{act.label}</Text>
           <View style={{ width: 26 }} />
         </View>
 
@@ -310,6 +321,19 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
             </View>
 
             <View style={styles.panel}>
+              <View style={styles.actSelector}>
+                {ACTIVIDADES.map((a) => (
+                  <TouchableOpacity
+                    key={a.key}
+                    style={[styles.actChip, tipo === a.key && styles.actChipOn]}
+                    onPress={() => setTipo(a.key)}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.actEmoji}>{a.emoji}</Text>
+                    <Text style={[styles.actLabel, tipo === a.key && styles.actLabelOn]}>{a.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
               {fase !== "resumen" ? (
                 <View style={[styles.estado, fase === "pausado" && styles.estadoPausa]}>
                   <View style={[styles.estadoDot, fase === "pausado" && styles.estadoDotPausa]} />
@@ -335,15 +359,23 @@ export default function CaminataModal({ visible, onClose, onGuardar }) {
                   <Text style={styles.statCardNum}>{fmtTiempo(secs)}</Text>
                   <Text style={styles.statCardLbl}>tiempo</Text>
                 </View>
+                {act.metrica === "velocidad" ? (
+                  <View style={styles.statCard}>
+                    <Ionicons name="speedometer-outline" size={17} color={colors.greenBright} />
+                    <Text style={styles.statCardNum}>{vel > 0 ? vel.toFixed(1) : "—"}</Text>
+                    <Text style={styles.statCardLbl}>km/h</Text>
+                  </View>
+                ) : (
+                  <View style={styles.statCard}>
+                    <Ionicons name="speedometer-outline" size={17} color={colors.greenBright} />
+                    <Text style={styles.statCardNum}>{ritmo > 0 ? ritmo.toFixed(1) : "—"}</Text>
+                    <Text style={styles.statCardLbl}>min/km</Text>
+                  </View>
+                )}
                 <View style={styles.statCard}>
-                  <Ionicons name="speedometer-outline" size={17} color={colors.greenBright} />
-                  <Text style={styles.statCardNum}>{ritmo > 0 ? ritmo.toFixed(1) : "—"}</Text>
-                  <Text style={styles.statCardLbl}>min/km</Text>
-                </View>
-                <View style={styles.statCard}>
-                  <Ionicons name="flash-outline" size={17} color={colors.greenBright} />
-                  <Text style={styles.statCardNum}>{vel > 0 ? vel.toFixed(1) : "—"}</Text>
-                  <Text style={styles.statCardLbl}>km/h</Text>
+                  <Ionicons name="flame-outline" size={17} color={colors.greenBright} />
+                  <Text style={styles.statCardNum}>{kcal > 0 ? kcal : "—"}</Text>
+                  <Text style={styles.statCardLbl}>kcal</Text>
                 </View>
               </View>
 
@@ -445,6 +477,24 @@ const makeStyles = (colors) =>
       borderColor: "#fff",
     },
     panel: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 18, alignItems: "center", gap: 10 },
+
+    actSelector: { flexDirection: "row", gap: 8, alignSelf: "stretch" },
+    actChip: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 5,
+      paddingVertical: 8,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+    },
+    actChipOn: { borderColor: colors.greenBright, backgroundColor: "rgba(93,199,45,0.14)" },
+    actEmoji: { fontSize: 15 },
+    actLabel: { color: colors.muted, fontSize: 13, fontWeight: "800" },
+    actLabelOn: { color: colors.greenBright },
 
     estado: {
       flexDirection: "row",

@@ -36,6 +36,8 @@ const saludSchema = new mongoose.Schema(
           fecha: String,
           metros: Number,
           secs: Number,
+          tipo: String, // "caminata" | "carrera" | "bici"
+          kcal: Number, // calorías estimadas de la actividad
           ruta: { type: [{ _id: false, latitude: Number, longitude: Number }], default: undefined },
         },
       ],

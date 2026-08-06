@@ -642,7 +642,15 @@ export default function SaludScreen() {
   const guardarCaminata = (walk) => {
     if (!walk || walk.metros <= 0) return;
     const ruta = Array.isArray(walk.ruta) ? walk.ruta.slice(0, 500) : [];
-    const lista = [{ fecha: hoy, metros: walk.metros, secs: walk.secs, ruta }, ...caminatas].slice(0, 50);
+    const nueva = {
+      fecha: hoy,
+      metros: walk.metros,
+      secs: walk.secs,
+      ruta,
+      tipo: walk.tipo || "caminata",
+      kcal: Number(walk.kcal) || 0,
+    };
+    const lista = [nueva, ...caminatas].slice(0, 50);
     setCaminatas(lista);
     SecureStore.setItemAsync(CAMINATAS_KEY, JSON.stringify({ lista })).catch(() => {});
     pushSalud({ caminatas: lista });
@@ -1272,6 +1280,7 @@ export default function SaludScreen() {
         visible={caminataOpen}
         onClose={() => setCaminataOpen(false)}
         onGuardar={guardarCaminata}
+        pesoKg={pesoActual || nutri?.peso || 70}
       />
 
       <RecorridosModal

@@ -57,6 +57,14 @@ const ANIMOS = [
   { level: 5, emoji: "😄", label: "Genial" },
 ];
 
+// Metadatos del tipo de actividad (caminata/carrera/bici), para mostrar ícono y nombre.
+const ACT_META = {
+  caminata: { label: "Caminata", emoji: "🚶" },
+  carrera: { label: "Carrera", emoji: "🏃" },
+  bici: { label: "Bici", emoji: "🚴" },
+};
+const actMeta = (t) => ACT_META[t] || ACT_META.caminata;
+
 const pad = (n) => String(n).padStart(2, "0");
 const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const addDays = (key, delta) => {
@@ -453,7 +461,9 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
               <div className={style.recInfoTxt}>
                 <strong>{(sel.metros / 1000).toFixed(2)} km</strong>
                 <span>
-                  {fechaLabel(sel.fecha, hoy)} · {Math.floor((sel.secs || 0) / 60)} min
+                  {actMeta(sel.tipo).emoji} {actMeta(sel.tipo).label} · {fechaLabel(sel.fecha, hoy)} ·{" "}
+                  {Math.floor((sel.secs || 0) / 60)} min
+                  {sel.kcal ? ` · ${sel.kcal} kcal` : ""}
                 </span>
               </div>
               <button
@@ -1183,9 +1193,13 @@ export default function SaludPage() {
               <ul className={style.caminatas}>
                 {data.caminatas.slice(0, 5).map((c, i) => (
                   <li key={i}>
+                    <span className={style.caminataTipo} title={actMeta(c.tipo).label}>
+                      {actMeta(c.tipo).emoji}
+                    </span>
                     <span>{c.fecha}</span>
                     <strong>{(c.metros / 1000).toFixed(2)} km</strong>
                     <span>{Math.floor((c.secs || 0) / 60)} min</span>
+                    {c.kcal ? <span className={style.caminataKcal}>{c.kcal} kcal</span> : null}
                     <button
                       type="button"
                       className={style.caminataDel}
