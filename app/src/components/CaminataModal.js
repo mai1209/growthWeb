@@ -286,29 +286,25 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
           </View>
         ) : (
           <View style={styles.body}>
-            <View style={styles.topSelector}>
-              <View style={styles.actSelector}>
-                {ACTIVIDADES.map((a) => (
-                  <TouchableOpacity
-                    key={a.key}
-                    style={[styles.actChip, tipo === a.key && styles.actChipOn]}
-                    onPress={() => setTipo(a.key)}
-                    activeOpacity={0.85}
-                  >
-                    <MaterialCommunityIcons
-                      name={a.icon}
-                      size={17}
-                      color={tipo === a.key ? colors.greenBright : colors.text}
-                    />
-                    <Text style={[styles.actLabel, tipo === a.key && styles.actLabelOn]} numberOfLines={1}>
-                      {a.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <TouchableOpacity style={styles.infoBtn} onPress={infoActividad} hitSlop={10}>
-                <Ionicons name="information-circle-outline" size={22} color={colors.muted} />
-              </TouchableOpacity>
+            <View style={styles.topEstado}>
+              {fase === "listo" ? (
+                <View style={styles.estado}>
+                  <Ionicons name="location" size={14} color={colors.greenBright} />
+                  <Text style={styles.estadoTxt}>GPS LISTO</Text>
+                </View>
+              ) : fase !== "resumen" ? (
+                <View style={[styles.estado, fase === "pausado" && styles.estadoPausa]}>
+                  <View style={[styles.estadoDot, fase === "pausado" && styles.estadoDotPausa]} />
+                  <Text style={[styles.estadoTxt, fase === "pausado" && styles.estadoTxtPausa]}>
+                    {fase === "activo" ? "EN CURSO" : "EN PAUSA"}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.estado}>
+                  <Ionicons name="checkmark-circle" size={14} color={colors.greenBright} />
+                  <Text style={styles.estadoTxt}>{act.label.toUpperCase()} LISTA</Text>
+                </View>
+              )}
             </View>
             <View style={styles.mapWrap}>
               {Platform.OS === "android" ? (
@@ -353,24 +349,30 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
             </View>
 
             <View style={styles.panel}>
-              {fase === "listo" ? (
-                <View style={styles.estado}>
-                  <Ionicons name="location" size={14} color={colors.greenBright} />
-                  <Text style={styles.estadoTxt}>GPS LISTO</Text>
+              <View style={styles.selectorRow}>
+                <View style={styles.actSelector}>
+                  {ACTIVIDADES.map((a) => (
+                    <TouchableOpacity
+                      key={a.key}
+                      style={[styles.actChip, tipo === a.key && styles.actChipOn]}
+                      onPress={() => setTipo(a.key)}
+                      activeOpacity={0.85}
+                    >
+                      <MaterialCommunityIcons
+                        name={a.icon}
+                        size={17}
+                        color={tipo === a.key ? colors.greenBright : colors.text}
+                      />
+                      <Text style={[styles.actLabel, tipo === a.key && styles.actLabelOn]} numberOfLines={1}>
+                        {a.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
-              ) : fase !== "resumen" ? (
-                <View style={[styles.estado, fase === "pausado" && styles.estadoPausa]}>
-                  <View style={[styles.estadoDot, fase === "pausado" && styles.estadoDotPausa]} />
-                  <Text style={[styles.estadoTxt, fase === "pausado" && styles.estadoTxtPausa]}>
-                    {fase === "activo" ? "EN CURSO" : "EN PAUSA"}
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.estado}>
-                  <Ionicons name="checkmark-circle" size={14} color={colors.greenBright} />
-                  <Text style={styles.estadoTxt}>{act.label.toUpperCase()} LISTA</Text>
-                </View>
-              )}
+                <TouchableOpacity style={styles.infoBtn} onPress={infoActividad} hitSlop={10}>
+                  <Ionicons name="information-circle-outline" size={22} color={colors.muted} />
+                </TouchableOpacity>
+              </View>
 
               <View style={styles.kmRow}>
                 <Text style={styles.kmBig}>{km.toFixed(2)}</Text>
@@ -516,12 +518,16 @@ const makeStyles = (colors) =>
     },
     panel: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 18, alignItems: "center", gap: 10 },
 
-    topSelector: {
+    topEstado: {
+      paddingHorizontal: 16,
+      paddingBottom: 6,
+      alignItems: "flex-start",
+    },
+    selectorRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: 8,
-      paddingHorizontal: 12,
-      paddingBottom: 8,
+      alignSelf: "stretch",
     },
     infoBtn: { padding: 2 },
     actSelector: { flex: 1, flexDirection: "row", gap: 7 },
