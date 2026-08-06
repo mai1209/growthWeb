@@ -17,6 +17,8 @@ import MapView, { Polyline, Marker } from "react-native-maps";
 import { iniciarCaminataLA, actualizarCaminataLA, terminarCaminataLA } from "../services/liveActivity";
 import * as TaskManager from "expo-task-manager";
 import { useTheme } from "../theme";
+import { communityService } from "../api";
+import { COMUNIDAD_HABILITADA } from "../config";
 
 const R_TIERRA = 6371000; // metros
 const toRad = (x) => (x * Math.PI) / 180;
@@ -103,6 +105,7 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
   const [ruta, setRuta] = useState([]); // trazado del recorrido para el mapa
   const [enFondo, setEnFondo] = useState(false); // true si el tracking sigue en segundo plano
   const [tipo, setTipo] = useState("caminata"); // tipo de actividad (recuerda la última)
+  const [compartir, setCompartir] = useState(false); // compartir en comunidad al guardar
 
   const subRef = useRef(null); // watchPosition (modo foreground / Expo Go)
   const mapRef = useRef(null);
@@ -186,6 +189,7 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
       setMetros(0);
       setSecs(0);
       setRuta([]);
+      setCompartir(false);
       track.metros = 0;
       track.last = null;
       track.puntos = [];
@@ -241,7 +245,21 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
   const ultimoPunto = ruta.length ? ruta[ruta.length - 1] : null;
 
   const guardar = () => {
-    onGuardar?.({ metros: Math.round(track.metros), secs, ruta: track.puntos.slice(), tipo, kcal });
+    const metrosR = Math.round(track.metros);
+    const ruta = track.puntos.slice();
+    onGuardar?.({ metros: metrosR, secs, ruta, tipo, kcal });
+    // Si eligió compartir, publica la actividad en la comunidad (best-effort).
+    if (compartir && COMUNIDAD_HABILITADA) {
+      const d = new Date();
+      const p2 = (n) => String(n).padStart(2, "0");
+      const fecha = `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+      communityService
+        .crearPost({
+          tipo: "actividad",
+          actividad: { tipo, metros: metrosR, secs, kcal, fecha, ruta },
+        })
+        .catch(() => {});
+    }
     onClose?.();
   };
 
@@ -433,14 +451,27 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
                 </TouchableOpacity>
               </View>
             ) : fase === "resumen" ? (
-              <View style={styles.acciones}>
-                <TouchableOpacity style={styles.btnSec} onPress={onClose}>
-                  <Text style={styles.btnSecText}>Descartar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnPrim} onPress={guardar}>
-                  <Text style={styles.btnPrimText}>Guardar</Text>
-                </TouchableOpacity>
-              </View>
+              <>
+                {COMUNIDAD_HABILITADA ? (
+                  <TouchableOpacity style={styles.compartirRow} onPress={() => setCompartir((v) => !v)}>
+                    <Ionicons
+                      name={compartir ? "checkbox" : "square-outline"}
+                      size={20}
+                      color={compartir ? colors.greenBright : colors.muted}
+                    />
+                    <Ionicons name="globe-outline" size={15} color={colors.greenBright} />
+                    <Text style={styles.compartirTxt}>Compartir en comunidad</Text>
+                  </TouchableOpacity>
+                ) : null}
+                <View style={styles.acciones}>
+                  <TouchableOpacity style={styles.btnSec} onPress={onClose}>
+                    <Text style={styles.btnSecText}>Descartar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.btnPrim} onPress={guardar}>
+                    <Text style={styles.btnPrimText}>Guardar</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
             ) : null}
 
             {fase === "listo" ? (
@@ -574,6 +605,8 @@ const makeStyles = (colors) =>
     statNum: { color: colors.text, fontSize: 28, fontWeight: "800" },
     statLbl: { color: colors.muted, fontSize: 12, fontWeight: "700" },
 
+    compartirRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
+    compartirTxt: { color: colors.text, fontSize: 13.5, fontWeight: "700" },
     acciones: { flexDirection: "row", gap: 12 },
     btnSec: {
       flexDirection: "row",

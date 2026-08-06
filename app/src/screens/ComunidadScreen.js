@@ -17,8 +17,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import Svg, { Path, Circle } from "react-native-svg";
 import { useTheme } from "../theme";
 import { communityService } from "../api";
+import { elegirFotoComida } from "../utils/foto";
 
 const ACT = {
   caminata: { label: "Caminata", icon: "walk" },
@@ -41,6 +43,38 @@ const fmtTiempo = (secs) => {
   const m = Math.floor((secs || 0) / 60);
   return `${m} min`;
 };
+
+// Dibuja el trazado de un recorrido (proyección equirectangular) en un SVG chico.
+function RutaMini({ ruta, colors, W = 320, H = 150 }) {
+  if (!Array.isArray(ruta) || ruta.length < 2) return null;
+  const pad = 14;
+  const lats = ruta.map((p) => p.latitude);
+  const lngs = ruta.map((p) => p.longitude);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+  const kx = Math.cos((((minLat + maxLat) / 2) * Math.PI) / 180) || 1;
+  const spanLng = (maxLng - minLng) * kx || 1e-6;
+  const spanLat = maxLat - minLat || 1e-6;
+  const scale = Math.min((W - 2 * pad) / spanLng, (H - 2 * pad) / spanLat);
+  const offX = (W - spanLng * scale) / 2;
+  const offY = (H - spanLat * scale) / 2;
+  const pts = ruta.map((p) => [
+    offX + (p.longitude - minLng) * kx * scale,
+    H - offY - (p.latitude - minLat) * scale,
+  ]);
+  const d = "M " + pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" L ");
+  const ini = pts[0];
+  const fin = pts[pts.length - 1];
+  return (
+    <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`}>
+      <Path d={d} fill="none" stroke={colors.greenBright} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx={ini[0]} cy={ini[1]} r={5} fill="#fff" stroke={colors.greenBright} strokeWidth={3} />
+      <Circle cx={fin[0]} cy={fin[1]} r={6} fill={colors.greenBright} stroke="#fff" strokeWidth={2} />
+    </Svg>
+  );
+}
 
 // Avatar con inicial de fallback.
 function Avatar({ user, size = 44, colors }) {
@@ -132,8 +166,8 @@ export default function ComunidadScreen({ navigation }) {
     cargarMiPerfil();
   }, [cargarMiPerfil]);
 
-  const publicar = (texto) => {
-    return communityService.crearPost({ tipo: "texto", texto }).then(({ data }) => {
+  const publicar = ({ texto, foto }) => {
+    return communityService.crearPost({ tipo: "texto", texto, foto }).then(({ data }) => {
       if (data?.post) setFeed((prev) => [data.post, ...(prev || [])]);
       cargarMiPerfil();
     });
@@ -159,15 +193,24 @@ export default function ComunidadScreen({ navigation }) {
 
       {item.texto ? <Text style={styles.postTexto}>{item.texto}</Text> : null}
 
+      {item.foto ? <Image source={{ uri: item.foto }} style={styles.postFoto} /> : null}
+
       {item.tipo === "actividad" && item.actividad ? (
-        <View style={styles.actCard}>
-          <MaterialCommunityIcons name={actMeta(item.actividad.tipo).icon} size={20} color={colors.greenBright} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.actTitulo}>{actMeta(item.actividad.tipo).label}</Text>
-            <Text style={styles.actStats}>
-              {(item.actividad.metros / 1000).toFixed(2)} km · {fmtTiempo(item.actividad.secs)}
-              {item.actividad.kcal ? ` · ${item.actividad.kcal} kcal` : ""}
-            </Text>
+        <View style={styles.actWrap}>
+          {Array.isArray(item.actividad.ruta) && item.actividad.ruta.length > 1 ? (
+            <View style={styles.actMapa}>
+              <RutaMini ruta={item.actividad.ruta} colors={colors} />
+            </View>
+          ) : null}
+          <View style={styles.actCard}>
+            <MaterialCommunityIcons name={actMeta(item.actividad.tipo).icon} size={20} color={colors.greenBright} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.actTitulo}>{actMeta(item.actividad.tipo).label}</Text>
+              <Text style={styles.actStats}>
+                {(item.actividad.metros / 1000).toFixed(2)} km · {fmtTiempo(item.actividad.secs)}
+                {item.actividad.kcal ? ` · ${item.actividad.kcal} kcal` : ""}
+              </Text>
+            </View>
           </View>
         </View>
       ) : null}
@@ -278,11 +321,17 @@ export default function ComunidadScreen({ navigation }) {
 // ---------- Compartir (posteo de texto) ----------
 function ComposeModal({ colors, styles, onClose, onPublicar }) {
   const [texto, setTexto] = useState("");
+  const [foto, setFoto] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const vacio = !texto.trim() && !foto;
+  const agregarFoto = async () => {
+    const r = await elegirFotoComida();
+    if (r?.base64) setFoto(`data:${r.mediaType};base64,${r.base64}`);
+  };
   const enviar = () => {
-    if (!texto.trim() || enviando) return;
+    if (vacio || enviando) return;
     setEnviando(true);
-    onPublicar(texto.trim())
+    onPublicar({ texto: texto.trim(), foto })
       .then(() => onClose())
       .catch(() => Alert.alert("Error", "No se pudo publicar."))
       .finally(() => setEnviando(false));
@@ -296,8 +345,8 @@ function ComposeModal({ colors, styles, onClose, onPublicar }) {
               <Text style={styles.composeCancel}>Cancelar</Text>
             </TouchableOpacity>
             <Text style={styles.composeTitulo}>Nuevo posteo</Text>
-            <TouchableOpacity onPress={enviar} disabled={!texto.trim() || enviando} hitSlop={8}>
-              <Text style={[styles.composeOk, (!texto.trim() || enviando) && { opacity: 0.4 }]}>Publicar</Text>
+            <TouchableOpacity onPress={enviar} disabled={vacio || enviando} hitSlop={8}>
+              <Text style={[styles.composeOk, (vacio || enviando) && { opacity: 0.4 }]}>Publicar</Text>
             </TouchableOpacity>
           </View>
           <TextInput
@@ -310,6 +359,18 @@ function ComposeModal({ colors, styles, onClose, onPublicar }) {
             autoFocus
             maxLength={600}
           />
+          {foto ? (
+            <View style={styles.composeFotoWrap}>
+              <Image source={{ uri: foto }} style={styles.composeFoto} />
+              <TouchableOpacity style={styles.composeFotoX} onPress={() => setFoto("")} hitSlop={8}>
+                <Ionicons name="close-circle" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          ) : null}
+          <TouchableOpacity style={styles.composeFotoBtn} onPress={agregarFoto}>
+            <Ionicons name="image-outline" size={18} color={colors.greenBright} />
+            <Text style={styles.composeFotoBtnTxt}>{foto ? "Cambiar foto" : "Agregar foto"}</Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -615,6 +676,9 @@ const makeStyles = (colors) =>
     postAutor: { color: colors.text, fontSize: 15, fontWeight: "800" },
     postFecha: { color: colors.muted, fontSize: 12, fontWeight: "600" },
     postTexto: { color: colors.text, fontSize: 15, lineHeight: 21 },
+    postFoto: { width: "100%", height: 200, borderRadius: 12, resizeMode: "cover" },
+    actWrap: { gap: 8 },
+    actMapa: { backgroundColor: "rgba(93,199,45,0.08)", borderRadius: 12, padding: 8 },
     actCard: {
       flexDirection: "row",
       alignItems: "center",
@@ -649,9 +713,14 @@ const makeStyles = (colors) =>
       color: colors.text,
       fontSize: 16,
       lineHeight: 22,
-      minHeight: 120,
+      minHeight: 100,
       textAlignVertical: "top",
     },
+    composeFotoWrap: { position: "relative", marginTop: 4 },
+    composeFoto: { width: "100%", height: 180, borderRadius: 12, resizeMode: "cover" },
+    composeFotoX: { position: "absolute", top: 8, right: 8 },
+    composeFotoBtn: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingVertical: 8 },
+    composeFotoBtnTxt: { color: colors.greenBright, fontWeight: "800", fontSize: 14 },
 
     buscarWrap: {
       flexDirection: "row",
