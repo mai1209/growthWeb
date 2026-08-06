@@ -69,6 +69,10 @@ const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDa
 // Tipo de actividad (para el resumen): etiqueta e ícono.
 const ACT_LABEL = { caminata: "Caminata", carrera: "Carrera", bici: "Bici" };
 const ACT_ICON = { caminata: "walk", carrera: "run", bici: "bike" };
+
+// Estimación de calorías quemadas por los pasos, ajustada por peso (~0,04 kcal/paso a 70 kg).
+const kcalDePasos = (pasos, pesoKg) =>
+  Math.round((Number(pasos) || 0) * 0.04 * ((Number(pesoKg) || 70) / 70));
 const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
 const addDays = (key, delta) => {
   const d = new Date(`${key}T00:00:00`);
@@ -829,6 +833,7 @@ export default function SaludScreen() {
   }, [pasosHist, pasosManual]);
 
   const pctPasos = pasos != null ? Math.round((pasosHoyTotal / metaPasos) * 100) : 0;
+  const kcalPasosHoy = kcalDePasos(pasosHoyTotal, pesoActual);
   const pctAgua = Math.round((agua / metaAgua) * 100);
 
   // ----- Tendencia por período (D/S/M/A) -----
@@ -1258,6 +1263,9 @@ export default function SaludScreen() {
                     {pasos != null ? pasosHoyTotal.toLocaleString("es-AR") : "—"}
                   </Text>
                   <Text style={styles.ringSub}>de {metaPasos.toLocaleString("es-AR")}</Text>
+                  {kcalPasosHoy > 0 ? (
+                    <Text style={styles.kcalPasos}>≈ {kcalPasosHoy} kcal 🔥</Text>
+                  ) : null}
                   {manualHoy > 0 ? (
                     <Text style={styles.manualHint}>+{manualHoy.toLocaleString("es-AR")} manual</Text>
                   ) : null}
@@ -1530,6 +1538,7 @@ const makeStyles = (colors) =>
     modalSub: { color: colors.muted, fontSize: 12.5, lineHeight: 18, marginTop: 6 },
     pasosBtns: { flexDirection: "row", gap: 5 },
     manualHint: { color: colors.greenBright, fontSize: 11, fontWeight: "800", marginTop: 2 },
+    kcalPasos: { color: colors.muted, fontSize: 11, fontWeight: "700", marginTop: 2 },
     modalInput: {
       backgroundColor: colors.card,
       borderWidth: 1,

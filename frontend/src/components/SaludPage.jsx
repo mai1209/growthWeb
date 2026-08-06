@@ -60,6 +60,11 @@ const FRANJAS = [
 
 // Formatea la cantidad: 0.5 -> "0,5", 2 -> "2", 1.5 -> "1,5".
 const fmtCant = (n) => (Number.isInteger(n) ? String(n) : String(n).replace(".", ","));
+
+// Estimación de calorías quemadas por los pasos, ajustada por peso.
+// ~0,04 kcal/paso para 70 kg; escala lineal con el peso.
+const kcalDePasos = (pasos, pesoKg) =>
+  Math.round((Number(pasos) || 0) * 0.04 * ((Number(pesoKg) || 70) / 70));
 const ANIMOS = [
   { level: 1, emoji: "😔", label: "Mal" },
   { level: 2, emoji: "😕", label: "Bajón" },
@@ -750,6 +755,15 @@ export default function SaludPage() {
   const pasosDe = (k) => (Number(data?.pasos?.[k]) || 0) + (Number(data?.pasosManual?.[k]) || 0);
   const pasosHoy = pasosDe(hoy);
 
+  // Peso actual (último registrado o el del plan) para estimar calorías de los pasos.
+  const pesoKg = (() => {
+    if (Number(data?.nutri?.peso) > 0) return Number(data.nutri.peso);
+    const p = data?.peso || {};
+    const ks = Object.keys(p).sort();
+    return ks.length ? Number(p[ks[ks.length - 1]]) || 70 : 70;
+  })();
+  const kcalPasosHoy = kcalDePasos(pasosHoy, pesoKg);
+
   // Resumen de actividad (caminatas/carreras/salidas en bici) por período.
   const cutoffSemana = addDays(hoy, -6);
   const resumen = (data?.caminatas || [])
@@ -1415,6 +1429,9 @@ export default function SaludPage() {
               <Ring percent={(pasosHoy / metaPasos) * 100} color="var(--color-verde, #5dc72d)">
                 <strong>{pasosHoy.toLocaleString("es-AR")}</strong>
                 <small>de {metaPasos.toLocaleString("es-AR")}</small>
+                {kcalPasosHoy > 0 ? (
+                  <small className={style.kcalPasos}>≈ {kcalPasosHoy} kcal 🔥</small>
+                ) : null}
                 {Number(data?.pasosManual?.[hoy]) > 0 ? (
                   <small className={style.manualHint}>+{Number(data.pasosManual[hoy]).toLocaleString("es-AR")} manual</small>
                 ) : null}

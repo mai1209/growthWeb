@@ -836,6 +836,11 @@
   color: var(--color-verde, #5dc72d) !important;
   font-weight: 800;
 }
+.kcalPasos {
+  color: var(--color-muted) !important;
+  font-weight: 700;
+  font-size: 0.72rem;
+}
 
 .badgeTel {
   font-size: 0.7rem;
