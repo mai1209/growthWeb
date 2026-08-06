@@ -9,6 +9,7 @@ import {
   FiHeart,
   FiInfo,
   FiNavigation,
+  FiPlay,
   FiPlus,
   FiRefreshCw,
   FiSmile,
@@ -407,7 +408,7 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
       H - offY - (p.latitude - minLat) * scale,
     ]);
     const d = "M " + pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" L ");
-    return { W, H, d, ini: pts[0], fin: pts[pts.length - 1] };
+    return { W, H, d, pts, ini: pts[0], fin: pts[pts.length - 1] };
   }, [sel]);
 
   const fechaCorta = (k) =>
@@ -428,6 +429,37 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
       .catch(() => {})
       .finally(() => setBorrando(false));
   };
+
+  // Replay animado del recorrido: la ruta se dibuja y un puntito la recorre.
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(1); // 0..1 (1 = ruta completa)
+  useEffect(() => {
+    // Al cambiar de recorrido: mostramos la ruta entera y frenamos el replay.
+    setPlaying(false);
+    setProgress(1);
+  }, [idx, recorridos]);
+  useEffect(() => {
+    if (!playing) return undefined;
+    let raf;
+    let start = null;
+    const DUR = 4200; // ms que dura el replay
+    const step = (t) => {
+      if (start === null) start = t;
+      const p = Math.min(1, (t - start) / DUR);
+      setProgress(p);
+      if (p < 1) raf = requestAnimationFrame(step);
+      else setPlaying(false);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [playing]);
+  const reproducir = () => {
+    if (!svg) return;
+    setProgress(0);
+    setPlaying(true);
+  };
+  const nPts = svg ? svg.pts.length : 0;
+  const dotPos = nPts ? svg.pts[Math.min(nPts - 1, Math.round(progress * (nPts - 1)))] : null;
 
   return (
     <div className={style.recOverlay} onClick={onClose}>
@@ -450,24 +482,53 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
           <>
             <div className={style.recMapa}>
               {svg ? (
-                <svg viewBox={`0 0 ${svg.W} ${svg.H}`} width="100%" preserveAspectRatio="xMidYMid meet">
-                  <defs>
-                    <linearGradient id="recRuta" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#7ee787" />
-                      <stop offset="100%" stopColor="var(--color-verde, #5dc72d)" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d={svg.d}
-                    fill="none"
-                    stroke="url(#recRuta)"
-                    strokeWidth="6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <circle cx={svg.ini[0]} cy={svg.ini[1]} r="8" fill="#fff" stroke="var(--color-verde, #5dc72d)" strokeWidth="3" />
-                  <circle cx={svg.fin[0]} cy={svg.fin[1]} r="9" fill="var(--color-verde, #5dc72d)" stroke="#fff" strokeWidth="3" />
-                </svg>
+                <>
+                  <svg viewBox={`0 0 ${svg.W} ${svg.H}`} width="100%" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                      <linearGradient id="recRuta" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor="#7ee787" />
+                        <stop offset="100%" stopColor="var(--color-verde, #5dc72d)" />
+                      </linearGradient>
+                    </defs>
+                    {/* Traza completa, tenue, de fondo */}
+                    <path
+                      d={svg.d}
+                      fill="none"
+                      stroke="var(--color-verde, #5dc72d)"
+                      strokeOpacity="0.22"
+                      strokeWidth="6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    {/* Traza que se dibuja según el progreso del replay */}
+                    <path
+                      d={svg.d}
+                      pathLength="1"
+                      fill="none"
+                      stroke="url(#recRuta)"
+                      strokeWidth="6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeDasharray="1"
+                      strokeDashoffset={1 - progress}
+                    />
+                    <circle cx={svg.ini[0]} cy={svg.ini[1]} r="8" fill="#fff" stroke="var(--color-verde, #5dc72d)" strokeWidth="3" />
+                    {progress >= 1 ? (
+                      <circle cx={svg.fin[0]} cy={svg.fin[1]} r="9" fill="var(--color-verde, #5dc72d)" stroke="#fff" strokeWidth="3" />
+                    ) : dotPos ? (
+                      <circle cx={dotPos[0]} cy={dotPos[1]} r="9" fill="var(--color-verde, #5dc72d)" stroke="#fff" strokeWidth="3" />
+                    ) : null}
+                  </svg>
+                  <button
+                    type="button"
+                    className={style.recPlay}
+                    onClick={reproducir}
+                    disabled={playing}
+                    aria-label="Reproducir recorrido"
+                  >
+                    <FiPlay /> {playing ? "Reproduciendo…" : "Reproducir"}
+                  </button>
+                </>
               ) : (
                 <p className={style.hint}>Este recorrido no tiene trazado guardado.</p>
               )}

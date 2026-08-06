@@ -668,6 +668,7 @@
   background: rgba(255, 255, 255, 0.14);
 }
 .recMapa {
+  position: relative;
   border: 1px solid var(--border-color);
   border-radius: 16px;
   background:
@@ -678,6 +679,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.recPlay {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: none;
+  background: var(--color-verde, #5dc72d);
+  color: #06210a;
+  font-weight: 800;
+  font-size: 0.82rem;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+.recPlay:disabled {
+  opacity: 0.7;
+  cursor: default;
 }
 .recInfo {
   display: flex;

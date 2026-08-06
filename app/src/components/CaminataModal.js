@@ -424,7 +424,10 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
                 acá para pausar o finalizar.
               </Text>
             ) : (
-              <Text style={styles.resumenTxt}>Mantené la pantalla abierta mientras caminás.</Text>
+              <Text style={styles.resumenTxt}>
+                Para que siga midiéndose con la pantalla bloqueada, permití “Ubicación: Siempre” en
+                los ajustes del teléfono. Por ahora, mantené la app abierta.
+              </Text>
             )}
             </View>
           </View>
