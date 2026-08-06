@@ -312,6 +312,7 @@ export default function ComunidadScreen({ navigation }) {
 
 // ---------- Compartir (posteo de texto) ----------
 function ComposeModal({ colors, styles, onClose, onPublicar }) {
+  const insets = useSafeAreaInsets();
   const [texto, setTexto] = useState("");
   const [foto, setFoto] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -329,18 +330,21 @@ function ComposeModal({ colors, styles, onClose, onPublicar }) {
       .finally(() => setEnviando(false));
   };
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <View style={styles.composeCard}>
-          <View style={styles.composeHead}>
-            <TouchableOpacity onPress={onClose} hitSlop={8}>
-              <Text style={styles.composeCancel}>Cancelar</Text>
-            </TouchableOpacity>
-            <Text style={styles.composeTitulo}>Nuevo posteo</Text>
-            <TouchableOpacity onPress={enviar} disabled={vacio || enviando} hitSlop={8}>
-              <Text style={[styles.composeOk, (vacio || enviando) && { opacity: 0.4 }]}>Publicar</Text>
-            </TouchableOpacity>
-          </View>
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <KeyboardAvoidingView
+        style={[styles.composeFull, { paddingTop: insets.top }]}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View style={styles.composeHeadFull}>
+          <TouchableOpacity onPress={onClose} hitSlop={8}>
+            <Text style={styles.composeCancel}>Cancelar</Text>
+          </TouchableOpacity>
+          <Text style={styles.composeTitulo}>Nuevo posteo</Text>
+          <TouchableOpacity onPress={enviar} disabled={vacio || enviando} hitSlop={8}>
+            <Text style={[styles.composeOk, (vacio || enviando) && { opacity: 0.4 }]}>Publicar</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }} keyboardShouldPersistTaps="handled">
           <TextInput
             style={styles.composeInput}
             value={texto}
@@ -363,7 +367,7 @@ function ComposeModal({ colors, styles, onClose, onPublicar }) {
             <Ionicons name="image-outline" size={18} color={colors.greenBright} />
             <Text style={styles.composeFotoBtnTxt}>{foto ? "Cambiar foto" : "Agregar foto"}</Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -701,11 +705,21 @@ const makeStyles = (colors) =>
     composeCancel: { color: colors.muted, fontSize: 15, fontWeight: "700" },
     composeTitulo: { color: colors.text, fontSize: 16, fontWeight: "800" },
     composeOk: { color: colors.greenBright, fontSize: 15, fontWeight: "800" },
+    composeFull: { flex: 1, backgroundColor: colors.bg },
+    composeHeadFull: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.cardBorder,
+    },
     composeInput: {
       color: colors.text,
-      fontSize: 16,
-      lineHeight: 22,
-      minHeight: 100,
+      fontSize: 17,
+      lineHeight: 23,
+      minHeight: 160,
       textAlignVertical: "top",
     },
     composeFotoWrap: { position: "relative", marginTop: 4 },
