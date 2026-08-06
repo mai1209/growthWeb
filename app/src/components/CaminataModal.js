@@ -269,6 +269,24 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
           <TouchableOpacity onPress={onClose} hitSlop={10}>
             <Ionicons name="close" size={26} color={colors.text} />
           </TouchableOpacity>
+          {fase === "permiso" || fase === "denegado" ? null : fase === "listo" ? (
+            <View style={styles.estado}>
+              <Ionicons name="location" size={14} color={colors.greenBright} />
+              <Text style={styles.estadoTxt}>GPS LISTO</Text>
+            </View>
+          ) : fase !== "resumen" ? (
+            <View style={[styles.estado, fase === "pausado" && styles.estadoPausa]}>
+              <View style={[styles.estadoDot, fase === "pausado" && styles.estadoDotPausa]} />
+              <Text style={[styles.estadoTxt, fase === "pausado" && styles.estadoTxtPausa]}>
+                {fase === "activo" ? "EN CURSO" : "EN PAUSA"}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.estado}>
+              <Ionicons name="checkmark-circle" size={14} color={colors.greenBright} />
+              <Text style={styles.estadoTxt}>{act.label.toUpperCase()} LISTA</Text>
+            </View>
+          )}
         </View>
 
         {fase === "permiso" ? (
@@ -286,26 +304,6 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
           </View>
         ) : (
           <View style={styles.body}>
-            <View style={styles.topEstado}>
-              {fase === "listo" ? (
-                <View style={styles.estado}>
-                  <Ionicons name="location" size={14} color={colors.greenBright} />
-                  <Text style={styles.estadoTxt}>GPS LISTO</Text>
-                </View>
-              ) : fase !== "resumen" ? (
-                <View style={[styles.estado, fase === "pausado" && styles.estadoPausa]}>
-                  <View style={[styles.estadoDot, fase === "pausado" && styles.estadoDotPausa]} />
-                  <Text style={[styles.estadoTxt, fase === "pausado" && styles.estadoTxtPausa]}>
-                    {fase === "activo" ? "EN CURSO" : "EN PAUSA"}
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.estado}>
-                  <Ionicons name="checkmark-circle" size={14} color={colors.greenBright} />
-                  <Text style={styles.estadoTxt}>{act.label.toUpperCase()} LISTA</Text>
-                </View>
-              )}
-            </View>
             <View style={styles.mapWrap}>
               {Platform.OS === "android" ? (
                 <View style={styles.mapSoon}>
@@ -476,9 +474,10 @@ const makeStyles = (colors) =>
     header: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
+      justifyContent: "flex-start",
+      gap: 12,
       paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingVertical: 10,
     },
     title: { color: colors.text, fontSize: 18, fontWeight: "800" },
     center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 14, padding: 32 },
