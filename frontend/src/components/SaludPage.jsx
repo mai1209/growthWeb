@@ -1077,7 +1077,7 @@ export default function SaludPage() {
     let nombre = base;
     if (fModo === "g") nombre = `${base} · ${fmtCant(cantNum)} g`;
     else if (fUnidad) nombre = `${base} · ${fmtCant(cantNum)} ${fUnidad}`;
-    else if (cantNum !== 1) nombre = `${base} ×${fmtCant(cantNum)}`;
+    else if (cantNum !== 1) nombre = `${base} · ${fmtCant(cantNum)} porciones`;
     const item = {
       id: `${Date.now()}`,
       franja: formFranja,
@@ -1404,7 +1404,7 @@ export default function SaludPage() {
                             placeholder="Buscá qué comiste…"
                             autoFocus
                           />
-                          {sugAbierta && sugerencias.length > 0 ? (
+                          {sugAbierta && (sugerencias.length > 0 || fNombre.trim().length >= 2) ? (
                             <ul className={style.sugerencias}>
                               {sugerencias.map((s, i) => (
                                 <li key={i}>
@@ -1427,17 +1427,26 @@ export default function SaludPage() {
                                   </button>
                                 </li>
                               ))}
+                              {fNombre.trim().length >= 2 ? (
+                                <li>
+                                  <button
+                                    type="button"
+                                    className={style.cargarManualItem}
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={activarManual}
+                                  >
+                                    <span className={style.sugIcono}>
+                                      <FiPlus />
+                                    </span>
+                                    <span className={style.sugNombre}>Cargar “{fNombre.trim()}” a mano</span>
+                                  </button>
+                                </li>
+                              ) : null}
                             </ul>
                           ) : null}
                         </div>
                         <div className={style.buscarAcciones}>
-                          {fNombre.trim().length >= 2 ? (
-                            <button type="button" className={style.cargarManual} onClick={activarManual}>
-                              <FiPlus /> Cargar “{fNombre.trim()}” a mano
-                            </button>
-                          ) : (
-                            <span className={style.buscarHint}>Escribí y elegí de la lista.</span>
-                          )}
+                          <span className={style.buscarHint}>Elegí de la lista o cargala a mano.</span>
                           <button type="button" className={style.comidaCancel} onClick={() => setFormFranja(null)}>
                             Cancelar
                           </button>
@@ -1490,7 +1499,9 @@ export default function SaludPage() {
                             className={style.cantInput}
                             title="Cantidad"
                           />
-                          <span className={style.cantUnidad}>{fModo === "g" ? "g" : fUnidad || "u."}</span>
+                          <span className={style.cantUnidad}>
+                            {fModo === "g" ? "g" : fUnidad || (cantNum === 1 ? "porción" : "porciones")}
+                          </span>
                           <span className={style.cantChips}>
                             {(fModo === "g" ? ["50", "100", "150", "200"] : ["0.5", "1", "2"]).map((v) => (
                               <button key={v} type="button" className={style.cantChip} onClick={() => setFCant(v)}>
@@ -1499,6 +1510,9 @@ export default function SaludPage() {
                             ))}
                           </span>
                         </div>
+                        {!manual && !fUnidad && fGramos === 0 && fNombre.trim() ? (
+                          <span className={style.cantNota}>1 porción = «{fNombre}»</span>
+                        ) : null}
                         {editValores ? (
                           <div className={style.macrosEdit}>
                             <input
@@ -1529,7 +1543,7 @@ export default function SaludPage() {
                               : fUnidad
                               ? ` · ${fmtCant(cantNum)} ${fUnidad}`
                               : cantNum !== 1
-                              ? ` · ×${fmtCant(cantNum)}`
+                              ? ` · ${fmtCant(cantNum)} porciones`
                               : ""}
                           </span>
                         ) : null}

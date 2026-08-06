@@ -1236,20 +1236,44 @@
 
 .sugerencias {
   list-style: none;
-  margin: 0.3rem 0 0;
+  margin: 0.4rem 0 0;
   padding: 0.25rem;
-  position: absolute;
-  z-index: 20;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--surface-card, #14181c);
+  /* En flujo (no absoluto): empuja el contenido de abajo en vez de taparlo. */
+  background: var(--surface-card-strong, #081c23);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
+  max-height: 264px;
+  overflow-y: auto;
+}
+/* Item "Cargar a mano" (última fila del desplegable) */
+.cargarManualItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: none;
+  border-top: 1px dashed var(--border-color);
+  margin-top: 0.15rem;
+  background: transparent;
+  color: var(--color-verde, #5dc72d);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 8px;
+  text-align: left;
+}
+.cargarManualItem:hover {
+  background: rgba(93, 199, 45, 0.08);
+}
+/* Nota aclaratoria de la cantidad (p. ej. qué es una porción) */
+.cantNota {
+  color: var(--color-muted);
+  font-size: 0.76rem;
 }
 
 .sugerencias li button {
