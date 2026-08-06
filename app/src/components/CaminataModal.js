@@ -10,7 +10,7 @@ import {
   Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import MapView, { Polyline, Marker } from "react-native-maps";
 import { iniciarCaminataLA, actualizarCaminataLA, terminarCaminataLA } from "../services/liveActivity";
@@ -31,9 +31,9 @@ const REGION_DEFAULT = {
 // Tipos de actividad (como en Strava): cambia la métrica principal (ritmo vs
 // velocidad) y el gasto calórico (MET). No cambia el GPS ni el trazado.
 const ACTIVIDADES = [
-  { key: "caminata", label: "Caminata", emoji: "🚶", met: 3.5, metrica: "ritmo" },
-  { key: "carrera", label: "Carrera", emoji: "🏃", met: 9.0, metrica: "ritmo" },
-  { key: "bici", label: "Bici", emoji: "🚴", met: 6.0, metrica: "velocidad" },
+  { key: "caminata", label: "Caminata", icon: "walk", met: 3.5, metrica: "ritmo" },
+  { key: "carrera", label: "Carrera", icon: "run", met: 9.0, metrica: "ritmo" },
+  { key: "bici", label: "Bici", icon: "bike", met: 6.0, metrica: "velocidad" },
 ];
 
 function haversine(a, b) {
@@ -329,7 +329,11 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
                     onPress={() => setTipo(a.key)}
                     activeOpacity={0.85}
                   >
-                    <Text style={styles.actEmoji}>{a.emoji}</Text>
+                    <MaterialCommunityIcons
+                      name={a.icon}
+                      size={18}
+                      color={tipo === a.key ? colors.greenBright : colors.text}
+                    />
                     <Text style={[styles.actLabel, tipo === a.key && styles.actLabelOn]}>{a.label}</Text>
                   </TouchableOpacity>
                 ))}
@@ -492,7 +496,6 @@ const makeStyles = (colors) =>
       backgroundColor: colors.card,
     },
     actChipOn: { borderColor: colors.greenBright, backgroundColor: "rgba(93,199,45,0.14)" },
-    actEmoji: { fontSize: 15 },
     actLabel: { color: colors.muted, fontSize: 13, fontWeight: "800" },
     actLabelOn: { color: colors.greenBright },
 

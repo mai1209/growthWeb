@@ -16,6 +16,16 @@ import {
   FiTrendingUp,
   FiX,
 } from "react-icons/fi";
+import {
+  MdDirectionsWalk,
+  MdDirectionsRun,
+  MdDirectionsBike,
+  MdFreeBreakfast,
+  MdRestaurant,
+  MdIcecream,
+  MdNightlight,
+  MdFastfood,
+} from "react-icons/md";
 import { saludService } from "../api";
 import { calcularPlan, ACTIVIDADES, OBJETIVOS } from "../utils/nutricion";
 import { BASE_COMIDAS } from "../utils/comidasBase";
@@ -40,11 +50,11 @@ const PERIODOS = [
   { key: "anio", label: "A" },
 ];
 const FRANJAS = [
-  { key: "desayuno", label: "Desayuno" },
-  { key: "almuerzo", label: "Almuerzo" },
-  { key: "merienda", label: "Merienda" },
-  { key: "cena", label: "Cena" },
-  { key: "aperitivo", label: "Aperitivo" },
+  { key: "desayuno", label: "Desayuno", Icon: MdFreeBreakfast },
+  { key: "almuerzo", label: "Almuerzo", Icon: MdRestaurant },
+  { key: "merienda", label: "Merienda", Icon: MdIcecream },
+  { key: "cena", label: "Cena", Icon: MdNightlight },
+  { key: "aperitivo", label: "Aperitivo", Icon: MdFastfood },
 ];
 
 // Formatea la cantidad: 0.5 -> "0,5", 2 -> "2", 1.5 -> "1,5".
@@ -59,11 +69,16 @@ const ANIMOS = [
 
 // Metadatos del tipo de actividad (caminata/carrera/bici), para mostrar ícono y nombre.
 const ACT_META = {
-  caminata: { label: "Caminata", emoji: "🚶" },
-  carrera: { label: "Carrera", emoji: "🏃" },
-  bici: { label: "Bici", emoji: "🚴" },
+  caminata: { label: "Caminata", Icon: MdDirectionsWalk },
+  carrera: { label: "Carrera", Icon: MdDirectionsRun },
+  bici: { label: "Bici", Icon: MdDirectionsBike },
 };
 const actMeta = (t) => ACT_META[t] || ACT_META.caminata;
+// Ícono del tipo de actividad como componente reutilizable.
+function ActIcon({ tipo, className }) {
+  const { Icon, label } = actMeta(tipo);
+  return <Icon className={className} title={label} aria-label={label} />;
+}
 
 const pad = (n) => String(n).padStart(2, "0");
 const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -460,9 +475,9 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
             <div className={style.recInfo}>
               <div className={style.recInfoTxt}>
                 <strong>{(sel.metros / 1000).toFixed(2)} km</strong>
-                <span>
-                  {actMeta(sel.tipo).emoji} {actMeta(sel.tipo).label} · {fechaLabel(sel.fecha, hoy)} ·{" "}
-                  {Math.floor((sel.secs || 0) / 60)} min
+                <span className={style.recInfoTipo}>
+                  <ActIcon tipo={sel.tipo} className={style.recTipoIcon} /> {actMeta(sel.tipo).label} ·{" "}
+                  {fechaLabel(sel.fecha, hoy)} · {Math.floor((sel.secs || 0) / 60)} min
                   {sel.kcal ? ` · ${sel.kcal} kcal` : ""}
                 </span>
               </div>
@@ -1193,9 +1208,7 @@ export default function SaludPage() {
               <ul className={style.caminatas}>
                 {data.caminatas.slice(0, 5).map((c, i) => (
                   <li key={i}>
-                    <span className={style.caminataTipo} title={actMeta(c.tipo).label}>
-                      {actMeta(c.tipo).emoji}
-                    </span>
+                    <ActIcon tipo={c.tipo} className={style.caminataTipo} />
                     <span>{c.fecha}</span>
                     <strong>{(c.metros / 1000).toFixed(2)} km</strong>
                     <span>{Math.floor((c.secs || 0) / 60)} min</span>
@@ -1386,7 +1399,10 @@ export default function SaludPage() {
             return (
               <div key={f.key} className={style.franja}>
                 <div className={style.franjaHead}>
-                  <strong>{f.label}</strong>
+                  <strong className={style.franjaLabel}>
+                    <f.Icon className={style.franjaIcon} />
+                    {f.label}
+                  </strong>
                   <span>{tot} kcal</span>
                   <button type="button" className={style.franjaAdd} onClick={() => abrirForm(f.key)}>
                     <FiPlus />

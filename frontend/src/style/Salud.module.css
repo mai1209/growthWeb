@@ -1069,6 +1069,16 @@
   flex: 1;
   font-size: 0.92rem;
 }
+.franjaLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.franjaIcon {
+  color: var(--color-verde, #5dc72d);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
 
 .franjaHead span {
   color: var(--color-muted);
@@ -1476,13 +1486,23 @@
   background: rgba(226, 90, 90, 0.12);
 }
 .caminataTipo {
-  font-size: 1rem;
-  line-height: 1;
+  color: var(--color-verde, #5dc72d);
+  font-size: 1.1rem;
+  flex-shrink: 0;
 }
 .caminataKcal {
   color: var(--color-verde, #5dc72d) !important;
   font-weight: 700;
   font-size: 0.8rem;
+}
+.recInfoTipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.recTipoIcon {
+  color: var(--color-verde, #5dc72d);
+  font-size: 1rem;
 }
 
 /* ===== Todos los resultados (estilo Salud de iPhone) ===== */
