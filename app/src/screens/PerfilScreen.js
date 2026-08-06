@@ -82,6 +82,7 @@ export default function PerfilScreen({ navigation }) {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [bio, setBio] = useState("");
+  const [perfilPublico, setPerfilPublico] = useState(true); // comunidad: perfil visible
   const [photo, setPhoto] = useState("");
   const [banner, setBanner] = useState("");
   const [userStatus, setUserStatus] = useState("idle");
@@ -112,7 +113,10 @@ export default function PerfilScreen({ navigation }) {
     const traer = () =>
       communityService
         .getMiPerfil()
-        .then(({ data }) => setComuStats(data?.stats || null))
+        .then(({ data }) => {
+          setComuStats(data?.stats || null);
+          setPerfilPublico(data?.perfilPublico !== false);
+        })
         .catch(() => {});
     traer();
     const unsub = navigation.addListener("focus", traer);
@@ -185,6 +189,10 @@ export default function PerfilScreen({ navigation }) {
         businessProfiles: profile?.businessProfiles || undefined,
       });
       setProfile(res.data?.profile || res.data);
+      // Privacidad de comunidad (campo aparte).
+      if (COMUNIDAD_HABILITADA) {
+        communityService.updateMiPerfil({ perfilPublico }).catch(() => {});
+      }
       setEditing(false);
       refreshProfiles?.();
     } catch (err) {
@@ -489,6 +497,22 @@ export default function PerfilScreen({ navigation }) {
                 multiline
               />
               <Text style={styles.counter}>{bio.length}/160</Text>
+
+              {COMUNIDAD_HABILITADA ? (
+                <>
+                  <Text style={styles.label}>Comunidad</Text>
+                  <TouchableOpacity style={styles.privRow} onPress={() => setPerfilPublico((v) => !v)}>
+                    <Ionicons
+                      name={perfilPublico ? "checkbox" : "square-outline"}
+                      size={22}
+                      color={perfilPublico ? colors.greenBright : colors.muted}
+                    />
+                    <Text style={styles.privTxt}>
+                      Perfil público (otros pueden encontrarte y seguirte en la comunidad)
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              ) : null}
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
@@ -705,6 +729,8 @@ const makeStyles = (colors, isDark) =>
     inputDisabled: { opacity: 0.7 },
     bioInput: { minHeight: 80, textAlignVertical: "top" },
     counter: { color: colors.muted, fontSize: 12, alignSelf: "flex-end", marginTop: 5 },
+    privRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6 },
+    privTxt: { color: colors.text, fontSize: 13.5, fontWeight: "600", flex: 1 },
 
     handleField: {
       flexDirection: "row",

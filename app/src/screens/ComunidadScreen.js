@@ -250,7 +250,6 @@ export default function ComunidadScreen({ navigation }) {
         {[
           ["inicio", "Inicio", "home-outline"],
           ["buscar", "Buscar", "search-outline"],
-          ["perfil", "Perfil", "person-outline"],
         ].map(([k, l, ic]) => (
           <TouchableOpacity key={k} style={styles.tabBtn} onPress={() => setTab(k)}>
             <Ionicons name={ic} size={18} color={tab === k ? colors.greenBright : colors.muted} />
@@ -282,18 +281,11 @@ export default function ComunidadScreen({ navigation }) {
             }
           />
         )
-      ) : tab === "buscar" ? (
+      ) : (
         <BuscarTab
           colors={colors}
           styles={styles}
           onAbrirPerfil={setPerfilUser}
-        />
-      ) : (
-        <MiPerfilTab
-          colors={colors}
-          styles={styles}
-          perfil={miPerfil}
-          onGuardado={cargarMiPerfil}
         />
       )}
 
