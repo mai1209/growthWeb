@@ -19,6 +19,7 @@ import * as TaskManager from "expo-task-manager";
 import { useTheme } from "../theme";
 import { communityService } from "../api";
 import { COMUNIDAD_HABILITADA } from "../config";
+import CompartirActividadModal from "./CompartirActividadModal";
 
 const R_TIERRA = 6371000; // metros
 const toRad = (x) => (x * Math.PI) / 180;
@@ -106,6 +107,7 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
   const [enFondo, setEnFondo] = useState(false); // true si el tracking sigue en segundo plano
   const [tipo, setTipo] = useState("caminata"); // tipo de actividad (recuerda la última)
   const [compartir, setCompartir] = useState(false); // compartir en comunidad al guardar
+  const [compartirImgOpen, setCompartirImgOpen] = useState(false); // compositor de imagen
 
   const subRef = useRef(null); // watchPosition (modo foreground / Expo Go)
   const mapRef = useRef(null);
@@ -463,6 +465,10 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
                     <Text style={styles.compartirTxt}>Compartir en comunidad</Text>
                   </TouchableOpacity>
                 ) : null}
+                <TouchableOpacity style={styles.imgBtn} onPress={() => setCompartirImgOpen(true)}>
+                  <Ionicons name="image-outline" size={18} color={colors.greenBright} />
+                  <Text style={styles.imgBtnText}>Compartir imagen (foto + recorrido)</Text>
+                </TouchableOpacity>
                 <View style={styles.acciones}>
                   <TouchableOpacity style={styles.btnSec} onPress={onClose}>
                     <Text style={styles.btnSecText}>Descartar</Text>
@@ -495,6 +501,12 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
           </View>
         )}
       </View>
+
+      <CompartirActividadModal
+        visible={compartirImgOpen}
+        actividad={{ tipo, metros: Math.round(metros), secs, kcal, ruta }}
+        onClose={() => setCompartirImgOpen(false)}
+      />
     </Modal>
   );
 }
@@ -607,6 +619,21 @@ const makeStyles = (colors) =>
 
     compartirRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
     compartirTxt: { color: colors.text, fontSize: 13.5, fontWeight: "700" },
+    imgBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.greenBright,
+      backgroundColor: "rgba(93,199,45,0.12)",
+      marginBottom: 8,
+      alignSelf: "stretch",
+    },
+    imgBtnText: { color: colors.greenBright, fontSize: 13.5, fontWeight: "800" },
     acciones: { flexDirection: "row", gap: 12 },
     btnSec: {
       flexDirection: "row",

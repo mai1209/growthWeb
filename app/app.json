@@ -104,6 +104,14 @@
             }
           ]
         }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Growth accede a tus fotos para elegir un fondo al compartir tu actividad.",
+          "savePhotosPermission": "Growth guarda la imagen de tu actividad en tu galería.",
+          "isAccessMediaLocationEnabled": false
+        }
       ]
     ]
   }
