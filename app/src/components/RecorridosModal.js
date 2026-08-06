@@ -5,6 +5,8 @@ import { Ionicons } from "@expo/vector-icons";
 import MapView, { Polyline, Marker } from "react-native-maps";
 import CalendarioFechas from "./CalendarioFechas";
 import { useTheme } from "../theme";
+import { COMUNIDAD_HABILITADA } from "../config";
+import CompartirActividadModal from "./CompartirActividadModal";
 
 const REGION_DEFAULT = { latitude: -31.6333, longitude: -60.7, latitudeDelta: 0.02, longitudeDelta: 0.02 };
 const fmtFecha = (k) =>
@@ -23,6 +25,7 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
   );
   const [idx, setIdx] = useState(0);
   const [calAbierto, setCalAbierto] = useState(false);
+  const [compartirOpen, setCompartirOpen] = useState(false);
   useEffect(() => {
     if (visible) {
       setIdx(0);
@@ -160,6 +163,13 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
               </View>
             </View>
 
+            {COMUNIDAD_HABILITADA && sel ? (
+              <TouchableOpacity style={styles.compartirImgBtn} onPress={() => setCompartirOpen(true)}>
+                <Ionicons name="image-outline" size={18} color={colors.greenBright} />
+                <Text style={styles.compartirImgTxt}>Compartir imagen (foto + recorrido)</Text>
+              </TouchableOpacity>
+            ) : null}
+
             <Text style={styles.listaTitulo}>Tus caminatas</Text>
             <ScrollView
               horizontal
@@ -193,6 +203,16 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
           </>
         )}
       </View>
+
+      <CompartirActividadModal
+        visible={compartirOpen}
+        actividad={
+          sel
+            ? { tipo: sel.tipo, metros: sel.metros, secs: sel.secs, kcal: sel.kcal, ruta: sel.ruta }
+            : {}
+        }
+        onClose={() => setCompartirOpen(false)}
+      />
     </Modal>
   );
 }
@@ -240,6 +260,20 @@ const makeStyles = (colors) =>
     statCard: { flex: 1, alignItems: "center", gap: 4, paddingVertical: 6 },
     statCardNum: { color: colors.text, fontSize: 22, fontWeight: "900" },
     statCardLbl: { color: colors.muted, fontSize: 11, fontWeight: "700" },
+    compartirImgBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      marginHorizontal: 16,
+      marginBottom: 6,
+      paddingVertical: 11,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.greenBright,
+      backgroundColor: "rgba(93,199,45,0.12)",
+    },
+    compartirImgTxt: { color: colors.greenBright, fontSize: 13.5, fontWeight: "800" },
 
     listaTitulo: {
       color: colors.text,

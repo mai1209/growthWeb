@@ -28,7 +28,7 @@ import ComunidadScreen from "./src/screens/ComunidadScreen";
 import UpdateModal from "./src/components/UpdateModal";
 import RadialTabBar from "./src/components/RadialTabBar";
 import { appService } from "./src/api";
-import { APP_VERSION } from "./src/config";
+import { APP_VERSION, COMUNIDAD_HABILITADA } from "./src/config";
 import * as SecureStore from "expo-secure-store";
 
 const UPDATE_SEEN_KEY = "update_aviso_visto_v"; // guarda la última versión ya avisada
@@ -65,6 +65,11 @@ function TopBar() {
         resizeMode="contain"
       />
       <View style={styles.topActions}>
+        {COMUNIDAD_HABILITADA ? (
+          <TouchableOpacity onPress={() => navigation.navigate("Comunidad")} hitSlop={10}>
+            <Ionicons name="globe-outline" size={23} color={colors.muted} />
+          </TouchableOpacity>
+        ) : null}
         <TouchableOpacity onPress={toggleTheme} hitSlop={10}>
           <Ionicons
             name={isDark ? "sunny-outline" : "moon-outline"}

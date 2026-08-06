@@ -247,21 +247,7 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
   const ultimoPunto = ruta.length ? ruta[ruta.length - 1] : null;
 
   const guardar = () => {
-    const metrosR = Math.round(track.metros);
-    const ruta = track.puntos.slice();
-    onGuardar?.({ metros: metrosR, secs, ruta, tipo, kcal });
-    // Si eligió compartir, publica la actividad en la comunidad (best-effort).
-    if (compartir && COMUNIDAD_HABILITADA) {
-      const d = new Date();
-      const p2 = (n) => String(n).padStart(2, "0");
-      const fecha = `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
-      communityService
-        .crearPost({
-          tipo: "actividad",
-          actividad: { tipo, metros: metrosR, secs, kcal, fecha, ruta },
-        })
-        .catch(() => {});
-    }
+    onGuardar?.({ metros: Math.round(track.metros), secs, ruta: track.puntos.slice(), tipo, kcal });
     onClose?.();
   };
 
@@ -455,20 +441,11 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
             ) : fase === "resumen" ? (
               <>
                 {COMUNIDAD_HABILITADA ? (
-                  <TouchableOpacity style={styles.compartirRow} onPress={() => setCompartir((v) => !v)}>
-                    <Ionicons
-                      name={compartir ? "checkbox" : "square-outline"}
-                      size={20}
-                      color={compartir ? colors.greenBright : colors.muted}
-                    />
-                    <Ionicons name="globe-outline" size={15} color={colors.greenBright} />
-                    <Text style={styles.compartirTxt}>Compartir en comunidad</Text>
+                  <TouchableOpacity style={styles.imgBtn} onPress={() => setCompartirImgOpen(true)}>
+                    <Ionicons name="image-outline" size={18} color={colors.greenBright} />
+                    <Text style={styles.imgBtnText}>Compartir imagen (foto + recorrido)</Text>
                   </TouchableOpacity>
                 ) : null}
-                <TouchableOpacity style={styles.imgBtn} onPress={() => setCompartirImgOpen(true)}>
-                  <Ionicons name="image-outline" size={18} color={colors.greenBright} />
-                  <Text style={styles.imgBtnText}>Compartir imagen (foto + recorrido)</Text>
-                </TouchableOpacity>
                 <View style={styles.acciones}>
                   <TouchableOpacity style={styles.btnSec} onPress={onClose}>
                     <Text style={styles.btnSecText}>Descartar</Text>

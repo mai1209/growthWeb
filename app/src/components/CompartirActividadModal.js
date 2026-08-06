@@ -10,6 +10,8 @@ import {
   Dimensions,
   ActivityIndicator,
   Alert,
+  Animated,
+  PanResponder,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -73,6 +75,21 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
   const shotRef = useRef(null);
   const [foto, setFoto] = useState("");
   const [ocupado, setOcupado] = useState(false);
+
+  // Arrastre del bloque de datos: se puede poner en cualquier parte de la foto.
+  const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        pan.setOffset({ x: pan.x.__getValue(), y: pan.y.__getValue() });
+        pan.setValue({ x: 0, y: 0 });
+      },
+      onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
+      onPanResponderRelease: () => pan.flattenOffset(),
+    })
+  ).current;
 
   const act = ACT[actividad?.tipo] || ACT.caminata;
   const km = (actividad?.metros || 0) / 1000;
@@ -170,8 +187,11 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
               <View style={[StyleSheet.absoluteFill, styles.lienzoBg]} />
             )}
 
-            {/* Datos apilados, directo sobre la foto (con sombra para leerse) */}
-            <View style={styles.overlayInfo} pointerEvents="none">
+            {/* Datos apilados, arrastrables: ponelos donde quieras sobre la foto */}
+            <Animated.View
+              style={[styles.overlayInfo, { transform: pan.getTranslateTransform() }]}
+              {...panResponder.panHandlers}
+            >
               <View style={styles.dato}>
                 <Text style={styles.datoLbl}>DISTANCIA</Text>
                 <Text style={styles.datoVal}>{km.toFixed(2)} km</Text>
@@ -200,7 +220,7 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
                 </View>
               ) : null}
               <Text style={styles.marca}>GROWTH</Text>
-            </View>
+            </Animated.View>
           </ViewShot>
 
           {!foto ? (
@@ -209,6 +229,7 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
               <Text style={styles.elegirTxt}>Elegí una foto de fondo</Text>
             </TouchableOpacity>
           ) : null}
+          <Text style={styles.arrastraHint}>✋ Arrastrá los datos para ubicarlos donde quieras.</Text>
         </ScrollView>
 
         <View style={[styles.acciones, { paddingBottom: insets.bottom + 10 }]}>
@@ -253,19 +274,19 @@ const makeStyles = (colors) =>
     overlayInfo: { position: "absolute", left: 24, top: "34%", gap: 14 },
     dato: {},
     datoLbl: {
-      color: "rgba(255,255,255,0.9)",
-      fontSize: 12.5,
-      fontWeight: "700",
-      letterSpacing: 1.2,
+      color: "rgba(255,255,255,0.85)",
+      fontSize: 10.5,
+      fontWeight: "600",
+      letterSpacing: 1.3,
       textShadowColor: "rgba(0,0,0,0.5)",
       textShadowRadius: 5,
       textShadowOffset: { width: 0, height: 1 },
     },
     datoVal: {
       color: "#fff",
-      fontSize: 30,
-      fontWeight: "900",
-      letterSpacing: -0.5,
+      fontSize: 24,
+      fontWeight: "700",
+      letterSpacing: -0.3,
       marginTop: 1,
       textShadowColor: "rgba(0,0,0,0.55)",
       textShadowRadius: 6,
@@ -274,8 +295,8 @@ const makeStyles = (colors) =>
     miniRuta: { marginTop: 6 },
     marca: {
       color: "#fff",
-      fontSize: 15,
-      fontWeight: "900",
+      fontSize: 12.5,
+      fontWeight: "800",
       letterSpacing: 2,
       marginTop: 8,
       textShadowColor: "rgba(0,0,0,0.5)",
@@ -285,6 +306,7 @@ const makeStyles = (colors) =>
 
     elegirBtn: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 14 },
     elegirTxt: { color: colors.greenBright, fontSize: 14, fontWeight: "800" },
+    arrastraHint: { color: colors.muted, fontSize: 12, fontWeight: "600", marginTop: 12, textAlign: "center" },
 
     acciones: {
       flexDirection: "row",
