@@ -27,16 +27,19 @@ const ACT = {
   bici: { label: "Bici", icon: "bike", metrica: "velocidad" },
 };
 
-const fmtTiempo = (secs) => {
-  const m = Math.floor((secs || 0) / 60);
-  const s = (secs || 0) % 60;
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+const fmtTiempoLargo = (secs) => {
+  const t = secs || 0;
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const s = t % 60;
+  if (h > 0) return `${h}h ${m}min`;
+  return `${m}min ${String(s).padStart(2, "0")}s`;
 };
 
-// Trazado del recorrido en blanco (para que resalte sobre la foto).
-function Trazado({ ruta, W, H }) {
+// Trazado del recorrido (verde por defecto) para superponer sobre la foto.
+function Trazado({ ruta, W, H, color = "#5dc72d" }) {
   if (!Array.isArray(ruta) || ruta.length < 2) return null;
-  const pad = 26;
+  const pad = 10;
   const lats = ruta.map((p) => p.latitude);
   const lngs = ruta.map((p) => p.longitude);
   const minLat = Math.min(...lats);
@@ -56,9 +59,9 @@ function Trazado({ ruta, W, H }) {
   const d = "M " + pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" L ");
   return (
     <Svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
-      <Path d={d} fill="none" stroke="#fff" strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" opacity={0.95} />
-      <Circle cx={pts[0][0]} cy={pts[0][1]} r={6} fill="#fff" />
-      <Circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r={7} fill="#5dc72d" stroke="#fff" strokeWidth={2} />
+      <Path d={d} fill="none" stroke={color} strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx={pts[0][0]} cy={pts[0][1]} r={4} fill={color} />
+      <Circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r={4.5} fill={color} />
     </Svg>
   );
 }
@@ -167,40 +170,35 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
               <View style={[StyleSheet.absoluteFill, styles.lienzoBg]} />
             )}
 
-            {/* Recorrido centrado */}
-            <View style={styles.trazadoWrap} pointerEvents="none">
-              <Trazado ruta={actividad?.ruta} W={lienzoW} H={Math.round(lienzoH * 0.62)} />
-            </View>
-
-            {/* Franja de datos abajo */}
-            <View style={styles.datosBand}>
-              <View style={styles.tipoRow}>
-                <MaterialCommunityIcons name={act.icon} size={18} color="#fff" />
-                <Text style={styles.tipoTxt}>{act.label}</Text>
+            {/* Datos apilados, directo sobre la foto (con sombra para leerse) */}
+            <View style={styles.overlayInfo} pointerEvents="none">
+              <View style={styles.dato}>
+                <Text style={styles.datoLbl}>DISTANCIA</Text>
+                <Text style={styles.datoVal}>{km.toFixed(2)} km</Text>
               </View>
-              <Text style={styles.kmGrande}>{km.toFixed(2)} km</Text>
-              <View style={styles.statsRow}>
-                <View style={styles.statCol}>
-                  <Text style={styles.statNum}>
-                    {act.metrica === "velocidad"
-                      ? vel > 0
-                        ? vel.toFixed(1)
-                        : "—"
-                      : ritmo > 0
-                      ? ritmo.toFixed(1)
-                      : "—"}
-                  </Text>
-                  <Text style={styles.statLbl}>{act.metrica === "velocidad" ? "km/h" : "min/km"}</Text>
-                </View>
-                <View style={styles.statCol}>
-                  <Text style={styles.statNum}>{fmtTiempo(secs)}</Text>
-                  <Text style={styles.statLbl}>tiempo</Text>
-                </View>
-                <View style={styles.statCol}>
-                  <Text style={styles.statNum}>{actividad?.kcal || 0}</Text>
-                  <Text style={styles.statLbl}>kcal</Text>
-                </View>
+              <View style={styles.dato}>
+                <Text style={styles.datoLbl}>{act.metrica === "velocidad" ? "VELOCIDAD" : "RITMO"}</Text>
+                <Text style={styles.datoVal}>
+                  {act.metrica === "velocidad"
+                    ? `${vel > 0 ? vel.toFixed(1) : "—"} km/h`
+                    : `${ritmo > 0 ? ritmo.toFixed(1) : "—"} /km`}
+                </Text>
               </View>
+              <View style={styles.dato}>
+                <Text style={styles.datoLbl}>TIEMPO</Text>
+                <Text style={styles.datoVal}>{fmtTiempoLargo(secs)}</Text>
+              </View>
+              {actividad?.kcal ? (
+                <View style={styles.dato}>
+                  <Text style={styles.datoLbl}>CALORÍAS</Text>
+                  <Text style={styles.datoVal}>{actividad.kcal} kcal</Text>
+                </View>
+              ) : null}
+              {Array.isArray(actividad?.ruta) && actividad.ruta.length > 1 ? (
+                <View style={styles.miniRuta}>
+                  <Trazado ruta={actividad.ruta} W={110} H={80} color="#5dc72d" />
+                </View>
+              ) : null}
               <Text style={styles.marca}>GROWTH</Text>
             </View>
           </ViewShot>
@@ -252,23 +250,38 @@ const makeStyles = (colors) =>
 
     lienzo: { borderRadius: 20, overflow: "hidden", backgroundColor: "#0d1f27" },
     lienzoBg: { backgroundColor: "#0d1f27" },
-    trazadoWrap: { position: "absolute", top: 0, left: 0, right: 0, alignItems: "center", justifyContent: "center" },
-    datosBand: {
-      position: "absolute",
-      left: 0,
-      right: 0,
-      bottom: 0,
-      padding: 18,
-      backgroundColor: "rgba(0,0,0,0.42)",
+    overlayInfo: { position: "absolute", left: 24, top: "34%", gap: 14 },
+    dato: {},
+    datoLbl: {
+      color: "rgba(255,255,255,0.9)",
+      fontSize: 12.5,
+      fontWeight: "700",
+      letterSpacing: 1.2,
+      textShadowColor: "rgba(0,0,0,0.5)",
+      textShadowRadius: 5,
+      textShadowOffset: { width: 0, height: 1 },
     },
-    tipoRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 },
-    tipoTxt: { color: "#fff", fontSize: 14, fontWeight: "800", letterSpacing: 0.5 },
-    kmGrande: { color: "#fff", fontSize: 44, fontWeight: "900", letterSpacing: -1 },
-    statsRow: { flexDirection: "row", gap: 26, marginTop: 8 },
-    statCol: {},
-    statNum: { color: "#fff", fontSize: 20, fontWeight: "900" },
-    statLbl: { color: "rgba(255,255,255,0.75)", fontSize: 12, fontWeight: "700" },
-    marca: { color: "#5dc72d", fontSize: 13, fontWeight: "900", letterSpacing: 2, marginTop: 12 },
+    datoVal: {
+      color: "#fff",
+      fontSize: 30,
+      fontWeight: "900",
+      letterSpacing: -0.5,
+      marginTop: 1,
+      textShadowColor: "rgba(0,0,0,0.55)",
+      textShadowRadius: 6,
+      textShadowOffset: { width: 0, height: 1 },
+    },
+    miniRuta: { marginTop: 6 },
+    marca: {
+      color: "#fff",
+      fontSize: 15,
+      fontWeight: "900",
+      letterSpacing: 2,
+      marginTop: 8,
+      textShadowColor: "rgba(0,0,0,0.5)",
+      textShadowRadius: 5,
+      textShadowOffset: { width: 0, height: 1 },
+    },
 
     elegirBtn: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 14 },
     elegirTxt: { color: colors.greenBright, fontSize: 14, fontWeight: "800" },
