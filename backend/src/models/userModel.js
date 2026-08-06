@@ -44,6 +44,11 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: 160,
     },
+    // Comunidad: si el perfil es visible/descubrible por otros usuarios.
+    perfilPublico: {
+      type: Boolean,
+      default: true,
+    },
     businessProfile: {
       name: {
         type: String,

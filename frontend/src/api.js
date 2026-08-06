@@ -173,6 +173,23 @@ export const gymService = {
   update: (data) => api.put("/api/gym", data),
 };
 
+// Comunidad (Fase 1: perfil público, seguir, posteos, feed).
+export const communityService = {
+  getMiPerfil: () => api.get("/api/community/me"),
+  updateMiPerfil: (data) => api.put("/api/community/me", data),
+  getPerfil: (username) => api.get(`/api/community/users/${username}`),
+  buscar: (q) => api.get("/api/community/buscar", { params: { q } }),
+  seguir: (userId) => api.post(`/api/community/follow/${userId}`),
+  dejarDeSeguir: (userId) => api.delete(`/api/community/follow/${userId}`),
+  seguidores: (userId) => api.get(`/api/community/users/${userId}/followers`),
+  siguiendo: (userId) => api.get(`/api/community/users/${userId}/following`),
+  crearPost: (data) => api.post("/api/community/posts", data),
+  feed: (params) => api.get("/api/community/feed", { params }),
+  postsDeUsuario: (userId) => api.get(`/api/community/users/${userId}/posts`),
+  kudos: (postId) => api.post(`/api/community/posts/${postId}/kudos`),
+  borrarPost: (postId) => api.delete(`/api/community/posts/${postId}`),
+};
+
 export const afirmacionService = {
   // `fecha` es la fecha local del cliente (YYYY-MM-DD): el "hoy" lo define el
   // dispositivo, no el servidor.
