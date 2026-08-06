@@ -269,8 +269,6 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
           <TouchableOpacity onPress={onClose} hitSlop={10}>
             <Ionicons name="close" size={26} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>{act.label}</Text>
-          <View style={{ width: 26 }} />
         </View>
 
         {fase === "permiso" ? (
@@ -288,6 +286,30 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
           </View>
         ) : (
           <View style={styles.body}>
+            <View style={styles.topSelector}>
+              <View style={styles.actSelector}>
+                {ACTIVIDADES.map((a) => (
+                  <TouchableOpacity
+                    key={a.key}
+                    style={[styles.actChip, tipo === a.key && styles.actChipOn]}
+                    onPress={() => setTipo(a.key)}
+                    activeOpacity={0.85}
+                  >
+                    <MaterialCommunityIcons
+                      name={a.icon}
+                      size={17}
+                      color={tipo === a.key ? colors.greenBright : colors.text}
+                    />
+                    <Text style={[styles.actLabel, tipo === a.key && styles.actLabelOn]} numberOfLines={1}>
+                      {a.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <TouchableOpacity style={styles.infoBtn} onPress={infoActividad} hitSlop={10}>
+                <Ionicons name="information-circle-outline" size={22} color={colors.muted} />
+              </TouchableOpacity>
+            </View>
             <View style={styles.mapWrap}>
               {Platform.OS === "android" ? (
                 <View style={styles.mapSoon}>
@@ -331,27 +353,6 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
             </View>
 
             <View style={styles.panel}>
-              <View style={styles.actSelector}>
-                {ACTIVIDADES.map((a) => (
-                  <TouchableOpacity
-                    key={a.key}
-                    style={[styles.actChip, tipo === a.key && styles.actChipOn]}
-                    onPress={() => setTipo(a.key)}
-                    activeOpacity={0.85}
-                  >
-                    <MaterialCommunityIcons
-                      name={a.icon}
-                      size={18}
-                      color={tipo === a.key ? colors.greenBright : colors.text}
-                    />
-                    <Text style={[styles.actLabel, tipo === a.key && styles.actLabelOn]}>{a.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <TouchableOpacity style={styles.infoLink} onPress={infoActividad} hitSlop={8}>
-                <Ionicons name="information-circle-outline" size={14} color={colors.muted} />
-                <Text style={styles.infoLinkText}>¿Cuál elegir? Influye en las calorías</Text>
-              </TouchableOpacity>
               {fase === "listo" ? (
                 <View style={styles.estado}>
                   <Ionicons name="location" size={14} color={colors.greenBright} />
@@ -515,21 +516,29 @@ const makeStyles = (colors) =>
     },
     panel: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 18, alignItems: "center", gap: 10 },
 
-    actSelector: { flexDirection: "row", gap: 8, alignSelf: "stretch" },
+    topSelector: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingHorizontal: 12,
+      paddingBottom: 8,
+    },
+    infoBtn: { padding: 2 },
+    actSelector: { flex: 1, flexDirection: "row", gap: 7 },
     actChip: {
       flex: 1,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: 5,
-      paddingVertical: 8,
+      gap: 4,
+      paddingVertical: 7,
       borderRadius: 999,
       borderWidth: 1,
       borderColor: colors.cardBorder,
       backgroundColor: colors.card,
     },
     actChipOn: { borderColor: colors.greenBright, backgroundColor: "rgba(93,199,45,0.14)" },
-    actLabel: { color: colors.muted, fontSize: 13, fontWeight: "800" },
+    actLabel: { color: colors.muted, fontSize: 12.5, fontWeight: "800" },
     actLabelOn: { color: colors.greenBright },
     infoLink: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
     infoLinkText: { color: colors.muted, fontSize: 12, fontWeight: "600" },
@@ -538,17 +547,11 @@ const makeStyles = (colors) =>
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
-      paddingHorizontal: 12,
-      paddingVertical: 5,
-      borderRadius: 999,
-      backgroundColor: "rgba(93,199,45,0.14)",
-      borderWidth: 1,
-      borderColor: "rgba(93,199,45,0.4)",
     },
-    estadoPausa: { backgroundColor: "rgba(214,169,46,0.14)", borderColor: "rgba(214,169,46,0.45)" },
+    estadoPausa: {},
     estadoDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.greenBright },
     estadoDotPausa: { backgroundColor: "#d6a92e" },
-    estadoTxt: { color: colors.greenBright, fontSize: 11, fontWeight: "900", letterSpacing: 1 },
+    estadoTxt: { color: colors.greenBright, fontSize: 12, fontWeight: "600", letterSpacing: 0.5 },
     estadoTxtPausa: { color: "#d6a92e" },
 
     kmRow: { flexDirection: "row", alignItems: "flex-end", gap: 6, marginTop: 2 },
@@ -595,7 +598,7 @@ const makeStyles = (colors) =>
       paddingHorizontal: 26,
       paddingVertical: 14,
       borderRadius: 999,
-      backgroundColor: colors.red,
+      backgroundColor: "#E03525",
     },
     btnStopText: { color: "#fff", fontSize: 15, fontWeight: "800" },
     resumenTxt: {
