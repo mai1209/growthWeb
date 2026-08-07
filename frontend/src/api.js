@@ -202,6 +202,18 @@ export const gruposService = {
   borrar: (id) => api.delete(`/api/community/grupos/${id}`),
 };
 
+// Retos / desafíos (Fase 3).
+export const retosService = {
+  crear: (data) => api.post("/api/community/retos", data),
+  descubrir: (q) => api.get("/api/community/retos", { params: { q } }),
+  mios: () => api.get("/api/community/retos/mios"),
+  get: (id) => api.get(`/api/community/retos/${id}`),
+  unirse: (id) => api.post(`/api/community/retos/${id}/join`),
+  salir: (id) => api.delete(`/api/community/retos/${id}/join`),
+  ranking: (id) => api.get(`/api/community/retos/${id}/ranking`),
+  borrar: (id) => api.delete(`/api/community/retos/${id}`),
+};
+
 export const afirmacionService = {
   // `fecha` es la fecha local del cliente (YYYY-MM-DD): el "hoy" lo define el
   // dispositivo, no el servidor.

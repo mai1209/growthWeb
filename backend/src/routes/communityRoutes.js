@@ -25,6 +25,16 @@ import {
   miembrosGrupo,
   borrarGrupo,
 } from "../controllers/groupController.js";
+import {
+  crearReto,
+  descubrirRetos,
+  misRetos,
+  getReto,
+  unirseReto,
+  salirReto,
+  rankingReto,
+  borrarReto,
+} from "../controllers/challengeController.js";
 
 const router = express.Router();
 
@@ -54,5 +64,15 @@ router.post("/grupos/:id/join", requireAuth, unirse);
 router.delete("/grupos/:id/join", requireAuth, salir);
 router.get("/grupos/:id", requireAuth, getGrupo);
 router.delete("/grupos/:id", requireAuth, borrarGrupo);
+
+// Retos / desafíos (Fase 3). Orden: rutas fijas antes que /:id.
+router.post("/retos", requireAuth, crearReto);
+router.get("/retos", requireAuth, descubrirRetos);
+router.get("/retos/mios", requireAuth, misRetos);
+router.get("/retos/:id/ranking", requireAuth, rankingReto);
+router.post("/retos/:id/join", requireAuth, unirseReto);
+router.delete("/retos/:id/join", requireAuth, salirReto);
+router.get("/retos/:id", requireAuth, getReto);
+router.delete("/retos/:id", requireAuth, borrarReto);
 
 export default router;
