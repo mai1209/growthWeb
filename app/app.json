@@ -2,14 +2,14 @@
   "expo": {
     "name": "Growth Manager",
     "slug": "growth-manager",
-    "version": "1.0.11",
+    "version": "1.0.12",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.growthmanager.mobile",
-      "buildNumber": "22",
+      "buildNumber": "23",
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -21,7 +21,7 @@
     },
     "android": {
       "package": "app.growthmanager.mobile",
-      "versionCode": 22,
+      "versionCode": 23,
       "permissions": [
         "android.permission.health.READ_STEPS"
       ],

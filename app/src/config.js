@@ -15,7 +15,8 @@ export const APP_VERSION = Application.nativeApplicationVersion || "1.0.11";
 // Cuando exista el sistema de planes, cambiar a true para activarlo entero.
 export const ARCA_HABILITADO = false;
 
-// Comunidad (perfiles, seguir, feed). En desarrollo: dejar en true para probar.
-// IMPORTANTE: poner en false antes de publicar en las tiendas hasta tener
-// moderación + reportar/bloquear y la declaración de "interacción social".
-export const COMUNIDAD_HABILITADA = true;
+// Comunidad (perfiles, seguir, feed, clubes, retos). Para probar en dev: true.
+// OFF en las tiendas hasta tener moderación + reportar/bloquear y actualizar la
+// declaración de "interacción social". Ojo: este flag también gatea el
+// exportador de imagen ("Compartir imagen") porque incluye el botón "Publicar".
+export const COMUNIDAD_HABILITADA = false;
