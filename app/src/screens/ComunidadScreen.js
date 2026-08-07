@@ -1784,9 +1784,7 @@ function PerfilUsuarioModal({ colors, styles, user, onClose }) {
           <TouchableOpacity onPress={onClose} hitSlop={10}>
             <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title} numberOfLines={1}>
-            @{user.username}
-          </Text>
+          <Text style={styles.title}>Perfil</Text>
           <View style={{ width: 24 }} />
         </View>
         {!perfil ? (
@@ -1803,54 +1801,71 @@ function PerfilUsuarioModal({ colors, styles, user, onClose }) {
             <Text style={styles.vacioTxt}>Este perfil es privado.</Text>
           </View>
         ) : (
-          <ScrollView contentContainerStyle={{ padding: 18, gap: 10 }}>
-            <View style={{ alignItems: "center", gap: 8 }}>
-              <Avatar user={perfil} size={80} colors={colors} />
-              <Text style={styles.perfilNombre}>{perfil.fullName || perfil.username}</Text>
-              <Text style={styles.perfilUser}>@{perfil.username}</Text>
-              {perfil.bio ? <Text style={styles.perfilBio}>{perfil.bio}</Text> : null}
-              <View style={styles.statsRow}>
-                <View style={styles.statBox}>
-                  <Text style={styles.statNum}>{perfil.stats?.posteos || 0}</Text>
-                  <Text style={styles.statLbl}>posteos</Text>
-                </View>
-                <View style={styles.statBox}>
-                  <Text style={styles.statNum}>{perfil.stats?.seguidores || 0}</Text>
-                  <Text style={styles.statLbl}>seguidores</Text>
-                </View>
-                <View style={styles.statBox}>
-                  <Text style={styles.statNum}>{perfil.stats?.siguiendo || 0}</Text>
-                  <Text style={styles.statLbl}>siguiendo</Text>
-                </View>
+          <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
+            {/* Portada */}
+            {perfil.banner ? (
+              <Image source={{ uri: perfil.banner }} style={styles.perfilBannerU} />
+            ) : (
+              <View style={[styles.perfilBannerU, styles.perfilBannerVaciaU]} />
+            )}
+
+            {/* Avatar (encima de la portada) + botón Seguir a la derecha */}
+            <View style={styles.perfilTopRowU}>
+              <View style={styles.perfilAvatarU}>
+                <Avatar user={perfil} size={80} colors={colors} />
               </View>
               {!perfil.esYo ? (
-                <TouchableOpacity style={loSigo ? styles.btnSec : styles.btnPrim} onPress={toggleSeguir}>
-                  <Text style={loSigo ? styles.btnSecTxt : styles.btnPrimTxt}>
-                    {loSigo ? "Siguiendo" : "Seguir"}
-                  </Text>
-                </TouchableOpacity>
+                <View style={styles.perfilFollowWrapU}>
+                  <TouchableOpacity style={loSigo ? styles.btnSec : styles.btnPrim} onPress={toggleSeguir}>
+                    <Text style={loSigo ? styles.btnSecTxt : styles.btnPrimTxt}>
+                      {loSigo ? "Siguiendo" : "Seguir"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               ) : null}
             </View>
 
-            <Text style={styles.postsHead}>Posteos</Text>
-            {posts.length === 0 ? (
-              <Text style={styles.vacioTxt}>Todavía no publicó nada.</Text>
-            ) : (
-              posts.map((p) => (
-                <View key={String(p.id)} style={styles.post}>
-                  <Text style={styles.postFecha}>{haceCuanto(p.createdAt)}</Text>
-                  {p.texto ? <Text style={styles.postTexto}>{p.texto}</Text> : null}
-                  {p.tipo === "actividad" && p.actividad ? (
-                    <View style={styles.actCard}>
-                      <MaterialCommunityIcons name={actMeta(p.actividad.tipo).icon} size={20} color={colors.greenBright} />
-                      <Text style={styles.actStats}>
-                        {(p.actividad.metros / 1000).toFixed(2)} km · {fmtTiempo(p.actividad.secs)}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-              ))
-            )}
+            {/* Identidad */}
+            <View style={styles.perfilIdentU}>
+              <Text style={styles.perfilNameU}>{perfil.fullName || perfil.username}</Text>
+              <Text style={styles.perfilHandleU}>@{perfil.username}</Text>
+              {perfil.bio ? <Text style={styles.perfilBioU}>{perfil.bio}</Text> : null}
+              <View style={styles.perfilStatsU}>
+                <Text style={styles.perfilStatText}>
+                  <Text style={styles.perfilStatNum}>{perfil.stats?.posteos || 0}</Text> posteos
+                </Text>
+                <Text style={styles.perfilStatText}>
+                  <Text style={styles.perfilStatNum}>{perfil.stats?.seguidores || 0}</Text> seguidores
+                </Text>
+                <Text style={styles.perfilStatText}>
+                  <Text style={styles.perfilStatNum}>{perfil.stats?.siguiendo || 0}</Text> siguiendo
+                </Text>
+              </View>
+            </View>
+
+            {/* Posteos */}
+            <View style={{ paddingHorizontal: 18, gap: 10 }}>
+              <Text style={styles.postsHead}>Posteos</Text>
+              {posts.length === 0 ? (
+                <Text style={styles.vacioTxt}>Todavía no publicó nada.</Text>
+              ) : (
+                posts.map((p) => (
+                  <View key={String(p.id)} style={styles.post}>
+                    <Text style={styles.postFecha}>{haceCuanto(p.createdAt)}</Text>
+                    {p.texto ? <Text style={styles.postTexto}>{p.texto}</Text> : null}
+                    {p.foto ? <Image source={{ uri: p.foto }} style={styles.postFoto} /> : null}
+                    {p.tipo === "actividad" && p.actividad ? (
+                      <View style={styles.actCard}>
+                        <MaterialCommunityIcons name={actMeta(p.actividad.tipo).icon} size={20} color={colors.greenBright} />
+                        <Text style={styles.actStats}>
+                          {(p.actividad.metros / 1000).toFixed(2)} km · {fmtTiempo(p.actividad.secs)}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                ))
+              )}
+            </View>
           </ScrollView>
         )}
       </View>
@@ -2149,6 +2164,35 @@ const makeStyles = (colors) =>
     perfilNombre: { color: colors.text, fontSize: 20, fontWeight: "900" },
     perfilUser: { color: colors.muted, fontSize: 14, fontWeight: "700" },
     perfilBio: { color: colors.text, fontSize: 14, lineHeight: 20, textAlign: "center", marginTop: 4 },
+    // ---- Perfil de otro usuario con portada (igual que el propio) ----
+    perfilBannerU: { width: "100%", height: 130, backgroundColor: colors.card },
+    perfilBannerVaciaU: { backgroundColor: colors.card },
+    perfilTopRowU: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      paddingHorizontal: 14,
+      marginTop: -44,
+    },
+    perfilAvatarU: {
+      width: 88,
+      height: 88,
+      borderRadius: 44,
+      borderWidth: 4,
+      borderColor: colors.bg,
+      backgroundColor: colors.card,
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+    },
+    perfilFollowWrapU: { marginTop: 48 },
+    perfilIdentU: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 14, gap: 4 },
+    perfilNameU: { color: colors.text, fontSize: 21, fontWeight: "800" },
+    perfilHandleU: { color: colors.muted, fontSize: 15 },
+    perfilBioU: { color: colors.text, fontSize: 15, lineHeight: 21, marginTop: 6 },
+    perfilStatsU: { flexDirection: "row", gap: 18, marginTop: 12 },
+    perfilStatText: { color: colors.muted, fontSize: 14 },
+    perfilStatNum: { color: colors.text, fontWeight: "800" },
     perfilPriv: { color: colors.muted, fontSize: 12.5, fontWeight: "700" },
     statsRow: { flexDirection: "row", gap: 26, marginTop: 8 },
     statBox: { alignItems: "center" },
