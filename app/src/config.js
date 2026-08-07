@@ -16,7 +16,7 @@ export const APP_VERSION = Application.nativeApplicationVersion || "1.0.11";
 export const ARCA_HABILITADO = false;
 
 // Comunidad (perfiles, seguir, feed, clubes, retos). Para probar en dev: true.
-// OFF en las tiendas hasta tener moderación + reportar/bloquear y actualizar la
-// declaración de "interacción social". Ojo: este flag también gatea el
-// exportador de imagen ("Compartir imagen") porque incluye el botón "Publicar".
-export const COMUNIDAD_HABILITADA = false;
+// ⚠️ VOLVER A false ANTES DEL BUILD PÚBLICO (tiendas) hasta tener moderación +
+// reportar/bloquear y actualizar la declaración de "interacción social". Ojo:
+// este flag también gatea el exportador de imagen ("Compartir imagen").
+export const COMUNIDAD_HABILITADA = true;
