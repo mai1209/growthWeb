@@ -472,45 +472,9 @@ function BuscarTab({ colors, styles, onAbrirPerfil }) {
 }
 
 // ---------- Clubes / grupos ----------
-function GruposTab({ colors, styles }) {
-  const [mios, setMios] = useState([]);
-  const [descubrir, setDescubrir] = useState([]);
-  const [q, setQ] = useState("");
-  const [crearOpen, setCrearOpen] = useState(false);
-  const [detalle, setDetalle] = useState(null);
-
-  const cargar = useCallback(() => {
-    gruposService.mios().then(({ data }) => setMios(data?.grupos || [])).catch(() => {});
-  }, []);
-  useEffect(() => {
-    cargar();
-  }, [cargar]);
-  useEffect(() => {
-    const query = q.trim();
-    const t = setTimeout(() => {
-      gruposService
-        .descubrir(query)
-        .then(({ data }) => setDescubrir(data?.grupos || []))
-        .catch(() => {});
-    }, 350);
-    return () => clearTimeout(t);
-  }, [q]);
-
-  const toggleUnirse = (g) => {
-    const accion = g.soyMiembro ? gruposService.salir : gruposService.unirse;
-    const upd = (arr) =>
-      arr.map((x) =>
-        x.id === g.id
-          ? { ...x, soyMiembro: !g.soyMiembro, miembros: x.miembros + (g.soyMiembro ? -1 : 1) }
-          : x
-      );
-    setDescubrir(upd);
-    setMios(upd);
-    accion(g.id).then(() => cargar()).catch(() => {});
-  };
-
-  const Card = (g) => (
-    <TouchableOpacity key={String(g.id)} style={styles.grupoCard} onPress={() => setDetalle(g)}>
+function GrupoCard({ g, colors, styles, onAbrir, onToggle }) {
+  return (
+    <TouchableOpacity style={styles.grupoCard} onPress={() => onAbrir(g)}>
       <View style={styles.grupoIcon}>
         {g.foto ? (
           <Image source={{ uri: g.foto }} style={styles.grupoFoto} />
@@ -525,30 +489,59 @@ function GruposTab({ colors, styles }) {
           {g.zona ? ` · ${g.zona}` : ""} · {g.miembros} {g.miembros === 1 ? "miembro" : "miembros"}
         </Text>
       </View>
-      <TouchableOpacity
-        style={g.soyMiembro ? styles.grupoBtnSec : styles.grupoBtnPrim}
-        onPress={() => toggleUnirse(g)}
-      >
-        <Text style={g.soyMiembro ? styles.grupoBtnSecTxt : styles.grupoBtnPrimTxt}>
-          {g.soyMiembro ? "Unido" : "Unirme"}
-        </Text>
-      </TouchableOpacity>
+      {onToggle ? (
+        <TouchableOpacity
+          style={g.soyMiembro ? styles.grupoBtnSec : styles.grupoBtnPrim}
+          onPress={() => onToggle(g)}
+        >
+          <Text style={g.soyMiembro ? styles.grupoBtnSecTxt : styles.grupoBtnPrimTxt}>
+            {g.soyMiembro ? "Unido" : "Unirme"}
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+      )}
     </TouchableOpacity>
   );
+}
+
+function GruposTab({ colors, styles }) {
+  const [descubrir, setDescubrir] = useState([]);
+  const [q, setQ] = useState("");
+  const [crearOpen, setCrearOpen] = useState(false);
+  const [misOpen, setMisOpen] = useState(false);
+  const [detalle, setDetalle] = useState(null);
+
+  const cargarDescubrir = useCallback(() => {
+    gruposService.descubrir(q.trim()).then(({ data }) => setDescubrir(data?.grupos || [])).catch(() => {});
+  }, [q]);
+  useEffect(() => {
+    const t = setTimeout(cargarDescubrir, 350);
+    return () => clearTimeout(t);
+  }, [cargarDescubrir]);
+
+  const toggleUnirse = (g) => {
+    const accion = g.soyMiembro ? gruposService.salir : gruposService.unirse;
+    setDescubrir((arr) =>
+      arr.map((x) =>
+        x.id === g.id ? { ...x, soyMiembro: !g.soyMiembro, miembros: x.miembros + (g.soyMiembro ? -1 : 1) } : x
+      )
+    );
+    accion(g.id).catch(() => {});
+  };
 
   return (
     <ScrollView contentContainerStyle={{ padding: 14, gap: 10 }}>
-      <TouchableOpacity style={styles.crearGrupoBtn} onPress={() => setCrearOpen(true)}>
-        <Ionicons name="add" size={18} color="#06210a" />
-        <Text style={styles.crearGrupoTxt}>Crear un club</Text>
-      </TouchableOpacity>
-
-      {mios.length ? (
-        <>
-          <Text style={styles.grupoSecTit}>Tus clubes</Text>
-          {mios.map(Card)}
-        </>
-      ) : null}
+      <View style={styles.dobleBtnRow}>
+        <TouchableOpacity style={styles.dobleBtnPrim} onPress={() => setCrearOpen(true)}>
+          <Ionicons name="add" size={17} color="#06210a" />
+          <Text style={styles.dobleBtnPrimTxt}>Crear un club</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.dobleBtnSec} onPress={() => setMisOpen(true)}>
+          <Ionicons name="people-outline" size={16} color={colors.greenBright} />
+          <Text style={styles.dobleBtnSecTxt}>Mis clubes</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.buscarWrap}>
         <Ionicons name="search" size={17} color={colors.muted} />
@@ -562,7 +555,9 @@ function GruposTab({ colors, styles }) {
       </View>
       <Text style={styles.grupoSecTit}>Descubrir</Text>
       {descubrir.length ? (
-        descubrir.map(Card)
+        descubrir.map((g) => (
+          <GrupoCard key={String(g.id)} g={g} colors={colors} styles={styles} onAbrir={setDetalle} onToggle={toggleUnirse} />
+        ))
       ) : (
         <Text style={styles.vacioTxt}>Todavía no hay clubes. ¡Creá el primero!</Text>
       )}
@@ -574,10 +569,11 @@ function GruposTab({ colors, styles }) {
           onClose={() => setCrearOpen(false)}
           onCreado={() => {
             setCrearOpen(false);
-            cargar();
+            cargarDescubrir();
           }}
         />
       ) : null}
+      {misOpen ? <MisClubesModal colors={colors} styles={styles} onClose={() => setMisOpen(false)} /> : null}
       {detalle ? (
         <GrupoDetalleModal
           colors={colors}
@@ -585,11 +581,204 @@ function GruposTab({ colors, styles }) {
           grupo={detalle}
           onClose={() => {
             setDetalle(null);
-            cargar();
+            cargarDescubrir();
           }}
         />
       ) : null}
     </ScrollView>
+  );
+}
+
+// Pantalla "Mis clubes": switch Creados / Unidos.
+function MisClubesModal({ colors, styles, onClose }) {
+  const insets = useSafeAreaInsets();
+  const [seg, setSeg] = useState("creados");
+  const [clubs, setClubs] = useState([]);
+  const [detalle, setDetalle] = useState(null);
+  const [editar, setEditar] = useState(null);
+
+  const cargar = useCallback(() => {
+    gruposService.mios().then(({ data }) => setClubs(data?.grupos || [])).catch(() => {});
+  }, []);
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+
+  const lista = clubs.filter((c) => (seg === "creados" ? c.soyOwner : !c.soyOwner));
+
+  return (
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <View style={[styles.safe, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onClose} hitSlop={10}>
+            <Ionicons name="close" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Mis clubes</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.segmento}>
+          {[
+            ["creados", "Creados"],
+            ["unidos", "Unidos"],
+          ].map(([k, l]) => (
+            <TouchableOpacity key={k} style={[styles.segBtn, seg === k && styles.segBtnOn]} onPress={() => setSeg(k)}>
+              <Text style={[styles.segTxt, seg === k && styles.segTxtOn]}>{l}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 14, gap: 10 }}>
+          {lista.length ? (
+            lista.map((g) => (
+              <View key={String(g.id)} style={styles.grupoCard}>
+                <TouchableOpacity style={styles.grupoIcon} onPress={() => setDetalle(g)}>
+                  {g.foto ? (
+                    <Image source={{ uri: g.foto }} style={styles.grupoFoto} />
+                  ) : (
+                    <MaterialCommunityIcons name={DEP_ICON[g.deporte] || "account-group"} size={22} color={colors.greenBright} />
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity style={{ flex: 1 }} onPress={() => setDetalle(g)}>
+                  <Text style={styles.grupoNombre}>{g.nombre}</Text>
+                  <Text style={styles.grupoSub}>
+                    {DEP_LABEL[g.deporte] || "Mixto"}
+                    {g.zona ? ` · ${g.zona}` : ""} · {g.miembros} {g.miembros === 1 ? "miembro" : "miembros"}
+                  </Text>
+                </TouchableOpacity>
+                {g.soyOwner ? (
+                  <TouchableOpacity onPress={() => setEditar(g)} hitSlop={8}>
+                    <Ionicons name="create-outline" size={21} color={colors.greenBright} />
+                  </TouchableOpacity>
+                ) : (
+                  <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+                )}
+              </View>
+            ))
+          ) : (
+            <Text style={styles.vacioTxt}>
+              {seg === "creados" ? "Todavía no creaste ningún club." : "Todavía no te uniste a ningún club."}
+            </Text>
+          )}
+        </ScrollView>
+
+        {detalle ? (
+          <GrupoDetalleModal
+            colors={colors}
+            styles={styles}
+            grupo={detalle}
+            onClose={() => {
+              setDetalle(null);
+              cargar();
+            }}
+          />
+        ) : null}
+        {editar ? (
+          <EditarGrupoModal
+            colors={colors}
+            styles={styles}
+            grupo={editar}
+            onClose={() => setEditar(null)}
+            onGuardado={() => {
+              setEditar(null);
+              cargar();
+            }}
+          />
+        ) : null}
+      </View>
+    </Modal>
+  );
+}
+
+function EditarGrupoModal({ colors, styles, grupo, onClose, onGuardado }) {
+  const insets = useSafeAreaInsets();
+  const [nombre, setNombre] = useState(grupo.nombre || "");
+  const [descripcion, setDescripcion] = useState(grupo.descripcion || "");
+  const [zona, setZona] = useState(grupo.zona || "");
+  const [deporte, setDeporte] = useState(grupo.deporte || "mixto");
+  const [foto, setFoto] = useState(grupo.foto || "");
+  const [enviando, setEnviando] = useState(false);
+
+  const elegir = async () => {
+    const r = await elegirFotoComida();
+    if (r?.base64) setFoto(`data:${r.mediaType};base64,${r.base64}`);
+  };
+  const guardar = () => {
+    if (!nombre.trim() || enviando) return;
+    setEnviando(true);
+    gruposService
+      .editar(grupo.id, { nombre: nombre.trim(), descripcion, zona, deporte, foto })
+      .then(() => onGuardado())
+      .catch(() => Alert.alert("Error", "No se pudo guardar."))
+      .finally(() => setEnviando(false));
+  };
+
+  return (
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <View style={[styles.safe, { paddingTop: insets.top }]}>
+        <View style={styles.composeHeadFull}>
+          <TouchableOpacity onPress={onClose} hitSlop={8}>
+            <Text style={styles.composeCancel}>Cancelar</Text>
+          </TouchableOpacity>
+          <Text style={styles.composeTitulo}>Editar club</Text>
+          <TouchableOpacity onPress={guardar} disabled={!nombre.trim() || enviando} hitSlop={8}>
+            <Text style={[styles.composeOk, (!nombre.trim() || enviando) && { opacity: 0.4 }]}>Guardar</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }} keyboardShouldPersistTaps="handled">
+          <TouchableOpacity style={styles.editFotoWrap} onPress={elegir}>
+            {foto ? (
+              <Image source={{ uri: foto }} style={styles.editFoto} />
+            ) : (
+              <View style={[styles.editFoto, styles.editFotoVacia]}>
+                <MaterialCommunityIcons name={DEP_ICON[deporte] || "account-group"} size={34} color={colors.greenBright} />
+              </View>
+            )}
+            <Text style={styles.editFotoTxt}>Cambiar foto</Text>
+          </TouchableOpacity>
+          <TextInput
+            style={styles.grupoInput}
+            value={nombre}
+            onChangeText={setNombre}
+            placeholder="Nombre del club"
+            placeholderTextColor={colors.muted}
+            maxLength={60}
+          />
+          <TextInput
+            style={[styles.grupoInput, { minHeight: 80, textAlignVertical: "top" }]}
+            value={descripcion}
+            onChangeText={setDescripcion}
+            placeholder="Descripción (opcional)"
+            placeholderTextColor={colors.muted}
+            multiline
+            maxLength={400}
+          />
+          <TextInput
+            style={styles.grupoInput}
+            value={zona}
+            onChangeText={setZona}
+            placeholder="Zona / ciudad"
+            placeholderTextColor={colors.muted}
+            maxLength={80}
+          />
+          <Text style={styles.grupoLbl}>Deporte</Text>
+          <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+            {[
+              ["caminata", "Caminata"],
+              ["carrera", "Carrera"],
+              ["bici", "Bici"],
+              ["mixto", "Mixto"],
+            ].map(([k, l]) => (
+              <TouchableOpacity
+                key={k}
+                style={[styles.depChip, deporte === k && styles.depChipOn]}
+                onPress={() => setDeporte(k)}
+              >
+                <Text style={[styles.depChipTxt, deporte === k && styles.depChipTxtOn]}>{l}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
   );
 }
 
@@ -755,94 +944,83 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose }) {
 }
 
 // ---------- Retos / desafíos ----------
+function RetoCard({ r, colors, styles, onAbrir, onToggle }) {
+  const est = estadoReto(r, colors);
+  const pct = r.miProgreso != null && r.meta ? Math.min(100, Math.round((r.miProgreso / r.meta) * 100)) : null;
+  return (
+    <TouchableOpacity style={styles.retoCard} onPress={() => onAbrir(r)}>
+      <View style={styles.retoTop}>
+        <View style={styles.grupoIcon}>
+          <MaterialCommunityIcons name={DEP_ICON[r.deporte] || "trophy"} size={20} color={colors.greenBright} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.grupoNombre}>{r.nombre}</Text>
+          <Text style={styles.grupoSub}>
+            {fmtKm(r.meta)} · {DEP_LABEL[r.deporte] || "Mixto"} · {r.participantes}{" "}
+            {r.participantes === 1 ? "persona" : "personas"}
+          </Text>
+        </View>
+        <View style={[styles.retoBadge, { backgroundColor: est.bg }]}>
+          <Text style={[styles.retoBadgeTxt, { color: est.fg }]}>{est.txt}</Text>
+        </View>
+      </View>
+      {pct != null ? (
+        <View style={{ gap: 5 }}>
+          <View style={styles.progBar}>
+            <View style={[styles.progFill, { width: `${pct}%` }]} />
+          </View>
+          <Text style={styles.progTxt}>
+            {fmtKm(r.miProgreso)} de {fmtKm(r.meta)} · {pct}%
+          </Text>
+        </View>
+      ) : onToggle ? (
+        <TouchableOpacity style={r.meApunto ? styles.grupoBtnSec : styles.grupoBtnPrim} onPress={() => onToggle(r)}>
+          <Text style={r.meApunto ? styles.grupoBtnSecTxt : styles.grupoBtnPrimTxt}>
+            {r.meApunto ? "Apuntado" : "Sumarme"}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
+    </TouchableOpacity>
+  );
+}
+
 function RetosTab({ colors, styles, onAbrirPerfil }) {
-  const [mios, setMios] = useState([]);
   const [descubrir, setDescubrir] = useState([]);
   const [q, setQ] = useState("");
   const [crearOpen, setCrearOpen] = useState(false);
+  const [misOpen, setMisOpen] = useState(false);
   const [detalle, setDetalle] = useState(null);
 
-  const cargar = useCallback(() => {
-    retosService.mios().then(({ data }) => setMios(data?.retos || [])).catch(() => {});
-  }, []);
-  useEffect(() => {
-    cargar();
-  }, [cargar]);
-  useEffect(() => {
-    const query = q.trim();
-    const t = setTimeout(() => {
-      retosService.descubrir(query).then(({ data }) => setDescubrir(data?.retos || [])).catch(() => {});
-    }, 350);
-    return () => clearTimeout(t);
+  const cargarDescubrir = useCallback(() => {
+    retosService.descubrir(q.trim()).then(({ data }) => setDescubrir(data?.retos || [])).catch(() => {});
   }, [q]);
+  useEffect(() => {
+    const t = setTimeout(cargarDescubrir, 350);
+    return () => clearTimeout(t);
+  }, [cargarDescubrir]);
 
   const toggle = (r) => {
     const accion = r.meApunto ? retosService.salir : retosService.unirse;
-    const upd = (arr) =>
+    setDescubrir((arr) =>
       arr.map((x) =>
         x.id === r.id ? { ...x, meApunto: !r.meApunto, participantes: x.participantes + (r.meApunto ? -1 : 1) } : x
-      );
-    setDescubrir(upd);
-    setMios(upd);
-    accion(r.id).then(() => cargar()).catch(() => {});
-  };
-
-  const Card = (r) => {
-    const est = estadoReto(r, colors);
-    const pct = r.miProgreso != null && r.meta ? Math.min(100, Math.round((r.miProgreso / r.meta) * 100)) : null;
-    return (
-      <TouchableOpacity key={String(r.id)} style={styles.retoCard} onPress={() => setDetalle(r)}>
-        <View style={styles.retoTop}>
-          <View style={styles.grupoIcon}>
-            <MaterialCommunityIcons name={DEP_ICON[r.deporte] || "trophy"} size={20} color={colors.greenBright} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.grupoNombre}>{r.nombre}</Text>
-            <Text style={styles.grupoSub}>
-              {fmtKm(r.meta)} · {DEP_LABEL[r.deporte] || "Mixto"} · {r.participantes}{" "}
-              {r.participantes === 1 ? "persona" : "personas"}
-            </Text>
-          </View>
-          <View style={[styles.retoBadge, { backgroundColor: est.bg }]}>
-            <Text style={[styles.retoBadgeTxt, { color: est.fg }]}>{est.txt}</Text>
-          </View>
-        </View>
-        {pct != null ? (
-          <View style={{ gap: 5 }}>
-            <View style={styles.progBar}>
-              <View style={[styles.progFill, { width: `${pct}%` }]} />
-            </View>
-            <Text style={styles.progTxt}>
-              {fmtKm(r.miProgreso)} de {fmtKm(r.meta)} · {pct}%
-            </Text>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={r.meApunto ? styles.grupoBtnSec : styles.grupoBtnPrim}
-            onPress={() => toggle(r)}
-          >
-            <Text style={r.meApunto ? styles.grupoBtnSecTxt : styles.grupoBtnPrimTxt}>
-              {r.meApunto ? "Apuntado" : "Sumarme"}
-            </Text>
-          </TouchableOpacity>
-        )}
-      </TouchableOpacity>
+      )
     );
+    accion(r.id).catch(() => {});
   };
 
   return (
     <ScrollView contentContainerStyle={{ padding: 14, gap: 10 }}>
-      <TouchableOpacity style={styles.crearGrupoBtn} onPress={() => setCrearOpen(true)}>
-        <Ionicons name="add" size={18} color="#06210a" />
-        <Text style={styles.crearGrupoTxt}>Crear un reto</Text>
-      </TouchableOpacity>
-
-      {mios.length ? (
-        <>
-          <Text style={styles.grupoSecTit}>Tus retos</Text>
-          {mios.map(Card)}
-        </>
-      ) : null}
+      <View style={styles.dobleBtnRow}>
+        <TouchableOpacity style={styles.dobleBtnPrim} onPress={() => setCrearOpen(true)}>
+          <Ionicons name="add" size={17} color="#06210a" />
+          <Text style={styles.dobleBtnPrimTxt}>Crear un reto</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.dobleBtnSec} onPress={() => setMisOpen(true)}>
+          <Ionicons name="trophy-outline" size={15} color={colors.greenBright} />
+          <Text style={styles.dobleBtnSecTxt}>Mis retos</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.buscarWrap}>
         <Ionicons name="search" size={17} color={colors.muted} />
@@ -856,7 +1034,9 @@ function RetosTab({ colors, styles, onAbrirPerfil }) {
       </View>
       <Text style={styles.grupoSecTit}>Descubrir</Text>
       {descubrir.length ? (
-        descubrir.map(Card)
+        descubrir.map((r) => (
+          <RetoCard key={String(r.id)} r={r} colors={colors} styles={styles} onAbrir={setDetalle} onToggle={toggle} />
+        ))
       ) : (
         <Text style={styles.vacioTxt}>Todavía no hay retos. ¡Creá el primero!</Text>
       )}
@@ -868,9 +1048,12 @@ function RetosTab({ colors, styles, onAbrirPerfil }) {
           onClose={() => setCrearOpen(false)}
           onCreado={() => {
             setCrearOpen(false);
-            cargar();
+            cargarDescubrir();
           }}
         />
+      ) : null}
+      {misOpen ? (
+        <MisRetosModal colors={colors} styles={styles} onAbrirPerfil={onAbrirPerfil} onClose={() => setMisOpen(false)} />
       ) : null}
       {detalle ? (
         <RetoDetalleModal
@@ -880,11 +1063,76 @@ function RetosTab({ colors, styles, onAbrirPerfil }) {
           onAbrirPerfil={onAbrirPerfil}
           onClose={() => {
             setDetalle(null);
-            cargar();
+            cargarDescubrir();
           }}
         />
       ) : null}
     </ScrollView>
+  );
+}
+
+// Pantalla "Mis retos": switch Creados / Apuntados.
+function MisRetosModal({ colors, styles, onClose, onAbrirPerfil }) {
+  const insets = useSafeAreaInsets();
+  const [seg, setSeg] = useState("creados");
+  const [retos, setRetos] = useState([]);
+  const [detalle, setDetalle] = useState(null);
+
+  const cargar = useCallback(() => {
+    retosService.mios().then(({ data }) => setRetos(data?.retos || [])).catch(() => {});
+  }, []);
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+
+  const lista = retos.filter((r) => (seg === "creados" ? r.soyCreador : !r.soyCreador));
+
+  return (
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <View style={[styles.safe, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onClose} hitSlop={10}>
+            <Ionicons name="close" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Mis retos</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.segmento}>
+          {[
+            ["creados", "Creados"],
+            ["apuntados", "Apuntados"],
+          ].map(([k, l]) => (
+            <TouchableOpacity key={k} style={[styles.segBtn, seg === k && styles.segBtnOn]} onPress={() => setSeg(k)}>
+              <Text style={[styles.segTxt, seg === k && styles.segTxtOn]}>{l}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 14, gap: 10 }}>
+          {lista.length ? (
+            lista.map((r) => (
+              <RetoCard key={String(r.id)} r={r} colors={colors} styles={styles} onAbrir={setDetalle} />
+            ))
+          ) : (
+            <Text style={styles.vacioTxt}>
+              {seg === "creados" ? "Todavía no creaste ningún reto." : "Todavía no te apuntaste a ningún reto."}
+            </Text>
+          )}
+        </ScrollView>
+
+        {detalle ? (
+          <RetoDetalleModal
+            colors={colors}
+            styles={styles}
+            reto={detalle}
+            onAbrirPerfil={onAbrirPerfil}
+            onClose={() => {
+              setDetalle(null);
+              cargar();
+            }}
+          />
+        ) : null}
+      </View>
+    </Modal>
   );
 }
 
@@ -1303,16 +1551,6 @@ function PerfilUsuarioModal({ colors, styles, user, onClose }) {
 const makeStyles = (colors) =>
   StyleSheet.create({
     // ---- Clubes / grupos ----
-    crearGrupoBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 6,
-      backgroundColor: colors.greenBright,
-      borderRadius: 12,
-      paddingVertical: 12,
-    },
-    crearGrupoTxt: { color: "#06210a", fontSize: 15, fontWeight: "800" },
     grupoSecTit: {
       color: colors.muted,
       fontSize: 12.5,
@@ -1418,6 +1656,58 @@ const makeStyles = (colors) =>
     rankPosTop: { color: colors.greenBright },
     rankNombre: { flex: 1, color: colors.text, fontSize: 14.5, fontWeight: "600" },
     rankKm: { color: colors.text, fontSize: 13.5, fontWeight: "800" },
+    // ---- Doble botón (Crear / Mis…) ----
+    dobleBtnRow: { flexDirection: "row", gap: 10 },
+    dobleBtnPrim: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      backgroundColor: colors.greenBright,
+      borderRadius: 12,
+      paddingVertical: 12,
+    },
+    dobleBtnPrimTxt: { color: "#06210a", fontSize: 14.5, fontWeight: "800" },
+    dobleBtnSec: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      borderRadius: 12,
+      paddingVertical: 12,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+    },
+    dobleBtnSecTxt: { color: colors.greenBright, fontSize: 14.5, fontWeight: "800" },
+    // ---- Switch / segmento ----
+    segmento: {
+      flexDirection: "row",
+      marginHorizontal: 14,
+      marginTop: 6,
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      padding: 3,
+      gap: 3,
+    },
+    segBtn: { flex: 1, alignItems: "center", paddingVertical: 9, borderRadius: 9 },
+    segBtnOn: { backgroundColor: colors.greenBright },
+    segTxt: { color: colors.muted, fontSize: 14, fontWeight: "800" },
+    segTxtOn: { color: "#06210a" },
+    // ---- Editar club: foto ----
+    editFotoWrap: { alignItems: "center", gap: 8, marginBottom: 4 },
+    editFoto: { width: 96, height: 96, borderRadius: 24 },
+    editFotoVacia: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    editFotoTxt: { color: colors.greenBright, fontSize: 14, fontWeight: "800" },
     safe: { flex: 1, backgroundColor: colors.bg },
     header: {
       flexDirection: "row",

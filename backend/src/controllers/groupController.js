@@ -167,6 +167,27 @@ export const miembrosGrupo = async (req, res) => {
   }
 };
 
+// PUT /api/community/grupos/:id — editar (solo el owner). Por ahora foto + datos básicos.
+export const editarGrupo = async (req, res) => {
+  try {
+    const g = await Group.findById(req.params.id);
+    if (!g) return res.status(404).json({ error: "Club no encontrado" });
+    if (String(g.owner) !== String(req.userId)) return res.status(403).json({ error: "No es tu club." });
+    const { nombre, descripcion, deporte, zona, foto } = req.body || {};
+    if (typeof nombre === "string" && nombre.trim()) g.nombre = nombre.slice(0, 60);
+    if (typeof descripcion === "string") g.descripcion = descripcion.slice(0, 400);
+    if (DEPORTES.includes(deporte)) g.deporte = deporte;
+    if (typeof zona === "string") g.zona = zona.slice(0, 80);
+    if (typeof foto === "string") g.foto = foto.slice(0, 2000000);
+    await g.save();
+    const miembros = await GroupMember.countDocuments({ group: g._id });
+    return res.json({ grupo: serializarGrupo(g, { miembros, soyMiembro: true, soyOwner: true }) });
+  } catch (err) {
+    console.error("[grupos] editar:", err.message);
+    return res.status(500).json({ error: "No se pudo guardar." });
+  }
+};
+
 // DELETE /api/community/grupos/:id — solo el owner.
 export const borrarGrupo = async (req, res) => {
   try {

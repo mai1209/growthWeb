@@ -23,6 +23,7 @@ import {
   unirse,
   salir,
   miembrosGrupo,
+  editarGrupo,
   borrarGrupo,
 } from "../controllers/groupController.js";
 import {
@@ -63,6 +64,7 @@ router.get("/grupos/:id/miembros", requireAuth, miembrosGrupo);
 router.post("/grupos/:id/join", requireAuth, unirse);
 router.delete("/grupos/:id/join", requireAuth, salir);
 router.get("/grupos/:id", requireAuth, getGrupo);
+router.put("/grupos/:id", requireAuth, editarGrupo);
 router.delete("/grupos/:id", requireAuth, borrarGrupo);
 
 // Retos / desafíos (Fase 3). Orden: rutas fijas antes que /:id.

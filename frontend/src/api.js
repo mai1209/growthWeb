@@ -199,6 +199,7 @@ export const gruposService = {
   unirse: (id) => api.post(`/api/community/grupos/${id}/join`),
   salir: (id) => api.delete(`/api/community/grupos/${id}/join`),
   miembros: (id) => api.get(`/api/community/grupos/${id}/miembros`),
+  editar: (id, data) => api.put(`/api/community/grupos/${id}`, data),
   borrar: (id) => api.delete(`/api/community/grupos/${id}`),
 };
 
