@@ -22,6 +22,7 @@ const serializar = (r, extra = {}) => ({
   deporte: DEPORTES.includes(r.deporte) ? r.deporte : "mixto",
   inicio: r.inicio,
   fin: r.fin,
+  foto: r.foto || "",
   creador: r.creador,
   ...extra,
 });
@@ -210,6 +211,36 @@ export const rankingReto = async (req, res) => {
   } catch (err) {
     console.error("[retos] ranking:", err.message);
     return res.status(500).json({ error: "No se pudo cargar el ranking." });
+  }
+};
+
+// PUT /api/community/retos/:id — editar (solo el creador). Por ahora foto + datos básicos.
+export const editarReto = async (req, res) => {
+  try {
+    const r = await Challenge.findById(req.params.id);
+    if (!r) return res.status(404).json({ error: "Reto no encontrado" });
+    if (String(r.creador) !== String(req.userId)) return res.status(403).json({ error: "No es tu reto." });
+    const { nombre, descripcion, deporte, foto } = req.body || {};
+    if (typeof nombre === "string" && nombre.trim()) r.nombre = nombre.slice(0, 80);
+    if (typeof descripcion === "string") r.descripcion = descripcion.slice(0, 400);
+    if (DEPORTES.includes(deporte)) r.deporte = deporte;
+    if (typeof foto === "string") r.foto = foto.slice(0, 2000000);
+    await r.save();
+    const [participantes, salud] = await Promise.all([
+      ChallengeMember.countDocuments({ challenge: r._id }),
+      Salud.findOne({ usuario: req.userId }).select("caminatas"),
+    ]);
+    return res.json({
+      reto: serializar(r, {
+        participantes,
+        meApunto: true,
+        soyCreador: true,
+        miProgreso: sumMetros(salud?.caminatas || [], r.inicio, r.fin, r.deporte),
+      }),
+    });
+  } catch (err) {
+    console.error("[retos] editar:", err.message);
+    return res.status(500).json({ error: "No se pudo guardar." });
   }
 };
 

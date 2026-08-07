@@ -34,6 +34,7 @@ import {
   unirseReto,
   salirReto,
   rankingReto,
+  editarReto,
   borrarReto,
 } from "../controllers/challengeController.js";
 
@@ -75,6 +76,7 @@ router.get("/retos/:id/ranking", requireAuth, rankingReto);
 router.post("/retos/:id/join", requireAuth, unirseReto);
 router.delete("/retos/:id/join", requireAuth, salirReto);
 router.get("/retos/:id", requireAuth, getReto);
+router.put("/retos/:id", requireAuth, editarReto);
 router.delete("/retos/:id", requireAuth, borrarReto);
 
 export default router;

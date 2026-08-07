@@ -179,6 +179,7 @@ export const retosService = {
   unirse: (id) => api.post(`/api/community/retos/${id}/join`),
   salir: (id) => api.delete(`/api/community/retos/${id}/join`),
   ranking: (id) => api.get(`/api/community/retos/${id}/ranking`),
+  editar: (id, data) => api.put(`/api/community/retos/${id}`, data),
   borrar: (id) => api.delete(`/api/community/retos/${id}`),
 };
 

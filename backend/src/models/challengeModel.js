@@ -12,6 +12,7 @@ const challengeSchema = new mongoose.Schema(
     deporte: { type: String, default: "mixto" }, // caminata | carrera | bici | mixto
     inicio: { type: String, required: true }, // "YYYY-MM-DD" (fecha local del cliente)
     fin: { type: String, required: true }, // "YYYY-MM-DD"
+    foto: { type: String, default: "" },
     creador: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     publico: { type: Boolean, default: true },
   },
