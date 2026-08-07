@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Svg, { Path, Circle } from "react-native-svg";
 import { useTheme } from "../theme";
-import { communityService, gruposService } from "../api";
+import { communityService, gruposService, retosService } from "../api";
 import { elegirFotoComida } from "../utils/foto";
 
 const ACT = {
@@ -31,6 +31,20 @@ const actMeta = (t) => ACT[t] || ACT.caminata;
 
 const DEP_LABEL = { caminata: "Caminata", carrera: "Carrera", bici: "Bici", mixto: "Mixto" };
 const DEP_ICON = { caminata: "walk", carrera: "run", bici: "bike", mixto: "account-group" };
+
+const fmtKm = (m) => `${((Number(m) || 0) / 1000).toFixed(1)} km`;
+const pad2 = (n) => String(n).padStart(2, "0");
+const hoyLocal = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+};
+// Estado del reto según el "hoy" del dispositivo (igual que el resto de la app).
+const estadoReto = (r, colors) => {
+  const h = hoyLocal();
+  if (h < r.inicio) return { txt: "Próximo", fg: "#7a5b00", bg: "#ffe4a3" };
+  if (h > r.fin) return { txt: "Terminado", fg: colors.muted, bg: colors.cardBorder };
+  return { txt: "En curso", fg: "#06210a", bg: colors.greenBright };
+};
 
 const haceCuanto = (iso) => {
   if (!iso) return "";
@@ -264,6 +278,7 @@ export default function ComunidadScreen({ navigation }) {
           ["inicio", "Inicio", "home-outline"],
           ["buscar", "Buscar", "search-outline"],
           ["grupos", "Clubes", "people-outline"],
+          ["retos", "Retos", "trophy-outline"],
         ].map(([k, l, ic]) => (
           <TouchableOpacity key={k} style={styles.tabBtn} onPress={() => setTab(k)}>
             <Ionicons name={ic} size={18} color={tab === k ? colors.greenBright : colors.muted} />
@@ -297,8 +312,10 @@ export default function ComunidadScreen({ navigation }) {
         )
       ) : tab === "buscar" ? (
         <BuscarTab colors={colors} styles={styles} onAbrirPerfil={setPerfilUser} />
-      ) : (
+      ) : tab === "grupos" ? (
         <GruposTab colors={colors} styles={styles} />
+      ) : (
+        <RetosTab colors={colors} styles={styles} onAbrirPerfil={setPerfilUser} />
       )}
 
       {composeOpen ? (
@@ -728,6 +745,355 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose }) {
   );
 }
 
+// ---------- Retos / desafíos ----------
+function RetosTab({ colors, styles, onAbrirPerfil }) {
+  const [mios, setMios] = useState([]);
+  const [descubrir, setDescubrir] = useState([]);
+  const [q, setQ] = useState("");
+  const [crearOpen, setCrearOpen] = useState(false);
+  const [detalle, setDetalle] = useState(null);
+
+  const cargar = useCallback(() => {
+    retosService.mios().then(({ data }) => setMios(data?.retos || [])).catch(() => {});
+  }, []);
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+  useEffect(() => {
+    const query = q.trim();
+    const t = setTimeout(() => {
+      retosService.descubrir(query).then(({ data }) => setDescubrir(data?.retos || [])).catch(() => {});
+    }, 350);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const toggle = (r) => {
+    const accion = r.meApunto ? retosService.salir : retosService.unirse;
+    const upd = (arr) =>
+      arr.map((x) =>
+        x.id === r.id ? { ...x, meApunto: !r.meApunto, participantes: x.participantes + (r.meApunto ? -1 : 1) } : x
+      );
+    setDescubrir(upd);
+    setMios(upd);
+    accion(r.id).then(() => cargar()).catch(() => {});
+  };
+
+  const Card = (r) => {
+    const est = estadoReto(r, colors);
+    const pct = r.miProgreso != null && r.meta ? Math.min(100, Math.round((r.miProgreso / r.meta) * 100)) : null;
+    return (
+      <TouchableOpacity key={String(r.id)} style={styles.retoCard} onPress={() => setDetalle(r)}>
+        <View style={styles.retoTop}>
+          <View style={styles.grupoIcon}>
+            <MaterialCommunityIcons name={DEP_ICON[r.deporte] || "trophy"} size={20} color={colors.greenBright} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.grupoNombre}>{r.nombre}</Text>
+            <Text style={styles.grupoSub}>
+              {fmtKm(r.meta)} · {DEP_LABEL[r.deporte] || "Mixto"} · {r.participantes}{" "}
+              {r.participantes === 1 ? "persona" : "personas"}
+            </Text>
+          </View>
+          <View style={[styles.retoBadge, { backgroundColor: est.bg }]}>
+            <Text style={[styles.retoBadgeTxt, { color: est.fg }]}>{est.txt}</Text>
+          </View>
+        </View>
+        {pct != null ? (
+          <View style={{ gap: 5 }}>
+            <View style={styles.progBar}>
+              <View style={[styles.progFill, { width: `${pct}%` }]} />
+            </View>
+            <Text style={styles.progTxt}>
+              {fmtKm(r.miProgreso)} de {fmtKm(r.meta)} · {pct}%
+            </Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={r.meApunto ? styles.grupoBtnSec : styles.grupoBtnPrim}
+            onPress={() => toggle(r)}
+          >
+            <Text style={r.meApunto ? styles.grupoBtnSecTxt : styles.grupoBtnPrimTxt}>
+              {r.meApunto ? "Apuntado" : "Sumarme"}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <ScrollView contentContainerStyle={{ padding: 14, gap: 10 }}>
+      <TouchableOpacity style={styles.crearGrupoBtn} onPress={() => setCrearOpen(true)}>
+        <Ionicons name="add" size={18} color="#06210a" />
+        <Text style={styles.crearGrupoTxt}>Crear un reto</Text>
+      </TouchableOpacity>
+
+      {mios.length ? (
+        <>
+          <Text style={styles.grupoSecTit}>Tus retos</Text>
+          {mios.map(Card)}
+        </>
+      ) : null}
+
+      <View style={styles.buscarWrap}>
+        <Ionicons name="search" size={17} color={colors.muted} />
+        <TextInput
+          style={styles.buscarInput}
+          value={q}
+          onChangeText={setQ}
+          placeholder="Buscar retos"
+          placeholderTextColor={colors.muted}
+        />
+      </View>
+      <Text style={styles.grupoSecTit}>Descubrir</Text>
+      {descubrir.length ? (
+        descubrir.map(Card)
+      ) : (
+        <Text style={styles.vacioTxt}>Todavía no hay retos. ¡Creá el primero!</Text>
+      )}
+
+      {crearOpen ? (
+        <CrearRetoModal
+          colors={colors}
+          styles={styles}
+          onClose={() => setCrearOpen(false)}
+          onCreado={() => {
+            setCrearOpen(false);
+            cargar();
+          }}
+        />
+      ) : null}
+      {detalle ? (
+        <RetoDetalleModal
+          colors={colors}
+          styles={styles}
+          reto={detalle}
+          onAbrirPerfil={onAbrirPerfil}
+          onClose={() => {
+            setDetalle(null);
+            cargar();
+          }}
+        />
+      ) : null}
+    </ScrollView>
+  );
+}
+
+function CrearRetoModal({ colors, styles, onClose, onCreado }) {
+  const insets = useSafeAreaInsets();
+  const [nombre, setNombre] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [deporte, setDeporte] = useState("mixto");
+  const [metaKm, setMetaKm] = useState("");
+  const [dur, setDur] = useState("mes"); // "7" | "30" | "mes"
+  const [enviando, setEnviando] = useState(false);
+
+  const km = Number(String(metaKm).replace(",", "."));
+  const puede = !!nombre.trim() && km > 0;
+
+  const periodo = () => {
+    const d = new Date();
+    const fmt = (x) => `${x.getFullYear()}-${pad2(x.getMonth() + 1)}-${pad2(x.getDate())}`;
+    const inicio = fmt(d);
+    const finD =
+      dur === "mes" ? new Date(d.getFullYear(), d.getMonth() + 1, 0) : new Date(d.getTime() + Number(dur) * 86400000);
+    return { inicio, fin: fmt(finD) };
+  };
+
+  const crear = () => {
+    if (!puede || enviando) return;
+    setEnviando(true);
+    const { inicio, fin } = periodo();
+    retosService
+      .crear({ nombre: nombre.trim(), descripcion, deporte, meta: Math.round(km * 1000), inicio, fin })
+      .then(() => onCreado())
+      .catch(() => Alert.alert("Error", "No se pudo crear el reto."))
+      .finally(() => setEnviando(false));
+  };
+
+  return (
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <View style={[styles.safe, { paddingTop: insets.top }]}>
+        <View style={styles.composeHeadFull}>
+          <TouchableOpacity onPress={onClose} hitSlop={8}>
+            <Text style={styles.composeCancel}>Cancelar</Text>
+          </TouchableOpacity>
+          <Text style={styles.composeTitulo}>Crear reto</Text>
+          <TouchableOpacity onPress={crear} disabled={!puede || enviando} hitSlop={8}>
+            <Text style={[styles.composeOk, (!puede || enviando) && { opacity: 0.4 }]}>Crear</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }} keyboardShouldPersistTaps="handled">
+          <TextInput
+            style={styles.grupoInput}
+            value={nombre}
+            onChangeText={setNombre}
+            placeholder="Nombre del reto (ej: 100 km en agosto)"
+            placeholderTextColor={colors.muted}
+            maxLength={80}
+            autoFocus
+          />
+          <TextInput
+            style={[styles.grupoInput, { minHeight: 70, textAlignVertical: "top" }]}
+            value={descripcion}
+            onChangeText={setDescripcion}
+            placeholder="Descripción (opcional)"
+            placeholderTextColor={colors.muted}
+            multiline
+            maxLength={400}
+          />
+          <Text style={styles.grupoLbl}>Meta (kilómetros)</Text>
+          <TextInput
+            style={styles.grupoInput}
+            value={metaKm}
+            onChangeText={setMetaKm}
+            placeholder="Ej: 100"
+            placeholderTextColor={colors.muted}
+            keyboardType="numeric"
+            maxLength={6}
+          />
+          <Text style={styles.grupoLbl}>Deporte</Text>
+          <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+            {[
+              ["caminata", "Caminata"],
+              ["carrera", "Carrera"],
+              ["bici", "Bici"],
+              ["mixto", "Mixto"],
+            ].map(([k, l]) => (
+              <TouchableOpacity
+                key={k}
+                style={[styles.depChip, deporte === k && styles.depChipOn]}
+                onPress={() => setDeporte(k)}
+              >
+                <Text style={[styles.depChipTxt, deporte === k && styles.depChipTxtOn]}>{l}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <Text style={styles.grupoLbl}>Duración</Text>
+          <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+            {[
+              ["7", "7 días"],
+              ["30", "30 días"],
+              ["mes", "Este mes"],
+            ].map(([k, l]) => (
+              <TouchableOpacity
+                key={k}
+                style={[styles.depChip, dur === k && styles.depChipOn]}
+                onPress={() => setDur(k)}
+              >
+                <Text style={[styles.depChipTxt, dur === k && styles.depChipTxtOn]}>{l}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <Text style={styles.grupoSub}>Arranca hoy. El progreso se cuenta con tus actividades registradas.</Text>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
+function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil }) {
+  const insets = useSafeAreaInsets();
+  const [r, setR] = useState(reto);
+  const [ranking, setRanking] = useState([]);
+  useEffect(() => {
+    retosService.get(reto.id).then(({ data }) => data?.reto && setR(data.reto)).catch(() => {});
+    retosService.ranking(reto.id).then(({ data }) => setRanking(data?.ranking || [])).catch(() => {});
+  }, [reto.id]);
+
+  const toggle = () => {
+    const accion = r.meApunto ? retosService.salir : retosService.unirse;
+    setR((x) => ({ ...x, meApunto: !x.meApunto, participantes: x.participantes + (x.meApunto ? -1 : 1) }));
+    accion(r.id)
+      .then(({ data }) => setR((x) => ({ ...x, ...data })))
+      .catch(() => {});
+  };
+  const borrar = () => {
+    Alert.alert("Borrar reto", "¿Seguro que querés borrarlo? No se puede deshacer.", [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Borrar", style: "destructive", onPress: () => retosService.borrar(r.id).then(onClose).catch(() => {}) },
+    ]);
+  };
+
+  const pct = r.miProgreso != null && r.meta ? Math.min(100, Math.round((r.miProgreso / r.meta) * 100)) : 0;
+  const est = estadoReto(r, colors);
+
+  return (
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <View style={[styles.safe, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onClose} hitSlop={10}>
+            <Ionicons name="close" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.title} numberOfLines={1}>
+            {r.nombre}
+          </Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 18, gap: 14 }}>
+          <View style={{ alignItems: "center", gap: 8 }}>
+            <View style={styles.grupoIconBig}>
+              <MaterialCommunityIcons name={DEP_ICON[r.deporte] || "trophy"} size={38} color={colors.greenBright} />
+            </View>
+            <Text style={styles.perfilNombre}>{r.nombre}</Text>
+            <Text style={styles.perfilUser}>
+              {fmtKm(r.meta)} · {DEP_LABEL[r.deporte] || "Mixto"} · {r.participantes} apuntados
+            </Text>
+            <View style={[styles.retoBadge, { backgroundColor: est.bg }]}>
+              <Text style={[styles.retoBadgeTxt, { color: est.fg }]}>
+                {est.txt} · {r.inicio} → {r.fin}
+              </Text>
+            </View>
+            {r.descripcion ? <Text style={styles.perfilBio}>{r.descripcion}</Text> : null}
+          </View>
+
+          {r.meApunto ? (
+            <View style={{ gap: 6 }}>
+              <View style={styles.progBar}>
+                <View style={[styles.progFill, { width: `${pct}%` }]} />
+              </View>
+              <Text style={styles.progTxt}>
+                Vas {fmtKm(r.miProgreso || 0)} de {fmtKm(r.meta)} · {pct}%
+              </Text>
+            </View>
+          ) : null}
+
+          <TouchableOpacity style={r.meApunto ? styles.btnSec : styles.btnPrim} onPress={toggle}>
+            <Text style={r.meApunto ? styles.btnSecTxt : styles.btnPrimTxt}>
+              {r.meApunto ? "Salir del reto" : "Sumarme al reto"}
+            </Text>
+          </TouchableOpacity>
+          {r.soyCreador ? (
+            <TouchableOpacity onPress={borrar} hitSlop={8} style={{ alignItems: "center" }}>
+              <Text style={styles.borrarClub}>Borrar reto</Text>
+            </TouchableOpacity>
+          ) : null}
+
+          <Text style={styles.postsHead}>Tabla de posiciones</Text>
+          {ranking.length ? (
+            ranking.map((u, i) => (
+              <TouchableOpacity
+                key={String(u.id)}
+                style={styles.rankRow}
+                onPress={() => onAbrirPerfil && onAbrirPerfil(u)}
+              >
+                <Text style={[styles.rankPos, i < 3 && styles.rankPosTop]}>{i + 1}</Text>
+                <Avatar user={u} size={34} colors={colors} />
+                <Text style={styles.rankNombre} numberOfLines={1}>
+                  {u.fullName || u.username}
+                </Text>
+                <Text style={styles.rankKm}>{fmtKm(u.metros)}</Text>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={styles.vacioTxt}>Todavía nadie sumó kilómetros.</Text>
+          )}
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
 // ---------- Mi perfil ----------
 function MiPerfilTab({ colors, styles, perfil, onGuardado }) {
   const [editando, setEditando] = useState(false);
@@ -1018,6 +1384,31 @@ const makeStyles = (colors) =>
     grupoFotoBig: { width: 84, height: 84 },
     borrarClub: { color: "#e0563b", fontSize: 13.5, fontWeight: "700", marginTop: 4 },
     miembroRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+    // ---- Retos ----
+    retoCard: {
+      backgroundColor: colors.card,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      padding: 12,
+      gap: 10,
+    },
+    retoTop: { flexDirection: "row", alignItems: "center", gap: 12 },
+    retoBadge: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999 },
+    retoBadgeTxt: { fontSize: 11, fontWeight: "800" },
+    progBar: {
+      height: 9,
+      borderRadius: 999,
+      backgroundColor: colors.cardBorder,
+      overflow: "hidden",
+    },
+    progFill: { height: 9, borderRadius: 999, backgroundColor: colors.greenBright },
+    progTxt: { color: colors.muted, fontSize: 12.5, fontWeight: "600" },
+    rankRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 5 },
+    rankPos: { width: 22, textAlign: "center", color: colors.muted, fontSize: 15, fontWeight: "800" },
+    rankPosTop: { color: colors.greenBright },
+    rankNombre: { flex: 1, color: colors.text, fontSize: 14.5, fontWeight: "600" },
+    rankKm: { color: colors.text, fontSize: 13.5, fontWeight: "800" },
     safe: { flex: 1, backgroundColor: colors.bg },
     header: {
       flexDirection: "row",
