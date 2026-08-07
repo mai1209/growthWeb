@@ -119,12 +119,18 @@ const serializeProfile = (user) => {
 
 export const signup = async (req, res) => {
   try {
-    const username = req.body.username?.trim();
+    const username = normalizeHandle(req.body.username);
     const email = normalizeEmail(req.body.email);
     const password = req.body.password;
 
     if (!username || !email || !password) {
       return res.status(400).json({ error: "Todos los campos son requeridos" });
+    }
+
+    if (!isValidHandle(username)) {
+      return res.status(400).json({
+        error: "El usuario debe tener entre 3 y 20 caracteres: minúsculas, números o guion bajo.",
+      });
     }
 
     if (!isStrongEnoughPassword(password)) {

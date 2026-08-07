@@ -77,7 +77,11 @@ const newToken = res.data.token;
               <input
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) =>
+                  setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20))
+                }
+                placeholder="minúsculas, sin espacios"
+                autoCapitalize="none"
                 required
               />
             </div>
