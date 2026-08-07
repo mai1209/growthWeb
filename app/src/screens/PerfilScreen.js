@@ -726,7 +726,7 @@ const makeStyles = (colors, isDark) =>
       paddingHorizontal: 10,
     },
 
-    identity: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 18, gap: 4, marginTop: -34 },
+    identity: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 18, gap: 4, marginTop: -14 },
     name: { color: colors.text, fontSize: 21, fontWeight: "800" },
     handle: { color: colors.muted, fontSize: 15 },
     bio: { color: colors.text, fontSize: 15, lineHeight: 21, marginTop: 6 },
