@@ -1,6 +1,7 @@
 import Group from "../models/groupModel.js";
 import GroupMember from "../models/groupMemberModel.js";
 import User from "../models/userModel.js";
+import Follow from "../models/followModel.js";
 import Post from "../models/postModel.js";
 import Comment from "../models/commentModel.js";
 
@@ -160,8 +161,15 @@ export const miembrosGrupo = async (req, res) => {
       "username fullName profilePhotoUrl"
     );
     const rolMap = new Map(ms.map((m) => [String(m.user), m.rol]));
+    const sigo = await Follow.find({ seguidor: req.userId, seguido: { $in: users.map((u) => u._id) } }).select("seguido");
+    const sigoSet = new Set(sigo.map((f) => String(f.seguido)));
     return res.json({
-      miembros: users.map((u) => ({ ...pubUser(u), rol: rolMap.get(String(u._id)) || "miembro" })),
+      miembros: users.map((u) => ({
+        ...pubUser(u),
+        rol: rolMap.get(String(u._id)) || "miembro",
+        loSigo: sigoSet.has(String(u._id)),
+        esYo: String(u._id) === String(req.userId),
+      })),
     });
   } catch (err) {
     console.error("[grupos] miembros:", err.message);

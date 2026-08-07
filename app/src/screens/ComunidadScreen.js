@@ -985,12 +985,11 @@ function PostClub({ post, colors, styles, onAbrirPerfil, onBorrar, miId }) {
 function GrupoDetalleModal({ colors, styles, grupo, onClose, onAbrirPerfil, miId }) {
   const insets = useSafeAreaInsets();
   const [g, setG] = useState(grupo);
-  const [miembros, setMiembros] = useState([]);
   const [posts, setPosts] = useState([]);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [miembrosOpen, setMiembrosOpen] = useState(false);
   useEffect(() => {
     gruposService.get(grupo.id).then(({ data }) => data?.grupo && setG(data.grupo)).catch(() => {});
-    gruposService.miembros(grupo.id).then(({ data }) => setMiembros(data?.miembros || [])).catch(() => {});
     communityService.postsDeGrupo(grupo.id).then(({ data }) => setPosts(data?.posts || [])).catch(() => {});
   }, [grupo.id]);
   const publicarEnClub = ({ texto, foto }) =>
@@ -1066,13 +1065,16 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose, onAbrirPerfil, miId
           <Text style={styles.title} numberOfLines={1}>
             {g.nombre}
           </Text>
-          {g.soyMiembro || g.soyOwner ? (
-            <TouchableOpacity onPress={abrirAjustes} hitSlop={10}>
-              <Ionicons name="settings-outline" size={22} color={colors.text} />
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+            <TouchableOpacity onPress={() => setMiembrosOpen(true)} hitSlop={10}>
+              <Ionicons name="people-outline" size={22} color={colors.text} />
             </TouchableOpacity>
-          ) : (
-            <View style={{ width: 24 }} />
-          )}
+            {g.soyMiembro || g.soyOwner ? (
+              <TouchableOpacity onPress={abrirAjustes} hitSlop={10}>
+                <Ionicons name="settings-outline" size={22} color={colors.text} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </View>
         <ScrollView contentContainerStyle={{ padding: 18, gap: 12 }}>
           <View style={{ alignItems: "center", gap: 8 }}>
@@ -1121,20 +1123,6 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose, onAbrirPerfil, miId
               {g.soyMiembro ? "Todavía no hay posteos. ¡Escribí el primero!" : "Todavía no hay posteos."}
             </Text>
           )}
-
-          <Text style={[styles.postsHead, { marginTop: 6 }]}>Miembros</Text>
-          {miembros.map((m) => (
-            <View key={String(m.id)} style={styles.miembroRow}>
-              <Avatar user={m} size={38} colors={colors} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.userNombre}>{m.fullName || m.username}</Text>
-                <Text style={styles.userSub}>
-                  @{m.username}
-                  {m.rol === "owner" ? " · creador" : ""}
-                </Text>
-              </View>
-            </View>
-          ))}
         </ScrollView>
 
         {composeOpen ? (
@@ -1145,6 +1133,71 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose, onAbrirPerfil, miId
             onPublicar={publicarEnClub}
           />
         ) : null}
+        {miembrosOpen ? (
+          <MiembrosModal
+            colors={colors}
+            styles={styles}
+            grupoId={g.id}
+            onAbrirPerfil={onAbrirPerfil}
+            onClose={() => setMiembrosOpen(false)}
+          />
+        ) : null}
+      </View>
+    </Modal>
+  );
+}
+
+// Pantalla de miembros del club, con botón Seguir por cada uno.
+function MiembrosModal({ colors, styles, grupoId, onClose, onAbrirPerfil }) {
+  const insets = useSafeAreaInsets();
+  const [miembros, setMiembros] = useState([]);
+  useEffect(() => {
+    gruposService.miembros(grupoId).then(({ data }) => setMiembros(data?.miembros || [])).catch(() => {});
+  }, [grupoId]);
+  const toggleSeguir = (m) => {
+    const accion = m.loSigo ? communityService.dejarDeSeguir : communityService.seguir;
+    setMiembros((arr) => arr.map((x) => (x.id === m.id ? { ...x, loSigo: !m.loSigo } : x)));
+    accion(m.id).catch(() => {});
+  };
+  return (
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <View style={[styles.safe, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onClose} hitSlop={10}>
+            <Ionicons name="close" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Miembros</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 14, gap: 12 }}>
+          {miembros.map((m) => (
+            <View key={String(m.id)} style={styles.miembroRow}>
+              <TouchableOpacity
+                style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}
+                onPress={() => onAbrirPerfil && onAbrirPerfil(m)}
+              >
+                <Avatar user={m} size={38} colors={colors} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.userNombre}>{m.fullName || m.username}</Text>
+                  <Text style={styles.userSub}>
+                    @{m.username}
+                    {m.rol === "owner" ? " · creador" : ""}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              {!m.esYo ? (
+                <TouchableOpacity
+                  style={m.loSigo ? styles.grupoBtnSec : styles.grupoBtnPrim}
+                  onPress={() => toggleSeguir(m)}
+                >
+                  <Text style={m.loSigo ? styles.grupoBtnSecTxt : styles.grupoBtnPrimTxt}>
+                    {m.loSigo ? "Siguiendo" : "Seguir"}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          ))}
+        </ScrollView>
       </View>
     </Modal>
   );
