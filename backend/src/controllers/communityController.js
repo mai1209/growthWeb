@@ -30,7 +30,7 @@ export const getMiPerfil = async (req, res) => {
     const [seguidores, siguiendo, posteos] = await Promise.all([
       Follow.countDocuments({ seguido: u._id }),
       Follow.countDocuments({ seguidor: u._id }),
-      Post.countDocuments({ autor: u._id }),
+      Post.countDocuments({ autor: u._id, group: null }),
     ]);
     return res.json({
       ...pubUser(u),
@@ -74,7 +74,7 @@ export const getPerfil = async (req, res) => {
     const [seguidores, siguiendo, posteos, sigo] = await Promise.all([
       Follow.countDocuments({ seguido: u._id }),
       Follow.countDocuments({ seguidor: u._id }),
-      Post.countDocuments({ autor: u._id }),
+      Post.countDocuments({ autor: u._id, group: null }),
       Follow.exists({ seguidor: req.userId, seguido: u._id }),
     ]);
     return res.json({
@@ -321,7 +321,8 @@ export const getFeed = async (req, res) => {
     const autores = fs.map((f) => f.seguido);
     autores.push(req.userId);
     const limit = Math.min(30, Math.max(1, Number(req.query.limit) || 20));
-    const filtro = { autor: { $in: autores } };
+    // Solo posteos generales (los de club quedan dentro del club, no en el feed).
+    const filtro = { autor: { $in: autores }, group: null };
     if (req.query.before) {
       const d = new Date(req.query.before);
       if (!isNaN(d.getTime())) filtro.createdAt = { $lt: d };
@@ -340,7 +341,8 @@ export const getFeed = async (req, res) => {
 // GET /api/community/users/:userId/posts
 export const getPostsDeUsuario = async (req, res) => {
   try {
-    const posts = await Post.find({ autor: req.params.userId })
+    // Solo posteos generales en el perfil (los de club viven en el club).
+    const posts = await Post.find({ autor: req.params.userId, group: null })
       .sort({ createdAt: -1 })
       .limit(30)
       .populate("autor", "username fullName profilePhotoUrl bio");
