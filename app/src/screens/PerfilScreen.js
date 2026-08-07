@@ -688,7 +688,7 @@ const makeStyles = (colors, isDark) =>
       paddingHorizontal: 14,
       marginTop: 10,
       gap: 8,
-      alignItems: "flex-start",
+      alignItems: "flex-end",
     },
     editBtn: {
       paddingVertical: 6,
