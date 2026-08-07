@@ -5,6 +5,8 @@ import mongoose from "mongoose";
 const postSchema = new mongoose.Schema(
   {
     autor: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    // Si el posteo pertenece a un club, acá va su id (si no, null = feed general).
+    group: { type: mongoose.Schema.Types.ObjectId, ref: "Group", default: null, index: true },
     tipo: { type: String, enum: ["actividad", "texto"], default: "texto" },
     texto: { type: String, default: "", trim: true, maxlength: 600 },
     foto: { type: String, default: "" }, // data URL o URL

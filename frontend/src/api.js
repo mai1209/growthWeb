@@ -186,8 +186,12 @@ export const communityService = {
   crearPost: (data) => api.post("/api/community/posts", data),
   feed: (params) => api.get("/api/community/feed", { params }),
   postsDeUsuario: (userId) => api.get(`/api/community/users/${userId}/posts`),
+  postsDeGrupo: (groupId) => api.get(`/api/community/grupos/${groupId}/posts`),
   kudos: (postId) => api.post(`/api/community/posts/${postId}/kudos`),
   borrarPost: (postId) => api.delete(`/api/community/posts/${postId}`),
+  comentarios: (postId) => api.get(`/api/community/posts/${postId}/comentarios`),
+  comentar: (postId, texto) => api.post(`/api/community/posts/${postId}/comentarios`, { texto }),
+  borrarComentario: (id) => api.delete(`/api/community/comentarios/${id}`),
 };
 
 // Clubes / grupos (Fase 3).

@@ -1,6 +1,8 @@
 import Group from "../models/groupModel.js";
 import GroupMember from "../models/groupMemberModel.js";
 import User from "../models/userModel.js";
+import Post from "../models/postModel.js";
+import Comment from "../models/commentModel.js";
 
 const pubUser = (u) => ({
   id: u._id,
@@ -194,6 +196,9 @@ export const borrarGrupo = async (req, res) => {
     const g = await Group.findById(req.params.id).select("owner");
     if (!g) return res.status(404).json({ error: "Club no encontrado" });
     if (String(g.owner) !== String(req.userId)) return res.status(403).json({ error: "No es tu club." });
+    const posts = await Post.find({ group: g._id }).select("_id");
+    if (posts.length) await Comment.deleteMany({ post: { $in: posts.map((p) => p._id) } });
+    await Post.deleteMany({ group: g._id });
     await GroupMember.deleteMany({ group: g._id });
     await Group.deleteOne({ _id: g._id });
     return res.json({ ok: true });

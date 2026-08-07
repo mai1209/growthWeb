@@ -322,7 +322,7 @@ export default function ComunidadScreen({ navigation }) {
       ) : tab === "buscar" ? (
         <BuscarTab colors={colors} styles={styles} onAbrirPerfil={abrirPerfil} />
       ) : tab === "grupos" ? (
-        <GruposTab colors={colors} styles={styles} />
+        <GruposTab colors={colors} styles={styles} onAbrirPerfil={abrirPerfil} miId={miPerfil?.id} />
       ) : (
         <RetosTab colors={colors} styles={styles} onAbrirPerfil={abrirPerfil} />
       )}
@@ -505,7 +505,7 @@ function GrupoCard({ g, colors, styles, onAbrir, onToggle }) {
   );
 }
 
-function GruposTab({ colors, styles }) {
+function GruposTab({ colors, styles, onAbrirPerfil, miId }) {
   const [descubrir, setDescubrir] = useState([]);
   const [q, setQ] = useState("");
   const [crearOpen, setCrearOpen] = useState(false);
@@ -573,12 +573,22 @@ function GruposTab({ colors, styles }) {
           }}
         />
       ) : null}
-      {misOpen ? <MisClubesModal colors={colors} styles={styles} onClose={() => setMisOpen(false)} /> : null}
+      {misOpen ? (
+        <MisClubesModal
+          colors={colors}
+          styles={styles}
+          onAbrirPerfil={onAbrirPerfil}
+          miId={miId}
+          onClose={() => setMisOpen(false)}
+        />
+      ) : null}
       {detalle ? (
         <GrupoDetalleModal
           colors={colors}
           styles={styles}
           grupo={detalle}
+          onAbrirPerfil={onAbrirPerfil}
+          miId={miId}
           onClose={() => {
             setDetalle(null);
             cargarDescubrir();
@@ -590,7 +600,7 @@ function GruposTab({ colors, styles }) {
 }
 
 // Pantalla "Mis clubes": switch Creados / Unidos.
-function MisClubesModal({ colors, styles, onClose }) {
+function MisClubesModal({ colors, styles, onClose, onAbrirPerfil, miId }) {
   const insets = useSafeAreaInsets();
   const [seg, setSeg] = useState("creados");
   const [clubs, setClubs] = useState([]);
@@ -665,6 +675,8 @@ function MisClubesModal({ colors, styles, onClose }) {
             colors={colors}
             styles={styles}
             grupo={detalle}
+            onAbrirPerfil={onAbrirPerfil}
+            miId={miId}
             onClose={() => {
               setDetalle(null);
               cargar();
@@ -860,14 +872,145 @@ function CrearGrupoModal({ colors, styles, onClose, onCreado }) {
   );
 }
 
-function GrupoDetalleModal({ colors, styles, grupo, onClose }) {
+// Posteo dentro de un club: con "me gusta" (kudos) y comentarios desplegables.
+function PostClub({ post, colors, styles, onAbrirPerfil, onBorrar, miId }) {
+  const [p, setP] = useState(post);
+  const [openC, setOpenC] = useState(false);
+  const [comentarios, setComentarios] = useState([]);
+  const [txt, setTxt] = useState("");
+  const [enviando, setEnviando] = useState(false);
+
+  const kudos = () => {
+    setP((x) => ({ ...x, leDiKudos: !x.leDiKudos, kudos: Math.max(0, x.kudos + (x.leDiKudos ? -1 : 1)) }));
+    communityService.kudos(p.id).then(({ data }) => setP((x) => ({ ...x, ...data }))).catch(() => {});
+  };
+  const toggleComents = () => {
+    const nuevo = !openC;
+    setOpenC(nuevo);
+    if (nuevo) communityService.comentarios(p.id).then(({ data }) => setComentarios(data?.comentarios || [])).catch(() => {});
+  };
+  const enviar = () => {
+    const t = txt.trim();
+    if (!t || enviando) return;
+    setEnviando(true);
+    setTxt("");
+    communityService
+      .comentar(p.id, t)
+      .then(({ data }) => {
+        if (data?.comentario) {
+          setComentarios((c) => [...c, data.comentario]);
+          setP((x) => ({ ...x, comentarios: (x.comentarios || 0) + 1 }));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setEnviando(false));
+  };
+
+  const esMio = miId && p.autor && String(p.autor.id) === String(miId);
+
+  return (
+    <View style={styles.post}>
+      <View style={styles.postHead}>
+        <TouchableOpacity
+          style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}
+          onPress={() => onAbrirPerfil && onAbrirPerfil(p.autor)}
+        >
+          <Avatar user={p.autor} colors={colors} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.postAutor}>{p.autor?.fullName || p.autor?.username || "Alguien"}</Text>
+            <Text style={styles.postFecha}>
+              {p.autor?.username ? `@${p.autor.username} · ` : ""}
+              {haceCuanto(p.createdAt)}
+            </Text>
+          </View>
+        </TouchableOpacity>
+        {esMio ? (
+          <TouchableOpacity onPress={() => onBorrar(p)} hitSlop={8}>
+            <Ionicons name="ellipsis-horizontal" size={18} color={colors.muted} />
+          </TouchableOpacity>
+        ) : null}
+      </View>
+      {p.texto ? <Text style={styles.postTexto}>{p.texto}</Text> : null}
+      {p.foto ? <Image source={{ uri: p.foto }} style={styles.postFoto} /> : null}
+      <View style={styles.postAcciones}>
+        <TouchableOpacity style={styles.kudosBtn} onPress={kudos} hitSlop={6}>
+          <Ionicons
+            name={p.leDiKudos ? "thumbs-up" : "thumbs-up-outline"}
+            size={18}
+            color={p.leDiKudos ? colors.greenBright : colors.muted}
+          />
+          <Text style={[styles.kudosTxt, p.leDiKudos && { color: colors.greenBright }]}>
+            {p.kudos > 0 ? `${p.kudos} ` : ""}
+            {p.kudos === 1 ? "kudo" : "kudos"}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.kudosBtn} onPress={toggleComents} hitSlop={6}>
+          <Ionicons name="chatbubble-outline" size={17} color={colors.muted} />
+          <Text style={styles.kudosTxt}>
+            {p.comentarios > 0 ? `${p.comentarios} ` : ""}
+            {p.comentarios === 1 ? "comentario" : "comentarios"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      {openC ? (
+        <View style={styles.comentSec}>
+          {comentarios.map((c) => (
+            <View key={String(c.id)} style={styles.comentRow}>
+              <Avatar user={c.autor} size={28} colors={colors} />
+              <View style={styles.comentBurbuja}>
+                <Text style={styles.comentAutor}>{c.autor?.fullName || c.autor?.username || "Alguien"}</Text>
+                <Text style={styles.comentTxt}>{c.texto}</Text>
+              </View>
+            </View>
+          ))}
+          <View style={styles.comentInputRow}>
+            <TextInput
+              style={styles.comentInput}
+              value={txt}
+              onChangeText={setTxt}
+              placeholder="Escribí un comentario…"
+              placeholderTextColor={colors.muted}
+              multiline
+            />
+            <TouchableOpacity onPress={enviar} hitSlop={8} disabled={!txt.trim() || enviando}>
+              <Ionicons name="send" size={20} color={txt.trim() ? colors.greenBright : colors.muted} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function GrupoDetalleModal({ colors, styles, grupo, onClose, onAbrirPerfil, miId }) {
   const insets = useSafeAreaInsets();
   const [g, setG] = useState(grupo);
   const [miembros, setMiembros] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [composeOpen, setComposeOpen] = useState(false);
   useEffect(() => {
     gruposService.get(grupo.id).then(({ data }) => data?.grupo && setG(data.grupo)).catch(() => {});
     gruposService.miembros(grupo.id).then(({ data }) => setMiembros(data?.miembros || [])).catch(() => {});
+    communityService.postsDeGrupo(grupo.id).then(({ data }) => setPosts(data?.posts || [])).catch(() => {});
   }, [grupo.id]);
+  const publicarEnClub = ({ texto, foto }) =>
+    communityService.crearPost({ tipo: "texto", texto, foto, group: g.id }).then(({ data }) => {
+      if (data?.post) setPosts((ps) => [data.post, ...ps]);
+    });
+  const borrarPostClub = (p) => {
+    Alert.alert("Borrar posteo", "¿Seguro?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Borrar",
+        style: "destructive",
+        onPress: () =>
+          communityService
+            .borrarPost(p.id)
+            .then(() => setPosts((ps) => ps.filter((x) => x.id !== p.id)))
+            .catch(() => {}),
+      },
+    ]);
+  };
   const toggle = () => {
     const accion = g.soyMiembro ? gruposService.salir : gruposService.unirse;
     setG((x) => ({ ...x, soyMiembro: !x.soyMiembro, miembros: x.miembros + (x.soyMiembro ? -1 : 1) }));
@@ -951,7 +1094,34 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose }) {
             )}
           </View>
 
-          <Text style={styles.postsHead}>Miembros</Text>
+          <View style={styles.postsHeadRow}>
+            <Text style={styles.postsHead}>Posteos</Text>
+            {g.soyMiembro ? (
+              <TouchableOpacity style={styles.postsAddBtn} onPress={() => setComposeOpen(true)} hitSlop={8}>
+                <Ionicons name="create-outline" size={18} color={colors.greenBright} />
+                <Text style={styles.postsAddTxt}>Publicar</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+          {posts.length ? (
+            posts.map((p) => (
+              <PostClub
+                key={String(p.id)}
+                post={p}
+                colors={colors}
+                styles={styles}
+                onAbrirPerfil={onAbrirPerfil}
+                onBorrar={borrarPostClub}
+                miId={miId}
+              />
+            ))
+          ) : (
+            <Text style={styles.vacioTxt}>
+              {g.soyMiembro ? "Todavía no hay posteos. ¡Escribí el primero!" : "Todavía no hay posteos."}
+            </Text>
+          )}
+
+          <Text style={[styles.postsHead, { marginTop: 6 }]}>Miembros</Text>
           {miembros.map((m) => (
             <View key={String(m.id)} style={styles.miembroRow}>
               <Avatar user={m} size={38} colors={colors} />
@@ -965,6 +1135,15 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose }) {
             </View>
           ))}
         </ScrollView>
+
+        {composeOpen ? (
+          <ComposeModal
+            colors={colors}
+            styles={styles}
+            onClose={() => setComposeOpen(false)}
+            onPublicar={publicarEnClub}
+          />
+        ) : null}
       </View>
     </Modal>
   );
@@ -1965,5 +2144,33 @@ const makeStyles = (colors) =>
       justifyContent: "center",
       borderWidth: 2,
       borderColor: colors.bg,
+    },
+    // ---- Posteos del club + comentarios ----
+    postsHeadRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    postsAddBtn: { flexDirection: "row", alignItems: "center", gap: 5 },
+    postsAddTxt: { color: colors.greenBright, fontSize: 14, fontWeight: "800" },
+    comentSec: { marginTop: 10, gap: 10, borderTopWidth: 1, borderTopColor: colors.cardBorder, paddingTop: 10 },
+    comentRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
+    comentBurbuja: {
+      flex: 1,
+      backgroundColor: colors.bg,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+    },
+    comentAutor: { color: colors.text, fontSize: 12.5, fontWeight: "800", marginBottom: 2 },
+    comentTxt: { color: colors.text, fontSize: 14, lineHeight: 19 },
+    comentInputRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 },
+    comentInput: {
+      flex: 1,
+      backgroundColor: colors.bg,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      color: colors.text,
+      fontSize: 14,
+      maxHeight: 90,
     },
   });

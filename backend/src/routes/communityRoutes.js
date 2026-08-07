@@ -12,6 +12,10 @@ import {
   crearPost,
   getFeed,
   getPostsDeUsuario,
+  getPostsDeGrupo,
+  getComentarios,
+  crearComentario,
+  borrarComentario,
   toggleKudos,
   borrarPost,
 } from "../controllers/communityController.js";
@@ -46,8 +50,11 @@ router.get("/buscar", requireAuth, buscarUsuarios);
 router.get("/feed", requireAuth, getFeed);
 
 router.post("/posts", requireAuth, crearPost);
+router.get("/posts/:id/comentarios", requireAuth, getComentarios);
+router.post("/posts/:id/comentarios", requireAuth, crearComentario);
 router.post("/posts/:id/kudos", requireAuth, toggleKudos);
 router.delete("/posts/:id", requireAuth, borrarPost);
+router.delete("/comentarios/:id", requireAuth, borrarComentario);
 
 router.post("/follow/:userId", requireAuth, seguir);
 router.delete("/follow/:userId", requireAuth, dejarDeSeguir);
@@ -62,6 +69,7 @@ router.post("/grupos", requireAuth, crearGrupo);
 router.get("/grupos", requireAuth, descubrirGrupos);
 router.get("/grupos/mios", requireAuth, misGrupos);
 router.get("/grupos/:id/miembros", requireAuth, miembrosGrupo);
+router.get("/grupos/:id/posts", requireAuth, getPostsDeGrupo);
 router.post("/grupos/:id/join", requireAuth, unirse);
 router.delete("/grupos/:id/join", requireAuth, salir);
 router.get("/grupos/:id", requireAuth, getGrupo);

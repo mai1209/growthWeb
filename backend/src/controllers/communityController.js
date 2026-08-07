@@ -1,6 +1,8 @@
 import User from "../models/userModel.js";
 import Follow from "../models/followModel.js";
 import Post from "../models/postModel.js";
+import Comment from "../models/commentModel.js";
+import GroupMember from "../models/groupMemberModel.js";
 
 const num = (v) => {
   const n = Number(v);
@@ -188,29 +190,56 @@ const limpiarActividad = (a) => {
   };
 };
 
-const serializarPost = (p, meId) => ({
+const serializarPost = (p, meId, comentarios = 0) => ({
   id: p._id,
   tipo: p.tipo,
   texto: p.texto || "",
   foto: p.foto || "",
   actividad: p.actividad || null,
+  group: p.group || null,
   kudos: (p.kudos || []).length,
   leDiKudos: (p.kudos || []).some((k) => String(k) === String(meId)),
+  comentarios,
   createdAt: p.createdAt,
   autor: p.autor && p.autor.username ? pubUser(p.autor) : null,
 });
 
-// POST /api/community/posts — { tipo, texto, foto, actividad }
+const serializarComentario = (c) => ({
+  id: c._id,
+  texto: c.texto || "",
+  createdAt: c.createdAt,
+  autor: c.autor && c.autor.username ? pubUser(c.autor) : null,
+});
+
+// Cuenta comentarios por post → Map(postId → n).
+const contarComentarios = async (ids) => {
+  if (!ids.length) return new Map();
+  const rows = await Comment.aggregate([
+    { $match: { post: { $in: ids } } },
+    { $group: { _id: "$post", n: { $sum: 1 } } },
+  ]);
+  return new Map(rows.map((r) => [String(r._id), r.n]));
+};
+
+// POST /api/community/posts — { tipo, texto, foto, actividad, group? }
 export const crearPost = async (req, res) => {
   try {
-    const { tipo, texto, foto } = req.body || {};
+    const { tipo, texto, foto, group } = req.body || {};
     const actividad = limpiarActividad(req.body.actividad);
     const t = tipo === "actividad" ? "actividad" : "texto";
     if (t === "texto" && !String(texto || "").trim() && !foto) {
       return res.status(400).json({ error: "El posteo está vacío." });
     }
+    // Si es un posteo de club, tenés que ser miembro.
+    let groupId = null;
+    if (group) {
+      const esMiembro = await GroupMember.exists({ group, user: req.userId });
+      if (!esMiembro) return res.status(403).json({ error: "No sos miembro de este club." });
+      groupId = group;
+    }
     const post = await Post.create({
       autor: req.userId,
+      group: groupId,
       tipo: t,
       texto: String(texto || "").slice(0, 600),
       foto: typeof foto === "string" ? foto.slice(0, 2000000) : "",
@@ -221,6 +250,67 @@ export const crearPost = async (req, res) => {
   } catch (err) {
     console.error("[community] crearPost:", err.message);
     return res.status(500).json({ error: "No se pudo publicar." });
+  }
+};
+
+// GET /api/community/grupos/:id/posts — posteos de un club.
+export const getPostsDeGrupo = async (req, res) => {
+  try {
+    const posts = await Post.find({ group: req.params.id })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .populate("autor", "username fullName profilePhotoUrl bio");
+    const counts = await contarComentarios(posts.map((p) => p._id));
+    return res.json({
+      posts: posts.map((p) => serializarPost(p, req.userId, counts.get(String(p._id)) || 0)),
+    });
+  } catch (err) {
+    console.error("[community] getPostsDeGrupo:", err.message);
+    return res.status(500).json({ error: "No se pudieron cargar los posteos." });
+  }
+};
+
+// GET /api/community/posts/:id/comentarios
+export const getComentarios = async (req, res) => {
+  try {
+    const comentarios = await Comment.find({ post: req.params.id })
+      .sort({ createdAt: 1 })
+      .limit(200)
+      .populate("autor", "username fullName profilePhotoUrl bio");
+    return res.json({ comentarios: comentarios.map(serializarComentario) });
+  } catch (err) {
+    console.error("[community] getComentarios:", err.message);
+    return res.status(500).json({ error: "No se pudieron cargar los comentarios." });
+  }
+};
+
+// POST /api/community/posts/:id/comentarios — { texto }
+export const crearComentario = async (req, res) => {
+  try {
+    const texto = String(req.body?.texto || "").trim();
+    if (!texto) return res.status(400).json({ error: "Escribí algo." });
+    const post = await Post.findById(req.params.id).select("_id");
+    if (!post) return res.status(404).json({ error: "Posteo no encontrado" });
+    const c = await Comment.create({ post: post._id, autor: req.userId, texto: texto.slice(0, 600) });
+    const full = await Comment.findById(c._id).populate("autor", "username fullName profilePhotoUrl bio");
+    return res.json({ comentario: serializarComentario(full) });
+  } catch (err) {
+    console.error("[community] crearComentario:", err.message);
+    return res.status(500).json({ error: "No se pudo comentar." });
+  }
+};
+
+// DELETE /api/community/comentarios/:id — solo el autor del comentario.
+export const borrarComentario = async (req, res) => {
+  try {
+    const c = await Comment.findById(req.params.id).select("autor");
+    if (!c) return res.status(404).json({ error: "Comentario no encontrado" });
+    if (String(c.autor) !== String(req.userId)) return res.status(403).json({ error: "No es tu comentario." });
+    await Comment.deleteOne({ _id: c._id });
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("[community] borrarComentario:", err.message);
+    return res.status(500).json({ error: "No se pudo borrar." });
   }
 };
 
@@ -289,6 +379,7 @@ export const borrarPost = async (req, res) => {
       return res.status(403).json({ error: "No es tu posteo." });
     }
     await Post.deleteOne({ _id: post._id });
+    await Comment.deleteMany({ post: post._id });
     return res.json({ ok: true });
   } catch (err) {
     console.error("[community] borrarPost:", err.message);
