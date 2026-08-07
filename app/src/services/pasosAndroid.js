@@ -26,10 +26,10 @@ let listo = false;
 export async function iniciarPasosAndroid() {
   if (!AP) return false;
   try {
-    await AP.initialize(); // lanza si el teléfono no tiene sensor de pasos
+    await AP.isSensorAvailable(); // lanza si el teléfono no tiene sensor de pasos
     const act = await AP.getActivityPermissionStatus();
     if (!act?.granted) {
-      const r = await AP.requestPermissions();
+      const r = await AP.requestActivityPermissions();
       if (!r?.granted) return false;
     }
     const noti = await AP.getNotificationPermissionStatus();
@@ -39,7 +39,6 @@ export async function iniciarPasosAndroid() {
     await AP.setupBackgroundUpdates({
       title: "Growth · Pasos",
       contentTemplate: "Llevás %d pasos hoy",
-      style: "bigText",
     });
     listo = true;
     return true;
