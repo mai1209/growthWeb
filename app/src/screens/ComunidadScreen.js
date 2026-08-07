@@ -242,13 +242,18 @@ export default function ComunidadScreen({ navigation }) {
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Comunidad</Text>
-        {tab === "inicio" ? (
-          <TouchableOpacity onPress={() => setComposeOpen(true)} hitSlop={10}>
-            <Ionicons name="create-outline" size={24} color={colors.greenBright} />
+        <View style={styles.headerRight}>
+          {tab === "inicio" ? (
+            <TouchableOpacity onPress={() => setComposeOpen(true)} hitSlop={10}>
+              <Ionicons name="create-outline" size={24} color={colors.greenBright} />
+            </TouchableOpacity>
+          ) : null}
+          <TouchableOpacity onPress={() => navigation.navigate("Perfil")} hitSlop={8}>
+            <View style={styles.headerAvatar}>
+              <Avatar user={miPerfil} size={30} colors={colors} />
+            </View>
           </TouchableOpacity>
-        ) : (
-          <View style={{ width: 24 }} />
-        )}
+        </View>
       </View>
 
       <View style={styles.tabs}>
@@ -646,6 +651,13 @@ const makeStyles = (colors) =>
       paddingVertical: 10,
     },
     title: { color: colors.text, fontSize: 18, fontWeight: "800" },
+    headerRight: { flexDirection: "row", alignItems: "center", gap: 14 },
+    headerAvatar: {
+      borderRadius: 16,
+      borderWidth: 1.5,
+      borderColor: colors.greenBright,
+      overflow: "hidden",
+    },
     center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 30 },
 
     tabs: {
