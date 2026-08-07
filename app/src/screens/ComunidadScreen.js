@@ -1752,6 +1752,7 @@ function MiPerfilTab({ colors, styles, perfil, onGuardado }) {
 
 // ---------- Perfil de otro usuario (modal) ----------
 function PerfilUsuarioModal({ colors, styles, user, onClose }) {
+  const insets = useSafeAreaInsets();
   const [perfil, setPerfil] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loSigo, setLoSigo] = useState(false);
@@ -1778,12 +1779,14 @@ function PerfilUsuarioModal({ colors, styles, user, onClose }) {
 
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
-      <View style={[styles.safe, { paddingTop: 12 }]}>
+      <View style={[styles.safe, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} hitSlop={10}>
             <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>@{user.username}</Text>
+          <Text style={styles.title} numberOfLines={1}>
+            @{user.username}
+          </Text>
           <View style={{ width: 24 }} />
         </View>
         {!perfil ? (
