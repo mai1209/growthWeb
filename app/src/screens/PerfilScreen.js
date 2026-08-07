@@ -343,21 +343,22 @@ export default function PerfilScreen({ navigation }) {
                   <Text style={styles.avatarInitials}>{initials}</Text>
                 )}
               </View>
-            </View>
-            {/* Botones a la izquierda, apilados, fuera de la portada */}
-            <View style={styles.perfilBtns}>
-              <TouchableOpacity style={styles.editBtn} onPress={openEdit}>
-                <Text style={styles.editBtnText}>Editar perfil</Text>
-              </TouchableOpacity>
-              {COMUNIDAD_HABILITADA ? (
-                <TouchableOpacity
-                  style={styles.comunidadBtn}
-                  onPress={() => navigation.navigate("Comunidad")}
-                >
-                  <Ionicons name="globe-outline" size={16} color={colors.greenBright} />
-                  <Text style={styles.comunidadBtnText}>Comunidad</Text>
+              {/* Botones a la derecha, junto a la portada */}
+              <View style={styles.perfilBtns}>
+                <TouchableOpacity style={styles.editBtn} onPress={openEdit} hitSlop={6}>
+                  <Text style={styles.editBtnText}>Editar perfil</Text>
                 </TouchableOpacity>
-              ) : null}
+                {COMUNIDAD_HABILITADA ? (
+                  <TouchableOpacity
+                    style={styles.comunidadBtn}
+                    onPress={() => navigation.navigate("Comunidad")}
+                    hitSlop={6}
+                  >
+                    <Ionicons name="globe-outline" size={15} color={colors.greenBright} />
+                    <Text style={styles.comunidadBtnText}>Comunidad</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
             </View>
 
             {/* Identidad */}
@@ -685,30 +686,23 @@ const makeStyles = (colors, isDark) =>
     },
     avatarInitials: { color: colors.greenDark, fontSize: 30, fontWeight: "800" },
     perfilBtns: {
-      paddingHorizontal: 14,
-      marginTop: 10,
-      gap: 8,
+      marginTop: 48,
+      gap: 4,
       alignItems: "flex-end",
     },
     editBtn: {
-      paddingVertical: 6,
-      paddingHorizontal: 14,
-      borderRadius: 999,
-      borderWidth: 1,
-      borderColor: colors.greenBright,
+      paddingVertical: 4,
+      paddingHorizontal: 6,
     },
-    editBtnText: { color: colors.greenBright, fontWeight: "800", fontSize: 12.5 },
+    editBtnText: { color: colors.greenBright, fontWeight: "800", fontSize: 14 },
     comunidadBtn: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 6,
-      paddingVertical: 6,
-      paddingHorizontal: 14,
-      borderRadius: 999,
-      borderWidth: 1,
-      borderColor: colors.greenBright,
+      gap: 5,
+      paddingVertical: 4,
+      paddingHorizontal: 6,
     },
-    comunidadBtnText: { color: colors.greenBright, fontWeight: "800", fontSize: 12.5 },
+    comunidadBtnText: { color: colors.greenBright, fontWeight: "800", fontSize: 14 },
     posteosSec: { paddingHorizontal: 16, marginTop: 18, gap: 10 },
     posteosTitulo: { color: colors.text, fontSize: 16, fontWeight: "800", marginBottom: 2 },
     postCard: {
@@ -732,7 +726,7 @@ const makeStyles = (colors, isDark) =>
       paddingHorizontal: 10,
     },
 
-    identity: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 18, gap: 4 },
+    identity: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 18, gap: 4, marginTop: -34 },
     name: { color: colors.text, fontSize: 21, fontWeight: "800" },
     handle: { color: colors.muted, fontSize: 15 },
     bio: { color: colors.text, fontSize: 15, lineHeight: 21, marginTop: 6 },
