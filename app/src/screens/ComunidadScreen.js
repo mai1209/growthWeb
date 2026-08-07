@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Svg, { Path, Circle } from "react-native-svg";
 import { useTheme } from "../theme";
-import { communityService } from "../api";
+import { communityService, gruposService } from "../api";
 import { elegirFotoComida } from "../utils/foto";
 
 const ACT = {
@@ -28,6 +28,9 @@ const ACT = {
   bici: { label: "Bici", icon: "bike" },
 };
 const actMeta = (t) => ACT[t] || ACT.caminata;
+
+const DEP_LABEL = { caminata: "Caminata", carrera: "Carrera", bici: "Bici", mixto: "Mixto" };
+const DEP_ICON = { caminata: "walk", carrera: "run", bici: "bike", mixto: "account-group" };
 
 const haceCuanto = (iso) => {
   if (!iso) return "";
@@ -260,6 +263,7 @@ export default function ComunidadScreen({ navigation }) {
         {[
           ["inicio", "Inicio", "home-outline"],
           ["buscar", "Buscar", "search-outline"],
+          ["grupos", "Clubes", "people-outline"],
         ].map(([k, l, ic]) => (
           <TouchableOpacity key={k} style={styles.tabBtn} onPress={() => setTab(k)}>
             <Ionicons name={ic} size={18} color={tab === k ? colors.greenBright : colors.muted} />
@@ -291,12 +295,10 @@ export default function ComunidadScreen({ navigation }) {
             }
           />
         )
+      ) : tab === "buscar" ? (
+        <BuscarTab colors={colors} styles={styles} onAbrirPerfil={setPerfilUser} />
       ) : (
-        <BuscarTab
-          colors={colors}
-          styles={styles}
-          onAbrirPerfil={setPerfilUser}
-        />
+        <GruposTab colors={colors} styles={styles} />
       )}
 
       {composeOpen ? (
@@ -440,6 +442,289 @@ function BuscarTab({ colors, styles, onAbrirPerfil }) {
         }
       />
     </View>
+  );
+}
+
+// ---------- Clubes / grupos ----------
+function GruposTab({ colors, styles }) {
+  const [mios, setMios] = useState([]);
+  const [descubrir, setDescubrir] = useState([]);
+  const [q, setQ] = useState("");
+  const [crearOpen, setCrearOpen] = useState(false);
+  const [detalle, setDetalle] = useState(null);
+
+  const cargar = useCallback(() => {
+    gruposService.mios().then(({ data }) => setMios(data?.grupos || [])).catch(() => {});
+  }, []);
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+  useEffect(() => {
+    const query = q.trim();
+    const t = setTimeout(() => {
+      gruposService
+        .descubrir(query)
+        .then(({ data }) => setDescubrir(data?.grupos || []))
+        .catch(() => {});
+    }, 350);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const toggleUnirse = (g) => {
+    const accion = g.soyMiembro ? gruposService.salir : gruposService.unirse;
+    const upd = (arr) =>
+      arr.map((x) =>
+        x.id === g.id
+          ? { ...x, soyMiembro: !g.soyMiembro, miembros: x.miembros + (g.soyMiembro ? -1 : 1) }
+          : x
+      );
+    setDescubrir(upd);
+    setMios(upd);
+    accion(g.id).then(() => cargar()).catch(() => {});
+  };
+
+  const Card = (g) => (
+    <TouchableOpacity key={String(g.id)} style={styles.grupoCard} onPress={() => setDetalle(g)}>
+      <View style={styles.grupoIcon}>
+        {g.foto ? (
+          <Image source={{ uri: g.foto }} style={styles.grupoFoto} />
+        ) : (
+          <MaterialCommunityIcons name={DEP_ICON[g.deporte] || "account-group"} size={22} color={colors.greenBright} />
+        )}
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.grupoNombre}>{g.nombre}</Text>
+        <Text style={styles.grupoSub}>
+          {DEP_LABEL[g.deporte] || "Mixto"}
+          {g.zona ? ` · ${g.zona}` : ""} · {g.miembros} {g.miembros === 1 ? "miembro" : "miembros"}
+        </Text>
+      </View>
+      <TouchableOpacity
+        style={g.soyMiembro ? styles.grupoBtnSec : styles.grupoBtnPrim}
+        onPress={() => toggleUnirse(g)}
+      >
+        <Text style={g.soyMiembro ? styles.grupoBtnSecTxt : styles.grupoBtnPrimTxt}>
+          {g.soyMiembro ? "Unido" : "Unirme"}
+        </Text>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+
+  return (
+    <ScrollView contentContainerStyle={{ padding: 14, gap: 10 }}>
+      <TouchableOpacity style={styles.crearGrupoBtn} onPress={() => setCrearOpen(true)}>
+        <Ionicons name="add" size={18} color="#06210a" />
+        <Text style={styles.crearGrupoTxt}>Crear un club</Text>
+      </TouchableOpacity>
+
+      {mios.length ? (
+        <>
+          <Text style={styles.grupoSecTit}>Tus clubes</Text>
+          {mios.map(Card)}
+        </>
+      ) : null}
+
+      <View style={styles.buscarWrap}>
+        <Ionicons name="search" size={17} color={colors.muted} />
+        <TextInput
+          style={styles.buscarInput}
+          value={q}
+          onChangeText={setQ}
+          placeholder="Buscar clubes por nombre o zona"
+          placeholderTextColor={colors.muted}
+        />
+      </View>
+      <Text style={styles.grupoSecTit}>Descubrir</Text>
+      {descubrir.length ? (
+        descubrir.map(Card)
+      ) : (
+        <Text style={styles.vacioTxt}>Todavía no hay clubes. ¡Creá el primero!</Text>
+      )}
+
+      {crearOpen ? (
+        <CrearGrupoModal
+          colors={colors}
+          styles={styles}
+          onClose={() => setCrearOpen(false)}
+          onCreado={() => {
+            setCrearOpen(false);
+            cargar();
+          }}
+        />
+      ) : null}
+      {detalle ? (
+        <GrupoDetalleModal
+          colors={colors}
+          styles={styles}
+          grupo={detalle}
+          onClose={() => {
+            setDetalle(null);
+            cargar();
+          }}
+        />
+      ) : null}
+    </ScrollView>
+  );
+}
+
+function CrearGrupoModal({ colors, styles, onClose, onCreado }) {
+  const insets = useSafeAreaInsets();
+  const [nombre, setNombre] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [zona, setZona] = useState("");
+  const [deporte, setDeporte] = useState("mixto");
+  const [enviando, setEnviando] = useState(false);
+  const crear = () => {
+    if (!nombre.trim() || enviando) return;
+    setEnviando(true);
+    gruposService
+      .crear({ nombre: nombre.trim(), descripcion, zona, deporte })
+      .then(() => onCreado())
+      .catch(() => Alert.alert("Error", "No se pudo crear el club."))
+      .finally(() => setEnviando(false));
+  };
+  return (
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <View style={[styles.safe, { paddingTop: insets.top }]}>
+        <View style={styles.composeHeadFull}>
+          <TouchableOpacity onPress={onClose} hitSlop={8}>
+            <Text style={styles.composeCancel}>Cancelar</Text>
+          </TouchableOpacity>
+          <Text style={styles.composeTitulo}>Crear club</Text>
+          <TouchableOpacity onPress={crear} disabled={!nombre.trim() || enviando} hitSlop={8}>
+            <Text style={[styles.composeOk, (!nombre.trim() || enviando) && { opacity: 0.4 }]}>Crear</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }} keyboardShouldPersistTaps="handled">
+          <TextInput
+            style={styles.grupoInput}
+            value={nombre}
+            onChangeText={setNombre}
+            placeholder="Nombre del club"
+            placeholderTextColor={colors.muted}
+            maxLength={60}
+            autoFocus
+          />
+          <TextInput
+            style={[styles.grupoInput, { minHeight: 80, textAlignVertical: "top" }]}
+            value={descripcion}
+            onChangeText={setDescripcion}
+            placeholder="Descripción (opcional)"
+            placeholderTextColor={colors.muted}
+            multiline
+            maxLength={400}
+          />
+          <TextInput
+            style={styles.grupoInput}
+            value={zona}
+            onChangeText={setZona}
+            placeholder="Zona / ciudad (ej: Santa Fe)"
+            placeholderTextColor={colors.muted}
+            maxLength={80}
+          />
+          <Text style={styles.grupoLbl}>Deporte</Text>
+          <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+            {[
+              ["caminata", "Caminata"],
+              ["carrera", "Carrera"],
+              ["bici", "Bici"],
+              ["mixto", "Mixto"],
+            ].map(([k, l]) => (
+              <TouchableOpacity
+                key={k}
+                style={[styles.depChip, deporte === k && styles.depChipOn]}
+                onPress={() => setDeporte(k)}
+              >
+                <Text style={[styles.depChipTxt, deporte === k && styles.depChipTxtOn]}>{l}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
+function GrupoDetalleModal({ colors, styles, grupo, onClose }) {
+  const insets = useSafeAreaInsets();
+  const [g, setG] = useState(grupo);
+  const [miembros, setMiembros] = useState([]);
+  useEffect(() => {
+    gruposService.get(grupo.id).then(({ data }) => data?.grupo && setG(data.grupo)).catch(() => {});
+    gruposService.miembros(grupo.id).then(({ data }) => setMiembros(data?.miembros || [])).catch(() => {});
+  }, [grupo.id]);
+  const toggle = () => {
+    const accion = g.soyMiembro ? gruposService.salir : gruposService.unirse;
+    setG((x) => ({ ...x, soyMiembro: !x.soyMiembro, miembros: x.miembros + (x.soyMiembro ? -1 : 1) }));
+    accion(g.id)
+      .then(({ data }) => setG((x) => ({ ...x, ...data })))
+      .catch(() => {});
+  };
+  const borrar = () => {
+    Alert.alert("Borrar club", "¿Seguro que querés borrarlo? No se puede deshacer.", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Borrar",
+        style: "destructive",
+        onPress: () => gruposService.borrar(g.id).then(onClose).catch(() => {}),
+      },
+    ]);
+  };
+  return (
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <View style={[styles.safe, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onClose} hitSlop={10}>
+            <Ionicons name="close" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.title} numberOfLines={1}>
+            {g.nombre}
+          </Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 18, gap: 12 }}>
+          <View style={{ alignItems: "center", gap: 8 }}>
+            <View style={styles.grupoIconBig}>
+              {g.foto ? (
+                <Image source={{ uri: g.foto }} style={styles.grupoFotoBig} />
+              ) : (
+                <MaterialCommunityIcons name={DEP_ICON[g.deporte] || "account-group"} size={40} color={colors.greenBright} />
+              )}
+            </View>
+            <Text style={styles.perfilNombre}>{g.nombre}</Text>
+            <Text style={styles.perfilUser}>
+              {DEP_LABEL[g.deporte] || "Mixto"}
+              {g.zona ? ` · ${g.zona}` : ""} · {g.miembros} miembros
+            </Text>
+            {g.descripcion ? <Text style={styles.perfilBio}>{g.descripcion}</Text> : null}
+            <TouchableOpacity style={g.soyMiembro ? styles.btnSec : styles.btnPrim} onPress={toggle}>
+              <Text style={g.soyMiembro ? styles.btnSecTxt : styles.btnPrimTxt}>
+                {g.soyMiembro ? "Salir del club" : "Unirme"}
+              </Text>
+            </TouchableOpacity>
+            {g.soyOwner ? (
+              <TouchableOpacity onPress={borrar} hitSlop={8}>
+                <Text style={styles.borrarClub}>Borrar club</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+
+          <Text style={styles.postsHead}>Miembros</Text>
+          {miembros.map((m) => (
+            <View key={String(m.id)} style={styles.miembroRow}>
+              <Avatar user={m} size={38} colors={colors} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.userNombre}>{m.fullName || m.username}</Text>
+                <Text style={styles.userSub}>
+                  @{m.username}
+                  {m.rol === "owner" ? " · creador" : ""}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    </Modal>
   );
 }
 
@@ -642,6 +927,97 @@ function PerfilUsuarioModal({ colors, styles, user, onClose }) {
 
 const makeStyles = (colors) =>
   StyleSheet.create({
+    // ---- Clubes / grupos ----
+    crearGrupoBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      backgroundColor: colors.greenBright,
+      borderRadius: 12,
+      paddingVertical: 12,
+    },
+    crearGrupoTxt: { color: "#06210a", fontSize: 15, fontWeight: "800" },
+    grupoSecTit: {
+      color: colors.muted,
+      fontSize: 12.5,
+      fontWeight: "800",
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      marginTop: 6,
+    },
+    grupoCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      backgroundColor: colors.card,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      padding: 12,
+    },
+    grupoIcon: {
+      width: 46,
+      height: 46,
+      borderRadius: 12,
+      backgroundColor: colors.bg,
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+    },
+    grupoFoto: { width: 46, height: 46 },
+    grupoNombre: { color: colors.text, fontSize: 15, fontWeight: "700" },
+    grupoSub: { color: colors.muted, fontSize: 12.5, marginTop: 2 },
+    grupoBtnPrim: {
+      backgroundColor: colors.greenBright,
+      borderRadius: 999,
+      paddingVertical: 7,
+      paddingHorizontal: 16,
+    },
+    grupoBtnPrimTxt: { color: "#06210a", fontSize: 13, fontWeight: "800" },
+    grupoBtnSec: {
+      borderRadius: 999,
+      paddingVertical: 7,
+      paddingHorizontal: 16,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+    },
+    grupoBtnSecTxt: { color: colors.muted, fontSize: 13, fontWeight: "700" },
+    grupoInput: {
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      color: colors.text,
+      fontSize: 15,
+    },
+    grupoLbl: { color: colors.text, fontSize: 14, fontWeight: "700", marginTop: 2 },
+    depChip: {
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+    },
+    depChipOn: { backgroundColor: colors.greenBright, borderColor: colors.greenBright },
+    depChipTxt: { color: colors.muted, fontSize: 13.5, fontWeight: "700" },
+    depChipTxtOn: { color: "#06210a" },
+    grupoIconBig: {
+      width: 84,
+      height: 84,
+      borderRadius: 22,
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+    },
+    grupoFotoBig: { width: 84, height: 84 },
+    borrarClub: { color: "#e0563b", fontSize: 13.5, fontWeight: "700", marginTop: 4 },
+    miembroRow: { flexDirection: "row", alignItems: "center", gap: 12 },
     safe: { flex: 1, backgroundColor: colors.bg },
     header: {
       flexDirection: "row",
