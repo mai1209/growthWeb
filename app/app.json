@@ -69,6 +69,7 @@
           "motionPermission": "Growth usa el sensor de movimiento para contar tus pasos del día."
         }
       ],
+      "expo-android-pedometer",
       [
         "expo-location",
         {

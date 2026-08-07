@@ -17,6 +17,7 @@ import Svg, { Circle, Path, Text as SvgText } from "react-native-svg";
 import { Pedometer } from "expo-sensors";
 import * as SecureStore from "expo-secure-store";
 import { iniciarHealthConnect, pasosHoyHC, pasosSemanaHC } from "../services/healthConnectPasos";
+import { iniciarPasosAndroid, pasosHoyAndroid, pasosSemanaAndroid } from "../services/pasosAndroid";
 import { useTheme } from "../theme";
 import { saludService } from "../api";
 import CaminataModal from "../components/CaminataModal";
@@ -415,6 +416,29 @@ export default function SaludScreen() {
       }
     };
 
+    // Android: pasos del sensor del teléfono (hardware, con servicio en segundo plano).
+    let nativoOk = false;
+    const cargarNativo = async () => {
+      const hoyPasos = await pasosHoyAndroid();
+      if (!vivo) return;
+      setPasos(hoyPasos);
+      const semana = await pasosSemanaAndroid();
+      if (!vivo) return;
+      const dias = Object.keys(semana)
+        .sort()
+        .map((k) => ({
+          label: DIAS_SEMANA[new Date(`${k}T00:00:00`).getDay()],
+          valor: Number(semana[k]) || 0,
+        }));
+      setPasosSemana(dias);
+      setModoPasos("ios"); // tiene histórico → misma UI + sync que iOS
+      guardarHist(semana);
+    };
+    const refrescarNativo = async () => {
+      const p = await pasosHoyAndroid();
+      if (vivo) setPasos(p);
+    };
+
     // Android: pasos reales del día desde Health Connect (segundo plano).
     const cargarHC = async () => {
       const hoyPasos = await pasosHoyHC();
@@ -438,24 +462,33 @@ export default function SaludScreen() {
     };
 
     (async () => {
-      // ---- Android: Health Connect ----
+      // ---- Android: sensor del teléfono (hardware) ----
       if (Platform.OS === "android") {
+        // 1º: sensor de pasos del celu (cuenta en segundo plano, aunque la app esté cerrada).
+        nativoOk = await iniciarPasosAndroid();
+        if (!vivo) return;
+        if (nativoOk) {
+          await cargarNativo();
+          intervalo = setInterval(refrescarNativo, 12000);
+          return;
+        }
+        // 2º respaldo: Health Connect (por si el usuario lo tiene poblado por otra app).
         hcOk = await iniciarHealthConnect();
         if (!vivo) return;
         if (hcOk) {
           await cargarHC();
           intervalo = setInterval(refrescarHC, 25000);
+          return;
+        }
+        // 3º respaldo: contador en vivo (solo mientras la app está abierta).
+        const disp = await Pedometer.isAvailableAsync().catch(() => false);
+        if (!vivo) return;
+        if (disp) {
+          setModoPasos("android");
+          setPasos(0);
+          sub = Pedometer.watchStepCount((res) => setPasos(res?.steps ?? 0));
         } else {
-          // Sin Health Connect / sin permiso → contador en vivo (app abierta).
-          const disp = await Pedometer.isAvailableAsync().catch(() => false);
-          if (!vivo) return;
-          if (disp) {
-            setModoPasos("android");
-            setPasos(0);
-            sub = Pedometer.watchStepCount((res) => setPasos(res?.steps ?? 0));
-          } else {
-            setModoPasos("no");
-          }
+          setModoPasos("no");
         }
         return;
       }
@@ -482,7 +515,8 @@ export default function SaludScreen() {
     appSub = AppState.addEventListener("change", (estado) => {
       if (estado !== "active") return;
       if (Platform.OS === "android") {
-        if (hcOk) cargarHC().catch(() => {});
+        if (nativoOk) cargarNativo().catch(() => {});
+        else if (hcOk) cargarHC().catch(() => {});
       } else {
         cargarTodo().catch(() => {});
       }
