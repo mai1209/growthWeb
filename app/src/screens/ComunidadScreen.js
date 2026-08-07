@@ -1525,6 +1525,11 @@ function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil }) {
       .then(({ data }) => setR((x) => ({ ...x, ...data })))
       .catch(() => {});
   };
+  const toggleSeguir = (u) => {
+    const accion = u.loSigo ? communityService.dejarDeSeguir : communityService.seguir;
+    setRanking((arr) => arr.map((x) => (x.id === u.id ? { ...x, loSigo: !u.loSigo } : x)));
+    accion(u.id).catch(() => {});
+  };
   const borrar = () => {
     Alert.alert("Borrar reto", "¿Seguro que querés borrarlo? No se puede deshacer.", [
       { text: "Cancelar", style: "cancel" },
@@ -1621,18 +1626,28 @@ function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil }) {
           <Text style={styles.postsHead}>Tabla de posiciones</Text>
           {ranking.length ? (
             ranking.map((u, i) => (
-              <TouchableOpacity
-                key={String(u.id)}
-                style={styles.rankRow}
-                onPress={() => onAbrirPerfil && onAbrirPerfil(u)}
-              >
-                <Text style={[styles.rankPos, i < 3 && styles.rankPosTop]}>{i + 1}</Text>
-                <Avatar user={u} size={34} colors={colors} />
-                <Text style={styles.rankNombre} numberOfLines={1}>
-                  {u.fullName || u.username}
-                </Text>
+              <View key={String(u.id)} style={styles.rankRow}>
+                <TouchableOpacity
+                  style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}
+                  onPress={() => onAbrirPerfil && onAbrirPerfil(u)}
+                >
+                  <Text style={[styles.rankPos, i < 3 && styles.rankPosTop]}>{i + 1}</Text>
+                  <Avatar user={u} size={34} colors={colors} />
+                  <Text style={styles.rankNombre} numberOfLines={1}>
+                    {u.fullName || u.username}
+                  </Text>
+                </TouchableOpacity>
                 <Text style={styles.rankKm}>{fmtKm(u.metros)}</Text>
-              </TouchableOpacity>
+                {!u.esYo ? (
+                  <TouchableOpacity onPress={() => toggleSeguir(u)} hitSlop={8}>
+                    <Ionicons
+                      name={u.loSigo ? "checkmark" : "person-add-outline"}
+                      size={20}
+                      color={u.loSigo ? colors.muted : colors.greenBright}
+                    />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
             ))
           ) : (
             <Text style={styles.vacioTxt}>Todavía nadie sumó kilómetros.</Text>

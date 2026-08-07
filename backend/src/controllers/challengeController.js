@@ -2,6 +2,7 @@ import Challenge from "../models/challengeModel.js";
 import ChallengeMember from "../models/challengeMemberModel.js";
 import Salud from "../models/saludModel.js";
 import User from "../models/userModel.js";
+import Follow from "../models/followModel.js";
 
 const pubUser = (u) => ({
   id: u._id,
@@ -192,17 +193,24 @@ export const rankingReto = async (req, res) => {
     if (!r) return res.status(404).json({ error: "Reto no encontrado" });
     const ms = await ChallengeMember.find({ challenge: r._id }).select("user").limit(500);
     const userIds = ms.map((m) => m.user);
-    const [users, saludDocs] = await Promise.all([
+    const [users, saludDocs, sigo] = await Promise.all([
       User.find({ _id: { $in: userIds } }).select("username fullName profilePhotoUrl"),
       Salud.find({ usuario: { $in: userIds } }).select("usuario caminatas"),
+      Follow.find({ seguidor: req.userId, seguido: { $in: userIds } }).select("seguido"),
     ]);
     const userMap = new Map(users.map((u) => [String(u._id), u]));
     const camMap = new Map(saludDocs.map((s) => [String(s.usuario), s.caminatas || []]));
+    const sigoSet = new Set(sigo.map((f) => String(f.seguido)));
     const ranking = userIds
       .map((uid) => {
         const u = userMap.get(String(uid));
         if (!u) return null;
-        return { ...pubUser(u), metros: sumMetros(camMap.get(String(uid)) || [], r.inicio, r.fin, r.deporte) };
+        return {
+          ...pubUser(u),
+          metros: sumMetros(camMap.get(String(uid)) || [], r.inicio, r.fin, r.deporte),
+          loSigo: sigoSet.has(String(uid)),
+          esYo: String(uid) === String(req.userId),
+        };
       })
       .filter(Boolean)
       .sort((a, b) => b.metros - a.metros)
