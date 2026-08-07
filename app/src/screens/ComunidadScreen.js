@@ -183,6 +183,17 @@ export default function ComunidadScreen({ navigation }) {
     cargarMiPerfil();
   }, [cargarMiPerfil]);
 
+  // Abrir un perfil: si sos vos, va al perfil principal (el de la portada);
+  // si es otro usuario, abre el modal de perfil público.
+  const abrirPerfil = useCallback(
+    (u) => {
+      if (!u) return;
+      if (miPerfil && String(u.id) === String(miPerfil.id)) navigation.navigate("Perfil");
+      else setPerfilUser(u);
+    },
+    [miPerfil, navigation]
+  );
+
   const publicar = ({ texto, foto }) => {
     return communityService.crearPost({ tipo: "texto", texto, foto }).then(({ data }) => {
       if (data?.post) setFeed((prev) => [data.post, ...(prev || [])]);
@@ -194,9 +205,7 @@ export default function ComunidadScreen({ navigation }) {
     <View style={styles.post}>
       <TouchableOpacity
         style={styles.postHead}
-        onPress={() =>
-          item.autor && (!miPerfil || String(item.autor.id) !== String(miPerfil.id)) && setPerfilUser(item.autor)
-        }
+        onPress={() => abrirPerfil(item.autor)}
       >
         <Avatar user={item.autor} colors={colors} />
         <View style={{ flex: 1 }}>
@@ -311,11 +320,11 @@ export default function ComunidadScreen({ navigation }) {
           />
         )
       ) : tab === "buscar" ? (
-        <BuscarTab colors={colors} styles={styles} onAbrirPerfil={setPerfilUser} />
+        <BuscarTab colors={colors} styles={styles} onAbrirPerfil={abrirPerfil} />
       ) : tab === "grupos" ? (
         <GruposTab colors={colors} styles={styles} />
       ) : (
-        <RetosTab colors={colors} styles={styles} onAbrirPerfil={setPerfilUser} />
+        <RetosTab colors={colors} styles={styles} onAbrirPerfil={abrirPerfil} />
       )}
 
       {composeOpen ? (
