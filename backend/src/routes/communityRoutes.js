@@ -15,6 +15,16 @@ import {
   toggleKudos,
   borrarPost,
 } from "../controllers/communityController.js";
+import {
+  crearGrupo,
+  descubrirGrupos,
+  misGrupos,
+  getGrupo,
+  unirse,
+  salir,
+  miembrosGrupo,
+  borrarGrupo,
+} from "../controllers/groupController.js";
 
 const router = express.Router();
 
@@ -34,5 +44,15 @@ router.get("/users/:userId/followers", requireAuth, getSeguidores);
 router.get("/users/:userId/following", requireAuth, getSiguiendo);
 router.get("/users/:userId/posts", requireAuth, getPostsDeUsuario);
 router.get("/users/:username", requireAuth, getPerfil);
+
+// Clubes / grupos (Fase 3). Orden: rutas fijas antes que /:id.
+router.post("/grupos", requireAuth, crearGrupo);
+router.get("/grupos", requireAuth, descubrirGrupos);
+router.get("/grupos/mios", requireAuth, misGrupos);
+router.get("/grupos/:id/miembros", requireAuth, miembrosGrupo);
+router.post("/grupos/:id/join", requireAuth, unirse);
+router.delete("/grupos/:id/join", requireAuth, salir);
+router.get("/grupos/:id", requireAuth, getGrupo);
+router.delete("/grupos/:id", requireAuth, borrarGrupo);
 
 export default router;

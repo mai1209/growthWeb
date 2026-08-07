@@ -157,6 +157,18 @@ export const communityService = {
   borrarPost: (postId) => api.delete(`/api/community/posts/${postId}`),
 };
 
+// Clubes / grupos (Fase 3).
+export const gruposService = {
+  crear: (data) => api.post("/api/community/grupos", data),
+  descubrir: (q) => api.get("/api/community/grupos", { params: { q } }),
+  mios: () => api.get("/api/community/grupos/mios"),
+  get: (id) => api.get(`/api/community/grupos/${id}`),
+  unirse: (id) => api.post(`/api/community/grupos/${id}/join`),
+  salir: (id) => api.delete(`/api/community/grupos/${id}/join`),
+  miembros: (id) => api.get(`/api/community/grupos/${id}/miembros`),
+  borrar: (id) => api.delete(`/api/community/grupos/${id}`),
+};
+
 export const nutricionService = {
   // Envía la foto (base64 sin prefijo) y devuelve { nombre, kcal, carbG, protG, fatG }.
   analizarFoto: (imagenBase64, mediaType) =>
