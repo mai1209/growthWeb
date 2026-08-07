@@ -233,8 +233,10 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
                   <Trazado ruta={actividad.ruta} W={110} H={80} color="#5dc72d" />
                 </View>
               ) : null}
-              <Text style={styles.marca}>GROWTH</Text>
             </Animated.View>
+
+            {/* Marca fija, centrada abajo (no se arrastra) */}
+            <Text style={styles.marca}>GROWTH</Text>
           </ViewShot>
 
           {!foto ? (
@@ -302,7 +304,7 @@ const makeStyles = (colors) =>
     datoVal: {
       color: "#fff",
       fontSize: 24,
-      fontWeight: "700",
+      fontWeight: "600",
       letterSpacing: -0.3,
       marginTop: 1,
       textShadowColor: "rgba(0,0,0,0.55)",
@@ -311,13 +313,17 @@ const makeStyles = (colors) =>
     },
     miniRuta: { marginTop: 6 },
     marca: {
-      color: "#fff",
-      fontSize: 12.5,
+      position: "absolute",
+      bottom: 18,
+      left: 0,
+      right: 0,
+      textAlign: "center",
+      color: "#5dc72d",
+      fontSize: 13,
       fontWeight: "800",
-      letterSpacing: 2,
-      marginTop: 8,
-      textShadowColor: "rgba(0,0,0,0.5)",
-      textShadowRadius: 5,
+      letterSpacing: 2.5,
+      textShadowColor: "rgba(0,0,0,0.55)",
+      textShadowRadius: 6,
       textShadowOffset: { width: 0, height: 1 },
     },
 
