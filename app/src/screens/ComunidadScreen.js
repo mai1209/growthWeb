@@ -1035,6 +1035,13 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose, onAbrirPerfil, miId
     setG((x) => ({ ...x, foto }));
     gruposService.editar(g.id, { foto }).catch(() => {});
   };
+  const abrirAjustes = () => {
+    const opciones = [];
+    if (g.soyOwner) opciones.push({ text: "Borrar club", style: "destructive", onPress: borrar });
+    else if (g.soyMiembro) opciones.push({ text: "Salir del grupo", style: "destructive", onPress: toggle });
+    opciones.push({ text: "Cancelar", style: "cancel" });
+    Alert.alert(g.nombre, undefined, opciones);
+  };
   const IconoGrande = (
     <>
       {g.foto ? (
@@ -1059,7 +1066,13 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose, onAbrirPerfil, miId
           <Text style={styles.title} numberOfLines={1}>
             {g.nombre}
           </Text>
-          <View style={{ width: 24 }} />
+          {g.soyMiembro || g.soyOwner ? (
+            <TouchableOpacity onPress={abrirAjustes} hitSlop={10}>
+              <Ionicons name="settings-outline" size={22} color={colors.text} />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ width: 24 }} />
+          )}
         </View>
         <ScrollView contentContainerStyle={{ padding: 18, gap: 12 }}>
           <View style={{ alignItems: "center", gap: 8 }}>
@@ -1070,28 +1083,16 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose, onAbrirPerfil, miId
             ) : (
               <View style={styles.grupoIconBig}>{IconoGrande}</View>
             )}
-            <Text style={styles.perfilNombre}>{g.nombre}</Text>
             <Text style={styles.perfilUser}>
               {DEP_LABEL[g.deporte] || "Mixto"}
               {g.zona ? ` · ${g.zona}` : ""} · {g.miembros} miembros
             </Text>
             {g.descripcion ? <Text style={styles.perfilBio}>{g.descripcion}</Text> : null}
-            {g.soyOwner ? (
-              <View style={styles.btnRow}>
-                <TouchableOpacity style={[styles.btnSec, { flex: 1 }]} onPress={toggle}>
-                  <Text style={styles.btnSecTxt}>Salir</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.btnDanger, { flex: 1 }]} onPress={borrar}>
-                  <Text style={styles.btnDangerTxt}>Borrar club</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity style={g.soyMiembro ? styles.btnSec : styles.btnPrim} onPress={toggle}>
-                <Text style={g.soyMiembro ? styles.btnSecTxt : styles.btnPrimTxt}>
-                  {g.soyMiembro ? "Salir del club" : "Unirme"}
-                </Text>
+            {!g.soyMiembro ? (
+              <TouchableOpacity style={styles.btnPrim} onPress={toggle}>
+                <Text style={styles.btnPrimTxt}>Unirme</Text>
               </TouchableOpacity>
-            )}
+            ) : null}
           </View>
 
           <View style={styles.postsHeadRow}>
@@ -1484,6 +1485,13 @@ function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil }) {
     setR((x) => ({ ...x, foto }));
     retosService.editar(r.id, { foto }).catch(() => {});
   };
+  const abrirAjustes = () => {
+    const opciones = [];
+    if (r.soyCreador) opciones.push({ text: "Borrar reto", style: "destructive", onPress: borrar });
+    else if (r.meApunto) opciones.push({ text: "Salir del reto", style: "destructive", onPress: toggle });
+    opciones.push({ text: "Cancelar", style: "cancel" });
+    Alert.alert(r.nombre, undefined, opciones);
+  };
   const IconoGrande = (
     <>
       {r.foto ? (
@@ -1512,7 +1520,13 @@ function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil }) {
           <Text style={styles.title} numberOfLines={1}>
             {r.nombre}
           </Text>
-          <View style={{ width: 24 }} />
+          {r.meApunto || r.soyCreador ? (
+            <TouchableOpacity onPress={abrirAjustes} hitSlop={10}>
+              <Ionicons name="settings-outline" size={22} color={colors.text} />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ width: 24 }} />
+          )}
         </View>
         <ScrollView contentContainerStyle={{ padding: 18, gap: 14 }}>
           <View style={{ alignItems: "center", gap: 8 }}>
@@ -1523,7 +1537,6 @@ function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil }) {
             ) : (
               <View style={styles.grupoIconBig}>{IconoGrande}</View>
             )}
-            <Text style={styles.perfilNombre}>{r.nombre}</Text>
             <Text style={styles.perfilUser}>
               {fmtKm(r.meta)} · {DEP_LABEL[r.deporte] || "Mixto"} · {r.participantes} apuntados
             </Text>
@@ -1546,22 +1559,11 @@ function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil }) {
             </View>
           ) : null}
 
-          {r.soyCreador ? (
-            <View style={styles.btnRow}>
-              <TouchableOpacity style={[styles.btnSec, { flex: 1 }]} onPress={toggle}>
-                <Text style={styles.btnSecTxt}>{r.meApunto ? "Salir" : "Sumarme"}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.btnDanger, { flex: 1 }]} onPress={borrar}>
-                <Text style={styles.btnDangerTxt}>Borrar reto</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity style={r.meApunto ? styles.btnSec : styles.btnPrim} onPress={toggle}>
-              <Text style={r.meApunto ? styles.btnSecTxt : styles.btnPrimTxt}>
-                {r.meApunto ? "Salir del reto" : "Sumarme al reto"}
-              </Text>
+          {!r.meApunto ? (
+            <TouchableOpacity style={styles.btnPrim} onPress={toggle}>
+              <Text style={styles.btnPrimTxt}>Sumarme al reto</Text>
             </TouchableOpacity>
-          )}
+          ) : null}
 
           <Text style={styles.postsHead}>Tabla de posiciones</Text>
           {ranking.length ? (
@@ -1866,7 +1868,6 @@ const makeStyles = (colors) =>
       overflow: "hidden",
     },
     grupoFotoBig: { width: 84, height: 84 },
-    borrarClub: { color: "#e0563b", fontSize: 13.5, fontWeight: "700", marginTop: 4 },
     miembroRow: { flexDirection: "row", alignItems: "center", gap: 12 },
     // ---- Retos ----
     retoCard: {
@@ -2005,7 +2006,7 @@ const makeStyles = (colors) =>
     },
     actTitulo: { color: colors.text, fontSize: 14, fontWeight: "800" },
     actStats: { color: colors.muted, fontSize: 13, fontWeight: "700" },
-    postAcciones: { flexDirection: "row", alignItems: "center" },
+    postAcciones: { flexDirection: "row", alignItems: "center", gap: 22 },
     kudosBtn: { flexDirection: "row", alignItems: "center", gap: 6 },
     kudosTxt: { color: colors.muted, fontSize: 13, fontWeight: "700" },
 
@@ -2039,7 +2040,7 @@ const makeStyles = (colors) =>
       color: colors.text,
       fontSize: 17,
       lineHeight: 23,
-      minHeight: 160,
+      minHeight: 100,
       textAlignVertical: "top",
     },
     composeFotoWrap: { position: "relative", marginTop: 4 },
@@ -2121,17 +2122,6 @@ const makeStyles = (colors) =>
       borderColor: colors.cardBorder,
     },
     btnSecTxt: { color: colors.text, fontSize: 14, fontWeight: "800" },
-    btnRow: { flexDirection: "row", gap: 10, alignSelf: "stretch" },
-    btnDanger: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      paddingVertical: 11,
-      borderRadius: 999,
-      borderWidth: 1,
-      borderColor: "#e0563b",
-    },
-    btnDangerTxt: { color: "#e0563b", fontSize: 14, fontWeight: "800" },
     fotoBadge: {
       position: "absolute",
       right: -2,
