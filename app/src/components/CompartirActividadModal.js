@@ -75,6 +75,7 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
   const shotRef = useRef(null);
   const [foto, setFoto] = useState("");
   const [ocupado, setOcupado] = useState(false);
+  const [arrastrando, setArrastrando] = useState(false);
 
   // Arrastre del bloque de datos: se puede poner en cualquier parte de la foto.
   const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
@@ -82,12 +83,22 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
+      onPanResponderTerminationRequest: () => false,
+      onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: () => {
+        setArrastrando(true);
         pan.setOffset({ x: pan.x.__getValue(), y: pan.y.__getValue() });
         pan.setValue({ x: 0, y: 0 });
       },
       onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
-      onPanResponderRelease: () => pan.flattenOffset(),
+      onPanResponderRelease: () => {
+        pan.flattenOffset();
+        setArrastrando(false);
+      },
+      onPanResponderTerminate: () => {
+        pan.flattenOffset();
+        setArrastrando(false);
+      },
     })
   ).current;
 
@@ -175,7 +186,10 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={{ alignItems: "center", padding: 16, paddingBottom: 30 }}>
+        <ScrollView
+          scrollEnabled={!arrastrando}
+          contentContainerStyle={{ alignItems: "center", padding: 16, paddingBottom: 30 }}
+        >
           <ViewShot
             ref={shotRef}
             options={{ format: "jpg", quality: 0.92 }}
@@ -229,7 +243,10 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
               <Text style={styles.elegirTxt}>Elegí una foto de fondo</Text>
             </TouchableOpacity>
           ) : null}
-          <Text style={styles.arrastraHint}>✋ Arrastrá los datos para ubicarlos donde quieras.</Text>
+          <View style={styles.arrastraHint}>
+            <Ionicons name="move-outline" size={15} color={colors.greenBright} />
+            <Text style={styles.arrastraHintTxt}>Arrastrá los datos para ubicarlos donde quieras.</Text>
+          </View>
         </ScrollView>
 
         <View style={[styles.acciones, { paddingBottom: insets.bottom + 10 }]}>
@@ -306,7 +323,8 @@ const makeStyles = (colors) =>
 
     elegirBtn: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 14 },
     elegirTxt: { color: colors.greenBright, fontSize: 14, fontWeight: "800" },
-    arrastraHint: { color: colors.muted, fontSize: 12, fontWeight: "600", marginTop: 12, textAlign: "center" },
+    arrastraHint: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 12 },
+    arrastraHintTxt: { color: colors.muted, fontSize: 12, fontWeight: "600" },
 
     acciones: {
       flexDirection: "row",

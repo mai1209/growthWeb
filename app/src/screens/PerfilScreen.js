@@ -32,6 +32,17 @@ const joinedLabel = (createdAt) => {
   }
 };
 
+const ACT_LABEL = { caminata: "Caminata", carrera: "Carrera", bici: "Bici" };
+const haceCuanto = (iso) => {
+  if (!iso) return "";
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return "ahora";
+  if (s < 3600) return `hace ${Math.floor(s / 60)} min`;
+  if (s < 86400) return `hace ${Math.floor(s / 3600)} h`;
+  if (s < 604800) return `hace ${Math.floor(s / 86400)} d`;
+  return new Date(iso).toLocaleDateString("es-AR", { day: "numeric", month: "short" });
+};
+
 // Elige una imagen del teléfono, la achica y la devuelve como data URL (base64).
 const pickImageAsDataUrl = async (maxW, aspect) => {
   const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -106,8 +117,9 @@ export default function PerfilScreen({ navigation }) {
     return unsub;
   }, [load, navigation]);
 
-  // Stats de comunidad (posteos/seguidores/siguiendo) para el perfil personal.
+  // Comunidad: stats + posteos propios para el perfil personal.
   const [comuStats, setComuStats] = useState(null);
+  const [misPosts, setMisPosts] = useState([]);
   useEffect(() => {
     if (!COMUNIDAD_HABILITADA) return undefined;
     const traer = () =>
@@ -116,6 +128,12 @@ export default function PerfilScreen({ navigation }) {
         .then(({ data }) => {
           setComuStats(data?.stats || null);
           setPerfilPublico(data?.perfilPublico !== false);
+          if (data?.id) {
+            communityService
+              .postsDeUsuario(data.id)
+              .then(({ data: d }) => setMisPosts(d?.posts || []))
+              .catch(() => {});
+          }
         })
         .catch(() => {});
     traer();
@@ -364,6 +382,27 @@ export default function PerfilScreen({ navigation }) {
                 </Text>
               </View>
             </View>
+
+            {COMUNIDAD_HABILITADA && misPosts.length > 0 ? (
+              <View style={styles.posteosSec}>
+                <Text style={styles.posteosTitulo}>Posteos</Text>
+                {misPosts.map((p) => (
+                  <View key={String(p.id)} style={styles.postCard}>
+                    <Text style={styles.postFecha}>{haceCuanto(p.createdAt)}</Text>
+                    {p.texto ? <Text style={styles.postTexto}>{p.texto}</Text> : null}
+                    {p.foto ? <Image source={{ uri: p.foto }} style={styles.postFoto} /> : null}
+                    {p.tipo === "actividad" && p.actividad ? (
+                      <Text style={styles.postAct}>
+                        {ACT_LABEL[p.actividad.tipo] || "Actividad"} ·{" "}
+                        {(p.actividad.metros / 1000).toFixed(2)} km ·{" "}
+                        {Math.floor((p.actividad.secs || 0) / 60)} min
+                        {p.actividad.kcal ? ` · ${p.actividad.kcal} kcal` : ""}
+                      </Text>
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+            ) : null}
           </View>
           )}
         </ScrollView>
@@ -652,25 +691,46 @@ const makeStyles = (colors, isDark) =>
       alignItems: "flex-start",
     },
     editBtn: {
-      paddingVertical: 8,
-      paddingHorizontal: 16,
+      paddingVertical: 6,
+      paddingHorizontal: 14,
       borderRadius: 999,
       borderWidth: 1,
-      borderColor: colors.greenDark,
+      borderColor: colors.greenBright,
     },
-    editBtnText: { color: colors.greenDark, fontWeight: "800", fontSize: 13.5 },
+    editBtnText: { color: colors.greenBright, fontWeight: "800", fontSize: 12.5 },
     comunidadBtn: {
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
-      paddingVertical: 8,
-      paddingHorizontal: 16,
+      paddingVertical: 6,
+      paddingHorizontal: 14,
       borderRadius: 999,
-      backgroundColor: "rgba(93,199,45,0.14)",
       borderWidth: 1,
       borderColor: colors.greenBright,
     },
-    comunidadBtnText: { color: colors.greenBright, fontWeight: "800", fontSize: 13.5 },
+    comunidadBtnText: { color: colors.greenBright, fontWeight: "800", fontSize: 12.5 },
+    posteosSec: { paddingHorizontal: 16, marginTop: 18, gap: 10 },
+    posteosTitulo: { color: colors.text, fontSize: 16, fontWeight: "800", marginBottom: 2 },
+    postCard: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 14,
+      padding: 14,
+      gap: 8,
+    },
+    postFecha: { color: colors.muted, fontSize: 12, fontWeight: "600" },
+    postTexto: { color: colors.text, fontSize: 15, lineHeight: 21 },
+    postFoto: { width: "100%", height: 180, borderRadius: 12, resizeMode: "cover" },
+    postAct: {
+      color: colors.greenBright,
+      fontSize: 13.5,
+      fontWeight: "800",
+      backgroundColor: "rgba(93,199,45,0.08)",
+      borderRadius: 10,
+      paddingVertical: 8,
+      paddingHorizontal: 10,
+    },
 
     identity: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 18, gap: 4 },
     name: { color: colors.text, fontSize: 21, fontWeight: "800" },

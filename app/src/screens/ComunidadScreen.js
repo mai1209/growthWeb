@@ -175,7 +175,12 @@ export default function ComunidadScreen({ navigation }) {
 
   const renderPost = ({ item }) => (
     <View style={styles.post}>
-      <TouchableOpacity style={styles.postHead} onPress={() => item.autor && setPerfilUser(item.autor)}>
+      <TouchableOpacity
+        style={styles.postHead}
+        onPress={() =>
+          item.autor && (!miPerfil || String(item.autor.id) !== String(miPerfil.id)) && setPerfilUser(item.autor)
+        }
+      >
         <Avatar user={item.autor} colors={colors} />
         <View style={{ flex: 1 }}>
           <Text style={styles.postAutor}>{item.autor?.fullName || item.autor?.username || "Alguien"}</Text>
