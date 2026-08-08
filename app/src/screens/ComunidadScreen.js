@@ -196,6 +196,11 @@ export default function ComunidadScreen({ navigation }) {
     [miPerfil, navigation]
   );
 
+  // Atajo: ir a Movilidad y abrir el GPS directo (para sumar km a un reto).
+  const irAMovilidadGps = useCallback(() => {
+    navigation.navigate("Main", { screen: "Salud", params: { view: "movilidad", iniciarGps: Date.now() } });
+  }, [navigation]);
+
   const publicar = ({ texto, foto }) => {
     return communityService.crearPost({ tipo: "texto", texto, foto }).then(({ data }) => {
       if (data?.post) setFeed((prev) => [data.post, ...(prev || [])]);
@@ -270,7 +275,7 @@ export default function ComunidadScreen({ navigation }) {
       ) : tab === "grupos" ? (
         <GruposTab colors={colors} styles={styles} onAbrirPerfil={abrirPerfil} miId={miPerfil?.id} />
       ) : (
-        <RetosTab colors={colors} styles={styles} onAbrirPerfil={abrirPerfil} />
+        <RetosTab colors={colors} styles={styles} onAbrirPerfil={abrirPerfil} onIniciarGps={irAMovilidadGps} />
       )}
 
       {composeOpen ? (
@@ -1187,7 +1192,7 @@ function RetoCard({ r, colors, styles, onAbrir, onToggle }) {
   );
 }
 
-function RetosTab({ colors, styles, onAbrirPerfil }) {
+function RetosTab({ colors, styles, onAbrirPerfil, onIniciarGps }) {
   const [descubrir, setDescubrir] = useState([]);
   const [q, setQ] = useState("");
   const [crearOpen, setCrearOpen] = useState(false);
@@ -1256,7 +1261,13 @@ function RetosTab({ colors, styles, onAbrirPerfil }) {
         />
       ) : null}
       {misOpen ? (
-        <MisRetosModal colors={colors} styles={styles} onAbrirPerfil={onAbrirPerfil} onClose={() => setMisOpen(false)} />
+        <MisRetosModal
+          colors={colors}
+          styles={styles}
+          onAbrirPerfil={onAbrirPerfil}
+          onIniciarGps={onIniciarGps}
+          onClose={() => setMisOpen(false)}
+        />
       ) : null}
       {detalle ? (
         <RetoDetalleModal
@@ -1264,6 +1275,7 @@ function RetosTab({ colors, styles, onAbrirPerfil }) {
           styles={styles}
           reto={detalle}
           onAbrirPerfil={onAbrirPerfil}
+          onIniciarGps={onIniciarGps}
           onClose={() => {
             setDetalle(null);
             cargarDescubrir();
@@ -1275,7 +1287,7 @@ function RetosTab({ colors, styles, onAbrirPerfil }) {
 }
 
 // Pantalla "Mis retos": switch Creados / Apuntados.
-function MisRetosModal({ colors, styles, onClose, onAbrirPerfil }) {
+function MisRetosModal({ colors, styles, onClose, onAbrirPerfil, onIniciarGps }) {
   const insets = useSafeAreaInsets();
   const [seg, setSeg] = useState("creados");
   const [retos, setRetos] = useState([]);
@@ -1328,6 +1340,7 @@ function MisRetosModal({ colors, styles, onClose, onAbrirPerfil }) {
             styles={styles}
             reto={detalle}
             onAbrirPerfil={onAbrirPerfil}
+            onIniciarGps={onIniciarGps}
             onClose={() => {
               setDetalle(null);
               cargar();
@@ -1452,7 +1465,7 @@ function CrearRetoModal({ colors, styles, onClose, onCreado }) {
   );
 }
 
-function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil }) {
+function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil, onIniciarGps }) {
   const insets = useSafeAreaInsets();
   const [r, setR] = useState(reto);
   const [ranking, setRanking] = useState([]);
@@ -1564,6 +1577,25 @@ function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil }) {
             <TouchableOpacity style={styles.btnPrim} onPress={toggle}>
               <Text style={styles.btnPrimTxt}>Sumarme al reto</Text>
             </TouchableOpacity>
+          ) : null}
+
+          {r.meApunto ? (
+            <View style={styles.retoInfo}>
+              <View style={styles.retoInfoHead}>
+                <Ionicons name="information-circle-outline" size={18} color={colors.greenBright} />
+                <Text style={styles.retoInfoTit}>¿Cómo sumo?</Text>
+              </View>
+              <Text style={styles.retoInfoTxt}>
+                Iniciá una actividad con GPS ({DEP_LABEL[r.deporte]?.toLowerCase() || "caminata/carrera/bici"}) y tus
+                kilómetros se cuentan solos en este reto.
+              </Text>
+              {onIniciarGps ? (
+                <TouchableOpacity style={styles.retoInfoBtn} onPress={onIniciarGps}>
+                  <Ionicons name="play" size={15} color="#06210a" />
+                  <Text style={styles.retoInfoBtnTxt}>Iniciar actividad con GPS</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
           ) : null}
 
           <Text style={styles.postsHead}>Tabla de posiciones</Text>
@@ -1909,6 +1941,28 @@ const makeStyles = (colors) =>
     },
     retoTop: { flexDirection: "row", alignItems: "center", gap: 12 },
     retoBadge: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999 },
+    retoInfo: {
+      backgroundColor: "rgba(93,199,45,0.08)",
+      borderWidth: 1,
+      borderColor: "rgba(93,199,45,0.3)",
+      borderRadius: 14,
+      padding: 12,
+      gap: 8,
+    },
+    retoInfoHead: { flexDirection: "row", alignItems: "center", gap: 6 },
+    retoInfoTit: { color: colors.text, fontSize: 14.5, fontWeight: "800" },
+    retoInfoTxt: { color: colors.muted, fontSize: 13.5, lineHeight: 19 },
+    retoInfoBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      backgroundColor: colors.greenBright,
+      borderRadius: 999,
+      paddingVertical: 10,
+      marginTop: 2,
+    },
+    retoInfoBtnTxt: { color: "#06210a", fontSize: 14, fontWeight: "800" },
     retoBadgeTxt: { fontSize: 11, fontWeight: "800" },
     progBar: {
       height: 9,

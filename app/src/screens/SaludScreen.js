@@ -674,6 +674,10 @@ export default function SaludScreen() {
 
   // ---------------- Caminatas (GPS) ----------------
   const [caminataOpen, setCaminataOpen] = useState(false);
+  // Atajo desde un reto: si llega el param iniciarGps, abrimos el GPS directo.
+  useEffect(() => {
+    if (route.params?.iniciarGps) setCaminataOpen(true);
+  }, [route.params?.iniciarGps]);
   const [recorridosOpen, setRecorridosOpen] = useState(false);
   const [caminatas, setCaminatas] = useState([]);
   const [resumenPeriodo, setResumenPeriodo] = useState("semana"); // semana | mes | todo

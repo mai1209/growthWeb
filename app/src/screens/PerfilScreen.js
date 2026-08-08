@@ -370,28 +370,26 @@ export default function PerfilScreen({ navigation }) {
               <View style={[styles.banner, styles.bannerPlaceholder]} />
             )}
 
-            {/* Avatar (solo, encima de la portada) con el lápiz de editar dentro */}
+            {/* Avatar (solo, encima de la portada) */}
             <View style={styles.topRow}>
-              <View style={styles.avatarWrap}>
-                <View style={styles.avatar}>
-                  {profile?.profilePhotoUrl ? (
-                    <Image source={{ uri: profile.profilePhotoUrl }} style={styles.avatarImg} />
-                  ) : (
-                    <Text style={styles.avatarInitials}>{initials}</Text>
-                  )}
-                </View>
-                <TouchableOpacity style={styles.avatarEdit} onPress={openEdit} hitSlop={6}>
-                  <Ionicons name="pencil" size={13} color="#06210a" />
-                </TouchableOpacity>
+              <View style={styles.avatar}>
+                {profile?.profilePhotoUrl ? (
+                  <Image source={{ uri: profile.profilePhotoUrl }} style={styles.avatarImg} />
+                ) : (
+                  <Text style={styles.avatarInitials}>{initials}</Text>
+                )}
               </View>
-              {/* A la derecha: subir posteo */}
-              {COMUNIDAD_HABILITADA ? (
-                <View style={styles.perfilBtns}>
+              {/* A la derecha: editar (lápiz verde, sin fondo) + subir posteo */}
+              <View style={styles.perfilBtns}>
+                <TouchableOpacity style={styles.perfilIconBtn} onPress={openEdit} hitSlop={8}>
+                  <Ionicons name="pencil" size={20} color={colors.greenBright} />
+                </TouchableOpacity>
+                {COMUNIDAD_HABILITADA ? (
                   <TouchableOpacity style={styles.perfilIconBtn} onPress={() => setComposeOpen(true)} hitSlop={8}>
                     <Ionicons name="add-circle-outline" size={24} color={colors.greenBright} />
                   </TouchableOpacity>
-                </View>
-              ) : null}
+                ) : null}
+              </View>
             </View>
 
             {/* Identidad */}
