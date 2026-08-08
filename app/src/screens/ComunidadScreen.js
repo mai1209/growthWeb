@@ -1636,7 +1636,13 @@ function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil, onInic
                 kilómetros se cuentan solos en este reto.
               </Text>
               {onIniciarGps ? (
-                <TouchableOpacity style={styles.retoInfoBtn} onPress={onIniciarGps}>
+                <TouchableOpacity
+                  style={styles.retoInfoBtn}
+                  onPress={() => {
+                    onClose?.(); // cerramos el modal del reto (Modal nativo) antes de navegar
+                    onIniciarGps();
+                  }}
+                >
                   <Ionicons name="play" size={15} color="#06210a" />
                   <Text style={styles.retoInfoBtnTxt}>Iniciar actividad con GPS</Text>
                 </TouchableOpacity>
