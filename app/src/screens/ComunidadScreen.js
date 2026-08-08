@@ -21,6 +21,7 @@ import Svg, { Path, Circle } from "react-native-svg";
 import { useTheme } from "../theme";
 import { communityService, gruposService, retosService } from "../api";
 import { elegirFotoComida } from "../utils/foto";
+import PostCard from "../components/PostCard";
 
 const ACT = {
   caminata: { label: "Caminata", icon: "walk" },
@@ -202,64 +203,7 @@ export default function ComunidadScreen({ navigation }) {
   };
 
   const renderPost = ({ item }) => (
-    <View style={styles.post}>
-      <TouchableOpacity
-        style={styles.postHead}
-        onPress={() => abrirPerfil(item.autor)}
-      >
-        <Avatar user={item.autor} colors={colors} />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.postAutor}>{item.autor?.fullName || item.autor?.username || "Alguien"}</Text>
-          <Text style={styles.postFecha}>
-            {item.autor?.username ? `@${item.autor.username} · ` : ""}
-            {haceCuanto(item.createdAt)}
-          </Text>
-        </View>
-        {miPerfil && item.autor && String(item.autor.id) === String(miPerfil.id) ? (
-          <TouchableOpacity onPress={() => borrarPost(item)} hitSlop={8}>
-            <Ionicons name="ellipsis-horizontal" size={18} color={colors.muted} />
-          </TouchableOpacity>
-        ) : null}
-      </TouchableOpacity>
-
-      {item.texto ? <Text style={styles.postTexto}>{item.texto}</Text> : null}
-
-      {item.foto ? <Image source={{ uri: item.foto }} style={styles.postFoto} /> : null}
-
-      {/* Si hay foto, la imagen ya trae recorrido + datos → no repetimos el trazado */}
-      {item.tipo === "actividad" && item.actividad && !item.foto ? (
-        <View style={styles.actWrap}>
-          {Array.isArray(item.actividad.ruta) && item.actividad.ruta.length > 1 ? (
-            <View style={styles.actMapa}>
-              <RutaMini ruta={item.actividad.ruta} colors={colors} />
-            </View>
-          ) : null}
-          <View style={styles.actCard}>
-            <MaterialCommunityIcons name={actMeta(item.actividad.tipo).icon} size={20} color={colors.greenBright} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.actTitulo}>{actMeta(item.actividad.tipo).label}</Text>
-              <Text style={styles.actStats}>
-                {(item.actividad.metros / 1000).toFixed(2)} km · {fmtTiempo(item.actividad.secs)}
-                {item.actividad.kcal ? ` · ${item.actividad.kcal} kcal` : ""}
-              </Text>
-            </View>
-          </View>
-        </View>
-      ) : null}
-
-      <View style={styles.postAcciones}>
-        <TouchableOpacity style={styles.kudosBtn} onPress={() => darKudos(item)} hitSlop={6}>
-          <Ionicons
-            name={item.leDiKudos ? "thumbs-up" : "thumbs-up-outline"}
-            size={18}
-            color={item.leDiKudos ? colors.greenBright : colors.muted}
-          />
-          <Text style={[styles.kudosTxt, item.leDiKudos && { color: colors.greenBright }]}>
-            {item.kudos > 0 ? item.kudos : ""} {item.kudos === 1 ? "kudo" : "kudos"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <PostCard post={item} miId={miPerfil?.id} onAbrirPerfil={abrirPerfil} onBorrar={borrarPost} />
   );
 
   return (

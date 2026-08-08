@@ -331,7 +331,8 @@ export const getFeed = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(limit)
       .populate("autor", "username fullName profilePhotoUrl bio");
-    return res.json({ posts: posts.map((p) => serializarPost(p, req.userId)) });
+    const counts = await contarComentarios(posts.map((p) => p._id));
+    return res.json({ posts: posts.map((p) => serializarPost(p, req.userId, counts.get(String(p._id)) || 0)) });
   } catch (err) {
     console.error("[community] getFeed:", err.message);
     return res.status(500).json({ error: "No se pudo cargar el feed." });
@@ -346,7 +347,8 @@ export const getPostsDeUsuario = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(30)
       .populate("autor", "username fullName profilePhotoUrl bio");
-    return res.json({ posts: posts.map((p) => serializarPost(p, req.userId)) });
+    const counts = await contarComentarios(posts.map((p) => p._id));
+    return res.json({ posts: posts.map((p) => serializarPost(p, req.userId, counts.get(String(p._id)) || 0)) });
   } catch (err) {
     console.error("[community] getPostsDeUsuario:", err.message);
     return res.status(500).json({ error: "No se pudo cargar." });

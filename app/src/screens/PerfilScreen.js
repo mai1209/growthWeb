@@ -19,6 +19,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { authService, communityService } from "../api";
 import { elegirFotoComida } from "../utils/foto";
+import PostCard from "../components/PostCard";
 import { COMUNIDAD_HABILITADA } from "../config";
 import { useTheme } from "../theme";
 import { useWorkspace } from "../workspace/WorkspaceContext";
@@ -434,26 +435,11 @@ export default function PerfilScreen({ navigation }) {
             {COMUNIDAD_HABILITADA && misPosts.length > 0 ? (
               <View style={styles.posteosSec}>
                 <Text style={styles.posteosTitulo}>Posteos</Text>
-                {misPosts.map((p) => (
-                  <View key={String(p.id)} style={styles.postCard}>
-                    <View style={styles.postCardHead}>
-                      <Text style={styles.postFecha}>{haceCuanto(p.createdAt)}</Text>
-                      <TouchableOpacity onPress={() => borrarMiPost(p)} hitSlop={8}>
-                        <Ionicons name="ellipsis-horizontal" size={18} color={colors.muted} />
-                      </TouchableOpacity>
-                    </View>
-                    {p.texto ? <Text style={styles.postTexto}>{p.texto}</Text> : null}
-                    {p.foto ? <Image source={{ uri: p.foto }} style={styles.postFoto} /> : null}
-                    {p.tipo === "actividad" && p.actividad ? (
-                      <Text style={styles.postAct}>
-                        {ACT_LABEL[p.actividad.tipo] || "Actividad"} ·{" "}
-                        {(p.actividad.metros / 1000).toFixed(2)} km ·{" "}
-                        {Math.floor((p.actividad.secs || 0) / 60)} min
-                        {p.actividad.kcal ? ` · ${p.actividad.kcal} kcal` : ""}
-                      </Text>
-                    ) : null}
-                  </View>
-                ))}
+                <View style={{ gap: 10 }}>
+                  {misPosts.map((p) => (
+                    <PostCard key={String(p.id)} post={p} miId={p.autor?.id} onBorrar={borrarMiPost} />
+                  ))}
+                </View>
               </View>
             ) : null}
           </View>
