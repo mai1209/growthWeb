@@ -158,11 +158,15 @@ export default function PerfilScreen({ navigation }) {
     setComposeEnviando(true);
     communityService
       .crearPost({ tipo: "texto", texto: composeTexto.trim(), foto: composeFoto })
-      .then(() => {
+      .then(({ data }) => {
+        // Prependemos el posteo devuelto (sin recargar todo) → instantáneo.
+        if (data?.post) {
+          setMisPosts((prev) => [data.post, ...prev]);
+          setComuStats((s) => (s ? { ...s, posteos: (s.posteos || 0) + 1 } : s));
+        }
         setComposeOpen(false);
         setComposeTexto("");
         setComposeFoto("");
-        cargarComunidad();
       })
       .catch(() => Alert.alert("Error", "No se pudo publicar."))
       .finally(() => setComposeEnviando(false));
@@ -173,7 +177,12 @@ export default function PerfilScreen({ navigation }) {
       {
         text: "Borrar",
         style: "destructive",
-        onPress: () => communityService.borrarPost(p.id).then(cargarComunidad).catch(() => {}),
+        onPress: () => {
+          // Optimista: lo sacamos al instante; el borrado va por atrás.
+          setMisPosts((prev) => prev.filter((x) => String(x.id) !== String(p.id)));
+          setComuStats((s) => (s ? { ...s, posteos: Math.max(0, (s.posteos || 0) - 1) } : s));
+          communityService.borrarPost(p.id).catch(() => cargarComunidad()); // si falla, restauramos
+        },
       },
     ]);
   };
