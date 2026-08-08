@@ -1028,19 +1028,6 @@ export default function SaludScreen() {
             />
             <Text style={styles.title}>{esCalorias ? "Calorías diarias" : "Movilidad"}</Text>
           </View>
-          {!esCalorias ? (
-            <View style={styles.animoTop}>
-              {ANIMOS.map((a) => (
-                <TouchableOpacity
-                  key={a.level}
-                  style={[styles.animoTopBtn, animoHoy === a.level && styles.animoTopBtnOn]}
-                  onPress={() => setAnimo(a.level)}
-                >
-                  <Text style={styles.animoTopEmoji}>{a.emoji}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          ) : null}
         </View>
 
         {esCalorias ? (
@@ -1213,8 +1200,6 @@ export default function SaludScreen() {
           <Ionicons name="chevron-forward" size={16} color={colors.greenDark} />
         </TouchableOpacity>
 
-        {renderTendencia(METRICAS_MOV, metricaMov, setMetricaMov)}
-
         {/* ---- Caminata (GPS) ---- */}
         <View style={styles.card}>
           <View style={styles.cardHead}>
@@ -1242,6 +1227,64 @@ export default function SaludScreen() {
             <Ionicons name="play" size={16} color="#06210a" />
             <Text style={styles.caminataBtnText}>Iniciar actividad</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* ---- Pasos de hoy (círculo + tendencia) ---- */}
+        <View style={styles.card}>
+          <View style={styles.cardHead}>
+            <View style={styles.cardHeadLeft}>
+              <Ionicons name="walk-outline" size={18} color={colors.greenDark} />
+              <Text style={styles.cardTitle}>Pasos</Text>
+            </View>
+            <View style={styles.pasosBtns}>
+              <TouchableOpacity style={styles.metaBtn} onPress={() => abrirEdicion("manual")}>
+                <Ionicons name="add-circle-outline" size={14} color={colors.muted} />
+                <Text style={styles.metaBtnText}>Manual</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.metaBtn} onPress={() => abrirEdicion("pasos")}>
+                <Ionicons name="create-outline" size={14} color={colors.muted} />
+                <Text style={styles.metaBtnText}>Meta</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {modoPasos === "no" ? (
+            <Text style={styles.aviso}>Tu teléfono no tiene sensor de pasos disponible.</Text>
+          ) : (
+            <View style={styles.pasosBody}>
+              <Ring percent={pctPasos} size={116} stroke={12} color={colors.greenBright} track={colors.cardBorder}>
+                <View style={styles.ringCenter}>
+                  <Text style={styles.ringBig}>
+                    {pasos != null ? pasosHoyTotal.toLocaleString("es-AR") : "—"}
+                  </Text>
+                  <Text style={styles.ringSub}>de {metaPasos.toLocaleString("es-AR")}</Text>
+                  {kcalPasosHoy > 0 ? (
+                    <Text style={styles.kcalPasos}>≈ {kcalPasosHoy} kcal 🔥</Text>
+                  ) : null}
+                  {manualHoy > 0 ? (
+                    <Text style={styles.manualHint}>+{manualHoy.toLocaleString("es-AR")} manual</Text>
+                  ) : null}
+                </View>
+              </Ring>
+              {modoPasos === "ios" && pasosSemana.length > 0 ? (
+                <View style={{ flex: 1 }}>
+                  <LineaTendencia
+                    points={pasosSemana.map((d) => ({ label: d.label, value: Number(d.valor) || 0 }))}
+                    color={colors.greenBright}
+                    track={colors.cardBorder}
+                    unidad="pasos"
+                  />
+                </View>
+              ) : null}
+            </View>
+          )}
+
+          {modoPasos === "android" ? (
+            <Text style={styles.aviso}>
+              Contamos los pasos mientras tengas la app abierta. Para que cuente también en segundo
+              plano, cerrá y volvé a abrir Growth.
+            </Text>
+          ) : null}
         </View>
 
         {/* ---- Resumen de actividad ---- */}
@@ -1303,66 +1346,6 @@ export default function SaludScreen() {
           ) : (
             <Text style={styles.aviso}>Sin actividades en este período.</Text>
           )}
-        </View>
-
-        {/* ---- Pasos de hoy (debajo de la caminata GPS) ---- */}
-        <View style={styles.card}>
-          <View style={styles.cardHead}>
-            <View style={styles.cardHeadLeft}>
-              <Ionicons name="walk-outline" size={18} color={colors.greenDark} />
-              <Text style={styles.cardTitle}>Pasos</Text>
-            </View>
-            <View style={styles.pasosBtns}>
-              <TouchableOpacity style={styles.metaBtn} onPress={() => abrirEdicion("manual")}>
-                <Ionicons name="add-circle-outline" size={14} color={colors.muted} />
-                <Text style={styles.metaBtnText}>Manual</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.metaBtn} onPress={() => abrirEdicion("pasos")}>
-                <Ionicons name="create-outline" size={14} color={colors.muted} />
-                <Text style={styles.metaBtnText}>Meta</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {modoPasos === "no" ? (
-            <Text style={styles.aviso}>Tu teléfono no tiene sensor de pasos disponible.</Text>
-          ) : (
-            <View style={styles.pasosBody}>
-              <Ring percent={pctPasos} color={colors.greenBright} track={colors.cardBorder}>
-                <View style={styles.ringCenter}>
-                  <Text style={styles.ringBig}>
-                    {pasos != null ? pasosHoyTotal.toLocaleString("es-AR") : "—"}
-                  </Text>
-                  <Text style={styles.ringSub}>de {metaPasos.toLocaleString("es-AR")}</Text>
-                  {kcalPasosHoy > 0 ? (
-                    <Text style={styles.kcalPasos}>≈ {kcalPasosHoy} kcal 🔥</Text>
-                  ) : null}
-                  {manualHoy > 0 ? (
-                    <Text style={styles.manualHint}>+{manualHoy.toLocaleString("es-AR")} manual</Text>
-                  ) : null}
-                </View>
-              </Ring>
-              {modoPasos === "ios" && pasosSemana.length > 0 ? (
-                <View style={{ flex: 1 }}>
-                  <BarrasSemana
-                    valores={pasosSemana}
-                    meta={metaPasos}
-                    color={colors.greenBright}
-                    track={colors.cardBorder}
-                    styles={styles}
-                  />
-                </View>
-              ) : null}
-            </View>
-          )}
-
-          {modoPasos === "android" ? (
-            <Text style={styles.aviso}>
-              Para ver el histórico completo y que cuente en segundo plano, activá{" "}
-              <Text style={{ fontWeight: "800" }}>Health Connect</Text> y dale permiso de pasos a
-              Growth. Sin eso, contamos solo desde que abrís la app.
-            </Text>
-          ) : null}
         </View>
 
         {/* ---- Peso ---- */}
@@ -1464,6 +1447,7 @@ export default function SaludScreen() {
         pesoDias={pesoDias}
         comidasDias={comidasDias}
         caminatas={caminatas}
+        tendencia={renderTendencia(METRICAS_MOV, metricaMov, setMetricaMov)}
       />
 
       <NutricionModal

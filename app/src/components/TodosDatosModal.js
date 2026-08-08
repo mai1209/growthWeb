@@ -130,6 +130,7 @@ export default function TodosDatosModal({
   pesoDias,
   comidasDias,
   caminatas,
+  tendencia,
 }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -354,6 +355,7 @@ export default function TodosDatosModal({
               </View>
             </TouchableOpacity>
           ))}
+          {tendencia ? <View style={{ marginTop: 4 }}>{tendencia}</View> : null}
         </ScrollView>
 
         <HistorialDetalle
