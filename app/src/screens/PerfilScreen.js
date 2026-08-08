@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { authService, communityService } from "../api";
+import { elegirFotoComida } from "../utils/foto";
 import { COMUNIDAD_HABILITADA } from "../config";
 import { useTheme } from "../theme";
 import { useWorkspace } from "../workspace/WorkspaceContext";
@@ -120,26 +121,62 @@ export default function PerfilScreen({ navigation }) {
   // Comunidad: stats + posteos propios para el perfil personal.
   const [comuStats, setComuStats] = useState(null);
   const [misPosts, setMisPosts] = useState([]);
+  const cargarComunidad = useCallback(() => {
+    if (!COMUNIDAD_HABILITADA) return;
+    communityService
+      .getMiPerfil()
+      .then(({ data }) => {
+        setComuStats(data?.stats || null);
+        setPerfilPublico(data?.perfilPublico !== false);
+        if (data?.id) {
+          communityService
+            .postsDeUsuario(data.id)
+            .then(({ data: d }) => setMisPosts(d?.posts || []))
+            .catch(() => {});
+        }
+      })
+      .catch(() => {});
+  }, []);
   useEffect(() => {
-    if (!COMUNIDAD_HABILITADA) return undefined;
-    const traer = () =>
-      communityService
-        .getMiPerfil()
-        .then(({ data }) => {
-          setComuStats(data?.stats || null);
-          setPerfilPublico(data?.perfilPublico !== false);
-          if (data?.id) {
-            communityService
-              .postsDeUsuario(data.id)
-              .then(({ data: d }) => setMisPosts(d?.posts || []))
-              .catch(() => {});
-          }
-        })
-        .catch(() => {});
-    traer();
-    const unsub = navigation.addListener("focus", traer);
+    cargarComunidad();
+    const unsub = navigation.addListener("focus", cargarComunidad);
     return unsub;
-  }, [navigation]);
+  }, [cargarComunidad, navigation]);
+
+  // ---- Composer de posteo (se sube al feed/inicio general) ----
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [composeTexto, setComposeTexto] = useState("");
+  const [composeFoto, setComposeFoto] = useState("");
+  const [composeEnviando, setComposeEnviando] = useState(false);
+  const composeVacio = !composeTexto.trim() && !composeFoto;
+  const elegirFotoPost = async () => {
+    const r = await elegirFotoComida();
+    if (r?.base64) setComposeFoto(`data:${r.mediaType};base64,${r.base64}`);
+  };
+  const publicarPost = () => {
+    if (composeVacio || composeEnviando) return;
+    setComposeEnviando(true);
+    communityService
+      .crearPost({ tipo: "texto", texto: composeTexto.trim(), foto: composeFoto })
+      .then(() => {
+        setComposeOpen(false);
+        setComposeTexto("");
+        setComposeFoto("");
+        cargarComunidad();
+      })
+      .catch(() => Alert.alert("Error", "No se pudo publicar."))
+      .finally(() => setComposeEnviando(false));
+  };
+  const borrarMiPost = (p) => {
+    Alert.alert("Borrar posteo", "¿Seguro que querés borrarlo?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Borrar",
+        style: "destructive",
+        onPress: () => communityService.borrarPost(p.id).then(cargarComunidad).catch(() => {}),
+      },
+    ]);
+  };
 
   // Al abrir la edición, copiamos los valores actuales.
   const openEdit = () => {
@@ -294,7 +331,13 @@ export default function PerfilScreen({ navigation }) {
           <Text style={styles.backText}>Volver</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Perfil</Text>
-        <View style={{ width: 70 }} />
+        {COMUNIDAD_HABILITADA ? (
+          <TouchableOpacity onPress={() => navigation.navigate("Comunidad")} hitSlop={10} style={styles.headerComu}>
+            <Ionicons name="globe-outline" size={22} color={colors.greenBright} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 70 }} />
+        )}
       </View>
 
       {loading ? (
@@ -343,19 +386,14 @@ export default function PerfilScreen({ navigation }) {
                   <Text style={styles.avatarInitials}>{initials}</Text>
                 )}
               </View>
-              {/* Botones a la derecha, junto a la portada */}
+              {/* Íconos a la derecha, junto a la portada: editar + subir posteo */}
               <View style={styles.perfilBtns}>
-                <TouchableOpacity style={styles.editBtn} onPress={openEdit} hitSlop={6}>
-                  <Text style={styles.editBtnText}>Editar perfil</Text>
+                <TouchableOpacity style={styles.perfilIconBtn} onPress={openEdit} hitSlop={8}>
+                  <Ionicons name="create-outline" size={21} color={colors.greenBright} />
                 </TouchableOpacity>
                 {COMUNIDAD_HABILITADA ? (
-                  <TouchableOpacity
-                    style={styles.comunidadBtn}
-                    onPress={() => navigation.navigate("Comunidad")}
-                    hitSlop={6}
-                  >
-                    <Ionicons name="globe-outline" size={15} color={colors.greenBright} />
-                    <Text style={styles.comunidadBtnText}>Comunidad</Text>
+                  <TouchableOpacity style={styles.perfilIconBtn} onPress={() => setComposeOpen(true)} hitSlop={8}>
+                    <Ionicons name="add-circle-outline" size={23} color={colors.greenBright} />
                   </TouchableOpacity>
                 ) : null}
               </View>
@@ -389,7 +427,12 @@ export default function PerfilScreen({ navigation }) {
                 <Text style={styles.posteosTitulo}>Posteos</Text>
                 {misPosts.map((p) => (
                   <View key={String(p.id)} style={styles.postCard}>
-                    <Text style={styles.postFecha}>{haceCuanto(p.createdAt)}</Text>
+                    <View style={styles.postCardHead}>
+                      <Text style={styles.postFecha}>{haceCuanto(p.createdAt)}</Text>
+                      <TouchableOpacity onPress={() => borrarMiPost(p)} hitSlop={8}>
+                        <Ionicons name="ellipsis-horizontal" size={18} color={colors.muted} />
+                      </TouchableOpacity>
+                    </View>
                     {p.texto ? <Text style={styles.postTexto}>{p.texto}</Text> : null}
                     {p.foto ? <Image source={{ uri: p.foto }} style={styles.postFoto} /> : null}
                     {p.tipo === "actividad" && p.actividad ? (
@@ -616,6 +659,48 @@ export default function PerfilScreen({ navigation }) {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* ===== Composer de posteo (feed / inicio) ===== */}
+      <Modal visible={composeOpen} animationType="slide" onRequestClose={() => setComposeOpen(false)}>
+        <KeyboardAvoidingView
+          style={[styles.safe, { paddingTop: insets.top }]}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <View style={styles.composeHead}>
+            <TouchableOpacity onPress={() => setComposeOpen(false)} hitSlop={8}>
+              <Text style={styles.composeCancel}>Cancelar</Text>
+            </TouchableOpacity>
+            <Text style={styles.composeTitulo}>Nuevo posteo</Text>
+            <TouchableOpacity onPress={publicarPost} disabled={composeVacio || composeEnviando} hitSlop={8}>
+              <Text style={[styles.composeOk, (composeVacio || composeEnviando) && { opacity: 0.4 }]}>Publicar</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }} keyboardShouldPersistTaps="handled">
+            <TextInput
+              style={styles.composeInput}
+              value={composeTexto}
+              onChangeText={setComposeTexto}
+              placeholder="¿Qué querés compartir?"
+              placeholderTextColor={colors.muted}
+              multiline
+              autoFocus
+              maxLength={600}
+            />
+            {composeFoto ? (
+              <View style={styles.composeFotoWrap}>
+                <Image source={{ uri: composeFoto }} style={styles.composeFoto} />
+                <TouchableOpacity style={styles.composeFotoX} onPress={() => setComposeFoto("")} hitSlop={8}>
+                  <Ionicons name="close-circle" size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            ) : null}
+            <TouchableOpacity style={styles.composeFotoBtn} onPress={elegirFotoPost}>
+              <Ionicons name="image-outline" size={18} color={colors.greenBright} />
+              <Text style={styles.composeFotoBtnTxt}>{composeFoto ? "Cambiar foto" : "Agregar foto"}</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -687,9 +772,48 @@ const makeStyles = (colors, isDark) =>
     avatarInitials: { color: colors.greenDark, fontSize: 30, fontWeight: "800" },
     perfilBtns: {
       marginTop: 48,
-      gap: 4,
-      alignItems: "flex-end",
+      flexDirection: "row",
+      gap: 8,
+      alignItems: "center",
     },
+    perfilIconBtn: { padding: 6 },
+    headerComu: { width: 70, alignItems: "flex-end" },
+    postCardHead: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 2,
+    },
+    composeHead: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.cardBorder,
+    },
+    composeCancel: { color: colors.muted, fontSize: 15, fontWeight: "700" },
+    composeTitulo: { color: colors.text, fontSize: 16, fontWeight: "800" },
+    composeOk: { color: colors.greenBright, fontSize: 15, fontWeight: "800" },
+    composeInput: {
+      color: colors.text,
+      fontSize: 17,
+      lineHeight: 23,
+      minHeight: 100,
+      textAlignVertical: "top",
+    },
+    composeFotoWrap: { position: "relative" },
+    composeFoto: { width: "100%", height: 200, borderRadius: 12, resizeMode: "cover" },
+    composeFotoX: { position: "absolute", top: 8, right: 8 },
+    composeFotoBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      alignSelf: "flex-start",
+      paddingVertical: 8,
+    },
+    composeFotoBtnTxt: { color: colors.greenBright, fontWeight: "800", fontSize: 14 },
     editBtn: {
       paddingVertical: 4,
       paddingHorizontal: 6,

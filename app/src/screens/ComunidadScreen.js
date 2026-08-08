@@ -1816,8 +1816,8 @@ function PerfilUsuarioModal({ colors, styles, user, onClose }) {
               </View>
               {!perfil.esYo ? (
                 <View style={styles.perfilFollowWrapU}>
-                  <TouchableOpacity style={loSigo ? styles.btnSec : styles.btnPrim} onPress={toggleSeguir}>
-                    <Text style={loSigo ? styles.btnSecTxt : styles.btnPrimTxt}>
+                  <TouchableOpacity style={loSigo ? styles.grupoBtnSec : styles.grupoBtnPrim} onPress={toggleSeguir}>
+                    <Text style={loSigo ? styles.grupoBtnSecTxt : styles.grupoBtnPrimTxt}>
                       {loSigo ? "Siguiendo" : "Seguir"}
                     </Text>
                   </TouchableOpacity>
