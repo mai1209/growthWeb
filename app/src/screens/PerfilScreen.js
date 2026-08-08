@@ -352,7 +352,7 @@ export default function PerfilScreen({ navigation }) {
       {loading ? (
         <ActivityIndicator color={colors.greenBright} style={{ marginTop: 40 }} />
       ) : (
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+        <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 40 }}>
           {isBusiness && business ? (
             <View style={styles.card}>
               {/* Cabecera del negocio */}
@@ -736,7 +736,7 @@ const makeStyles = (colors, isDark) =>
       borderColor: colors.cardBorder,
       borderRadius: 20,
       overflow: "hidden",
-      backgroundColor: colors.card,
+      backgroundColor: "transparent",
     },
     banner: { width: "100%", height: 130, backgroundColor: colors.greenSoft },
     bannerPlaceholder: { backgroundColor: colors.greenBright2 },
@@ -839,7 +839,7 @@ const makeStyles = (colors, isDark) =>
     posteosSec: { paddingHorizontal: 16, marginTop: 18, gap: 10 },
     posteosTitulo: { color: colors.text, fontSize: 16, fontWeight: "800", marginBottom: 2 },
     postCard: {
-      backgroundColor: colors.card,
+      backgroundColor: "transparent",
       borderWidth: 1,
       borderColor: colors.cardBorder,
       borderRadius: 14,

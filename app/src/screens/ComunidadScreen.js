@@ -226,7 +226,8 @@ export default function ComunidadScreen({ navigation }) {
 
       {item.foto ? <Image source={{ uri: item.foto }} style={styles.postFoto} /> : null}
 
-      {item.tipo === "actividad" && item.actividad ? (
+      {/* Si hay foto, la imagen ya trae recorrido + datos → no repetimos el trazado */}
+      {item.tipo === "actividad" && item.actividad && !item.foto ? (
         <View style={styles.actWrap}>
           {Array.isArray(item.actividad.ruta) && item.actividad.ruta.length > 1 ? (
             <View style={styles.actMapa}>
