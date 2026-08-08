@@ -133,6 +133,8 @@ export const saludService = {
   get: () => api.get("/api/salud"),
   // Manda solo las secciones a actualizar; el backend mergea por día.
   update: (data) => api.put("/api/salud", data),
+  // Caminatas con su trazado GPS (aparte, para el visor de recorridos).
+  recorridos: () => api.get("/api/salud/recorridos"),
 };
 
 export const gymService = {

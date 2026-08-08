@@ -692,6 +692,26 @@ export default function SaludScreen() {
         } catch {}
       })
       .catch(() => {});
+    // También traemos los recorridos del servidor (con su ruta GPS): así aparecen
+    // las caminatas viejas / de otro teléfono, no solo las guardadas en este celu.
+    saludService
+      .recorridos()
+      .then(({ data }) => {
+        const remotos = Array.isArray(data?.recorridos) ? data.recorridos : [];
+        if (!remotos.length) return;
+        setCaminatas((prev) => {
+          const clave = (c) => `${c.fecha}|${c.metros}|${c.secs}`;
+          const vistos = new Set(prev.map(clave));
+          const nuevos = remotos.filter((r) => !vistos.has(clave(r)));
+          if (!nuevos.length) return prev;
+          const merged = [...prev, ...nuevos]
+            .sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")))
+            .slice(0, 50);
+          SecureStore.setItemAsync(CAMINATAS_KEY, JSON.stringify({ lista: merged })).catch(() => {});
+          return merged;
+        });
+      })
+      .catch(() => {});
   }, []);
 
   const guardarCaminata = (walk) => {
@@ -1489,11 +1509,14 @@ const makeStyles = (colors) =>
     animoTopEmoji: { fontSize: 18 },
 
     card: {
-      backgroundColor: colors.card,
-      borderWidth: 1,
+      // Experimento (pedido del jefe): secciones SIN fondo ni borde, "ahí nomás".
+      // Para volver atrás: backgroundColor colors.card + borderWidth 1.
+      backgroundColor: "transparent",
+      borderWidth: 0,
       borderColor: colors.cardBorder,
       borderRadius: 18,
-      padding: 16,
+      paddingVertical: 12,
+      paddingHorizontal: 4,
       gap: 12,
     },
     cardHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
