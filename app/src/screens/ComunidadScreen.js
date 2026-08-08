@@ -19,7 +19,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Svg, { Path, Circle } from "react-native-svg";
 import { useTheme } from "../theme";
-import { communityService, gruposService, retosService } from "../api";
+import { communityService, gruposService, retosService, saludService } from "../api";
+import CaminataModal from "../components/CaminataModal";
 import { elegirFotoComida } from "../utils/foto";
 import PostCard from "../components/PostCard";
 import ComposePostModal from "../components/ComposePostModal";
@@ -196,10 +197,31 @@ export default function ComunidadScreen({ navigation }) {
     [miPerfil, navigation]
   );
 
-  // Atajo: ir a Movilidad y abrir el GPS directo (para sumar km a un reto).
-  const irAMovilidadGps = useCallback(() => {
-    navigation.navigate("Main", { screen: "Salud", params: { view: "movilidad", iniciarGps: Date.now() } });
-  }, [navigation]);
+  // Atajo desde un reto: abrir el GPS acá mismo (se apila arriba del reto).
+  const [caminataOpen, setCaminataOpen] = useState(false);
+  const irAMovilidadGps = useCallback(() => setCaminataOpen(true), []);
+  // Guardamos la caminata en el backend (así el reto la cuenta). Traemos las
+  // existentes y agregamos la nueva (el backend reemplaza la lista completa).
+  const guardarCaminataComunidad = useCallback((walk) => {
+    if (!walk || walk.metros <= 0) return;
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    const nueva = {
+      fecha: `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`,
+      metros: Math.round(walk.metros),
+      secs: walk.secs,
+      tipo: walk.tipo || "caminata",
+      kcal: Number(walk.kcal) || 0,
+      ruta: Array.isArray(walk.ruta) ? walk.ruta.slice(0, 500) : [],
+    };
+    saludService
+      .recorridos()
+      .then(({ data }) => {
+        const ex = Array.isArray(data?.recorridos) ? data.recorridos : [];
+        saludService.update({ caminatas: [nueva, ...ex].slice(0, 50) }).catch(() => {});
+      })
+      .catch(() => {}); // si no pudimos traer las existentes, no pisamos nada
+  }, []);
 
   const publicar = ({ texto, foto }) => {
     return communityService.crearPost({ tipo: "texto", texto, foto }).then(({ data }) => {
@@ -293,6 +315,15 @@ export default function ComunidadScreen({ navigation }) {
           styles={styles}
           user={perfilUser}
           onClose={() => setPerfilUser(null)}
+        />
+      ) : null}
+
+      {/* GPS abierto desde un reto (se apila arriba; al terminar volvés al reto) */}
+      {caminataOpen ? (
+        <CaminataModal
+          visible
+          onClose={() => setCaminataOpen(false)}
+          onGuardar={guardarCaminataComunidad}
         />
       ) : null}
     </View>
@@ -1636,13 +1667,7 @@ function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil, onInic
                 kilómetros se cuentan solos en este reto.
               </Text>
               {onIniciarGps ? (
-                <TouchableOpacity
-                  style={styles.retoInfoBtn}
-                  onPress={() => {
-                    onClose?.(); // cerramos el modal del reto (Modal nativo) antes de navegar
-                    onIniciarGps();
-                  }}
-                >
+                <TouchableOpacity style={styles.retoInfoBtn} onPress={onIniciarGps}>
                   <Ionicons name="play" size={15} color="#06210a" />
                   <Text style={styles.retoInfoBtnTxt}>Iniciar actividad con GPS</Text>
                 </TouchableOpacity>
