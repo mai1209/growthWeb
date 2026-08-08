@@ -237,6 +237,8 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
   const finalizar = async () => {
     await cortarTramo();
     terminarCaminataLA(); // termina la Live Activity
+    // Guardado AUTOMÁTICO apenas finalizás: queda en el historial aunque cierres la app.
+    onGuardar?.({ metros: Math.round(track.metros), secs, ruta: track.puntos.slice(), tipo, kcal });
     setFase("resumen");
   };
   const act = ACTIVIDADES.find((a) => a.key === tipo) || ACTIVIDADES[0];
@@ -245,11 +247,6 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
   const vel = secs > 0 ? km / (secs / 3600) : 0; // km/h
   const kcal = Math.round(act.met * (pesoKg || 70) * (secs / 3600)); // MET × peso × horas
   const ultimoPunto = ruta.length ? ruta[ruta.length - 1] : null;
-
-  const guardar = () => {
-    onGuardar?.({ metros: Math.round(track.metros), secs, ruta: track.puntos.slice(), tipo, kcal });
-    onClose?.();
-  };
 
   const infoActividad = () => {
     Alert.alert(
@@ -447,11 +444,8 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
                   </TouchableOpacity>
                 ) : null}
                 <View style={styles.acciones}>
-                  <TouchableOpacity style={styles.btnSec} onPress={onClose}>
-                    <Text style={styles.btnSecText}>Descartar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.btnPrim} onPress={guardar}>
-                    <Text style={styles.btnPrimText}>Guardar</Text>
+                  <TouchableOpacity style={[styles.btnPrim, { flex: 1 }]} onPress={onClose}>
+                    <Text style={styles.btnPrimText}>Listo</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -462,7 +456,9 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
                 Elegí la actividad arriba y tocá Iniciar cuando estés listo/a.
               </Text>
             ) : fase === "resumen" ? (
-              <Text style={styles.resumenTxt}>¡Buena {act.label.toLowerCase()}! Guardala en tu historial.</Text>
+              <Text style={styles.resumenTxt}>
+                ¡Buena {act.label.toLowerCase()}! Ya quedó guardada en tu historial.
+              </Text>
             ) : enFondo ? (
               <Text style={styles.resumenTxt}>
                 Podés bloquear el teléfono o usar otras apps: la actividad sigue midiéndose. Volvé
