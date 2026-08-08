@@ -1028,6 +1028,12 @@ export default function SaludScreen() {
             />
             <Text style={styles.title}>{esCalorias ? "Calorías diarias" : "Movilidad"}</Text>
           </View>
+          {!esCalorias ? (
+            <TouchableOpacity style={styles.verTodosTop} onPress={() => setDatosOpen(true)}>
+              <Text style={styles.verTodosText}>Ver todos los resultados</Text>
+              <Ionicons name="chevron-forward" size={15} color={colors.greenDark} />
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         {esCalorias ? (
@@ -1194,12 +1200,6 @@ export default function SaludScreen() {
         </>
         ) : (
         <>
-        {/* Todos los datos (estilo Salud de iPhone) */}
-        <TouchableOpacity style={styles.verTodosTop} onPress={() => setDatosOpen(true)}>
-          <Text style={styles.verTodosText}>Ver todos los resultados</Text>
-          <Ionicons name="chevron-forward" size={16} color={colors.greenDark} />
-        </TouchableOpacity>
-
         {/* ---- Caminata (GPS) ---- */}
         <View style={styles.card}>
           <View style={styles.cardHead}>
