@@ -1271,7 +1271,7 @@ export default function SaludScreen() {
                   <LineaTendencia
                     points={pasosSemana.map((d) => ({ label: d.label, value: Number(d.valor) || 0 }))}
                     color={colors.greenBright}
-                    track={colors.cardBorder}
+                    track={colors.text}
                     unidad="pasos"
                   />
                 </View>
@@ -1719,16 +1719,21 @@ const makeStyles = (colors) =>
     periodoBtnOn: { backgroundColor: colors.greenBright },
     periodoText: { color: colors.muted, fontSize: 12, fontWeight: "800" },
     periodoTextOn: { color: "#06210a" },
-    resTiles: { flexDirection: "row", gap: 8, marginTop: 12 },
+    // Un solo div largo con el fondo; los 4 valores van adentro, repartidos.
+    resTiles: {
+      flexDirection: "row",
+      marginTop: 12,
+      backgroundColor: colors.card,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      overflow: "hidden",
+    },
     resTile: {
       flex: 1,
       alignItems: "center",
       gap: 2,
       paddingVertical: 12,
-      borderRadius: 14,
-      backgroundColor: colors.card,
-      borderWidth: 1,
-      borderColor: colors.cardBorder,
     },
     resTileNum: { color: colors.greenBright, fontSize: 20, fontWeight: "900" },
     resTileLbl: { color: colors.muted, fontSize: 11, fontWeight: "700" },
