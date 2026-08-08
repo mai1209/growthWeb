@@ -1222,6 +1222,13 @@ export default function SaludScreen() {
               <Ionicons name="navigate-outline" size={18} color={colors.greenDark} />
               <Text style={styles.cardTitle}>Actividad</Text>
             </View>
+            <TouchableOpacity
+              style={styles.metaBtnIcon}
+              onPress={() => setRecorridosOpen(true)}
+              accessibilityLabel="Ver recorridos en el mapa"
+            >
+              <Ionicons name="map-outline" size={16} color={colors.muted} />
+            </TouchableOpacity>
           </View>
           {ultimaCaminata ? (
             <Text style={styles.ringSub}>
@@ -1306,9 +1313,6 @@ export default function SaludScreen() {
               <Text style={styles.cardTitle}>Pasos</Text>
             </View>
             <View style={styles.pasosBtns}>
-              <TouchableOpacity style={styles.metaBtnIcon} onPress={() => setRecorridosOpen(true)} accessibilityLabel="Ver recorridos en el mapa">
-                <Ionicons name="map-outline" size={16} color={colors.muted} />
-              </TouchableOpacity>
               <TouchableOpacity style={styles.metaBtn} onPress={() => abrirEdicion("manual")}>
                 <Ionicons name="add-circle-outline" size={14} color={colors.muted} />
                 <Text style={styles.metaBtnText}>Manual</Text>
@@ -1509,13 +1513,13 @@ const makeStyles = (colors) =>
     animoTopEmoji: { fontSize: 18 },
 
     card: {
-      // Experimento (pedido del jefe): secciones SIN fondo ni borde, "ahí nomás".
-      // Para volver atrás: backgroundColor colors.card + borderWidth 1.
+      // Experimento (pedido del jefe): secciones SIN fondo, separadas por una
+      // línea divisoria verde sutil abajo. Para volver a las tarjetas:
+      // backgroundColor colors.card + borderWidth 1 + borderRadius 18, y sacar el borderBottom.
       backgroundColor: "transparent",
-      borderWidth: 0,
-      borderColor: colors.cardBorder,
-      borderRadius: 18,
-      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: "rgba(93,199,45,0.22)",
+      paddingVertical: 14,
       paddingHorizontal: 4,
       gap: 12,
     },
