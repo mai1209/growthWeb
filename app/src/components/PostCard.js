@@ -199,7 +199,7 @@ const makeStyles = (colors) =>
       borderWidth: 1,
       borderColor: colors.cardBorder,
       borderRadius: 16,
-      padding: 14,
+      padding: 12,
       gap: 10,
     },
     head: { flexDirection: "row", alignItems: "center", gap: 10 },
