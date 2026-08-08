@@ -22,6 +22,7 @@ import { useTheme } from "../theme";
 import { communityService, gruposService, retosService } from "../api";
 import { elegirFotoComida } from "../utils/foto";
 import PostCard from "../components/PostCard";
+import ComposePostModal from "../components/ComposePostModal";
 
 const ACT = {
   caminata: { label: "Caminata", icon: "walk" },
@@ -273,9 +274,9 @@ export default function ComunidadScreen({ navigation }) {
       )}
 
       {composeOpen ? (
-        <ComposeModal
-          colors={colors}
-          styles={styles}
+        <ComposePostModal
+          visible
+          user={miPerfil}
           onClose={() => setComposeOpen(false)}
           onPublicar={publicar}
         />
@@ -1053,11 +1054,9 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose, onAbrirPerfil, miId
           </View>
           {posts.length ? (
             posts.map((p) => (
-              <PostClub
+              <PostCard
                 key={String(p.id)}
                 post={p}
-                colors={colors}
-                styles={styles}
                 onAbrirPerfil={onAbrirPerfil}
                 onBorrar={borrarPostClub}
                 miId={miId}
@@ -1071,12 +1070,7 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose, onAbrirPerfil, miId
         </ScrollView>
 
         {composeOpen ? (
-          <ComposeModal
-            colors={colors}
-            styles={styles}
-            onClose={() => setComposeOpen(false)}
-            onPublicar={publicarEnClub}
-          />
+          <ComposePostModal visible onClose={() => setComposeOpen(false)} onPublicar={publicarEnClub} />
         ) : null}
         {miembrosOpen ? (
           <MiembrosModal

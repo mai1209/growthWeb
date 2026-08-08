@@ -20,6 +20,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 import { authService, communityService } from "../api";
 import { elegirFotoComida } from "../utils/foto";
 import PostCard from "../components/PostCard";
+import ComposePostModal from "../components/ComposePostModal";
 import { COMUNIDAD_HABILITADA } from "../config";
 import { useTheme } from "../theme";
 import { useWorkspace } from "../workspace/WorkspaceContext";
@@ -146,32 +147,14 @@ export default function PerfilScreen({ navigation }) {
 
   // ---- Composer de posteo (se sube al feed/inicio general) ----
   const [composeOpen, setComposeOpen] = useState(false);
-  const [composeTexto, setComposeTexto] = useState("");
-  const [composeFoto, setComposeFoto] = useState("");
-  const [composeEnviando, setComposeEnviando] = useState(false);
-  const composeVacio = !composeTexto.trim() && !composeFoto;
-  const elegirFotoPost = async () => {
-    const r = await elegirFotoComida();
-    if (r?.base64) setComposeFoto(`data:${r.mediaType};base64,${r.base64}`);
-  };
-  const publicarPost = () => {
-    if (composeVacio || composeEnviando) return;
-    setComposeEnviando(true);
-    communityService
-      .crearPost({ tipo: "texto", texto: composeTexto.trim(), foto: composeFoto })
-      .then(({ data }) => {
-        // Prependemos el posteo devuelto (sin recargar todo) → instantáneo.
-        if (data?.post) {
-          setMisPosts((prev) => [data.post, ...prev]);
-          setComuStats((s) => (s ? { ...s, posteos: (s.posteos || 0) + 1 } : s));
-        }
-        setComposeOpen(false);
-        setComposeTexto("");
-        setComposeFoto("");
-      })
-      .catch(() => Alert.alert("Error", "No se pudo publicar."))
-      .finally(() => setComposeEnviando(false));
-  };
+  const publicarPost = ({ texto, foto }) =>
+    communityService.crearPost({ tipo: "texto", texto, foto }).then(({ data }) => {
+      // Prependemos el posteo devuelto (sin recargar todo) → instantáneo.
+      if (data?.post) {
+        setMisPosts((prev) => [data.post, ...prev]);
+        setComuStats((s) => (s ? { ...s, posteos: (s.posteos || 0) + 1 } : s));
+      }
+    });
   const borrarMiPost = (p) => {
     Alert.alert("Borrar posteo", "¿Seguro que querés borrarlo?", [
       { text: "Cancelar", style: "cancel" },
@@ -656,46 +639,12 @@ export default function PerfilScreen({ navigation }) {
       </Modal>
 
       {/* ===== Composer de posteo (feed / inicio) ===== */}
-      <Modal visible={composeOpen} animationType="slide" onRequestClose={() => setComposeOpen(false)}>
-        <KeyboardAvoidingView
-          style={[styles.safe, { paddingTop: insets.top }]}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-          <View style={styles.composeHead}>
-            <TouchableOpacity onPress={() => setComposeOpen(false)} hitSlop={8}>
-              <Text style={styles.composeCancel}>Cancelar</Text>
-            </TouchableOpacity>
-            <Text style={styles.composeTitulo}>Nuevo posteo</Text>
-            <TouchableOpacity onPress={publicarPost} disabled={composeVacio || composeEnviando} hitSlop={8}>
-              <Text style={[styles.composeOk, (composeVacio || composeEnviando) && { opacity: 0.4 }]}>Publicar</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }} keyboardShouldPersistTaps="handled">
-            <TextInput
-              style={styles.composeInput}
-              value={composeTexto}
-              onChangeText={setComposeTexto}
-              placeholder="¿Qué querés compartir?"
-              placeholderTextColor={colors.muted}
-              multiline
-              autoFocus
-              maxLength={600}
-            />
-            {composeFoto ? (
-              <View style={styles.composeFotoWrap}>
-                <Image source={{ uri: composeFoto }} style={styles.composeFoto} />
-                <TouchableOpacity style={styles.composeFotoX} onPress={() => setComposeFoto("")} hitSlop={8}>
-                  <Ionicons name="close-circle" size={24} color="#fff" />
-                </TouchableOpacity>
-              </View>
-            ) : null}
-            <TouchableOpacity style={styles.composeFotoBtn} onPress={elegirFotoPost}>
-              <Ionicons name="image-outline" size={18} color={colors.greenBright} />
-              <Text style={styles.composeFotoBtnTxt}>{composeFoto ? "Cambiar foto" : "Agregar foto"}</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </Modal>
+      <ComposePostModal
+        visible={composeOpen}
+        user={profile}
+        onClose={() => setComposeOpen(false)}
+        onPublicar={publicarPost}
+      />
     </View>
   );
 }
