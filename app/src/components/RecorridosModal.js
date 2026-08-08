@@ -174,7 +174,7 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.compartirImgTit}>Compartir imagen</Text>
-                  <Text style={styles.compartirImgSub}>Foto de fondo + tu recorrido, listo para redes</Text>
+                  <Text style={styles.compartirImgSub}>Foto de fondo + tu recorrido</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={colors.greenBright} />
               </TouchableOpacity>
@@ -275,6 +275,7 @@ const makeStyles = (colors) =>
       alignItems: "center",
       gap: 12,
       marginHorizontal: 16,
+      marginTop: 14,
       marginBottom: 6,
       padding: 12,
       borderRadius: 16,
