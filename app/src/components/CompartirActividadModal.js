@@ -292,7 +292,10 @@ const makeStyles = (colors) =>
     },
     title: { color: colors.text, fontSize: 18, fontWeight: "800" },
 
-    lienzo: { borderRadius: 20, overflow: "hidden", backgroundColor: "#0d1f27" },
+    // Sin borderRadius: la captura queda rectangular (si se redondea, el JPG
+    // rellena las esquinas transparentes de BLANCO). El redondeo lo pone quien
+    // la muestra (la tarjeta del posteo).
+    lienzo: { overflow: "hidden", backgroundColor: "#0d1f27" },
     lienzoBg: { backgroundColor: "#0d1f27" },
     overlayInfo: { position: "absolute", left: 24, top: "34%", gap: 14 },
     dato: {},
