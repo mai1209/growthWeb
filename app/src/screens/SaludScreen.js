@@ -74,6 +74,17 @@ const ACT_ICON = { caminata: "walk", carrera: "run", bici: "bike" };
 // Estimación de calorías quemadas por los pasos, ajustada por peso (~0,04 kcal/paso a 70 kg).
 const kcalDePasos = (pasos, pesoKg) =>
   Math.round((Number(pasos) || 0) * 0.04 * ((Number(pesoKg) || 70) / 70));
+
+// Mergea dos mapas { "YYYY-MM-DD": pasos } tomando el MÁXIMO por día. Así un 0
+// (día que el sensor no tiene) nunca pisa un valor real ya guardado, y el
+// backend puede restaurar lo que se hubiera pisado. Igual criterio que el backend.
+const mergeMaxDias = (a = {}, b = {}) => {
+  const out = { ...a };
+  for (const [k, v] of Object.entries(b || {})) {
+    out[k] = Math.max(Number(out[k]) || 0, Number(v) || 0);
+  }
+  return out;
+};
 const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
 const addDays = (key, delta) => {
   const d = new Date(`${key}T00:00:00`);
@@ -328,7 +339,8 @@ export default function SaludScreen() {
 
   const guardarHist = useCallback((nuevos) => {
     setPasosHist((prev) => {
-      const merged = { ...prev, ...nuevos };
+      // MÁX por día: un 0 del sensor (día sin datos) nunca pisa un valor real.
+      const merged = mergeMaxDias(prev, nuevos);
       const recortado = {};
       Object.keys(merged)
         .sort()
@@ -818,7 +830,8 @@ export default function SaludScreen() {
           return next;
         });
         setPasosHist((prev) => {
-          const next = { ...(data.pasos || {}), ...prev };
+          // MÁX por día: el backend restaura lo que un 0 del sensor hubiera pisado.
+          const next = mergeMaxDias(data.pasos || {}, prev);
           SecureStore.setItemAsync(PASOS_HIST_KEY, JSON.stringify(next)).catch(() => {});
           return next;
         });
