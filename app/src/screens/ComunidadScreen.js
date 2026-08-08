@@ -197,11 +197,8 @@ export default function ComunidadScreen({ navigation }) {
     [miPerfil, navigation]
   );
 
-  // Atajo desde un reto: abrir el GPS acá mismo (se apila arriba del reto).
-  const [caminataOpen, setCaminataOpen] = useState(false);
-  const irAMovilidadGps = useCallback(() => setCaminataOpen(true), []);
-  // Guardamos la caminata en el backend (así el reto la cuenta). Traemos las
-  // existentes y agregamos la nueva (el backend reemplaza la lista completa).
+  // Guardado de la caminata iniciada desde un reto: la mandamos al backend (así
+  // el reto la cuenta). Traemos las existentes y agregamos la nueva.
   const guardarCaminataComunidad = useCallback((walk) => {
     if (!walk || walk.metros <= 0) return;
     const d = new Date();
@@ -297,7 +294,7 @@ export default function ComunidadScreen({ navigation }) {
       ) : tab === "grupos" ? (
         <GruposTab colors={colors} styles={styles} onAbrirPerfil={abrirPerfil} miId={miPerfil?.id} />
       ) : (
-        <RetosTab colors={colors} styles={styles} onAbrirPerfil={abrirPerfil} onIniciarGps={irAMovilidadGps} />
+        <RetosTab colors={colors} styles={styles} onAbrirPerfil={abrirPerfil} onGuardarGps={guardarCaminataComunidad} />
       )}
 
       {composeOpen ? (
@@ -318,14 +315,6 @@ export default function ComunidadScreen({ navigation }) {
         />
       ) : null}
 
-      {/* GPS abierto desde un reto (se apila arriba; al terminar volvés al reto) */}
-      {caminataOpen ? (
-        <CaminataModal
-          visible
-          onClose={() => setCaminataOpen(false)}
-          onGuardar={guardarCaminataComunidad}
-        />
-      ) : null}
     </View>
   );
 }
@@ -1223,7 +1212,7 @@ function RetoCard({ r, colors, styles, onAbrir, onToggle }) {
   );
 }
 
-function RetosTab({ colors, styles, onAbrirPerfil, onIniciarGps }) {
+function RetosTab({ colors, styles, onAbrirPerfil, onGuardarGps }) {
   const [descubrir, setDescubrir] = useState([]);
   const [q, setQ] = useState("");
   const [crearOpen, setCrearOpen] = useState(false);
@@ -1296,7 +1285,7 @@ function RetosTab({ colors, styles, onAbrirPerfil, onIniciarGps }) {
           colors={colors}
           styles={styles}
           onAbrirPerfil={onAbrirPerfil}
-          onIniciarGps={onIniciarGps}
+          onGuardarGps={onGuardarGps}
           onClose={() => setMisOpen(false)}
         />
       ) : null}
@@ -1306,7 +1295,7 @@ function RetosTab({ colors, styles, onAbrirPerfil, onIniciarGps }) {
           styles={styles}
           reto={detalle}
           onAbrirPerfil={onAbrirPerfil}
-          onIniciarGps={onIniciarGps}
+          onGuardarGps={onGuardarGps}
           onClose={() => {
             setDetalle(null);
             cargarDescubrir();
@@ -1318,7 +1307,7 @@ function RetosTab({ colors, styles, onAbrirPerfil, onIniciarGps }) {
 }
 
 // Pantalla "Mis retos": switch Creados / Apuntados.
-function MisRetosModal({ colors, styles, onClose, onAbrirPerfil, onIniciarGps }) {
+function MisRetosModal({ colors, styles, onClose, onAbrirPerfil, onGuardarGps }) {
   const insets = useSafeAreaInsets();
   const [seg, setSeg] = useState("creados");
   const [retos, setRetos] = useState([]);
@@ -1371,7 +1360,7 @@ function MisRetosModal({ colors, styles, onClose, onAbrirPerfil, onIniciarGps })
             styles={styles}
             reto={detalle}
             onAbrirPerfil={onAbrirPerfil}
-            onIniciarGps={onIniciarGps}
+            onGuardarGps={onGuardarGps}
             onClose={() => {
               setDetalle(null);
               cargar();
@@ -1542,14 +1531,20 @@ function CrearRetoModal({ colors, styles, onClose, onCreado }) {
   );
 }
 
-function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil, onIniciarGps }) {
+function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil, onGuardarGps }) {
   const insets = useSafeAreaInsets();
   const [r, setR] = useState(reto);
   const [ranking, setRanking] = useState([]);
-  useEffect(() => {
+  const [gpsOpen, setGpsOpen] = useState(false);
+  const refrescar = () => {
     retosService.get(reto.id).then(({ data }) => data?.reto && setR(data.reto)).catch(() => {});
     retosService.ranking(reto.id).then(({ data }) => setRanking(data?.ranking || [])).catch(() => {});
+  };
+  useEffect(() => {
+    refrescar();
   }, [reto.id]);
+  // Deporte inicial del GPS según el reto (correr → carrera, etc.).
+  const tipoInicial = ["caminata", "carrera", "bici"].includes(r.deporte) ? r.deporte : "caminata";
 
   const toggle = () => {
     const accion = r.meApunto ? retosService.salir : retosService.unirse;
@@ -1666,8 +1661,8 @@ function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil, onInic
                 Iniciá una actividad con GPS ({DEP_LABEL[r.deporte]?.toLowerCase() || "caminata/carrera/bici"}) y tus
                 kilómetros se cuentan solos en este reto.
               </Text>
-              {onIniciarGps ? (
-                <TouchableOpacity style={styles.retoInfoBtn} onPress={onIniciarGps}>
+              {onGuardarGps ? (
+                <TouchableOpacity style={styles.retoInfoBtn} onPress={() => setGpsOpen(true)}>
                   <Ionicons name="play" size={15} color="#06210a" />
                   <Text style={styles.retoInfoBtnTxt}>Iniciar actividad con GPS</Text>
                 </TouchableOpacity>
@@ -1705,6 +1700,19 @@ function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil, onInic
             <Text style={styles.vacioTxt}>Todavía nadie sumó kilómetros.</Text>
           )}
         </ScrollView>
+
+        {/* GPS iniciado desde el reto: se apila arriba de este modal */}
+        {gpsOpen ? (
+          <CaminataModal
+            visible
+            tipoInicial={tipoInicial}
+            onGuardar={onGuardarGps}
+            onClose={() => {
+              setGpsOpen(false);
+              refrescar(); // al volver, refrescamos el progreso del reto
+            }}
+          />
+        ) : null}
       </View>
     </Modal>
   );

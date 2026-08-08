@@ -95,7 +95,7 @@ const fmtTiempo = (secs) => {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 };
 
-export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70 }) {
+export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70, tipoInicial }) {
   const { colors, isDark } = useTheme();
   const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
@@ -105,7 +105,9 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
   const [secs, setSecs] = useState(0);
   const [ruta, setRuta] = useState([]); // trazado del recorrido para el mapa
   const [enFondo, setEnFondo] = useState(false); // true si el tracking sigue en segundo plano
-  const [tipo, setTipo] = useState("caminata"); // tipo de actividad (recuerda la última)
+  const [tipo, setTipo] = useState(
+    ["caminata", "carrera", "bici"].includes(tipoInicial) ? tipoInicial : "caminata"
+  ); // tipo de actividad (si viene de un reto, arranca con el deporte del reto)
   const [compartir, setCompartir] = useState(false); // compartir en comunidad al guardar
   const [compartirImgOpen, setCompartirImgOpen] = useState(false); // compositor de imagen
 
