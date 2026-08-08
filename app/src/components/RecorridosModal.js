@@ -164,9 +164,19 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
             </View>
 
             {COMUNIDAD_HABILITADA && sel ? (
-              <TouchableOpacity style={styles.compartirImgBtn} onPress={() => setCompartirOpen(true)}>
-                <Ionicons name="image-outline" size={18} color={colors.greenBright} />
-                <Text style={styles.compartirImgTxt}>Compartir imagen (foto + recorrido)</Text>
+              <TouchableOpacity
+                style={styles.compartirImgBtn}
+                onPress={() => setCompartirOpen(true)}
+                activeOpacity={0.85}
+              >
+                <View style={styles.compartirImgBadge}>
+                  <Ionicons name="image" size={20} color="#06210a" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.compartirImgTit}>Compartir imagen</Text>
+                  <Text style={styles.compartirImgSub}>Foto de fondo + tu recorrido, listo para redes</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.greenBright} />
               </TouchableOpacity>
             ) : null}
 
@@ -263,17 +273,25 @@ const makeStyles = (colors) =>
     compartirImgBtn: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
-      gap: 6,
+      gap: 12,
       marginHorizontal: 16,
       marginBottom: 6,
-      paddingVertical: 11,
-      borderRadius: 999,
+      padding: 12,
+      borderRadius: 16,
       borderWidth: 1,
-      borderColor: colors.greenBright,
-      backgroundColor: "rgba(93,199,45,0.12)",
+      borderColor: "rgba(93,199,45,0.35)",
+      backgroundColor: "rgba(93,199,45,0.10)",
     },
-    compartirImgTxt: { color: colors.greenBright, fontSize: 13.5, fontWeight: "800" },
+    compartirImgBadge: {
+      width: 42,
+      height: 42,
+      borderRadius: 12,
+      backgroundColor: colors.greenBright,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    compartirImgTit: { color: colors.text, fontSize: 15, fontWeight: "800" },
+    compartirImgSub: { color: colors.muted, fontSize: 12, marginTop: 1 },
 
     listaTitulo: {
       color: colors.text,

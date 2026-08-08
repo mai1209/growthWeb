@@ -1207,12 +1207,9 @@ export default function SaludScreen() {
               <Ionicons name="navigate-outline" size={18} color={colors.greenDark} />
               <Text style={styles.cardTitle}>Actividad</Text>
             </View>
-            <TouchableOpacity
-              style={styles.metaBtnIcon}
-              onPress={() => setRecorridosOpen(true)}
-              accessibilityLabel="Ver recorridos en el mapa"
-            >
-              <Ionicons name="map-outline" size={16} color={colors.muted} />
+            <TouchableOpacity style={styles.metaBtn} onPress={() => setRecorridosOpen(true)}>
+              <Ionicons name="map-outline" size={14} color={colors.muted} />
+              <Text style={styles.metaBtnText}>Recorridos</Text>
             </TouchableOpacity>
           </View>
           {ultimaCaminata ? (
