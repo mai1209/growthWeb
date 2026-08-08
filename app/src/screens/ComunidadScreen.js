@@ -216,7 +216,7 @@ export default function ComunidadScreen({ navigation }) {
         <View style={styles.headerRight}>
           {tab === "inicio" ? (
             <TouchableOpacity onPress={() => setComposeOpen(true)} hitSlop={10}>
-              <Ionicons name="create-outline" size={24} color={colors.greenBright} />
+              <Ionicons name="add-circle-outline" size={26} color={colors.greenBright} />
             </TouchableOpacity>
           ) : null}
           <TouchableOpacity onPress={() => navigation.navigate("Perfil")} hitSlop={8}>

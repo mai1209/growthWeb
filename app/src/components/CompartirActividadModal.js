@@ -169,7 +169,7 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
           ruta: actividad?.ruta || undefined,
         },
       });
-      Alert.alert("Publicado", "Tu actividad ya está en la comunidad. 🌐");
+      Alert.alert("Publicado ↗", "Tu actividad ya está en la comunidad.");
       onClose?.();
     } catch {
       Alert.alert("Error", "No se pudo publicar.");
