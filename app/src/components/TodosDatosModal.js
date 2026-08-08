@@ -265,17 +265,6 @@ export default function TodosDatosModal({
       fmt: (v) => Math.round(v).toLocaleString("es-AR"),
     },
     {
-      titulo: "Ánimo",
-      icon: "happy-outline",
-      color: "#d6a92e",
-      valor: animoHoy ? ANIMO_EMOJI[animoHoy] : "—",
-      unidad: animoHoy ? "hoy" : "sin registrar",
-      barras: serie(animoDias),
-      getVal: (k) => Number(animoDias?.[k]) || 0,
-      keys: () => Object.keys(animoDias || {}),
-      emoji: ANIMO_EMOJI,
-    },
-    {
       titulo: "Peso",
       icon: "body-outline",
       color: colors.greenBright,
@@ -292,14 +281,25 @@ export default function TodosDatosModal({
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={[styles.safe, { paddingTop: insets.top }]}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} hitSlop={10} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={24} color={colors.text} />
+          <View style={styles.headerLeft}>
+            <TouchableOpacity onPress={onClose} hitSlop={10} style={styles.backBtn}>
+              <Ionicons name="chevron-back" size={24} color={colors.text} />
+            </TouchableOpacity>
+            <Text style={styles.title} numberOfLines={1}>
+              Todos los resultados de hoy
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => setCalAbierto((v) => !v)} hitSlop={10}>
+            <Ionicons
+              name={calAbierto ? "chevron-up" : "calendar-outline"}
+              size={22}
+              color={colors.greenBright}
+            />
           </TouchableOpacity>
-          <Text style={styles.title}>Todos los datos</Text>
-          <View style={{ width: 32 }} />
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll}>
+          {tendencia ? <View>{tendencia}</View> : null}
           <View style={styles.dateNav}>
             <TouchableOpacity style={styles.dateBtn} onPress={() => setFecha(addDays(fecha, -1))}>
               <Ionicons name="chevron-back" size={20} color={colors.text} />
@@ -307,7 +307,7 @@ export default function TodosDatosModal({
             <TouchableOpacity style={styles.fechaBtn} onPress={() => setCalAbierto((v) => !v)} activeOpacity={0.7}>
               <Text style={styles.seccion}>{fechaLabel(fecha, hoyReal)}</Text>
               <Ionicons
-                name={calAbierto ? "chevron-up" : "calendar-outline"}
+                name={calAbierto ? "chevron-up" : "chevron-down"}
                 size={16}
                 color={colors.muted}
               />
@@ -355,7 +355,6 @@ export default function TodosDatosModal({
               </View>
             </TouchableOpacity>
           ))}
-          {tendencia ? <View style={{ marginTop: 4 }}>{tendencia}</View> : null}
         </ScrollView>
 
         <HistorialDetalle
@@ -385,6 +384,7 @@ const makeStyles = (colors) =>
       paddingVertical: 10,
     },
     backBtn: { padding: 4 },
+    headerLeft: { flexDirection: "row", alignItems: "center", gap: 4, flex: 1 },
     title: { color: colors.text, fontSize: 18, fontWeight: "800" },
     scroll: { padding: 16, paddingBottom: 40, gap: 10 },
     seccion: { color: colors.text, fontSize: 20, fontWeight: "900", textTransform: "capitalize", textAlign: "center" },
