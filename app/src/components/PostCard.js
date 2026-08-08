@@ -26,6 +26,27 @@ const haceCuanto = (iso) => {
   return `hace ${d} d`;
 };
 
+// Imagen del posteo que se adapta a su proporción (como Instagram): no se
+// recorta. Toma el alto real al cargar y ajusta el aspect ratio (con un tope
+// para que un retrato muy alto no ocupe media pantalla).
+function FotoPost({ uri, colors }) {
+  const [ratio, setRatio] = useState(null);
+  return (
+    <Image
+      source={{ uri }}
+      style={[
+        { width: "100%", borderRadius: 12, backgroundColor: colors.card },
+        ratio ? { aspectRatio: ratio } : { height: 260 },
+      ]}
+      resizeMode="cover"
+      onLoad={(e) => {
+        const s = e?.nativeEvent?.source;
+        if (s?.width && s?.height) setRatio(Math.max(0.6, Math.min(1.91, s.width / s.height)));
+      }}
+    />
+  );
+}
+
 function Avatar({ user, size = 44, colors }) {
   const inicial = (user?.fullName || user?.username || "?").trim().charAt(0).toUpperCase() || "?";
   if (user?.foto) {
@@ -110,7 +131,7 @@ export default function PostCard({ post, miId, onAbrirPerfil, onBorrar }) {
       </View>
 
       {p.texto ? <Text style={styles.texto}>{p.texto}</Text> : null}
-      {p.foto ? <Image source={{ uri: p.foto }} style={styles.foto} /> : null}
+      {p.foto ? <FotoPost uri={p.foto} colors={colors} /> : null}
       {p.tipo === "actividad" && p.actividad && !p.foto ? (
         <View style={styles.actCard}>
           <MaterialCommunityIcons name={actMeta(p.actividad.tipo).icon} size={20} color={colors.greenBright} />
