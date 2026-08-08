@@ -718,8 +718,6 @@ const makeStyles = (colors, isDark) =>
     headerTitle: { color: colors.text, fontSize: 18, fontWeight: "800" },
 
     card: {
-      borderWidth: 1,
-      borderColor: colors.cardBorder,
       borderRadius: 20,
       overflow: "hidden",
       backgroundColor: "transparent",

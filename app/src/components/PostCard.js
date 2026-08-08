@@ -35,8 +35,8 @@ function FotoPost({ uri, colors }) {
     <Image
       source={{ uri }}
       style={[
-        { width: "100%", borderRadius: 12, backgroundColor: colors.card },
-        ratio ? { aspectRatio: ratio } : { height: 260 },
+        { width: "100%", borderRadius: 12 },
+        ratio ? { aspectRatio: ratio } : { height: 260, backgroundColor: colors.card },
       ]}
       resizeMode="cover"
       onLoad={(e) => {
