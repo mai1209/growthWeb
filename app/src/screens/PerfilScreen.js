@@ -370,26 +370,28 @@ export default function PerfilScreen({ navigation }) {
               <View style={[styles.banner, styles.bannerPlaceholder]} />
             )}
 
-            {/* Avatar (solo, encima de la portada) */}
+            {/* Avatar (solo, encima de la portada) con el lápiz de editar dentro */}
             <View style={styles.topRow}>
-              <View style={styles.avatar}>
-                {profile?.profilePhotoUrl ? (
-                  <Image source={{ uri: profile.profilePhotoUrl }} style={styles.avatarImg} />
-                ) : (
-                  <Text style={styles.avatarInitials}>{initials}</Text>
-                )}
-              </View>
-              {/* Íconos a la derecha, junto a la portada: editar + subir posteo */}
-              <View style={styles.perfilBtns}>
-                <TouchableOpacity style={styles.perfilIconBtn} onPress={openEdit} hitSlop={8}>
-                  <Ionicons name="create-outline" size={21} color={colors.greenBright} />
+              <View style={styles.avatarWrap}>
+                <View style={styles.avatar}>
+                  {profile?.profilePhotoUrl ? (
+                    <Image source={{ uri: profile.profilePhotoUrl }} style={styles.avatarImg} />
+                  ) : (
+                    <Text style={styles.avatarInitials}>{initials}</Text>
+                  )}
+                </View>
+                <TouchableOpacity style={styles.avatarEdit} onPress={openEdit} hitSlop={6}>
+                  <Ionicons name="pencil" size={13} color="#06210a" />
                 </TouchableOpacity>
-                {COMUNIDAD_HABILITADA ? (
-                  <TouchableOpacity style={styles.perfilIconBtn} onPress={() => setComposeOpen(true)} hitSlop={8}>
-                    <Ionicons name="add-circle-outline" size={23} color={colors.greenBright} />
-                  </TouchableOpacity>
-                ) : null}
               </View>
+              {/* A la derecha: subir posteo */}
+              {COMUNIDAD_HABILITADA ? (
+                <View style={styles.perfilBtns}>
+                  <TouchableOpacity style={styles.perfilIconBtn} onPress={() => setComposeOpen(true)} hitSlop={8}>
+                    <Ionicons name="add-circle-outline" size={24} color={colors.greenBright} />
+                  </TouchableOpacity>
+                </View>
+              ) : null}
             </View>
 
             {/* Identidad */}
@@ -680,6 +682,20 @@ const makeStyles = (colors, isDark) =>
       alignItems: "flex-start",
       paddingHorizontal: 14,
       marginTop: -44,
+    },
+    avatarWrap: { position: "relative" },
+    avatarEdit: {
+      position: "absolute",
+      right: 0,
+      bottom: 0,
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      backgroundColor: colors.greenBright,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 2,
+      borderColor: colors.bg,
     },
     avatar: {
       width: 88,

@@ -1047,7 +1047,7 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose, onAbrirPerfil, miId
             <Text style={styles.postsHead}>Posteos</Text>
             {g.soyMiembro ? (
               <TouchableOpacity style={styles.postsAddBtn} onPress={() => setComposeOpen(true)} hitSlop={8}>
-                <Ionicons name="create-outline" size={18} color={colors.greenBright} />
+                <Ionicons name="add-circle-outline" size={20} color={colors.greenBright} />
                 <Text style={styles.postsAddTxt}>Publicar</Text>
               </TouchableOpacity>
             ) : null}
@@ -1150,7 +1150,11 @@ function RetoCard({ r, colors, styles, onAbrir, onToggle }) {
     <TouchableOpacity style={styles.retoCard} onPress={() => onAbrir(r)}>
       <View style={styles.retoTop}>
         <View style={styles.grupoIcon}>
-          <MaterialCommunityIcons name={DEP_ICON[r.deporte] || "trophy"} size={20} color={colors.greenBright} />
+          {r.foto ? (
+            <Image source={{ uri: r.foto }} style={styles.grupoFoto} />
+          ) : (
+            <MaterialCommunityIcons name={DEP_ICON[r.deporte] || "trophy"} size={20} color={colors.greenBright} />
+          )}
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.grupoNombre}>{r.nombre}</Text>
