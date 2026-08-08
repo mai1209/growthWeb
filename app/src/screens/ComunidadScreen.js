@@ -1359,10 +1359,15 @@ function CrearRetoModal({ colors, styles, onClose, onCreado }) {
   const [deporte, setDeporte] = useState("mixto");
   const [metaKm, setMetaKm] = useState("");
   const [dur, setDur] = useState("mes"); // "7" | "30" | "mes"
+  const [foto, setFoto] = useState("");
   const [enviando, setEnviando] = useState(false);
 
   const km = Number(String(metaKm).replace(",", "."));
   const puede = !!nombre.trim() && km > 0;
+  const elegir = async () => {
+    const r = await elegirFotoComida();
+    if (r?.base64) setFoto(`data:${r.mediaType};base64,${r.base64}`);
+  };
 
   const periodo = () => {
     const d = new Date();
@@ -1378,7 +1383,7 @@ function CrearRetoModal({ colors, styles, onClose, onCreado }) {
     setEnviando(true);
     const { inicio, fin } = periodo();
     retosService
-      .crear({ nombre: nombre.trim(), descripcion, deporte, meta: Math.round(km * 1000), inicio, fin })
+      .crear({ nombre: nombre.trim(), descripcion, deporte, meta: Math.round(km * 1000), inicio, fin, foto })
       .then(() => onCreado())
       .catch(() => Alert.alert("Error", "No se pudo crear el reto."))
       .finally(() => setEnviando(false));
@@ -1396,69 +1401,110 @@ function CrearRetoModal({ colors, styles, onClose, onCreado }) {
             <Text style={[styles.composeOk, (!puede || enviando) && { opacity: 0.4 }]}>Crear</Text>
           </TouchableOpacity>
         </View>
-        <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }} keyboardShouldPersistTaps="handled">
-          <TextInput
-            style={styles.grupoInput}
-            value={nombre}
-            onChangeText={setNombre}
-            placeholder="Nombre del reto (ej: 100 km en agosto)"
-            placeholderTextColor={colors.muted}
-            maxLength={80}
-            autoFocus
-          />
-          <TextInput
-            style={[styles.grupoInput, { minHeight: 70, textAlignVertical: "top" }]}
-            value={descripcion}
-            onChangeText={setDescripcion}
-            placeholder="Descripción (opcional)"
-            placeholderTextColor={colors.muted}
-            multiline
-            maxLength={400}
-          />
-          <Text style={styles.grupoLbl}>Meta (kilómetros)</Text>
-          <TextInput
-            style={styles.grupoInput}
-            value={metaKm}
-            onChangeText={setMetaKm}
-            placeholder="Ej: 100"
-            placeholderTextColor={colors.muted}
-            keyboardType="numeric"
-            maxLength={6}
-          />
-          <Text style={styles.grupoLbl}>Deporte</Text>
-          <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
-            {[
-              ["caminata", "Caminata"],
-              ["carrera", "Carrera"],
-              ["bici", "Bici"],
-              ["mixto", "Mixto"],
-            ].map(([k, l]) => (
-              <TouchableOpacity
-                key={k}
-                style={[styles.depChip, deporte === k && styles.depChipOn]}
-                onPress={() => setDeporte(k)}
-              >
-                <Text style={[styles.depChipTxt, deporte === k && styles.depChipTxtOn]}>{l}</Text>
-              </TouchableOpacity>
-            ))}
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }} keyboardShouldPersistTaps="handled">
+          <TouchableOpacity style={styles.editFotoWrap} onPress={elegir} activeOpacity={0.85}>
+            {foto ? (
+              <Image source={{ uri: foto }} style={styles.editFoto} />
+            ) : (
+              <View style={[styles.editFoto, styles.editFotoVacia]}>
+                <Ionicons name="image-outline" size={30} color={colors.greenBright} />
+              </View>
+            )}
+            <Text style={styles.editFotoTxt}>{foto ? "Cambiar foto" : "Agregar foto"}</Text>
+          </TouchableOpacity>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.grupoLbl}>Nombre del reto</Text>
+            <TextInput
+              style={styles.grupoInput}
+              value={nombre}
+              onChangeText={setNombre}
+              placeholder="Ej: 100 km en agosto"
+              placeholderTextColor={colors.muted}
+              maxLength={80}
+              autoFocus
+            />
           </View>
-          <Text style={styles.grupoLbl}>Duración</Text>
-          <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
-            {[
-              ["7", "7 días"],
-              ["30", "30 días"],
-              ["mes", "Este mes"],
-            ].map(([k, l]) => (
-              <TouchableOpacity
-                key={k}
-                style={[styles.depChip, dur === k && styles.depChipOn]}
-                onPress={() => setDur(k)}
-              >
-                <Text style={[styles.depChipTxt, dur === k && styles.depChipTxtOn]}>{l}</Text>
-              </TouchableOpacity>
-            ))}
+
+          <View style={styles.formGroup}>
+            <Text style={styles.grupoLbl}>
+              Descripción <Text style={styles.lblOpc}>· opcional</Text>
+            </Text>
+            <TextInput
+              style={[styles.grupoInput, { minHeight: 70, textAlignVertical: "top" }]}
+              value={descripcion}
+              onChangeText={setDescripcion}
+              placeholder="¿De qué se trata el reto?"
+              placeholderTextColor={colors.muted}
+              multiline
+              maxLength={400}
+            />
           </View>
-          <Text style={styles.grupoSub}>Arranca hoy. El progreso se cuenta con tus actividades registradas.</Text>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.grupoLbl}>Meta a completar</Text>
+            <View style={styles.metaRow}>
+              <TextInput
+                style={[styles.grupoInput, { flex: 1 }]}
+                value={metaKm}
+                onChangeText={setMetaKm}
+                placeholder="Ej: 100"
+                placeholderTextColor={colors.muted}
+                keyboardType="numeric"
+                maxLength={6}
+              />
+              <Text style={styles.metaUnidad}>km</Text>
+            </View>
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.grupoLbl}>Deporte</Text>
+            <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+              {[
+                ["caminata", "Caminata"],
+                ["carrera", "Carrera"],
+                ["bici", "Bici"],
+                ["mixto", "Mixto"],
+              ].map(([k, l]) => (
+                <TouchableOpacity
+                  key={k}
+                  style={[styles.depChip, deporte === k && styles.depChipOn]}
+                  onPress={() => setDeporte(k)}
+                >
+                  <Text style={[styles.depChipTxt, deporte === k && styles.depChipTxtOn]}>{l}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.grupoLbl}>Duración</Text>
+            <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+              {[
+                ["7", "7 días"],
+                ["30", "30 días"],
+                ["mes", "Este mes"],
+              ].map(([k, l]) => (
+                <TouchableOpacity
+                  key={k}
+                  style={[styles.depChip, dur === k && styles.depChipOn]}
+                  onPress={() => setDur(k)}
+                >
+                  <Text style={[styles.depChipTxt, dur === k && styles.depChipTxtOn]}>{l}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.retoInfo}>
+            <View style={styles.retoInfoHead}>
+              <Ionicons name="information-circle-outline" size={18} color={colors.greenBright} />
+              <Text style={styles.retoInfoTit}>Cómo funciona</Text>
+            </View>
+            <Text style={styles.retoInfoTxt}>
+              Arranca hoy. Sumás kilómetros iniciando actividades con GPS; el progreso se cuenta solo.
+            </Text>
+          </View>
         </ScrollView>
       </View>
     </Modal>
@@ -1907,6 +1953,10 @@ const makeStyles = (colors) =>
       fontSize: 15,
     },
     grupoLbl: { color: colors.text, fontSize: 14, fontWeight: "700", marginTop: 2 },
+    lblOpc: { color: colors.muted, fontSize: 12, fontWeight: "600" },
+    formGroup: { gap: 6 },
+    metaRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+    metaUnidad: { color: colors.text, fontSize: 16, fontWeight: "800" },
     depChip: {
       paddingVertical: 8,
       paddingHorizontal: 16,

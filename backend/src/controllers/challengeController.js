@@ -42,7 +42,7 @@ const sumMetros = (caminatas, inicio, fin, deporte) =>
 // POST /api/community/retos — crea un reto (el creador queda apuntado).
 export const crearReto = async (req, res) => {
   try {
-    const { nombre, descripcion, meta, deporte, inicio, fin } = req.body || {};
+    const { nombre, descripcion, meta, deporte, inicio, fin, foto } = req.body || {};
     if (!String(nombre || "").trim()) return res.status(400).json({ error: "Poné un nombre." });
     const metaNum = Math.round(Number(meta) || 0);
     if (metaNum <= 0) return res.status(400).json({ error: "Poné una meta válida." });
@@ -55,6 +55,7 @@ export const crearReto = async (req, res) => {
       deporte: DEPORTES.includes(deporte) ? deporte : "mixto",
       inicio,
       fin,
+      foto: typeof foto === "string" ? foto.slice(0, 2000000) : "",
       creador: req.userId,
     });
     await ChallengeMember.create({ challenge: reto._id, user: req.userId });
