@@ -144,6 +144,8 @@ export default function PerfilScreen({ navigation }) {
     return unsub;
   }, [cargarComunidad, navigation]);
 
+  const [postoSel, setPostoSel] = useState(null); // posteo abierto (grid → completo)
+
   // ---- Composer de posteo (se sube al feed/inicio general) ----
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeTexto, setComposeTexto] = useState("");
@@ -435,9 +437,29 @@ export default function PerfilScreen({ navigation }) {
             {COMUNIDAD_HABILITADA && misPosts.length > 0 ? (
               <View style={styles.posteosSec}>
                 <Text style={styles.posteosTitulo}>Posteos</Text>
-                <View style={{ gap: 10 }}>
+                <View style={styles.grid}>
                   {misPosts.map((p) => (
-                    <PostCard key={String(p.id)} post={p} miId={p.autor?.id} onBorrar={borrarMiPost} />
+                    <TouchableOpacity
+                      key={String(p.id)}
+                      style={styles.gridItem}
+                      onPress={() => setPostoSel(p)}
+                      activeOpacity={0.85}
+                    >
+                      {p.foto ? (
+                        <Image source={{ uri: p.foto }} style={styles.gridImg} />
+                      ) : (
+                        <View style={[styles.gridImg, styles.gridTxt]}>
+                          <Text style={styles.gridTxtTexto} numberOfLines={4}>
+                            {p.texto || "Actividad"}
+                          </Text>
+                        </View>
+                      )}
+                      {p.tipo === "actividad" ? (
+                        <View style={styles.gridBadge}>
+                          <Ionicons name="walk" size={12} color="#fff" />
+                        </View>
+                      ) : null}
+                    </TouchableOpacity>
                   ))}
                 </View>
               </View>
@@ -696,6 +718,32 @@ export default function PerfilScreen({ navigation }) {
           </ScrollView>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* ===== Posteo completo (desde la cuadrícula) ===== */}
+      <Modal visible={!!postoSel} animationType="slide" onRequestClose={() => setPostoSel(null)}>
+        <View style={[styles.safe, { paddingTop: insets.top }]}>
+          <View style={[styles.header, { paddingTop: 10 }]}>
+            <TouchableOpacity onPress={() => setPostoSel(null)} hitSlop={10} style={styles.backBtn}>
+              <Ionicons name="chevron-back" size={24} color={colors.text} />
+              <Text style={styles.backText}>Volver</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Posteo</Text>
+            <View style={{ width: 70 }} />
+          </View>
+          <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 40 }}>
+            {postoSel ? (
+              <PostCard
+                post={postoSel}
+                miId={postoSel.autor?.id}
+                onBorrar={(p) => {
+                  borrarMiPost(p);
+                  setPostoSel(null);
+                }}
+              />
+            ) : null}
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -822,6 +870,25 @@ const makeStyles = (colors, isDark) =>
     comunidadBtnText: { color: colors.greenBright, fontWeight: "800", fontSize: 14 },
     posteosSec: { paddingHorizontal: 16, marginTop: 18, gap: 10 },
     posteosTitulo: { color: colors.text, fontSize: 16, fontWeight: "800", marginBottom: 2 },
+    grid: { flexDirection: "row", flexWrap: "wrap", marginHorizontal: -1.5 },
+    gridItem: { width: "33.333%", aspectRatio: 1, padding: 1.5 },
+    gridImg: { width: "100%", height: "100%", borderRadius: 6, backgroundColor: colors.card },
+    gridTxt: {
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 8,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+    },
+    gridTxtTexto: { color: colors.text, fontSize: 12, textAlign: "center" },
+    gridBadge: {
+      position: "absolute",
+      top: 6,
+      right: 6,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      borderRadius: 999,
+      padding: 3,
+    },
     postCard: {
       backgroundColor: "transparent",
       borderWidth: 1,
