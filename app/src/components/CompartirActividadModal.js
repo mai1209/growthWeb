@@ -61,6 +61,11 @@ function Trazado({ ruta, W, H, color = "#5dc72d" }) {
   const d = "M " + pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" L ");
   return (
     <Svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+      {/* Sombra/contorno oscuro: hace que el recorrido resalte sobre la foto */}
+      <Path d={d} fill="none" stroke="rgba(0,0,0,0.45)" strokeWidth={6.5} strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx={pts[0][0]} cy={pts[0][1]} r={5.5} fill="rgba(0,0,0,0.45)" />
+      <Circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r={6} fill="rgba(0,0,0,0.45)" />
+      {/* Recorrido */}
       <Path d={d} fill="none" stroke={color} strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" />
       <Circle cx={pts[0][0]} cy={pts[0][1]} r={4} fill={color} />
       <Circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r={4.5} fill={color} />
