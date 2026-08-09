@@ -16,6 +16,7 @@ import Project from "../models/projectModel.js";
 import Salud from "../models/saludModel.js";
 import TimeEntry from "../models/timeEntryModel.js";
 import { generateToken } from "../utils/jwt.js";
+import { subirImagen } from "../lib/blob.js";
 
 const RESET_TOKEN_MINUTES = 60;
 
@@ -410,7 +411,7 @@ export const updateProfile = async (req, res) => {
       if (bannerUrl.length > MAX_IMAGE_DATA_URL) {
         return res.status(400).json({ error: "La portada es demasiado grande" });
       }
-      user.bannerUrl = bannerUrl;
+      user.bannerUrl = await subirImagen(bannerUrl, "perfil");
     }
     if (req.body.bio !== undefined) {
       user.bio = String(req.body.bio || "").replace(/\s+$/g, "").slice(0, 160);
@@ -436,11 +437,19 @@ export const updateProfile = async (req, res) => {
       return res.status(400).json({ error: "Una imagen de negocio es demasiado grande" });
     }
 
+    // Subo las imágenes a Vercel Blob (si son data URIs). Idempotente: si ya son
+    // URLs quedan igual; sin token, quedan como estaban (no rompe).
     user.fullName = fullName;
     user.phone = phone;
-    user.profilePhotoUrl = profilePhotoUrl;
-    user.businessProfiles = businessProfiles;
-    user.businessProfile = businessProfiles[0] || {
+    user.profilePhotoUrl = await subirImagen(profilePhotoUrl, "perfil");
+    user.businessProfiles = await Promise.all(
+      businessProfiles.map(async (business) => ({
+        ...business,
+        logoUrl: await subirImagen(business.logoUrl, "negocios"),
+        bannerUrl: await subirImagen(business.bannerUrl, "negocios"),
+      }))
+    );
+    user.businessProfile = user.businessProfiles[0] || {
       name: "",
       industry: "",
       logoUrl: "",

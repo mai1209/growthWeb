@@ -4,6 +4,7 @@ import User from "../models/userModel.js";
 import Follow from "../models/followModel.js";
 import Post from "../models/postModel.js";
 import Comment from "../models/commentModel.js";
+import { subirImagen } from "../lib/blob.js";
 
 const pubUser = (u) => ({
   id: u._id,
@@ -36,7 +37,7 @@ export const crearGrupo = async (req, res) => {
       descripcion: String(descripcion || "").slice(0, 400),
       deporte: DEPORTES.includes(deporte) ? deporte : "mixto",
       zona: String(zona || "").slice(0, 80),
-      foto: typeof foto === "string" ? foto.slice(0, 2000000) : "",
+      foto: await subirImagen(foto, "clubes"),
       owner: req.userId,
     });
     await GroupMember.create({ group: grupo._id, user: req.userId, rol: "owner" });
@@ -188,7 +189,7 @@ export const editarGrupo = async (req, res) => {
     if (typeof descripcion === "string") g.descripcion = descripcion.slice(0, 400);
     if (DEPORTES.includes(deporte)) g.deporte = deporte;
     if (typeof zona === "string") g.zona = zona.slice(0, 80);
-    if (typeof foto === "string") g.foto = foto.slice(0, 2000000);
+    if (typeof foto === "string") g.foto = await subirImagen(foto, "clubes");
     await g.save();
     const miembros = await GroupMember.countDocuments({ group: g._id });
     return res.json({ grupo: serializarGrupo(g, { miembros, soyMiembro: true, soyOwner: true }) });

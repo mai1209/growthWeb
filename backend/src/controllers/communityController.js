@@ -3,6 +3,7 @@ import Follow from "../models/followModel.js";
 import Post from "../models/postModel.js";
 import Comment from "../models/commentModel.js";
 import GroupMember from "../models/groupMemberModel.js";
+import { subirImagen } from "../lib/blob.js";
 
 const num = (v) => {
   const n = Number(v);
@@ -242,7 +243,7 @@ export const crearPost = async (req, res) => {
       group: groupId,
       tipo: t,
       texto: String(texto || "").slice(0, 600),
-      foto: typeof foto === "string" ? foto.slice(0, 2000000) : "",
+      foto: await subirImagen(foto, "posts"),
       actividad: t === "actividad" ? actividad : undefined,
     });
     const full = await Post.findById(post._id).populate("autor", "username fullName profilePhotoUrl bio");

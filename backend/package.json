@@ -15,6 +15,7 @@
     "@afipsdk/afip.js": "^1.2.3",
     "@anthropic-ai/sdk": "^0.115.0",
     "@googleapis/calendar": "^15.0.0",
+    "@vercel/blob": "^0.27.3",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",

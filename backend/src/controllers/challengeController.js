@@ -3,6 +3,7 @@ import ChallengeMember from "../models/challengeMemberModel.js";
 import Salud from "../models/saludModel.js";
 import User from "../models/userModel.js";
 import Follow from "../models/followModel.js";
+import { subirImagen } from "../lib/blob.js";
 
 const pubUser = (u) => ({
   id: u._id,
@@ -55,7 +56,7 @@ export const crearReto = async (req, res) => {
       deporte: DEPORTES.includes(deporte) ? deporte : "mixto",
       inicio,
       fin,
-      foto: typeof foto === "string" ? foto.slice(0, 2000000) : "",
+      foto: await subirImagen(foto, "retos"),
       creador: req.userId,
     });
     await ChallengeMember.create({ challenge: reto._id, user: req.userId });
@@ -233,7 +234,7 @@ export const editarReto = async (req, res) => {
     if (typeof nombre === "string" && nombre.trim()) r.nombre = nombre.slice(0, 80);
     if (typeof descripcion === "string") r.descripcion = descripcion.slice(0, 400);
     if (DEPORTES.includes(deporte)) r.deporte = deporte;
-    if (typeof foto === "string") r.foto = foto.slice(0, 2000000);
+    if (typeof foto === "string") r.foto = await subirImagen(foto, "retos");
     await r.save();
     const [participantes, salud] = await Promise.all([
       ChallengeMember.countDocuments({ challenge: r._id }),
