@@ -392,17 +392,31 @@
   gap: 0.3rem;
   justify-content: flex-end;
 }
+/* Toggle de "serie hecha" tipo checkbox: círculo vacío = falta, verde con ✓ =
+   hecha. Al pasar el mouse muestra un check tenue + borde verde para que se
+   entienda que hay que tocarlo (antes era un ✓ con contorno y confundía). */
 .checkOn,
 .checkOff {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
   cursor: pointer;
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-color);
   background: transparent;
   color: var(--color-muted);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.checkOff svg {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.checkOff:hover {
+  border-color: var(--color-verde, #5dc72d);
+}
+.checkOff:hover svg {
+  opacity: 0.5;
 }
 .checkOn {
   background: var(--color-verde, #5dc72d);
@@ -732,14 +746,64 @@
 
 .progresoTop {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
 }
+.progresoHero { min-width: 0; }
 .progresoValor {
   margin: 0;
-  font-size: 1.8rem;
+  font-size: 2.15rem;
   font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
   color: var(--color-verde, #5dc72d);
+}
+.progresoUnidad {
+  font-size: 1.05rem;
+  font-weight: 800;
+  opacity: 0.75;
+}
+
+/* Tiles de stats (sesiones / récord) a la derecha del valor */
+.statTiles {
+  display: flex;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+.statTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--surface-hover, rgba(0, 237, 100, 0.06));
+}
+.statTile strong {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.statTile strong small {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  margin-left: 0.15rem;
+}
+.statTile span {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 0.15rem;
 }
 .progresoLabel {
   color: var(--color-muted);
@@ -811,7 +875,7 @@
 
 .chartSvg {
   width: 100%;
-  height: 110px;
+  height: 150px;
   display: block;
 }
 

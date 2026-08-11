@@ -134,7 +134,7 @@ export default function GymPanel() {
 
   const TABS = [
     { k: "rutinas", label: "1 · Rutinas" },
-    { k: "registro", label: "2 · Entrenar" },
+    { k: "registro", label: "2 · Asignar rutina" },
     { k: "progreso", label: "Progreso" },
   ];
 
@@ -335,7 +335,7 @@ function Registro({ styles, colors, dia, fecha, setFecha, entrenos, rutinas, bus
           <View style={styles.heroBox}>
             <Text style={styles.muted}>{esFuturo ? "Este día no tiene rutina asignada." : "Todavía no entrenaste este día."}</Text>
             <TouchableOpacity style={styles.primaryBtn} onPress={() => setEligiendoRutina(true)}>
-              <Text style={styles.primaryBtnText}>{esFuturo ? "Asignar rutina" : "Entrenar"}</Text>
+              <Text style={styles.primaryBtnText}>Asignar rutina a este día</Text>
             </TouchableOpacity>
           </View>
         ) : (

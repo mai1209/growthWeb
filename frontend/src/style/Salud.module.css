@@ -53,13 +53,16 @@
 }
 
 .card {
-  border: 1px solid var(--border-color);
-  background: var(--surface-card, rgba(255, 255, 255, 0.03));
-  border-radius: 16px;
-  padding: 1.1rem 1.2rem;
+  /* Sin fondo ni caja: cada sección se separa con una línea fina delicada
+     abajo (como en la app). */
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  padding: 1.1rem 0.3rem;
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .cardAncha {
@@ -806,6 +809,7 @@
 .recChipOn strong {
   font-size: 0.9rem;
   font-weight: 800;
+  color: var(--color-muted);
 }
 .recChipOn {
   border-color: var(--color-verde, #5dc72d);

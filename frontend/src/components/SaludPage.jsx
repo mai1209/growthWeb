@@ -12,9 +12,9 @@ import {
   FiPlay,
   FiPlus,
   FiRefreshCw,
-  FiSmile,
   FiTrash2,
   FiTrendingUp,
+  FiShare2,
   FiX,
 } from "react-icons/fi";
 import {
@@ -32,6 +32,7 @@ import { calcularPlan, ACTIVIDADES, OBJETIVOS } from "../utils/nutricion";
 import { BASE_COMIDAS } from "../utils/comidasBase";
 import { buscarComidasOFF } from "../utils/openFoodFacts";
 import GymView from "./GymView";
+import CompartirRecorridoModal from "./CompartirRecorridoModal";
 import style from "../style/Salud.module.css";
 
 // Normaliza para comparar sin acentos ni mayúsculas.
@@ -65,14 +66,6 @@ const fmtCant = (n) => (Number.isInteger(n) ? String(n) : String(n).replace(".",
 // ~0,04 kcal/paso para 70 kg; escala lineal con el peso.
 const kcalDePasos = (pasos, pesoKg) =>
   Math.round((Number(pasos) || 0) * 0.04 * ((Number(pesoKg) || 70) / 70));
-const ANIMOS = [
-  { level: 1, emoji: "😔", label: "Mal" },
-  { level: 2, emoji: "😕", label: "Bajón" },
-  { level: 3, emoji: "😐", label: "Normal" },
-  { level: 4, emoji: "🙂", label: "Bien" },
-  { level: 5, emoji: "😄", label: "Genial" },
-];
-
 // Metadatos del tipo de actividad (caminata/carrera/bici), para mostrar ícono y nombre.
 const ACT_META = {
   caminata: { label: "Caminata", Icon: MdDirectionsWalk },
@@ -457,6 +450,7 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
     new Date(`${k}T00:00:00`).toLocaleDateString("es-AR", { day: "numeric", month: "short" });
 
   const [borrando, setBorrando] = useState(false);
+  const [compartir, setCompartir] = useState(false);
   const borrar = () => {
     if (!sel || borrando) return;
     setBorrando(true);
@@ -640,16 +634,34 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
                   {sel.kcal ? ` · ${sel.kcal} kcal` : ""}
                 </span>
               </div>
-              <button
-                type="button"
-                className={style.recBorrar}
-                onClick={borrar}
-                disabled={borrando}
-                aria-label="Borrar este recorrido"
-              >
-                <FiTrash2 /> {borrando ? "Borrando…" : "Borrar"}
-              </button>
+              <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
+                <button
+                  type="button"
+                  className={style.recBorrar}
+                  style={{ color: "var(--color-verde, #5dc72d)", borderColor: "var(--accent-border)" }}
+                  onClick={() => setCompartir(true)}
+                  aria-label="Compartir este recorrido como imagen"
+                >
+                  <FiShare2 /> Compartir imagen
+                </button>
+                <button
+                  type="button"
+                  className={style.recBorrar}
+                  onClick={borrar}
+                  disabled={borrando}
+                  aria-label="Borrar este recorrido"
+                >
+                  <FiTrash2 /> {borrando ? "Borrando…" : "Borrar"}
+                </button>
+              </div>
             </div>
+            {compartir && sel ? (
+              <CompartirRecorridoModal
+                recorrido={sel}
+                onClose={() => setCompartir(false)}
+                onPublicado={() => onCaminatas?.()}
+              />
+            ) : null}
             <div className={style.recChips}>
               {recorridos.map((c, i) => (
                 <button
@@ -891,7 +903,6 @@ export default function SaludPage() {
   const tieneDatosCal = (k) =>
     (data?.comidas?.[k] || []).length > 0 || (Number(data?.agua?.[k]) || 0) > 0;
   const agua = Number(data?.agua?.[hoy]) || 0;
-  const animoHoy = data?.animo?.[hoy];
   const plan = useMemo(() => calcularPlan(data?.nutri), [data]);
 
   const ultimos7 = useMemo(() => {
@@ -1315,6 +1326,11 @@ export default function SaludPage() {
   if (esGym) return <GymView />;
   if (cargando) return <p className={style.cargando}>Cargando tu salud…</p>;
 
+  // Tendencia de Movilidad (métrica elegida en las tabs) para embeberla dentro
+  // de la tarjeta de Pasos de hoy junto al círculo.
+  const mMov = METRICAS_MOV.find((x) => x.key === metricaMov) || METRICAS_MOV[0];
+  const tendMov = construirTendencia(mMov.getVal, mMov.medicion);
+
   return (
     <div className={style.wrap}>
       <header className={style.header}>
@@ -1326,33 +1342,101 @@ export default function SaludPage() {
               : "Los pasos y caminatas se miden desde el teléfono; lo demás también lo podés cargar acá."}
           </p>
         </div>
-        {!esCalorias ? (
-          <div className={style.animoHeader}>
-            <h2 className={style.animoTitulo}>
-              <FiSmile /> ¿Cómo te sentís hoy?
-            </h2>
-            <div className={style.animoRow}>
-              {ANIMOS.map((a) => (
-                <button
-                  key={a.level}
-                  type="button"
-                  className={`${style.animoBtn} ${animoHoy === a.level ? style.animoBtnOn : ""}`}
-                  onClick={() => mutate({ animo: { [hoy]: a.level } })}
-                >
-                  <span className={style.animoEmoji}>{a.emoji}</span>
-                  <span>{a.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
       </header>
 
       <div className={style.grid}>
         {!esCalorias ? (
         <>
-        {/* Tendencia (full width) */}
-        {renderTendencia(METRICAS_MOV, metricaMov, setMetricaMov)}
+        {/* Pasos de hoy + Tendencia (círculo a la izquierda, línea a la derecha) */}
+        <section className={`${style.card} ${style.cardAncha}`}>
+          <div className={style.cardHead}>
+            <h2>
+              <FiActivity /> Pasos de hoy
+            </h2>
+            <div className={style.pasosBtns}>
+              <button
+                type="button"
+                className={style.pasosManualBtn}
+                title="Ver los recorridos de tus caminatas por GPS"
+                onClick={() => setRecorridosOpen(true)}
+              >
+                <FiMap /> Recorridos
+              </button>
+              <button
+                type="button"
+                className={style.pasosManualBtn}
+                title="Cargar pasos a mano (se suman a los del teléfono)"
+                onClick={() => {
+                  const actual = Number(data?.pasosManual?.[hoy]) || 0;
+                  const v = window.prompt(
+                    "Pasos cargados a mano para hoy (se suman a los del teléfono). Poné 0 para sacarlos:",
+                    actual ? String(actual) : ""
+                  );
+                  if (v == null) return;
+                  const n = Math.max(0, parseInt(v, 10) || 0);
+                  mutate({ pasosManual: { [hoy]: n } });
+                }}
+              >
+                <FiPlus /> Manual
+              </button>
+            </div>
+          </div>
+
+          {/* Tabs de métrica para la tendencia (Pasos / Peso / Distancia) */}
+          <div className={style.metricaSel}>
+            {METRICAS_MOV.map((x) => (
+              <button
+                key={x.key}
+                type="button"
+                className={metricaMov === x.key ? style.metricaOn : style.metricaOff}
+                onClick={() => setMetricaMov(x.key)}
+              >
+                {x.label}
+              </button>
+            ))}
+          </div>
+
+          <div className={style.fila}>
+            <Ring percent={(pasosHoy / metaPasos) * 100} color="var(--color-verde, #5dc72d)">
+              <strong>{pasosHoy.toLocaleString("es-AR")}</strong>
+              <small>de {metaPasos.toLocaleString("es-AR")}</small>
+              {kcalPasosHoy > 0 ? (
+                <small className={style.kcalPasos}>≈ {kcalPasosHoy} kcal 🔥</small>
+              ) : null}
+              {Number(data?.pasosManual?.[hoy]) > 0 ? (
+                <small className={style.manualHint}>+{Number(data.pasosManual[hoy]).toLocaleString("es-AR")} manual</small>
+              ) : null}
+            </Ring>
+
+            {/* Tendencia (línea) al lado del círculo, como en la app */}
+            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                <div className={style.tendResumen}>
+                  <strong style={{ color: mMov.color }}>{tendMov.promedio.toLocaleString("es-AR")}</strong>
+                  <span>{periodo === "dia" ? mMov.unidad : `${mMov.unidad} · promedio`}</span>
+                </div>
+                <div className={style.periodoSel}>
+                  {PERIODOS.map((p) => (
+                    <button
+                      key={p.key}
+                      type="button"
+                      className={periodo === p.key ? style.periodoOn : style.periodoOff}
+                      onClick={() => setPeriodo(p.key)}
+                      title={NOMBRE_PERIODO[p.key]}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {periodo === "dia" ? (
+                <p className={style.hint}>Elegí Semana, Mes o Año para ver la tendencia.</p>
+              ) : (
+                <LineChart points={tendMov.points} color={mMov.color} unidad={mMov.unidad} />
+              )}
+            </div>
+          </div>
+        </section>
 
         {/* Peso + Caminatas lado a lado; Pasos de hoy va debajo. */}
         <div className={style.trioRow}>
@@ -1484,62 +1568,6 @@ export default function SaludPage() {
             <p className={style.hint}>Sin actividades en este período. Grabá una caminata desde la app.</p>
           )}
         </section>
-
-        {/* Pasos de hoy — debajo de Caminatas (ambos vienen del teléfono). */}
-        <div className={style.trioRow}>
-          <section className={style.card}>
-            <div className={style.cardHead}>
-              <h2>
-                <FiActivity /> Pasos de hoy
-              </h2>
-              <div className={style.pasosBtns}>
-                <button
-                  type="button"
-                  className={style.pasosManualBtn}
-                  title="Ver los recorridos de tus caminatas por GPS"
-                  onClick={() => setRecorridosOpen(true)}
-                >
-                  <FiMap /> Recorridos
-                </button>
-                <button
-                  type="button"
-                  className={style.pasosManualBtn}
-                  title="Cargar pasos a mano (se suman a los del teléfono)"
-                  onClick={() => {
-                    const actual = Number(data?.pasosManual?.[hoy]) || 0;
-                    const v = window.prompt(
-                      "Pasos cargados a mano para hoy (se suman a los del teléfono). Poné 0 para sacarlos:",
-                      actual ? String(actual) : ""
-                    );
-                    if (v == null) return;
-                    const n = Math.max(0, parseInt(v, 10) || 0);
-                    mutate({ pasosManual: { [hoy]: n } });
-                  }}
-                >
-                  <FiPlus /> Manual
-                </button>
-              </div>
-            </div>
-            <div className={style.fila}>
-              <Ring percent={(pasosHoy / metaPasos) * 100} color="var(--color-verde, #5dc72d)">
-                <strong>{pasosHoy.toLocaleString("es-AR")}</strong>
-                <small>de {metaPasos.toLocaleString("es-AR")}</small>
-                {kcalPasosHoy > 0 ? (
-                  <small className={style.kcalPasos}>≈ {kcalPasosHoy} kcal 🔥</small>
-                ) : null}
-                {Number(data?.pasosManual?.[hoy]) > 0 ? (
-                  <small className={style.manualHint}>+{Number(data.pasosManual[hoy]).toLocaleString("es-AR")} manual</small>
-                ) : null}
-              </Ring>
-              <Semana
-                dias={ultimos7.labels}
-                valores={ultimos7.dias.map((k) => pasosDe(k))}
-                meta={metaPasos}
-                color="var(--color-verde, #5dc72d)"
-              />
-            </div>
-          </section>
-        </div>
 
         {/* Todos los resultados (estilo Salud de iPhone) */}
         <section className={`${style.card} ${style.cardAncha}`}>

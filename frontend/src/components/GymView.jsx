@@ -130,7 +130,7 @@ export default function GymView() {
         <div className={style.tabs}>
           {[
             { k: "rutinas", label: "1 · Creá tu rutina" },
-            { k: "registro", label: "2 · Entrenar" },
+            { k: "registro", label: "2 · Asignar rutina" },
             { k: "progreso", label: "Progreso" },
           ].map((t) => (
             <button key={t.k} type="button" className={tab === t.k ? style.tabOn : style.tabOff} onClick={() => setTab(t.k)}>
@@ -328,7 +328,7 @@ function Registro({ dia, fecha, setFecha, buscarEjercicios, agregarEjercicio, bo
                 {esFuturo ? "Este día todavía no tiene rutina asignada." : "Todavía no entrenaste este día."}
               </p>
               <button type="button" className={style.entrenarBtn} onClick={() => setEligiendoRutina(true)}>
-                {esFuturo ? "Asignar rutina" : "Entrenar"}
+                Asignar rutina a este día
               </button>
             </>
           ) : (
@@ -773,9 +773,9 @@ function Progreso({ entrenos }) {
         </div>
 
         <div className={style.progresoTop}>
-          <div>
+          <div className={style.progresoHero}>
             <p className={style.progresoValor} style={{ color: info.color }}>
-              {grande.toLocaleString("es-AR")} {info.unidad}
+              {grande.toLocaleString("es-AR")} <span className={style.progresoUnidad}>{info.unidad}</span>
               {metrica === "kg" && delta != null && delta !== 0 ? (
                 <span className={delta > 0 ? style.deltaUp : style.deltaDown}>
                   {delta > 0 ? "▲" : "▼"} {Math.abs(delta)} kg
@@ -787,14 +787,19 @@ function Progreso({ entrenos }) {
               {metrica === "kg" && delta != null ? " · vs tu sesión anterior" : ""}
             </span>
           </div>
-          <div className={style.progresoDer}>
-            <span className={style.progresoSesiones}>
-              {sesiones} {sesiones === 1 ? "sesión" : "sesiones"} en {RANGO[periodo]}
-            </span>
+          <div className={style.statTiles}>
+            <div className={style.statTile}>
+              <strong>{sesiones}</strong>
+              <span>{sesiones === 1 ? "sesión" : "sesiones"}</span>
+            </div>
             {record > 0 ? (
-              <span className={style.progresoRecord}>
-                <TbTrophy className={style.trofeo} /> récord: {record} kg
-              </span>
+              <div className={style.statTile}>
+                <strong>
+                  <TbTrophy className={style.trofeo} /> {record}
+                  <small>kg</small>
+                </strong>
+                <span>récord</span>
+              </div>
             ) : null}
           </div>
         </div>

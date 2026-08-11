@@ -1,0 +1,685 @@
+/* ============================================================
+   Comunidad web — estilo Strava, consistente con el resto de la app.
+   Usa las variables de tema globales (claro/oscuro) de index.css.
+   ============================================================ */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 1.5rem clamp(0.6rem, 3vw, 1.5rem) 4rem;
+}
+
+.cargando,
+.vacio {
+  color: var(--color-muted);
+  text-align: center;
+  padding: 2.5rem 1rem;
+  font-size: 0.92rem;
+}
+
+/* ---------- Header ---------- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.header h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.header .kicker {
+  margin: 0 0 0.15rem;
+  color: var(--color-verde);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.headerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: none;
+  background: var(--color-verde);
+  color: var(--accent-contrast);
+  font-weight: 700;
+  font-size: 0.86rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.headerBtn:hover { filter: brightness(1.06); }
+.headerIconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--surface-card);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+.headerIconBtn:hover { background: var(--surface-hover); }
+
+/* ---------- Tabs ---------- */
+.tabs {
+  display: flex;
+  gap: 0.3rem;
+  background: var(--surface-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 0.3rem;
+  position: sticky;
+  top: 0.5rem;
+  z-index: 5;
+  backdrop-filter: blur(8px);
+}
+.tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.55rem 0.4rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.tab:hover { color: var(--color-text); }
+.tabOn {
+  background: var(--color-verde-soft);
+  color: var(--color-verde);
+}
+
+/* ---------- Buscador ---------- */
+.buscador {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface-input);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.55rem 0.8rem;
+}
+.buscador svg { color: var(--color-muted); flex-shrink: 0; }
+.buscador input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  outline: none;
+}
+
+/* ---------- PostCard ---------- */
+.post {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 0.9rem 1rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.postHead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--color-verde-soft);
+  flex-shrink: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-verde);
+  font-weight: 800;
+  font-size: 1rem;
+  border: none;
+  overflow: hidden;
+}
+.avatarSm { width: 34px; height: 34px; font-size: 0.85rem; }
+.postAutor { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.postNombre {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.postNombre:hover { text-decoration: underline; }
+.postMeta { color: var(--color-muted); font-size: 0.76rem; }
+.postMenuBtn {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.2rem;
+  border-radius: 8px;
+}
+.postMenuBtn:hover { background: var(--surface-hover); color: var(--color-text); }
+.postTexto {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.postFoto {
+  width: 100%;
+  border-radius: 12px;
+  display: block;
+  object-fit: cover;
+  background: var(--surface-hover);
+}
+
+/* Bloque de actividad (caminata/carrera/bici) */
+.actividad {
+  display: flex;
+  gap: 0.4rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface-hover);
+}
+.actIcono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  background: var(--color-verde-soft);
+  color: var(--color-verde);
+  font-size: 1.4rem;
+}
+.actDatos { display: flex; flex: 1; padding: 0.6rem 0.4rem; }
+.actDato { flex: 1; text-align: center; }
+.actValor { font-weight: 800; font-size: 1rem; }
+.actLabel { color: var(--color-muted); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Acciones (kudos / comentar) */
+.postAcciones {
+  display: flex;
+  gap: 0.3rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.5rem;
+}
+.accionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.accionBtn:hover { background: var(--surface-hover); }
+.accionOn { color: var(--color-verde); }
+
+/* Comentarios */
+.comentarios {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.75rem;
+  margin-top: 0.2rem;
+}
+.comentario { display: flex; gap: 0.55rem; align-items: flex-start; }
+.comentBody {
+  background: var(--surface-hover);
+  border-radius: 14px;
+  padding: 0.5rem 0.8rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.comentNombre { font-weight: 700; font-size: 0.82rem; color: var(--color-text); }
+.comentTexto {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--color-text);
+  word-break: break-word;
+  white-space: pre-wrap;
+  margin-top: 0.05rem;
+}
+.comentBorrar {
+  border: none; background: none; color: var(--color-muted);
+  cursor: pointer; font-size: 0.95rem; padding: 0.25rem;
+  flex-shrink: 0; align-self: center;
+}
+.comentBorrar:hover { color: var(--color-rojo); }
+
+/* Composer: input + enviar SIEMPRE en la misma fila (flex blindado) */
+.comentForm {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 0.15rem;
+}
+.comentInput {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  border: 1px solid var(--border-color);
+  background: var(--surface-input);
+  border-radius: 22px;
+  padding: 0.55rem 0.95rem;
+  color: var(--color-text);
+  font-size: 0.9rem;
+  outline: none;
+}
+.comentInput:focus { border-color: var(--accent-border); }
+.comentEnviar {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border: none;
+  background: var(--color-verde);
+  color: var(--accent-contrast);
+  border-radius: 50%;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.comentEnviar:disabled { opacity: 0.4; cursor: default; }
+
+/* ---------- Grillas de clubes/retos ---------- */
+.subtabs {
+  display: flex;
+  gap: 0.5rem;
+}
+.subBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1px solid var(--border-color);
+  background: var(--surface-card);
+  color: var(--color-text);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.7rem;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.subBtnPrim { background: var(--color-verde); color: var(--accent-contrast); border-color: transparent; }
+.subBtn:hover { filter: brightness(1.03); }
+
+.lista { display: flex; flex-direction: column; gap: 0.7rem; }
+
+.itemCard {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  background: var(--surface-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 0.7rem 0.8rem;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  color: var(--color-text);
+  font-family: inherit;
+}
+.itemCard:hover { background: var(--surface-hover); }
+.itemFoto {
+  width: 58px;
+  height: 58px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--color-verde-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-verde);
+  font-size: 1.4rem;
+  overflow: hidden;
+}
+.itemInfo { flex: 1; min-width: 0; }
+.itemNombre { font-weight: 700; font-size: 0.98rem; color: var(--color-text); }
+.itemSub { color: var(--color-muted); font-size: 0.8rem; margin-top: 0.1rem; }
+.itemBadge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-verde);
+  background: var(--color-verde-soft);
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+/* Barra de progreso (retos) */
+.progreso {
+  height: 7px;
+  border-radius: 5px;
+  background: var(--surface-hover);
+  overflow: hidden;
+  margin-top: 0.45rem;
+}
+.progresoFill { height: 100%; background: var(--color-verde); border-radius: 5px; }
+
+/* ---------- Header de detalle inline (club/reto sin popup) ---------- */
+.detalleHead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.2rem;
+}
+.detalleHead .modalTitulo { font-size: 1.15rem; }
+.volverBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--surface-card);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+.volverBtn:hover { background: var(--surface-hover); }
+
+/* ---------- Modal ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  padding: 0;
+}
+@media (min-width: 620px) {
+  .overlay { align-items: center; padding: 1.5rem; }
+}
+.modal {
+  background: var(--surface-card-strong);
+  border: 1px solid var(--border-color);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+@media (min-width: 620px) { .modal { border-radius: 20px; } }
+.modalHead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.1rem;
+  position: sticky;
+  top: 0;
+  background: var(--surface-card-strong);
+  border-bottom: 1px solid var(--border-color);
+  z-index: 2;
+}
+.modalTitulo { font-weight: 800; font-size: 1.05rem; flex: 1; }
+.modalX {
+  border: none; background: var(--surface-hover); color: var(--color-text);
+  width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem;
+}
+.modalBody { padding: 1.1rem; display: flex; flex-direction: column; gap: 1rem; }
+
+/* Foto de club/reto: redonda y centrada, estilo foto de perfil (como la app) */
+.detalleFotoWrap {
+  display: flex;
+  justify-content: center;
+  padding: 0.4rem 0 0.2rem;
+}
+.detalleFoto {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--color-verde-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-verde);
+  font-weight: 800;
+  font-size: 2.4rem;
+  overflow: hidden;
+  border: 3px solid var(--border-color);
+}
+.detalleFoto img { width: 100%; height: 100%; object-fit: cover; }
+.detalleCentro { text-align: center; }
+
+/* Portada de perfil / detalle */
+.banner {
+  height: 120px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--color-verde-soft), var(--surface-hover));
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+.perfilTop {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.9rem;
+  margin-top: -34px;
+  padding: 0 0.3rem;
+}
+.perfilAvatar {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--surface-card-strong);
+  background: var(--color-verde-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-verde);
+  font-weight: 800;
+  font-size: 1.8rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.perfilIdent { flex: 1; padding-bottom: 0.3rem; min-width: 0; }
+.perfilNombre { font-weight: 800; font-size: 1.15rem; }
+.perfilHandle { color: var(--color-muted); font-size: 0.86rem; }
+.perfilBio { font-size: 0.9rem; line-height: 1.4; margin: 0.2rem 0 0; }
+.stats { display: flex; gap: 1.4rem; padding: 0.2rem 0.3rem; }
+.stat { text-align: center; }
+.statNum { font-weight: 800; font-size: 1.05rem; }
+.statLabel { color: var(--color-muted); font-size: 0.74rem; }
+
+/* Botón seguir */
+.btnSeguir {
+  border: none;
+  background: var(--color-verde);
+  color: var(--accent-contrast);
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btnSiguiendo {
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--border-color);
+}
+
+/* Miembros / ranking rows */
+.userRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.userRow:last-child { border-bottom: none; }
+.userRowInfo { flex: 1; min-width: 0; }
+.userRowNombre { font-weight: 700; font-size: 0.9rem; }
+.userRowSub { color: var(--color-muted); font-size: 0.78rem; }
+.rankPos {
+  width: 26px; text-align: center; font-weight: 800; color: var(--color-muted); font-size: 0.9rem;
+}
+
+/* Formularios (crear club/reto, editar) */
+.formGroup { display: flex; flex-direction: column; gap: 0.35rem; }
+.label { font-weight: 700; font-size: 0.82rem; }
+.labelOpc { color: var(--color-muted); font-weight: 500; font-size: 0.76rem; }
+.input,
+.textarea,
+.select {
+  border: 1px solid var(--border-color);
+  background: var(--surface-input);
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+}
+.input:focus, .textarea:focus, .select:focus { border-color: var(--accent-border); }
+.textarea { resize: vertical; min-height: 90px; }
+.row2 { display: flex; gap: 0.7rem; }
+.row2 > * { flex: 1; }
+
+.fotoPicker {
+  border: 1.5px dashed var(--border-color);
+  border-radius: 14px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-muted);
+  cursor: pointer;
+  font-size: 0.86rem;
+  text-align: center;
+}
+.fotoPicker:hover { border-color: var(--color-verde); color: var(--color-verde); }
+.fotoPreview { width: 100%; border-radius: 12px; object-fit: cover; max-height: 200px; }
+
+.btnPrim {
+  border: none;
+  background: var(--color-verde);
+  color: var(--accent-contrast);
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.8rem;
+  border-radius: 12px;
+  cursor: pointer;
+  width: 100%;
+}
+.btnPrim:disabled { opacity: 0.5; cursor: default; }
+.btnSec {
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-text);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.7rem;
+  border-radius: 12px;
+  cursor: pointer;
+  width: 100%;
+}
+.btnPeligro { color: var(--color-rojo); border-color: var(--color-rojo-soft); }
+
+.chips { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.chip {
+  border: 1px solid var(--border-color);
+  background: var(--surface-card);
+  color: var(--color-muted);
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  cursor: pointer;
+}
+.chipOn { background: var(--color-verde-soft); color: var(--color-verde); border-color: var(--accent-border); }
+
+/* Tarjeta informativa "¿cómo sumo?" */
+.infoCard {
+  background: var(--color-verde-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+.infoTitulo { font-weight: 800; color: var(--color-verde); margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.4rem; }
+
+.descripcion { font-size: 0.92rem; line-height: 1.5; color: var(--color-text); margin: 0; }
+
+/* Menú de ajustes flotante (club/reto propio) */
+.menuFlot {
+  position: absolute;
+  right: 1rem;
+  top: 3.4rem;
+  background: var(--surface-card-strong);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 5;
+  min-width: 170px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.88rem;
+  padding: 0.7rem 0.9rem;
+  cursor: pointer;
+  text-align: left;
+}
+.menuItem:hover { background: var(--surface-hover); }
+.menuItemPeligro { color: var(--color-rojo); }
+
+.error {
+  color: var(--color-rojo);
+  font-size: 0.85rem;
+  text-align: center;
+}

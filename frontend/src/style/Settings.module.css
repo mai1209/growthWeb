@@ -1749,3 +1749,70 @@
 .cardProfile .viewToggleBtn:not(.viewToggleActive) {
   color: rgba(255, 255, 255, 0.92);
 }
+
+/* ============================================================
+   Perfil web — panel rediseñado: columna centrada tipo red social,
+   acciones alineadas, stats con jerarquía y sección de posteos.
+   ============================================================ */
+.cardProfile {
+  max-width: 660px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cardProfile .profileBanner {
+  height: 176px;
+}
+
+/* Globo (comunidad) + Editar perfil: juntos y alineados debajo de la portada */
+.profileActions {
+  margin-top: 70px;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.cardProfile .profileActions .editProfileBtn {
+  margin-top: 0;
+}
+.profileGlobeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 38px;
+  border: none;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 1.35rem;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+.profileGlobeBtn:hover {
+  transform: translateY(-1px);
+  opacity: 0.85;
+}
+
+/* Stats: números destacados sobre una línea divisoria fina */
+.cardProfile .profileStats {
+  gap: 1.6rem;
+  margin-top: 1.05rem;
+  padding-top: 0.95rem;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.92rem;
+}
+.cardProfile .profileStats strong {
+  font-size: 1.06rem;
+}
+
+/* Sección de posteos con encabezado */
+.postsSection {
+  padding: 0.2rem 1.1rem 1.6rem;
+}
+.postsLabel {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin: 0.4rem 0 0.9rem;
+}

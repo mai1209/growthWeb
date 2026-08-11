@@ -37,8 +37,8 @@ const OPTIONS = [
 ];
 
 function SettingsSidePanel() {
-  // Arranca colapsado para ahorrar espacio: se abre al tocar el encabezado.
-  const [open, setOpen] = useState(false);
+  // Arranca abierto: los usuarios no entendían que el menú se podía desplegar.
+  const [open, setOpen] = useState(true);
 
   return (
     <aside className={`${style.container} ${open ? style.containerOpen : ""}`}>

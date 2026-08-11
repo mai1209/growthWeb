@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   FiAlertCircle,
   FiArrowLeft,
@@ -14,12 +14,12 @@ import {
   FiEye,
   FiEyeOff,
   FiFileText,
+  FiGlobe,
   FiHeart,
   FiKey,
   FiLink,
   FiLoader,
   FiLock,
-  FiMail,
   FiMoon,
   FiPhone,
   FiPlus,
@@ -31,9 +31,11 @@ import {
   FiUser,
   FiX,
 } from "react-icons/fi";
-import { authService, googleService, fiscalService } from "../api";
+import { authService, googleService, fiscalService, communityService } from "../api";
 import PhotoCropper from "./PhotoCropper";
 import ApoyarPage from "./ApoyarPage";
+import PostCard from "./comunidad/PostCard";
+import comStyle from "../style/Comunidad.module.css";
 import style from "../style/Settings.module.css";
 
 const TAB_META = {
@@ -102,6 +104,7 @@ const fileToDataUrl = (file, maxW, maxH) =>
 
 function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   // En /perfil mostramos sólo el panel de perfil; en /ajustes ya no hay perfil.
   const perfilOnly = mode === "perfil";
   const activeTab = perfilOnly
@@ -144,6 +147,9 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
   const [openBusiness, setOpenBusiness] = useState(() => new Set());
   // Vista del tab Perfil: "personal" (tarjeta estilo red social) o "negocios".
   const [perfilView, setPerfilView] = useState("personal");
+  // Datos de comunidad para /perfil: stats (posteos/seguidores/siguiendo) y mis posteos.
+  const [comPerfil, setComPerfil] = useState(null);
+  const [misPosts, setMisPosts] = useState([]);
   // Negocio abierto (pantalla interna de ese perfil de empresa) o null = lista.
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   // Edición del negocio abierto (popup como el personal).
@@ -255,6 +261,26 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [perfilOnly, ws, businessProfiles.length]);
+
+  // En /perfil traemos los datos de comunidad (stats + posteos propios) para
+  // mostrar el perfil en formato red social, igual que en la app.
+  useEffect(() => {
+    if (!perfilOnly) return;
+    let vivo = true;
+    communityService
+      .getMiPerfil()
+      .then(({ data }) => {
+        if (!vivo) return;
+        setComPerfil(data);
+        return communityService.postsDeUsuario(data.id).then(({ data: dp }) => {
+          if (vivo) setMisPosts(dp.posts || []);
+        });
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, [perfilOnly]);
 
   useEffect(() => {
     let isMounted = true;
@@ -701,14 +727,6 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
     }
   };
 
-  // "Se unió {mes año}" a partir de la fecha de creación de la cuenta.
-  const joinedLabel = profile.createdAt
-    ? new Date(profile.createdAt).toLocaleDateString("es-AR", {
-        month: "long",
-        year: "numeric",
-      })
-    : "hace poco";
-
   // Estado visual del chequeo del @usuario.
   const USERNAME_UI = {
     checking: { icon: <FiLoader className={style.handleSpin} />, hint: "Verificando disponibilidad…", cls: "" },
@@ -813,13 +831,24 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
                       <span>{profileInitials}</span>
                     )}
                   </span>
-                  <button
-                    type="button"
-                    className={style.editProfileBtn}
-                    onClick={() => setEditingProfile((prev) => !prev)}
-                  >
-                    {editingProfile ? "Cerrar edición" : "Editar perfil"}
-                  </button>
+                  <div className={style.profileActions}>
+                    <button
+                      type="button"
+                      className={style.profileGlobeBtn}
+                      onClick={() => navigate("/comunidad")}
+                      title="Ir a la comunidad"
+                      aria-label="Ir a la comunidad"
+                    >
+                      <FiGlobe />
+                    </button>
+                    <button
+                      type="button"
+                      className={style.editProfileBtn}
+                      onClick={() => setEditingProfile((prev) => !prev)}
+                    >
+                      {editingProfile ? "Cerrar edición" : "Editar perfil"}
+                    </button>
+                  </div>
                 </div>
 
                 <div className={style.profileIdentity}>
@@ -834,37 +863,43 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
                       Todavía no escribiste una bio. Contá algo sobre vos.
                     </p>
                   )}
-                  <div className={style.profileMeta}>
-                    <span>
-                      <FiCalendar />
-                      Se unió {joinedLabel}
-                    </span>
-                    {profile.email ? (
-                      <span>
-                        <FiMail />
-                        {profile.email}
-                      </span>
-                    ) : null}
-                    {profile.phone ? (
-                      <span>
-                        <FiPhone />
-                        {profile.phone}
-                      </span>
-                    ) : null}
-                  </div>
                   <div className={style.profileStats}>
                     <span>
-                      <strong>{businessProfiles.length}</strong> negocios
+                      <strong>{comPerfil?.stats?.posteos ?? 0}</strong> posteos
                     </span>
                     <span>
-                      <strong>0</strong> seguidores
+                      <strong>{comPerfil?.stats?.seguidores ?? 0}</strong> seguidores
                     </span>
                     <span>
-                      <strong>0</strong> siguiendo
+                      <strong>{comPerfil?.stats?.siguiendo ?? 0}</strong> siguiendo
                     </span>
                   </div>
                 </div>
               </div>
+
+              {/* ===== Mis posteos (formato comunidad) ===== */}
+              {misPosts.length > 0 ? (
+                <div className={style.postsSection}>
+                <div className={style.postsLabel}>Posteos</div>
+                <div className={comStyle.lista}>
+                  {misPosts.map((p) => (
+                    <PostCard
+                      key={p.id}
+                      post={p}
+                      miId={comPerfil?.id}
+                      onBorrar={async (id) => {
+                        setMisPosts((xs) => xs.filter((x) => x.id !== id));
+                        try {
+                          await communityService.borrarPost(id);
+                        } catch {
+                          /* no-op */
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+                </div>
+              ) : null}
 
               {/* ===== Formulario de edición (se despliega) ===== */}
               {editingProfile ? (

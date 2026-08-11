@@ -55,10 +55,19 @@ const fechaLarga = (fecha) => {
 export default function AfirmacionesPanel({ visible, onClose }) {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const styles = makeStyles(colors, isDark);
+  // Memoizado: makeStyles crea ~40 estilos; sin esto se reconstruían en CADA
+  // tecla y re-render, lo que sumaba jank/freeze al escribir.
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
   const [fecha, setFecha] = useState(hoyLocal);
   const [lineas, setLineas] = useState(() => Array(RENGLONES_INICIALES).fill(""));
+  // Id estable por renglón: NUNCA usar el índice como key en una lista de
+  // TextInput, porque al borrar/agregar los índices se corren, React remonta
+  // los inputs y se pierde el foco (el teclado no vuelve a abrir). Con un id
+  // fijo por renglón, cada input conserva su identidad.
+  const idCounter = useRef(1);
+  const generarIds = (n) => Array.from({ length: n }, () => idCounter.current++);
+  const [ids, setIds] = useState(() => generarIds(RENGLONES_INICIALES));
   const [leidoHoy, setLeidoHoy] = useState(false);
   const [racha, setRacha] = useState(0);
   const [hablando, setHablando] = useState(false);
@@ -109,6 +118,7 @@ export default function AfirmacionesPanel({ visible, onClose }) {
         ? recibidas
         : [...recibidas, ...Array(RENGLONES_INICIALES - recibidas.length).fill("")];
     setLineas(completas);
+    setIds(generarIds(completas.length));
     setResaltadas(new Set(Array.isArray(data?.resaltadas) ? data.resaltadas : []));
     setLeidoHoy(Boolean(data?.leidoHoy));
     setRacha(Number(data?.racha) || 0);
@@ -181,12 +191,11 @@ export default function AfirmacionesPanel({ visible, onClose }) {
   };
 
   const agregarLinea = () => {
-    setLineas((prev) => {
-      if (prev.length >= MAX_RENGLONES) return prev;
-      const proximas = [...prev, ""];
-      guardarDiferido(proximas);
-      return proximas;
-    });
+    if (lineas.length >= MAX_RENGLONES) return;
+    const proximas = [...lineas, ""];
+    setLineas(proximas);
+    setIds((prev) => [...prev, idCounter.current++]);
+    guardarDiferido(proximas);
   };
 
   // Borra TODAS las afirmaciones y arranca de cero (con confirmación).
@@ -202,6 +211,7 @@ export default function AfirmacionesPanel({ visible, onClose }) {
           onPress: () => {
             const vacias = Array(RENGLONES_INICIALES).fill("");
             setLineas(vacias);
+            setIds(generarIds(RENGLONES_INICIALES));
             setResaltadas(new Set());
             if (guardadoRef.current) clearTimeout(guardadoRef.current);
             afirmacionService.save({ lineas: vacias, resaltadas: [], fecha }).catch(() => {});
@@ -212,12 +222,11 @@ export default function AfirmacionesPanel({ visible, onClose }) {
   };
 
   const borrarLinea = (indice) => {
-    setLineas((prev) => {
-      if (prev.length <= 1) return prev;
-      const proximas = prev.filter((_, i) => i !== indice);
-      guardarDiferido(proximas);
-      return proximas;
-    });
+    if (lineas.length <= 1) return;
+    const proximas = lineas.filter((_, i) => i !== indice);
+    setLineas(proximas);
+    setIds((prev) => prev.filter((_, i) => i !== indice));
+    guardarDiferido(proximas);
   };
 
   const hayEscritas = useMemo(() => lineas.some((l) => l.trim()), [lineas]);
@@ -517,7 +526,7 @@ export default function AfirmacionesPanel({ visible, onClose }) {
 
               {/* Renglones */}
               {lineas.map((linea, indice) => (
-                <View key={indice} style={styles.item}>
+                <View key={ids[indice] ?? `l${indice}`} style={styles.item}>
                   <TouchableOpacity
                     style={[styles.numero, resaltadas.has(indice) && styles.numeroOn]}
                     onPress={() => toggleResaltada(indice)}
@@ -758,11 +767,6 @@ const makeStyles = (colors, isDark = false) =>
     // Número activo cuando el renglón está resaltado.
     numeroOn: {
       backgroundColor: colors.greenBright,
-      shadowColor: colors.greenBright,
-      shadowOpacity: 0.6,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 0 },
-      elevation: 5,
     },
     numeroTextOn: { color: "#06210a" },
     // El recuadro (borde/fondo/glow) ahora envuelve el input + el cesto.
@@ -777,14 +781,11 @@ const makeStyles = (colors, isDark = false) =>
       backgroundColor: colors.card,
       paddingRight: 4,
     },
+    // Sin sombra/elevation: el glow verde causaba jank/freeze en Android al
+    // enfocar (se re-renderiza en cada tecla). Basta con el borde verde.
     inputWrapFoco: {
       borderColor: colors.greenBright,
       borderWidth: 1.5,
-      shadowColor: colors.greenBright,
-      shadowOpacity: 0.55,
-      shadowRadius: 10,
-      shadowOffset: { width: 0, height: 0 },
-      elevation: 6,
     },
     input: {
       flex: 1,
@@ -795,12 +796,10 @@ const makeStyles = (colors, isDark = false) =>
       fontSize: 15,
       lineHeight: 20,
     },
-    // Sólo el brillo del texto al resaltar (el borde/glow va en el wrapper).
+    // Sin textShadow: el brillo del texto se re-rasterizaba en cada letra y
+    // causaba tirones/freeze al escribir. El foco ya se marca con el borde.
     inputTextFoco: {
       color: colors.text,
-      textShadowColor: isDark ? "rgba(123, 255, 77, 0.7)" : "transparent",
-      textShadowOffset: { width: 0, height: 0 },
-      textShadowRadius: 8,
     },
     // Renglón enfocado: borde verde brillante para saber dónde estás escribiendo
     borrar: { padding: 6 },

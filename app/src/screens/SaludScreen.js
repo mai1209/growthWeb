@@ -349,9 +349,16 @@ export default function SaludScreen() {
           recortado[k] = merged[k];
         });
       SecureStore.setItemAsync(PASOS_HIST_KEY, JSON.stringify(recortado)).catch(() => {});
+      // Espejo en la web: mandamos el valor ACUMULADO (máximo local) de los días
+      // afectados, NO el crudo del sensor. Así, si el sensor devuelve un valor
+      // bajo para un día que ya teníamos alto, la web no muestra de menos.
+      const paraWeb = {};
+      Object.keys(nuevos).forEach((k) => {
+        if (recortado[k] != null) paraWeb[k] = recortado[k];
+      });
+      pushSalud({ pasos: paraWeb });
       return recortado;
     });
-    pushSalud({ pasos: nuevos }); // espejo en la web
   }, []);
 
   // Pasos cargados a mano (se SUMAN a los del sensor). Ej: caminaste sin el teléfono.
@@ -436,6 +443,11 @@ export default function SaludScreen() {
       setPasos(hoyPasos);
       const semana = await pasosSemanaAndroid();
       if (!vivo) return;
+      // El conteo VIVO de hoy (getStepsCountAsync sin fecha) suele ser mayor y
+      // más actual que el que devuelve la consulta por fecha; lo usamos para hoy
+      // así lo que mostramos y lo que sincronizamos a la web coinciden.
+      const hoyK = dayKey(new Date());
+      if (hoyPasos > (Number(semana[hoyK]) || 0)) semana[hoyK] = hoyPasos;
       const dias = Object.keys(semana)
         .sort()
         .map((k) => ({
@@ -458,6 +470,8 @@ export default function SaludScreen() {
       setPasos(hoyPasos);
       const semana = await pasosSemanaHC();
       if (!vivo) return;
+      const hoyK = dayKey(new Date());
+      if (hoyPasos > (Number(semana[hoyK]) || 0)) semana[hoyK] = hoyPasos;
       const dias = Object.keys(semana)
         .sort()
         .map((k) => ({
