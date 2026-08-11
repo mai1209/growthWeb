@@ -6,6 +6,7 @@ import { TbBarbell } from "react-icons/tb";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { authService } from "../api";
+import { COMUNIDAD_HABILITADA } from "../config";
 
 // Nav agrupado por secciones (estilo consola: se despliegan/contraen).
 const NAV_GROUPS = [
@@ -61,6 +62,11 @@ const NAV_GROUPS = [
     ],
   },
 ];
+
+// Grupos visibles: la Comunidad queda oculta mientras el flag esté apagado.
+const VISIBLE_GROUPS = NAV_GROUPS.filter(
+  (g) => g.id !== "comunidad" || COMUNIDAD_HABILITADA
+);
 
 // Ya no hay items sueltos en la lista: Ajustes vive abajo (junto a cerrar sesión),
 // y Apoyar + tema están dentro de Ajustes.
@@ -270,7 +276,7 @@ function Nav({
   };
 
   // Grupo abierto (acordeón). Por defecto se auto-abre el de la sección activa.
-  const activeGroupId = NAV_GROUPS.find((g) => g.items.some((it) => isItemActive(it.to)))?.id;
+  const activeGroupId = VISIBLE_GROUPS.find((g) => g.items.some((it) => isItemActive(it.to)))?.id;
   const openGroupId = openGroup === undefined ? activeGroupId : openGroup;
   const toggleGroup = (id) => setOpenGroup(openGroupId === id ? null : id);
 
@@ -282,7 +288,7 @@ function Nav({
     if (!grouped) {
       return (
         <>
-          {NAV_GROUPS.map((group) => {
+          {VISIBLE_GROUPS.map((group) => {
             const open = openGroupId === group.id;
             const groupActive = group.items.some((it) => isItemActive(it.to));
             return (
@@ -311,7 +317,7 @@ function Nav({
     }
     return (
       <>
-        {NAV_GROUPS.map((group) => {
+        {VISIBLE_GROUPS.map((group) => {
           const open = openGroupId === group.id;
           return (
             <div key={group.id} className={style.navGroup}>

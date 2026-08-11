@@ -15,6 +15,7 @@ import PomodoroPage from "./PomodoroPage";
 import SaludPage from "./SaludPage";
 import ComunidadPage from "./ComunidadPage";
 import ApoyarPage from "./ApoyarPage";
+import { COMUNIDAD_HABILITADA } from "../config";
 
 import LoginPage from "./LoginPage";
 import SignupPage from "./SignupPage";
@@ -209,7 +210,9 @@ function AppRoutes({
         <Route path="compartidos" element={<SharedExpenses />} />
         <Route path="pomodoro" element={<PomodoroPage />} />
         <Route path="salud" element={<SaludPage />} />
-        <Route path="comunidad" element={<ComunidadPage />} />
+        {COMUNIDAD_HABILITADA ? (
+          <Route path="comunidad" element={<ComunidadPage />} />
+        ) : null}
         <Route path="ajustes" element={<SettingsPage theme={theme} onThemeToggle={onThemeToggle} />} />
         <Route path="perfil" element={<SettingsPage mode="perfil" currentWorkspace={activeWorkspace} theme={theme} onThemeToggle={onThemeToggle} />} />
         <Route path="apoyar" element={<ApoyarPage />} />

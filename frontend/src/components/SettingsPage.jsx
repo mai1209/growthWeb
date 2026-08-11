@@ -36,6 +36,7 @@ import PhotoCropper from "./PhotoCropper";
 import ApoyarPage from "./ApoyarPage";
 import PostCard from "./comunidad/PostCard";
 import comStyle from "../style/Comunidad.module.css";
+import { COMUNIDAD_HABILITADA } from "../config";
 import style from "../style/Settings.module.css";
 
 const TAB_META = {
@@ -832,15 +833,17 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
                     )}
                   </span>
                   <div className={style.profileActions}>
-                    <button
-                      type="button"
-                      className={style.profileGlobeBtn}
-                      onClick={() => navigate("/comunidad")}
-                      title="Ir a la comunidad"
-                      aria-label="Ir a la comunidad"
-                    >
-                      <FiGlobe />
-                    </button>
+                    {COMUNIDAD_HABILITADA ? (
+                      <button
+                        type="button"
+                        className={style.profileGlobeBtn}
+                        onClick={() => navigate("/comunidad")}
+                        title="Ir a la comunidad"
+                        aria-label="Ir a la comunidad"
+                      >
+                        <FiGlobe />
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className={style.editProfileBtn}
