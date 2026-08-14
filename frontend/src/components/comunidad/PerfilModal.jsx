@@ -1,10 +1,13 @@
 // Perfil público de un usuario: portada + stats + seguir/dejar de seguir + sus
 // posteos. Mismo formato para uno mismo y para otros.
 import { useEffect, useState } from "react";
+import { FiMessageCircle } from "react-icons/fi";
 import { communityService } from "../../api";
 import style from "../../style/Comunidad.module.css";
 import Modal from "./Modal";
 import PostCard from "./PostCard";
+import ListaUsuariosModal from "./ListaUsuariosModal";
+import ChatModal from "./ChatModal";
 
 export default function PerfilModal({ username, miId, onClose, onAbrirPerfil }) {
   const [perfil, setPerfil] = useState(null);
@@ -12,6 +15,9 @@ export default function PerfilModal({ username, miId, onClose, onAbrirPerfil }) 
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [siguiendo, setSiguiendo] = useState(false);
+  const [pendiente, setPendiente] = useState(false);
+  const [lista, setLista] = useState(null); // { titulo, cargar } | null
+  const [chat, setChat] = useState(false);
 
   useEffect(() => {
     let vivo = true;
@@ -23,6 +29,7 @@ export default function PerfilModal({ username, miId, onClose, onAbrirPerfil }) 
         if (!vivo) return;
         setPerfil(data);
         setSiguiendo(!!data.loSigo);
+        setPendiente(!!data.pendiente);
         const { data: dp } = await communityService.postsDeUsuario(data.id);
         if (vivo) setPosts(dp.posts || []);
       } catch (err) {
@@ -38,29 +45,36 @@ export default function PerfilModal({ username, miId, onClose, onAbrirPerfil }) 
 
   const toggleSeguir = async () => {
     if (!perfil) return;
-    const antes = siguiendo;
-    setSiguiendo(!antes);
-    setPerfil((p) => ({
-      ...p,
-      stats: { ...p.stats, seguidores: p.stats.seguidores + (antes ? -1 : 1) },
-    }));
     try {
-      if (antes) await communityService.dejarDeSeguir(perfil.id);
-      else await communityService.seguir(perfil.id);
+      if (siguiendo || pendiente) {
+        const eraSiguiendo = siguiendo;
+        setSiguiendo(false);
+        setPendiente(false);
+        if (eraSiguiendo) {
+          setPerfil((p) => ({ ...p, stats: { ...p.stats, seguidores: Math.max(0, p.stats.seguidores - 1) } }));
+        }
+        await communityService.dejarDeSeguir(perfil.id);
+      } else {
+        const { data } = await communityService.seguir(perfil.id);
+        setSiguiendo(!!data.loSigo);
+        setPendiente(!!data.pendiente);
+        if (data.loSigo) {
+          setPerfil((p) => ({ ...p, stats: { ...p.stats, seguidores: p.stats.seguidores + 1 } }));
+        }
+      }
     } catch {
-      setSiguiendo(antes);
-      setPerfil((p) => ({
-        ...p,
-        stats: { ...p.stats, seguidores: p.stats.seguidores + (antes ? 1 : -1) },
-      }));
+      setSiguiendo(!!perfil.loSigo);
+      setPendiente(!!perfil.pendiente);
     }
   };
+
+  const labelSeguir = pendiente ? "Pendiente" : siguiendo ? "Siguiendo" : "Seguir";
 
   const ini = (perfil?.fullName || perfil?.username || "?").trim().charAt(0).toUpperCase();
   const esYo = perfil && String(perfil.id) === String(miId);
 
   return (
-    <Modal titulo="Perfil" onClose={onClose}>
+    <Modal titulo="Perfil" onClose={onClose} wide>
       {cargando ? (
         <div className={style.cargando}>Cargando…</div>
       ) : error ? (
@@ -77,12 +91,22 @@ export default function PerfilModal({ username, miId, onClose, onAbrirPerfil }) 
               <div className={style.perfilHandle}>@{perfil.username}</div>
             </div>
             {!esYo && (
-              <button
-                className={`${style.btnSeguir} ${siguiendo ? style.btnSiguiendo : ""}`}
-                onClick={toggleSeguir}
-              >
-                {siguiendo ? "Siguiendo" : "Seguir"}
-              </button>
+              <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+                <button
+                  className={style.btnMensaje}
+                  onClick={() => setChat(true)}
+                  aria-label="Mensaje"
+                  title="Mensaje"
+                >
+                  <FiMessageCircle />
+                </button>
+                <button
+                  className={`${style.btnSeguir} ${siguiendo || pendiente ? style.btnSiguiendo : ""}`}
+                  onClick={toggleSeguir}
+                >
+                  {labelSeguir}
+                </button>
+              </div>
             )}
           </div>
 
@@ -93,18 +117,30 @@ export default function PerfilModal({ username, miId, onClose, onAbrirPerfil }) 
               <div className={style.statNum}>{perfil.stats?.posteos ?? 0}</div>
               <div className={style.statLabel}>posteos</div>
             </div>
-            <div className={style.stat}>
+            <button
+              type="button"
+              className={`${style.stat} ${style.statBtn}`}
+              onClick={() => setLista({ titulo: "Seguidores", cargar: () => communityService.seguidores(perfil.id) })}
+            >
               <div className={style.statNum}>{perfil.stats?.seguidores ?? 0}</div>
               <div className={style.statLabel}>seguidores</div>
-            </div>
-            <div className={style.stat}>
+            </button>
+            <button
+              type="button"
+              className={`${style.stat} ${style.statBtn}`}
+              onClick={() => setLista({ titulo: "Siguiendo", cargar: () => communityService.siguiendo(perfil.id) })}
+            >
               <div className={style.statNum}>{perfil.stats?.siguiendo ?? 0}</div>
               <div className={style.statLabel}>siguiendo</div>
-            </div>
+            </button>
           </div>
 
           <div className={style.lista}>
-            {posts.length === 0 ? (
+            {!esYo && !perfil.puedeVer ? (
+              <div className={style.vacio}>
+                🔒 Perfil privado. {pendiente ? "Tu solicitud está pendiente de aprobación." : "Mandá una solicitud para ver sus posteos."}
+              </div>
+            ) : posts.length === 0 ? (
               <div className={style.vacio}>Todavía no hay posteos.</div>
             ) : (
               posts.map((p) => (
@@ -131,6 +167,31 @@ export default function PerfilModal({ username, miId, onClose, onAbrirPerfil }) 
           </div>
         </div>
       ) : null}
+
+      {lista && (
+        <ListaUsuariosModal
+          titulo={lista.titulo}
+          cargar={lista.cargar}
+          miId={miId}
+          onCambio={() =>
+            communityService
+              .getPerfil(username)
+              .then(({ data }) => setPerfil(data))
+              .catch(() => {})
+          }
+          onClose={() => setLista(null)}
+          onAbrirPerfil={onAbrirPerfil}
+        />
+      )}
+      {chat && perfil && (
+        <ChatModal
+          modo="dm"
+          id={perfil.id}
+          titulo={perfil.fullName || perfil.username}
+          miId={miId}
+          onClose={() => setChat(false)}
+        />
+      )}
     </Modal>
   );
 }

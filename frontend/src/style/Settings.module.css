@@ -1154,6 +1154,37 @@
   margin-right: 0.25rem;
 }
 
+/* Seguidores / siguiendo clickeables (abren la lista) */
+.profileStatBtn {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.profileStatBtn:hover:not(:disabled) { opacity: 0.7; }
+.profileStatBtn:disabled { cursor: default; }
+
+/* Fila de privacidad (aparecés / no en búsquedas) */
+.privacidadRow {
+  margin-top: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: flex-start;
+  border: 1px solid var(--border-color);
+  background: var(--surface-hover, rgba(0, 237, 100, 0.06));
+  color: var(--color-text);
+  border-radius: var(--radius-pill, 999px);
+  padding: 0.5rem 0.9rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.privacidadRow:hover { background: var(--accent-surface); }
+.privacidadHint { color: var(--color-muted); font-weight: 500; }
+
 /* Formularios (edición personal / negocios) */
 .editForm {
   display: grid;
@@ -1769,7 +1800,9 @@
   margin-top: 70px;
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 .cardProfile .profileActions .editProfileBtn {
   margin-top: 0;

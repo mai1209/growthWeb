@@ -1,12 +1,14 @@
 // Detalle de un club: portada, unirse/salir, miembros (con seguir), posteos del
 // club y composer para miembros. El owner tiene menú de ajustes (editar/borrar).
 import { useEffect, useState } from "react";
-import { FiSettings, FiUsers, FiPlusCircle, FiEdit2, FiTrash2, FiLogOut, FiMapPin, FiArrowLeft } from "react-icons/fi";
+import { FiSettings, FiUsers, FiPlusCircle, FiEdit2, FiTrash2, FiLogOut, FiMapPin, FiArrowLeft, FiMessageCircle } from "react-icons/fi";
 import { gruposService, communityService } from "../../api";
 import style from "../../style/Comunidad.module.css";
 import PostCard from "./PostCard";
 import ComposePostModal from "./ComposePostModal";
 import CrearClubModal from "./CrearClubModal";
+import Modal from "./Modal";
+import ChatModal from "./ChatModal";
 import { UserRow } from "./ui";
 
 const DEP_LABEL = { mixto: "Mixto", caminata: "Caminata", carrera: "Carrera", bici: "Bici" };
@@ -20,6 +22,7 @@ export default function ClubDetalleModal({ grupoId, grupoInicial, miId, yo, onCl
   const [menu, setMenu] = useState(false);
   const [componer, setComponer] = useState(false);
   const [editar, setEditar] = useState(false);
+  const [chat, setChat] = useState(false);
 
   const cargar = async () => {
     try {
@@ -42,9 +45,8 @@ export default function ClubDetalleModal({ grupoId, grupoInicial, miId, yo, onCl
   }, [grupoId]);
 
   const cargarMiembros = async () => {
-    const nuevo = !verMiembros;
-    setVerMiembros(nuevo);
-    if (nuevo && miembros === null) {
+    setVerMiembros(true);
+    if (miembros === null) {
       try {
         const { data } = await gruposService.miembros(grupoId);
         setMiembros(data.miembros || []);
@@ -159,23 +161,36 @@ export default function ClubDetalleModal({ grupoId, grupoInicial, miId, yo, onCl
             <button className={style.subBtn} onClick={cargarMiembros}>
               <FiUsers /> Miembros
             </button>
+            {grupo.soyMiembro ? (
+              <button className={style.subBtn} onClick={() => setChat(true)}>
+                <FiMessageCircle /> Chat
+              </button>
+            ) : null}
           </div>
 
           {verMiembros && (
-            <div>
-              {miembros === null ? (
-                <div className={style.cargando} style={{ padding: "0.6rem" }}>Cargando…</div>
-              ) : (
-                miembros.map((m) => (
-                  <UserRow
-                    key={m.id}
-                    user={m}
-                    onAbrirPerfil={onAbrirPerfil}
-                    extra={m.rol === "owner" ? <span className={style.itemBadge}>owner</span> : null}
-                  />
-                ))
-              )}
-            </div>
+            <Modal titulo={`Miembros · ${grupo.miembros}`} onClose={() => setVerMiembros(false)}>
+              <div className={style.modalBody}>
+                {miembros === null ? (
+                  <div className={style.cargando}>Cargando…</div>
+                ) : miembros.length === 0 ? (
+                  <div className={style.vacio}>Todavía no hay miembros.</div>
+                ) : (
+                  miembros.map((m) => (
+                    <UserRow
+                      key={m.id}
+                      user={m}
+                      miId={miId}
+                      onAbrirPerfil={(u) => {
+                        setVerMiembros(false);
+                        onAbrirPerfil?.(u);
+                      }}
+                      extra={m.rol === "owner" ? <span className={style.itemBadge}>owner</span> : null}
+                    />
+                  ))
+                )}
+              </div>
+            </Modal>
           )}
 
           <div className={style.lista}>
@@ -222,6 +237,15 @@ export default function ClubDetalleModal({ grupoId, grupoInicial, miId, yo, onCl
           grupo={grupo}
           onClose={() => setEditar(false)}
           onGuardado={(g) => { setGrupo((prev) => ({ ...prev, ...g })); onCambio?.(); }}
+        />
+      )}
+      {chat && grupo && (
+        <ChatModal
+          modo="grupo"
+          id={grupoId}
+          titulo={`Chat · ${grupo.nombre}`}
+          miId={miId}
+          onClose={() => setChat(false)}
         />
       )}
     </div>

@@ -5,6 +5,9 @@ const followSchema = new mongoose.Schema(
   {
     seguidor: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     seguido: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    // "aceptado" = sigue de verdad; "pendiente" = solicitud a una cuenta privada.
+    // Los docs viejos sin este campo se tratan como aceptados.
+    estado: { type: String, enum: ["aceptado", "pendiente"], default: "aceptado" },
   },
   { timestamps: true }
 );

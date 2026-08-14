@@ -1,0 +1,20 @@
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+}
+.img {
+  width: 1.15em;
+  height: 1.15em;
+  object-fit: contain;
+}
+/* Por defecto (tema claro) se ve la versión clara; en oscuro, la gris. */
+.oscuro {
+  display: none;
+}
+:global(body[data-theme="dark"]) .claro {
+  display: none;
+}
+:global(body[data-theme="dark"]) .oscuro {
+  display: inline-block;
+}

@@ -137,21 +137,41 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
     // Intento seguir en segundo plano (requiere build nativo + permiso "Siempre").
     let backgroundOk = false;
     try {
-      const bg = await Location.requestBackgroundPermissionsAsync();
-      if (bg.status === "granted") {
-        await Location.startLocationUpdatesAsync(TASK, {
-          accuracy: Location.Accuracy.High,
-          distanceInterval: 5,
-          timeInterval: 3000,
-          pausesUpdatesAutomatically: false,
-          showsBackgroundLocationIndicator: true,
-          foregroundService: {
-            notificationTitle: "Caminata en curso 🚶",
-            notificationBody: "Growth sigue midiendo tu caminata. Abrí la app para pausar o finalizar.",
-            notificationColor: "#5dc72d",
-          },
+      // Aviso destacado (requisito de Google Play): explicamos para qué se usa la
+      // ubicación en segundo plano ANTES de pedir el permiso del sistema. Solo si
+      // la persona toca "Continuar" se dispara el pedido de permiso.
+      const actual = await Location.getBackgroundPermissionsAsync();
+      let seguir = actual.status === "granted";
+      if (!seguir && actual.canAskAgain) {
+        seguir = await new Promise((resolve) => {
+          Alert.alert(
+            "Ubicación en segundo plano",
+            "Growth usa tu ubicación para medir la distancia y el recorrido de tus caminatas, carreras y salidas en bici, incluso cuando la pantalla está apagada o la app queda en segundo plano. El seguimiento se detiene cuando finalizás la actividad.",
+            [
+              { text: "Ahora no", style: "cancel", onPress: () => resolve(false) },
+              { text: "Continuar", onPress: () => resolve(true) },
+            ],
+            { cancelable: false }
+          );
         });
-        backgroundOk = true;
+      }
+      if (seguir) {
+        const bg = await Location.requestBackgroundPermissionsAsync();
+        if (bg.status === "granted") {
+          await Location.startLocationUpdatesAsync(TASK, {
+            accuracy: Location.Accuracy.High,
+            distanceInterval: 5,
+            timeInterval: 3000,
+            pausesUpdatesAutomatically: false,
+            showsBackgroundLocationIndicator: true,
+            foregroundService: {
+              notificationTitle: "Caminata en curso 🚶",
+              notificationBody: "Growth sigue midiendo tu caminata. Abrí la app para pausar o finalizar.",
+              notificationColor: "#5dc72d",
+            },
+          });
+          backgroundOk = true;
+        }
       }
     } catch {}
 

@@ -41,7 +41,7 @@ const uid = () => `${Date.now()}${Math.floor(Math.random() * 1000)}`;
 export default function GymView() {
   const [data, setData] = useState({ ejercicios: [], rutinas: [], entrenos: {} });
   const [cargando, setCargando] = useState(true);
-  const [tab, setTab] = useState("registro"); // registro | rutinas | progreso
+  const [tab, setTab] = useState("rutinas"); // registro | rutinas | progreso — arranca en el paso 1
   const [fecha, setFecha] = useState(hoyKey());
   const timerRef = useRef(null);
 

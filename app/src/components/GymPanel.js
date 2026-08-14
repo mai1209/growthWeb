@@ -62,7 +62,7 @@ export default function GymPanel() {
 
   const [data, setData] = useState({ ejercicios: [], rutinas: [], entrenos: {} });
   const [cargando, setCargando] = useState(true);
-  const [tab, setTab] = useState("registro"); // rutinas | registro | progreso
+  const [tab, setTab] = useState("rutinas"); // rutinas | registro | progreso — arranca en el paso 1
   const [fecha, setFecha] = useState(hoyKey());
   const timerRef = useRef(null);
 

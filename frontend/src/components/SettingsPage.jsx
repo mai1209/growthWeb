@@ -14,12 +14,13 @@ import {
   FiEye,
   FiEyeOff,
   FiFileText,
-  FiGlobe,
   FiHeart,
   FiKey,
   FiLink,
   FiLoader,
   FiLock,
+  FiUnlock,
+  FiMessageCircle,
   FiMoon,
   FiPhone,
   FiPlus,
@@ -35,6 +36,10 @@ import { authService, googleService, fiscalService, communityService } from "../
 import PhotoCropper from "./PhotoCropper";
 import ApoyarPage from "./ApoyarPage";
 import PostCard from "./comunidad/PostCard";
+import ListaUsuariosModal from "./comunidad/ListaUsuariosModal";
+import PerfilModal from "./comunidad/PerfilModal";
+import BandejaModal from "./comunidad/BandejaModal";
+import ComunidadIcon from "./ComunidadIcon";
 import comStyle from "../style/Comunidad.module.css";
 import { COMUNIDAD_HABILITADA } from "../config";
 import style from "../style/Settings.module.css";
@@ -151,6 +156,10 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
   // Datos de comunidad para /perfil: stats (posteos/seguidores/siguiendo) y mis posteos.
   const [comPerfil, setComPerfil] = useState(null);
   const [misPosts, setMisPosts] = useState([]);
+  const [listaUsuarios, setListaUsuarios] = useState(null); // { titulo, cargar } | null
+  const [verPerfilU, setVerPerfilU] = useState(null); // username a ver en popup
+  const [verBandeja, setVerBandeja] = useState(false); // bandeja de mensajes (DMs)
+  const [chatNoLeidos, setChatNoLeidos] = useState(0);
   // Negocio abierto (pantalla interna de ese perfil de empresa) o null = lista.
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   // Edición del negocio abierto (popup como el personal).
@@ -280,6 +289,25 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
       .catch(() => {});
     return () => {
       vivo = false;
+    };
+  }, [perfilOnly]);
+
+  // No leídos de chat (badge de la bandeja en /perfil)
+  useEffect(() => {
+    if (!perfilOnly || !COMUNIDAD_HABILITADA) return;
+    let vivo = true;
+    const tick = () =>
+      communityService
+        .chatNoLeidos()
+        .then(({ data }) => {
+          if (vivo) setChatNoLeidos(data.noLeidos || 0);
+        })
+        .catch(() => {});
+    tick();
+    const id = setInterval(tick, 15000);
+    return () => {
+      vivo = false;
+      clearInterval(id);
     };
   }, [perfilOnly]);
 
@@ -837,11 +865,26 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
                       <button
                         type="button"
                         className={style.profileGlobeBtn}
+                        style={{ position: "relative" }}
+                        onClick={() => setVerBandeja(true)}
+                        title="Mensajes"
+                        aria-label="Mensajes"
+                      >
+                        <FiMessageCircle />
+                        {chatNoLeidos > 0 ? (
+                          <span className={comStyle.campanaBadge}>{chatNoLeidos > 9 ? "9+" : chatNoLeidos}</span>
+                        ) : null}
+                      </button>
+                    ) : null}
+                    {COMUNIDAD_HABILITADA ? (
+                      <button
+                        type="button"
+                        className={style.profileGlobeBtn}
                         onClick={() => navigate("/comunidad")}
                         title="Ir a la comunidad"
                         aria-label="Ir a la comunidad"
                       >
-                        <FiGlobe />
+                        <ComunidadIcon />
                       </button>
                     ) : null}
                     <button
@@ -870,14 +913,73 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
                     <span>
                       <strong>{comPerfil?.stats?.posteos ?? 0}</strong> posteos
                     </span>
-                    <span>
+                    <button
+                      type="button"
+                      className={style.profileStatBtn}
+                      disabled={!comPerfil}
+                      onClick={() => setListaUsuarios({ titulo: "Seguidores", cargar: () => communityService.seguidores(comPerfil.id) })}
+                    >
                       <strong>{comPerfil?.stats?.seguidores ?? 0}</strong> seguidores
-                    </span>
-                    <span>
+                    </button>
+                    <button
+                      type="button"
+                      className={style.profileStatBtn}
+                      disabled={!comPerfil}
+                      onClick={() => setListaUsuarios({ titulo: "Siguiendo", cargar: () => communityService.siguiendo(comPerfil.id) })}
+                    >
                       <strong>{comPerfil?.stats?.siguiendo ?? 0}</strong> siguiendo
-                    </span>
+                    </button>
                   </div>
+
+                  {COMUNIDAD_HABILITADA && comPerfil ? (
+                    <button
+                      type="button"
+                      className={style.privacidadRow}
+                      title="Tus posteos siempre son solo para seguidores aceptados. Este control solo decide si te encuentran en la búsqueda de la comunidad."
+                      onClick={() => {
+                        const nuevo = !comPerfil.perfilPublico;
+                        setComPerfil((p) => ({ ...p, perfilPublico: nuevo }));
+                        communityService
+                          .updateMiPerfil({ perfilPublico: nuevo })
+                          .catch(() => setComPerfil((p) => ({ ...p, perfilPublico: !nuevo })));
+                      }}
+                    >
+                      {comPerfil.perfilPublico ? <FiUnlock /> : <FiLock />}
+                      <span>{comPerfil.perfilPublico ? "Aparecés en las búsquedas" : "No aparecés en las búsquedas"}</span>
+                      <span className={style.privacidadHint}>· tocá para cambiar</span>
+                    </button>
+                  ) : null}
                 </div>
+
+                {listaUsuarios && (
+                  <ListaUsuariosModal
+                    titulo={listaUsuarios.titulo}
+                    cargar={listaUsuarios.cargar}
+                    miId={comPerfil?.id}
+                    onCambio={() =>
+                      communityService.getMiPerfil().then(({ data }) => setComPerfil(data)).catch(() => {})
+                    }
+                    onClose={() => setListaUsuarios(null)}
+                    onAbrirPerfil={(u) => setVerPerfilU(u.username)}
+                  />
+                )}
+                {verPerfilU && (
+                  <PerfilModal
+                    username={verPerfilU}
+                    miId={comPerfil?.id}
+                    onClose={() => setVerPerfilU(null)}
+                    onAbrirPerfil={(u) => setVerPerfilU(u.username)}
+                  />
+                )}
+                {verBandeja && (
+                  <BandejaModal
+                    miId={comPerfil?.id}
+                    onClose={() => setVerBandeja(false)}
+                    onLeidas={() =>
+                      communityService.chatNoLeidos().then(({ data }) => setChatNoLeidos(data.noLeidos || 0)).catch(() => {})
+                    }
+                  />
+                )}
               </div>
 
               {/* ===== Mis posteos (formato comunidad) ===== */}

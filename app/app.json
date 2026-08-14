@@ -2,7 +2,7 @@
   "expo": {
     "name": "Growth Manager",
     "slug": "growth-manager",
-    "version": "1.0.12",
+    "version": "1.0.13",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -16,12 +16,15 @@
       "infoPlist": {
         "NSSupportsLiveActivities": true,
         "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone",
-        "NSFaceIDUsageDescription": "Allow $(PRODUCT_NAME) to access your Face ID biometric data."
+        "NSFaceIDUsageDescription": "Allow $(PRODUCT_NAME) to access your Face ID biometric data.",
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        }
       }
     },
     "android": {
       "package": "app.growthmanager.mobile",
-      "versionCode": 23,
+      "versionCode": 25,
       "permissions": [
         "android.permission.health.READ_STEPS"
       ],

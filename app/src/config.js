@@ -19,4 +19,4 @@ export const ARCA_HABILITADO = false;
 // ⚠️ VOLVER A false ANTES DEL BUILD PÚBLICO (tiendas) hasta tener moderación +
 // reportar/bloquear y actualizar la declaración de "interacción social". Ojo:
 // este flag también gatea el exportador de imagen ("Compartir imagen").
-export const COMUNIDAD_HABILITADA = false;
+export const COMUNIDAD_HABILITADA = true;

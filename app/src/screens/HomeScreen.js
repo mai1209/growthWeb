@@ -10,6 +10,7 @@ import {
   Animated,
   Easing,
   Modal,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -23,10 +24,21 @@ import HistoryModal from "../components/HistoryModal";
 import {
   filterMovimientosByCurrency,
   formatMoney,
+  formatSignedMoney,
   getCurrencyMeta,
+  getMovementTypeMeta,
   isSameMonth,
   summarizeByType,
 } from "../utils/finance";
+
+// Ícono según el tipo de movimiento (mismo criterio que el historial).
+const movementIcon = (m) => {
+  if (m.desdeAhorro) return "swap-horizontal-outline";
+  if (m.tipo === "ingreso") return "arrow-down-outline";
+  if (m.tipo === "ahorro") return "wallet-outline";
+  if (m.tipo === "deuda") return "card-outline";
+  return "arrow-up-outline"; // egreso
+};
 
 const HOME_TABS = [
   { key: "ARS", label: "ARS" },
@@ -192,7 +204,34 @@ export default function HomeScreen() {
   const [cardSize, setCardSize] = useState({ w: 0, h: 0 });
   const [modalMode, setModalMode] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [resumenTab, setResumenTab] = useState("resumen"); // resumen | historial
+  const [expandedMovs, setExpandedMovs] = useState(() => new Set()); // filas abiertas
+  const [editMov, setEditMov] = useState(null); // movimiento a editar (form)
   const [infoOpen, setInfoOpen] = useState(false); // popup "cómo funciona"
+
+  const toggleMovExpand = (id) =>
+    setExpandedMovs((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+  const handleDeleteMov = (mov) =>
+    Alert.alert("Eliminar movimiento", `¿Borrar "${mov.categoria || "movimiento"}"?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Eliminar",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await movimientoService.delete(mov._id);
+            fetchData();
+          } catch {
+            Alert.alert("Error", "No se pudo eliminar.");
+          }
+        },
+      },
+    ]);
   const [saldoInfoOpen, setSaldoInfoOpen] = useState(false); // popup info del saldo total
   const [typeCurrency, setTypeCurrency] = useState("ARS"); // ARS/USD dentro de Deuda/Ahorro
 
@@ -218,13 +257,16 @@ export default function HomeScreen() {
     fetchData();
   }, [fetchData]);
 
-  const { historical, monthSummary, monthCount } = useMemo(() => {
+  const { historical, monthSummary, monthCount, monthMovs } = useMemo(() => {
     const byCurrency = filterMovimientosByCurrency(movimientos, currency);
-    const monthMovs = byCurrency.filter((m) => isSameMonth(m.fecha));
+    const mm = byCurrency
+      .filter((m) => isSameMonth(m.fecha))
+      .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
     return {
       historical: summarizeByType(byCurrency),
-      monthSummary: summarizeByType(monthMovs),
-      monthCount: monthMovs.length,
+      monthSummary: summarizeByType(mm),
+      monthCount: mm.length,
+      monthMovs: mm,
     };
   }, [movimientos, currency]);
 
@@ -377,13 +419,6 @@ export default function HomeScreen() {
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.bcIconBtn, { borderColor: card.iconBorder, backgroundColor: card.iconBg }]}
-                        onPress={() => setShowHistory(true)}
-                        hitSlop={6}
-                      >
-                        <Ionicons name="time-outline" size={17} color={card.text} />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.bcIconBtn, { borderColor: card.iconBorder, backgroundColor: card.iconBg }]}
                         onPress={() => setVisible((v) => !v)}
                         hitSlop={6}
                       >
@@ -467,21 +502,158 @@ export default function HomeScreen() {
 
                 {error ? <Text style={styles.error}>{error}</Text> : null}
 
-                {/* Movimientos del mes (clickeables → Filtros filtrado) */}
-                <Text style={styles.sectionLabel}>Resumen</Text>
-                <View style={styles.statGrid}>
-                  {stats.map((s) => (
-                    <TouchableOpacity
-                      key={s.label}
-                      style={styles.statCard}
-                      activeOpacity={0.7}
-                      onPress={() => goToFilter(s.tipo)}
-                    >
-                      <View style={[styles.statBar, { backgroundColor: s.accent }]} />
-                      <Text style={styles.statLabel}>{s.label}</Text>
-                      <Text style={styles.statValue}>{s.value}</Text>
-                    </TouchableOpacity>
-                  ))}
+                {/* Switch Resumen / Historial */}
+                {/* ===== Ticket: switch adentro + corte perforado + contenido ===== */}
+                <View style={styles.ticket}>
+                  <View style={styles.ticketTop}>
+                    <View style={styles.ticketSwitch}>
+                      {[
+                        ["resumen", "Resumen"],
+                        ["historial", "Historial"],
+                      ].map(([k, l]) => (
+                        <TouchableOpacity
+                          key={k}
+                          style={[styles.ticketSeg, resumenTab === k && styles.ticketSegOn]}
+                          onPress={() => setResumenTab(k)}
+                          activeOpacity={0.85}
+                        >
+                          <Text style={[styles.ticketSegText, resumenTab === k && styles.ticketSegTextOn]}>{l}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    {resumenTab === "historial" ? (
+                      <TouchableOpacity onPress={() => setShowHistory(true)} hitSlop={8}>
+                        <Text style={styles.verTodos}>Ver todos</Text>
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
+
+                  {/* Corte perforado tipo ticket */}
+                  <View style={styles.ticketCut}>
+                    <View style={styles.ticketDash} />
+                  </View>
+
+                  {resumenTab === "resumen" ? (
+                    <View style={styles.ticketBody}>
+                      <Text style={styles.ticketCaption}>RESUMEN DEL MES · {currency}</Text>
+                      {stats.map((s) => (
+                        <TouchableOpacity
+                          key={s.label}
+                          style={styles.ticketRow}
+                          activeOpacity={0.6}
+                          onPress={() => goToFilter(s.tipo)}
+                        >
+                          <Text style={[styles.ticketLabel, { textDecorationColor: s.accent }]} numberOfLines={1}>
+                            {s.label}
+                          </Text>
+                          <View style={styles.ticketDots} />
+                          <Text style={[styles.ticketValue, { color: s.accent }]}>{s.value}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  ) : (
+                    <View style={styles.ticketBody}>
+                      {monthMovs.length === 0 ? (
+                        <Text style={styles.movEmpty}>No hay movimientos este mes.</Text>
+                      ) : (
+                        monthMovs.map((item, idx) => {
+                          const meta = getMovementTypeMeta(item.tipo);
+                          const abierto = expandedMovs.has(item._id);
+                          const isDebt = item.tipo === "deuda";
+                          const isPendingDebt = isDebt && item.deudaEstado !== "pagada";
+                          const debtPaid = Number(item.deudaPagado) || 0;
+                          const debtRemaining = (Number(item.monto) || 0) - debtPaid;
+                          const isPartialDebt = isPendingDebt && debtPaid > 0;
+                          return (
+                            <View
+                              key={item._id}
+                              style={[styles.movTkItem, idx < monthMovs.length - 1 && styles.movTkDivider]}
+                            >
+                              <TouchableOpacity
+                                style={styles.movTkTop}
+                                activeOpacity={0.7}
+                                onPress={() => toggleMovExpand(item._id)}
+                              >
+                                <View style={[styles.movRedIcon, { borderColor: meta.color + "55", backgroundColor: meta.color + "1f" }]}>
+                                  <Ionicons name={movementIcon(item)} size={17} color={colors.text} />
+                                </View>
+                                <Text style={styles.movRedTitle} numberOfLines={1}>
+                                  {item.categoria || "Sin categoría"}
+                                </Text>
+                                <Text style={[styles.movRedAmount, { color: meta.color }]}>
+                                  {visible ? formatSignedMoney(item.monto, currency, item.tipo) : "••••"}
+                                </Text>
+                                <Ionicons
+                                  name={abierto ? "chevron-up" : "chevron-down"}
+                                  size={18}
+                                  color={colors.muted}
+                                  style={{ marginLeft: 6 }}
+                                />
+                              </TouchableOpacity>
+
+                              {abierto ? (
+                                <View style={styles.movTkBody}>
+                                  <Text style={styles.movRedFecha}>{fmtDate(item.fecha)}</Text>
+                                  {item.detalle ? <Text style={styles.movRedDetail}>{item.detalle}</Text> : null}
+                                  {isDebt && item.deudaAcreedor ? (
+                                    <Text style={styles.movRedDetail}>Acreedor: {item.deudaAcreedor}</Text>
+                                  ) : null}
+                                  {isPendingDebt ? (
+                                    <Text style={styles.movRedDebt}>
+                                      {isPartialDebt
+                                        ? `Pagado ${formatMoney(debtPaid, currency)} · resta ${formatMoney(debtRemaining, currency)}`
+                                        : "Pendiente de pago"}
+                                    </Text>
+                                  ) : null}
+                                  <View style={styles.movRedChips}>
+                                    <Text style={[styles.movRedChip, { color: meta.color }]}>{meta.label}</Text>
+                                    {isPartialDebt ? (
+                                      <Text style={[styles.movRedChip, { color: colors.greenDark }]}>Parcial</Text>
+                                    ) : null}
+                                    {item.desdeAhorro ? (
+                                      <Text style={[styles.movRedChip, { color: "#4fb6c9" }]}>Uso de ahorro</Text>
+                                    ) : null}
+                                    {item.medio ? <Text style={styles.movRedChip}>{item.medio}</Text> : null}
+                                  </View>
+                                  <View style={styles.movRedActions}>
+                                    {isPendingDebt ? (
+                                      <TouchableOpacity style={styles.movRedPay} onPress={() => setShowHistory(true)}>
+                                        <Ionicons name="cash-outline" size={15} color="#3a2d05" />
+                                        <Text style={styles.movRedPayText}>Pagar deuda</Text>
+                                      </TouchableOpacity>
+                                    ) : (
+                                      <View />
+                                    )}
+                                    <View style={styles.movRedIcons}>
+                                      <TouchableOpacity onPress={() => setEditMov(item)} hitSlop={8}>
+                                        <Ionicons name="pencil" size={18} color={colors.muted} />
+                                      </TouchableOpacity>
+                                      <TouchableOpacity onPress={() => handleDeleteMov(item)} hitSlop={8}>
+                                        <Ionicons name="trash-outline" size={18} color={colors.red} />
+                                      </TouchableOpacity>
+                                    </View>
+                                  </View>
+                                </View>
+                              ) : null}
+                            </View>
+                          );
+                        })
+                      )}
+                    </View>
+                  )}
+
+                  {/* Corte perforado inferior (cierra el ticket) */}
+                  <View style={[styles.ticketCut, { marginTop: 6 }]}>
+                    <View style={styles.ticketDash} />
+                  </View>
+
+                  {/* Info: también existe la versión web */}
+                  <View style={styles.ticketFooter}>
+                    <Ionicons name="globe-outline" size={14} color={colors.greenBright} />
+                    <Text style={styles.ticketFooterText}>
+                      También en la web · <Text style={styles.ticketFooterLink}>growthmanager.app</Text>
+                    </Text>
+                  </View>
                 </View>
               </>
             ) : (
@@ -644,6 +816,18 @@ export default function HomeScreen() {
         movimientos={movimientos}
         onClose={() => setModalMode(null)}
         onSaved={fetchData}
+      />
+
+      <MovementFormModal
+        visible={Boolean(editMov)}
+        editMovement={editMov}
+        defaultCurrency={currency}
+        movimientos={movimientos}
+        onClose={() => setEditMov(null)}
+        onSaved={() => {
+          setEditMov(null);
+          fetchData();
+        }}
       />
 
       <HistoryModal
@@ -1064,6 +1248,145 @@ const makeStyles = (colors) => StyleSheet.create({
     textTransform: "uppercase",
   },
   statValue: { color: colors.text, fontSize: 17, fontWeight: "800", textAlign: "right" },
+
+  // ---- Ticket: switch adentro + corte perforado ----
+  ticket: {
+    backgroundColor: colors.cardSoft,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    marginTop: 18,
+  },
+  ticketTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+  },
+  ticketSwitch: {
+    flexDirection: "row",
+    gap: 4,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 12,
+    padding: 4,
+  },
+  ticketSeg: { paddingVertical: 7, paddingHorizontal: 18, borderRadius: 8, alignItems: "center" },
+  ticketSegOn: { backgroundColor: colors.segActive },
+  ticketSegText: { color: colors.muted, fontSize: 13, fontWeight: "700" },
+  ticketSegTextOn: { color: colors.segActiveText, fontWeight: "800" },
+  verTodos: { color: colors.greenBright, fontSize: 13, fontWeight: "800" },
+
+  // Corte perforado (línea punteada + muescas laterales tipo ticket).
+  // Las muescas son círculos del color del fondo: la mitad de afuera se funde con
+  // el fondo y la de adentro "muerde" la card. Por eso el ticket NO lleva overflow.
+  ticketCut: { height: 22, justifyContent: "center", marginHorizontal: -16 },
+  ticketDash: {
+    borderBottomWidth: 1,
+    borderStyle: "dashed",
+    borderColor: colors.cardBorder,
+    marginHorizontal: 16,
+  },
+  ticketNotch: {
+    position: "absolute",
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    top: 0,
+  },
+  ticketNotchL: { left: -11 },
+  ticketNotchR: { right: -11 },
+
+  ticketBody: { paddingTop: 4 },
+  ticketCaption: {
+    color: colors.muted,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+    textAlign: "center",
+    marginTop: 6,
+    marginBottom: 2,
+  },
+  ticketRow: { flexDirection: "row", alignItems: "flex-end", paddingVertical: 12 },
+  ticketLabel: {
+    color: colors.text,
+    fontSize: 13.5,
+    fontWeight: "700",
+    textDecorationLine: "underline",
+    flexShrink: 1,
+  },
+  ticketDots: {
+    flex: 1,
+    borderBottomWidth: 1,
+    borderStyle: "dotted",
+    borderColor: colors.cardBorder,
+    marginHorizontal: 8,
+    marginBottom: 5,
+  },
+  ticketValue: { fontSize: 15, fontWeight: "800", fontVariant: ["tabular-nums"] },
+  ticketFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingTop: 10,
+    paddingBottom: 2,
+  },
+  ticketFooterText: { color: colors.muted, fontSize: 12, fontWeight: "600" },
+  ticketFooterLink: { color: colors.greenBright, fontWeight: "800" },
+
+  // ---- Historial reducido dentro del ticket ----
+  movEmpty: { color: colors.muted, fontSize: 13, textAlign: "center", paddingVertical: 22 },
+  movTkItem: {},
+  movTkDivider: { borderBottomWidth: 1, borderColor: colors.cardBorder },
+  movTkTop: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12 },
+  movTkBody: { paddingBottom: 12, paddingTop: 2, gap: 4 },
+  movRedIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  movRedTitle: { flex: 1, color: colors.text, fontSize: 14.5, fontWeight: "700" },
+  movRedAmount: { fontSize: 14.5, fontWeight: "800", fontVariant: ["tabular-nums"] },
+  movRedBody: {
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    paddingTop: 2,
+    gap: 4,
+  },
+  movRedFecha: { color: colors.muted, fontSize: 12, fontWeight: "700" },
+  movRedDetail: { color: colors.muted, fontSize: 13 },
+  movRedDebt: { color: colors.greenDark, fontSize: 13, fontWeight: "700" },
+  movRedChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
+  movRedChip: { color: colors.muted, fontSize: 11.5, fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.4 },
+  movRedPay: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    alignSelf: "flex-start",
+    marginTop: 10,
+    backgroundColor: "#e0b13a",
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+  },
+  movRedPayText: { color: "#3a2d05", fontSize: 13, fontWeight: "800" },
+  movRedActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  movRedIcons: { flexDirection: "row", alignItems: "center", gap: 18 },
 
   balanceSub: { color: colors.muted, fontSize: 13, marginTop: 4 },
   potText: { color: "#2bb888", fontSize: 14, fontWeight: "800", marginTop: 4 },

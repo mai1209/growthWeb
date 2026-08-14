@@ -1279,15 +1279,13 @@ const makeStyles = (colors) =>
       lineHeight: 24,
       fontFamily: Platform.OS === "ios" ? "Noteworthy" : "cursive",
     },
-    // Flotante arriba a la derecha, a la altura de la carita (no ocupa fila).
+    // Fila propia alineada a la derecha, entre la fecha y las preguntas.
     libroEditRow: {
-      position: "absolute",
-      top: 44,
-      right: 12,
-      zIndex: 3,
       flexDirection: "row",
       justifyContent: "flex-end",
       gap: 7,
+      marginTop: 10,
+      marginBottom: 4,
     },
     libroEditBtn: {
       flexDirection: "row",

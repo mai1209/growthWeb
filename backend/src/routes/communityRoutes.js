@@ -7,6 +7,10 @@ import {
   buscarUsuarios,
   seguir,
   dejarDeSeguir,
+  aceptarSolicitud,
+  rechazarSolicitud,
+  getNotificaciones,
+  marcarLeidas,
   getSeguidores,
   getSiguiendo,
   crearPost,
@@ -41,6 +45,14 @@ import {
   editarReto,
   borrarReto,
 } from "../controllers/challengeController.js";
+import {
+  enviarDM,
+  getDM,
+  getConversaciones,
+  getNoLeidosChat,
+  enviarGrupo,
+  getGrupoChat,
+} from "../controllers/chatController.js";
 
 const router = express.Router();
 
@@ -58,6 +70,19 @@ router.delete("/comentarios/:id", requireAuth, borrarComentario);
 
 router.post("/follow/:userId", requireAuth, seguir);
 router.delete("/follow/:userId", requireAuth, dejarDeSeguir);
+
+router.post("/solicitudes/:userId/aceptar", requireAuth, aceptarSolicitud);
+router.post("/solicitudes/:userId/rechazar", requireAuth, rechazarSolicitud);
+router.get("/notificaciones", requireAuth, getNotificaciones);
+router.post("/notificaciones/leer", requireAuth, marcarLeidas);
+
+// Chat (DM privado + chat de club)
+router.get("/chat/conversaciones", requireAuth, getConversaciones);
+router.get("/chat/no-leidos", requireAuth, getNoLeidosChat);
+router.get("/chat/dm/:userId", requireAuth, getDM);
+router.post("/chat/dm/:userId", requireAuth, enviarDM);
+router.get("/chat/grupo/:grupoId", requireAuth, getGrupoChat);
+router.post("/chat/grupo/:grupoId", requireAuth, enviarGrupo);
 
 router.get("/users/:userId/followers", requireAuth, getSeguidores);
 router.get("/users/:userId/following", requireAuth, getSiguiendo);

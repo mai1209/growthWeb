@@ -24,6 +24,7 @@ import CaminataModal from "../components/CaminataModal";
 import { elegirFotoComida } from "../utils/foto";
 import PostCard from "../components/PostCard";
 import ComposePostModal from "../components/ComposePostModal";
+import { ChatModal } from "../components/ChatModal";
 
 const ACT = {
   caminata: { label: "Caminata", icon: "walk" },
@@ -176,10 +177,16 @@ export default function ComunidadScreen({ navigation }) {
 
   // ---- Perfil propio ----
   const [miPerfil, setMiPerfil] = useState(null);
+  const [notifsOpen, setNotifsOpen] = useState(false);
+  const [noLeidas, setNoLeidas] = useState(0);
   const cargarMiPerfil = useCallback(() => {
     communityService
       .getMiPerfil()
       .then(({ data }) => setMiPerfil(data))
+      .catch(() => {});
+    communityService
+      .notificaciones()
+      .then(({ data }) => setNoLeidas(data?.noLeidas || 0))
       .catch(() => {});
   }, []);
   useEffect(() => {
@@ -244,6 +251,16 @@ export default function ComunidadScreen({ navigation }) {
               <Ionicons name="add-circle-outline" size={26} color={colors.greenBright} />
             </TouchableOpacity>
           ) : null}
+          <TouchableOpacity onPress={() => setNotifsOpen(true)} hitSlop={10}>
+            <View>
+              <Ionicons name="notifications-outline" size={24} color={colors.text} />
+              {noLeidas > 0 ? (
+                <View style={styles.notifBadge}>
+                  <Text style={styles.notifBadgeTxt}>{noLeidas > 9 ? "9+" : noLeidas}</Text>
+                </View>
+              ) : null}
+            </View>
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate("Perfil")} hitSlop={8}>
             <View style={styles.headerAvatar}>
               <Avatar user={miPerfil} size={30} colors={colors} />
@@ -311,11 +328,176 @@ export default function ComunidadScreen({ navigation }) {
           colors={colors}
           styles={styles}
           user={perfilUser}
+          miId={miPerfil?.id}
           onClose={() => setPerfilUser(null)}
         />
       ) : null}
 
+      {notifsOpen ? (
+        <NotificacionesModal
+          colors={colors}
+          styles={styles}
+          onClose={() => setNotifsOpen(false)}
+          onAbrirPerfil={(u) => {
+            setNotifsOpen(false);
+            abrirPerfil(u);
+          }}
+          onLeidas={() => setNoLeidas(0)}
+        />
+      ) : null}
+
     </View>
+  );
+}
+
+// ---------- Notificaciones ----------
+function NotificacionesModal({ colors, styles, onClose, onAbrirPerfil, onLeidas }) {
+  const insets = useSafeAreaInsets();
+  const [items, setItems] = useState(null);
+  const TEXTO = {
+    follow: "empezó a seguirte",
+    solicitud: "quiere seguirte",
+    kudo: "le dio kudos a tu posteo",
+    comentario: "comentó tu posteo",
+  };
+  useEffect(() => {
+    communityService
+      .notificaciones()
+      .then(({ data }) => {
+        setItems(data?.notificaciones || []);
+        communityService.marcarLeidas().then(() => onLeidas && onLeidas()).catch(() => {});
+      })
+      .catch(() => setItems([]));
+  }, []);
+
+  const responder = (n, aceptar) => {
+    setItems((xs) => xs.map((x) => (x.id === n.id ? { ...x, tipo: aceptar ? "follow" : "rechazada" } : x)));
+    const accion = aceptar ? communityService.aceptarSolicitud : communityService.rechazarSolicitud;
+    accion(n.actor.id).catch(() => {});
+  };
+
+  return (
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <View style={[styles.safe, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onClose} hitSlop={10}>
+            <Ionicons name="close" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Notificaciones</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        {items === null ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.green} />
+          </View>
+        ) : items.filter((n) => n.tipo !== "rechazada").length === 0 ? (
+          <View style={styles.center}>
+            <Text style={styles.vacioTxt}>Todavía no tenés notificaciones.</Text>
+          </View>
+        ) : (
+          <ScrollView contentContainerStyle={{ padding: 14, gap: 4 }}>
+            {items
+              .filter((n) => n.tipo !== "rechazada")
+              .map((n) => (
+                <View key={String(n.id)} style={styles.notifRow}>
+                  <TouchableOpacity onPress={() => onAbrirPerfil && n.actor && onAbrirPerfil(n.actor)}>
+                    <Avatar user={n.actor} size={38} colors={colors} />
+                  </TouchableOpacity>
+                  <Text style={styles.notifTxt}>
+                    <Text style={styles.notifNombre} onPress={() => onAbrirPerfil && n.actor && onAbrirPerfil(n.actor)}>
+                      {n.actor?.fullName || n.actor?.username}
+                    </Text>{" "}
+                    {TEXTO[n.tipo] || "interactuó con vos"}
+                    <Text style={styles.notifCuando}> · {haceCuanto(n.createdAt)}</Text>
+                  </Text>
+                  {n.tipo === "solicitud" ? (
+                    <View style={{ flexDirection: "row", gap: 6 }}>
+                      <TouchableOpacity style={styles.grupoBtnPrim} onPress={() => responder(n, true)}>
+                        <Text style={styles.grupoBtnPrimTxt}>Aceptar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.grupoBtnSec} onPress={() => responder(n, false)}>
+                        <Text style={styles.grupoBtnSecTxt}>Rechazar</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+                </View>
+              ))}
+          </ScrollView>
+        )}
+      </View>
+    </Modal>
+  );
+}
+
+// ---------- Lista de usuarios (seguidores / siguiendo) ----------
+function ListaUsuariosModal({ colors, styles, titulo, cargar, onClose, onAbrirPerfil, onCambio }) {
+  const insets = useSafeAreaInsets();
+  const [usuarios, setUsuarios] = useState(null);
+  useEffect(() => {
+    cargar()
+      .then(({ data }) => setUsuarios(data?.usuarios || []))
+      .catch(() => setUsuarios([]));
+  }, []);
+  const toggle = async (u, i) => {
+    if (u.loSigo || u.pendiente) {
+      setUsuarios((arr) => arr.map((x, k) => (k === i ? { ...x, loSigo: false, pendiente: false } : x)));
+      communityService.dejarDeSeguir(u.id).catch(() => {});
+    } else {
+      try {
+        const { data } = await communityService.seguir(u.id);
+        setUsuarios((arr) => arr.map((x, k) => (k === i ? { ...x, loSigo: !!data.loSigo, pendiente: !!data.pendiente } : x)));
+      } catch {}
+    }
+    onCambio && onCambio();
+  };
+  return (
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <View style={[styles.safe, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onClose} hitSlop={10}>
+            <Ionicons name="close" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.title}>{titulo}</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        {usuarios === null ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.green} />
+          </View>
+        ) : usuarios.length === 0 ? (
+          <View style={styles.center}>
+            <Text style={styles.vacioTxt}>Todavía no hay nadie acá.</Text>
+          </View>
+        ) : (
+          <ScrollView contentContainerStyle={{ padding: 14, gap: 12 }}>
+            {usuarios.map((u, i) => (
+              <View key={String(u.id)} style={styles.miembroRow}>
+                <TouchableOpacity
+                  style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}
+                  onPress={() => onAbrirPerfil && onAbrirPerfil(u)}
+                >
+                  <Avatar user={u} size={38} colors={colors} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.userNombre}>{u.fullName || u.username}</Text>
+                    <Text style={styles.userSub}>@{u.username}</Text>
+                  </View>
+                </TouchableOpacity>
+                {!u.esYo ? (
+                  <TouchableOpacity
+                    style={u.loSigo || u.pendiente ? styles.grupoBtnSec : styles.grupoBtnPrim}
+                    onPress={() => toggle(u, i)}
+                  >
+                    <Text style={u.loSigo || u.pendiente ? styles.grupoBtnSecTxt : styles.grupoBtnPrimTxt}>
+                      {u.pendiente ? "Pendiente" : u.loSigo ? "Siguiendo" : "Seguir"}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            ))}
+          </ScrollView>
+        )}
+      </View>
+    </Modal>
   );
 }
 
@@ -959,6 +1141,7 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose, onAbrirPerfil, miId
   const [posts, setPosts] = useState([]);
   const [composeOpen, setComposeOpen] = useState(false);
   const [miembrosOpen, setMiembrosOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   useEffect(() => {
     gruposService.get(grupo.id).then(({ data }) => data?.grupo && setG(data.grupo)).catch(() => {});
     communityService.postsDeGrupo(grupo.id).then(({ data }) => setPosts(data?.posts || [])).catch(() => {});
@@ -1037,6 +1220,11 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose, onAbrirPerfil, miId
             {g.nombre}
           </Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+            {g.soyMiembro || g.soyOwner ? (
+              <TouchableOpacity onPress={() => setChatOpen(true)} hitSlop={10}>
+                <Ionicons name="chatbubbles-outline" size={22} color={colors.text} />
+              </TouchableOpacity>
+            ) : null}
             <TouchableOpacity onPress={() => setMiembrosOpen(true)} hitSlop={10}>
               <Ionicons name="people-outline" size={22} color={colors.text} />
             </TouchableOpacity>
@@ -1106,6 +1294,15 @@ function GrupoDetalleModal({ colors, styles, grupo, onClose, onAbrirPerfil, miId
             onClose={() => setMiembrosOpen(false)}
           />
         ) : null}
+        {chatOpen ? (
+          <ChatModal
+            modo="grupo"
+            id={g.id}
+            titulo={`Chat · ${g.nombre}`}
+            miId={miId}
+            onClose={() => setChatOpen(false)}
+          />
+        ) : null}
       </View>
     </Modal>
   );
@@ -1118,10 +1315,16 @@ function MiembrosModal({ colors, styles, grupoId, onClose, onAbrirPerfil }) {
   useEffect(() => {
     gruposService.miembros(grupoId).then(({ data }) => setMiembros(data?.miembros || [])).catch(() => {});
   }, [grupoId]);
-  const toggleSeguir = (m) => {
-    const accion = m.loSigo ? communityService.dejarDeSeguir : communityService.seguir;
-    setMiembros((arr) => arr.map((x) => (x.id === m.id ? { ...x, loSigo: !m.loSigo } : x)));
-    accion(m.id).catch(() => {});
+  const toggleSeguir = async (m) => {
+    if (m.loSigo || m.pendiente) {
+      setMiembros((arr) => arr.map((x) => (x.id === m.id ? { ...x, loSigo: false, pendiente: false } : x)));
+      communityService.dejarDeSeguir(m.id).catch(() => {});
+    } else {
+      try {
+        const { data } = await communityService.seguir(m.id);
+        setMiembros((arr) => arr.map((x) => (x.id === m.id ? { ...x, loSigo: !!data.loSigo, pendiente: !!data.pendiente } : x)));
+      } catch {}
+    }
   };
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
@@ -1151,11 +1354,11 @@ function MiembrosModal({ colors, styles, grupoId, onClose, onAbrirPerfil }) {
               </TouchableOpacity>
               {!m.esYo ? (
                 <TouchableOpacity
-                  style={m.loSigo ? styles.grupoBtnSec : styles.grupoBtnPrim}
+                  style={m.loSigo || m.pendiente ? styles.grupoBtnSec : styles.grupoBtnPrim}
                   onPress={() => toggleSeguir(m)}
                 >
-                  <Text style={m.loSigo ? styles.grupoBtnSecTxt : styles.grupoBtnPrimTxt}>
-                    {m.loSigo ? "Siguiendo" : "Seguir"}
+                  <Text style={m.loSigo || m.pendiente ? styles.grupoBtnSecTxt : styles.grupoBtnPrimTxt}>
+                    {m.pendiente ? "Pendiente" : m.loSigo ? "Siguiendo" : "Seguir"}
                   </Text>
                 </TouchableOpacity>
               ) : null}
@@ -1553,10 +1756,16 @@ function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil, onGuar
       .then(({ data }) => setR((x) => ({ ...x, ...data })))
       .catch(() => {});
   };
-  const toggleSeguir = (u) => {
-    const accion = u.loSigo ? communityService.dejarDeSeguir : communityService.seguir;
-    setRanking((arr) => arr.map((x) => (x.id === u.id ? { ...x, loSigo: !u.loSigo } : x)));
-    accion(u.id).catch(() => {});
+  const toggleSeguir = async (u) => {
+    if (u.loSigo || u.pendiente) {
+      setRanking((arr) => arr.map((x) => (x.id === u.id ? { ...x, loSigo: false, pendiente: false } : x)));
+      communityService.dejarDeSeguir(u.id).catch(() => {});
+    } else {
+      try {
+        const { data } = await communityService.seguir(u.id);
+        setRanking((arr) => arr.map((x) => (x.id === u.id ? { ...x, loSigo: !!data.loSigo, pendiente: !!data.pendiente } : x)));
+      } catch {}
+    }
   };
   const borrar = () => {
     Alert.alert("Borrar reto", "¿Seguro que querés borrarlo? No se puede deshacer.", [
@@ -1688,9 +1897,9 @@ function RetoDetalleModal({ colors, styles, reto, onClose, onAbrirPerfil, onGuar
                 {!u.esYo ? (
                   <TouchableOpacity onPress={() => toggleSeguir(u)} hitSlop={8}>
                     <Ionicons
-                      name={u.loSigo ? "checkmark" : "person-add-outline"}
+                      name={u.pendiente ? "time-outline" : u.loSigo ? "checkmark" : "person-add-outline"}
                       size={20}
-                      color={u.loSigo ? colors.muted : colors.greenBright}
+                      color={u.loSigo || u.pendiente ? colors.muted : colors.greenBright}
                     />
                   </TouchableOpacity>
                 ) : null}
@@ -1723,6 +1932,8 @@ function MiPerfilTab({ colors, styles, perfil, onGuardado }) {
   const [editando, setEditando] = useState(false);
   const [bio, setBio] = useState("");
   const [publico, setPublico] = useState(true);
+  const [lista, setLista] = useState(null);
+  const [verU, setVerU] = useState(null);
   useEffect(() => {
     if (perfil) {
       setBio(perfil.bio || "");
@@ -1756,15 +1967,32 @@ function MiPerfilTab({ colors, styles, perfil, onGuardado }) {
           <Text style={styles.statNum}>{perfil.stats?.posteos || 0}</Text>
           <Text style={styles.statLbl}>posteos</Text>
         </View>
-        <View style={styles.statBox}>
+        <TouchableOpacity style={styles.statBox} onPress={() => setLista({ titulo: "Seguidores", cargar: () => communityService.seguidores(perfil.id) })}>
           <Text style={styles.statNum}>{perfil.stats?.seguidores || 0}</Text>
           <Text style={styles.statLbl}>seguidores</Text>
-        </View>
-        <View style={styles.statBox}>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.statBox} onPress={() => setLista({ titulo: "Siguiendo", cargar: () => communityService.siguiendo(perfil.id) })}>
           <Text style={styles.statNum}>{perfil.stats?.siguiendo || 0}</Text>
           <Text style={styles.statLbl}>siguiendo</Text>
-        </View>
+        </TouchableOpacity>
       </View>
+
+      {lista ? (
+        <ListaUsuariosModal
+          colors={colors}
+          styles={styles}
+          titulo={lista.titulo}
+          cargar={lista.cargar}
+          onClose={() => setLista(null)}
+          onAbrirPerfil={(u) => {
+            setLista(null);
+            setVerU(u);
+          }}
+        />
+      ) : null}
+      {verU ? (
+        <PerfilUsuarioModal colors={colors} styles={styles} user={verU} onClose={() => setVerU(null)} />
+      ) : null}
 
       {editando ? (
         <View style={{ alignSelf: "stretch", gap: 10, marginTop: 8 }}>
@@ -1783,7 +2011,9 @@ function MiPerfilTab({ colors, styles, perfil, onGuardado }) {
               size={20}
               color={publico ? colors.greenBright : colors.muted}
             />
-            <Text style={styles.toggleTxt}>Perfil público (otros pueden encontrarte y seguirte)</Text>
+            <Text style={styles.toggleTxt}>
+              Aparecés en las búsquedas (si lo apagás, solo te encuentran con tu perfil). Tus posteos siempre son solo para seguidores aceptados.
+            </Text>
           </TouchableOpacity>
           <View style={{ flexDirection: "row", gap: 10 }}>
             <TouchableOpacity style={styles.btnSec} onPress={() => setEditando(false)}>
@@ -1798,7 +2028,7 @@ function MiPerfilTab({ colors, styles, perfil, onGuardado }) {
         <>
           {perfil.bio ? <Text style={styles.perfilBio}>{perfil.bio}</Text> : null}
           <Text style={styles.perfilPriv}>
-            {perfil.perfilPublico !== false ? "Perfil público" : "Perfil privado"}
+            {perfil.perfilPublico !== false ? "🔓 Aparecés en búsquedas" : "🔒 No aparecés en búsquedas"}
           </Text>
           <TouchableOpacity style={styles.btnSec} onPress={() => setEditando(true)}>
             <Ionicons name="create-outline" size={15} color={colors.text} />
@@ -1811,12 +2041,16 @@ function MiPerfilTab({ colors, styles, perfil, onGuardado }) {
 }
 
 // ---------- Perfil de otro usuario (modal) ----------
-function PerfilUsuarioModal({ colors, styles, user, onClose }) {
+function PerfilUsuarioModal({ colors, styles, user, onClose, miId }) {
   const insets = useSafeAreaInsets();
   const [perfil, setPerfil] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loSigo, setLoSigo] = useState(false);
+  const [pendiente, setPendiente] = useState(false);
   const [cargando, setCargando] = useState(false);
+  const [lista, setLista] = useState(null); // { titulo, cargar } | null
+  const [verU, setVerU] = useState(null); // usuario anidado a ver
+  const [chat, setChat] = useState(false); // chat DM abierto
   useEffect(() => {
     setPerfil(null);
     communityService
@@ -1824,18 +2058,34 @@ function PerfilUsuarioModal({ colors, styles, user, onClose }) {
       .then(({ data }) => {
         setPerfil(data);
         setLoSigo(!!data.loSigo);
+        setPendiente(!!data.pendiente);
         if (data.id) communityService.postsDeUsuario(data.id).then(({ data: d }) => setPosts(d?.posts || [])).catch(() => {});
       })
       .catch(() => setPerfil({ error: true }));
   }, [user.username]);
 
-  const toggleSeguir = () => {
+  const toggleSeguir = async () => {
     if (!perfil?.id || cargando) return;
     setCargando(true);
-    const accion = loSigo ? communityService.dejarDeSeguir : communityService.seguir;
-    setLoSigo((v) => !v);
-    accion(perfil.id).catch(() => setLoSigo((v) => !v)).finally(() => setCargando(false));
+    try {
+      if (loSigo || pendiente) {
+        setLoSigo(false);
+        setPendiente(false);
+        await communityService.dejarDeSeguir(perfil.id);
+      } else {
+        const { data } = await communityService.seguir(perfil.id);
+        setLoSigo(!!data.loSigo);
+        setPendiente(!!data.pendiente);
+      }
+    } catch {
+      setLoSigo(!!perfil.loSigo);
+      setPendiente(!!perfil.pendiente);
+    } finally {
+      setCargando(false);
+    }
   };
+  const labelSeguir = pendiente ? "Pendiente" : loSigo ? "Siguiendo" : "Seguir";
+  const siguiendoUi = loSigo || pendiente;
 
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
@@ -1855,11 +2105,6 @@ function PerfilUsuarioModal({ colors, styles, user, onClose }) {
           <View style={styles.center}>
             <Text style={styles.vacioTxt}>No se pudo cargar el perfil.</Text>
           </View>
-        ) : perfil.perfilPublico === false && !perfil.esYo ? (
-          <View style={styles.center}>
-            <Ionicons name="lock-closed-outline" size={30} color={colors.muted} />
-            <Text style={styles.vacioTxt}>Este perfil es privado.</Text>
-          </View>
         ) : (
           <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
             {/* Portada */}
@@ -1875,10 +2120,13 @@ function PerfilUsuarioModal({ colors, styles, user, onClose }) {
                 <Avatar user={perfil} size={80} colors={colors} />
               </View>
               {!perfil.esYo ? (
-                <View style={styles.perfilFollowWrapU}>
-                  <TouchableOpacity style={loSigo ? styles.grupoBtnSec : styles.grupoBtnPrim} onPress={toggleSeguir}>
-                    <Text style={loSigo ? styles.grupoBtnSecTxt : styles.grupoBtnPrimTxt}>
-                      {loSigo ? "Siguiendo" : "Seguir"}
+                <View style={[styles.perfilFollowWrapU, { flexDirection: "row", alignItems: "center", gap: 8 }]}>
+                  <TouchableOpacity style={styles.chatIconBtn} onPress={() => setChat(true)}>
+                    <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.text} />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={siguiendoUi ? styles.grupoBtnSec : styles.grupoBtnPrim} onPress={toggleSeguir} disabled={cargando}>
+                    <Text style={siguiendoUi ? styles.grupoBtnSecTxt : styles.grupoBtnPrimTxt}>
+                      {labelSeguir}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -1894,19 +2142,28 @@ function PerfilUsuarioModal({ colors, styles, user, onClose }) {
                 <Text style={styles.perfilStatText}>
                   <Text style={styles.perfilStatNum}>{perfil.stats?.posteos || 0}</Text> posteos
                 </Text>
-                <Text style={styles.perfilStatText}>
-                  <Text style={styles.perfilStatNum}>{perfil.stats?.seguidores || 0}</Text> seguidores
-                </Text>
-                <Text style={styles.perfilStatText}>
-                  <Text style={styles.perfilStatNum}>{perfil.stats?.siguiendo || 0}</Text> siguiendo
-                </Text>
+                <TouchableOpacity onPress={() => setLista({ titulo: "Seguidores", cargar: () => communityService.seguidores(perfil.id) })}>
+                  <Text style={styles.perfilStatText}>
+                    <Text style={styles.perfilStatNum}>{perfil.stats?.seguidores || 0}</Text> seguidores
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setLista({ titulo: "Siguiendo", cargar: () => communityService.siguiendo(perfil.id) })}>
+                  <Text style={styles.perfilStatText}>
+                    <Text style={styles.perfilStatNum}>{perfil.stats?.siguiendo || 0}</Text> siguiendo
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
 
             {/* Posteos */}
             <View style={{ paddingHorizontal: 18, gap: 10 }}>
               <Text style={styles.postsHead}>Posteos</Text>
-              {posts.length === 0 ? (
+              {!perfil.esYo && !perfil.puedeVer ? (
+                <Text style={styles.vacioTxt}>
+                  🔒 Perfil privado.{" "}
+                  {pendiente ? "Tu solicitud está pendiente de aprobación." : "Mandá una solicitud para ver sus posteos."}
+                </Text>
+              ) : posts.length === 0 ? (
                 <Text style={styles.vacioTxt}>Todavía no publicó nada.</Text>
               ) : (
                 posts.map((p) => (
@@ -1928,6 +2185,31 @@ function PerfilUsuarioModal({ colors, styles, user, onClose }) {
             </View>
           </ScrollView>
         )}
+        {lista ? (
+          <ListaUsuariosModal
+            colors={colors}
+            styles={styles}
+            titulo={lista.titulo}
+            cargar={lista.cargar}
+            onClose={() => setLista(null)}
+            onAbrirPerfil={(u) => {
+              setLista(null);
+              setVerU(u);
+            }}
+          />
+        ) : null}
+        {verU ? (
+          <PerfilUsuarioModal colors={colors} styles={styles} user={verU} miId={miId} onClose={() => setVerU(null)} />
+        ) : null}
+        {chat && perfil?.id ? (
+          <ChatModal
+            modo="dm"
+            id={perfil.id}
+            titulo={perfil.fullName || perfil.username}
+            miId={miId}
+            onClose={() => setChat(false)}
+          />
+        ) : null}
       </View>
     </Modal>
   );
@@ -2134,6 +2416,105 @@ const makeStyles = (colors) =>
       borderColor: colors.greenBright,
       overflow: "hidden",
     },
+    notifBadge: {
+      position: "absolute",
+      top: -5,
+      right: -6,
+      minWidth: 16,
+      height: 16,
+      paddingHorizontal: 3,
+      borderRadius: 8,
+      backgroundColor: "#ff5d5d",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    notifBadgeTxt: { color: "#fff", fontSize: 9, fontWeight: "800" },
+    // ---- Chat ----
+    chatIconBtn: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    chatMsg: { maxWidth: "80%", gap: 2 },
+    chatMsgMio: { alignSelf: "flex-end", alignItems: "flex-end" },
+    chatMsgOtro: { alignSelf: "flex-start", alignItems: "flex-start" },
+    chatAutor: { color: colors.greenBright, fontSize: 11.5, fontWeight: "800", paddingHorizontal: 6 },
+    chatBurbuja: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 16 },
+    chatBurbujaMio: { backgroundColor: colors.greenBright, borderBottomRightRadius: 5 },
+    chatBurbujaOtro: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderBottomLeftRadius: 5,
+    },
+    chatTxtMio: { color: "#06210a", fontSize: 14.5, lineHeight: 20 },
+    chatTxtOtro: { color: colors.text, fontSize: 14.5, lineHeight: 20 },
+    chatHora: { color: colors.muted, fontSize: 10.5, paddingHorizontal: 6 },
+    chatForm: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      gap: 8,
+      paddingHorizontal: 12,
+      paddingTop: 10,
+      borderTopWidth: 1,
+      borderTopColor: colors.cardBorder,
+      backgroundColor: colors.bg,
+    },
+    chatInput: {
+      flex: 1,
+      minHeight: 42,
+      maxHeight: 120,
+      backgroundColor: colors.card,
+      borderRadius: 22,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      paddingHorizontal: 16,
+      paddingTop: 10,
+      paddingBottom: 10,
+      color: colors.text,
+      fontSize: 15,
+    },
+    chatSend: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      backgroundColor: colors.greenBright,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    convoRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 4,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.cardBorder,
+    },
+    convoBadge: {
+      minWidth: 20,
+      height: 20,
+      paddingHorizontal: 5,
+      borderRadius: 10,
+      backgroundColor: "#ff5d5d",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    notifRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.cardBorder,
+    },
+    notifTxt: { flex: 1, color: colors.text, fontSize: 13.5, lineHeight: 19 },
+    notifNombre: { fontWeight: "800", color: colors.text },
+    notifCuando: { color: colors.muted, fontSize: 12 },
     center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 30 },
 
     tabs: {

@@ -35,25 +35,36 @@ export function haceCuanto(iso) {
 
 // Fila de usuario con botón seguir. Se usa en miembros de club y ranking de
 // reto. `extra` es contenido a la derecha (ej: metros del reto).
-export function UserRow({ user, onAbrirPerfil, extra, pos, miId }) {
+export function UserRow({ user, onAbrirPerfil, extra, pos, miId, onCambio }) {
   const [siguiendo, setSiguiendo] = useState(!!user.loSigo);
+  const [pendiente, setPendiente] = useState(!!user.pendiente);
   const [ocupado, setOcupado] = useState(false);
   const esYo = user.esYo || (miId != null && String(user.id) === String(miId));
 
   const toggle = async () => {
     if (ocupado) return;
-    const antes = siguiendo;
-    setSiguiendo(!antes);
     setOcupado(true);
     try {
-      if (antes) await communityService.dejarDeSeguir(user.id);
-      else await communityService.seguir(user.id);
+      if (siguiendo || pendiente) {
+        // Ya lo sigo (o le mandé solicitud): dejar de seguir / cancelar.
+        setSiguiendo(false);
+        setPendiente(false);
+        await communityService.dejarDeSeguir(user.id);
+      } else {
+        const { data } = await communityService.seguir(user.id);
+        setSiguiendo(!!data.loSigo);
+        setPendiente(!!data.pendiente); // cuenta privada → queda pendiente
+      }
+      onCambio?.();
     } catch {
-      setSiguiendo(antes);
+      setSiguiendo(!!user.loSigo);
+      setPendiente(!!user.pendiente);
     } finally {
       setOcupado(false);
     }
   };
+
+  const label = pendiente ? "Pendiente" : siguiendo ? "Siguiendo" : "Seguir";
 
   return (
     <div className={style.userRow}>
@@ -65,8 +76,8 @@ export function UserRow({ user, onAbrirPerfil, extra, pos, miId }) {
       </div>
       {extra}
       {!esYo && (
-        <button className={`${style.btnSeguir} ${siguiendo ? style.btnSiguiendo : ""}`} onClick={toggle} disabled={ocupado}>
-          {siguiendo ? "Siguiendo" : "Seguir"}
+        <button className={`${style.btnSeguir} ${siguiendo || pendiente ? style.btnSiguiendo : ""}`} onClick={toggle} disabled={ocupado}>
+          {label}
         </button>
       )}
     </div>

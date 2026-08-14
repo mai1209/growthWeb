@@ -442,6 +442,7 @@
   flex-direction: column;
 }
 @media (min-width: 620px) { .modal { border-radius: 20px; } }
+.modalWide { max-width: 680px; }
 .modalHead {
   display: flex;
   align-items: center;
@@ -498,8 +499,10 @@
   display: flex;
   align-items: flex-end;
   gap: 0.9rem;
-  margin-top: -34px;
+  margin-top: -42px;
   padding: 0 0.3rem;
+  position: relative;
+  z-index: 1; /* el avatar siempre por encima de la portada */
 }
 .perfilAvatar {
   width: 84px;
@@ -522,8 +525,10 @@
 .perfilHandle { color: var(--color-muted); font-size: 0.86rem; }
 .perfilBio { font-size: 0.9rem; line-height: 1.4; margin: 0.2rem 0 0; }
 .stats { display: flex; gap: 1.4rem; padding: 0.2rem 0.3rem; }
-.stat { text-align: center; }
-.statNum { font-weight: 800; font-size: 1.05rem; }
+.stat { text-align: center; border: none; background: none; padding: 0; font-family: inherit; }
+.statBtn { cursor: pointer; border-radius: 8px; }
+.statBtn:hover { opacity: 0.75; }
+.statNum { font-weight: 800; font-size: 1.05rem; color: var(--color-text); }
 .statLabel { color: var(--color-muted); font-size: 0.74rem; }
 
 /* Botón seguir */
@@ -542,6 +547,25 @@
   background: transparent;
   color: var(--color-text);
   border: 1px solid var(--border-color);
+}
+.btnMensaje {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 1.05rem;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.btnMensaje:hover {
+  background: var(--color-verde);
+  color: var(--accent-contrast);
+  border-color: var(--color-verde);
 }
 
 /* Miembros / ranking rows */
@@ -682,4 +706,192 @@
   color: var(--color-rojo);
   font-size: 0.85rem;
   text-align: center;
+}
+
+/* ---------- Notificaciones ---------- */
+.campanaWrap { position: relative; }
+.campanaBadge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--color-rojo, #ff5d5d);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--surface-card);
+}
+.notifRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.notifRow:last-child { border-bottom: none; }
+.notifTexto { flex: 1; min-width: 0; font-size: 0.88rem; line-height: 1.35; }
+.notifNombre { font-weight: 700; color: var(--color-text); cursor: pointer; }
+.notifNombre:hover { text-decoration: underline; }
+.notifCuando { color: var(--color-muted); font-size: 0.78rem; }
+.notifAcciones { display: flex; gap: 0.4rem; flex-shrink: 0; }
+.notifAceptar {
+  border: none;
+  background: var(--color-verde);
+  color: var(--accent-contrast);
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 18px;
+  cursor: pointer;
+}
+.notifRechazar {
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-text);
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 18px;
+  cursor: pointer;
+}
+
+/* ---------- Chat (DM / club) ---------- */
+.chatWrap {
+  display: flex;
+  flex-direction: column;
+  height: 68vh;
+}
+.chatMsgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.chatMsg {
+  max-width: 78%;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.chatMio {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+.chatAutor {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-verde);
+  padding-left: 0.4rem;
+}
+.chatBurbuja {
+  background: var(--surface-hover);
+  color: var(--color-text);
+  padding: 0.55rem 0.85rem;
+  border-radius: 16px;
+  border-bottom-left-radius: 5px;
+  font-size: 0.92rem;
+  line-height: 1.38;
+  word-break: break-word;
+  white-space: pre-wrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+.chatMio .chatBurbuja {
+  background: var(--color-verde);
+  color: var(--accent-contrast);
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 5px;
+}
+.chatHora {
+  font-size: 0.64rem;
+  color: var(--color-muted);
+  padding: 0 0.5rem;
+  opacity: 0.85;
+}
+.chatForm {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.75rem 0.9rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--surface-card, transparent);
+}
+.chatInput {
+  flex: 1 1 0;
+  min-width: 0;
+  border: 1px solid var(--border-color);
+  background: var(--surface-input);
+  border-radius: 22px;
+  padding: 0.6rem 1rem;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  outline: none;
+}
+.chatInput:focus { border-color: var(--accent-border); }
+.chatEnviar {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border: none;
+  background: var(--color-verde);
+  color: var(--accent-contrast);
+  border-radius: 50%;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+.chatEnviar:hover:not(:disabled) { filter: brightness(1.08); transform: scale(1.05); }
+.chatEnviar:active:not(:disabled) { transform: scale(0.95); }
+.chatEnviar:disabled { opacity: 0.4; cursor: default; }
+
+/* Bandeja de conversaciones */
+.convoRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  padding: 0.6rem 0.3rem;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  font-family: inherit;
+}
+.convoRow:hover { background: var(--surface-hover); }
+.convoInfo { flex: 1; min-width: 0; }
+.convoNombre { font-weight: 700; font-size: 0.92rem; }
+.convoUltimo {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.convoCuando { color: var(--color-muted); font-size: 0.72rem; flex-shrink: 0; }
+.convoBadge {
+  flex-shrink: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--color-verde);
+  color: var(--accent-contrast);
+  font-size: 0.68rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }

@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { FiX } from "react-icons/fi";
 import style from "../../style/Comunidad.module.css";
 
-export default function Modal({ titulo, onClose, children, headExtra }) {
+export default function Modal({ titulo, onClose, children, headExtra, wide }) {
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose?.();
     window.addEventListener("keydown", onKey);
@@ -18,7 +18,7 @@ export default function Modal({ titulo, onClose, children, headExtra }) {
 
   return createPortal(
     <div className={style.overlay} onMouseDown={(e) => e.target === e.currentTarget && onClose?.()}>
-      <div className={style.modal}>
+      <div className={`${style.modal} ${wide ? style.modalWide : ""}`}>
         <div className={style.modalHead}>
           <span className={style.modalTitulo}>{titulo}</span>
           {headExtra}

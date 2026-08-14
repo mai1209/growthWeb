@@ -932,6 +932,61 @@
   text-transform: capitalize;
 }
 
+.taskShared {
+  background: rgba(17, 24, 21, 0.12);
+  color: rgba(17, 24, 20, 0.9);
+}
+
+/* ===== Invitaciones a tareas compartidas ===== */
+.invList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+.invCard {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid rgba(93, 199, 45, 0.35);
+  background: rgba(93, 199, 45, 0.1);
+}
+.invIcon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  color: var(--color-verde, #5dc72d);
+}
+.invText {
+  flex: 1;
+  margin: 0;
+  color: var(--color-text);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+.invAceptar {
+  cursor: pointer;
+  border: none;
+  background: var(--color-verde, #5dc72d);
+  color: var(--accent-contrast, #06210a);
+  font-weight: 800;
+  font-size: 0.8rem;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  white-space: nowrap;
+}
+.invRechazar {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+}
+
 .hiddenMobile {
   display: flex;
 }

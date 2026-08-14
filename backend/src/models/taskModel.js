@@ -7,6 +7,19 @@ const TaskSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  // 👥 Colaboradores: tarea compartida entre usuarios. `user` es el dueño;
+  // acá van los invitados (pendiente) y los que aceptaron (aceptado). Una tarea
+  // aceptada aparece en la lista de ambos y cualquiera la edita/completa.
+  colaboradores: {
+    type: [
+      {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        estado: { type: String, enum: ['pendiente', 'aceptado'], default: 'pendiente' },
+        _id: false,
+      },
+    ],
+    default: [],
+  },
   meta: {
     type: String,
     required: [true, 'La meta es obligatoria'],

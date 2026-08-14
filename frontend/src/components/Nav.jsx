@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
-import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiWatch, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers, FiArrowRight, FiHeart, FiActivity, FiZap, FiGlobe } from "react-icons/fi";
+import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiWatch, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers, FiArrowRight, FiHeart, FiActivity, FiZap } from "react-icons/fi";
 import { TbBarbell } from "react-icons/tb";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { authService } from "../api";
+import ComunidadIcon from "./ComunidadIcon";
 import { COMUNIDAD_HABILITADA } from "../config";
 
 // Nav agrupado por secciones (estilo consola: se despliegan/contraen).
@@ -56,9 +57,9 @@ const NAV_GROUPS = [
   {
     id: "comunidad",
     title: "Comunidad",
-    icon: <FiGlobe className={style.navGroupIcon} />,
+    icon: <ComunidadIcon className={style.navGroupIcon} />,
     items: [
-      { to: "/comunidad", label: "Comunidad", icon: <FiUsers className={style.navIcon} /> },
+      { to: "/comunidad", label: "Comunidad", icon: <ComunidadIcon className={style.navIcon} /> },
     ],
   },
 ];

@@ -28,6 +28,7 @@ import TaskFormModal, { TASK_COLORS } from "../components/TaskFormModal";
 import TaskCalendar from "../components/TaskCalendar";
 import TaskHistory from "../components/TaskHistory";
 import ProgressRing from "../components/ProgressRing";
+import CompartirTareaModal from "../components/CompartirTareaModal";
 
 // Riel de horarios (como en la web): etiqueta de hora a la izquierda de cada
 // tarea y orden por horario (exactas por minuto, luego Mañana/Tarde/Noche, y las
@@ -105,6 +106,8 @@ export default function TareasScreen() {
   const [editTask, setEditTask] = useState(null);
   const [openMenu, setOpenMenu] = useState(null);
   const [tipWidget, setTipWidget] = useState(false); // aviso "agregá el widget"
+  const [compartirTask, setCompartirTask] = useState(null); // tarea a compartir
+  const [invitaciones, setInvitaciones] = useState([]); // invitaciones pendientes
 
   // Mostrar el aviso del widget una sola vez (hasta que lo cierren).
   useEffect(() => {
@@ -123,6 +126,11 @@ export default function TareasScreen() {
       const res = await taskService.getAll({ tipo: "task" });
       const list = Array.isArray(res.data) ? res.data : [];
       setAllTasks(list);
+      // Invitaciones a tareas compartidas (para el banner de arriba).
+      taskService
+        .invitaciones()
+        .then(({ data }) => setInvitaciones(data?.invitaciones || []))
+        .catch(() => {});
       // Espeja las tareas pendientes de hoy al widget de iOS (App Group),
       // ordenadas por horario y con la hora que muestra el widget.
       const hoy = new Date();
@@ -151,6 +159,31 @@ export default function TareasScreen() {
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
+
+  const aceptarInvitacion = async (inv) => {
+    setInvitaciones((prev) => prev.filter((x) => x.id !== inv.id));
+    try {
+      const { data } = await taskService.aceptarInvitacion(inv.id);
+      // La mostramos al toque con lo que devuelve el backend...
+      if (data?.tarea) {
+        setAllTasks((prev) => [
+          ...prev.filter((t) => String(t._id) !== String(data.tarea._id)),
+          data.tarea,
+        ]);
+      }
+    } catch {
+      /* no-op */
+    }
+    fetchTasks(); // ...y reconciliamos con el servidor.
+  };
+  const rechazarInvitacion = async (inv) => {
+    setInvitaciones((prev) => prev.filter((x) => x.id !== inv.id));
+    try {
+      await taskService.salir(inv.id);
+    } catch {
+      /* no-op */
+    }
+  };
 
   const dayTasks = useMemo(
     () => filterTasksForDate(allTasks, selectedDate),
@@ -231,6 +264,24 @@ export default function TareasScreen() {
             await fetchTasks();
           } catch {
             Alert.alert("Error", "No se pudo eliminar.");
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleSalir = (task) => {
+    Alert.alert("Salir de la tarea", `¿Dejar de colaborar en "${task.meta}"?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Salir",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await taskService.salir(task._id);
+            await fetchTasks();
+          } catch {
+            Alert.alert("Error", "No se pudo salir de la tarea.");
           }
         },
       },
@@ -331,6 +382,23 @@ export default function TareasScreen() {
                   </View>
                 ) : null}
 
+                {invitaciones.map((inv) => (
+                  <View key={inv.id} style={styles.invCard}>
+                    <Ionicons name="people" size={20} color={colors.greenBright} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.invTitulo} numberOfLines={2}>
+                        {inv.de?.fullName || inv.de?.username || "Alguien"} te invitó a la tarea “{inv.meta}”
+                      </Text>
+                    </View>
+                    <TouchableOpacity style={styles.invAceptar} onPress={() => aceptarInvitacion(inv)} hitSlop={6}>
+                      <Text style={styles.invAceptarTxt}>Aceptar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => rechazarInvitacion(inv)} hitSlop={8}>
+                      <Ionicons name="close" size={20} color={colors.muted} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+
                 <View style={styles.progressCard}>
                   <ProgressRing percent={progressPercent} />
                   <View style={styles.progressSide}>
@@ -387,6 +455,14 @@ export default function TareasScreen() {
                       <Text style={[styles.cardTitle, done && styles.cardTitleDone]}>{item.meta}</Text>
                       <View style={styles.metaRow}>
                         {item.urgencia ? <Text style={styles.metaChip}>{item.urgencia}</Text> : null}
+                        {item.compartida ? (
+                          <View style={styles.compartidaChip}>
+                            <Ionicons name="people" size={11} color="#16241d" />
+                            <Text style={styles.compartidaChipTxt}>
+                              {item.soyOwner === false ? "Compartida conmigo" : "Compartida"}
+                            </Text>
+                          </View>
+                        ) : null}
                       </View>
                     </View>
 
@@ -402,30 +478,54 @@ export default function TareasScreen() {
                     />
                   </View>
 
-                  {/* Fila desplegable: editar / eliminar */}
+                  {/* Fila desplegable: editar (ícono) / compartir / eliminar (ícono) */}
                   {menuOpen ? (
                     <View style={styles.cardExpanded}>
                       <TouchableOpacity
-                        style={styles.expandedBtn}
+                        style={styles.expandedIconBtn}
                         onPress={() => {
                           setOpenMenu(null);
                           setEditTask(item);
                           setShowForm(true);
                         }}
+                        accessibilityLabel="Editar tarea"
                       >
-                        <Ionicons name="pencil" size={15} color="#16241d" />
-                        <Text style={[styles.expandedText, { color: "#16241d" }]}>Editar</Text>
+                        <Ionicons name="pencil" size={18} color={fg} />
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={[styles.expandedBtn, styles.expandedDelete]}
+                        style={[styles.expandedIconBtn, { flexDirection: "row" }]}
                         onPress={() => {
                           setOpenMenu(null);
-                          handleDelete(item);
+                          setCompartirTask(item);
                         }}
+                        accessibilityLabel="Compartir tarea"
                       >
-                        <Ionicons name="trash-outline" size={15} color="#c0392b" />
-                        <Text style={[styles.expandedText, { color: "#c0392b" }]}>Eliminar</Text>
+                        <Ionicons name="people-outline" size={18} color={fg} />
+                        <Ionicons name="add" size={14} color={fg} style={{ marginLeft: -1, marginTop: -6 }} />
                       </TouchableOpacity>
+                      {item.soyOwner === false ? (
+                        <TouchableOpacity
+                          style={[styles.expandedIconBtn, styles.expandedDelete]}
+                          onPress={() => {
+                            setOpenMenu(null);
+                            handleSalir(item);
+                          }}
+                          accessibilityLabel="Salir de la tarea"
+                        >
+                          <Ionicons name="exit-outline" size={18} color={fg} />
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity
+                          style={[styles.expandedIconBtn, styles.expandedDelete]}
+                          onPress={() => {
+                            setOpenMenu(null);
+                            handleDelete(item);
+                          }}
+                          accessibilityLabel="Eliminar tarea"
+                        >
+                          <Ionicons name="trash-outline" size={18} color={fg} />
+                        </TouchableOpacity>
+                      )}
                     </View>
                   ) : null}
                   </View>
@@ -451,6 +551,14 @@ export default function TareasScreen() {
         }}
         onSaved={fetchTasks}
       />
+
+      {compartirTask ? (
+        <CompartirTareaModal
+          task={compartirTask}
+          onClose={() => setCompartirTask(null)}
+          onCambio={fetchTasks}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -563,6 +671,27 @@ const makeStyles = (colors) => StyleSheet.create({
   tipTitulo: { color: colors.text, fontSize: 14, fontWeight: "800" },
   tipTexto: { color: colors.muted, fontSize: 12.5, lineHeight: 18, fontWeight: "600", marginTop: 2 },
 
+  // Banner de invitación a tarea compartida.
+  invCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(93,199,45,0.35)",
+    backgroundColor: "rgba(93,199,45,0.10)",
+    marginBottom: 10,
+  },
+  invTitulo: { color: colors.text, fontSize: 13.5, fontWeight: "700", lineHeight: 19 },
+  invAceptar: {
+    backgroundColor: colors.greenBright,
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+  },
+  invAceptarTxt: { color: "#06210a", fontSize: 13, fontWeight: "800" },
+
   progressCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -651,7 +780,14 @@ const makeStyles = (colors) => StyleSheet.create({
     // color de tarjeta (pastel, gris o la oscura) y en tarjeta completada.
     backgroundColor: "rgba(255,255,255,0.92)",
   },
-  expandedDelete: { backgroundColor: "rgba(255,255,255,0.92)" },
+  expandedIconBtn: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+  },
+  expandedDelete: {},
   expandedText: { fontWeight: "800", fontSize: 13 },
   cardTitle: { color: colors.text, fontSize: 16, fontWeight: "700" },
   cardTitleDone: { textDecorationLine: "line-through", color: colors.muted },
@@ -667,6 +803,16 @@ const makeStyles = (colors) => StyleSheet.create({
     textTransform: "capitalize",
     overflow: "hidden",
   },
+  compartidaChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "rgba(0,0,0,0.10)",
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  compartidaChipTxt: { color: "#16241d", fontSize: 11.5, fontWeight: "800" },
   fab: {
     position: "absolute",
     right: 18,

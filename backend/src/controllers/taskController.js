@@ -1,6 +1,42 @@
 import Task from "../models/taskModel.js";
 import Meta from "../models/metaModel.js";
+import User from "../models/userModel.js";
 import mongoose from "mongoose";
+
+// Datos públicos mínimos de un usuario (para dueño/colaboradores de una tarea).
+const pubUser = (u) =>
+  u && typeof u === "object" && u._id
+    ? {
+        id: String(u._id),
+        username: u.username || "",
+        fullName: u.fullName || "",
+        foto: u.profilePhotoUrl || "",
+      }
+    : null;
+
+const POPULATE_COLABS = [
+  { path: "user", select: "username fullName profilePhotoUrl" },
+  { path: "colaboradores.user", select: "username fullName profilePhotoUrl" },
+];
+
+// Condición de "puedo ver esta tarea": es mía, o soy colaborador aceptado.
+// Las tareas compartidas se muestran solo en el workspace personal.
+const ownershipCond = (userId, workspace, workspaceQuery) => {
+  const oid = new mongoose.Types.ObjectId(userId);
+  const mine = { user: oid, ...workspaceQuery };
+  if (workspace !== "personal") return mine;
+  const shared = {
+    colaboradores: { $elemMatch: { user: oid, estado: "aceptado" } },
+  };
+  return { $or: [mine, shared] };
+};
+
+const puedeEditarTarea = (task, userId) => {
+  if (String(task.user?._id || task.user) === String(userId)) return true;
+  return (task.colaboradores || []).some(
+    (c) => String(c.user?._id || c.user) === String(userId) && c.estado === "aceptado"
+  );
+};
 
 // Carga perezosa de la sincronización con Google. Si el módulo (o sus paquetes)
 // no se puede cargar en el entorno serverless, NO rompe el resto de la API.
@@ -84,12 +120,24 @@ const normalizeTaskDate = (value) => {
   );
 };
 
-const serializeTask = (task) => {
+const serializeTask = (task, meId) => {
   const raw = typeof task.toObject === "function" ? task.toObject() : task;
+  const ownerId = raw.user && raw.user._id ? String(raw.user._id) : String(raw.user || "");
+  const colabs = (raw.colaboradores || [])
+    .map((c) => {
+      const info = pubUser(c.user);
+      return info ? { ...info, estado: c.estado } : { id: String(c.user), estado: c.estado };
+    })
+    .filter((c) => c.id);
 
   return {
     ...raw,
+    user: ownerId, // se mantiene como id (string) por compatibilidad con el front
     fecha: normalizeTaskDate(raw.fecha),
+    owner: pubUser(raw.user) || { id: ownerId },
+    colaboradores: colabs,
+    compartida: colabs.length > 0,
+    soyOwner: meId ? String(ownerId) === String(meId) : undefined,
   };
 };
 
@@ -185,7 +233,7 @@ export const getTasks = async (req, res) => {
         : { $or: [{ tipo: "task" }, { tipo: { $exists: false } }] };
 
     const buildTaskState = (task, targetDate) => {
-      const taskObj = serializeTask(task);
+      const taskObj = serializeTask(task, userId);
       taskObj.completada = task.completadasEn?.includes(targetDate) || false;
       return taskObj;
     };
@@ -193,10 +241,10 @@ export const getTasks = async (req, res) => {
     // 👇 SI NO HAY FECHA, SALIMOS ANTES
     if (!fecha) {
       const allTasks = await Task.find({
-        user: new mongoose.Types.ObjectId(userId),
-        ...workspaceQuery,
-        ...typeQuery,
-      }).sort({ fecha: 1, horario: 1 });
+        $and: [ownershipCond(userId, workspace, workspaceQuery), typeQuery],
+      })
+        .populate(POPULATE_COLABS)
+        .sort({ fecha: 1, horario: 1 });
 
       const allTasksWithState = allTasks.map((task) =>
         buildTaskState(task, normalizeTaskDate(task.fecha).toISOString().slice(0, 10))
@@ -219,9 +267,8 @@ const diaActual = diasMap[startDate.getUTCDay()];
 
     // ✅ DESPUÉS usarlas
     const query = {
-      user: new mongoose.Types.ObjectId(userId),
       $and: [
-        workspaceQuery,
+        ownershipCond(userId, workspace, workspaceQuery),
         typeQuery,
         {
           $or: [
@@ -242,7 +289,7 @@ const diaActual = diasMap[startDate.getUTCDay()];
       ],
     };
 
- const tasks = await Task.find(query).sort({ horario: 1 });
+ const tasks = await Task.find(query).populate(POPULATE_COLABS).sort({ horario: 1 });
 
 // 👇 FECHA STRING (YYYY-MM-DD)
 const fechaStr = startDate.toISOString().slice(0, 10);
@@ -267,14 +314,15 @@ res.status(200).json(tasksConEstado);
 export const updateTaskStatus = async (req, res) => {
   try {
     const { fecha } = req.body; // "YYYY-MM-DD"
-    const workspace = normalizeWorkspace(req);
 
-    const task = await Task.findOne({ _id: req.params.id, ...buildWorkspaceQuery(workspace) });
+    // Buscamos por id (sin filtrar workspace): una tarea compartida vive en el
+    // workspace del dueño, pero el colaborador la completa desde el suyo.
+    const task = await Task.findById(req.params.id);
     if (!task) {
       return res.status(404).json({ message: "Tarea no encontrada" });
     }
 
-    if (task.user.toString() !== req.user.id) {
+    if (!puedeEditarTarea(task, req.user.id)) {
       return res.status(401).json({ message: "Usuario no autorizado" });
     }
 
@@ -308,7 +356,8 @@ export const updateTaskStatus = async (req, res) => {
       }
     }
 
-    const taskObj = serializeTask(task);
+    await task.populate(POPULATE_COLABS);
+    const taskObj = serializeTask(task, req.user.id);
     taskObj.completada = completada;
 
     // 👈 ESTO ES LO CLAVE
@@ -327,18 +376,30 @@ export const updateTaskStatus = async (req, res) => {
 // @access  Private
 export const deleteTask = async (req, res) => {
   try {
-    const workspace = normalizeWorkspace(req);
     // 1. Buscamos la tarea por su ID, que viene en la URL (req.params.id)
-    const task = await Task.findOne({ _id: req.params.id, ...buildWorkspaceQuery(workspace) });
+    const task = await Task.findById(req.params.id);
 
     // Si no se encuentra, devolvemos un error 404
     if (!task) {
       return res.status(404).json({ message: "Tarea no encontrada" });
     }
 
-    // 2. Verificación de seguridad: nos aseguramos de que el usuario que la quiere borrar sea el dueño
+    // 2. Si NO es el dueño pero es colaborador, "borrar" = salir de la tarea
+    // compartida (se quita a sí mismo, la tarea sigue viva para los demás).
     if (task.user.toString() !== req.user.id) {
-      return res.status(401).json({ message: "Usuario no autorizado" });
+      const esColab = (task.colaboradores || []).some(
+        (c) => c.user.toString() === req.user.id
+      );
+      if (!esColab) {
+        return res.status(401).json({ message: "Usuario no autorizado" });
+      }
+      task.colaboradores = task.colaboradores.filter(
+        (c) => c.user.toString() !== req.user.id
+      );
+      await task.save();
+      return res
+        .status(200)
+        .json({ message: "Saliste de la tarea compartida", id: req.params.id, salida: true });
     }
 
     // 🔗 Borramos también el evento vinculado en Google Calendar (si existe)
@@ -366,16 +427,16 @@ export const deleteTask = async (req, res) => {
 
 export const updateTask = async (req, res) => {
   try {
-    const activeWorkspace = normalizeWorkspace(req);
-    // 1. Buscamos la tarea por su ID
-    const task = await Task.findOne({ _id: req.params.id, ...buildWorkspaceQuery(activeWorkspace) });
+    // 1. Buscamos la tarea por su ID (una tarea compartida puede editarla
+    // cualquier colaborador aceptado, aunque el dueño la tenga en otro workspace).
+    const task = await Task.findById(req.params.id);
 
     if (!task) {
       return res.status(404).json({ message: "Tarea no encontrada" });
     }
 
-    // 2. Verificamos que el usuario sea el dueño
-    if (task.user.toString() !== req.user.id) {
+    // 2. Verificamos que el usuario sea el dueño o colaborador aceptado
+    if (!puedeEditarTarea(task, req.user.id)) {
       return res.status(401).json({ message: "Usuario no autorizado" });
     }
 
@@ -431,11 +492,168 @@ export const updateTask = async (req, res) => {
       updatedTask.googleEventId = googleEventId;
     }
 
-    res.status(200).json(serializeTask(updatedTask));
+    await updatedTask.populate(POPULATE_COLABS);
+    res.status(200).json(serializeTask(updatedTask, req.user.id));
   } catch (error) {
     console.error("Error al actualizar la tarea:", error);
     res
       .status(500)
       .json({ message: "Error en el servidor al actualizar la tarea" });
+  }
+};
+
+// ============================================================================
+// 👥 COMPARTIR TAREAS (tarea colaborativa entre usuarios)
+// ============================================================================
+
+// @desc  Buscar usuarios por @usuario para invitar a una tarea
+// @route GET /api/task/buscar-usuario?u=texto
+export const buscarUsuarioTarea = async (req, res) => {
+  try {
+    const q = String(req.query.u || "").trim().replace(/^@/, "");
+    if (q.length < 2) return res.status(200).json({ usuarios: [] });
+    const rx = new RegExp("^" + q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    const users = await User.find({ username: rx, _id: { $ne: req.user.id } })
+      .select("username fullName profilePhotoUrl")
+      .limit(8);
+    res.status(200).json({ usuarios: users.map(pubUser) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al buscar usuario" });
+  }
+};
+
+// @desc  Invitar a un usuario a colaborar en una tarea
+// @route POST /api/task/:id/compartir   body: { username } o { userId }
+export const compartirTarea = async (req, res) => {
+  try {
+    const { username, userId: targetId } = req.body;
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: "Tarea no encontrada" });
+
+    // Solo el dueño o un colaborador aceptado puede invitar a más gente.
+    if (!puedeEditarTarea(task, req.user.id)) {
+      return res.status(403).json({ message: "No autorizado" });
+    }
+
+    let target = null;
+    if (targetId) target = await User.findById(targetId);
+    else if (username)
+      target = await User.findOne({
+        username: String(username).trim().replace(/^@/, ""),
+      });
+    if (!target) return res.status(404).json({ message: "Usuario no encontrado" });
+
+    if (target._id.toString() === task.user.toString()) {
+      return res.status(400).json({ message: "Esa persona ya es la dueña de la tarea" });
+    }
+    const ya = (task.colaboradores || []).find(
+      (c) => c.user.toString() === target._id.toString()
+    );
+    if (ya) {
+      return res.status(200).json({
+        message: ya.estado === "aceptado" ? "Ya colabora en la tarea" : "Ya tiene una invitación pendiente",
+        estado: ya.estado,
+        usuario: pubUser(target),
+      });
+    }
+
+    task.colaboradores.push({ user: target._id, estado: "pendiente" });
+    await task.save();
+    res.status(200).json({ message: "Invitación enviada", usuario: pubUser(target) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al compartir la tarea" });
+  }
+};
+
+// @desc  Invitaciones pendientes de tareas para el usuario actual
+// @route GET /api/task/invitaciones
+export const getInvitacionesTarea = async (req, res) => {
+  try {
+    const oid = new mongoose.Types.ObjectId(req.user.id);
+    const tasks = await Task.find({
+      colaboradores: { $elemMatch: { user: oid, estado: "pendiente" } },
+    })
+      .populate({ path: "user", select: "username fullName profilePhotoUrl" })
+      .sort({ updatedAt: -1 });
+    const invitaciones = tasks.map((t) => ({
+      id: String(t._id),
+      meta: t.meta,
+      tipo: t.tipo,
+      fecha: normalizeTaskDate(t.fecha),
+      de: pubUser(t.user),
+    }));
+    res.status(200).json({ invitaciones });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al traer invitaciones" });
+  }
+};
+
+// @desc  Aceptar una invitación a una tarea compartida
+// @route POST /api/task/:id/aceptar
+export const aceptarInvitacionTarea = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: "Tarea no encontrada" });
+    const colab = (task.colaboradores || []).find(
+      (c) => c.user.toString() === req.user.id
+    );
+    if (!colab) return res.status(404).json({ message: "No tenés una invitación a esta tarea" });
+    colab.estado = "aceptado";
+    task.markModified("colaboradores");
+    await task.save();
+    await task.populate(POPULATE_COLABS);
+    // Devolvemos la tarea completa para que el cliente la muestre al instante.
+    res.status(200).json({
+      message: "Te uniste a la tarea",
+      id: String(task._id),
+      tarea: serializeTask(task, req.user.id),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al aceptar la invitación" });
+  }
+};
+
+// @desc  Rechazar una invitación o salir de una tarea compartida (se quita a sí mismo)
+// @route POST /api/task/:id/salir
+export const salirDeTarea = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: "Tarea no encontrada" });
+    const estaba = (task.colaboradores || []).some(
+      (c) => c.user.toString() === req.user.id
+    );
+    if (!estaba) return res.status(404).json({ message: "No estás en esta tarea" });
+    task.colaboradores = task.colaboradores.filter(
+      (c) => c.user.toString() !== req.user.id
+    );
+    await task.save();
+    res.status(200).json({ message: "Listo", id: String(task._id) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al salir de la tarea" });
+  }
+};
+
+// @desc  El dueño quita a un colaborador de una tarea
+// @route DELETE /api/task/:id/colaborador/:userId
+export const quitarColaborador = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: "Tarea no encontrada" });
+    if (task.user.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Solo el dueño puede quitar colaboradores" });
+    }
+    task.colaboradores = task.colaboradores.filter(
+      (c) => c.user.toString() !== req.params.userId
+    );
+    await task.save();
+    res.status(200).json({ message: "Colaborador quitado", id: String(task._id) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al quitar colaborador" });
   }
 };

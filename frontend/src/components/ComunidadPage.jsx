@@ -11,12 +11,14 @@ import {
   FiPlus,
   FiMapPin,
   FiCalendar,
+  FiBell,
 } from "react-icons/fi";
 import { communityService, gruposService, retosService } from "../api";
 import style from "../style/Comunidad.module.css";
 import PostCard from "./comunidad/PostCard";
 import ComposePostModal from "./comunidad/ComposePostModal";
 import PerfilModal from "./comunidad/PerfilModal";
+import NotificacionesModal from "./comunidad/NotificacionesModal";
 import ClubDetalleModal from "./comunidad/ClubDetalleModal";
 import RetoDetalleModal from "./comunidad/RetoDetalleModal";
 import CrearClubModal from "./comunidad/CrearClubModal";
@@ -50,9 +52,12 @@ export default function ComunidadPage() {
   const [componer, setComponer] = useState(false);
   const [crearClub, setCrearClub] = useState(false);
   const [crearReto, setCrearReto] = useState(false);
+  const [notifsOpen, setNotifsOpen] = useState(false);
+  const [noLeidas, setNoLeidas] = useState(0);
 
   useEffect(() => {
     communityService.getMiPerfil().then(({ data }) => setYo(data)).catch(() => {});
+    communityService.notificaciones().then(({ data }) => setNoLeidas(data.noLeidas || 0)).catch(() => {});
   }, []);
 
   const abrirPerfil = useCallback(
@@ -121,9 +126,20 @@ export default function ComunidadPage() {
           <p className={style.kicker}>Comunidad</p>
           <h1>Growth social</h1>
         </div>
-        <button className={style.headerIconBtn} onClick={() => yo && abrirPerfil(yo)} aria-label="Mi perfil" title="Mi perfil">
-          <Avatar user={yo} />
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <button
+            className={`${style.headerIconBtn} ${style.campanaWrap}`}
+            onClick={() => setNotifsOpen(true)}
+            aria-label="Notificaciones"
+            title="Notificaciones"
+          >
+            <FiBell />
+            {noLeidas > 0 && <span className={style.campanaBadge}>{noLeidas > 9 ? "9+" : noLeidas}</span>}
+          </button>
+          <button className={style.headerIconBtn} onClick={() => yo && abrirPerfil(yo)} aria-label="Mi perfil" title="Mi perfil">
+            <Avatar user={yo} />
+          </button>
+        </div>
       </div>
 
       <div className={style.tabs}>
@@ -162,6 +178,14 @@ export default function ComunidadPage() {
           miId={yo?.id}
           onClose={() => setPerfilUsername(null)}
           onAbrirPerfil={abrirPerfil}
+        />
+      )}
+      {notifsOpen && (
+        <NotificacionesModal
+          miId={yo?.id}
+          onClose={() => setNotifsOpen(false)}
+          onAbrirPerfil={abrirPerfil}
+          onLeidas={() => setNoLeidas(0)}
         />
       )}
       {componer && (

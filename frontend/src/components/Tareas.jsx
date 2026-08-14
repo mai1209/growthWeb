@@ -33,7 +33,11 @@ import {
   FiTarget,
   FiCheckSquare,
   FiFlag,
+  FiUsers,
+  FiLogOut,
+  FiSearch,
 } from "react-icons/fi";
+import CompartirTareaModal from "./CompartirTareaModal";
 
 
 const FormDateButton = forwardRef(({ value, onClick }, ref) => (
@@ -285,6 +289,8 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
   const [historyRef, setHistoryRef] = useState(new Date()); // período de referencia del historial
   const [updatingTaskIds, setUpdatingTaskIds] = useState([]);
   const [openTaskMenu, setOpenTaskMenu] = useState(null);
+  const [compartirTask, setCompartirTask] = useState(null); // tarea a compartir
+  const [invitaciones, setInvitaciones] = useState([]); // invitaciones pendientes
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [dayActionDate, setDayActionDate] = useState(null); // día tocado en el calendario
   const [editingTask, setEditingTask] = useState(null);
@@ -371,12 +377,50 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
       const res = await taskService.getAll({ tipo: "task", workspace: activeWorkspace });
       setTasks(Array.isArray(res.data) ? res.data : []);
       setError("");
+      // Invitaciones a tareas compartidas (banner de arriba).
+      taskService
+        .invitaciones()
+        .then(({ data }) => setInvitaciones(data?.invitaciones || []))
+        .catch(() => {});
     } catch (err) {
       setError("No se pudieron cargar las tareas.");
     } finally {
       setLoading(false);
     }
   }, [activeWorkspace]);
+
+  const aceptarInvitacion = async (inv) => {
+    setInvitaciones((prev) => prev.filter((x) => x.id !== inv.id));
+    try {
+      const { data } = await taskService.aceptarInvitacion(inv.id);
+      if (data?.tarea) {
+        setTasks((prev) => [
+          ...prev.filter((t) => String(t._id) !== String(data.tarea._id)),
+          data.tarea,
+        ]);
+      }
+    } catch {
+      /* no-op */
+    }
+    fetchTasks();
+  };
+  const rechazarInvitacion = async (inv) => {
+    setInvitaciones((prev) => prev.filter((x) => x.id !== inv.id));
+    try {
+      await taskService.salir(inv.id);
+    } catch {
+      /* no-op */
+    }
+  };
+  const handleSalirTarea = async (taskId) => {
+    if (!window.confirm("¿Dejar de colaborar en esta tarea?")) return;
+    try {
+      await taskService.salir(taskId);
+      await fetchTasks();
+    } catch {
+      setError("No se pudo salir de la tarea.");
+    }
+  };
 
   useEffect(() => {
     fetchTasks();
@@ -707,6 +751,12 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                     <FiClock />
                     {task.horario || "Sin horario"}
                   </span>
+                  {task.compartida ? (
+                    <span className={`${style.taskChip} ${style.taskShared}`}>
+                      <FiUsers />
+                      {task.soyOwner === false ? "Compartida conmigo" : "Compartida"}
+                    </span>
+                  ) : null}
                 </div>
               </div>
 
@@ -720,7 +770,7 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
               />
             </div>
 
-            {/* Fila desplegable con editar / eliminar */}
+            {/* Fila desplegable con editar / compartir / eliminar */}
             {menuOpen ? (
               <div className={style.taskExpanded}>
                 <button
@@ -737,12 +787,35 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                   type="button"
                   onClick={() => {
                     setOpenTaskMenu(null);
-                    handleDeleteTask(task._id);
+                    setCompartirTask(task);
                   }}
-                  className={`${style.taskExpandedBtn} ${style.taskExpandedDelete}`}
+                  className={style.taskExpandedBtn}
                 >
-                  <FiTrash2 /> Eliminar
+                  <FiUsers /> Compartir
                 </button>
+                {task.soyOwner === false ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenTaskMenu(null);
+                      handleSalirTarea(task._id);
+                    }}
+                    className={`${style.taskExpandedBtn} ${style.taskExpandedDelete}`}
+                  >
+                    <FiLogOut /> Salir
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenTaskMenu(null);
+                      handleDeleteTask(task._id);
+                    }}
+                    className={`${style.taskExpandedBtn} ${style.taskExpandedDelete}`}
+                  >
+                    <FiTrash2 /> Eliminar
+                  </button>
+                )}
               </div>
             ) : null}
           </div>
@@ -1088,6 +1161,24 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
         </aside>
 
         <div className={style.tasksList}>
+          {invitaciones.length > 0 ? (
+            <div className={style.invList}>
+              {invitaciones.map((inv) => (
+                <div key={inv.id} className={style.invCard}>
+                  <FiUsers className={style.invIcon} />
+                  <p className={style.invText}>
+                    <strong>{inv.de?.fullName || inv.de?.username || "Alguien"}</strong> te invitó a la tarea “{inv.meta}”
+                  </p>
+                  <button type="button" className={style.invAceptar} onClick={() => aceptarInvitacion(inv)}>
+                    Aceptar
+                  </button>
+                  <button type="button" className={style.invRechazar} onClick={() => rechazarInvitacion(inv)} aria-label="Rechazar">
+                    <FiX />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
           {viewMode === "calendar"
             ? renderCalendar()
             : viewMode === "history"
@@ -1304,6 +1395,14 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
             </form>
           </section>
         </div>
+      ) : null}
+
+      {compartirTask ? (
+        <CompartirTareaModal
+          task={compartirTask}
+          onClose={() => setCompartirTask(null)}
+          onCambio={fetchTasks}
+        />
       ) : null}
     </div>
   );

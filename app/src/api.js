@@ -69,6 +69,13 @@ export const taskService = {
   update: (id, data) => api.put(`/api/task/${id}`, data),
   updateStatus: (id, data) => api.put(`/api/task/${id}/status`, data),
   delete: (id) => api.delete(`/api/task/${id}`),
+  // 👥 Compartir tareas
+  buscarUsuario: (u) => api.get("/api/task/buscar-usuario", { params: { u } }),
+  compartir: (id, data) => api.post(`/api/task/${id}/compartir`, data),
+  invitaciones: () => api.get("/api/task/invitaciones"),
+  aceptarInvitacion: (id) => api.post(`/api/task/${id}/aceptar`),
+  salir: (id) => api.post(`/api/task/${id}/salir`),
+  quitarColaborador: (id, userId) => api.delete(`/api/task/${id}/colaborador/${userId}`),
 };
 
 export const movimientoService = {
@@ -150,6 +157,17 @@ export const communityService = {
   buscar: (q) => api.get("/api/community/buscar", { params: { q } }),
   seguir: (userId) => api.post(`/api/community/follow/${userId}`),
   dejarDeSeguir: (userId) => api.delete(`/api/community/follow/${userId}`),
+  aceptarSolicitud: (userId) => api.post(`/api/community/solicitudes/${userId}/aceptar`),
+  rechazarSolicitud: (userId) => api.post(`/api/community/solicitudes/${userId}/rechazar`),
+  notificaciones: () => api.get("/api/community/notificaciones"),
+  marcarLeidas: () => api.post("/api/community/notificaciones/leer"),
+  // Chat
+  conversaciones: () => api.get("/api/community/chat/conversaciones"),
+  chatNoLeidos: () => api.get("/api/community/chat/no-leidos"),
+  getDM: (userId) => api.get(`/api/community/chat/dm/${userId}`),
+  enviarDM: (userId, texto) => api.post(`/api/community/chat/dm/${userId}`, { texto }),
+  getChatGrupo: (grupoId) => api.get(`/api/community/chat/grupo/${grupoId}`),
+  enviarChatGrupo: (grupoId, texto) => api.post(`/api/community/chat/grupo/${grupoId}`, { texto }),
   seguidores: (userId) => api.get(`/api/community/users/${userId}/followers`),
   siguiendo: (userId) => api.get(`/api/community/users/${userId}/following`),
   crearPost: (data) => api.post("/api/community/posts", data),
