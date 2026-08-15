@@ -24,7 +24,7 @@
     },
     "android": {
       "package": "app.growthmanager.mobile",
-      "versionCode": 25,
+      "versionCode": 27,
       "permissions": [
         "android.permission.health.READ_STEPS"
       ],
