@@ -18,7 +18,7 @@ import { iniciarCaminataLA, actualizarCaminataLA, terminarCaminataLA } from "../
 import * as TaskManager from "expo-task-manager";
 import { useTheme } from "../theme";
 import { communityService } from "../api";
-import { COMUNIDAD_HABILITADA } from "../config";
+import { COMPARTIR_IMAGEN_HABILITADO } from "../config";
 import CompartirActividadModal from "./CompartirActividadModal";
 
 const R_TIERRA = 6371000; // metros
@@ -459,7 +459,7 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
               </View>
             ) : fase === "resumen" ? (
               <>
-                {COMUNIDAD_HABILITADA ? (
+                {COMPARTIR_IMAGEN_HABILITADO ? (
                   <TouchableOpacity style={styles.imgBtn} onPress={() => setCompartirImgOpen(true)}>
                     <Ionicons name="image-outline" size={18} color={colors.greenBright} />
                     <Text style={styles.imgBtnText}>Compartir imagen (foto + recorrido)</Text>

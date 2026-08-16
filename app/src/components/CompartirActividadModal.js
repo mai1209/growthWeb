@@ -126,7 +126,7 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
   const guardar = async () => {
     setOcupado(true);
     try {
-      const perm = await MediaLibrary.requestPermissionsAsync();
+      const perm = await MediaLibrary.requestPermissionsAsync(true); // true = solo "agregar" (write-only)
       if (!perm.granted) {
         Alert.alert("Permiso", "Necesitamos permiso para guardar en tu galería.");
         return;

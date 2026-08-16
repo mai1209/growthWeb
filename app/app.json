@@ -17,6 +17,7 @@
         "NSSupportsLiveActivities": true,
         "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone",
         "NSFaceIDUsageDescription": "Allow $(PRODUCT_NAME) to access your Face ID biometric data.",
+        "NSPhotoLibraryAddUsageDescription": "Growth guarda en tu galería la imagen de tu recorrido cuando tocás \"Compartir imagen\".",
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true
         }

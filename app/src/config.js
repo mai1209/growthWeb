@@ -17,6 +17,10 @@ export const ARCA_HABILITADO = false;
 
 // Comunidad (perfiles, seguir, feed, clubes, retos). Para probar en dev: true.
 // ⚠️ VOLVER A false ANTES DEL BUILD PÚBLICO (tiendas) hasta tener moderación +
-// reportar/bloquear y actualizar la declaración de "interacción social". Ojo:
-// este flag también gatea el exportador de imagen ("Compartir imagen").
+// reportar/bloquear y actualizar la declaración de "interacción social".
 export const COMUNIDAD_HABILITADA = false;
+
+// Exportar imagen de la actividad ("Compartir imagen": foto + recorrido + stats).
+// Es una función LOCAL (arma la imagen y la guardás/compartís desde el teléfono),
+// no es social, así que va independiente de la comunidad y puede ir en on.
+export const COMPARTIR_IMAGEN_HABILITADO = true;

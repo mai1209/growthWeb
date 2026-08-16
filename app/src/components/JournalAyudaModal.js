@@ -202,7 +202,7 @@ export default function JournalAyudaModal({ visible, onClose, onUsarPregunta }) 
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const [temaAbierto, setTemaAbierto] = useState(TEMAS[0].id);
+  const [temaAbierto, setTemaAbierto] = useState(null); // todas cerradas por defecto
   const [copiada, setCopiada] = useState(null);
 
   const copiar = async (pregunta, key) => {

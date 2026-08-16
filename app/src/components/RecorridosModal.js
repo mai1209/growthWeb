@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import MapView, { Polyline, Marker } from "react-native-maps";
 import CalendarioFechas from "./CalendarioFechas";
 import { useTheme } from "../theme";
-import { COMUNIDAD_HABILITADA } from "../config";
+import { COMPARTIR_IMAGEN_HABILITADO } from "../config";
 import CompartirActividadModal from "./CompartirActividadModal";
 
 const REGION_DEFAULT = { latitude: -31.6333, longitude: -60.7, latitudeDelta: 0.02, longitudeDelta: 0.02 };
@@ -163,7 +163,7 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
               </View>
             </View>
 
-            {COMUNIDAD_HABILITADA && sel ? (
+            {COMPARTIR_IMAGEN_HABILITADO && sel ? (
               <TouchableOpacity
                 style={styles.compartirImgBtn}
                 onPress={() => setCompartirOpen(true)}
