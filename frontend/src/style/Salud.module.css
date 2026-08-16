@@ -688,6 +688,7 @@
   position: absolute;
   left: 12px;
   bottom: 12px;
+  z-index: 800; /* por encima de los paneles del mapa (Leaflet) */
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;

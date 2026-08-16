@@ -33,6 +33,8 @@ import { BASE_COMIDAS } from "../utils/comidasBase";
 import { buscarComidasOFF } from "../utils/openFoodFacts";
 import GymView from "./GymView";
 import CompartirRecorridoModal from "./CompartirRecorridoModal";
+import { MapContainer, TileLayer, Polyline, CircleMarker, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 import style from "../style/Salud.module.css";
 
 // Normaliza para comparar sin acentos ni mayúsculas.
@@ -371,8 +373,26 @@ function HistorialModal({ metric, hoy, onClose }) {
   );
 }
 
-// Visor de recorridos GPS: dibuja el trazado de cada caminata en SVG (sin mapa,
-// solo la forma del recorrido) + fecha/km. Trae la ruta de un endpoint aparte.
+// Encaja el mapa para que se vea todo el recorrido (o todos, en el mapa de calor).
+// Se re-ajusta cuando cambian las posiciones (al pasar de un recorrido a otro).
+function AjustarVista({ posiciones }) {
+  const map = useMap();
+  useEffect(() => {
+    // Dentro de un modal el contenedor puede terminar de dimensionarse después
+    // del montaje: recalculamos el tamaño y recién ahí encuadramos el recorrido.
+    const t = setTimeout(() => {
+      map.invalidateSize();
+      if (posiciones && posiciones.length > 1) {
+        map.fitBounds(posiciones, { padding: [26, 26], maxZoom: 17 });
+      }
+    }, 60);
+    return () => clearTimeout(t);
+  }, [posiciones, map]);
+  return null;
+}
+
+// Visor de recorridos GPS: muestra el trazado de cada caminata sobre un mapa real
+// (Leaflet + OpenStreetMap) + fecha/km. Trae la ruta de un endpoint aparte.
 function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
   const [recorridos, setRecorridos] = useState(null); // null = cargando
   const [idx, setIdx] = useState(0);
@@ -385,66 +405,30 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
   }, []);
   const sel = recorridos && recorridos[idx];
 
-  const svg = useMemo(() => {
-    if (!sel?.ruta || sel.ruta.length < 2) return null;
-    const W = 560;
-    const H = 360;
-    const pad = 36;
-    const lats = sel.ruta.map((p) => p.latitude);
-    const lngs = sel.ruta.map((p) => p.longitude);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs);
-    const maxLng = Math.max(...lngs);
-    const kx = Math.cos((((minLat + maxLat) / 2) * Math.PI) / 180) || 1;
-    const spanLng = (maxLng - minLng) * kx || 1e-6;
-    const spanLat = maxLat - minLat || 1e-6;
-    const scale = Math.min((W - 2 * pad) / spanLng, (H - 2 * pad) / spanLat);
-    const offX = (W - spanLng * scale) / 2;
-    const offY = (H - spanLat * scale) / 2;
-    const pts = sel.ruta.map((p) => [
-      offX + (p.longitude - minLng) * kx * scale,
-      H - offY - (p.latitude - minLat) * scale,
-    ]);
-    const d = "M " + pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" L ");
-    return { W, H, d, pts, ini: pts[0], fin: pts[pts.length - 1] };
-  }, [sel]);
+  // Puntos [lat, lng] del recorrido seleccionado, para dibujarlos sobre el mapa.
+  const rutaLL = useMemo(
+    () =>
+      (sel?.ruta || [])
+        .filter((p) => p && typeof p.latitude === "number" && typeof p.longitude === "number")
+        .map((p) => [p.latitude, p.longitude]),
+    [sel]
+  );
 
-  // Mapa de calor personal: proyecta TODOS los recorridos a un mismo SVG.
-  // Al superponer líneas semi-transparentes, donde más pasás queda más brillante.
-  const heat = useMemo(() => {
-    const rutas = (recorridos || [])
-      .map((r) => r.ruta)
-      .filter((r) => Array.isArray(r) && r.length > 1);
-    if (!rutas.length) return null;
-    const W = 560;
-    const H = 360;
-    const pad = 30;
-    const lats = rutas.flatMap((r) => r.map((p) => p.latitude));
-    const lngs = rutas.flatMap((r) => r.map((p) => p.longitude));
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs);
-    const maxLng = Math.max(...lngs);
-    const kx = Math.cos((((minLat + maxLat) / 2) * Math.PI) / 180) || 1;
-    const spanLng = (maxLng - minLng) * kx || 1e-6;
-    const spanLat = maxLat - minLat || 1e-6;
-    const scale = Math.min((W - 2 * pad) / spanLng, (H - 2 * pad) / spanLat);
-    const offX = (W - spanLng * scale) / 2;
-    const offY = (H - spanLat * scale) / 2;
-    const paths = rutas.map(
-      (r) =>
-        "M " +
-        r
-          .map((p) => {
-            const x = offX + (p.longitude - minLng) * kx * scale;
-            const y = H - offY - (p.latitude - minLat) * scale;
-            return `${x.toFixed(1)},${y.toFixed(1)}`;
-          })
-          .join(" L ")
-    );
-    return { W, H, paths };
-  }, [recorridos]);
+  // Mapa de calor personal: TODOS los recorridos como listas de [lat, lng].
+  // Al superponer líneas semi-transparentes sobre el mapa, donde más pasás
+  // queda más brillante. heatFlat junta todos los puntos para encuadrar el mapa.
+  const heatLL = useMemo(
+    () =>
+      (recorridos || [])
+        .map((r) =>
+          (r.ruta || [])
+            .filter((p) => p && typeof p.latitude === "number" && typeof p.longitude === "number")
+            .map((p) => [p.latitude, p.longitude])
+        )
+        .filter((r) => r.length > 1),
+    [recorridos]
+  );
+  const heatFlat = useMemo(() => heatLL.flat(), [heatLL]);
 
   const fechaCorta = (k) =>
     new Date(`${k}T00:00:00`).toLocaleDateString("es-AR", { day: "numeric", month: "short" });
@@ -490,12 +474,14 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
     return () => cancelAnimationFrame(raf);
   }, [playing]);
   const reproducir = () => {
-    if (!svg) return;
+    if (rutaLL.length < 2) return;
     setProgress(0);
     setPlaying(true);
   };
-  const nPts = svg ? svg.pts.length : 0;
-  const dotPos = nPts ? svg.pts[Math.min(nPts - 1, Math.round(progress * (nPts - 1)))] : null;
+  const nLL = rutaLL.length;
+  const idxDot = nLL ? Math.min(nLL - 1, Math.round(progress * (nLL - 1))) : 0;
+  const dotLL = nLL ? rutaLL[idxDot] : null;
+  const recorridas = nLL ? rutaLL.slice(0, idxDot + 1) : []; // tramo ya recorrido (replay)
 
   return (
     <div className={style.recOverlay} onClick={onClose}>
@@ -535,33 +521,26 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
             {vista === "calor" ? (
               <>
                 <div className={style.recMapa}>
-                  {heat ? (
-                    <svg viewBox={`0 0 ${heat.W} ${heat.H}`} width="100%" preserveAspectRatio="xMidYMid meet">
-                      {heat.paths.map((d, i) => (
-                        <path
-                          key={`g${i}`}
-                          d={d}
-                          fill="none"
-                          stroke="var(--color-verde, #5dc72d)"
-                          strokeOpacity="0.16"
-                          strokeWidth="10"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
+                  {heatFlat.length > 1 ? (
+                    <MapContainer
+                      center={heatFlat[0]}
+                      zoom={15}
+                      scrollWheelZoom
+                      style={{ height: 320, width: "100%", borderRadius: 12 }}
+                    >
+                      <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                      />
+                      {/* halo ancho tenue: donde se superponen más rutas, más brillo */}
+                      {heatLL.map((r, i) => (
+                        <Polyline key={`g${i}`} positions={r} pathOptions={{ color: "#5dc72d", weight: 10, opacity: 0.18 }} />
                       ))}
-                      {heat.paths.map((d, i) => (
-                        <path
-                          key={`c${i}`}
-                          d={d}
-                          fill="none"
-                          stroke="#7ee787"
-                          strokeOpacity="0.42"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
+                      {heatLL.map((r, i) => (
+                        <Polyline key={`c${i}`} positions={r} pathOptions={{ color: "#7ee787", weight: 3, opacity: 0.5 }} />
                       ))}
-                    </svg>
+                      <AjustarVista posiciones={heatFlat} />
+                    </MapContainer>
                   ) : (
                     <p className={style.hint}>Sin recorridos con trazado para el mapa de calor.</p>
                   )}
@@ -573,44 +552,38 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
             ) : (
               <>
             <div className={style.recMapa}>
-              {svg ? (
+              {rutaLL.length > 1 ? (
                 <>
-                  <svg viewBox={`0 0 ${svg.W} ${svg.H}`} width="100%" preserveAspectRatio="xMidYMid meet">
-                    <defs>
-                      <linearGradient id="recRuta" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stopColor="#7ee787" />
-                        <stop offset="100%" stopColor="var(--color-verde, #5dc72d)" />
-                      </linearGradient>
-                    </defs>
-                    {/* Traza completa, tenue, de fondo */}
-                    <path
-                      d={svg.d}
-                      fill="none"
-                      stroke="var(--color-verde, #5dc72d)"
-                      strokeOpacity="0.22"
-                      strokeWidth="6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                  <MapContainer
+                    center={rutaLL[0]}
+                    zoom={16}
+                    scrollWheelZoom
+                    style={{ height: 320, width: "100%", borderRadius: 12 }}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                      url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                     />
-                    {/* Traza que se dibuja según el progreso del replay */}
-                    <path
-                      d={svg.d}
-                      pathLength="1"
-                      fill="none"
-                      stroke="url(#recRuta)"
-                      strokeWidth="6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeDasharray="1"
-                      strokeDashoffset={1 - progress}
+                    {/* Ruta completa, tenue, de fondo */}
+                    <Polyline positions={rutaLL} pathOptions={{ color: "#5dc72d", weight: 5, opacity: 0.35 }} />
+                    {/* Tramo ya recorrido (se dibuja según el progreso del replay) */}
+                    <Polyline positions={recorridas} pathOptions={{ color: "#7ee787", weight: 5, opacity: 1 }} />
+                    {/* Punto de inicio */}
+                    <CircleMarker
+                      center={rutaLL[0]}
+                      radius={7}
+                      pathOptions={{ color: "#5dc72d", fillColor: "#fff", fillOpacity: 1, weight: 3 }}
                     />
-                    <circle cx={svg.ini[0]} cy={svg.ini[1]} r="8" fill="#fff" stroke="var(--color-verde, #5dc72d)" strokeWidth="3" />
-                    {progress >= 1 ? (
-                      <circle cx={svg.fin[0]} cy={svg.fin[1]} r="9" fill="var(--color-verde, #5dc72d)" stroke="#fff" strokeWidth="3" />
-                    ) : dotPos ? (
-                      <circle cx={dotPos[0]} cy={dotPos[1]} r="9" fill="var(--color-verde, #5dc72d)" stroke="#fff" strokeWidth="3" />
+                    {/* Punto que recorre la ruta / final */}
+                    {dotLL ? (
+                      <CircleMarker
+                        center={dotLL}
+                        radius={8}
+                        pathOptions={{ color: "#fff", fillColor: "#5dc72d", fillOpacity: 1, weight: 3 }}
+                      />
                     ) : null}
-                  </svg>
+                    <AjustarVista posiciones={rutaLL} />
+                  </MapContainer>
                   <button
                     type="button"
                     className={style.recPlay}

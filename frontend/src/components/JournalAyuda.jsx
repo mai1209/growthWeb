@@ -212,7 +212,7 @@ const TEMAS = [
 ];
 
 function JournalAyuda({ onClose }) {
-  const [temaAbierto, setTemaAbierto] = useState(TEMAS[0].id);
+  const [temaAbierto, setTemaAbierto] = useState(null); // todas cerradas por defecto
   const [copiada, setCopiada] = useState(null);
 
   const copiar = async (pregunta, key) => {
