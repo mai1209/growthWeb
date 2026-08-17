@@ -38,12 +38,27 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
   const ritmoSel = sel && kmSel > 0.02 && sel.secs > 0 ? sel.secs / 60 / kmSel : 0;
 
   const ajustar = () => {
-    if (mapRef.current && sel?.ruta?.length > 1) {
-      mapRef.current.fitToCoordinates(sel.ruta, {
-        edgePadding: { top: 60, right: 40, bottom: 60, left: 40 },
-        animated: true,
-      });
-    }
+    if (!mapRef.current || !(sel?.ruta?.length > 1)) return;
+    const lats = sel.ruta.map((p) => p.latitude);
+    const lngs = sel.ruta.map((p) => p.longitude);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    // Zoom mínimo (~800 m) para que se vean las calles aunque el recorrido sea
+    // muy corto; para recorridos largos encuadra con un margen (1.6x).
+    const MIN_DELTA = 0.008;
+    const latDelta = Math.max((maxLat - minLat) * 1.6, MIN_DELTA);
+    const lngDelta = Math.max((maxLng - minLng) * 1.6, MIN_DELTA);
+    mapRef.current.animateToRegion(
+      {
+        latitude: (minLat + maxLat) / 2,
+        longitude: (minLng + maxLng) / 2,
+        latitudeDelta: latDelta,
+        longitudeDelta: lngDelta,
+      },
+      350
+    );
   };
 
   return (
@@ -105,7 +120,12 @@ export default function RecorridosModal({ visible, onClose, caminatas }) {
                     ? { ...sel.ruta[0], latitudeDelta: 0.01, longitudeDelta: 0.01 }
                     : REGION_DEFAULT
                 }
-                onMapReady={ajustar}
+                onMapReady={() => {
+                  ajustar();
+                  // Nudge: con Nueva Arquitectura, Apple Maps a veces no pinta los
+                  // tiles hasta un segundo cambio de región. Reajustamos al toque.
+                  setTimeout(ajustar, 600);
+                }}
                 userInterfaceStyle={isDark ? "dark" : "light"}
                 pitchEnabled={false}
                 rotateEnabled={false}
@@ -251,7 +271,7 @@ const makeStyles = (colors) =>
       borderColor: colors.cardBorder,
     },
     map: { flex: 1 },
-    mapDim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.28)" },
+    mapDim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.12)" },
     mapSoon: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6, padding: 20, backgroundColor: colors.card },
     mapSoonText: { color: colors.text, fontSize: 15, fontWeight: "800" },
     mapSoonSub: { color: colors.muted, fontSize: 12.5, fontWeight: "600" },
