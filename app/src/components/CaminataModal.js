@@ -273,7 +273,7 @@ export default function CaminataModal({ visible, onClose, onGuardar, pesoKg = 70
   const infoActividad = () => {
     Alert.alert(
       "¿Qué actividad elegir?",
-      "Elegí según lo que hacés:\n\n🚶  Caminata — paso tranquilo.\n🏃  Carrera — si corrés (con o sin pausas de caminata, va como Carrera).\n🚴  Bici.\n\nLa distancia y el tiempo se miden igual en las 3 (por GPS). Lo que cambia son las CALORÍAS: correr quema más del doble que caminar. Si corrés y elegís Caminata, te cuenta de menos.\n\nSi hacés mitad y mitad, elegí Carrera.",
+      "Elegí según lo que hacés:\n\nCaminata — paso tranquilo.\nCarrera — si corrés (con o sin pausas de caminata, va como Carrera).\nBici.\n\nLa distancia y el tiempo se miden igual en las 3 (por GPS). Lo que cambia son las CALORÍAS: correr quema más del doble que caminar. Si corrés y elegís Caminata, te cuenta de menos.\n\nSi hacés mitad y mitad, elegí Carrera.",
       [{ text: "Entendido" }]
     );
   };
