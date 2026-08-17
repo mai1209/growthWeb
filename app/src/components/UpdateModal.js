@@ -8,6 +8,7 @@ import {
   ScrollView,
   Linking,
   Image,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../theme";
@@ -18,7 +19,9 @@ export default function UpdateModal({ visible, info, onClose }) {
   if (!info) return null;
 
   const openStore = () => {
-    const url = info.ios || info.android;
+    // Cada plataforma abre SU tienda (antes usaba siempre info.ios → en Android
+    // mandaba a la App Store, tienda equivocada).
+    const url = Platform.OS === "android" ? info.android || info.ios : info.ios || info.android;
     if (url) Linking.openURL(url).catch(() => {});
     onClose?.(); // marca la versión como avisada: no vuelve a aparecer
   };
