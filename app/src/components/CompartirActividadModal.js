@@ -16,7 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Svg, { Path, Circle } from "react-native-svg";
-import ViewShot from "react-native-view-shot";
+import ViewShot, { captureRef } from "react-native-view-shot";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 import { useTheme } from "../theme";
@@ -156,7 +156,9 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
   const publicar = async () => {
     setOcupado(true);
     try {
-      const dataUri = await capturar({ format: "jpg", quality: 0.82, result: "data-uri" });
+      // OJO: el .capture() del componente ignora estos opts y usa los del <ViewShot>
+      // (devuelve file://). Para obtener el data-uri base64 hay que usar captureRef.
+      const dataUri = await captureRef(shotRef, { format: "jpg", quality: 0.82, result: "data-uri" });
       await communityService.crearPost({
         tipo: "actividad",
         texto: "",
