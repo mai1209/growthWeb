@@ -632,7 +632,10 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
               <CompartirRecorridoModal
                 recorrido={sel}
                 onClose={() => setCompartir(false)}
-                onPublicado={() => onCaminatas?.()}
+                onPublicado={() => {
+                  onCaminatas?.(); // refresca movilidad
+                  onClose?.(); // cierra el visor de recorridos → vuelve a movilidad
+                }}
               />
             ) : null}
             <div className={style.recChips}>

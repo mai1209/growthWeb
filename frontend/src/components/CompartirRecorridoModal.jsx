@@ -59,6 +59,7 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
   const [pos, setPos] = useState({ fx: 0.06, fy: 0.34 }); // esquina sup-izq del bloque
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState("");
+  const [exito, setExito] = useState(false);
   const lienzoRef = useRef(null);
   const fileRef = useRef(null);
   const drag = useRef(null);
@@ -235,8 +236,12 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
           kcal: recorrido?.kcal || 0,
         },
       });
-      onPublicado?.();
-      onClose?.();
+      // Mostramos el aviso de éxito y recién ahí cerramos todo (vuelve a movilidad).
+      setExito(true);
+      setTimeout(() => {
+        onPublicado?.(); // refresca movilidad + cierra el visor de recorridos
+        onClose?.(); // cierra este modal de compartir
+      }, 1500);
     } catch {
       setError("No se pudo publicar. Probá de nuevo.");
     } finally {
@@ -311,18 +316,34 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
           </div>
         </div>
 
-        <p style={S.tip}>Arrastrá los datos para ubicarlos donde quieras. Subí una foto de fondo si querés.</p>
-        {error ? <p style={S.error}>{error}</p> : null}
+        {exito ? (
+          <p
+            style={{
+              margin: "0.5rem 0 0",
+              textAlign: "center",
+              color: "#5dc72d",
+              fontWeight: 800,
+              fontSize: "0.98rem",
+            }}
+          >
+            ✅ ¡Se subió tu foto al perfil!
+          </p>
+        ) : (
+          <>
+            <p style={S.tip}>Arrastrá los datos para ubicarlos donde quieras. Subí una foto de fondo si querés.</p>
+            {error ? <p style={S.error}>{error}</p> : null}
+          </>
+        )}
 
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={elegirFoto} />
         <div style={S.acciones}>
-          <button style={S.btnSec} onClick={() => fileRef.current?.click()} disabled={ocupado}>
+          <button style={S.btnSec} onClick={() => fileRef.current?.click()} disabled={ocupado || exito}>
             <FiImage /> {foto ? "Cambiar foto" : "Subir foto"}
           </button>
-          <button style={S.btnSec} onClick={descargar} disabled={ocupado}>
+          <button style={S.btnSec} onClick={descargar} disabled={ocupado || exito}>
             <FiDownload /> Descargar
           </button>
-          <button style={S.btnPrim} onClick={publicar} disabled={ocupado}>
+          <button style={S.btnPrim} onClick={publicar} disabled={ocupado || exito}>
             <FiSend /> {ocupado ? "…" : "Publicar"}
           </button>
         </div>
