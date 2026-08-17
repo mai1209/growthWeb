@@ -23,7 +23,7 @@ import PostCard from "../components/PostCard";
 import ComposePostModal from "../components/ComposePostModal";
 import { BandejaModal } from "../components/ChatModal";
 import ComunidadIcon from "../components/ComunidadIcon";
-import { COMUNIDAD_HABILITADA } from "../config";
+import { COMUNIDAD_HABILITADA, COMPARTIR_IMAGEN_HABILITADO } from "../config";
 import { useTheme } from "../theme";
 import { useWorkspace } from "../workspace/WorkspaceContext";
 
@@ -130,7 +130,9 @@ export default function PerfilScreen({ navigation }) {
   const [bandejaOpen, setBandejaOpen] = useState(false);
   const [msgNoLeidos, setMsgNoLeidos] = useState(0);
   const cargarComunidad = useCallback(() => {
-    if (!COMUNIDAD_HABILITADA) return;
+    // Con "Compartir imagen" on, cargamos tus posteos aunque la comunidad esté off
+    // (así ves en tu perfil las fotos que publicás). Lo social (chat) queda aparte.
+    if (!COMUNIDAD_HABILITADA && !COMPARTIR_IMAGEN_HABILITADO) return;
     communityService
       .getMiPerfil()
       .then(({ data }) => {
@@ -145,10 +147,12 @@ export default function PerfilScreen({ navigation }) {
         }
       })
       .catch(() => {});
-    communityService
-      .chatNoLeidos()
-      .then(({ data }) => setMsgNoLeidos(data?.noLeidos || 0))
-      .catch(() => {});
+    if (COMUNIDAD_HABILITADA) {
+      communityService
+        .chatNoLeidos()
+        .then(({ data }) => setMsgNoLeidos(data?.noLeidos || 0))
+        .catch(() => {});
+    }
   }, []);
   useEffect(() => {
     cargarComunidad();
@@ -477,7 +481,7 @@ export default function PerfilScreen({ navigation }) {
               ) : null}
             </View>
 
-            {COMUNIDAD_HABILITADA && misPosts.length > 0 ? (
+            {(COMUNIDAD_HABILITADA || COMPARTIR_IMAGEN_HABILITADO) && misPosts.length > 0 ? (
               <View style={styles.posteosSec}>
                 <Text style={styles.posteosTitulo}>Posteos</Text>
                 <View style={{ gap: 10 }}>
