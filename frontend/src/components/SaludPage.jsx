@@ -545,9 +545,6 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
                     <p className={style.hint}>Sin recorridos con trazado para el mapa de calor.</p>
                   )}
                 </div>
-                <p className={style.recHeatHint}>
-                  🔥 Se superponen tus {recorridos.length} recorridos: donde más pasás, más brillante.
-                </p>
               </>
             ) : (
               <>
