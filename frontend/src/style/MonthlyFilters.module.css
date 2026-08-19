@@ -1096,6 +1096,29 @@
   .rowInfo span {
     font-size: 0.8rem;
   }
+
+  /* Home más limpio en teléfono: sin fondo de tarjeta (más aire), separadas
+     por una línea fina. */
+  .row {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+    padding: 0.85rem 0.15rem;
+  }
+
+  /* Footer: el monto entra a la derecha y la fecha baja a su propia línea,
+     así nada se corta. */
+  .rowAmount {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .rowDate {
+    order: 3;
+    flex: 1 1 100%;
+    min-width: 0;
+  }
 }
 
 /* ===== Montos coloreados por tipo ===== */
