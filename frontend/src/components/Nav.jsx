@@ -371,12 +371,24 @@ function Nav({
       <button
         type="button"
         className={style.userProfile}
-        onClick={() => setProfileMenuOpen((prev) => !prev)}
-        aria-expanded={profileMenuOpen}
+        onClick={() => {
+          if (mobile) {
+            // En móvil, tocar el perfil te lleva directo a /perfil (sin desplegable).
+            navigate("/perfil");
+            onCloseMobileMenu?.();
+          } else {
+            setProfileMenuOpen((prev) => !prev);
+          }
+        }}
+        aria-expanded={mobile ? undefined : profileMenuOpen}
       >
         <ProfileAvatar />
         <span className={style.userName}>{displayName}</span>
-        <FiChevronDown className={`${style.chevron} ${profileMenuOpen ? style.chevronOpen : ""}`} />
+        {mobile ? (
+          <FiArrowRight className={style.chevron} />
+        ) : (
+          <FiChevronDown className={`${style.chevron} ${profileMenuOpen ? style.chevronOpen : ""}`} />
+        )}
       </button>
 
       {profileMenuOpen ? (

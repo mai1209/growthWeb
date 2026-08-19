@@ -52,15 +52,17 @@
 .createBtn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: center;
+  gap: 0.3rem;
   flex-shrink: 0;
-  padding: 0.6rem 1.1rem;
+  padding: 0.55rem 0.85rem;
   border: none;
   border-radius: 999px;
   background: var(--accent);
   color: var(--accent-contrast);
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 800;
+  white-space: nowrap;
   cursor: pointer;
   transition: filter var(--transition-fast), transform var(--transition-fast);
 }

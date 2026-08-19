@@ -458,6 +458,15 @@
   overflow-y: auto; /* el contenido del panel scrollea */
 }
 
+/* Panel Dashboard (mobile): scrollea y deja aire abajo para que el último
+   botón ("Quiero apoyar") no quede tapado por el borde/home-indicator. */
+.panelContent {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem 1rem calc(2rem + env(safe-area-inset-bottom, 0px));
+}
+
 .profileMenuMobile {
   display: block;
   margin-bottom: 0.55rem;

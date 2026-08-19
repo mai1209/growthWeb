@@ -989,6 +989,47 @@
   .dashboardPeriodSwitch {
     width: 100%;
   }
+
+  /* HOME móvil compacto: sin fondos de panel (más aire y más ancho para las
+     cards), y el ARS al lado del título (borde derecho). */
+  .dashboardInfoCard {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    border-radius: 0;
+    gap: 0.7rem;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .dashboardMovementShell {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    min-width: 0;
+  }
+
+  .dashboardMovementList {
+    padding: 0;
+    gap: 0;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  /* min-width:0 en toda la cadena: sin esto, la card (monto en nowrap) empuja
+     el ancho y hay que scrollear al costado. Es lo que Filtros ya tiene. */
+  .dashboardMovementGroup,
+  .dashboardMovementGroupRows {
+    min-width: 0;
+  }
+
+  /* ARS en la misma línea que el título, a la derecha (no apilado) */
+  .dashboardInfoHeader {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
 }
 
 @media (max-width: 520px) {
@@ -1057,7 +1098,7 @@
   }
 
   .dashboardInfoCard {
-    padding: 0.9rem;
+    padding: 0rem;
     border-radius: 22px;
   }
 
@@ -1100,7 +1141,7 @@
   }
 
   .dashboardMovementList {
-    padding: 0.8rem;
+    padding: 0rem;
   }
 
   .dashboardMovementRow {

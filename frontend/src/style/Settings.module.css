@@ -1718,6 +1718,9 @@
 .cardProfile {
   padding: 0;
   overflow: hidden;
+  /* Sin el fondo claro del contenedor: solo queda la línea del borde. */
+  background: transparent;
+  box-shadow: none;
 }
 
 .cardProfile .profileCard {
@@ -1725,6 +1728,10 @@
   border: none;
   border-radius: 0;
   box-shadow: none;
+  /* Sin fondo claro: que se funda con la página, sin el panel ni el blur. */
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .cardProfile .profileBanner {
@@ -1839,7 +1846,8 @@
 
 /* Sección de posteos con encabezado */
 .postsSection {
-  padding: 0.2rem 1.1rem 1.6rem;
+  margin-top: 1.3rem;
+  padding: 0.2rem 0.9rem 1.6rem;
 }
 .postsLabel {
   font-size: 0.72rem;
