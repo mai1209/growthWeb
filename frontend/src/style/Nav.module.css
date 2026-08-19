@@ -489,6 +489,22 @@
   border-top: 1px solid rgba(255,255,255,0.05);
 }
 
+.ajustesBtnFull {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 0.6rem;
+  background: rgba(93, 199, 45, 0.08);
+  border: 1px solid rgba(93, 199, 45, 0.2);
+  color: var(--color-verde, #5dc72d);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
 .logoutBtnFull {
   width: 100%;
   padding: 0.8rem;

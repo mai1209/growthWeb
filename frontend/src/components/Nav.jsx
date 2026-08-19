@@ -553,6 +553,9 @@ function Nav({
               <ProfileDropdown mobile />
               <NavItems />
               <div className={style.drawerFooter}>
+                <NavLink to="/ajustes" onClick={onCloseMobileMenu} className={style.ajustesBtnFull}>
+                  <FiSettings /> Ajustes
+                </NavLink>
                 <button onClick={handleLogout} className={style.logoutBtnFull}>
                   <FiLogOut /> Cerrar Sesión
                 </button>
