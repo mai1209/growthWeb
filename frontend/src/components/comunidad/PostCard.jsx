@@ -32,7 +32,7 @@ function FotoPost({ uri }) {
       style={ratio ? { aspectRatio: ratio } : { height: 260 }}
       onLoad={(e) => {
         const { naturalWidth: w, naturalHeight: h } = e.target;
-        if (w && h) setRatio(Math.min(1.91, Math.max(0.8, w / h)));
+        if (w && h) setRatio(w / h); // proporción natural: se ve TODA la imagen, sin recortar
       }}
     />
   );

@@ -4,6 +4,7 @@
 import { useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FiX, FiImage, FiDownload, FiSend, FiMove } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import { communityService } from "../api";
 import { redimensionarImagen } from "../utils/imagenComunidad";
 
@@ -60,6 +61,7 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState("");
   const [exito, setExito] = useState(false);
+  const navigate = useNavigate();
   const lienzoRef = useRef(null);
   const fileRef = useRef(null);
   const drag = useRef(null);
@@ -147,31 +149,58 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
       ctx.fillRect(0, 0, EXPORT_W, EXPORT_H);
     }
 
-    // Bloque (todo junto) en la posición arrastrada
+    // Bloque (todo junto) — CENTRADO tipo Strava — en la posición arrastrada
     let x = pos.fx * EXPORT_W;
     let y = pos.fy * EXPORT_H;
     ctx.textBaseline = "top";
     ctx.shadowColor = "rgba(0,0,0,0.65)";
     ctx.shadowBlur = 14;
 
-    const stat = (label, value) => {
-      ctx.fillStyle = "rgba(255,255,255,0.72)";
-      ctx.font = "800 26px Arial, sans-serif";
-      ctx.fillText(label.toUpperCase(), x, y);
-      y += 34;
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "800 66px Arial, sans-serif";
-      ctx.fillText(value, x, y);
-      y += 82;
-    };
-    stat("Distancia", `${km.toFixed(2).replace(".", ",")} km`);
-    stat("Ritmo", fmtRitmo(ritmo));
-    stat("Tiempo", fmtTiempo(secs));
+    const logo = await cargarImg("/logoDist.png");
+    const logoSz = 26; // logo más chico
+    const logoW = logo ? logoSz * (logo.width / logo.height) : 0;
 
-    // Recorrido (chico) debajo de los datos
+    const labelFont = "800 20px Arial, sans-serif";
+    const valueFont = "400 38px Arial, sans-serif";
+    const growthFont = "700 22px Arial, sans-serif";
+    const filas = [
+      ["Distancia", `${km.toFixed(2).replace(".", ",")} km`],
+      ["Ritmo", fmtRitmo(ritmo)],
+      ["Tiempo", fmtTiempo(secs)],
+    ];
+
+    // Ancho del contenido, para centrar todo (label/número/recorrido/logo)
+    let contentW = 0;
+    filas.forEach(([l, v]) => {
+      ctx.font = labelFont;
+      contentW = Math.max(contentW, ctx.measureText(l.toUpperCase()).width);
+      ctx.font = valueFont;
+      contentW = Math.max(contentW, ctx.measureText(v).width);
+    });
+    const routeW = rutaPts ? RUTA_W * (ESCALA * 1.4) : 0;
+    ctx.font = growthFont;
+    const growthTextW = ctx.measureText("GROWTH").width;
+    const logoRowW = logoW + (logo ? 10 : 0) + growthTextW;
+    contentW = Math.max(contentW, routeW, logoRowW);
+    const cx = x + contentW / 2;
+
+    // Datos centrados
+    ctx.textAlign = "center";
+    filas.forEach(([label, value]) => {
+      ctx.fillStyle = "rgba(255,255,255,0.72)";
+      ctx.font = labelFont;
+      ctx.fillText(label.toUpperCase(), cx, y);
+      y += 28;
+      ctx.fillStyle = "#ffffff";
+      ctx.font = valueFont;
+      ctx.fillText(value, cx, y);
+      y += 62;
+    });
+
+    // Recorrido centrado
     if (rutaPts) {
-      const s = ESCALA * 1.4; // un poco más grande que el preview
-      const ox = x;
+      const s = ESCALA * 1.4;
+      const ox = cx - routeW / 2;
       const oy = y + 8;
       const trazar = () => {
         ctx.beginPath();
@@ -188,17 +217,24 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
       ctx.lineWidth = 14;
       trazar();
       ctx.stroke();
-      ctx.strokeStyle = "#00ed64";
+      ctx.strokeStyle = "#3bcb23";
       ctx.lineWidth = 8;
       trazar();
       ctx.stroke();
       y = oy + RUTA_H * s + 12;
     }
 
-    // GROWTH
+    // Logo + GROWTH centrados
+    let gx = cx - logoRowW / 2;
+    if (logo) {
+      ctx.drawImage(logo, gx, y, logoW, logoSz);
+      gx += logoW + 10;
+    }
     ctx.fillStyle = "#00ed64";
-    ctx.font = "800 30px Arial, sans-serif";
-    ctx.fillText("G R O W T H", x, y);
+    ctx.font = growthFont;
+    ctx.textAlign = "left";
+    ctx.fillText("GROWTH", gx, y + (logoSz - 22) / 2);
+    ctx.textAlign = "start";
     ctx.shadowBlur = 0;
 
     return canvas.toDataURL("image/jpeg", 0.9);
@@ -241,6 +277,7 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
       setTimeout(() => {
         onPublicado?.(); // refresca movilidad + cierra el visor de recorridos
         onClose?.(); // cierra este modal de compartir
+        navigate("/perfil"); // renderiza el perfil
       }, 1500);
     } catch {
       setError("No se pudo publicar. Probá de nuevo.");
@@ -304,7 +341,7 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
                 <polyline
                   points={rutaPts.map((p) => `${p.x},${p.y}`).join(" ")}
                   fill="none"
-                  stroke="#00ed64"
+                  stroke="#3bcb23"
                   strokeWidth="4"
                   strokeLinejoin="round"
                   strokeLinecap="round"
@@ -312,7 +349,10 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
               </svg>
             ) : null}
 
-            <div style={S.growth}>G R O W T H</div>
+            <div style={S.growthRow}>
+              <img src="/logoDist.png" alt="" style={S.growthLogo} draggable={false} />
+              <span style={S.growth}>GROWTH</span>
+            </div>
           </div>
         </div>
 
@@ -326,7 +366,7 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
               fontSize: "0.98rem",
             }}
           >
-            ✅ ¡Se subió tu foto al perfil!
+            ✅ Esta foto fue cargada al perfil con éxito
           </p>
         ) : (
           <>
@@ -410,11 +450,17 @@ const S = {
     textShadow: "0 1px 8px rgba(0,0,0,0.65)",
     padding: 4,
     maxWidth: "80%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    textAlign: "center",
   },
-  stat: { marginBottom: 6 },
-  statLabel: { fontSize: "0.62rem", fontWeight: 800, letterSpacing: "0.12em", opacity: 0.8 },
-  statValor: { fontSize: "1.5rem", fontWeight: 800, lineHeight: 1.1 },
-  growth: { color: "#00ed64", fontWeight: 800, fontSize: "0.8rem", letterSpacing: "0.14em", marginTop: 2 },
+  stat: { marginBottom: 9 },
+  statLabel: { fontSize: "0.52rem", fontWeight: 800, letterSpacing: "0.1em", opacity: 0.8 },
+  statValor: { fontSize: "0.92rem", fontWeight: 400, lineHeight: 1.15 },
+  growthRow: { display: "flex", alignItems: "center", gap: 5, marginTop: 4 },
+  growthLogo: { height: 16, width: "auto", display: "block", flexShrink: 0 },
+  growth: { color: "#00ed64", fontWeight: 700, fontSize: "0.62rem", letterSpacing: "0.06em" },
   tip: { color: "var(--color-muted)", fontSize: "0.78rem", textAlign: "center", margin: 0 },
   error: { color: "var(--color-rojo)", fontSize: "0.82rem", textAlign: "center", margin: 0 },
   acciones: { display: "flex", gap: "0.5rem", flexWrap: "wrap" },

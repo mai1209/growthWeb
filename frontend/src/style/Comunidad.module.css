@@ -193,7 +193,9 @@
 }
 .postFoto {
   width: 100%;
-  max-height: 510px; /* como Twitter: la foto vertical se contiene (recorta al centro), no gigante */
+  /* Tipo Twitter: NO se fija un alto máximo. La proporción se limita por JS
+     entre ~4:5 (vertical) y ~16:9 (horizontal) y object-fit recorta lo justo.
+     Así las verticales quedan verticales y las horizontales anchas. */
   border-radius: 12px;
   display: block;
   object-fit: cover;

@@ -14,6 +14,7 @@ import {
   PanResponder,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Svg, { Path, Circle } from "react-native-svg";
 import ViewShot, { captureRef } from "react-native-view-shot";
@@ -77,6 +78,7 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
   const { colors } = useTheme();
   const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   const shotRef = useRef(null);
   const [foto, setFoto] = useState("");
   const [ocupado, setOcupado] = useState(false);
@@ -171,8 +173,15 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
           ruta: actividad?.ruta || undefined,
         },
       });
-      Alert.alert("¡Publicado! ↗", "Tu actividad ya está en tu perfil.");
-      onClose?.();
+      Alert.alert("¡Listo!", "Esta foto fue cargada al perfil con éxito.", [
+        {
+          text: "Ver perfil",
+          onPress: () => {
+            onClose?.();
+            navigation.navigate("Perfil");
+          },
+        },
+      ]);
     } catch {
       Alert.alert("Error", "No se pudo publicar.");
     } finally {
