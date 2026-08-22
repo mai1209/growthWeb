@@ -166,7 +166,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
     const list = term
       ? categories.filter((c) => c.nombre.toLowerCase().includes(term))
       : categories;
-    return list.slice(0, 6);
+    return list; // todas (filtradas al escribir); el desplegable scrollea
   }, [categories, categoria]);
 
   const selectedCatIcon = useMemo(() => {

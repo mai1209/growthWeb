@@ -796,7 +796,9 @@
   border-radius: 16px;
   background: var(--surface-card-strong);
   box-shadow: var(--shadow-md);
-  overflow: hidden;
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .catOption {
