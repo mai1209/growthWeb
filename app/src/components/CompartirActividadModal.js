@@ -246,11 +246,14 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
               ) : null}
               {Array.isArray(actividad?.ruta) && actividad.ruta.length > 1 ? (
                 <View style={styles.miniRuta}>
-                  <Trazado ruta={actividad.ruta} W={110} H={80} color="#5dc72d" />
+                  <Trazado ruta={actividad.ruta} W={110} H={80} color="#3bcb23" />
                 </View>
               ) : null}
-              {/* GROWTH: parte del bloque arrastrable, abajo del recorrido */}
-              <Text style={styles.marca}>GROWTH</Text>
+              {/* GROWTH con el logo al lado, abajo del recorrido */}
+              <View style={styles.marcaRow}>
+                <Image source={require("../../assets/logoDist.png")} style={styles.marcaLogo} />
+                <Text style={styles.marca}>GROWTH</Text>
+              </View>
             </Animated.View>
           </ViewShot>
 
@@ -308,34 +311,37 @@ const makeStyles = (colors) =>
     // la muestra (la tarjeta del posteo).
     lienzo: { overflow: "hidden", backgroundColor: "#0d1f27" },
     lienzoBg: { backgroundColor: "#0d1f27" },
-    overlayInfo: { position: "absolute", left: 24, top: "34%", gap: 14 },
-    dato: {},
+    overlayInfo: { position: "absolute", left: 24, top: "34%", gap: 14, alignItems: "center" },
+    dato: { alignItems: "center" },
     datoLbl: {
       color: "rgba(255,255,255,0.85)",
       fontSize: 10.5,
       fontWeight: "600",
       letterSpacing: 1.3,
+      textAlign: "center",
       textShadowColor: "rgba(0,0,0,0.5)",
       textShadowRadius: 5,
       textShadowOffset: { width: 0, height: 1 },
     },
     datoVal: {
       color: "#fff",
-      fontSize: 24,
-      fontWeight: "600",
+      fontSize: 25,
+      fontWeight: "400",
       letterSpacing: -0.3,
       marginTop: 1,
+      textAlign: "center",
       textShadowColor: "rgba(0,0,0,0.55)",
       textShadowRadius: 6,
       textShadowOffset: { width: 0, height: 1 },
     },
     miniRuta: { marginTop: 6 },
+    marcaRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 10 },
+    marcaLogo: { width: 20, height: 14, resizeMode: "contain" },
     marca: {
-      color: "#5dc72d",
-      fontSize: 13,
-      fontWeight: "800",
-      letterSpacing: 2.5,
-      marginTop: 10,
+      color: "#00ed64",
+      fontSize: 12,
+      fontWeight: "700",
+      letterSpacing: 0.5,
       textShadowColor: "rgba(0,0,0,0.55)",
       textShadowRadius: 6,
       textShadowOffset: { width: 0, height: 1 },
