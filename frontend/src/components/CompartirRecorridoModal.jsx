@@ -3,7 +3,7 @@
 // junto y arrastrable sobre la foto. Exporta a PNG (descargar) o publica.
 import { useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { FiX, FiImage, FiDownload, FiSend, FiMove } from "react-icons/fi";
+import { FiX, FiImage, FiDownload, FiSend } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { communityService } from "../api";
 import { redimensionarImagen } from "../utils/imagenComunidad";
@@ -61,6 +61,10 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState("");
   const [exito, setExito] = useState(false);
+  // Como Strava: layouts predefinidos que rotan al TOCAR el bloque, y una
+  // escala para achicar/agrandar todo junto.
+  const [layout, setLayout] = useState("vertical"); // vertical | horizontal | mini
+  const [escala, setEscala] = useState(1);
   const navigate = useNavigate();
   const lienzoRef = useRef(null);
   const fileRef = useRef(null);
@@ -85,12 +89,18 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
   // ---- Arrastre del bloque completo (datos + recorrido + GROWTH) ----
   const onPointerDown = (e) => {
     e.preventDefault();
-    drag.current = { startX: e.clientX, startY: e.clientY, base: { ...pos } };
+    drag.current = { startX: e.clientX, startY: e.clientY, base: { ...pos }, moved: false };
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
   };
   const onPointerMove = (e) => {
     if (!drag.current || !lienzoRef.current) return;
+    if (
+      Math.abs(e.clientX - drag.current.startX) > 6 ||
+      Math.abs(e.clientY - drag.current.startY) > 6
+    ) {
+      drag.current.moved = true;
+    }
     const rect = lienzoRef.current.getBoundingClientRect();
     const dx = (e.clientX - drag.current.startX) / rect.width;
     const dy = (e.clientY - drag.current.startY) / rect.height;
@@ -100,6 +110,10 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
     });
   };
   const onPointerUp = () => {
+    // Toque (sin arrastre) = rotar entre los layouts, como Strava.
+    if (drag.current && !drag.current.moved) {
+      setLayout((l) => (l === "vertical" ? "horizontal" : l === "horizontal" ? "mini" : "vertical"));
+    }
     drag.current = null;
     window.removeEventListener("pointermove", onPointerMove);
     window.removeEventListener("pointerup", onPointerUp);
@@ -149,59 +163,82 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
       ctx.fillRect(0, 0, EXPORT_W, EXPORT_H);
     }
 
-    // Bloque (todo junto) — CENTRADO tipo Strava — en la posición arrastrada
+    // Bloque (todo junto) tipo Strava: respeta el layout elegido (vertical /
+    // horizontal / mini) y la escala. Anclado a la esquina sup-izq (como el DOM).
+    const k = escala;
     let x = pos.fx * EXPORT_W;
     let y = pos.fy * EXPORT_H;
     ctx.textBaseline = "top";
     ctx.shadowColor = "rgba(0,0,0,0.65)";
-    ctx.shadowBlur = 14;
+    ctx.shadowBlur = 14 * k;
 
     const logo = await cargarImg("/logoDist.png");
-    const logoSz = 26; // logo más chico
+    const logoSz = 26 * k;
     const logoW = logo ? logoSz * (logo.width / logo.height) : 0;
 
-    const labelFont = "800 20px Arial, sans-serif";
-    const valueFont = "400 38px Arial, sans-serif";
-    const growthFont = "700 22px Arial, sans-serif";
+    const labelFont = `800 ${20 * k}px Arial, sans-serif`;
+    const valueFont = `400 ${38 * k}px Arial, sans-serif`;
+    const growthFont = `700 ${22 * k}px Arial, sans-serif`;
     const filas = [
       ["Distancia", `${km.toFixed(2).replace(".", ",")} km`],
       ["Ritmo", fmtRitmo(ritmo)],
       ["Tiempo", fmtTiempo(secs)],
     ];
 
-    // Ancho del contenido, para centrar todo (label/número/recorrido/logo)
-    let contentW = 0;
-    filas.forEach(([l, v]) => {
+    // Anchos por columna (para centrar y para la fila horizontal)
+    const colW = filas.map(([l, v]) => {
       ctx.font = labelFont;
-      contentW = Math.max(contentW, ctx.measureText(l.toUpperCase()).width);
+      const lw = ctx.measureText(l.toUpperCase()).width;
       ctx.font = valueFont;
-      contentW = Math.max(contentW, ctx.measureText(v).width);
+      return Math.max(lw, ctx.measureText(v).width);
     });
-    const routeW = rutaPts ? RUTA_W * (ESCALA * 1.4) : 0;
+    const gapFila = 40 * k;
+    const rowW = colW.reduce((a, b) => a + b, 0) + gapFila * (filas.length - 1);
+    const routeW = rutaPts ? RUTA_W * (ESCALA * 1.4 * k) : 0;
     ctx.font = growthFont;
     const growthTextW = ctx.measureText("GROWTH").width;
-    const logoRowW = logoW + (logo ? 10 : 0) + growthTextW;
-    contentW = Math.max(contentW, routeW, logoRowW);
+    const logoRowW = logoW + (logo ? 10 * k : 0) + growthTextW;
+
+    let contentW = Math.max(routeW, logoRowW);
+    if (layout === "vertical") contentW = Math.max(contentW, ...colW);
+    if (layout === "horizontal") contentW = Math.max(contentW, rowW);
     const cx = x + contentW / 2;
 
-    // Datos centrados
     ctx.textAlign = "center";
-    filas.forEach(([label, value]) => {
-      ctx.fillStyle = "rgba(255,255,255,0.72)";
-      ctx.font = labelFont;
-      ctx.fillText(label.toUpperCase(), cx, y);
-      y += 28;
-      ctx.fillStyle = "#ffffff";
-      ctx.font = valueFont;
-      ctx.fillText(value, cx, y);
-      y += 62;
-    });
+    if (layout === "vertical") {
+      // Datos apilados y centrados
+      filas.forEach(([label, value]) => {
+        ctx.fillStyle = "rgba(255,255,255,0.72)";
+        ctx.font = labelFont;
+        ctx.fillText(label.toUpperCase(), cx, y);
+        y += 28 * k;
+        ctx.fillStyle = "#ffffff";
+        ctx.font = valueFont;
+        ctx.fillText(value, cx, y);
+        y += 62 * k;
+      });
+    } else if (layout === "horizontal") {
+      // Datos en una fila (como Strava)
+      let colX = cx - rowW / 2;
+      filas.forEach(([label, value], i) => {
+        const c = colX + colW[i] / 2;
+        ctx.fillStyle = "rgba(255,255,255,0.72)";
+        ctx.font = labelFont;
+        ctx.fillText(label.toUpperCase(), c, y);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = valueFont;
+        ctx.fillText(value, c, y + 28 * k);
+        colX += colW[i] + gapFila;
+      });
+      y += 28 * k + 52 * k;
+    }
+    // layout "mini": sin datos, solo recorrido + logo
 
     // Recorrido centrado
     if (rutaPts) {
-      const s = ESCALA * 1.4;
+      const s = ESCALA * 1.4 * k;
       const ox = cx - routeW / 2;
-      const oy = y + 8;
+      const oy = y + 8 * k;
       const trazar = () => {
         ctx.beginPath();
         rutaPts.forEach((p, i) => {
@@ -214,26 +251,26 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
       ctx.lineJoin = "round";
       ctx.lineCap = "round";
       ctx.strokeStyle = "rgba(0,0,0,0.5)";
-      ctx.lineWidth = 14;
+      ctx.lineWidth = 14 * k;
       trazar();
       ctx.stroke();
       ctx.strokeStyle = "#3bcb23";
-      ctx.lineWidth = 8;
+      ctx.lineWidth = 8 * k;
       trazar();
       ctx.stroke();
-      y = oy + RUTA_H * s + 12;
+      y = oy + RUTA_H * s + 12 * k;
     }
 
     // Logo + GROWTH centrados
     let gx = cx - logoRowW / 2;
     if (logo) {
       ctx.drawImage(logo, gx, y, logoW, logoSz);
-      gx += logoW + 10;
+      gx += logoW + 10 * k;
     }
     ctx.fillStyle = "#00ed64";
     ctx.font = growthFont;
     ctx.textAlign = "left";
-    ctx.fillText("GROWTH", gx, y + (logoSz - 22) / 2);
+    ctx.fillText("GROWTH", gx, y + (logoSz - 22 * k) / 2);
     ctx.textAlign = "start";
     ctx.shadowBlur = 0;
 
@@ -308,25 +345,33 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
         >
           {foto ? <div style={S.oscurecer} /> : null}
 
-          {/* Bloque completo arrastrable: datos + recorrido + GROWTH */}
+          {/* Bloque arrastrable. Tocar (sin arrastrar) rota el layout, como Strava. */}
           <div
-            style={{ ...S.bloque, left: `${pos.fx * 100}%`, top: `${pos.fy * 100}%` }}
+            style={{
+              ...S.bloque,
+              left: `${pos.fx * 100}%`,
+              top: `${pos.fy * 100}%`,
+              transform: `scale(${escala})`,
+              transformOrigin: "top left",
+            }}
             onPointerDown={onPointerDown}
           >
-            <div style={S.stat}>
-              <div style={S.statLabel}>
-                DISTANCIA <FiMove style={{ fontSize: 11, opacity: 0.55, verticalAlign: "middle" }} />
+            {layout !== "mini" ? (
+              <div style={layout === "horizontal" ? S.statsFila : S.statsCol}>
+                <div style={S.stat}>
+                  <div style={S.statLabel}>DISTANCIA</div>
+                  <div style={S.statValor}>{km.toFixed(2).replace(".", ",")} km</div>
+                </div>
+                <div style={S.stat}>
+                  <div style={S.statLabel}>RITMO</div>
+                  <div style={S.statValor}>{fmtRitmo(ritmo)}</div>
+                </div>
+                <div style={S.stat}>
+                  <div style={S.statLabel}>TIEMPO</div>
+                  <div style={S.statValor}>{fmtTiempo(secs)}</div>
+                </div>
               </div>
-              <div style={S.statValor}>{km.toFixed(2).replace(".", ",")} km</div>
-            </div>
-            <div style={S.stat}>
-              <div style={S.statLabel}>RITMO</div>
-              <div style={S.statValor}>{fmtRitmo(ritmo)}</div>
-            </div>
-            <div style={S.stat}>
-              <div style={S.statLabel}>TIEMPO</div>
-              <div style={S.statValor}>{fmtTiempo(secs)}</div>
-            </div>
+            ) : null}
 
             {rutaPts ? (
               <svg width={RUTA_W} height={RUTA_H} style={{ display: "block", margin: "6px 0" }}>
@@ -370,7 +415,22 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
           </p>
         ) : (
           <>
-            <p style={S.tip}>Arrastrá los datos para ubicarlos donde quieras. Subí una foto de fondo si querés.</p>
+            <p style={S.tip}>
+              Arrastrá los datos para moverlos · tocá el bloque para cambiar el formato · ajustá el
+              tamaño abajo.
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
+              <span style={{ ...S.tip, margin: 0 }}>Tamaño</span>
+              <input
+                type="range"
+                min="0.55"
+                max="1.5"
+                step="0.05"
+                value={escala}
+                onChange={(e) => setEscala(Number(e.target.value))}
+                style={{ width: 160, accentColor: "#3bcb23" }}
+              />
+            </div>
             {error ? <p style={S.error}>{error}</p> : null}
           </>
         )}
@@ -455,9 +515,11 @@ const S = {
     alignItems: "center",
     textAlign: "center",
   },
-  stat: { marginBottom: 9 },
+  statsCol: { display: "flex", flexDirection: "column", alignItems: "center" },
+  statsFila: { display: "flex", flexDirection: "row", alignItems: "flex-start", gap: 18 },
+  stat: { marginBottom: 9, textAlign: "center" },
   statLabel: { fontSize: "0.52rem", fontWeight: 800, letterSpacing: "0.1em", opacity: 0.8 },
-  statValor: { fontSize: "0.92rem", fontWeight: 400, lineHeight: 1.15 },
+  statValor: { fontSize: "0.92rem", fontWeight: 400, lineHeight: 1.15, whiteSpace: "nowrap" },
   growthRow: { display: "flex", alignItems: "center", gap: 5, marginTop: 4 },
   growthLogo: { height: 16, width: "auto", display: "block", flexShrink: 0 },
   growth: { color: "#00ed64", fontWeight: 700, fontSize: "0.62rem", letterSpacing: "0.06em" },

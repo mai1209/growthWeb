@@ -83,6 +83,9 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
   const [foto, setFoto] = useState("");
   const [ocupado, setOcupado] = useState(false);
   const [arrastrando, setArrastrando] = useState(false);
+  // Como Strava: tocar el bloque rota el formato; escala achica/agranda todo.
+  const [layout, setLayout] = useState("vertical"); // vertical | horizontal | mini
+  const [escala, setEscala] = useState(1);
 
   // Arrastre del bloque de datos: se puede poner en cualquier parte de la foto.
   const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
@@ -98,9 +101,13 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
         pan.setValue({ x: 0, y: 0 });
       },
       onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
-      onPanResponderRelease: () => {
+      onPanResponderRelease: (e, g) => {
         pan.flattenOffset();
         setArrastrando(false);
+        // Toque (sin arrastre) = rotar entre los formatos, como Strava.
+        if (Math.abs(g.dx) < 6 && Math.abs(g.dy) < 6) {
+          setLayout((l) => (l === "vertical" ? "horizontal" : l === "horizontal" ? "mini" : "vertical"));
+        }
       },
       onPanResponderTerminate: () => {
         pan.flattenOffset();
@@ -219,29 +226,36 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
 
             {/* Datos apilados, arrastrables: ponelos donde quieras sobre la foto */}
             <Animated.View
-              style={[styles.overlayInfo, { transform: pan.getTranslateTransform() }]}
+              style={[
+                styles.overlayInfo,
+                { transform: [...pan.getTranslateTransform(), { scale: escala }] },
+              ]}
               {...panResponder.panHandlers}
             >
-              <View style={styles.dato}>
-                <Text style={styles.datoLbl}>DISTANCIA</Text>
-                <Text style={styles.datoVal}>{km.toFixed(2)} km</Text>
-              </View>
-              <View style={styles.dato}>
-                <Text style={styles.datoLbl}>{act.metrica === "velocidad" ? "VELOCIDAD" : "RITMO"}</Text>
-                <Text style={styles.datoVal}>
-                  {act.metrica === "velocidad"
-                    ? `${vel > 0 ? vel.toFixed(1) : "—"} km/h`
-                    : `${ritmo > 0 ? ritmo.toFixed(1) : "—"} /km`}
-                </Text>
-              </View>
-              <View style={styles.dato}>
-                <Text style={styles.datoLbl}>TIEMPO</Text>
-                <Text style={styles.datoVal}>{fmtTiempoLargo(secs)}</Text>
-              </View>
-              {actividad?.kcal ? (
-                <View style={styles.dato}>
-                  <Text style={styles.datoLbl}>CALORÍAS</Text>
-                  <Text style={styles.datoVal}>{actividad.kcal} kcal</Text>
+              {layout !== "mini" ? (
+                <View style={layout === "horizontal" ? styles.statsFila : styles.statsCol}>
+                  <View style={styles.dato}>
+                    <Text style={styles.datoLbl}>DISTANCIA</Text>
+                    <Text style={styles.datoVal}>{km.toFixed(2)} km</Text>
+                  </View>
+                  <View style={styles.dato}>
+                    <Text style={styles.datoLbl}>{act.metrica === "velocidad" ? "VELOCIDAD" : "RITMO"}</Text>
+                    <Text style={styles.datoVal}>
+                      {act.metrica === "velocidad"
+                        ? `${vel > 0 ? vel.toFixed(1) : "—"} km/h`
+                        : `${ritmo > 0 ? ritmo.toFixed(1) : "—"} /km`}
+                    </Text>
+                  </View>
+                  <View style={styles.dato}>
+                    <Text style={styles.datoLbl}>TIEMPO</Text>
+                    <Text style={styles.datoVal}>{fmtTiempoLargo(secs)}</Text>
+                  </View>
+                  {actividad?.kcal && layout === "vertical" ? (
+                    <View style={styles.dato}>
+                      <Text style={styles.datoLbl}>CALORÍAS</Text>
+                      <Text style={styles.datoVal}>{actividad.kcal} kcal</Text>
+                    </View>
+                  ) : null}
                 </View>
               ) : null}
               {Array.isArray(actividad?.ruta) && actividad.ruta.length > 1 ? (
@@ -265,7 +279,25 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
           ) : null}
           <View style={styles.arrastraHint}>
             <Ionicons name="move-outline" size={15} color={colors.greenBright} />
-            <Text style={styles.arrastraHintTxt}>Arrastrá los datos para ubicarlos donde quieras.</Text>
+            <Text style={styles.arrastraHintTxt}>
+              Arrastrá para mover · tocá el bloque para cambiar el formato
+            </Text>
+          </View>
+
+          <View style={styles.tamRow}>
+            <Text style={styles.arrastraHintTxt}>Tamaño</Text>
+            <TouchableOpacity
+              style={styles.tamBtn}
+              onPress={() => setEscala((v) => Math.max(0.55, Math.round((v - 0.15) * 100) / 100))}
+            >
+              <Text style={styles.tamBtnTxt}>−</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.tamBtn}
+              onPress={() => setEscala((v) => Math.min(1.5, Math.round((v + 0.15) * 100) / 100))}
+            >
+              <Text style={styles.tamBtnTxt}>＋</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
 
@@ -312,6 +344,8 @@ const makeStyles = (colors) =>
     lienzo: { overflow: "hidden", backgroundColor: "#0d1f27" },
     lienzoBg: { backgroundColor: "#0d1f27" },
     overlayInfo: { position: "absolute", left: 24, top: "34%", gap: 14, alignItems: "center" },
+    statsCol: { alignItems: "center", gap: 14 },
+    statsFila: { flexDirection: "row", alignItems: "flex-start", gap: 16 },
     dato: { alignItems: "center" },
     datoLbl: {
       color: "rgba(255,255,255,0.85)",
@@ -351,6 +385,18 @@ const makeStyles = (colors) =>
     elegirTxt: { color: colors.greenBright, fontSize: 14, fontWeight: "800" },
     arrastraHint: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 12 },
     arrastraHintTxt: { color: colors.muted, fontSize: 12, fontWeight: "600" },
+    tamRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10 },
+    tamBtn: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.card,
+    },
+    tamBtnTxt: { color: colors.greenBright, fontSize: 17, fontWeight: "800" },
 
     acciones: {
       flexDirection: "row",
