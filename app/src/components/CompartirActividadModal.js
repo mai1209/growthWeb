@@ -232,42 +232,50 @@ export default function CompartirActividadModal({ visible, actividad, onClose })
               ]}
               {...panResponder.panHandlers}
             >
-              {layout !== "mini" ? (
-                <View style={layout === "horizontal" ? styles.statsFila : styles.statsCol}>
-                  <View style={styles.dato}>
-                    <Text style={styles.datoLbl}>DISTANCIA</Text>
-                    <Text style={styles.datoVal}>{km.toFixed(2)} km</Text>
-                  </View>
-                  <View style={styles.dato}>
-                    <Text style={styles.datoLbl}>{act.metrica === "velocidad" ? "VELOCIDAD" : "RITMO"}</Text>
-                    <Text style={styles.datoVal}>
-                      {act.metrica === "velocidad"
-                        ? `${vel > 0 ? vel.toFixed(1) : "—"} km/h`
-                        : `${ritmo > 0 ? ritmo.toFixed(1) : "—"} /km`}
-                    </Text>
-                  </View>
-                  <View style={styles.dato}>
-                    <Text style={styles.datoLbl}>TIEMPO</Text>
-                    <Text style={styles.datoVal}>{fmtTiempoLargo(secs)}</Text>
-                  </View>
-                  {actividad?.kcal && layout === "vertical" ? (
-                    <View style={styles.dato}>
-                      <Text style={styles.datoLbl}>CALORÍAS</Text>
-                      <Text style={styles.datoVal}>{actividad.kcal} kcal</Text>
+              {(() => {
+                const statsEl =
+                  layout !== "mini" ? (
+                    <View key="s" style={layout === "horizontal" ? styles.statsFila : styles.statsCol}>
+                      <View style={styles.dato}>
+                        <Text style={styles.datoLbl}>DISTANCIA</Text>
+                        <Text style={styles.datoVal}>{km.toFixed(2)} km</Text>
+                      </View>
+                      <View style={styles.dato}>
+                        <Text style={styles.datoLbl}>{act.metrica === "velocidad" ? "VELOCIDAD" : "RITMO"}</Text>
+                        <Text style={styles.datoVal}>
+                          {act.metrica === "velocidad"
+                            ? `${vel > 0 ? vel.toFixed(1) : "—"} km/h`
+                            : `${ritmo > 0 ? ritmo.toFixed(1) : "—"} /km`}
+                        </Text>
+                      </View>
+                      <View style={styles.dato}>
+                        <Text style={styles.datoLbl}>TIEMPO</Text>
+                        <Text style={styles.datoVal}>{fmtTiempoLargo(secs)}</Text>
+                      </View>
+                      {actividad?.kcal && layout === "vertical" ? (
+                        <View style={styles.dato}>
+                          <Text style={styles.datoLbl}>CALORÍAS</Text>
+                          <Text style={styles.datoVal}>{actividad.kcal} kcal</Text>
+                        </View>
+                      ) : null}
                     </View>
-                  ) : null}
-                </View>
-              ) : null}
-              {Array.isArray(actividad?.ruta) && actividad.ruta.length > 1 ? (
-                <View style={styles.miniRuta}>
-                  <Trazado ruta={actividad.ruta} W={110} H={80} color="#3bcb23" />
-                </View>
-              ) : null}
-              {/* GROWTH con el logo al lado, abajo del recorrido */}
-              <View style={styles.marcaRow}>
-                <Image source={require("../../assets/logoDist.png")} style={styles.marcaLogo} />
-                <Text style={styles.marca}>GROWTH</Text>
-              </View>
+                  ) : null;
+                const rutaEl =
+                  Array.isArray(actividad?.ruta) && actividad.ruta.length > 1 ? (
+                    <View key="r" style={styles.miniRuta}>
+                      <Trazado ruta={actividad.ruta} W={110} H={80} color="#3bcb23" />
+                    </View>
+                  ) : null;
+                const logoEl = (
+                  <View key="g" style={styles.marcaRow}>
+                    <Image source={require("../../assets/logoDist.png")} style={styles.marcaLogo} />
+                    <Text style={styles.marca}>GROWTH</Text>
+                  </View>
+                );
+                // Orden clásico: info → recorrido → logo abajo (en mini, sin info).
+                if (layout === "mini") return [rutaEl, logoEl];
+                return [statsEl, rutaEl, logoEl];
+              })()}
             </Animated.View>
           </ViewShot>
 

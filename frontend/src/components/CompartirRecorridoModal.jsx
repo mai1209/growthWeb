@@ -205,8 +205,7 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
     const cx = x + contentW / 2;
 
     ctx.textAlign = "center";
-    if (layout === "vertical") {
-      // Datos apilados y centrados
+    const dibujarStatsVertical = () => {
       filas.forEach(([label, value]) => {
         ctx.fillStyle = "rgba(255,255,255,0.72)";
         ctx.font = labelFont;
@@ -217,8 +216,8 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
         ctx.fillText(value, cx, y);
         y += 62 * k;
       });
-    } else if (layout === "horizontal") {
-      // Datos en una fila (como Strava)
+    };
+    const dibujarStatsFila = () => {
       let colX = cx - rowW / 2;
       filas.forEach(([label, value], i) => {
         const c = colX + colW[i] / 2;
@@ -231,11 +230,9 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
         colX += colW[i] + gapFila;
       });
       y += 28 * k + 52 * k;
-    }
-    // layout "mini": sin datos, solo recorrido + logo
-
-    // Recorrido centrado
-    if (rutaPts) {
+    };
+    const dibujarRuta = () => {
+      if (!rutaPts) return;
       const s = ESCALA * 1.4 * k;
       const ox = cx - routeW / 2;
       const oy = y + 8 * k;
@@ -259,18 +256,34 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
       trazar();
       ctx.stroke();
       y = oy + RUTA_H * s + 12 * k;
-    }
+    };
+    const dibujarLogo = () => {
+      let gx = cx - logoRowW / 2;
+      if (logo) {
+        ctx.drawImage(logo, gx, y, logoW, logoSz);
+        gx += logoW + 10 * k;
+      }
+      ctx.fillStyle = "#00ed64";
+      ctx.font = growthFont;
+      ctx.textAlign = "left";
+      ctx.fillText("GROWTH", gx, y + (logoSz - 22 * k) / 2);
+      ctx.textAlign = "center";
+      y += logoSz + 10 * k;
+    };
 
-    // Logo + GROWTH centrados
-    let gx = cx - logoRowW / 2;
-    if (logo) {
-      ctx.drawImage(logo, gx, y, logoW, logoSz);
-      gx += logoW + 10 * k;
+    // Orden clásico (igual que el preview): info → recorrido → logo abajo.
+    if (layout === "horizontal") {
+      dibujarStatsFila();
+      dibujarRuta();
+      dibujarLogo();
+    } else if (layout === "vertical") {
+      dibujarStatsVertical();
+      dibujarRuta();
+      dibujarLogo();
+    } else {
+      dibujarRuta();
+      dibujarLogo();
     }
-    ctx.fillStyle = "#00ed64";
-    ctx.font = growthFont;
-    ctx.textAlign = "left";
-    ctx.fillText("GROWTH", gx, y + (logoSz - 22 * k) / 2);
     ctx.textAlign = "start";
     ctx.shadowBlur = 0;
 
@@ -356,48 +369,54 @@ export default function CompartirRecorridoModal({ recorrido, onClose, onPublicad
             }}
             onPointerDown={onPointerDown}
           >
-            {layout !== "mini" ? (
-              <div style={layout === "horizontal" ? S.statsFila : S.statsCol}>
-                <div style={S.stat}>
-                  <div style={S.statLabel}>DISTANCIA</div>
-                  <div style={S.statValor}>{km.toFixed(2).replace(".", ",")} km</div>
+            {(() => {
+              const statsEl =
+                layout !== "mini" ? (
+                  <div key="s" style={layout === "horizontal" ? S.statsFila : S.statsCol}>
+                    <div style={S.stat}>
+                      <div style={S.statLabel}>DISTANCIA</div>
+                      <div style={S.statValor}>{km.toFixed(2).replace(".", ",")} km</div>
+                    </div>
+                    <div style={S.stat}>
+                      <div style={S.statLabel}>RITMO</div>
+                      <div style={S.statValor}>{fmtRitmo(ritmo)}</div>
+                    </div>
+                    <div style={S.stat}>
+                      <div style={S.statLabel}>TIEMPO</div>
+                      <div style={S.statValor}>{fmtTiempo(secs)}</div>
+                    </div>
+                  </div>
+                ) : null;
+              const rutaEl = rutaPts ? (
+                <svg key="r" width={RUTA_W} height={RUTA_H} style={{ display: "block", margin: "6px 0" }}>
+                  <polyline
+                    points={rutaPts.map((p) => `${p.x},${p.y}`).join(" ")}
+                    fill="none"
+                    stroke="rgba(0,0,0,0.5)"
+                    strokeWidth="7"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                  <polyline
+                    points={rutaPts.map((p) => `${p.x},${p.y}`).join(" ")}
+                    fill="none"
+                    stroke="#3bcb23"
+                    strokeWidth="4"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              ) : null;
+              const logoEl = (
+                <div key="g" style={S.growthRow}>
+                  <img src="/logoDist.png" alt="" style={S.growthLogo} draggable={false} />
+                  <span style={S.growth}>GROWTH</span>
                 </div>
-                <div style={S.stat}>
-                  <div style={S.statLabel}>RITMO</div>
-                  <div style={S.statValor}>{fmtRitmo(ritmo)}</div>
-                </div>
-                <div style={S.stat}>
-                  <div style={S.statLabel}>TIEMPO</div>
-                  <div style={S.statValor}>{fmtTiempo(secs)}</div>
-                </div>
-              </div>
-            ) : null}
-
-            {rutaPts ? (
-              <svg width={RUTA_W} height={RUTA_H} style={{ display: "block", margin: "6px 0" }}>
-                <polyline
-                  points={rutaPts.map((p) => `${p.x},${p.y}`).join(" ")}
-                  fill="none"
-                  stroke="rgba(0,0,0,0.5)"
-                  strokeWidth="7"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-                <polyline
-                  points={rutaPts.map((p) => `${p.x},${p.y}`).join(" ")}
-                  fill="none"
-                  stroke="#3bcb23"
-                  strokeWidth="4"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-              </svg>
-            ) : null}
-
-            <div style={S.growthRow}>
-              <img src="/logoDist.png" alt="" style={S.growthLogo} draggable={false} />
-              <span style={S.growth}>GROWTH</span>
-            </div>
+              );
+              // Orden clásico: info → recorrido → logo abajo (en mini, sin info).
+              if (layout === "mini") return [rutaEl, logoEl];
+              return [statsEl, rutaEl, logoEl];
+            })()}
           </div>
         </div>
 
