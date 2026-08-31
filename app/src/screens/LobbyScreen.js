@@ -23,28 +23,29 @@ const VERDE = "#75f94c";
 const GRIS_LINEA = "#4f4f4f";
 
 // `grupo` es el id en NAV_GROUPS: define qué secciones muestra la barra inferior.
+// `glyph`/`icon`: mismos iconos que usaba el menú de navegación (RadialTabBar).
 const CARDS = [
   {
     titulo: "Finanzas",
-    emoji: "💸",
+    glyph: "$",
     grupo: "finanzas",
     desc: "Pon orden a tus finanzas con esta herramienta. Administra caja en pesos, caja en dolares, deudas y ahorros. Divide automaticamente los gastos con un grupo de personas, filtra, ve tus metricas, arma tu lista de compras.",
   },
   {
     titulo: "Desarrollo personal",
-    emoji: "🧠",
+    icon: "trending-up-outline",
     grupo: "desarrollo",
     desc: "Ordena tu vida. Utiliza funciones como trazo de metas, agenda de tareas diarias//programadas, block de notas, escribe tu journaling, escribe y lee tus afirmaciones diarias y aprovecha al maximo tu tiempo con la herramienta de pomodoro timer!",
   },
   {
     titulo: "Salud",
-    emoji: "🫀",
+    icon: "heart-outline",
     grupo: "salud",
     desc: "Lleva un trackeo de tus pasos diarios, inicia recorridos y compartelos en tus redes sociales, cuenta tus calorías, ordena tu rutina de gimnasio y lleva un control del progreso de tus rutinas.",
   },
   {
     titulo: "Co-Working",
-    emoji: "👥",
+    icon: "people-outline",
     grupo: "coworking",
     desc: "Registra tus horas, arma y una grilla de “To-Do”, “En progreso”, “En revisión”, “Realizados”",
   },
@@ -165,7 +166,14 @@ export default function LobbyScreen({ navigation }) {
                 paddingHorizontal: 14 * u,
               }}
             >
-              <Text style={{ fontSize: 34 * u }}>{c.emoji}</Text>
+              {c.glyph ? (
+                // "$" fino, igual que en la barra de navegación
+                <Text style={{ fontSize: 34 * u, lineHeight: 36 * u, fontWeight: "300", color: VERDE }}>
+                  {c.glyph}
+                </Text>
+              ) : (
+                <Ionicons name={c.icon} size={34 * u} color={VERDE} />
+              )}
               <Text
                 style={{
                   fontFamily: "Menda-Bold",

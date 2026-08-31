@@ -1249,8 +1249,11 @@ const makeStyles = (u) => StyleSheet.create({
     paddingTop: 20 * u,
     paddingBottom: 40 * u,
     marginTop: 37 * u,
+    // Recorta las muescas del corte: queda solo el medio círculo que muerde el borde
+    overflow: "hidden",
   },
-  ticketSwitchRow: { alignItems: "center" },
+  // El switch Resumen/Historial va a la derecha, como en el Figma
+  ticketSwitchRow: { alignItems: "flex-end" },
   ticketSwitch: {
     flexDirection: "row",
     borderWidth: 1,
@@ -1268,7 +1271,7 @@ const makeStyles = (u) => StyleSheet.create({
   ticketSegOn: { backgroundColor: VERDE },
   ticketSegText: { fontFamily: "Menda-Medium", fontSize: 25 * u, letterSpacing: -1 * u, color: TXT },
   ticketSegTextOn: { color: "#000000" },
-  verTodosWrap: { alignSelf: "center", marginTop: 10 * u },
+  verTodosWrap: { alignSelf: "flex-end", marginTop: 10 * u, marginRight: 8 * u },
   verTodos: { fontFamily: "Menda-Medium", color: VERDE, fontSize: 18 * u },
 
   ticketBody: { paddingHorizontal: 22 * u },
