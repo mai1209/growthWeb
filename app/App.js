@@ -27,7 +27,8 @@ import AjustesScreen from "./src/screens/AjustesScreen";
 import PerfilScreen from "./src/screens/PerfilScreen";
 import ComunidadScreen from "./src/screens/ComunidadScreen";
 import UpdateModal from "./src/components/UpdateModal";
-import RadialTabBar from "./src/components/RadialTabBar";
+import RadialTabBar, { NAV_GROUPS } from "./src/components/RadialTabBar";
+import GroupTabBar from "./src/components/GroupTabBar";
 import { appService } from "./src/api";
 import { APP_VERSION, COMUNIDAD_HABILITADA } from "./src/config";
 import * as SecureStore from "expo-secure-store";
@@ -87,15 +88,21 @@ function TopBar() {
   );
 }
 
-function MainTabs() {
+function MainTabs({ route }) {
   const { colors } = useTheme();
   const { workspace } = useWorkspace();
+  // Grupo elegido en el Lobby (finanzas/desarrollo/coworking/salud): barra plana
+  // con sus secciones a la vista. Sin grupo (GROWTH PRO) queda el dial radial.
+  const group = NAV_GROUPS.find((g) => g.id === route?.params?.group) || null;
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <TopBar />
       <Tab.Navigator
-        key={workspace}
-        tabBar={(props) => <RadialTabBar {...props} />}
+        key={`${workspace}:${group ? group.id : "pro"}`}
+        initialRouteName={group ? group.items[0].route : "Home"}
+        tabBar={(props) =>
+          group ? <GroupTabBar {...props} groupId={group.id} /> : <RadialTabBar {...props} />
+        }
         screenOptions={{ headerShown: false }}
       >
         <Tab.Screen name="Home" component={HomeScreen} />

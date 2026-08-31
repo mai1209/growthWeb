@@ -1,3 +1,11 @@
+// Home de Finanzas — réplica del frame "Finance Section" del Figma (rediseño):
+// fondo #10150f, fuente Menda, tabs AR$/US$/Deudas/Ahorros en contenedor
+// redondeado gris, card de saldo con degradado gris (la tapa a mitad del
+// contenedor de tabs, como en el diseño), ticket con borde verde con
+// Resumen/Historial y footer "Gracias por utilizar GROWTH MANAGER".
+// Los 3 iconos de la card: historial (reemplaza al filtro: Filtros ahora vive
+// en la barra inferior), ojo (ocultar montos) y paleta (color de tarjeta).
+// Escala: u = (width/738) * 1.15, igual que el Lobby.
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
@@ -11,14 +19,15 @@ import {
   Easing,
   Modal,
   Alert,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
+import { useFonts } from "expo-font";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Svg, { Defs, LinearGradient, Stop, Rect } from "react-native-svg";
 import * as SecureStore from "expo-secure-store";
 import { movimientoService } from "../api";
-import { statAccents, useTheme } from "../theme";
 import MovementFormModal from "../components/MovementFormModal";
 import HistoryModal from "../components/HistoryModal";
 import {
@@ -31,6 +40,26 @@ import {
   summarizeByType,
 } from "../utils/finance";
 
+// Paleta fija del rediseño (no sigue el tema claro/oscuro: el Figma es uno solo)
+const BG = "#10150f";
+const VERDE = "#75f94c";
+const ROJO = "#eb3223";
+const GRIS_BORDE = "#4e4e4e";
+const GRIS_PILL = "#4f4f4f";
+const TXT = "#ffffff";
+const MUTED = "rgba(255,255,255,0.6)";
+const LINEA = "rgba(255,255,255,0.14)";
+
+// Colores de la columna Balance, calcados del Figma
+const ACCENTS = {
+  resultado: "#575dfb",
+  ingreso: "#75f94c",
+  egreso: "#eb3223",
+  ahorro: "#ffffff",
+  deuda: "#f4c622",
+  movimientos: "#ff3465",
+};
+
 // Ícono según el tipo de movimiento (mismo criterio que el historial).
 const movementIcon = (m) => {
   if (m.desdeAhorro) return "swap-horizontal-outline";
@@ -40,9 +69,10 @@ const movementIcon = (m) => {
   return "arrow-up-outline"; // egreso
 };
 
+// Etiquetas como en el Figma: AR$ / US$
 const HOME_TABS = [
-  { key: "ARS", label: "ARS" },
-  { key: "USD", label: "USD" },
+  { key: "ARS", label: "AR$" },
+  { key: "USD", label: "US$" },
   { key: "deuda", label: "Deudas" },
   { key: "ahorro", label: "Ahorros" },
 ];
@@ -55,8 +85,22 @@ const fmtDate = (value) => {
 
 const CARD_STYLE_KEY = "gm_card_style";
 
-// Estilos de la tarjeta de saldo (elegibles dando vuelta la tarjeta).
+// Estilos de la tarjeta de saldo (elegibles con la paleta, que da vuelta la tarjeta).
+// "grafito" es el degradado gris del Figma y queda como predeterminado.
 const CARD_STYLES = {
+  grafito: {
+    label: "Grafito",
+    swatch: "#4f4f4f",
+    stops: ["#4f4f4f", "#7e7c7c", "#4f4f4f"],
+    backup: "#4f4f4f",
+    text: "#ffffff",
+    muted: "rgba(255, 255, 255, 0.72)",
+    iconBorder: "rgba(255, 255, 255, 0.28)",
+    iconBg: "rgba(255, 255, 255, 0.13)",
+    glow1: "rgba(255, 255, 255, 0.2)",
+    glow3: "rgba(255, 255, 255, 0.1)",
+    lineColor: "rgba(255, 255, 255, 0.35)",
+  },
   holo: {
     label: "Holográfico",
     swatch: "#c8b8ff",
@@ -136,13 +180,18 @@ const CARD_STYLES = {
     lineColor: "rgba(255, 255, 255, 0.45)",
   },
 };
-const CARD_ORDER = ["holo", "platino", "titanio", "chrome", "esmeralda", "champagne"];
+const CARD_ORDER = ["grafito", "holo", "platino", "titanio", "chrome", "esmeralda", "champagne"];
 
 export default function HomeScreen() {
-  const { colors, isDark } = useTheme();
-  const styles = makeStyles(colors);
+  const { width } = useWindowDimensions();
+  const u = (width / 738) * 1.15;
+  const styles = useMemo(() => makeStyles(u), [u]);
+  const [fontsLoaded] = useFonts({
+    "Menda-Bold": require("../../assets/fonts/Menda-Bold.ttf"),
+    "Menda-Medium": require("../../assets/fonts/Menda-Medium.ttf"),
+  });
 
-  // Brillo diagonal que se desliza (igual que la web)
+  // Brillo diagonal que se desliza sobre la tarjeta
   const sheen = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const loop = Animated.loop(
@@ -161,11 +210,10 @@ export default function HomeScreen() {
     return () => loop.stop();
   }, [sheen]);
 
-  // La tarjeta de saldo cambia con el tema: oscura en dark, mint clara en light
-  const [cardStyleKey, setCardStyleKey] = useState("holo");
+  const [cardStyleKey, setCardStyleKey] = useState("grafito");
   const [flipped, setFlipped] = useState(false);
   const flipAnim = useRef(new Animated.Value(0)).current;
-  const card = CARD_STYLES[cardStyleKey] || CARD_STYLES.holo;
+  const card = CARD_STYLES[cardStyleKey] || CARD_STYLES.grafito;
 
   // Cargar el estilo de tarjeta guardado
   useEffect(() => {
@@ -237,6 +285,7 @@ export default function HomeScreen() {
 
   const isCurrency = tab === "ARS" || tab === "USD";
   const currency = isCurrency ? tab : "ARS";
+  const currencyTag = currency === "USD" ? "US$" : "AR$";
 
   const goToFilter = (tipo) =>
     navigation.navigate("Filtros", { tipo: tipo || "all", currency, nonce: Date.now() });
@@ -296,58 +345,65 @@ export default function HomeScreen() {
   const money = (amount) => (visible ? formatMoney(amount, currency) : "••••");
   const moneyOf = (amount, mon) => (visible ? formatMoney(amount, mon || "ARS") : "••••");
 
+  // Acciones de la card, como en el Figma: flecha verde ↓, flecha roja ↑,
+  // fijo = flecha + candado / reloj.
   const quickActions = [
-    { key: "ingreso", label: "Ingreso", icon: "arrow-down-outline", color: "#2fa56f" },
-    { key: "egreso", label: "Egreso", icon: "arrow-up-outline", color: "#e0654f" },
-    { key: "ingreso-fijo", label: "Ing. fijo", icon: "repeat-outline", color: "#2f9e3a" },
-    { key: "egreso-fijo", label: "Gasto fijo", icon: "sync-outline", color: "#d9774a" },
+    { key: "ingreso", label: "Ingreso", icon: "arrow-down", color: VERDE },
+    { key: "egreso", label: "Egreso", icon: "arrow-up", color: ROJO },
+    { key: "ingreso-fijo", label: "Ingreso fijo", icon: "arrow-down", extra: "lock-closed", color: VERDE },
+    { key: "egreso-fijo", label: "Gasto fijo", icon: "arrow-up", extra: "time-outline", color: ROJO },
   ];
 
+  // Filas del resumen en el orden del Figma (Movimientos al final)
   const stats = [
-    { label: "Movimientos del mes", value: visible ? String(monthCount) : "••", accent: statAccents.movimientos, tipo: null },
-    { label: "Resultado mensual", value: money(monthSummary.total), accent: statAccents.resultado, tipo: null },
-    { label: "Ingresos del mes", value: money(monthSummary.ingreso), accent: statAccents.ingreso, tipo: "ingreso" },
-    { label: "Egresos del mes", value: money(monthSummary.egreso), accent: statAccents.egreso, tipo: "egreso" },
-    { label: "Ahorro del mes", value: money(monthSummary.ahorro), accent: statAccents.ahorro, tipo: "ahorro" },
-    { label: "Deuda pendiente", value: money(historical.deudaPendiente), accent: statAccents.deuda, tipo: "deuda" },
+    { label: "Resultado mensual", value: money(monthSummary.total), accent: ACCENTS.resultado, tipo: null },
+    { label: "Ingresos del mes", value: money(monthSummary.ingreso), accent: ACCENTS.ingreso, tipo: "ingreso" },
+    { label: "Egresos del mes", value: money(monthSummary.egreso), accent: ACCENTS.egreso, tipo: "egreso" },
+    { label: "Ahorro del mes", value: money(monthSummary.ahorro), accent: ACCENTS.ahorro, tipo: "ahorro" },
+    { label: "Deuda pendiente", value: money(historical.deudaPendiente), accent: ACCENTS.deuda, tipo: "deuda" },
+    { label: "Movimientos del mes", value: visible ? String(monthCount) : "••", accent: ACCENTS.movimientos, tipo: null },
   ];
+
+  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: BG }} />;
 
   return (
     <SafeAreaView style={styles.safe} edges={[]}>
-      {/* Selector segmentado FIJO — ARS · USD · Deudas · Ahorros */}
-      <View style={styles.fixedHeader}>
-        <View style={styles.segmentRow}>
-          {HOME_TABS.map((t) => {
-            const active = t.key === tab;
-            return (
-              <TouchableOpacity
-                key={t.key}
-                style={[styles.segment, active && styles.segmentActive]}
-                onPress={() => setTab(t.key)}
-                activeOpacity={0.85}
-              >
-                <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
-                  {t.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={false} onRefresh={fetchData} tintColor={colors.green} />
+          <RefreshControl refreshing={false} onRefresh={fetchData} tintColor={VERDE} />
         }
       >
+        {/* Contenedor redondeado de tabs (borde gris). Con moneda activa, la card
+            de saldo lo tapa desde la mitad, igual que en el Figma. */}
+        <View style={[styles.tabsShell, !isCurrency && styles.tabsShellSolo]}>
+          <View style={styles.segmentRow}>
+            {HOME_TABS.map((t) => {
+              const active = t.key === tab;
+              return (
+                <TouchableOpacity
+                  key={t.key}
+                  style={[styles.segment, active && styles.segmentActive]}
+                  onPress={() => setTab(t.key)}
+                  activeOpacity={0.85}
+                >
+                  <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
+                    {t.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          {isCurrency ? <View style={{ height: 186 * u }} /> : null}
+        </View>
+
         <View style={styles.cardBody}>
             {isCurrency ? (
               <>
-                {/* Tarjeta de saldo estilo credit card (se da vuelta para elegir color) */}
-                <View style={styles.flipWrap}>
+                {/* Tarjeta de saldo (degradado gris del Figma; se da vuelta con la paleta) */}
+                <View style={[styles.flipWrap, { marginTop: -177 * u }]}>
                 <Animated.View
                   style={[
                     styles.balanceCard,
@@ -368,10 +424,10 @@ export default function HomeScreen() {
                             <Stop offset="1" stopColor={card.stops[2]} />
                           </LinearGradient>
                         </Defs>
-                        <Rect width={cardSize.w} height={cardSize.h} rx={24} fill="url(#cardGrad)" />
+                        <Rect width={cardSize.w} height={cardSize.h} rx={34 * u} fill="url(#cardGrad)" />
                       </Svg>
 
-                      {/* Brillo diagonal que se desliza (igual que la web) */}
+                      {/* Brillo diagonal que se desliza */}
                       <Animated.View
                         pointerEvents="none"
                         style={[
@@ -403,66 +459,72 @@ export default function HomeScreen() {
                   ) : null}
 
                   <View style={styles.bcTop}>
-                    <View style={styles.bcKickerRow}>
-                      <Text style={[styles.bcKicker, { color: card.muted }]}>Saldo total</Text>
-                      <TouchableOpacity onPress={() => setSaldoInfoOpen(true)} hitSlop={8}>
-                        <Ionicons name="information-circle-outline" size={17} color={card.muted} />
-                      </TouchableOpacity>
+                    <View style={{ flex: 1 }}>
+                      <View style={styles.bcKickerRow}>
+                        <Text style={[styles.bcKicker, { color: card.text }]}>Saldo total</Text>
+                        <TouchableOpacity onPress={() => setSaldoInfoOpen(true)} hitSlop={8}>
+                          <Ionicons name="information-circle-outline" size={23 * u} color={card.text} />
+                        </TouchableOpacity>
+                      </View>
+                      {loading ? (
+                        <ActivityIndicator
+                          color={card.text}
+                          style={{ alignSelf: "flex-start", marginVertical: 14 * u }}
+                        />
+                      ) : (
+                        <Text style={[styles.bcBalance, { color: card.text }]}>{money(historical.total)}</Text>
+                      )}
                     </View>
+
+                    {/* Historial · Ojo · Paleta (círculos grises del Figma) */}
                     <View style={styles.bcIcons}>
                       <TouchableOpacity
-                        style={[styles.bcIconBtn, { borderColor: card.iconBorder, backgroundColor: card.iconBg }]}
-                        onPress={() => goToFilter(null)}
+                        style={styles.bcIconBtn}
+                        onPress={() => setShowHistory(true)}
                         hitSlop={6}
                       >
-                        <Ionicons name="funnel-outline" size={16} color={card.text} />
+                        <MaterialCommunityIcons name="history" size={25 * u} color={BG} />
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={[styles.bcIconBtn, { borderColor: card.iconBorder, backgroundColor: card.iconBg }]}
+                        style={styles.bcIconBtn}
                         onPress={() => setVisible((v) => !v)}
                         hitSlop={6}
                       >
                         <Ionicons
                           name={visible ? "eye-outline" : "eye-off-outline"}
-                          size={17}
-                          color={card.text}
+                          size={25 * u}
+                          color={BG}
                         />
                       </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.bcIconBtn, { borderColor: card.iconBorder, backgroundColor: card.iconBg }]}
-                        onPress={flipCard}
-                        hitSlop={6}
-                      >
-                        <Ionicons name="color-palette-outline" size={17} color={card.text} />
+                      <TouchableOpacity style={styles.bcIconBtn} onPress={flipCard} hitSlop={6}>
+                        <Ionicons name="color-palette-outline" size={25 * u} color={BG} />
                       </TouchableOpacity>
                     </View>
                   </View>
 
-                  {loading ? (
-                    <ActivityIndicator color="#14d95f" style={{ alignSelf: "flex-start", marginVertical: 14 }} />
-                  ) : (
-                    <Text style={[styles.bcBalance, { color: card.text }]}>{money(historical.total)}</Text>
-                  )}
-
-                  {/* Acciones dentro de la tarjeta (estilo referencia) */}
-                  <View
-                    style={[
-                      styles.bcActions,
-                      { backgroundColor: card.iconBg, borderColor: card.iconBorder },
-                    ]}
-                  >
-                    {quickActions.map((a) => (
-                      <TouchableOpacity
-                        key={a.key}
-                        style={styles.quickItem}
-                        onPress={() => setModalMode(a.key)}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons name={a.icon} size={25} color={a.color} />
-                        <Text style={[styles.quickLabel, { color: card.text }]} numberOfLines={1}>
-                          {a.label}
-                        </Text>
-                      </TouchableOpacity>
+                  {/* Acciones dentro de la tarjeta (banda translúcida del Figma) */}
+                  <View style={[styles.bcActions, { backgroundColor: card.iconBg }]}>
+                    {quickActions.map((a, i) => (
+                      <React.Fragment key={a.key}>
+                        {i > 0 ? (
+                          <View style={[styles.bcActionSep, { backgroundColor: card.lineColor }]} />
+                        ) : null}
+                        <TouchableOpacity
+                          style={styles.quickItem}
+                          onPress={() => setModalMode(a.key)}
+                          activeOpacity={0.7}
+                        >
+                          <View style={styles.quickIconRow}>
+                            <Ionicons name={a.icon} size={34 * u} color={a.color} />
+                            {a.extra ? (
+                              <Ionicons name={a.extra} size={20 * u} color={a.color} style={styles.quickExtra} />
+                            ) : null}
+                          </View>
+                          <Text style={[styles.quickLabel, { color: card.text }]} numberOfLines={1}>
+                            {a.label}
+                          </Text>
+                        </TouchableOpacity>
+                      </React.Fragment>
                     ))}
                   </View>
                 </Animated.View>
@@ -502,10 +564,9 @@ export default function HomeScreen() {
 
                 {error ? <Text style={styles.error}>{error}</Text> : null}
 
-                {/* Switch Resumen / Historial */}
-                {/* ===== Ticket: switch adentro + corte perforado + contenido ===== */}
+                {/* ===== Ticket con borde verde: Resumen / Historial ===== */}
                 <View style={styles.ticket}>
-                  <View style={styles.ticketTop}>
+                  <View style={styles.ticketSwitchRow}>
                     <View style={styles.ticketSwitch}>
                       {[
                         ["resumen", "Resumen"],
@@ -521,21 +582,19 @@ export default function HomeScreen() {
                         </TouchableOpacity>
                       ))}
                     </View>
-                    {resumenTab === "historial" ? (
-                      <TouchableOpacity onPress={() => setShowHistory(true)} hitSlop={8}>
-                        <Text style={styles.verTodos}>Ver todos</Text>
-                      </TouchableOpacity>
-                    ) : null}
                   </View>
-
-                  {/* Corte perforado tipo ticket */}
-                  <View style={styles.ticketCut}>
-                    <View style={styles.ticketDash} />
-                  </View>
+                  {resumenTab === "historial" ? (
+                    <TouchableOpacity onPress={() => setShowHistory(true)} hitSlop={8} style={styles.verTodosWrap}>
+                      <Text style={styles.verTodos}>Ver todos</Text>
+                    </TouchableOpacity>
+                  ) : null}
 
                   {resumenTab === "resumen" ? (
                     <View style={styles.ticketBody}>
-                      <Text style={styles.ticketCaption}>RESUMEN DEL MES · {currency}</Text>
+                      <View style={styles.ticketHeadRow}>
+                        <Text style={styles.ticketCaption}>Resumen del mes * {currencyTag}</Text>
+                        <Text style={styles.ticketCaption}>Balance</Text>
+                      </View>
                       {stats.map((s) => (
                         <TouchableOpacity
                           key={s.label}
@@ -543,10 +602,9 @@ export default function HomeScreen() {
                           activeOpacity={0.6}
                           onPress={() => goToFilter(s.tipo)}
                         >
-                          <Text style={[styles.ticketLabel, { textDecorationColor: s.accent }]} numberOfLines={1}>
+                          <Text style={styles.ticketLabel} numberOfLines={1}>
                             {s.label}
                           </Text>
-                          <View style={styles.ticketDots} />
                           <Text style={[styles.ticketValue, { color: s.accent }]}>{s.value}</Text>
                         </TouchableOpacity>
                       ))}
@@ -575,7 +633,7 @@ export default function HomeScreen() {
                                 onPress={() => toggleMovExpand(item._id)}
                               >
                                 <View style={[styles.movRedIcon, { borderColor: meta.color + "55", backgroundColor: meta.color + "1f" }]}>
-                                  <Ionicons name={movementIcon(item)} size={17} color={colors.text} />
+                                  <Ionicons name={movementIcon(item)} size={17} color={TXT} />
                                 </View>
                                 <Text style={styles.movRedTitle} numberOfLines={1}>
                                   {item.categoria || "Sin categoría"}
@@ -586,7 +644,7 @@ export default function HomeScreen() {
                                 <Ionicons
                                   name={abierto ? "chevron-up" : "chevron-down"}
                                   size={18}
-                                  color={colors.muted}
+                                  color={MUTED}
                                   style={{ marginLeft: 6 }}
                                 />
                               </TouchableOpacity>
@@ -608,7 +666,7 @@ export default function HomeScreen() {
                                   <View style={styles.movRedChips}>
                                     <Text style={[styles.movRedChip, { color: meta.color }]}>{meta.label}</Text>
                                     {isPartialDebt ? (
-                                      <Text style={[styles.movRedChip, { color: colors.greenDark }]}>Parcial</Text>
+                                      <Text style={[styles.movRedChip, { color: VERDE }]}>Parcial</Text>
                                     ) : null}
                                     {item.desdeAhorro ? (
                                       <Text style={[styles.movRedChip, { color: "#4fb6c9" }]}>Uso de ahorro</Text>
@@ -626,10 +684,10 @@ export default function HomeScreen() {
                                     )}
                                     <View style={styles.movRedIcons}>
                                       <TouchableOpacity onPress={() => setEditMov(item)} hitSlop={8}>
-                                        <Ionicons name="pencil" size={18} color={colors.muted} />
+                                        <Ionicons name="pencil" size={18} color={MUTED} />
                                       </TouchableOpacity>
                                       <TouchableOpacity onPress={() => handleDeleteMov(item)} hitSlop={8}>
-                                        <Ionicons name="trash-outline" size={18} color={colors.red} />
+                                        <Ionicons name="trash-outline" size={18} color="#ff6b5e" />
                                       </TouchableOpacity>
                                     </View>
                                   </View>
@@ -642,18 +700,19 @@ export default function HomeScreen() {
                     </View>
                   )}
 
-                  {/* Corte perforado inferior (cierra el ticket) */}
-                  <View style={[styles.ticketCut, { marginTop: 6 }]}>
+                  {/* Corte perforado tipo ticket (línea punteada + muescas verdes) */}
+                  <View style={styles.ticketCut}>
                     <View style={styles.ticketDash} />
+                    <View style={[styles.ticketNotch, styles.ticketNotchL]} />
+                    <View style={[styles.ticketNotch, styles.ticketNotchR]} />
                   </View>
 
-                  {/* Info: también existe la versión web */}
-                  <View style={styles.ticketFooter}>
-                    <Ionicons name="globe-outline" size={14} color={colors.greenBright} />
-                    <Text style={styles.ticketFooterText}>
-                      También en la web · <Text style={styles.ticketFooterLink}>growthmanager.app</Text>
-                    </Text>
-                  </View>
+                  {/* Footer del ticket, como en el Figma */}
+                  <Text style={styles.ticketGracias}>Gracias por utilizar GROWTH MANAGER</Text>
+                  <Text style={styles.ticketWeb}>
+                    Utiliza la version web{"\n"}
+                    <Text style={styles.ticketWebLink}>www.growthmanager.app</Text>
+                  </Text>
                 </View>
               </>
             ) : (
@@ -667,7 +726,7 @@ export default function HomeScreen() {
                       hitSlop={8}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="information-circle-outline" size={19} color={colors.muted} />
+                      <Ionicons name="information-circle-outline" size={19} color={MUTED} />
                     </TouchableOpacity>
                   </View>
 
@@ -696,7 +755,7 @@ export default function HomeScreen() {
                       <Ionicons
                         name={visible ? "eye-outline" : "eye-off-outline"}
                         size={19}
-                        color={colors.text}
+                        color={TXT}
                       />
                     </TouchableOpacity>
                   </View>
@@ -716,12 +775,12 @@ export default function HomeScreen() {
                 {/* Botones del tipo activo */}
                 <View style={styles.typeBtnRow}>
                   <TouchableOpacity
-                    style={[styles.addTypeBtn, { backgroundColor: tab === "deuda" ? "#d6a92e" : "#2bb888" }]}
+                    style={[styles.addTypeBtn, { backgroundColor: tab === "deuda" ? "#f4c622" : "#2bb888" }]}
                     onPress={() => setModalMode(tab)}
                     activeOpacity={0.85}
                   >
-                    <Ionicons name={tab === "deuda" ? "person-outline" : "wallet-outline"} size={18} color="#fff" />
-                    <Text style={styles.quickLabel}>
+                    <Ionicons name={tab === "deuda" ? "person-outline" : "wallet-outline"} size={18} color={tab === "deuda" ? "#3a2d05" : "#fff"} />
+                    <Text style={[styles.addTypeText, tab === "deuda" && { color: "#3a2d05" }]}>
                       {tab === "deuda" ? "Cargar deuda" : "Nuevo ahorro"}
                     </Text>
                   </TouchableOpacity>
@@ -740,7 +799,7 @@ export default function HomeScreen() {
 
                 <Text style={styles.sectionLabel}>Movimientos</Text>
                 {loading ? (
-                  <ActivityIndicator color={colors.green} style={{ alignSelf: "flex-start", marginTop: 6 }} />
+                  <ActivityIndicator color={VERDE} style={{ alignSelf: "flex-start", marginTop: 6 }} />
                 ) : error ? (
                   <Text style={styles.error}>{error}</Text>
                 ) : typeMovs.length === 0 ? (
@@ -779,7 +838,7 @@ export default function HomeScreen() {
                                 <Text
                                   style={[
                                     styles.movChip,
-                                    { color: isPaid ? colors.greenDark : isPartial ? colors.greenDark : "#d6a92e" },
+                                    { color: isPaid ? VERDE : isPartial ? VERDE : "#f4c622" },
                                   ]}
                                 >
                                   {isPaid ? "Pagada" : isPartial ? "Parcial" : "Pendiente"}
@@ -793,7 +852,7 @@ export default function HomeScreen() {
                           <Text
                             style={[
                               styles.movAmount,
-                              { color: m.tipo === "deuda" ? "#e6bc3f" : "#35cfa4" },
+                              { color: m.tipo === "deuda" ? "#f4c622" : "#35cfa4" },
                             ]}
                           >
                             {m.desdeAhorro ? "- " : ""}
@@ -855,7 +914,7 @@ export default function HomeScreen() {
                 {tab === "deuda" ? "Cómo funcionan las deudas" : "Cómo funcionan los ahorros"}
               </Text>
               <TouchableOpacity onPress={() => setInfoOpen(false)} hitSlop={8}>
-                <Ionicons name="close" size={22} color={colors.muted} />
+                <Ionicons name="close" size={22} color={VERDE} />
               </TouchableOpacity>
             </View>
 
@@ -933,7 +992,7 @@ export default function HomeScreen() {
             <View style={styles.infoHead}>
               <Text style={styles.infoTitle}>Saldo total</Text>
               <TouchableOpacity onPress={() => setSaldoInfoOpen(false)} hitSlop={8}>
-                <Ionicons name="close" size={22} color={colors.muted} />
+                <Ionicons name="close" size={22} color={VERDE} />
               </TouchableOpacity>
             </View>
 
@@ -948,10 +1007,10 @@ export default function HomeScreen() {
                 <Text style={styles.infoStrong}>transferencia</Text>.
               </Text>
               <View style={styles.saldoTip}>
-                <Ionicons name="funnel-outline" size={16} color={colors.greenDark} />
+                <Ionicons name="funnel-outline" size={16} color={VERDE} />
                 <Text style={styles.saldoTipText}>
                   ¿Querés ver cuánto es en efectivo y cuánto en transferencia por separado?
-                  Buscalo en Filtros, donde cada movimiento muestra su medio.
+                  Buscalo en Filtros, en la barra de abajo: cada movimiento muestra su medio.
                 </Text>
               </View>
             </View>
@@ -966,35 +1025,33 @@ export default function HomeScreen() {
   );
 }
 
-const makeStyles = (colors) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  content: { paddingHorizontal: 16, paddingTop: 2, paddingBottom: 28 },
+const makeStyles = (u) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: BG },
+  content: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 28 },
 
-  fixedHeader: { paddingHorizontal: 16, paddingTop: 2, paddingBottom: 2, backgroundColor: colors.bg },
-  cardStack: { position: "relative" },
-
-  // Selector segmentado tipo píldora (mismo lenguaje que Filtros/Métricas)
-  segmentRow: {
-    flexDirection: "row",
-    gap: 4,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 14,
-    padding: 4,
+  // Contenedor redondeado de los tabs (borde gris, radio 34 del Figma).
+  // Con moneda activa lleva un espaciador que después tapa la card (overlap).
+  tabsShell: {
+    borderWidth: 2,
+    borderColor: GRIS_BORDE,
+    borderRadius: 34 * u,
+    paddingTop: 10 * u,
+    paddingHorizontal: 14 * u,
   },
+  tabsShellSolo: { paddingBottom: 10 * u },
+  segmentRow: { flexDirection: "row", alignItems: "center" },
   segment: {
     flex: 1,
     alignItems: "center",
-    paddingVertical: 9,
-    borderRadius: 10,
+    paddingVertical: 8 * u,
+    borderRadius: 15 * u,
   },
-  segmentActive: { backgroundColor: colors.segActive },
-  segmentText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
-  segmentTextActive: { color: colors.segActiveText, fontWeight: "800" },
+  segmentActive: { backgroundColor: GRIS_PILL },
+  segmentText: { fontFamily: "Menda-Medium", fontSize: 25 * u, letterSpacing: -1 * u, color: TXT },
+  segmentTextActive: { fontFamily: "Menda-Bold", color: "#000000" },
 
   sectionLabel: {
-    color: colors.muted,
+    color: MUTED,
     fontSize: 12,
     fontWeight: "600",
     letterSpacing: 0.5,
@@ -1003,39 +1060,21 @@ const makeStyles = (colors) => StyleSheet.create({
     marginBottom: 10,
   },
 
-  // Contenido flotando, sin marco
   cardBody: { position: "relative", paddingTop: 2, paddingBottom: 8 },
-  cardActions: {
-    position: "absolute",
-    top: 10,
-    right: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    zIndex: 2,
-  },
   iconBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: LINEA,
     alignItems: "center",
     justifyContent: "center",
   },
-  kicker: {
-    color: colors.green,
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-  },
-  balanceTitle: { color: colors.text, fontSize: 20, fontWeight: "800", marginTop: 4 },
   typeHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 6,
+    marginTop: 14,
   },
   typeHeaderRight: { flexDirection: "row", alignItems: "center", gap: 10 },
   balanceLabelRow: {
@@ -1044,19 +1083,18 @@ const makeStyles = (colors) => StyleSheet.create({
     gap: 6,
   },
   balanceLabel: {
-    color: colors.muted,
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 1,
-    textTransform: "uppercase",
+    fontFamily: "Menda-Bold",
+    color: TXT,
+    fontSize: 22 * u,
+    letterSpacing: -1 * u,
   },
   infoBtn: { padding: 1 },
   curSwitch: {
     flexDirection: "row",
-    backgroundColor: colors.card,
+    backgroundColor: "rgba(255,255,255,0.06)",
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: LINEA,
     padding: 2,
   },
   curSwitchBtn: {
@@ -1064,20 +1102,20 @@ const makeStyles = (colors) => StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 999,
   },
-  curSwitchBtnActive: { backgroundColor: colors.greenBright },
-  curSwitchText: { color: colors.muted, fontWeight: "800", fontSize: 12 },
-  curSwitchTextActive: { color: "#0e1a0e" },
+  curSwitchBtnActive: { backgroundColor: VERDE },
+  curSwitchText: { color: MUTED, fontWeight: "800", fontSize: 12 },
+  curSwitchTextActive: { color: "#000000" },
   infoOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.55)",
+    backgroundColor: "rgba(0,0,0,0.65)",
     justifyContent: "center",
     padding: 22,
   },
   infoCard: {
-    backgroundColor: colors.bg,
-    borderRadius: 20,
+    backgroundColor: BG,
+    borderRadius: 22 * u,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: VERDE,
     padding: 18,
   },
   infoHead: {
@@ -1087,15 +1125,15 @@ const makeStyles = (colors) => StyleSheet.create({
     gap: 10,
     marginBottom: 12,
   },
-  infoTitle: { color: colors.text, fontSize: 17, fontWeight: "800", flex: 1 },
+  infoTitle: { fontFamily: "Menda-Bold", color: TXT, fontSize: 16, flex: 1 },
   infoBody: { gap: 10 },
-  infoText: { color: colors.muted, fontSize: 14, lineHeight: 21 },
-  infoStrong: { color: colors.text, fontWeight: "800" },
+  infoText: { color: "rgba(255,255,255,0.8)", fontSize: 14, lineHeight: 21 },
+  infoStrong: { color: TXT, fontWeight: "800" },
   infoTip: {
-    color: colors.text,
+    color: TXT,
     fontSize: 13.5,
     lineHeight: 20,
-    backgroundColor: colors.greenSoft,
+    backgroundColor: "rgba(117, 249, 76, 0.12)",
     borderRadius: 12,
     padding: 12,
     marginTop: 2,
@@ -1105,44 +1143,45 @@ const makeStyles = (colors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 10,
-    backgroundColor: colors.greenSoft,
+    backgroundColor: "rgba(117, 249, 76, 0.12)",
     borderRadius: 12,
     padding: 12,
     marginTop: 2,
   },
-  saldoTipText: { flex: 1, color: colors.text, fontSize: 13.5, lineHeight: 20 },
+  saldoTipText: { flex: 1, color: TXT, fontSize: 13.5, lineHeight: 20 },
   infoOk: {
     marginTop: 18,
     alignSelf: "flex-end",
-    backgroundColor: colors.greenBright,
+    backgroundColor: VERDE,
     borderRadius: 12,
     paddingVertical: 11,
     paddingHorizontal: 20,
   },
-  infoOkText: { color: "#0e1a0e", fontWeight: "800", fontSize: 14 },
-  balanceValue: { color: colors.text, fontSize: 34, fontWeight: "900", marginTop: 4 },
-  error: { color: colors.red, marginTop: 4 },
+  infoOkText: { color: "#000000", fontWeight: "800", fontSize: 14 },
+  error: { color: "#ff6b5e", marginTop: 8 },
 
-  // ===== Tarjeta de saldo (estilo credit card) =====
+  // ===== Tarjeta de saldo (degradado gris del Figma) =====
   flipWrap: { position: "relative" },
   balanceCard: {
-    borderRadius: 24,
-    padding: 18,
-    minHeight: 172,
+    borderRadius: 34 * u,
+    paddingTop: 34 * u,
+    paddingBottom: 30 * u,
+    paddingHorizontal: 36 * u,
+    minHeight: 306 * u,
     justifyContent: "space-between",
     overflow: "hidden",
-    backgroundColor: "#0c333c", // respaldo hasta que el SVG mida la tarjeta
+    backgroundColor: "#4f4f4f", // respaldo hasta que el SVG mida la tarjeta
   },
   cardBack: {
-    backgroundColor: colors.card,
+    backgroundColor: "#1a201a",
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: LINEA,
     alignItems: "center",
     justifyContent: "center",
     gap: 14,
     paddingVertical: 26,
   },
-  cardBackTitle: { color: colors.text, fontSize: 13, fontWeight: "800" },
+  cardBackTitle: { fontFamily: "Menda-Bold", color: TXT, fontSize: 13 },
   swatchRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 12 },
   swatch: {
     width: 34,
@@ -1153,198 +1192,159 @@ const makeStyles = (colors) => StyleSheet.create({
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.25)",
   },
-  swatchActive: { borderColor: colors.greenBright, borderWidth: 3 },
+  swatchActive: { borderColor: VERDE, borderWidth: 3 },
   cardBackDone: {
-    backgroundColor: colors.greenBright,
+    backgroundColor: VERDE,
     borderRadius: 999,
     paddingVertical: 8,
     paddingHorizontal: 20,
   },
-  cardBackDoneText: { color: "#0e1a0e", fontWeight: "800", fontSize: 13 },
-  bcTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  bcKickerRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  cardBackDoneText: { color: "#000000", fontWeight: "800", fontSize: 13 },
+  bcTop: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
+  bcKickerRow: { flexDirection: "row", alignItems: "center", gap: 8 * u },
   bcKicker: {
-    color: "rgba(236, 246, 243, 0.65)",
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase",
+    fontFamily: "Menda-Medium",
+    fontSize: 22 * u,
+    letterSpacing: -1 * u,
   },
-  bcIcons: { flexDirection: "row", gap: 8 },
+  bcIcons: { flexDirection: "row", gap: 4 * u },
   bcIconBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: "rgba(236, 246, 243, 0.22)",
-    backgroundColor: "rgba(255, 255, 255, 0.07)",
+    width: 45 * u,
+    height: 45 * u,
+    borderRadius: 23 * u,
+    backgroundColor: "#d9d9d9",
     alignItems: "center",
     justifyContent: "center",
   },
   bcBalance: {
-    color: "#ffffff",
-    fontSize: 36,
-    fontWeight: "900",
-    letterSpacing: -0.5,
+    fontFamily: "Menda-Bold",
+    fontSize: 45 * u,
+    letterSpacing: -1.5 * u,
+    marginTop: 6 * u,
     fontVariant: ["tabular-nums"],
-  },
-  bcFooter: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end" },
-  bcCurrency: {
-    color: "rgba(236, 246, 243, 0.85)",
-    fontSize: 14,
-    fontWeight: "800",
-    letterSpacing: 1.5,
   },
 
   bcActions: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "flex-start",
-    gap: 4,
-    marginTop: 16,
-    paddingVertical: 6,
-    paddingHorizontal: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  quickItem: { flex: 1, alignItems: "center", gap: 6, paddingVertical: 2 },
-  quickIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    borderWidth: 1.5,
     alignItems: "center",
-    justifyContent: "center",
+    marginTop: 24 * u,
+    paddingVertical: 12 * u,
+    borderRadius: 23 * u,
+    minHeight: 100 * u,
   },
-  quickLabel: { color: colors.text, fontWeight: "700", fontSize: 12.5 },
+  bcActionSep: { width: 1, height: 44 * u, alignSelf: "center" },
+  quickItem: { flex: 1, alignItems: "center", justifyContent: "center", gap: 7 * u },
+  quickIconRow: { flexDirection: "row", alignItems: "flex-end" },
+  quickExtra: { marginLeft: -4 * u, marginBottom: 2 * u },
+  quickLabel: { fontFamily: "Menda-Bold", fontSize: 15 * u, letterSpacing: -0.5 * u },
 
   statGrid: { gap: 10 },
-  statCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: colors.cardSoft,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingRight: 16,
-    paddingLeft: 18,
-    overflow: "hidden",
-  },
-  statBar: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 5,
-  },
-  statLabel: {
-    flex: 1,
-    color: colors.muted,
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-  },
-  statValue: { color: colors.text, fontSize: 17, fontWeight: "800", textAlign: "right" },
 
-  // ---- Ticket: switch adentro + corte perforado ----
+  // ---- Ticket con borde verde (Figma) ----
   ticket: {
-    backgroundColor: colors.cardSoft,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    marginTop: 18,
+    borderColor: VERDE,
+    borderRadius: 34 * u,
+    paddingHorizontal: 20 * u,
+    paddingTop: 20 * u,
+    paddingBottom: 40 * u,
+    marginTop: 37 * u,
   },
-  ticketTop: {
+  ticketSwitchRow: { alignItems: "center" },
+  ticketSwitch: {
+    flexDirection: "row",
+    borderWidth: 1,
+    borderColor: VERDE,
+    borderRadius: 17 * u,
+    padding: 6 * u,
+    gap: 6 * u,
+  },
+  ticketSeg: {
+    paddingVertical: 7 * u,
+    paddingHorizontal: 32 * u,
+    borderRadius: 15 * u,
+    alignItems: "center",
+  },
+  ticketSegOn: { backgroundColor: VERDE },
+  ticketSegText: { fontFamily: "Menda-Medium", fontSize: 25 * u, letterSpacing: -1 * u, color: TXT },
+  ticketSegTextOn: { color: "#000000" },
+  verTodosWrap: { alignSelf: "center", marginTop: 10 * u },
+  verTodos: { fontFamily: "Menda-Medium", color: VERDE, fontSize: 18 * u },
+
+  ticketBody: { paddingHorizontal: 22 * u },
+  ticketHeadRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 12,
+    marginTop: 56 * u,
+    marginBottom: 8 * u,
   },
-  ticketSwitch: {
+  ticketCaption: { fontFamily: "Menda-Medium", fontSize: 18 * u, letterSpacing: -0.6 * u, color: TXT },
+  ticketRow: {
     flexDirection: "row",
-    gap: 4,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 12,
-    padding: 4,
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 8.5 * u,
   },
-  ticketSeg: { paddingVertical: 7, paddingHorizontal: 18, borderRadius: 8, alignItems: "center" },
-  ticketSegOn: { backgroundColor: colors.segActive },
-  ticketSegText: { color: colors.muted, fontSize: 13, fontWeight: "700" },
-  ticketSegTextOn: { color: colors.segActiveText, fontWeight: "800" },
-  verTodos: { color: colors.greenBright, fontSize: 13, fontWeight: "800" },
+  ticketLabel: {
+    fontFamily: "Menda-Medium",
+    fontSize: 18 * u,
+    letterSpacing: -0.6 * u,
+    color: TXT,
+    flexShrink: 1,
+    marginRight: 12 * u,
+  },
+  ticketValue: {
+    fontFamily: "Menda-Bold",
+    fontSize: 18 * u,
+    letterSpacing: -0.6 * u,
+    fontVariant: ["tabular-nums"],
+  },
 
-  // Corte perforado (línea punteada + muescas laterales tipo ticket).
-  // Las muescas son círculos del color del fondo: la mitad de afuera se funde con
-  // el fondo y la de adentro "muerde" la card. Por eso el ticket NO lleva overflow.
-  ticketCut: { height: 22, justifyContent: "center", marginHorizontal: -16 },
+  // Corte perforado: línea punteada verde + muescas en los bordes
+  ticketCut: { height: 44 * u, justifyContent: "center", marginHorizontal: -20 * u, marginTop: 60 * u },
   ticketDash: {
     borderBottomWidth: 1,
     borderStyle: "dashed",
-    borderColor: colors.cardBorder,
-    marginHorizontal: 16,
+    borderColor: VERDE,
+    marginHorizontal: 34 * u,
   },
   ticketNotch: {
     position: "absolute",
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: colors.bg,
+    width: 44 * u,
+    height: 44 * u,
+    borderRadius: 22 * u,
+    backgroundColor: BG,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: VERDE,
     top: 0,
   },
-  ticketNotchL: { left: -11 },
-  ticketNotchR: { right: -11 },
+  ticketNotchL: { left: -22 * u },
+  ticketNotchR: { right: -22 * u },
 
-  ticketBody: { paddingTop: 4 },
-  ticketCaption: {
-    color: colors.muted,
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 1,
+  ticketGracias: {
+    fontFamily: "Menda-Medium",
+    fontSize: 18 * u,
+    letterSpacing: -0.6 * u,
+    color: TXT,
     textAlign: "center",
-    marginTop: 6,
-    marginBottom: 2,
+    marginTop: 24 * u,
   },
-  ticketRow: { flexDirection: "row", alignItems: "flex-end", paddingVertical: 12 },
-  ticketLabel: {
-    color: colors.text,
-    fontSize: 13.5,
-    fontWeight: "700",
-    textDecorationLine: "underline",
-    flexShrink: 1,
+  ticketWeb: {
+    fontFamily: "Menda-Medium",
+    fontSize: 25 * u,
+    lineHeight: 30 * u,
+    letterSpacing: -1 * u,
+    color: TXT,
+    textAlign: "center",
+    marginTop: 16 * u,
   },
-  ticketDots: {
-    flex: 1,
-    borderBottomWidth: 1,
-    borderStyle: "dotted",
-    borderColor: colors.cardBorder,
-    marginHorizontal: 8,
-    marginBottom: 5,
-  },
-  ticketValue: { fontSize: 15, fontWeight: "800", fontVariant: ["tabular-nums"] },
-  ticketFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingTop: 10,
-    paddingBottom: 2,
-  },
-  ticketFooterText: { color: colors.muted, fontSize: 12, fontWeight: "600" },
-  ticketFooterLink: { color: colors.greenBright, fontWeight: "800" },
+  ticketWebLink: { color: VERDE },
 
   // ---- Historial reducido dentro del ticket ----
-  movEmpty: { color: colors.muted, fontSize: 13, textAlign: "center", paddingVertical: 22 },
+  movEmpty: { color: MUTED, fontSize: 13, textAlign: "center", paddingVertical: 22 },
   movTkItem: {},
-  movTkDivider: { borderBottomWidth: 1, borderColor: colors.cardBorder },
+  movTkDivider: { borderBottomWidth: 1, borderColor: LINEA },
   movTkTop: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12 },
   movTkBody: { paddingBottom: 12, paddingTop: 2, gap: 4 },
   movRedIcon: {
@@ -1355,26 +1355,20 @@ const makeStyles = (colors) => StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  movRedTitle: { flex: 1, color: colors.text, fontSize: 14.5, fontWeight: "700" },
+  movRedTitle: { flex: 1, color: TXT, fontSize: 14.5, fontWeight: "700" },
   movRedAmount: { fontSize: 14.5, fontWeight: "800", fontVariant: ["tabular-nums"] },
-  movRedBody: {
-    paddingHorizontal: 14,
-    paddingBottom: 14,
-    paddingTop: 2,
-    gap: 4,
-  },
-  movRedFecha: { color: colors.muted, fontSize: 12, fontWeight: "700" },
-  movRedDetail: { color: colors.muted, fontSize: 13 },
-  movRedDebt: { color: colors.greenDark, fontSize: 13, fontWeight: "700" },
+  movRedFecha: { color: MUTED, fontSize: 12, fontWeight: "700" },
+  movRedDetail: { color: MUTED, fontSize: 13 },
+  movRedDebt: { color: VERDE, fontSize: 13, fontWeight: "700" },
   movRedChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
-  movRedChip: { color: colors.muted, fontSize: 11.5, fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.4 },
+  movRedChip: { color: MUTED, fontSize: 11.5, fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.4 },
   movRedPay: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     alignSelf: "flex-start",
     marginTop: 10,
-    backgroundColor: "#e0b13a",
+    backgroundColor: "#f4c622",
     borderRadius: 999,
     paddingVertical: 7,
     paddingHorizontal: 14,
@@ -1388,8 +1382,8 @@ const makeStyles = (colors) => StyleSheet.create({
   },
   movRedIcons: { flexDirection: "row", alignItems: "center", gap: 18 },
 
-  balanceSub: { color: colors.muted, fontSize: 13, marginTop: 4 },
-  potText: { color: "#2bb888", fontSize: 14, fontWeight: "800", marginTop: 4 },
+  balanceSub: { color: MUTED, fontSize: 13, marginTop: 6 },
+  potText: { color: "#2bb888", fontSize: 14, fontWeight: "800", marginTop: 6 },
   typeBtnRow: { flexDirection: "row", gap: 8, marginTop: 14, flexWrap: "wrap" },
   addTypeBtn: {
     flexDirection: "row",
@@ -1399,6 +1393,7 @@ const makeStyles = (colors) => StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 14,
   },
+  addTypeText: { color: "#fff", fontWeight: "700", fontSize: 12.5 },
   useTypeBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -1411,22 +1406,22 @@ const makeStyles = (colors) => StyleSheet.create({
     backgroundColor: "rgba(43, 184, 136, 0.12)",
   },
   useTypeText: { color: "#2bb888", fontWeight: "800", fontSize: 12.5 },
-  emptyText: { color: colors.muted, fontSize: 14, marginTop: 4 },
+  emptyText: { color: MUTED, fontSize: 14, marginTop: 4 },
   movRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    backgroundColor: colors.cardSoft,
+    backgroundColor: "rgba(255,255,255,0.05)",
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: LINEA,
     borderRadius: 14,
     paddingVertical: 12,
     paddingHorizontal: 14,
   },
-  movTitle: { color: colors.text, fontSize: 14, fontWeight: "700" },
-  movSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  movTitle: { color: TXT, fontSize: 14, fontWeight: "700" },
+  movSub: { color: MUTED, fontSize: 12, marginTop: 2 },
   movMetaRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4 },
-  movDate: { color: colors.muted, fontSize: 11 },
+  movDate: { color: MUTED, fontSize: 11 },
   movChip: { fontSize: 11, fontWeight: "800" },
-  movAmount: { color: colors.text, fontSize: 15, fontWeight: "800" },
+  movAmount: { color: TXT, fontSize: 15, fontWeight: "800" },
 });

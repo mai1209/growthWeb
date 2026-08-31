@@ -22,25 +22,30 @@ const BG = "#10150f";
 const VERDE = "#75f94c";
 const GRIS_LINEA = "#4f4f4f";
 
+// `grupo` es el id en NAV_GROUPS: define qué secciones muestra la barra inferior.
 const CARDS = [
   {
     titulo: "Finanzas",
     emoji: "💸",
+    grupo: "finanzas",
     desc: "Pon orden a tus finanzas con esta herramienta. Administra caja en pesos, caja en dolares, deudas y ahorros. Divide automaticamente los gastos con un grupo de personas, filtra, ve tus metricas, arma tu lista de compras.",
   },
   {
     titulo: "Desarrollo personal",
     emoji: "🧠",
+    grupo: "desarrollo",
     desc: "Ordena tu vida. Utiliza funciones como trazo de metas, agenda de tareas diarias//programadas, block de notas, escribe tu journaling, escribe y lee tus afirmaciones diarias y aprovecha al maximo tu tiempo con la herramienta de pomodoro timer!",
   },
   {
     titulo: "Salud",
     emoji: "🫀",
+    grupo: "salud",
     desc: "Lleva un trackeo de tus pasos diarios, inicia recorridos y compartelos en tus redes sociales, cuenta tus calorías, ordena tu rutina de gimnasio y lleva un control del progreso de tus rutinas.",
   },
   {
     titulo: "Co-Working",
     emoji: "👥",
+    grupo: "coworking",
     desc: "Registra tus horas, arma y una grilla de “To-Do”, “En progreso”, “En revisión”, “Realizados”",
   },
 ];
@@ -60,7 +65,9 @@ export default function LobbyScreen({ navigation }) {
 
   if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: BG }} />;
 
-  const irA = () => navigation.navigate("Main");
+  // Con grupo: barra plana con las secciones de esa app. Sin grupo (GROWTH PRO):
+  // la app tradicional con el menú radial.
+  const irA = (grupo) => navigation.navigate("Main", grupo ? { group: grupo } : undefined);
 
   const GAP = 20 * u;
   const ANCHO_GRILLA = 528 * u;
@@ -146,7 +153,7 @@ export default function LobbyScreen({ navigation }) {
             <TouchableOpacity
               key={c.titulo}
               activeOpacity={0.85}
-              onPress={irA}
+              onPress={() => irA(c.grupo)}
               style={{
                 width: ANCHO_CARD,
                 height: 150 * u,
@@ -178,7 +185,7 @@ export default function LobbyScreen({ navigation }) {
           {/* GROWTH PRO: ocupa las dos columnas */}
           <TouchableOpacity
             activeOpacity={0.85}
-            onPress={irA}
+            onPress={() => irA(null)}
             style={{
               width: ANCHO_GRILLA,
               height: 120 * u,
