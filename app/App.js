@@ -13,6 +13,7 @@ import ProfileSwitcher from "./src/components/ProfileSwitcher";
 import { ThemeProvider, useTheme } from "./src/theme";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import LoginScreen from "./src/screens/LoginScreen";
+import LobbyScreen from "./src/screens/LobbyScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import TareasScreen from "./src/screens/TareasScreen";
 import FiltrosScreen from "./src/screens/FiltrosScreen";
@@ -164,6 +165,8 @@ function Routes() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {token ? (
           <>
+            {/* Lobby: pantalla de entrada (elegís qué app usar), réplica de Figma */}
+            <Stack.Screen name="Lobby" component={LobbyScreen} />
             <Stack.Screen name="Main" component={MainTabs} />
             <Stack.Screen name="Ajustes" component={AjustesScreen} />
             <Stack.Screen name="Perfil" component={PerfilScreen} />
