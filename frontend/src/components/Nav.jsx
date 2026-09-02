@@ -302,10 +302,10 @@ function Nav({
                   onClick={() => toggleGroup(group.id)}
                   aria-expanded={open}
                 >
-                  {group.icon}
                   <FiChevronDown
                     className={`${style.railGroupChevron} ${open ? style.railGroupChevronOpen : ""}`}
                   />
+                  {group.icon}
                   <span className={style.tip}>{group.title}</span>
                 </button>
                 {open && group.items.map((item) => renderLink(item, true))}
@@ -328,11 +328,12 @@ function Nav({
                 onClick={() => toggleGroup(group.id)}
                 aria-expanded={open}
               >
-                {group.icon}
-                <span className={style.navGroupLabel}>{group.title}</span>
+                {/* Flecha a la izquierda, estilo árbol de VS Code */}
                 <FiChevronDown
                   className={`${style.navGroupChevron} ${open ? style.navGroupChevronOpen : ""}`}
                 />
+                {group.icon}
+                <span className={style.navGroupLabel}>{group.title}</span>
               </button>
               {open && (
                 <div className={style.navGroupItems}>
