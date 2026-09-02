@@ -302,9 +302,6 @@ function Nav({
                   onClick={() => toggleGroup(group.id)}
                   aria-expanded={open}
                 >
-                  <FiChevronDown
-                    className={`${style.railGroupChevron} ${open ? style.railGroupChevronOpen : ""}`}
-                  />
                   {group.icon}
                   <span className={style.tip}>{group.title}</span>
                 </button>

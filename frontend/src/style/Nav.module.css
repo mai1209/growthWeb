@@ -626,10 +626,10 @@
   gap: 0.25rem;
 }
 
-/* Rail cerrado: el ícono del grupo queda centrado y alineado con los demás
-   (40px), y la flechita flota a su izquierda, estilo árbol de VS Code. */
+/* Rail cerrado: sin flecha (como la barra de iconos de VS Code). Solo el ícono
+   del grupo, centrado a 40px; el abierto se marca con la pastilla de fondo y
+   sus items desplegados debajo. */
 .railGroupBtn {
-  position: relative;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -644,26 +644,6 @@
 
 .railGroupBtn :global(svg) {
   color: #5dc72d;
-}
-
-.railGroupBtn .railGroupChevron {
-  position: absolute;
-  left: -3px;
-  top: 50%;
-  font-size: 0.62rem;
-  opacity: 0.55;
-  transition: transform 0.2s ease, opacity 0.15s ease;
-  /* Cerrada apunta a la derecha (convención VS Code) */
-  transform: translateY(-50%) rotate(-90deg);
-}
-
-.railGroupBtn:hover .railGroupChevron {
-  opacity: 0.95;
-}
-
-/* Abierta apunta abajo. */
-.railGroupBtn .railGroupChevronOpen {
-  transform: translateY(-50%) rotate(0deg);
 }
 
 .railGroupBtnOpen {
