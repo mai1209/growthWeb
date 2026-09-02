@@ -15,6 +15,7 @@ import PomodoroPage from "./PomodoroPage";
 import SaludPage from "./SaludPage";
 import ComunidadPage from "./ComunidadPage";
 import ApoyarPage from "./ApoyarPage";
+import MonitoreoPage from "./MonitoreoPage";
 import { COMUNIDAD_HABILITADA } from "../config";
 
 import LoginPage from "./LoginPage";
@@ -216,6 +217,8 @@ function AppRoutes({
         <Route path="ajustes" element={<SettingsPage theme={theme} onThemeToggle={onThemeToggle} />} />
         <Route path="perfil" element={<SettingsPage mode="perfil" currentWorkspace={activeWorkspace} theme={theme} onThemeToggle={onThemeToggle} />} />
         <Route path="apoyar" element={<ApoyarPage />} />
+        {/* Panel admin: no aparece en el nav; el backend devuelve 403 si no sos ADMIN_EMAILS */}
+        <Route path="monitoreo" element={<MonitoreoPage />} />
 
         {/* Cualquier otra ruta privada → dashboard */}
         <Route path="*" element={<Navigate to="/" />} />

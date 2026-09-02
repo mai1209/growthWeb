@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "crypto";
 import User from "../models/userModel.js";
+import LoginAttempt from "../models/loginAttemptModel.js";
 import Task from "../models/taskModel.js";
 import IngresoEgreso from "../models/ingresoEgresoModel.js";
 import SharedGroup from "../models/sharedGroupModel.js";
@@ -162,12 +163,23 @@ export const login = async (req, res) => {
     const email = normalizeEmail(req.body.email);
     const { password, rememberMe } = req.body;
 
+    // Registro de fallos para el panel de monitoreo (fire-and-forget: si falla
+    // el log, el login sigue igual). La IP real llega por trust proxy.
+    const logFail = (motivo) =>
+      LoginAttempt.create({
+        email,
+        ip: req.ip || "",
+        userAgent: String(req.headers["user-agent"] || "").slice(0, 200),
+        motivo,
+      }).catch(() => {});
+
     if (!email || !password) {
       return res.status(400).json({ error: "Email y contraseña requeridos" });
     }
 
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
+      logFail("no-user");
       return res.status(401).json({ error: "Credenciales inválidas" });
     }
 
@@ -181,8 +193,12 @@ export const login = async (req, res) => {
 
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
+      logFail("bad-password");
       return res.status(401).json({ error: "Credenciales inválidas" });
     }
+
+    // Último login exitoso (para "usuarios activos" en monitoreo); no bloquea.
+    User.updateOne({ _id: user._id }, { lastLoginAt: new Date() }).catch(() => {});
 
     const expiresIn = rememberMe ? "30d" : "1d";
     const token = generateToken(user, expiresIn);

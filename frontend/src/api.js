@@ -260,4 +260,11 @@ export const authService = {
   checkUsername: (u) => api.get("/api/auth/username-available", { params: { u } }),
 };
 
+// Panel /monitoreo — solo responde para emails en ADMIN_EMAILS (backend)
+export const adminService = {
+  overview: () => api.get("/api/admin/overview"),
+  health: () => api.get("/api/admin/health"),
+  security: () => api.get("/api/admin/security"),
+};
+
 export default api;

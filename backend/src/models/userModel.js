@@ -31,6 +31,12 @@ const userSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+    // Último login exitoso (lo actualiza el login; sirve para "usuarios activos"
+    // en el panel de monitoreo).
+    lastLoginAt: {
+      type: Date,
+      default: null,
+    },
     // Portada tipo "banner" (perfil estilo red social). Opcional.
     bannerUrl: {
       type: String,

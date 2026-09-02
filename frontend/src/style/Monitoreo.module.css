@@ -1,0 +1,364 @@
+/* /monitoreo — usa las variables de tema globales (claro/oscuro) de index.css */
+
+.page {
+  padding: 1.2rem 1.4rem 2.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color: var(--color-text);
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.subtitle {
+  margin: 0.2rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
+.refreshBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-surface);
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.refreshBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.spinning {
+  animation: girar 0.9s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error {
+  color: #e0703f;
+  font-weight: 600;
+}
+
+/* ---- KPIs ---- */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.7rem;
+}
+
+.kpi {
+  background: var(--surface-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.kpiLabel {
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.kpiValue {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiGreen {
+  color: var(--accent);
+}
+
+.kpiWarn {
+  color: #e0a13f;
+}
+
+/* ---- Cards ---- */
+.card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.8rem;
+  font-size: 0.95rem;
+}
+
+.cardTitle svg {
+  color: var(--accent);
+}
+
+.cardSubtitle {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.twoCols {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .twoCols {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Gráfico de registros por día ---- */
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 120px;
+}
+
+.chartCol {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.chartBar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: var(--accent);
+  min-height: 3px;
+}
+
+.chartBar[data-empty="1"] {
+  background: var(--border-color);
+}
+
+.chartAxis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.35rem;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+}
+
+/* ---- Salud ---- */
+.healthRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+  text-transform: capitalize;
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.dotOk {
+  background: #14d95f;
+  box-shadow: 0 0 8px rgba(20, 217, 95, 0.7);
+}
+
+.dotBad {
+  background: #e0533f;
+  box-shadow: 0 0 8px rgba(224, 83, 63, 0.7);
+}
+
+.statList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.statList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px dashed var(--border-color);
+  font-size: 0.85rem;
+}
+
+.statList li:last-child {
+  border-bottom: none;
+}
+
+.statList li span {
+  color: var(--color-muted);
+}
+
+/* ---- Seguridad ---- */
+.securityKpis {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.securityKpis > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mutedSmall {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  margin: 0.3rem 0 0;
+  line-height: 1.45;
+}
+
+.emptyNote {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  margin: 0.8rem 0 0;
+}
+
+.emptyNote svg {
+  color: #e0a13f;
+  flex: 0 0 auto;
+}
+
+/* ---- Tablas ---- */
+.tableHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 0.4rem 0.8rem;
+  color: var(--color-muted);
+  background: var(--surface-card-strong);
+  margin-bottom: 0.8rem;
+}
+
+.search input {
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--color-text);
+  font-size: 0.85rem;
+  width: 220px;
+  max-width: 55vw;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.table th {
+  text-align: left;
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px dashed var(--border-color);
+  white-space: nowrap;
+}
+
+.table tbody tr:hover {
+  background: var(--accent-surface);
+}
+
+.emptyCell {
+  text-align: center;
+  color: var(--color-muted);
+  padding: 1.2rem 0;
+}
+
+.mono {
+  font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.78rem;
+}
+
+.muted {
+  color: var(--color-muted);
+}
+
+/* ---- 403 ---- */
+.forbidden {
+  margin: 4rem auto;
+  text-align: center;
+  color: var(--color-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.forbidden svg {
+  font-size: 2rem;
+  color: var(--accent);
+}
+
+.forbidden h2 {
+  margin: 0;
+  color: var(--color-text);
+}
