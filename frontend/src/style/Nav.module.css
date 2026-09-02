@@ -130,15 +130,21 @@
 }
 
 .navGroupChevron {
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   flex: 0 0 auto;
-  transition: transform 0.2s ease;
-  opacity: 0.7;
+  transition: transform 0.2s ease, opacity 0.15s ease;
+  opacity: 0.5;
+  /* Cerrada apunta a la derecha (convención estándar de acordeón) */
+  transform: rotate(-90deg);
 }
 
-/* Cerrada apunta abajo; abierta apunta a la derecha. */
+.navGroupTitle:hover .navGroupChevron {
+  opacity: 0.9;
+}
+
+/* Abierta apunta abajo. */
 .navGroupChevronOpen {
-  transform: rotate(-90deg);
+  transform: rotate(0deg);
 }
 
 .navGroupItems {
@@ -620,18 +626,21 @@
   gap: 0.25rem;
 }
 
-/* Rail cerrado: el botón de grupo muestra el ícono + una flechita al lado. */
+/* Rail cerrado: el botón de grupo apila ícono + flechita debajo, centrados,
+   con el mismo ancho (40px) que el resto de los íconos para que todo alinee. */
 .railGroupBtn {
   border: none;
   background: transparent;
   cursor: pointer;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.1rem;
-  width: auto;
+  gap: 0;
+  width: 40px;
   min-width: 40px;
-  padding: 0 0.25rem;
+  height: auto;
+  padding: 0.3rem 0 0.15rem;
 }
 
 .railGroupBtn :global(svg) {
@@ -639,15 +648,20 @@
 }
 
 .railGroupBtn .railGroupChevron {
-  font-size: 0.72rem;
+  font-size: 0.58rem;
   flex: 0 0 auto;
-  opacity: 0.7;
-  transition: transform 0.2s ease;
+  opacity: 0.55;
+  margin-top: 1px;
+  transition: transform 0.2s ease, opacity 0.15s ease;
 }
 
-/* Cerrada apunta abajo; abierta apunta a la derecha (igual que en expandido). */
+.railGroupBtn:hover .railGroupChevron {
+  opacity: 0.95;
+}
+
+/* Cerrada apunta abajo (hay más contenido); abierta apunta arriba (plegar). */
 .railGroupChevronOpen {
-  transform: rotate(-90deg);
+  transform: rotate(180deg);
 }
 
 .railGroupBtnOpen {
