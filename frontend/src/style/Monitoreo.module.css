@@ -204,6 +204,46 @@
   box-shadow: 0 0 8px rgba(224, 83, 63, 0.7);
 }
 
+/* ---- Barra de uso del plan (datos + índices vs. tope de Atlas) ---- */
+.usageWrap {
+  margin: 0.2rem 0 0.9rem;
+}
+
+.usageInfo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+  font-size: 0.82rem;
+  margin-bottom: 0.35rem;
+}
+
+.usageInfo span {
+  color: var(--color-muted);
+}
+
+.usageTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border-color);
+  overflow: hidden;
+}
+
+.usageFill {
+  height: 100%;
+  border-radius: 999px;
+  background: #14d95f;
+  transition: width 0.4s ease;
+}
+
+.usageWarn {
+  background: #e0a13f;
+}
+
+.usageDanger {
+  background: #e0533f;
+}
+
 .statList {
   list-style: none;
   margin: 0;

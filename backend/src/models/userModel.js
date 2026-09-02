@@ -37,6 +37,13 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // Última actividad real: cualquier pedido autenticado la actualiza (throttle
+    // de 1 hora en requireAuth). Mejor señal de uso que el login, porque las
+    // sesiones guardadas no pasan por el login.
+    lastSeenAt: {
+      type: Date,
+      default: null,
+    },
     // Portada tipo "banner" (perfil estilo red social). Opcional.
     bannerUrl: {
       type: String,

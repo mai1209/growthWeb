@@ -107,6 +107,13 @@ function MonitoreoPage() {
 
   const dbOk = health?.estado === "conectada";
 
+  // Uso del plan de Atlas: datos + índices contra el tope (M0 gratis = 512 MB)
+  const usadoMB = health?.db
+    ? Number((health.db.datosMB + health.db.indicesMB).toFixed(1))
+    : 0;
+  const limiteMB = health?.limiteMB || 512;
+  const pctUso = Number(((usadoMB / limiteMB) * 100).toFixed(1));
+
   return (
     <div className={style.page}>
       <header className={style.header}>
@@ -143,7 +150,7 @@ function MonitoreoPage() {
           <span className={style.kpiLabel}>Nuevos · 30 días</span>
           <span className={`${style.kpiValue} ${style.kpiGreen}`}>{overview?.nuevos30d ?? "—"}</span>
         </div>
-        <div className={style.kpi} title="Usuarios con login en los últimos 7 días (se llena a medida que la gente vuelva a entrar)">
+        <div className={style.kpi} title="Usuarios que usaron la app en los últimos 7 días (cualquier acción cuenta, no solo el login; arranca a llenarse desde este deploy)">
           <span className={style.kpiLabel}>Activos · 7 días</span>
           <span className={style.kpiValue}>{overview?.activos7d ?? "—"}</span>
         </div>
@@ -185,6 +192,28 @@ function MonitoreoPage() {
               <span className={style.muted}>· ping {health.pingMs} ms</span>
             ) : null}
           </div>
+          {health?.db ? (
+            <div className={style.usageWrap}>
+              <div className={style.usageInfo}>
+                <span>Uso del plan</span>
+                <strong>
+                  {usadoMB} MB de {limiteMB} MB ({pctUso}%)
+                </strong>
+              </div>
+              <div className={style.usageTrack}>
+                <div
+                  className={`${style.usageFill} ${
+                    pctUso >= 85 ? style.usageDanger : pctUso >= 60 ? style.usageWarn : ""
+                  }`}
+                  style={{ width: `${Math.min(100, Math.max(1, pctUso))}%` }}
+                />
+              </div>
+              <p className={style.mutedSmall}>
+                Atlas cuenta datos + índices. Al llegar al 100% bloquea escrituras (no se cae,
+                pero no se puede guardar). Activá la alerta al 75% en Atlas → Alerts.
+              </p>
+            </div>
+          ) : null}
           {health?.db ? (
             <ul className={style.statList}>
               <li>
@@ -315,7 +344,7 @@ function MonitoreoPage() {
                 <th>Usuario</th>
                 <th>Email</th>
                 <th>Registro</th>
-                <th>Último login</th>
+                <th>Última actividad</th>
               </tr>
             </thead>
             <tbody>
@@ -324,7 +353,11 @@ function MonitoreoPage() {
                   <td>{u.username || "—"}</td>
                   <td>{u.email || "—"}</td>
                   <td>{fmtFecha(u.createdAt)}</td>
-                  <td>{u.lastLoginAt ? fmtFechaHora(u.lastLoginAt) : "—"}</td>
+                  <td>
+                    {u.lastSeenAt || u.lastLoginAt
+                      ? fmtFechaHora(u.lastSeenAt || u.lastLoginAt)
+                      : "—"}
+                  </td>
                 </tr>
               ))}
               {!loading && usuariosFiltrados.length === 0 ? (

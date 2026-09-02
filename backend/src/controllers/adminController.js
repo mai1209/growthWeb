@@ -20,7 +20,12 @@ export const getOverview = async (req, res) => {
         User.countDocuments({ createdAt: { $gte: daysAgo(1) } }),
         User.countDocuments({ createdAt: { $gte: daysAgo(7) } }),
         User.countDocuments({ createdAt: { $gte: daysAgo(30) } }),
-        User.countDocuments({ lastLoginAt: { $gte: daysAgo(7) } }),
+        User.countDocuments({
+          $or: [
+            { lastSeenAt: { $gte: daysAgo(7) } },
+            { lastLoginAt: { $gte: daysAgo(7) } },
+          ],
+        }),
         User.aggregate([
           { $match: { createdAt: { $gte: daysAgo(30) } } },
           {
@@ -34,7 +39,7 @@ export const getOverview = async (req, res) => {
         User.find()
           .sort({ createdAt: -1 })
           .limit(100)
-          .select('username email createdAt lastLoginAt'),
+          .select('username email createdAt lastLoginAt lastSeenAt'),
       ]);
 
     res.json({ total, nuevos24h, nuevos7d, nuevos30d, activos7d, porDia, ultimos });
@@ -78,6 +83,9 @@ export const getHealth = async (req, res) => {
     res.json({
       estado: estados[conn.readyState] || String(conn.readyState),
       pingMs,
+      // Tope del plan de Atlas (M0 gratuito = 512 MB de datos + índices);
+      // ajustable por env var si algún día se sube de plan.
+      limiteMB: Number(process.env.DB_STORAGE_LIMIT_MB) || 512,
       db: {
         nombre: stats.db,
         colecciones: stats.collections,

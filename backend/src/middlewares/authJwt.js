@@ -20,6 +20,13 @@ export const requireAuth = async (req, res, next) => {
     req.user = user;
     req.userId = user._id;
 
+    // Actividad real para el panel de monitoreo: marca "visto" como mucho una
+    // vez por hora (fire-and-forget, no frena el pedido ni escribe de más).
+    const UNA_HORA = 60 * 60 * 1000;
+    if (!user.lastSeenAt || Date.now() - new Date(user.lastSeenAt).getTime() > UNA_HORA) {
+      User.updateOne({ _id: user._id }, { lastSeenAt: new Date() }).catch(() => {});
+    }
+
     //req.user = user;
     //req.id = user._id; // Crea esta propiedad limpia
    // next();
