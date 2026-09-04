@@ -1,3 +1,8 @@
+// Métricas de la app — mismo formato que la web rediseñada ("lila" con la
+// paleta de la app): KPIs con chip de ícono, Composición en barras
+// horizontales con %, Ingresos/Gastos por categoría como anillos (100% al
+// centro y la categoría principal debajo), Evolución como línea diaria suave
+// con puntos verde/rojo, y Ranking como lista numerada con toggle.
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
@@ -7,11 +12,13 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Svg, { Circle, G, Rect, Line, Text as SvgText } from "react-native-svg";
+import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from "react-native-svg";
+import { Ionicons } from "@expo/vector-icons";
 import { movimientoService } from "../api";
-import { statAccents, useTheme } from "../theme";
+import { useTheme } from "../theme";
 import {
   CURRENCY_OPTIONS,
   filterMovimientosByCurrency,
@@ -33,6 +40,7 @@ const TYPE_COLORS = {
   ahorro: "#58eba4",
   deuda: "#ffd55c",
 };
+const NEGATIVO = "#ff6e6e";
 const CATEGORY_COLORS = ["#9cfb43", "#ff915c", "#58eba4", "#ffd55c", "#69a7ff", "#f070b8"];
 
 const getPeriodRange = (period) => {
@@ -58,8 +66,11 @@ const periodRangeLabel = (period) => {
   return `${f} – ${t}`;
 };
 
-// Donut con react-native-svg (segmentos por strokeDasharray)
-function Donut({ items, size = 132, stroke = 22, colors }) {
+const truncLabel = (value, max = 12) =>
+  value.length > max ? `${value.slice(0, max - 1)}…` : value;
+
+// Anillo por categorías: 100% al centro (segmentos por strokeDasharray)
+function Ring({ items, size = 132, stroke = 20, colors }) {
   const data = items.filter((i) => i.value > 0);
   const total = data.reduce((a, i) => a + i.value, 0);
   const r = (size - stroke) / 2;
@@ -86,6 +97,7 @@ function Donut({ items, size = 132, stroke = 22, colors }) {
                   fill="none"
                   strokeDasharray={`${len} ${circ - len}`}
                   strokeDashoffset={-acc}
+                  strokeLinecap="butt"
                 />
               );
               acc += len;
@@ -95,8 +107,7 @@ function Donut({ items, size = 132, stroke = 22, colors }) {
         </G>
       </Svg>
       <View style={{ position: "absolute", alignItems: "center" }}>
-        <Text style={{ color: colors.text, fontSize: 20, fontWeight: "900" }}>{data.length}</Text>
-        <Text style={{ color: colors.muted, fontSize: 11 }}>rubros</Text>
+        <Text style={{ color: colors.text, fontSize: 17, fontWeight: "900" }}>100%</Text>
       </View>
     </View>
   );
@@ -104,12 +115,14 @@ function Donut({ items, size = 132, stroke = 22, colors }) {
 
 export default function MetricasScreen() {
   const { colors } = useTheme();
+  const { width } = useWindowDimensions();
   const styles = makeStyles(colors);
   const [movimientos, setMovimientos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currency, setCurrency] = useState("ARS");
   const [period, setPeriod] = useState("month");
+  const [rankingType, setRankingType] = useState("egreso");
 
   const fetchData = useCallback(async () => {
     setError("");
@@ -127,7 +140,7 @@ export default function MetricasScreen() {
     fetchData();
   }, [fetchData]);
 
-  const { summary, typeItems, expenseCats, incomeCats, monthlyBuckets } = useMemo(() => {
+  const { summary, typeItems, expenseCats, incomeCats, dailySeries } = useMemo(() => {
     const { from, to } = getPeriodRange(period);
     const periodMovs = filterMovimientosByCurrency(movimientos, currency, { from, to });
     const sum = summarizeByType(periodMovs);
@@ -148,7 +161,7 @@ export default function MetricasScreen() {
       });
       return [...map.entries()]
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 6)
+        .slice(0, 8)
         .map(([label, value], i) => ({
           label,
           value: Number(value.toFixed(2)),
@@ -156,44 +169,83 @@ export default function MetricasScreen() {
         }));
     };
 
-    // Buckets por mes (para el gráfico de velas de "Comparación mensual").
-    const byMonth = new Map();
+    // Evolución DIARIA del balance dentro del período, cortada en hoy
+    // (misma lógica que la web: siempre hay línea completa a lo ancho).
+    const byDay = new Map();
     periodMovs.forEach((m) => {
-      const d = new Date(m.fecha);
-      if (Number.isNaN(d.getTime())) return;
-      const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`;
-      if (!byMonth.has(key)) {
-        byMonth.set(key, { key, date: new Date(d.getFullYear(), d.getMonth(), 1), movs: [] });
-      }
-      byMonth.get(key).movs.push(m);
+      let delta = 0;
+      const tipo = normalizeMovementType(m.tipo);
+      if (tipo === "ingreso") delta = Number(m.monto) || 0;
+      else if (tipo === "egreso" || tipo === "ahorro") delta = -(Number(m.monto) || 0);
+      else return;
+      const key = String(m.fecha).slice(0, 10);
+      byDay.set(key, (byDay.get(key) || 0) + delta);
     });
-    const buckets = [...byMonth.values()]
-      .sort((a, b) => a.date - b.date)
-      .map((b) => ({
-        key: b.key,
-        label: b.date.toLocaleDateString("es-AR", { month: "short" }),
-        summary: summarizeByType(b.movs),
-      }));
+    const today = new Date();
+    const end = to < today ? to : today;
+    const days = [];
+    let acc = 0;
+    const cursor = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+    while (cursor <= end && days.length < 400) {
+      const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`;
+      const delta = byDay.get(key) || 0;
+      acc += delta;
+      days.push({
+        key,
+        label: cursor.toLocaleDateString("es-AR", { day: "numeric", month: "short" }),
+        balance: Number(acc.toFixed(2)),
+        delta,
+        hasMov: byDay.has(key),
+      });
+      cursor.setDate(cursor.getDate() + 1);
+    }
 
     return {
       summary: sum,
       typeItems: types,
       expenseCats: groupBy("egreso"),
       incomeCats: groupBy("ingreso"),
-      monthlyBuckets: buckets,
+      dailySeries: days,
     };
   }, [movimientos, currency, period]);
 
+  const totalTypeAmount = typeItems.reduce((a, i) => a + i.value, 0);
+  const compositionItems = typeItems.filter((i) => i.value > 0);
+
+  const rankingItems = rankingType === "egreso" ? expenseCats : incomeCats;
+  const rankingTotal = rankingType === "egreso" ? summary.egreso : summary.ingreso;
+
   const summaryCards = [
-    { label: "Ingresos", value: formatMoney(summary.ingreso, currency), accent: statAccents.ingreso },
-    { label: "Egresos", value: formatMoney(summary.egreso, currency), accent: statAccents.egreso },
-    { label: "Ahorros", value: formatMoney(summary.ahorro, currency), accent: statAccents.ahorro },
-    { label: "Deuda pend.", value: formatMoney(summary.deudaPendiente, currency), accent: statAccents.deuda },
+    {
+      label: "Balance",
+      value: formatMoney(summary.total, currency),
+      icon: "pulse-outline",
+      tint: "#69a7ff",
+    },
+    {
+      label: "Ingresos",
+      value: formatMoney(summary.ingreso, currency),
+      icon: "trending-up-outline",
+      tint: TYPE_COLORS.ingreso,
+    },
+    {
+      label: "Egresos",
+      value: formatMoney(summary.egreso, currency),
+      icon: "trending-down-outline",
+      tint: TYPE_COLORS.egreso,
+    },
+    {
+      label: "Deuda pend.",
+      value: formatMoney(summary.deudaPendiente, currency),
+      icon: "time-outline",
+      tint: TYPE_COLORS.deuda,
+    },
   ];
 
-  const renderChart = (title, items, emptyLabel) => {
-    const total = items.reduce((a, i) => a + i.value, 0);
-    const data = items.filter((i) => i.value > 0);
+  // Card de anillo por categorías (100% centro + categoría principal debajo)
+  const renderRingCard = (title, items, emptyLabel) => {
+    const shown = items.filter((i) => i.value > 0);
+    const total = shown.reduce((a, i) => a + i.value, 0);
     return (
       <>
         <Text style={styles.sectionTitle}>{title}</Text>
@@ -201,89 +253,107 @@ export default function MetricasScreen() {
           {total === 0 ? (
             <Text style={styles.muted}>{emptyLabel}</Text>
           ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingVertical: 6, minWidth: "100%", justifyContent: "center" }}
-            >
-              {(() => {
-                const shown = items.filter((i) => i.value > 0);
-                const maxV = Math.max(...shown.map((i) => i.value), 1);
-                const COL = 68;
-                const TOP = 22;
-                const PLOT = 120;
-                const H = 178;
-                const W = shown.length * COL;
-                const yVal = (v) => TOP + PLOT * (1 - v / maxV);
-                return (
-                  <Svg width={Math.max(W, 1)} height={H}>
-                    {[0, 0.5, 1].map((t) => (
-                      <Line
-                        key={t}
-                        x1={0}
-                        x2={W}
-                        y1={TOP + PLOT * t}
-                        y2={TOP + PLOT * t}
-                        stroke={colors.cardBorder}
-                        strokeWidth={1}
-                        opacity={0.5}
-                      />
-                    ))}
-                    {shown.map((it, i) => {
-                      const cx = i * COL + COL / 2;
-                      const bodyTop = yVal(it.value);
-                      const bodyH = Math.max(3, yVal(0) - bodyTop);
-                      const pct = ((it.value / total) * 100).toFixed(0);
-                      const name = it.label.length > 8 ? `${it.label.slice(0, 7)}…` : it.label;
-                      return (
-                        <G key={it.label}>
-                          <Line
-                            x1={cx}
-                            x2={cx}
-                            y1={yVal(maxV)}
-                            y2={yVal(0)}
-                            stroke={it.color}
-                            strokeWidth={2}
-                            opacity={0.28}
-                          />
-                          <Rect
-                            x={cx - 13}
-                            y={bodyTop}
-                            width={26}
-                            height={bodyH}
-                            rx={4}
-                            fill={it.color}
-                          />
-                          <SvgText
-                            x={cx}
-                            y={bodyTop - 6}
-                            fontSize={10}
-                            fill={colors.text}
-                            textAnchor="middle"
-                            fontWeight="800"
-                          >
-                            {`${pct}%`}
-                          </SvgText>
-                          <SvgText
-                            x={cx}
-                            y={H - 5}
-                            fontSize={9.5}
-                            fill={colors.muted}
-                            textAnchor="middle"
-                            fontWeight="700"
-                          >
-                            {name}
-                          </SvgText>
-                        </G>
-                      );
-                    })}
-                  </Svg>
-                );
-              })()}
-            </ScrollView>
+            <View style={styles.ringLayout}>
+              <View style={{ alignItems: "center", gap: 8 }}>
+                <Ring items={shown} colors={colors} />
+                <Text style={styles.ringTopCat} numberOfLines={1}>
+                  {shown[0].label}
+                </Text>
+              </View>
+              <View style={styles.legend}>
+                {shown.slice(0, 5).map((it) => (
+                  <View key={it.label} style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: it.color }]} />
+                    <Text style={[styles.legendLabel, { flex: 1 }]} numberOfLines={1}>
+                      {it.label}
+                    </Text>
+                    <Text style={styles.legendPct}>
+                      {((it.value / total) * 100).toFixed(0)}%
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
           )}
         </View>
       </>
+    );
+  };
+
+  // Línea diaria suave (evolución del balance)
+  const renderDailyLine = () => {
+    if (dailySeries.length < 2) {
+      return <Text style={styles.muted}>Sin datos para graficar en este período.</Text>;
+    }
+    const W = width - 32 - 28; // pantalla - padding del contenido - padding de la card
+    const H = 190;
+    const PADX = 14;
+    const TOP = 30;
+    const BOT = 30;
+    const vals = dailySeries.map((d) => d.balance);
+    const maxV = Math.max(...vals, 0);
+    const minV = Math.min(...vals, 0);
+    const span = maxV - minV || 1;
+    const plot = H - TOP - BOT;
+    const xFor = (i) => PADX + ((W - PADX * 2) * i) / (dailySeries.length - 1);
+    const yFor = (v) => TOP + plot * (1 - (v - minV) / span);
+    const pts = dailySeries.map((d, i) => ({ x: xFor(i), y: yFor(d.balance), d }));
+    const path = pts
+      .map((p, i) => {
+        if (i === 0) return `M ${p.x} ${p.y}`;
+        const prev = pts[i - 1];
+        const mx = (prev.x + p.x) / 2;
+        return `C ${mx} ${prev.y}, ${mx} ${p.y}, ${p.x} ${p.y}`;
+      })
+      .join(" ");
+    const movPts = pts.filter((p) => p.d.hasMov);
+    const showDots = movPts.length > 0 && movPts.length <= 40;
+    const axisIdx = [
+      ...new Set([
+        0,
+        Math.round((dailySeries.length - 1) / 2),
+        dailySeries.length - 1,
+      ]),
+    ];
+    return (
+      <Svg width={W} height={H}>
+        <Line
+          x1={PADX}
+          x2={W - PADX}
+          y1={yFor(0)}
+          y2={yFor(0)}
+          stroke={colors.cardBorder}
+          strokeWidth={1}
+          strokeDasharray="4 5"
+        />
+        <Path d={path} fill="none" stroke={colors.greenBright} strokeWidth={3} strokeLinecap="round" />
+        {showDots
+          ? movPts.map((p) => (
+              <Circle
+                key={p.d.key}
+                cx={p.x}
+                cy={p.y}
+                r={5.5}
+                fill={p.d.delta >= 0 ? TYPE_COLORS.ingreso : NEGATIVO}
+                stroke={colors.card}
+                strokeWidth={2.5}
+              />
+            ))
+          : null}
+        {axisIdx.map((i) => (
+          <SvgText
+            key={`x-${pts[i].d.key}`}
+            x={pts[i].x}
+            y={H - 6}
+            fontSize={9.5}
+            fill={colors.muted}
+            textAnchor={i === 0 ? "start" : i === dailySeries.length - 1 ? "end" : "middle"}
+            fontWeight="700"
+          >
+            {pts[i].d.label}
+          </SvgText>
+        ))}
+      </Svg>
     );
   };
 
@@ -344,127 +414,127 @@ export default function MetricasScreen() {
         >
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          {/* Totales: fila deslizable (scroll lateral) */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.summaryRow}
-          >
+          {/* KPIs en grilla 2x2 con chip de ícono */}
+          <View style={styles.summaryGrid}>
             {summaryCards.map((c) => (
               <View key={c.label} style={styles.summaryCard}>
-                <View style={[styles.sumBar, { backgroundColor: c.accent }]} />
-                <Text style={styles.sumLabel}>{c.label}</Text>
-                <Text style={styles.sumValue}>{c.value}</Text>
+                <View style={styles.sumHead}>
+                  <Text style={styles.sumLabel} numberOfLines={1}>
+                    {c.label}
+                  </Text>
+                  <View style={[styles.sumIcon, { backgroundColor: `${c.tint}29` }]}>
+                    <Ionicons name={c.icon} size={15} color={c.tint} />
+                  </View>
+                </View>
+                <Text style={styles.sumValue} numberOfLines={1} adjustsFontSizeToFit>
+                  {c.value}
+                </Text>
               </View>
             ))}
-          </ScrollView>
+          </View>
 
-          {/* Velas por tipo / categoría */}
-          {renderChart("Distribución por tipo", typeItems, "Sin datos en este período.")}
-          {renderChart("Egresos por categoría", expenseCats, "Sin egresos en este período.")}
-          {renderChart("Ingresos por categoría", incomeCats, "Sin ingresos en este período.")}
-
-          {/* Comparación mensual (velas verde/roja por mes) */}
-          <Text style={styles.sectionTitle}>Comparación mensual</Text>
+          {/* Composición en barras horizontales con % */}
+          <Text style={styles.sectionTitle}>Composición</Text>
           <View style={styles.card}>
-            {monthlyBuckets.length ? (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingVertical: 6, minWidth: "100%", justifyContent: "center" }}
-              >
-                {(() => {
-                  const COL = 54;
-                  const BODY = 20;
-                  const TOP = 12;
-                  const PLOT = 150;
-                  const H = 190;
-                  const W = monthlyBuckets.length * COL;
-                  const max =
-                    Math.max(
-                      1,
-                      ...monthlyBuckets.flatMap((b) => [
-                        b.summary.ingreso,
-                        b.summary.egreso,
-                        b.summary.ahorro,
-                      ])
-                    ) * 1.15;
-                  const yVal = (v) => TOP + PLOT * (1 - v / max);
-                  return (
-                    <Svg width={Math.max(W, 1)} height={H}>
-                      {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-                        <Line
-                          key={t}
-                          x1={0}
-                          x2={W}
-                          y1={TOP + PLOT * t}
-                          y2={TOP + PLOT * t}
-                          stroke={colors.cardBorder}
-                          strokeWidth={1}
-                          opacity={0.4}
-                        />
-                      ))}
-                      {monthlyBuckets.map((b, i) => {
-                        const open = b.summary.egreso;
-                        const close = b.summary.ingreso;
-                        const high = Math.max(b.summary.ingreso, b.summary.egreso, b.summary.ahorro);
-                        const low = Math.min(
-                          b.summary.ingreso,
-                          b.summary.egreso,
-                          b.summary.ahorro,
-                          0
-                        );
-                        const up = close >= open;
-                        const color = up ? TYPE_COLORS.ingreso : TYPE_COLORS.egreso;
-                        const cx = i * COL + COL / 2;
-                        const bodyTop = yVal(Math.max(open, close));
-                        const bodyH = Math.max(3, yVal(Math.min(open, close)) - bodyTop);
-                        return (
-                          <G key={b.key}>
-                            <Line x1={cx} x2={cx} y1={yVal(high)} y2={yVal(low)} stroke={color} strokeWidth={2} />
-                            <Rect x={cx - BODY / 2} y={bodyTop} width={BODY} height={bodyH} rx={3} fill={color} />
-                            <SvgText
-                              x={cx}
-                              y={H - 6}
-                              fontSize={9.5}
-                              fill={colors.muted}
-                              textAnchor="middle"
-                              fontWeight="700"
-                            >
-                              {b.label}
-                            </SvgText>
-                          </G>
-                        );
-                      })}
-                    </Svg>
-                  );
-                })()}
-              </ScrollView>
+            {compositionItems.length === 0 ? (
+              <Text style={styles.muted}>Sin datos en este período.</Text>
             ) : (
-              <Text style={styles.muted}>Sin datos para graficar en este período.</Text>
+              <View style={{ gap: 12 }}>
+                {compositionItems.map((it) => {
+                  const pct = (it.value / totalTypeAmount) * 100;
+                  return (
+                    <View key={it.label} style={{ gap: 4 }}>
+                      <Text style={styles.compLabel}>{it.label}</Text>
+                      <View style={styles.compLine}>
+                        <View style={styles.compTrack}>
+                          <View
+                            style={[
+                              styles.compFill,
+                              { width: `${Math.max(2, pct)}%`, backgroundColor: it.color },
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.compPct}>{pct.toFixed(1)}%</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
             )}
           </View>
 
-          {/* Ranking: categorías con mayor egreso (donut) */}
-          <Text style={styles.sectionTitle}>Categorías con mayor egreso</Text>
+          {/* Anillos por categoría */}
+          {renderRingCard("Ingresos por categoría", incomeCats, "Sin ingresos en este período.")}
+          {renderRingCard("Gastos por categoría", expenseCats, "Sin egresos en este período.")}
+
+          {/* Evolución diaria del balance */}
+          <Text style={styles.sectionTitle}>Evolución</Text>
           <View style={styles.card}>
-            {expenseCats.length ? (
-              <View style={styles.chartLayout}>
-                <Donut items={expenseCats} colors={colors} />
-                <View style={styles.legend}>
-                  {expenseCats.map((it) => (
-                    <View key={it.label} style={styles.legendItem}>
-                      <View style={[styles.legendDot, { backgroundColor: it.color }]} />
-                      <Text style={[styles.legendLabel, { flex: 1 }]} numberOfLines={1}>
-                        {it.label}
-                      </Text>
-                      <Text style={styles.legendPct}>{formatMoney(it.value, currency)}</Text>
-                    </View>
-                  ))}
-                </View>
+            {renderDailyLine()}
+            <View style={styles.lineLegend}>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: TYPE_COLORS.ingreso }]} />
+                <Text style={styles.legendMutedText}>Día con saldo a favor</Text>
               </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: NEGATIVO }]} />
+                <Text style={styles.legendMutedText}>Día con más gastos</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Ranking en lista numerada con toggle */}
+          <View style={styles.rankHeader}>
+            <Text style={styles.sectionTitle}>
+              {rankingType === "egreso" ? "Categorías con mayor egreso" : "Categorías con mayor ingreso"}
+            </Text>
+            <View style={styles.rankSwitch}>
+              {[
+                ["egreso", "Egresos"],
+                ["ingreso", "Ingresos"],
+              ].map(([value, label]) => (
+                <TouchableOpacity
+                  key={value}
+                  style={[styles.rankSwitchBtn, rankingType === value && styles.rankSwitchOn]}
+                  onPress={() => setRankingType(value)}
+                >
+                  <Text
+                    style={[
+                      styles.rankSwitchText,
+                      rankingType === value && styles.rankSwitchTextOn,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          <View style={styles.card}>
+            {rankingItems.length === 0 ? (
+              <Text style={styles.muted}>
+                No hay {rankingType === "egreso" ? "egresos" : "ingresos"} en este período.
+              </Text>
             ) : (
-              <Text style={styles.muted}>No hay egresos en este período.</Text>
+              <View style={{ gap: 8 }}>
+                {rankingItems.map((it, index) => (
+                  <View key={it.label} style={styles.rankRow}>
+                    <View style={styles.rankChip}>
+                      <Text style={styles.rankChipText}>{index + 1}</Text>
+                    </View>
+                    <Text style={styles.rankName} numberOfLines={1}>
+                      {truncLabel(it.label, 18)}
+                    </Text>
+                    <Text style={styles.rankAmt}>
+                      {formatMoney(it.value, currency)}
+                      <Text style={styles.rankPct}>
+                        {"  "}
+                        {rankingTotal ? ((it.value / rankingTotal) * 100).toFixed(1) : 0}%
+                      </Text>
+                    </Text>
+                  </View>
+                ))}
+              </View>
             )}
           </View>
         </ScrollView>
@@ -526,21 +596,35 @@ const makeStyles = (colors) =>
     periodChipText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
     periodChipTextActive: { color: colors.greenDark },
 
-    summaryRow: { flexDirection: "row", gap: 10, paddingRight: 4 },
+    // KPIs 2x2
+    summaryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
     summaryCard: {
-      minWidth: 150,
+      flexBasis: "47%",
+      flexGrow: 1,
       backgroundColor: colors.card,
       borderWidth: 1,
       borderColor: colors.cardBorder,
       borderRadius: 16,
       paddingVertical: 12,
-      paddingLeft: 16,
-      paddingRight: 12,
-      overflow: "hidden",
+      paddingHorizontal: 13,
+      gap: 6,
     },
-    sumBar: { position: "absolute", left: 0, top: 0, bottom: 0, width: 5 },
-    sumLabel: { color: colors.muted, fontSize: 11, fontWeight: "800", textTransform: "uppercase" },
-    sumValue: { color: colors.text, fontSize: 16, fontWeight: "800", marginTop: 5 },
+    sumHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
+    sumIcon: {
+      width: 28,
+      height: 28,
+      borderRadius: 9,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    sumLabel: {
+      color: colors.muted,
+      fontSize: 11,
+      fontWeight: "800",
+      textTransform: "uppercase",
+      flexShrink: 1,
+    },
+    sumValue: { color: colors.text, fontSize: 17, fontWeight: "800" },
 
     sectionTitle: {
       color: colors.muted,
@@ -560,11 +644,83 @@ const makeStyles = (colors) =>
     },
     muted: { color: colors.muted, fontSize: 13 },
 
-    chartLayout: { flexDirection: "row", alignItems: "center", gap: 14 },
+    // Composición (barras)
+    compLabel: { color: colors.muted, fontSize: 12, fontWeight: "700" },
+    compLine: { flexDirection: "row", alignItems: "center", gap: 10 },
+    compTrack: {
+      flex: 1,
+      height: 11,
+      borderRadius: 999,
+      backgroundColor: colors.cardBorder,
+      overflow: "hidden",
+    },
+    compFill: { height: "100%", borderRadius: 999 },
+    compPct: {
+      color: colors.text,
+      fontSize: 12.5,
+      fontWeight: "800",
+      minWidth: 48,
+      textAlign: "right",
+      fontVariant: ["tabular-nums"],
+    },
+
+    // Anillos
+    ringLayout: { flexDirection: "row", alignItems: "center", gap: 16 },
+    ringTopCat: { color: colors.text, fontSize: 13, fontWeight: "800", maxWidth: 132 },
     legend: { flex: 1, gap: 9 },
     legendItem: { flexDirection: "row", alignItems: "center", gap: 8 },
-    legendDot: { width: 11, height: 11, borderRadius: 3 },
-    legendLabel: { color: colors.text, fontSize: 13, fontWeight: "700" },
-    legendAmt: { color: colors.muted, fontSize: 11, marginTop: 1 },
+    legendDot: { width: 11, height: 11, borderRadius: 999 },
+    legendLabel: { color: colors.muted, fontSize: 13, fontWeight: "700" },
     legendPct: { color: colors.text, fontSize: 13, fontWeight: "800" },
+    legendMutedText: { color: colors.muted, fontSize: 12 },
+
+    // Evolución
+    lineLegend: { flexDirection: "row", flexWrap: "wrap", gap: 14, marginTop: 8 },
+
+    // Ranking
+    rankHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 10,
+      marginTop: 6,
+    },
+    rankSwitch: {
+      flexDirection: "row",
+      gap: 3,
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 999,
+      padding: 3,
+    },
+    rankSwitchBtn: { paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999 },
+    rankSwitchOn: { backgroundColor: colors.segActive },
+    rankSwitchText: { color: colors.muted, fontWeight: "800", fontSize: 12 },
+    rankSwitchTextOn: { color: colors.segActiveText },
+    rankRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      backgroundColor: colors.cardSoft,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 11,
+    },
+    rankChip: {
+      width: 26,
+      height: 26,
+      borderRadius: 8,
+      backgroundColor: colors.greenSoft,
+      borderWidth: 1,
+      borderColor: colors.greenBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    rankChipText: { color: colors.greenDark, fontSize: 12, fontWeight: "800" },
+    rankName: { flex: 1, color: colors.text, fontSize: 13.5, fontWeight: "700" },
+    rankAmt: { color: colors.text, fontSize: 13.5, fontWeight: "800", fontVariant: ["tabular-nums"] },
+    rankPct: { color: colors.muted, fontSize: 11.5, fontWeight: "700" },
   });

@@ -12,8 +12,9 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import Svg, { Circle, G, Path } from "react-native-svg";
 import { movimientoService, fiscalService } from "../api";
 import { ARCA_HABILITADO } from "../config";
 import MovementFormModal from "../components/MovementFormModal";
@@ -34,6 +35,87 @@ import {
 
 const TYPE_FILTERS = [{ value: "all", label: "Todos" }, ...MOVEMENT_TYPE_OPTIONS];
 
+// Colores por tipo (mismos que Métricas/web) para resumen y distribución
+const TYPE_COLORS = {
+  ingreso: "#9cfb43",
+  egreso: "#ff915c",
+  ahorro: "#58eba4",
+  deuda: "#ffd55c",
+};
+
+// Mini sparkline de las cards: curva suave del monto por día del período.
+// `amp` escala la altura según cuánto movió el tipo comparado con los demás.
+function SparkMini({ data, color, amp = 1, width = 74, height = 22 }) {
+  const max = Math.max(...data, 1);
+  const pts = data.map((v, i) => ({
+    x: (i / Math.max(1, data.length - 1)) * width,
+    y: height - 2 - (v / max) * (height - 6) * amp,
+  }));
+  const d = pts
+    .map((p, i) => {
+      if (i === 0) return `M ${p.x} ${p.y}`;
+      const prev = pts[i - 1];
+      const mx = (prev.x + p.x) / 2;
+      return `C ${mx} ${prev.y}, ${mx} ${p.y}, ${p.x} ${p.y}`;
+    })
+    .join(" ");
+  return (
+    <Svg width={width} height={height}>
+      <Path d={d} fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+// Anillo del resumen: composición por tipo con el saldo neto al centro
+function RingNeto({ items, size = 140, stroke = 18, colors, centerTitle, centerSub }) {
+  const data = items.filter((i) => i.value > 0);
+  const total = data.reduce((a, i) => a + i.value, 0);
+  const r = (size - stroke) / 2;
+  const cx = size / 2;
+  const circ = 2 * Math.PI * r;
+  let acc = 0;
+  return (
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+      <Svg width={size} height={size}>
+        <G rotation={-90} origin={`${cx}, ${cx}`}>
+          {total === 0 ? (
+            <Circle cx={cx} cy={cx} r={r} stroke={colors.cardBorder} strokeWidth={stroke} fill="none" />
+          ) : (
+            data.map((it, idx) => {
+              const len = (it.value / total) * circ;
+              const el = (
+                <Circle
+                  key={idx}
+                  cx={cx}
+                  cy={cx}
+                  r={r}
+                  stroke={it.color}
+                  strokeWidth={stroke}
+                  fill="none"
+                  strokeDasharray={`${len} ${circ - len}`}
+                  strokeDashoffset={-acc}
+                />
+              );
+              acc += len;
+              return el;
+            })
+          )}
+        </G>
+      </Svg>
+      <View style={{ position: "absolute", alignItems: "center", maxWidth: size - stroke * 2 - 8 }}>
+        <Text
+          style={{ color: colors.text, fontSize: 13, fontWeight: "900" }}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {centerTitle}
+        </Text>
+        <Text style={{ color: colors.muted, fontSize: 10 }}>{centerSub}</Text>
+      </View>
+    </View>
+  );
+}
+
 const shiftMonth = (d, n) => new Date(d.getFullYear(), d.getMonth() + n, 1);
 const CHART_H = 90; // alto máx de las barras del mini gráfico anual
 
@@ -50,6 +132,7 @@ export default function FiltrosScreen() {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
   const route = useRoute();
+  const navigation = useNavigation();
   const [movimientos, setMovimientos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -239,12 +322,225 @@ export default function FiltrosScreen() {
     );
   }, [period, monthBreakdown]);
 
+  // Período anterior (mes/año) + sparklines para las cards, como en la web
+  const extras = useMemo(() => {
+    const isYear = period === "year";
+    const from = isYear
+      ? new Date(year, 0, 1)
+      : new Date(month.getFullYear(), month.getMonth(), 1);
+    const to = isYear
+      ? new Date(year, 11, 31)
+      : new Date(month.getFullYear(), month.getMonth() + 1, 0);
+    const byCurrency = filterMovimientosByCurrency(movimientos, currency);
+    const inRange = (m, f, t) => {
+      const x = new Date(m?.fecha).getTime();
+      return !Number.isNaN(x) && x >= f && x <= t;
+    };
+    const fromT = new Date(from).setHours(0, 0, 0, 0);
+    const toT = new Date(to).setHours(23, 59, 59, 999);
+    const periodMovs = byCurrency.filter((m) => inRange(m, fromT, toT));
+
+    const pFrom = isYear
+      ? new Date(year - 1, 0, 1)
+      : new Date(month.getFullYear(), month.getMonth() - 1, 1);
+    const pTo = isYear
+      ? new Date(year - 1, 11, 31)
+      : new Date(month.getFullYear(), month.getMonth(), 0);
+    const prevMovs = byCurrency.filter((m) =>
+      inRange(m, new Date(pFrom).setHours(0, 0, 0, 0), new Date(pTo).setHours(23, 59, 59, 999))
+    );
+    const rawLabel = isYear
+      ? String(year - 1)
+      : pFrom.toLocaleDateString("es-AR", { month: "long" });
+    const prevLabel = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
+
+    // Sparklines: monto por día (por mes en vista año), hasta hoy, suavizadas
+    const today = new Date();
+    const endDate = !isYear && to > today && from <= today ? today : to;
+    const count = isYear
+      ? year === today.getFullYear()
+        ? Math.max(2, today.getMonth() + 1)
+        : 12
+      : Math.max(2, Math.round((endDate.getTime() - from.getTime()) / 86400000) + 1);
+    const idxFor = (fecha) => {
+      const d = new Date(fecha);
+      if (isYear) return Math.min(count - 1, Math.max(0, d.getMonth()));
+      return Math.min(
+        count - 1,
+        Math.max(0, Math.round((d.getTime() - from.getTime()) / 86400000))
+      );
+    };
+    const smooth = (arr) =>
+      arr.map((v, i) => {
+        const p = arr[i - 1] ?? v;
+        const n = arr[i + 1] ?? v;
+        return p * 0.25 + v * 0.5 + n * 0.25;
+      });
+    const build = (tipo) => {
+      const arr = Array(count).fill(0);
+      periodMovs.forEach((m) => {
+        if (normalizeMovementType(m.tipo) !== tipo) return;
+        arr[idxFor(m.fecha)] += Number(m.monto) || 0;
+      });
+      return smooth(smooth(arr));
+    };
+
+    return {
+      periodSummary: summarizeByType(periodMovs),
+      prevSummary: summarizeByType(prevMovs),
+      prevLabel,
+      sparks: {
+        ingreso: build("ingreso"),
+        egreso: build("egreso"),
+        ahorro: build("ahorro"),
+        deuda: build("deuda"),
+      },
+    };
+  }, [movimientos, currency, month, year, period]);
+
+  const { periodSummary, prevSummary, prevLabel, sparks } = extras;
+  const deltaPct = (curr, prev) => (prev > 0 ? ((curr - prev) / prev) * 100 : null);
+  const deltaText = (curr, prev) => {
+    const d = deltaPct(curr, prev);
+    if (d === null) return `— vs ${prevLabel}`;
+    return `${d >= 0 ? "+" : ""}${d.toFixed(1)}% vs ${prevLabel}`;
+  };
+  const sparkGlobalMax = Math.max(
+    ...sparks.ingreso,
+    ...sparks.egreso,
+    ...sparks.ahorro,
+    ...sparks.deuda,
+    1
+  );
+  const ampFor = (arr) => {
+    const m = Math.max(...arr);
+    return m <= 0 ? 1 : Math.max(0.3, Math.min(1, m / sparkGlobalMax));
+  };
+
   const summaryCards = [
-    { label: "Ingresos", value: formatMoney(summary.ingreso, currency), accent: statAccents.ingreso },
-    { label: "Egresos", value: formatMoney(summary.egreso, currency), accent: statAccents.egreso },
-    { label: "Ahorros", value: formatMoney(summary.ahorro, currency), accent: statAccents.ahorro },
-    { label: "Deuda pend.", value: formatMoney(summary.deudaPendiente, currency), accent: statAccents.deuda },
+    {
+      label: "Ingresos",
+      value: formatMoney(summary.ingreso, currency),
+      accent: statAccents.ingreso,
+      spark: sparks.ingreso,
+      sparkColor: TYPE_COLORS.ingreso,
+      delta: deltaText(periodSummary.ingreso, prevSummary.ingreso),
+      deltaNeg: deltaPct(periodSummary.ingreso, prevSummary.ingreso) < 0,
+    },
+    {
+      label: "Egresos",
+      value: formatMoney(summary.egreso, currency),
+      accent: statAccents.egreso,
+      spark: sparks.egreso,
+      sparkColor: TYPE_COLORS.egreso,
+      delta: deltaText(periodSummary.egreso, prevSummary.egreso),
+      deltaNeg: deltaPct(periodSummary.egreso, prevSummary.egreso) < 0,
+    },
+    {
+      label: "Ahorros",
+      value: formatMoney(summary.ahorro, currency),
+      accent: statAccents.ahorro,
+      spark: sparks.ahorro,
+      sparkColor: TYPE_COLORS.ahorro,
+      delta: deltaText(periodSummary.ahorro, prevSummary.ahorro),
+      deltaNeg: deltaPct(periodSummary.ahorro, prevSummary.ahorro) < 0,
+    },
+    {
+      label: "Deuda pend.",
+      value: formatMoney(summary.deudaPendiente, currency),
+      accent: statAccents.deuda,
+      spark: sparks.deuda,
+      sparkColor: TYPE_COLORS.deuda,
+      delta: `${summary.deudaPendienteCount || 0} pendiente${
+        summary.deudaPendienteCount === 1 ? "" : "s"
+      }`,
+      deltaMuted: true,
+    },
   ];
+
+  // Resumen del período (columna derecha de la web → sección en la app)
+  const resumenItems = [
+    { label: "Ingresos", value: summary.ingreso, color: TYPE_COLORS.ingreso },
+    { label: "Egresos", value: summary.egreso, color: TYPE_COLORS.egreso },
+    { label: "Ahorros", value: summary.ahorro, color: TYPE_COLORS.ahorro },
+    { label: "Deuda", value: summary.deudaPendiente, color: TYPE_COLORS.deuda },
+  ];
+  const resumenTotal = resumenItems.reduce((a, i) => a + i.value, 0);
+  const insightDelta = deltaPct(periodSummary.ingreso, prevSummary.ingreso);
+  const insightText =
+    insightDelta === null
+      ? `Sin datos de ${prevLabel} para comparar todavía.`
+      : `Tus ingresos ${insightDelta >= 0 ? "aumentaron" : "bajaron"} un ${Math.abs(
+          insightDelta
+        ).toFixed(1)}% respecto a ${prevLabel}.`;
+
+  const renderResumenHeader = () => (
+    <View style={{ gap: 10, marginBottom: 14 }}>
+      <View style={styles.resumenCard}>
+        <Text style={styles.resumenTitle}>
+          Resumen del {period === "year" ? "año" : "mes"}
+        </Text>
+        <View style={styles.resumenLayout}>
+          <RingNeto
+            items={resumenItems}
+            colors={colors}
+            centerTitle={formatMoney(summary.total, currency)}
+            centerSub="Saldo neto"
+          />
+          <View style={styles.resumenLegend}>
+            {resumenItems.map((it) => (
+              <View key={it.label} style={styles.resumenRow}>
+                <View style={[styles.resumenDot, { backgroundColor: it.color }]} />
+                <Text style={styles.resumenLabel}>{it.label}</Text>
+                <Text style={styles.resumenAmt} numberOfLines={1}>
+                  {formatMoney(it.value, currency)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <Text style={[styles.resumenTitle, { marginTop: 14 }]}>Distribución</Text>
+        <View style={{ gap: 8 }}>
+          {resumenItems.map((it) => {
+            const pct = resumenTotal ? (it.value / resumenTotal) * 100 : 0;
+            return (
+              <View key={it.label} style={styles.distRow}>
+                <Text style={styles.distLabel}>{it.label}</Text>
+                <View style={styles.distTrack}>
+                  <View
+                    style={[
+                      styles.distFill,
+                      {
+                        width: `${Math.max(pct, it.value > 0 ? 2 : 0)}%`,
+                        backgroundColor: it.color,
+                      },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.distPct}>{pct.toFixed(0)}%</Text>
+              </View>
+            );
+          })}
+        </View>
+
+        <View style={styles.insightsBox}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Ionicons name="flash-outline" size={14} color={colors.greenBright} />
+            <Text style={styles.insightsTitle}>Insights</Text>
+          </View>
+          <Text style={styles.insightsText}>{insightText}</Text>
+          <TouchableOpacity
+            style={{ flexDirection: "row", alignItems: "center", gap: 3 }}
+            onPress={() => navigation.navigate("Metricas")}
+          >
+            <Text style={styles.insightsLink}>Ver reporte completo</Text>
+            <Ionicons name="chevron-forward" size={13} color={colors.greenBright} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.safe} edges={[]}>
@@ -339,7 +635,23 @@ export default function FiltrosScreen() {
                 <View style={[styles.sumDot, { backgroundColor: c.accent }]} />
                 <Text style={styles.sumLabel}>{c.label}</Text>
               </View>
-              <Text style={styles.sumValue}>{c.value}</Text>
+              <View style={styles.sumValueRow}>
+                <Text style={styles.sumValue}>{c.value}</Text>
+                <SparkMini data={c.spark} color={c.sparkColor} amp={ampFor(c.spark)} />
+              </View>
+              <Text
+                style={[
+                  styles.sumDelta,
+                  c.deltaMuted
+                    ? { color: colors.muted }
+                    : c.deltaNeg
+                      ? { color: "#ff6e6e" }
+                      : null,
+                ]}
+                numberOfLines={1}
+              >
+                {c.delta}
+              </Text>
             </View>
           ))}
         </ScrollView>
@@ -477,6 +789,7 @@ export default function FiltrosScreen() {
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={fetchData} tintColor={colors.green} />
           }
+          ListHeaderComponent={renderResumenHeader}
           ListEmptyComponent={<Text style={styles.empty}>No hay movimientos para mostrar.</Text>}
           renderSectionHeader={({ section }) => (
             <Text style={styles.dayHeader}>{section.title}</Text>
@@ -701,6 +1014,65 @@ const makeStyles = (colors) => StyleSheet.create({
   },
   sumHead: { flexDirection: "row", alignItems: "center", gap: 6 },
   sumDot: { width: 7, height: 7, borderRadius: 4 },
+  sumValueRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
+  sumDelta: { color: colors.greenDark, fontSize: 10.5, fontWeight: "700", marginTop: 3 },
+
+  // ---- Resumen del mes / Distribución / Insights (header de la lista) ----
+  resumenCard: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 16,
+    padding: 14,
+  },
+  resumenTitle: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "800",
+    marginBottom: 10,
+  },
+  resumenLayout: { flexDirection: "row", alignItems: "center", gap: 14 },
+  resumenLegend: { flex: 1, gap: 8 },
+  resumenRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  resumenDot: { width: 10, height: 10, borderRadius: 999 },
+  resumenLabel: { flex: 1, color: colors.muted, fontSize: 12.5, fontWeight: "700" },
+  resumenAmt: {
+    color: colors.text,
+    fontSize: 12.5,
+    fontWeight: "800",
+    fontVariant: ["tabular-nums"],
+    flexShrink: 1,
+  },
+  distRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  distLabel: { width: 62, color: colors.muted, fontSize: 11.5, fontWeight: "700" },
+  distTrack: {
+    flex: 1,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: colors.cardBorder,
+    overflow: "hidden",
+  },
+  distFill: { height: "100%", borderRadius: 999 },
+  distPct: {
+    width: 36,
+    textAlign: "right",
+    color: colors.text,
+    fontSize: 11.5,
+    fontWeight: "800",
+    fontVariant: ["tabular-nums"],
+  },
+  insightsBox: {
+    marginTop: 14,
+    backgroundColor: colors.greenSoft,
+    borderWidth: 1,
+    borderColor: colors.greenBorder,
+    borderRadius: 12,
+    padding: 11,
+    gap: 6,
+  },
+  insightsTitle: { color: colors.text, fontSize: 12.5, fontWeight: "800" },
+  insightsText: { color: colors.text, fontSize: 12.5, lineHeight: 18 },
+  insightsLink: { color: colors.greenBright, fontSize: 12.5, fontWeight: "800" },
   sumLabel: { color: colors.muted, fontSize: 10.5, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.4 },
   sumValue: { color: colors.text, fontSize: 15, fontWeight: "800", marginTop: 5, fontVariant: ["tabular-nums"] },
 
