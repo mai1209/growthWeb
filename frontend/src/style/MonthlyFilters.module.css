@@ -1794,3 +1794,61 @@
   cursor: pointer;
   padding: 0;
 }
+
+/* Ajustes: sin barrita de color a la izquierda de las cards */
+.summaryCard::before {
+  display: none;
+}
+
+/* Panel de búsqueda: inputs y triggers al estilo del mockup */
+.filtersPanel .input,
+.filtersPanel .filterTrigger {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  min-height: 46px;
+}
+
+.filtersPanel .input:focus,
+.filtersPanel .filterTrigger:hover {
+  border-color: var(--accent-border);
+}
+
+.filtersPanel .clearButton {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  min-height: 46px;
+  padding: 0 1.1rem;
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.filtersPanel .clearButton:hover {
+  border-color: var(--accent-border);
+}
+
+.filtersPanel .clearButton svg {
+  color: var(--color-verde);
+}
+
+/* El panel de resultados se estira hasta donde llega la columna derecha */
+.detailsLayout {
+  align-items: stretch;
+}
+
+.listPanel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.listPanel .listShell {
+  flex: 1;
+}
+
+@media (max-width: 1150px) {
+  .listPanel {
+    height: auto;
+  }
+}

@@ -72,16 +72,25 @@ const buildConicGradient = (items) => {
   return `conic-gradient(${stops.join(", ")})`;
 };
 
-// Mini sparkline decorativa de las cards (acumulado del período en 8 tramos)
+// Mini sparkline de las cards: curva suave con el monto por día del período
 const Spark = ({ data, color }) => {
   const max = Math.max(...data, 1);
-  const pts = data
-    .map((v, i) => `${(i / (data.length - 1)) * 100},${26 - (v / max) * 22}`)
+  const pts = data.map((v, i) => ({
+    x: (i / Math.max(1, data.length - 1)) * 100,
+    y: 26 - (v / max) * 22,
+  }));
+  const d = pts
+    .map((p, i) => {
+      if (i === 0) return `M ${p.x} ${p.y}`;
+      const prev = pts[i - 1];
+      const mx = (prev.x + p.x) / 2;
+      return `C ${mx} ${prev.y}, ${mx} ${p.y}, ${p.x} ${p.y}`;
+    })
     .join(" ");
   return (
     <svg className={style.sparkSvg} viewBox="0 0 100 28" aria-hidden="true">
-      <polyline
-        points={pts}
+      <path
+        d={d}
         fill="none"
         stroke={color}
         strokeWidth="2.5"
@@ -370,24 +379,27 @@ function MonthlyFilters({
     return d === null ? 0 : d >= 0 ? 1 : -1;
   };
 
-  // Sparklines: acumulado del tipo en 8 tramos del período
+  // Sparklines: monto del tipo por día del período (por mes en vista año)
   const sparks = useMemo(() => {
-    const N = 8;
-    const t0 = from.getTime();
-    const t1 = to.getTime() + 86399999;
-    const step = Math.max(1, (t1 - t0) / N);
+    const isYear = period === "year";
+    const count = isYear
+      ? 12
+      : Math.max(2, Math.round((to.getTime() - from.getTime()) / 86400000) + 1);
+    const idxFor = (fecha) => {
+      const date = new Date(fecha);
+      if (isYear) return Math.min(11, Math.max(0, date.getMonth()));
+      return Math.min(
+        count - 1,
+        Math.max(0, Math.round((date.getTime() - from.getTime()) / 86400000))
+      );
+    };
     const build = (tipo) => {
-      const arr = Array(N).fill(0);
+      const arr = Array(count).fill(0);
       monthMovimientos.forEach((movimiento) => {
         if (movimiento.tipo !== tipo) return;
-        const idx = Math.min(
-          N - 1,
-          Math.max(0, Math.floor((new Date(movimiento.fecha).getTime() - t0) / step))
-        );
-        arr[idx] += Number(movimiento.monto) || 0;
+        arr[idxFor(movimiento.fecha)] += Number(movimiento.monto) || 0;
       });
-      let acc = 0;
-      return arr.map((v) => (acc += v));
+      return arr;
     };
     return {
       ingreso: build("ingreso"),
@@ -395,7 +407,7 @@ function MonthlyFilters({
       ahorro: build("ahorro"),
       deuda: build("deuda"),
     };
-  }, [monthMovimientos, from, to]);
+  }, [period, monthMovimientos, from, to]);
 
   // Items del anillo "Resumen del mes" y la distribución (columna derecha)
   const resumenItems = useMemo(
