@@ -1119,3 +1119,38 @@
     font-size: 1.25rem;
   }
 }
+
+/* Responsive: nada puede desbordar a lo ancho, y el switch ARS/USD a tamaño
+   normal (el width 100% de antes lo hacía enorme) */
+@media (max-width: 1000px) {
+  .container {
+    overflow-x: clip;
+    padding: 1rem 0.85rem 6.5rem;
+  }
+
+  .container > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .trioGrid,
+  .bottomGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pageTitle {
+    font-size: 1.5rem;
+  }
+
+  .currencySwitch {
+    width: auto;
+    min-width: 0;
+    align-self: flex-start;
+  }
+
+  .currencyButton {
+    min-height: 38px;
+    padding: 0.3rem 1.5rem;
+    font-size: 0.85rem;
+  }
+}
