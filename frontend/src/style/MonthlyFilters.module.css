@@ -1852,3 +1852,10 @@
     height: auto;
   }
 }
+
+/* El panel de búsqueda lleva fondo relleno como el mockup (no solo borde) */
+.filtersPanel {
+  background:
+    linear-gradient(165deg, rgba(117, 249, 76, 0.06), transparent 50%),
+    var(--surface-card-strong);
+}
