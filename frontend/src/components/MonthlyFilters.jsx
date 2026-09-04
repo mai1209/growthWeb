@@ -379,27 +379,42 @@ function MonthlyFilters({
     return d === null ? 0 : d >= 0 ? 1 : -1;
   };
 
-  // Sparklines: monto del tipo por día del período (por mes en vista año)
+  // Sparklines: monto del tipo por día del período (por mes en vista año),
+  // cortado en HOY (los días futuros vacíos aplastaban la curva) y con
+  // suavizado para que los picos de un solo día se vean como onda.
   const sparks = useMemo(() => {
     const isYear = period === "year";
+    const today = new Date();
+    const endDate =
+      !isYear && to.getTime() > today.getTime() && from.getTime() <= today.getTime()
+        ? today
+        : to;
     const count = isYear
-      ? 12
-      : Math.max(2, Math.round((to.getTime() - from.getTime()) / 86400000) + 1);
+      ? selectedYear === today.getFullYear()
+        ? Math.max(2, today.getMonth() + 1)
+        : 12
+      : Math.max(2, Math.round((endDate.getTime() - from.getTime()) / 86400000) + 1);
     const idxFor = (fecha) => {
       const date = new Date(fecha);
-      if (isYear) return Math.min(11, Math.max(0, date.getMonth()));
+      if (isYear) return Math.min(count - 1, Math.max(0, date.getMonth()));
       return Math.min(
         count - 1,
         Math.max(0, Math.round((date.getTime() - from.getTime()) / 86400000))
       );
     };
+    const smooth = (arr) =>
+      arr.map((v, i) => {
+        const prev = arr[i - 1] ?? v;
+        const next = arr[i + 1] ?? v;
+        return prev * 0.25 + v * 0.5 + next * 0.25;
+      });
     const build = (tipo) => {
       const arr = Array(count).fill(0);
       monthMovimientos.forEach((movimiento) => {
         if (movimiento.tipo !== tipo) return;
         arr[idxFor(movimiento.fecha)] += Number(movimiento.monto) || 0;
       });
-      return arr;
+      return smooth(smooth(arr));
     };
     return {
       ingreso: build("ingreso"),
@@ -407,7 +422,7 @@ function MonthlyFilters({
       ahorro: build("ahorro"),
       deuda: build("deuda"),
     };
-  }, [period, monthMovimientos, from, to]);
+  }, [period, monthMovimientos, from, to, selectedYear]);
 
   // Items del anillo "Resumen del mes" y la distribución (columna derecha)
   const resumenItems = useMemo(
