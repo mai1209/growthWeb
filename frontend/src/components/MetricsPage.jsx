@@ -425,7 +425,7 @@ function MetricsPage({
                       <div className={style.compTrack}>
                         <div
                           className={style.compFill}
-                          style={{ width: `${pct}%`, background: item.color }}
+                          style={{ width: `${pct}%`, background: item.color, color: item.color }}
                         />
                       </div>
                       <strong className={style.compPct}>{pct}%</strong>

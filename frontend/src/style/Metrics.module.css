@@ -1071,3 +1071,32 @@
 :global(body[data-theme="light"]) .periodRow input::-webkit-calendar-picker-indicator {
   filter: none;
 }
+
+/* ===== Brillo sutil (glow) en los gráficos, estilo neón de los mockups ===== */
+
+/* Línea de evolución y sus puntos */
+.lineSvg path {
+  filter: drop-shadow(0 0 7px rgba(117, 249, 76, 0.45));
+}
+
+.lineSvg circle {
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.35));
+}
+
+/* Anillos por categoría */
+.ring {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 32px rgba(156, 251, 67, 0.16),
+    0 16px 30px rgba(0, 0, 0, 0.16);
+}
+
+/* Barritas de composición: cada una brilla con su propio color */
+.compFill {
+  box-shadow: 0 0 12px -1px currentColor;
+}
+
+/* Chip del puesto en el ranking */
+.rankChip {
+  box-shadow: 0 0 10px rgba(117, 249, 76, 0.2);
+}
