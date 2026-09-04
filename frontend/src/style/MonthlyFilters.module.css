@@ -1469,3 +1469,328 @@
   color: var(--accent-contrast);
 }
 
+
+/* ===== Rediseño filtros: panel estilo mockup + cards con delta y sparkline
+   + columna derecha (Resumen / Distribución / Insights) ===== */
+
+/* Panel de filtros: borde verde, todo en una fila en desktop */
+.filtersPanel {
+  grid-template-columns: minmax(220px, 1.1fr) minmax(0, 2.2fr);
+  align-items: end;
+  border: 1px solid var(--accent-border);
+  box-shadow: 0 0 24px rgba(117, 249, 76, 0.07);
+}
+
+.filterPickers {
+  grid-column: auto;
+  grid-template-columns: repeat(3, minmax(130px, 1fr)) auto;
+}
+
+.filterField label {
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.searchWrap {
+  position: relative;
+}
+
+.searchWrap .input {
+  width: 100%;
+  padding-right: 2.4rem;
+}
+
+.searchIcon {
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-muted);
+  pointer-events: none;
+}
+
+.triggerIcon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: var(--color-verde);
+  font-size: 0.95rem;
+  font-style: normal;
+}
+
+.clearButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .filtersPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .filterPickers {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+}
+
+/* Cards de resumen: tinte por tipo, chip de ícono, delta y sparkline */
+.summaryCard {
+  padding: 0.85rem 0.95rem;
+  gap: 0.4rem;
+}
+
+.summaryIncome {
+  border-color: rgba(156, 251, 67, 0.3);
+  background: linear-gradient(160deg, rgba(156, 251, 67, 0.09), transparent 55%), var(--surface-card);
+}
+
+.summaryExpense {
+  border-color: rgba(255, 145, 92, 0.3);
+  background: linear-gradient(160deg, rgba(255, 145, 92, 0.09), transparent 55%), var(--surface-card);
+}
+
+.summarySavings {
+  border-color: rgba(88, 235, 164, 0.3);
+  background: linear-gradient(160deg, rgba(88, 235, 164, 0.09), transparent 55%), var(--surface-card);
+}
+
+.summaryDebt {
+  border-color: rgba(255, 213, 92, 0.3);
+  background: linear-gradient(160deg, rgba(255, 213, 92, 0.09), transparent 55%), var(--surface-card);
+}
+
+.summaryHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.summaryIcon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 0.88rem;
+  font-style: normal;
+}
+
+.summaryIncome .summaryIcon { color: #9cfb43; }
+.summaryExpense .summaryIcon { color: #ff915c; }
+.summarySavings .summaryIcon { color: #58eba4; }
+.summaryDebt .summaryIcon { color: #ffd55c; }
+
+.summaryBody {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.summaryBody strong {
+  font-size: 1.15rem;
+}
+
+.sparkSvg {
+  width: 84px;
+  height: 26px;
+  flex: 0 0 auto;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.18));
+}
+
+.summaryDelta {
+  color: #9cfb43;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.summaryDeltaNeg {
+  color: #ff6e6e;
+}
+
+.summaryDebt .summaryDelta {
+  color: var(--color-muted);
+}
+
+/* Layout con columna derecha */
+.detailsLayout {
+  grid-template-columns: minmax(0, 1fr) 330px;
+  align-items: start;
+}
+
+@media (max-width: 1150px) {
+  .detailsLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sideCol {
+  display: grid;
+  gap: 1rem;
+}
+
+.sideCard {
+  border: 1px solid rgba(216, 241, 224, 0.08);
+  background: var(--surface-card);
+  border-radius: 20px;
+  padding: 1rem 1.1rem;
+}
+
+.sideTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.9rem;
+  font-size: 0.98rem;
+}
+
+.sideTitle svg {
+  color: var(--color-verde);
+}
+
+/* Resumen: anillo con saldo neto al centro + leyenda */
+.resumenLayout {
+  display: grid;
+  gap: 0.9rem;
+  justify-items: center;
+}
+
+.resumenRing {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 26px rgba(156, 251, 67, 0.14);
+}
+
+.resumenHole {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.1rem;
+  background: var(--surface-card-strong);
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.resumenHole strong {
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+  padding: 0 0.3rem;
+}
+
+.resumenHole span {
+  color: var(--color-muted);
+  font-size: 0.68rem;
+}
+
+.resumenLegend {
+  width: 100%;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.resumenRow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.85rem;
+}
+
+.resumenRow i {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+}
+
+.resumenRow span {
+  flex: 1;
+  color: var(--color-muted);
+}
+
+.resumenRow strong {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Distribución: barritas con % */
+.distList {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.distRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.distLabel {
+  width: 72px;
+  flex: 0 0 auto;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.distTrack {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-input);
+  overflow: hidden;
+}
+
+.distFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.35s ease;
+}
+
+.distPct {
+  width: 40px;
+  flex: 0 0 auto;
+  text-align: right;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Insights */
+.insightsCard {
+  border-color: var(--accent-border);
+  background: linear-gradient(160deg, rgba(117, 249, 76, 0.08), transparent 60%), var(--surface-card);
+}
+
+.insightsText {
+  margin: 0 0 0.8rem;
+  color: var(--color-text);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.insightsLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  background: transparent;
+  color: var(--color-verde);
+  font-weight: 800;
+  font-size: 0.84rem;
+  cursor: pointer;
+  padding: 0;
+}

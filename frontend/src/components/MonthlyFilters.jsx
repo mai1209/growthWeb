@@ -6,10 +6,17 @@ import {
   FiCalendar,
   FiCheck,
   FiChevronDown,
+  FiChevronRight,
   FiCreditCard,
   FiFilter,
   FiPocket,
   FiRepeat,
+  FiSearch,
+  FiTrash2,
+  FiTrendingDown,
+  FiTrendingUp,
+  FiX,
+  FiZap,
 } from "react-icons/fi";
 import style from "../style/MonthlyFilters.module.css";
 import MovementCard from "./MovementCard";
@@ -40,6 +47,49 @@ const movementIcon = (m) => {
   if (m.tipo === "ahorro") return <FiPocket />;
   if (m.tipo === "deuda") return <FiCreditCard />;
   return <FiArrowUp />; // egreso
+};
+
+// Colores por tipo (mismos que Métricas) para el resumen y la distribución
+const TYPE_COLORS = {
+  ingreso: "#9cfb43",
+  egreso: "#ff915c",
+  ahorro: "#58eba4",
+  deuda: "#ffd55c",
+};
+
+const buildConicGradient = (items) => {
+  const total = items.reduce((acc, item) => acc + item.value, 0);
+  if (!total) return "conic-gradient(rgba(255,255,255,0.08) 0deg 360deg)";
+  let cursor = 0;
+  const stops = items
+    .filter((item) => item.value > 0)
+    .map((item) => {
+      const start = cursor;
+      const end = cursor + (item.value / total) * 360;
+      cursor = end;
+      return `${item.color} ${start}deg ${end}deg`;
+    });
+  return `conic-gradient(${stops.join(", ")})`;
+};
+
+// Mini sparkline decorativa de las cards (acumulado del período en 8 tramos)
+const Spark = ({ data, color }) => {
+  const max = Math.max(...data, 1);
+  const pts = data
+    .map((v, i) => `${(i / (data.length - 1)) * 100},${26 - (v / max) * 22}`)
+    .join(" ");
+  return (
+    <svg className={style.sparkSvg} viewBox="0 0 100 28" aria-hidden="true">
+      <polyline
+        points={pts}
+        fill="none"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 };
 
 const TYPE_FILTERS = [{ value: "all", label: "Todos" }, ...MOVEMENT_TYPE_OPTIONS];
@@ -282,6 +332,90 @@ function MonthlyFilters({
     () => summarizeByType(filteredMovimientos),
     [filteredMovimientos]
   );
+
+  // Período anterior (mes o año) para la comparación "+x% vs Agosto"
+  const prevRange = useMemo(() => {
+    if (period === "year") {
+      const y = selectedYear - 1;
+      return { from: new Date(y, 0, 1), to: new Date(y, 11, 31), label: String(y) };
+    }
+    const [y, m] = selectedMonth.split("-").map(Number);
+    const base = y && m ? new Date(y, m - 2, 1) : new Date();
+    const from = new Date(base.getFullYear(), base.getMonth(), 1);
+    const to = new Date(base.getFullYear(), base.getMonth() + 1, 0);
+    const raw = from.toLocaleDateString("es-AR", { month: "long" });
+    return { from, to, label: raw.charAt(0).toUpperCase() + raw.slice(1) };
+  }, [period, selectedMonth, selectedYear]);
+
+  const periodSummary = useMemo(() => summarizeByType(monthMovimientos), [monthMovimientos]);
+  const prevSummary = useMemo(
+    () =>
+      summarizeByType(
+        filterMovimientosByCurrency(movimientos, currentCurrency, {
+          from: prevRange.from,
+          to: prevRange.to,
+        })
+      ),
+    [movimientos, currentCurrency, prevRange.from, prevRange.to]
+  );
+
+  const deltaPct = (curr, prev) => (prev > 0 ? ((curr - prev) / prev) * 100 : null);
+  const deltaText = (curr, prev) => {
+    const d = deltaPct(curr, prev);
+    if (d === null) return `— vs ${prevRange.label}`;
+    return `${d >= 0 ? "+" : ""}${d.toFixed(1)}% vs ${prevRange.label}`;
+  };
+  const deltaSign = (curr, prev) => {
+    const d = deltaPct(curr, prev);
+    return d === null ? 0 : d >= 0 ? 1 : -1;
+  };
+
+  // Sparklines: acumulado del tipo en 8 tramos del período
+  const sparks = useMemo(() => {
+    const N = 8;
+    const t0 = from.getTime();
+    const t1 = to.getTime() + 86399999;
+    const step = Math.max(1, (t1 - t0) / N);
+    const build = (tipo) => {
+      const arr = Array(N).fill(0);
+      monthMovimientos.forEach((movimiento) => {
+        if (movimiento.tipo !== tipo) return;
+        const idx = Math.min(
+          N - 1,
+          Math.max(0, Math.floor((new Date(movimiento.fecha).getTime() - t0) / step))
+        );
+        arr[idx] += Number(movimiento.monto) || 0;
+      });
+      let acc = 0;
+      return arr.map((v) => (acc += v));
+    };
+    return {
+      ingreso: build("ingreso"),
+      egreso: build("egreso"),
+      ahorro: build("ahorro"),
+      deuda: build("deuda"),
+    };
+  }, [monthMovimientos, from, to]);
+
+  // Items del anillo "Resumen del mes" y la distribución (columna derecha)
+  const resumenItems = useMemo(
+    () => [
+      { label: "Ingresos", value: filteredSummary.ingreso, color: TYPE_COLORS.ingreso },
+      { label: "Egresos", value: filteredSummary.egreso, color: TYPE_COLORS.egreso },
+      { label: "Ahorros", value: filteredSummary.ahorro, color: TYPE_COLORS.ahorro },
+      { label: "Deuda", value: filteredSummary.deudaPendiente, color: TYPE_COLORS.deuda },
+    ],
+    [filteredSummary]
+  );
+  const resumenTotal = resumenItems.reduce((acc, item) => acc + item.value, 0);
+
+  const insightDelta = deltaPct(periodSummary.ingreso, prevSummary.ingreso);
+  const insightText =
+    insightDelta === null
+      ? `Sin datos de ${prevRange.label} para comparar todavía.`
+      : `Tus ingresos ${insightDelta >= 0 ? "aumentaron" : "bajaron"} un ${Math.abs(
+          insightDelta
+        ).toFixed(1)}% respecto a ${prevRange.label}.`;
   const groupedFilteredMovimientos = useMemo(
     () => groupMovimientosByDay(filteredMovimientos),
     [filteredMovimientos]
@@ -534,8 +668,8 @@ function MonthlyFilters({
             className={`${style.filterToggle} ${filtersOpen ? style.filterToggleActive : ""}`}
             onClick={() => setFiltersOpen((prev) => !prev)}
           >
-            <FiFilter />
-            Filtrar
+            {filtersOpen ? <FiX /> : <FiFilter />}
+            {filtersOpen ? "Ocultar filtros" : "Filtrar"}
           </button>
         </div>
       </div>
@@ -543,15 +677,18 @@ function MonthlyFilters({
       {filtersOpen ? (
       <div className={style.filtersPanel}>
         <div className={`${style.filterField} ${style.searchField}`}>
-          <label htmlFor="search-filter">Busqueda</label>
-          <input
-            id="search-filter"
-            type="text"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Categoria, detalle, fecha o tipo"
-            className={style.input}
-          />
+          <label htmlFor="search-filter">Búsqueda</label>
+          <div className={style.searchWrap}>
+            <input
+              id="search-filter"
+              type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Buscar por categoría, detalle, fecha o tipo"
+              className={style.input}
+            />
+            <FiSearch className={style.searchIcon} />
+          </div>
         </div>
 
         <div className={style.filterPickers}>
@@ -562,6 +699,9 @@ function MonthlyFilters({
               className={style.filterTrigger}
               onClick={() => setOpenPicker("type")}
             >
+              <i className={style.triggerIcon}>
+                <FiFilter />
+              </i>
               <span>{getOptionLabel(TYPE_FILTERS, selectedType)}</span>
               <FiChevronDown />
             </button>
@@ -574,6 +714,9 @@ function MonthlyFilters({
               className={style.filterTrigger}
               onClick={() => setOpenPicker("recurrence")}
             >
+              <i className={style.triggerIcon}>
+                <FiRepeat />
+              </i>
               <span>{getOptionLabel(RECURRENCE_FILTERS, selectedRecurrence)}</span>
               <FiChevronDown />
             </button>
@@ -586,12 +729,16 @@ function MonthlyFilters({
               className={style.filterTrigger}
               onClick={() => setOpenPicker("method")}
             >
+              <i className={style.triggerIcon}>
+                <FiCreditCard />
+              </i>
               <span>{getOptionLabel(METHOD_FILTERS, selectedMethod)}</span>
               <FiChevronDown />
             </button>
           </div>
 
           <button type="button" className={style.clearButton} onClick={clearFilters}>
+            <FiTrash2 />
             Limpiar filtros
           </button>
         </div>
@@ -651,27 +798,78 @@ function MonthlyFilters({
       ) : null}
 
       <div className={style.summaryStrip}>
-     
-
         <article className={`${style.summaryCard} ${style.summaryIncome}`}>
-          <span>Ingresos</span>
-          <strong>{formatMoney(filteredSummary.ingreso, currentCurrency)}</strong>
+          <div className={style.summaryHead}>
+            <i className={style.summaryIcon}>
+              <FiTrendingUp />
+            </i>
+            <span>Ingresos</span>
+          </div>
+          <div className={style.summaryBody}>
+            <strong>{formatMoney(filteredSummary.ingreso, currentCurrency)}</strong>
+            <Spark data={sparks.ingreso} color={TYPE_COLORS.ingreso} />
+          </div>
+          <small
+            className={`${style.summaryDelta} ${
+              deltaSign(periodSummary.ingreso, prevSummary.ingreso) < 0 ? style.summaryDeltaNeg : ""
+            }`}
+          >
+            {deltaText(periodSummary.ingreso, prevSummary.ingreso)}
+          </small>
         </article>
 
         <article className={`${style.summaryCard} ${style.summaryExpense}`}>
-          <span>Egresos</span>
-          <strong>{formatMoney(filteredSummary.egreso, currentCurrency)}</strong>
+          <div className={style.summaryHead}>
+            <i className={style.summaryIcon}>
+              <FiTrendingDown />
+            </i>
+            <span>Egresos</span>
+          </div>
+          <div className={style.summaryBody}>
+            <strong>{formatMoney(filteredSummary.egreso, currentCurrency)}</strong>
+            <Spark data={sparks.egreso} color={TYPE_COLORS.egreso} />
+          </div>
+          <small
+            className={`${style.summaryDelta} ${
+              deltaSign(periodSummary.egreso, prevSummary.egreso) < 0 ? style.summaryDeltaNeg : ""
+            }`}
+          >
+            {deltaText(periodSummary.egreso, prevSummary.egreso)}
+          </small>
         </article>
 
         <article className={`${style.summaryCard} ${style.summarySavings}`}>
-          <span>Ahorros</span>
-          <strong>{formatMoney(filteredSummary.ahorro, currentCurrency)}</strong>
+          <div className={style.summaryHead}>
+            <i className={style.summaryIcon}>
+              <FiPocket />
+            </i>
+            <span>Ahorros</span>
+          </div>
+          <div className={style.summaryBody}>
+            <strong>{formatMoney(filteredSummary.ahorro, currentCurrency)}</strong>
+            <Spark data={sparks.ahorro} color={TYPE_COLORS.ahorro} />
+          </div>
+          <small
+            className={`${style.summaryDelta} ${
+              deltaSign(periodSummary.ahorro, prevSummary.ahorro) < 0 ? style.summaryDeltaNeg : ""
+            }`}
+          >
+            {deltaText(periodSummary.ahorro, prevSummary.ahorro)}
+          </small>
         </article>
 
         <article className={`${style.summaryCard} ${style.summaryDebt}`}>
-          <span>Deuda pendiente</span>
-          <strong>{formatMoney(filteredSummary.deudaPendiente, currentCurrency)}</strong>
-          <small className={style.summaryHint}>
+          <div className={style.summaryHead}>
+            <i className={style.summaryIcon}>
+              <FiCreditCard />
+            </i>
+            <span>Deuda pendiente</span>
+          </div>
+          <div className={style.summaryBody}>
+            <strong>{formatMoney(filteredSummary.deudaPendiente, currentCurrency)}</strong>
+            <Spark data={sparks.deuda} color={TYPE_COLORS.deuda} />
+          </div>
+          <small className={style.summaryDelta}>
             {filteredSummary.deudaPendienteCount || 0} pendiente
             {filteredSummary.deudaPendienteCount === 1 ? "" : "s"}
           </small>
@@ -809,6 +1007,70 @@ function MonthlyFilters({
             </div>
           )}
         </section>
+
+        {/* Columna derecha: Resumen del período + Distribución + Insights */}
+        <aside className={style.sideCol}>
+          <article className={style.sideCard}>
+            <h3 className={style.sideTitle}>
+              Resumen del {period === "year" ? "año" : "mes"}
+            </h3>
+            <div className={style.resumenLayout}>
+              <div
+                className={style.resumenRing}
+                style={{ background: buildConicGradient(resumenItems) }}
+              >
+                <div className={style.resumenHole}>
+                  <strong>{formatMoney(filteredSummary.total, currentCurrency)}</strong>
+                  <span>Saldo neto</span>
+                </div>
+              </div>
+              <div className={style.resumenLegend}>
+                {resumenItems.map((item) => (
+                  <div key={item.label} className={style.resumenRow}>
+                    <i style={{ background: item.color }} />
+                    <span>{item.label}</span>
+                    <strong>{formatMoney(item.value, currentCurrency)}</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </article>
+
+          <article className={style.sideCard}>
+            <h3 className={style.sideTitle}>Distribución</h3>
+            <div className={style.distList}>
+              {resumenItems.map((item) => {
+                const pct = resumenTotal ? (item.value / resumenTotal) * 100 : 0;
+                return (
+                  <div key={item.label} className={style.distRow}>
+                    <span className={style.distLabel}>{item.label}</span>
+                    <div className={style.distTrack}>
+                      <div
+                        className={style.distFill}
+                        style={{ width: `${Math.max(pct, item.value > 0 ? 2 : 0)}%`, background: item.color }}
+                      />
+                    </div>
+                    <strong className={style.distPct}>{pct.toFixed(0)}%</strong>
+                  </div>
+                );
+              })}
+            </div>
+          </article>
+
+          <article className={`${style.sideCard} ${style.insightsCard}`}>
+            <h3 className={style.sideTitle}>
+              <FiZap /> Insights
+            </h3>
+            <p className={style.insightsText}>{insightText}</p>
+            <button
+              type="button"
+              className={style.insightsLink}
+              onClick={() => navigate("/metricas")}
+            >
+              Ver reporte completo <FiChevronRight />
+            </button>
+          </article>
+        </aside>
       </div>
     </section>
   );
