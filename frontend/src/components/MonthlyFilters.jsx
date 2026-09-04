@@ -72,12 +72,14 @@ const buildConicGradient = (items) => {
   return `conic-gradient(${stops.join(", ")})`;
 };
 
-// Mini sparkline de las cards: curva suave con el monto por día del período
-const Spark = ({ data, color }) => {
+// Mini sparkline de las cards: curva suave con el monto por día del período.
+// `amp` (0..1) escala la altura según cuánta plata movió el tipo comparado con
+// los demás: así Ingresos y Egresos no se ven idénticos cuando difieren.
+const Spark = ({ data, color, amp = 1 }) => {
   const max = Math.max(...data, 1);
   const pts = data.map((v, i) => ({
     x: (i / Math.max(1, data.length - 1)) * 100,
-    y: 26 - (v / max) * 22,
+    y: 26 - (v / max) * 22 * amp,
   }));
   const d = pts
     .map((p, i) => {
@@ -423,6 +425,20 @@ function MonthlyFilters({
       deuda: build("deuda"),
     };
   }, [period, monthMovimientos, from, to, selectedYear]);
+
+  // Amplitud relativa de cada sparkline: el tipo que más plata movió llega a
+  // altura completa; los demás, proporcional (con piso para que se vean).
+  const sparkGlobalMax = Math.max(
+    ...sparks.ingreso,
+    ...sparks.egreso,
+    ...sparks.ahorro,
+    ...sparks.deuda,
+    1
+  );
+  const ampFor = (arr) => {
+    const m = Math.max(...arr);
+    return m <= 0 ? 1 : Math.max(0.3, Math.min(1, m / sparkGlobalMax));
+  };
 
   // Items del anillo "Resumen del mes" y la distribución (columna derecha)
   const resumenItems = useMemo(
@@ -834,7 +850,7 @@ function MonthlyFilters({
           </div>
           <div className={style.summaryBody}>
             <strong>{formatMoney(filteredSummary.ingreso, currentCurrency)}</strong>
-            <Spark data={sparks.ingreso} color={TYPE_COLORS.ingreso} />
+            <Spark data={sparks.ingreso} color={TYPE_COLORS.ingreso} amp={ampFor(sparks.ingreso)} />
           </div>
           <small
             className={`${style.summaryDelta} ${
@@ -854,7 +870,7 @@ function MonthlyFilters({
           </div>
           <div className={style.summaryBody}>
             <strong>{formatMoney(filteredSummary.egreso, currentCurrency)}</strong>
-            <Spark data={sparks.egreso} color={TYPE_COLORS.egreso} />
+            <Spark data={sparks.egreso} color={TYPE_COLORS.egreso} amp={ampFor(sparks.egreso)} />
           </div>
           <small
             className={`${style.summaryDelta} ${
@@ -874,7 +890,7 @@ function MonthlyFilters({
           </div>
           <div className={style.summaryBody}>
             <strong>{formatMoney(filteredSummary.ahorro, currentCurrency)}</strong>
-            <Spark data={sparks.ahorro} color={TYPE_COLORS.ahorro} />
+            <Spark data={sparks.ahorro} color={TYPE_COLORS.ahorro} amp={ampFor(sparks.ahorro)} />
           </div>
           <small
             className={`${style.summaryDelta} ${
@@ -894,7 +910,7 @@ function MonthlyFilters({
           </div>
           <div className={style.summaryBody}>
             <strong>{formatMoney(filteredSummary.deudaPendiente, currentCurrency)}</strong>
-            <Spark data={sparks.deuda} color={TYPE_COLORS.deuda} />
+            <Spark data={sparks.deuda} color={TYPE_COLORS.deuda} amp={ampFor(sparks.deuda)} />
           </div>
           <small className={style.summaryDelta}>
             {filteredSummary.deudaPendienteCount || 0} pendiente
