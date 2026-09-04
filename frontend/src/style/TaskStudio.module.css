@@ -3781,3 +3781,136 @@ button.folderItem {
     font-size: 0.82rem;
   }
 }
+
+/* ===== Rediseño de claridad: toolbar agrupada, páginas como pestañas,
+   etiquetas "Ancho"/"Papel" y estado "Guardado" ===== */
+
+/* Grupos de la toolbar con separadores (todo visible, ordenado por función) */
+.toolGroup {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 7px;
+}
+
+.toolGroup + .toolGroup {
+  border-left: 1px solid rgba(17, 24, 20, 0.12);
+}
+
+.toolGroupLabel {
+  color: #637267;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-right: 6px;
+}
+
+/* Etiquetas de los controles que antes eran crípticos */
+.widthLabel {
+  color: var(--color-muted);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0 0.3rem 0 0.5rem;
+}
+
+.paperLabel {
+  color: #637267;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-right: 6px;
+}
+
+/* Estado guardado (verde), espejo del "Sin guardar" */
+.savedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #2f8f4f;
+  font-size: 0.76rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.savedDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #2fbf62;
+}
+
+/* Páginas como pestañas pegadas al papel */
+.pagesTabs {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 0.45rem;
+}
+
+.pageTab {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(17, 24, 20, 0.12);
+  border-radius: 11px 11px 4px 4px;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.pageTabActive {
+  background: #ffffff;
+  border-color: rgba(47, 111, 53, 0.45);
+  box-shadow: var(--shadow-sm);
+}
+
+.pageTabSelect {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  background: transparent;
+  padding: 7px 10px;
+  cursor: pointer;
+  color: #637267;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.pageTabActive .pageTabSelect {
+  color: #1c281f;
+}
+
+.pageTabName {
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pageTabActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding-right: 5px;
+}
+
+.pageTabAdd {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px dashed rgba(47, 111, 53, 0.5);
+  border-radius: 11px;
+  background: transparent;
+  padding: 7px 13px;
+  cursor: pointer;
+  color: #2f6f35;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+.pageTabAdd:hover {
+  background: rgba(47, 111, 53, 0.08);
+}

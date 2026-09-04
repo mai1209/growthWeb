@@ -494,7 +494,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
 
     const quill = new Quill(editorRef.current, {
       theme: "snow",
-      placeholder: "Escribí el contenido de la nota...",
+      placeholder: "Escribí acá… seleccioná texto para darle formato con la barra de arriba",
       modules: {
         toolbar: false,
       },
@@ -1969,6 +1969,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   {editorStats.words} palabra{editorStats.words === 1 ? "" : "s"}
                 </span>
                 <div className={style.widthControl} role="group" aria-label="Ancho de la hoja">
+                  <span className={style.widthLabel}>Ancho</span>
                   {SHEET_WIDTH_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
@@ -2010,6 +2011,11 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   <span className={style.unsavedBadge}>
                     <span className={style.unsavedDot} />
                     Sin guardar
+                  </span>
+                ) : form.id ? (
+                  <span className={style.savedBadge}>
+                    <span className={style.savedDot} />
+                    Guardado
                   </span>
                 ) : null}
                 <button
@@ -2064,6 +2070,9 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 </span>
 
                 <div className={style.backgroundPicker}>
+                  <span className={style.paperLabel} title="Color del papel de la nota">
+                    Papel
+                  </span>
                   <div className={style.colorGrid}>
                     {COLOR_OPTIONS.map((color) => (
                       <button
@@ -2083,345 +2092,286 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
             </div>
 
             <div className={style.editorBody}>
-              <aside className={style.pagesColumn} aria-label="Páginas de la nota">
-                <p className={style.pagesColumnTitle}>Páginas</p>
-                <div className={style.pagesList}>
-                  {notePages.map((page, index) => {
-                    const isActive = index === activeNotePageIndex;
-                    const isEditing = editingPageIndex === index;
-
-                    return (
-                      <div
-                        key={`page-${index}`}
-                        className={`${style.notePageItem} ${isActive ? style.notePageItemActive : ""}`}
-                      >
-                        {isEditing ? (
-                          <input
-                            className={style.notePageRenameInput}
-                            value={editingTitle}
-                            autoFocus
-                            onChange={(event) => setEditingTitle(event.target.value)}
-                            onBlur={() => commitRename(index)}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter") {
-                                event.preventDefault();
-                                commitRename(index);
-                              }
-                              if (event.key === "Escape") {
-                                event.preventDefault();
-                                cancelRename();
-                              }
-                            }}
-                          />
-                        ) : (
-                          <button
-                            type="button"
-                            className={style.notePageSelect}
-                            onClick={() => handleSelectPage(index)}
-                            onDoubleClick={() => startRename(index)}
-                          >
-                            <span className={style.notePageNumber}>{index + 1}</span>
-                            <span className={style.notePageName}>{getPageLabel(page, index)}</span>
-                            <span className={style.notePageTip} role="tooltip">
-                              {getPageLabel(page, index)}
-                            </span>
-                          </button>
-                        )}
-
-                        {!isEditing ? (
-                          <div className={style.notePageItemActions}>
-                            <button
-                              type="button"
-                              className={style.notePageActionButton}
-                              onClick={() => startRename(index)}
-                              aria-label="Renombrar página"
-                              title="Renombrar"
-                            >
-                              <FiEdit2 />
-                            </button>
-                            <button
-                              type="button"
-                              className={`${style.notePageActionButton} ${style.notePageDeleteButton}`}
-                              onClick={() => handleDeletePage(index)}
-                              disabled={notePages.length <= 1}
-                              aria-label="Eliminar página"
-                              title={notePages.length <= 1 ? "No podés eliminar la única página" : "Eliminar página"}
-                            >
-                              <FiTrash2 />
-                            </button>
-                          </div>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-                <button
-                  type="button"
-                  className={style.addPageButton}
-                  onClick={handleAddPage}
-                  aria-label="Agregar página"
-                  title="Agregar página"
-                >
-                  <FiFilePlus />
-                  Agregar página
-                </button>
-              </aside>
-
-              <div className={style.editorWorkspace}>
+                            <div className={style.editorWorkspace}>
               <aside className={style.editorToolbar} aria-label="Herramientas de texto">
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${activeFormats.header === 1 ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => applyBlockFormat("header", 1)}
-                  aria-label="Título grande"
-                  title="Título grande"
-                >
-                  <FiType />
-                </button>
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${activeFormats.header === 2 ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => applyBlockFormat("header", 2)}
-                  aria-label="Subtítulo"
-                  title="Subtítulo"
-                >
-                  <FiHash />
-                </button>
-                <div className={style.fontSizeControl} aria-label="Tamaño de letra">
+                {/* Grupos con separadores: todo visible, ordenado por función */}
+                <div className={style.toolGroup} role="group" aria-label="Títulos">
                   <button
                     type="button"
-                    className={style.fontSizeStep}
+                    className={`${style.toolbarButton} ${activeFormats.header === 1 ? style.toolbarButtonActive : ""}`}
                     onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => stepFontSize(-1)}
-                    aria-label="Achicar letra"
-                    title="Achicar letra"
+                    onClick={() => applyBlockFormat("header", 1)}
+                    aria-label="Título grande"
+                    title="Título grande"
                   >
-                    −
+                    <FiType />
                   </button>
-                  <input
-                    type="number"
-                    className={style.fontSizeInput}
-                    value={sizeInput}
-                    min={MIN_FONT_PX}
-                    max={MAX_FONT_PX}
-                    onChange={(event) => setSizeInput(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        commitSizeInput();
-                      }
-                    }}
-                    onBlur={commitSizeInput}
-                    aria-label="Tamaño de letra en píxeles"
-                    title="Tamaño de letra (px)"
-                  />
-                  <span className={style.fontSizeUnit}>px</span>
                   <button
                     type="button"
-                    className={style.fontSizeStep}
+                    className={`${style.toolbarButton} ${activeFormats.header === 2 ? style.toolbarButtonActive : ""}`}
                     onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => stepFontSize(1)}
-                    aria-label="Agrandar letra"
-                    title="Agrandar letra"
+                    onClick={() => applyBlockFormat("header", 2)}
+                    aria-label="Subtítulo"
+                    title="Subtítulo"
                   >
-                    +
+                    <FiHash />
                   </button>
                 </div>
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${activeFormats.bold ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => applyInlineFormat("bold")}
-                  aria-label="Negrita"
-                  title="Negrita"
-                >
-                  <FiBold />
-                </button>
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${activeFormats.italic ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => applyInlineFormat("italic")}
-                  aria-label="Itálica"
-                  title="Itálica"
-                >
-                  <FiItalic />
-                </button>
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${activeFormats.underline ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => applyInlineFormat("underline")}
-                  aria-label="Subrayado"
-                  title="Subrayado"
-                >
-                  <FiUnderline />
-                </button>
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${activeFormats.strike ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => applyInlineFormat("strike")}
-                  aria-label="Tachado"
-                  title="Tachado"
-                >
-                  <FiMinus />
-                </button>
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${activeFormats.bulletList ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={toggleBulletList}
-                  aria-label="Lista con viñetas"
-                  title="Lista con viñetas"
-                >
-                  <FiList />
-                </button>
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${activeFormats.orderedList ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={toggleOrderedList}
-                  aria-label="Lista numerada"
-                  title="Lista numerada"
-                >
-                  <span className={style.toolbarText}>1.</span>
-                </button>
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${activeFormats.checkList ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={toggleCheckList}
-                  aria-label="Lista con check"
-                  title="Lista con check"
-                >
-                  <FiCheckSquare />
-                </button>
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${activeFormats.blockquote ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => applyBlockFormat("blockquote")}
-                  aria-label="Cita"
-                  title="Cita"
-                >
-                  <FiMessageSquare />
-                </button>
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${activeFormats.codeBlock ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => applyBlockFormat("code-block")}
-                  aria-label="Bloque de código"
-                  title="Bloque de código"
-                >
-                  <FiCode />
-                </button>
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${style.highlightButton} ${activeFormats.background ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={toggleHighlight}
-                  aria-label="Resaltar"
-                  title="Resaltar (marcador)"
-                >
-                  <span className={style.highlightSwatch} />
-                </button>
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${autoCapEnabled ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => setAutoCapEnabled((prev) => !prev)}
-                  aria-pressed={autoCapEnabled}
-                  aria-label="Mayúscula automática"
-                  title={
-                    autoCapEnabled
-                      ? "Mayúscula automática: activada (tocá para escribir en minúscula)"
-                      : "Mayúscula automática: desactivada"
-                  }
-                >
-                  <span className={style.toolbarText}>Aa</span>
-                </button>
-                <button
-                  type="button"
-                  className={style.toolbarButton}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => applyCaseToSelection("lower")}
-                  aria-label="Pasar a minúsculas"
-                  title="Pasar la selección a minúsculas"
-                >
-                  <span className={style.toolbarText}>aa</span>
-                </button>
-                <button
-                  type="button"
-                  className={style.toolbarButton}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => applyCaseToSelection("upper")}
-                  aria-label="Pasar a mayúsculas"
-                  title="Pasar la selección a MAYÚSCULAS"
-                >
-                  <span className={style.toolbarText}>AA</span>
-                </button>
-                <button
-                  type="button"
-                  className={style.toolbarButton}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={handleInsertImage}
-                  aria-label="Insertar imagen"
-                  title="Insertar imagen (se sube a la nube)"
-                >
-                  <FiImage />
-                </button>
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${activeFormats.align === "" ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => applyAlign("")}
-                  aria-label="Alinear izquierda"
-                  title="Alinear izquierda"
-                >
-                  <FiAlignLeft />
-                </button>
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${activeFormats.align === "center" ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => applyAlign("center")}
-                  aria-label="Centrar"
-                  title="Centrar"
-                >
-                  <FiAlignCenter />
-                </button>
-                <button
-                  type="button"
-                  className={`${style.toolbarButton} ${activeFormats.align === "right" ? style.toolbarButtonActive : ""}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => applyAlign("right")}
-                  aria-label="Alinear derecha"
-                  title="Alinear derecha"
-                >
-                  <FiAlignRight />
-                </button>
-                <div className={style.textColorGrid} aria-label="Color de texto">
-                  {TEXT_COLOR_OPTIONS.map((color) => {
-                    const isDefault = !color.value && !activeFormats.color;
-                    const isActive = color.value && activeFormats.color === color.value;
 
-                    return (
-                      <button
-                        key={color.label}
-                        type="button"
-                        className={`${style.textColorOption} ${isDefault || isActive ? style.textColorOptionActive : ""}`}
-                        style={{ backgroundColor: color.swatch }}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => applyTextColor(color.value)}
-                        aria-label={`Texto ${color.label}`}
-                        title={`Texto ${color.label}`}
-                      />
-                    );
-                  })}
+                <div className={style.toolGroup} role="group" aria-label="Tamaño de letra">
+                  <div className={style.fontSizeControl} aria-label="Tamaño de letra">
+                    <button
+                      type="button"
+                      className={style.fontSizeStep}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => stepFontSize(-1)}
+                      aria-label="Achicar letra"
+                      title="Achicar letra"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      className={style.fontSizeInput}
+                      value={sizeInput}
+                      min={MIN_FONT_PX}
+                      max={MAX_FONT_PX}
+                      onChange={(event) => setSizeInput(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          commitSizeInput();
+                        }
+                      }}
+                      onBlur={commitSizeInput}
+                      aria-label="Tamaño de letra en píxeles"
+                      title="Tamaño de letra (px)"
+                    />
+                    <span className={style.fontSizeUnit}>px</span>
+                    <button
+                      type="button"
+                      className={style.fontSizeStep}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => stepFontSize(1)}
+                      aria-label="Agrandar letra"
+                      title="Agrandar letra"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className={style.toolGroup} role="group" aria-label="Formato de texto">
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.bold ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyInlineFormat("bold")}
+                    aria-label="Negrita"
+                    title="Negrita"
+                  >
+                    <FiBold />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.italic ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyInlineFormat("italic")}
+                    aria-label="Itálica"
+                    title="Itálica"
+                  >
+                    <FiItalic />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.underline ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyInlineFormat("underline")}
+                    aria-label="Subrayado"
+                    title="Subrayado"
+                  >
+                    <FiUnderline />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.strike ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyInlineFormat("strike")}
+                    aria-label="Tachado"
+                    title="Tachado"
+                  >
+                    <FiMinus />
+                  </button>
+                </div>
+
+                <div className={style.toolGroup} role="group" aria-label="Listas">
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.bulletList ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={toggleBulletList}
+                    aria-label="Lista con viñetas"
+                    title="Lista con viñetas"
+                  >
+                    <FiList />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.orderedList ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={toggleOrderedList}
+                    aria-label="Lista numerada"
+                    title="Lista numerada"
+                  >
+                    <span className={style.toolbarText}>1.</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.checkList ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={toggleCheckList}
+                    aria-label="Lista con check"
+                    title="Lista con check"
+                  >
+                    <FiCheckSquare />
+                  </button>
+                </div>
+
+                <div className={style.toolGroup} role="group" aria-label="Bloques">
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.blockquote ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyBlockFormat("blockquote")}
+                    aria-label="Cita"
+                    title="Cita"
+                  >
+                    <FiMessageSquare />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.codeBlock ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyBlockFormat("code-block")}
+                    aria-label="Bloque de código"
+                    title="Bloque de código"
+                  >
+                    <FiCode />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${style.highlightButton} ${activeFormats.background ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={toggleHighlight}
+                    aria-label="Resaltar"
+                    title="Resaltar (marcador)"
+                  >
+                    <span className={style.highlightSwatch} />
+                  </button>
+                </div>
+
+                <div className={style.toolGroup} role="group" aria-label="Mayúsculas y minúsculas">
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${autoCapEnabled ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => setAutoCapEnabled((prev) => !prev)}
+                    aria-pressed={autoCapEnabled}
+                    aria-label="Mayúscula automática"
+                    title={
+                      autoCapEnabled
+                        ? "Mayúscula automática: activada (tocá para escribir en minúscula)"
+                        : "Mayúscula automática: desactivada"
+                    }
+                  >
+                    <span className={style.toolbarText}>Aa</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={style.toolbarButton}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyCaseToSelection("lower")}
+                    aria-label="Pasar a minúsculas"
+                    title="Pasar la selección a minúsculas"
+                  >
+                    <span className={style.toolbarText}>aa</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={style.toolbarButton}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyCaseToSelection("upper")}
+                    aria-label="Pasar a mayúsculas"
+                    title="Pasar la selección a MAYÚSCULAS"
+                  >
+                    <span className={style.toolbarText}>AA</span>
+                  </button>
+                </div>
+
+                <div className={style.toolGroup} role="group" aria-label="Insertar y alinear">
+                  <button
+                    type="button"
+                    className={style.toolbarButton}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={handleInsertImage}
+                    aria-label="Insertar imagen"
+                    title="Insertar imagen (se sube a la nube)"
+                  >
+                    <FiImage />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.align === "" ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyAlign("")}
+                    aria-label="Alinear izquierda"
+                    title="Alinear izquierda"
+                  >
+                    <FiAlignLeft />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.align === "center" ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyAlign("center")}
+                    aria-label="Centrar"
+                    title="Centrar"
+                  >
+                    <FiAlignCenter />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.align === "right" ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyAlign("right")}
+                    aria-label="Alinear derecha"
+                    title="Alinear derecha"
+                  >
+                    <FiAlignRight />
+                  </button>
+                </div>
+
+                <div className={style.toolGroup} role="group" aria-label="Color de texto">
+                  <span className={style.toolGroupLabel}>Texto</span>
+                  <div className={style.textColorGrid} aria-label="Color de texto">
+                    {TEXT_COLOR_OPTIONS.map((color) => {
+                      const isDefault = !color.value && !activeFormats.color;
+                      const isActive = color.value && activeFormats.color === color.value;
+
+                      return (
+                        <button
+                          key={color.label}
+                          type="button"
+                          className={`${style.textColorOption} ${isDefault || isActive ? style.textColorOptionActive : ""}`}
+                          style={{ backgroundColor: color.swatch }}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => applyTextColor(color.value)}
+                          aria-label={`Texto ${color.label}`}
+                          title={`Texto ${color.label}`}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
               </aside>
 
@@ -2452,6 +2402,87 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   </div>
                 </div>
               ) : null}
+
+                            {/* Páginas como pestañas del papel (como solapas de cuaderno) */}
+              <div className={style.pagesTabs} aria-label="Páginas de la nota">
+                {notePages.map((page, index) => {
+                  const isActive = index === activeNotePageIndex;
+                  const isEditing = editingPageIndex === index;
+
+                  return (
+                    <div
+                      key={`page-${index}`}
+                      className={`${style.pageTab} ${isActive ? style.pageTabActive : ""}`}
+                    >
+                      {isEditing ? (
+                        <input
+                          className={style.notePageRenameInput}
+                          value={editingTitle}
+                          autoFocus
+                          onChange={(event) => setEditingTitle(event.target.value)}
+                          onBlur={() => commitRename(index)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              event.preventDefault();
+                              commitRename(index);
+                            }
+                            if (event.key === "Escape") {
+                              event.preventDefault();
+                              cancelRename();
+                            }
+                          }}
+                        />
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className={style.pageTabSelect}
+                            onClick={() => handleSelectPage(index)}
+                            onDoubleClick={() => startRename(index)}
+                            title={getPageLabel(page, index)}
+                          >
+                            <span className={style.notePageNumber}>{index + 1}</span>
+                            <span className={style.pageTabName}>{getPageLabel(page, index)}</span>
+                          </button>
+                          {isActive ? (
+                            <span className={style.pageTabActions}>
+                              <button
+                                type="button"
+                                className={style.notePageActionButton}
+                                onClick={() => startRename(index)}
+                                aria-label="Renombrar página"
+                                title="Renombrar"
+                              >
+                                <FiEdit2 />
+                              </button>
+                              <button
+                                type="button"
+                                className={`${style.notePageActionButton} ${style.notePageDeleteButton}`}
+                                onClick={() => handleDeletePage(index)}
+                                disabled={notePages.length <= 1}
+                                aria-label="Eliminar página"
+                                title={notePages.length <= 1 ? "No podés eliminar la única página" : "Eliminar página"}
+                              >
+                                <FiTrash2 />
+                              </button>
+                            </span>
+                          ) : null}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+                <button
+                  type="button"
+                  className={style.pageTabAdd}
+                  onClick={handleAddPage}
+                  aria-label="Agregar página"
+                  title="Agregar página"
+                >
+                  <FiFilePlus />
+                  Página
+                </button>
+              </div>
 
               <div className={`${style.field} ${style.editorField}`}>
                 <div
