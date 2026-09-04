@@ -1100,3 +1100,22 @@
 .rankChip {
   box-shadow: 0 0 10px rgba(117, 249, 76, 0.2);
 }
+
+/* Responsive: en pantallas chicas las KPI pasan a grilla 2x2 (la tira
+   horizontal con scroll las cortaba) */
+@media (max-width: 1000px) {
+  .summaryGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .statCard {
+    min-width: 0;
+  }
+
+  .statCard strong {
+    font-size: 1.25rem;
+  }
+}
