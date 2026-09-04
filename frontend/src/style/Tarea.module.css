@@ -14,7 +14,7 @@
 }
 
 .headerCard {
-  padding: 1.3rem;
+  padding: 0.85rem 1.3rem;
   border-radius: 24px;
   border: 1px solid rgba(216, 241, 224, 0.1);
   background: var(--hero-background);
@@ -31,6 +31,69 @@
 .headerCopy {
   display: grid;
   min-width: 0;
+}
+
+/* Barra compacta del header: fecha + flechas ‹ › + HOY en una sola fila */
+.headerDateGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.dayNav {
+  display: inline-flex;
+  gap: 0.1rem;
+}
+
+.dayNavBtn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dayNavBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text);
+}
+
+.todayBtn {
+  padding: 0.42rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.todayBtn:hover {
+  background: rgba(255, 255, 255, 0.11);
+}
+
+:global(body[data-theme="light"]) .dayNavBtn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+:global(body[data-theme="light"]) .todayBtn {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+:global(body[data-theme="light"]) .todayBtn:hover {
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .headerAside {
@@ -632,8 +695,9 @@
 }
 
 .dayTitle {
-  font-size: 2rem !important;
-  line-height: 1.1 !important;
+  margin: 0;
+  font-size: 1.55rem !important;
+  line-height: 1.15 !important;
   color: var(--color-text) !important;
   font-weight: 800 !important;
   letter-spacing: normal !important;
@@ -1894,7 +1958,7 @@
   display: inline-flex;
   gap: 0.25rem;
   padding: 0.25rem;
-  border-radius: 14px;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.055);
   border: 1px solid var(--border-color);
 }
@@ -1905,7 +1969,7 @@
   gap: 0.4rem;
   padding: 0.5rem 0.85rem;
   border: none;
-  border-radius: 16px;
+  border-radius: 999px;
   background: transparent;
   color: var(--color-muted);
   font-size: 0.85rem;
@@ -1927,6 +1991,9 @@
 .viewSwitchAction {
   background: #5dc72d;
   color: #0e2a12;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.78rem;
 }
 
 .viewSwitchAction:hover {

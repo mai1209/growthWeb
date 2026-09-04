@@ -434,6 +434,14 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
     return getTaskTargetDate(value);
   };
 
+  // Navegación del día desde el header (flechas ‹ › y botón HOY)
+  const shiftSelectedDay = (delta) =>
+    setSelectedDate((prev) => {
+      const next = new Date(prev);
+      next.setDate(next.getDate() + delta);
+      return next;
+    });
+
   const handleToggleCompleteForDate = async (taskId, dateValue = selectedDate) => {
     const fecha = getStatusDate(dateValue);
     const targetTask = tasks.find((task) => task._id === taskId);
@@ -1038,37 +1046,50 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
       <div className={style.headerShell}>
         <div className={style.headerCard}>
           <div className={style.headerTop}>
-            <div className={style.headerCopy}>
-              <p className={style.kicker}>Panel de tareas</p>
-              <h1 className={style.pageTitle}>
+            {/* Barra compacta: fecha grande + ‹ › + HOY (según el mockup) */}
+            <div className={style.headerDateGroup}>
+              <h1 className={style.dayTitle}>
                 {viewMode === "calendar"
                   ? "Calendario"
                   : viewMode === "history"
                     ? "Historial"
-                    : ""}
+                    : selectedDate.toLocaleDateString("es-AR", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
               </h1>
 
               {viewMode === "day" ? (
-                <div className={style.containerFecha}>
-                  <p className={style.dayTitle}>
-                    Tareas de{" "}
-                    {selectedDate.toLocaleDateString("es-AR", {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                    })}
-                  </p>
-                  <p className={style.viewSubtitle}>
-                    Para ver las tareas de otro día, andá a Calendario.
-                  </p>
-                </div>
-              ) : (
-                <p className={style.viewSubtitle}>
-                  {viewMode === "calendar"
-                    ? "Tocá un día para ver sus tareas"
-                    : "Tu rendimiento por día, semana, mes o año"}
-                </p>
-              )}
+                <>
+                  <div className={style.dayNav}>
+                    <button
+                      type="button"
+                      className={style.dayNavBtn}
+                      onClick={() => shiftSelectedDay(-1)}
+                      aria-label="Día anterior"
+                    >
+                      <FiChevronLeft />
+                    </button>
+                    <button
+                      type="button"
+                      className={style.dayNavBtn}
+                      onClick={() => shiftSelectedDay(1)}
+                      aria-label="Día siguiente"
+                    >
+                      <FiChevronRight />
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    className={style.todayBtn}
+                    onClick={() => setSelectedDate(new Date())}
+                  >
+                    Hoy
+                  </button>
+                </>
+              ) : null}
             </div>
 
             <div className={style.headerAside}>
