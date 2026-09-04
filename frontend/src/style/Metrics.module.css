@@ -182,7 +182,7 @@
 
 .chartGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -578,4 +578,135 @@
   font-size: 10.5px;
   font-weight: 700;
   text-transform: capitalize;
+}
+
+/* ===== Rediseño de métricas: chips de KPI, leyenda con %, ranking horizontal ===== */
+
+.statHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.statIcon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  font-size: 1rem;
+  font-style: normal;
+}
+
+.legendPct {
+  font-style: normal;
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  margin-left: 0.5rem;
+}
+
+/* Toggle Egresos/Ingresos del ranking */
+.rankSwitch {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.22rem;
+  border-radius: 999px;
+  background: var(--surface-input);
+  border: 1px solid var(--border-color);
+}
+
+.rankSwitchBtn {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 0.38rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.rankSwitchOn {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+/* Barras horizontales del ranking */
+.rankList {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.rankRow {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.rankPos {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-input);
+  border: 1px solid var(--border-color);
+  color: var(--color-muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.rankBody {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.32rem;
+}
+
+.rankMeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.rankLabel {
+  font-weight: 700;
+  font-size: 0.88rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rankValue {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rankValue em {
+  font-style: normal;
+  color: var(--color-muted);
+  font-weight: 700;
+  font-size: 0.76rem;
+  margin-left: 0.45rem;
+}
+
+.rankTrack {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--surface-input);
+  overflow: hidden;
+}
+
+.rankFill {
+  height: 100%;
+  border-radius: 999px;
+  min-width: 4px;
+  transition: width 0.35s ease;
 }

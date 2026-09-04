@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { FiActivity, FiClock, FiTrendingDown, FiTrendingUp } from "react-icons/fi";
 import style from "../style/Metrics.module.css";
 import {
   CURRENCY_OPTIONS,
@@ -141,8 +142,10 @@ const buildMonthlyBuckets = (movimientos, from, to) => {
   }));
 };
 
-const DonutChart = ({ title, subtitle, items, emptyLabel }) => {
-  const total = items.reduce((acc, item) => acc + item.value, 0);
+// Donut real (conic-gradient) + leyenda con monto y porcentaje de cada porción
+const DonutCard = ({ title, subtitle, items, emptyLabel, currency, centerTitle, centerSub }) => {
+  const shown = items.filter((item) => item.value > 0);
+  const total = shown.reduce((acc, item) => acc + item.value, 0);
 
   return (
     <article className={style.chartCard}>
@@ -151,81 +154,34 @@ const DonutChart = ({ title, subtitle, items, emptyLabel }) => {
           <span className={style.kicker}>{title}</span>
           <h2>{subtitle}</h2>
         </div>
-        <strong>{total ? "100%" : "0%"}</strong>
       </div>
 
       {total ? (
-        <div className={style.donutCandleWrap}>
-          {(() => {
-            const shown = items.filter((item) => item.value > 0);
-            const maxV = Math.max(...shown.map((i) => i.value), 1);
-            const COL = 66;
-            const TOP = 24;
-            const PLOT = 132;
-            const H = 196;
-            const W = shown.length * COL;
-            const yVal = (v) => TOP + PLOT * (1 - v / maxV);
-            return (
-              <svg
-                className={style.donutCandleSvg}
-                width={W}
-                height={H}
-                viewBox={`0 0 ${W} ${H}`}
-                role="img"
-              >
-                {[0, 0.5, 1].map((t) => (
-                  <line
-                    key={t}
-                    x1="0"
-                    x2={W}
-                    y1={TOP + PLOT * t}
-                    y2={TOP + PLOT * t}
-                    stroke="var(--border-color)"
-                    strokeWidth="1"
-                    opacity="0.35"
-                  />
-                ))}
-                {shown.map((item, i) => {
-                  const cx = i * COL + COL / 2;
-                  const bodyTop = yVal(item.value);
-                  const bodyH = Math.max(3, yVal(0) - bodyTop);
-                  const pct = ((item.value / total) * 100).toFixed(1);
-                  const name =
-                    item.label.length > 9 ? `${item.label.slice(0, 8)}…` : item.label;
-                  return (
-                    <g key={item.label}>
-                      <title>{`${item.label} · ${pct}%`}</title>
-                      {/* Mecha tenue hasta el máximo */}
-                      <line
-                        x1={cx}
-                        x2={cx}
-                        y1={yVal(maxV)}
-                        y2={yVal(0)}
-                        stroke={item.color}
-                        strokeWidth="2"
-                        opacity="0.28"
-                      />
-                      {/* Cuerpo */}
-                      <rect
-                        x={cx - 13}
-                        y={bodyTop}
-                        width="26"
-                        height={bodyH}
-                        rx="4"
-                        fill={item.color}
-                      />
-                      <text x={cx} y={bodyTop - 7} textAnchor="middle" className={style.donutCandlePct}>
-                        {pct}%
-                      </text>
-                      <text x={cx} y={H - 7} textAnchor="middle" className={style.donutCandleName}>
-                        {name}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
-            );
-          })()}
+        <div className={style.donutLayout}>
+          <div
+            className={style.donut}
+            style={{ background: buildConicGradient(shown) }}
+            aria-label={subtitle}
+          >
+            <div>
+              <strong>{centerTitle ?? shown.length}</strong>
+              <span>{centerSub ?? "rubros"}</span>
+            </div>
+          </div>
+          <div className={style.legend}>
+            {shown.map((item) => (
+              <div key={item.label} className={style.legendItem}>
+                <i style={{ background: item.color }} />
+                <span>{item.label}</span>
+                <strong>
+                  {formatMoney(item.value, currency)}
+                  <em className={style.legendPct}>
+                    {((item.value / total) * 100).toFixed(1)}%
+                  </em>
+                </strong>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <p className={style.emptyText}>{emptyLabel}</p>
@@ -242,6 +198,8 @@ function MetricsPage({
   const [period, setPeriod] = useState("month");
   const [selectedMonth, setSelectedMonth] = useState(getMonthInputValue(new Date()));
   const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
+  // Ranking: compara categorías entre sí dentro del período (egresos o ingresos)
+  const [rankingType, setRankingType] = useState("egreso");
   const currency = normalizeCurrency(currentCurrency);
 
   const availableYears = useMemo(() => {
@@ -297,7 +255,7 @@ function MetricsPage({
 
     return Object.entries(buckets)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
+      .slice(0, 8)
       .map(([label, value], index) => ({
         label,
         value: Number(value.toFixed(2)),
@@ -315,13 +273,19 @@ function MetricsPage({
 
     return Object.entries(buckets)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
+      .slice(0, 8)
       .map(([label, value], index) => ({
         label,
         value: Number(value.toFixed(2)),
         color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
       }));
   }, [periodMovimientos]);
+
+  // Datos del ranking según el toggle. El % se calcula contra el total real del
+  // tipo en el período (no solo contra el top 8), para no mentir.
+  const rankingItems = rankingType === "egreso" ? expenseCategoryItems : incomeCategoryItems;
+  const rankingTotal = rankingType === "egreso" ? summary.egreso : summary.ingreso;
+  const rankingMax = rankingItems[0]?.value || 1;
 
   const monthlyBuckets = useMemo(
     () => buildMonthlyBuckets(periodMovimientos, range.from, range.to),
@@ -407,46 +371,65 @@ function MetricsPage({
 
       <div className={style.summaryGrid}>
         <article className={style.statCard}>
-          <span>Balance</span>
+          <div className={style.statHead}>
+            <span>Balance</span>
+            <i className={style.statIcon} style={{ background: "rgba(105, 167, 255, 0.16)", color: "#69a7ff" }}>
+              <FiActivity />
+            </i>
+          </div>
           <strong>{formatMoney(summary.total, currency)}</strong>
           <p>Ingresos menos egresos y ahorro.</p>
         </article>
         <article className={style.statCard}>
-          <span>Ingresos</span>
+          <div className={style.statHead}>
+            <span>Ingresos</span>
+            <i className={style.statIcon} style={{ background: "rgba(156, 251, 67, 0.16)", color: "#9cfb43" }}>
+              <FiTrendingUp />
+            </i>
+          </div>
           <strong>{formatMoney(summary.ingreso, currency)}</strong>
           <p>{totalTypeAmount ? ((summary.ingreso / totalTypeAmount) * 100).toFixed(1) : 0}% del flujo.</p>
         </article>
         <article className={style.statCard}>
-          <span>Egresos</span>
+          <div className={style.statHead}>
+            <span>Egresos</span>
+            <i className={style.statIcon} style={{ background: "rgba(255, 145, 92, 0.16)", color: "#ff915c" }}>
+              <FiTrendingDown />
+            </i>
+          </div>
           <strong>{formatMoney(summary.egreso, currency)}</strong>
           <p>{periodMovimientos.filter((item) => item.tipo === "egreso").length} movimientos.</p>
         </article>
         <article className={style.statCard}>
-          <span>Deuda pendiente</span>
+          <div className={style.statHead}>
+            <span>Deuda pendiente</span>
+            <i className={style.statIcon} style={{ background: "rgba(255, 213, 92, 0.16)", color: "#ffd55c" }}>
+              <FiClock />
+            </i>
+          </div>
           <strong>{formatMoney(summary.deudaPendiente, currency)}</strong>
           <p>{summary.deudaPendienteCount || 0} registros abiertos.</p>
         </article>
       </div>
 
+      {/* Composición por TIPO (vista general) + zoom por CATEGORÍA de los gastos.
+          Los ingresos por categoría viven en el toggle del Ranking. */}
       <div className={style.chartGrid}>
-        <DonutChart
+        <DonutCard
           title="Composición"
           subtitle="Ingresos, gastos, ahorro y deuda"
           items={typeItems}
+          currency={currency}
+          centerTitle="100%"
+          centerSub="del flujo"
           emptyLabel="No hay movimientos en este corte."
         />
 
-        <DonutChart
-          title="Ingresos por categoría"
-          subtitle="De dónde entró la plata"
-          items={incomeCategoryItems}
-          emptyLabel="No hay ingresos para graficar."
-        />
-
-        <DonutChart
+        <DonutCard
           title="Gastos por categoría"
           subtitle="Dónde se fue la plata"
           items={expenseCategoryItems}
+          currency={currency}
           emptyLabel="No hay egresos para graficar."
         />
       </div>
@@ -555,38 +538,72 @@ function MetricsPage({
         </div>
       </section>
 
+      {/* Ranking: categorías comparadas entre sí dentro del período activo,
+          en barras horizontales ordenadas de mayor a menor. */}
       <section className={style.categoryPanel}>
         <div className={style.chartHeader}>
           <div>
             <span className={style.kicker}>Ranking</span>
-            <h2>Categorías con mayor egreso</h2>
+            <h2>
+              {rankingType === "egreso"
+                ? "¿En qué se fue la plata?"
+                : "¿De dónde entró la plata?"}
+            </h2>
+          </div>
+          <div className={style.rankSwitch}>
+            {[
+              ["egreso", "Egresos"],
+              ["ingreso", "Ingresos"],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={`${style.rankSwitchBtn} ${
+                  rankingType === value ? style.rankSwitchOn : ""
+                }`}
+                onClick={() => setRankingType(value)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {expenseCategoryItems.length ? (
-          <div className={style.donutLayout}>
-            <div
-              className={style.donut}
-              style={{ background: buildConicGradient(expenseCategoryItems) }}
-              aria-label="Categorías con mayor egreso"
-            >
-              <div>
-                <strong>{expenseCategoryItems.length}</strong>
-                <span>rubros</span>
-              </div>
-            </div>
-            <div className={style.legend}>
-              {expenseCategoryItems.map((item) => (
-                <div key={item.label} className={style.legendItem}>
-                  <i style={{ background: item.color }} />
-                  <span>{item.label}</span>
-                  <strong>{formatMoney(item.value, currency)}</strong>
+        {rankingItems.length ? (
+          <div className={style.rankList}>
+            {rankingItems.map((item, index) => (
+              <div key={item.label} className={style.rankRow}>
+                <span className={style.rankPos}>{index + 1}</span>
+                <div className={style.rankBody}>
+                  <div className={style.rankMeta}>
+                    <span className={style.rankLabel}>{item.label}</span>
+                    <span className={style.rankValue}>
+                      {formatMoney(item.value, currency)}
+                      <em>
+                        {rankingTotal
+                          ? ((item.value / rankingTotal) * 100).toFixed(1)
+                          : 0}
+                        %
+                      </em>
+                    </span>
+                  </div>
+                  <div className={style.rankTrack}>
+                    <div
+                      className={style.rankFill}
+                      style={{
+                        width: `${(item.value / rankingMax) * 100}%`,
+                        background: item.color,
+                      }}
+                    />
+                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         ) : (
-          <p className={style.emptyText}>No hay categorías de egreso en este período.</p>
+          <p className={style.emptyText}>
+            No hay {rankingType === "egreso" ? "egresos" : "ingresos"} en este período.
+          </p>
         )}
       </section>
     </section>
