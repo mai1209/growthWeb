@@ -265,10 +265,40 @@ function MetricsPage({
     [periodMovimientos]
   );
 
-  const monthlyBuckets = useMemo(
-    () => buildMonthlyBuckets(periodMovimientos, range.from, range.to),
-    [periodMovimientos, range.from, range.to]
-  );
+  // Evolución DIARIA del balance dentro del período: siempre hay una línea
+  // completa a lo ancho (con un solo mes, "por mes" era un punto flotando).
+  const dailySeries = useMemo(() => {
+    const byDay = new Map();
+    periodMovimientos.forEach((movimiento) => {
+      let delta = 0;
+      if (movimiento.tipo === "ingreso") delta = Number(movimiento.monto) || 0;
+      else if (movimiento.tipo === "egreso" || movimiento.tipo === "ahorro")
+        delta = -(Number(movimiento.monto) || 0);
+      else return;
+      const key = String(movimiento.fecha).slice(0, 10);
+      byDay.set(key, (byDay.get(key) || 0) + delta);
+    });
+
+    const today = new Date();
+    const end = range.to < today ? range.to : today;
+    const days = [];
+    let acc = 0;
+    const cursor = new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate());
+    while (cursor <= end && days.length < 400) {
+      const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`;
+      const delta = byDay.get(key) || 0;
+      acc += delta;
+      days.push({
+        key,
+        label: cursor.toLocaleDateString("es-AR", { day: "numeric", month: "short" }),
+        balance: Number(acc.toFixed(2)),
+        delta,
+        hasMov: byDay.has(key),
+      });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return days;
+  }, [periodMovimientos, range.from, range.to]);
 
   const rankingItems = rankingType === "egreso" ? expenseCategoryItems : incomeCategoryItems;
   const rankingTotal = rankingType === "egreso" ? summary.egreso : summary.ingreso;
@@ -430,11 +460,11 @@ function MetricsPage({
           <div className={style.chartHeader}>
             <div>
               <span className={style.kicker}>Evolución</span>
-              <h2>Comparación mensual</h2>
+              <h2>Cómo se movió tu saldo en el período</h2>
             </div>
           </div>
 
-          {monthlyBuckets.length ? (
+          {dailySeries.length > 1 ? (
             <>
               <div className={style.lineChartWrap}>
                 {(() => {
@@ -443,18 +473,15 @@ function MetricsPage({
                   const PADX = 26;
                   const TOP = 34;
                   const BOT = 34;
-                  const buckets = monthlyBuckets;
-                  const balances = buckets.map((b) => b.balance);
-                  const maxV = Math.max(...balances, 0);
-                  const minV = Math.min(...balances, 0);
+                  const series = dailySeries;
+                  const vals = series.map((d) => d.balance);
+                  const maxV = Math.max(...vals, 0);
+                  const minV = Math.min(...vals, 0);
                   const span = maxV - minV || 1;
                   const plot = H - TOP - BOT;
-                  const xFor = (i) =>
-                    buckets.length === 1
-                      ? W / 2
-                      : PADX + ((W - PADX * 2) * i) / (buckets.length - 1);
+                  const xFor = (i) => PADX + ((W - PADX * 2) * i) / (series.length - 1);
                   const yFor = (v) => TOP + plot * (1 - (v - minV) / span);
-                  const pts = buckets.map((b, i) => ({ x: xFor(i), y: yFor(b.balance), b }));
+                  const pts = series.map((d, i) => ({ x: xFor(i), y: yFor(d.balance), d }));
                   // Línea suave: curvas horizontales entre punto y punto
                   const path = pts
                     .map((p, i) => {
@@ -464,9 +491,14 @@ function MetricsPage({
                       return `C ${mx} ${prev.y}, ${mx} ${p.y}, ${p.x} ${p.y}`;
                     })
                     .join(" ");
+                  const movPts = pts.filter((p) => p.d.hasMov);
+                  const showDots = movPts.length > 0 && movPts.length <= 40;
                   const last = pts[pts.length - 1];
-                  const tagW = 74;
+                  const tagW = 84;
                   const tagX = Math.min(W - tagW - 4, Math.max(4, last.x - tagW / 2));
+                  const tagY = last.y - 34 < 4 ? last.y + 12 : last.y - 34;
+                  // 4 fechas de referencia en el eje
+                  const axisIdx = [...new Set([0, Math.round((series.length - 1) / 3), Math.round(((series.length - 1) * 2) / 3), series.length - 1])];
                   return (
                     <svg className={style.lineSvg} viewBox={`0 0 ${W} ${H}`} role="img">
                       {/* Línea de cero, de referencia */}
@@ -480,37 +512,34 @@ function MetricsPage({
                         opacity="0.7"
                       />
                       <path d={path} fill="none" stroke="var(--color-verde)" strokeWidth="3" strokeLinecap="round" opacity="0.9" />
-                      {pts.map((p) => (
-                        <g key={p.b.key}>
-                          <title>
-                            {`${p.b.label} · Balance ${formatMoney(p.b.balance, currency)} · Ingresos ${formatMoney(p.b.ingreso, currency)} · Egresos ${formatMoney(p.b.egreso, currency)}`}
-                          </title>
-                          <circle
-                            cx={p.x}
-                            cy={p.y}
-                            r="6"
-                            fill={p.b.balance >= 0 ? TYPE_COLORS.ingreso : "#ff6e6e"}
-                            stroke="var(--surface-card-strong)"
-                            strokeWidth="2.5"
-                          />
-                        </g>
-                      ))}
-                      {/* Tag del último mes, como en el mockup */}
+                      {showDots
+                        ? movPts.map((p) => (
+                            <g key={p.d.key}>
+                              <title>
+                                {`${p.d.label} · Saldo ${formatMoney(p.d.balance, currency)} · Movimiento del día ${formatMoney(p.d.delta, currency)}`}
+                              </title>
+                              <circle
+                                cx={p.x}
+                                cy={p.y}
+                                r="6"
+                                fill={p.d.delta >= 0 ? TYPE_COLORS.ingreso : "#ff6e6e"}
+                                stroke="var(--surface-card-strong)"
+                                strokeWidth="2.5"
+                              />
+                            </g>
+                          ))
+                        : null}
+                      {/* Tag del último día, como en el mockup */}
                       <g>
-                        <rect x={tagX} y={last.y - 34 < 4 ? last.y + 12 : last.y - 34} width={tagW} height="22" rx="8" className={style.lineTag} />
-                        <text
-                          x={tagX + tagW / 2}
-                          y={(last.y - 34 < 4 ? last.y + 12 : last.y - 34) + 15}
-                          textAnchor="middle"
-                          className={style.lineTagText}
-                        >
-                          {last.b.label}
+                        <rect x={tagX} y={tagY} width={tagW} height="22" rx="8" className={style.lineTag} />
+                        <text x={tagX + tagW / 2} y={tagY + 15} textAnchor="middle" className={style.lineTagText}>
+                          {last.d.label}
                         </text>
                       </g>
-                      {/* Meses en el eje */}
-                      {pts.map((p) => (
-                        <text key={`x-${p.b.key}`} x={p.x} y={H - 8} textAnchor="middle" className={style.lineAxisText}>
-                          {p.b.label}
+                      {/* Fechas de referencia en el eje */}
+                      {axisIdx.map((i) => (
+                        <text key={`x-${pts[i].d.key}`} x={pts[i].x} y={H - 8} textAnchor="middle" className={style.lineAxisText}>
+                          {pts[i].d.label}
                         </text>
                       ))}
                     </svg>
@@ -520,11 +549,11 @@ function MetricsPage({
               <div className={style.chartLegendRow}>
                 <span>
                   <i style={{ background: TYPE_COLORS.ingreso }} />
-                  Mes positivo
+                  Día con saldo a favor
                 </span>
                 <span>
                   <i style={{ background: "#ff6e6e" }} />
-                  Mes negativo
+                  Día con más gastos
                 </span>
               </div>
             </>
