@@ -862,3 +862,10 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Cajitas de etiqueta del flujo (tipo tooltip del mockup) */
+.flowBox {
+  fill: var(--surface-input);
+  stroke: var(--border-color);
+  stroke-width: 1;
+}

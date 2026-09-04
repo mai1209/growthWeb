@@ -154,23 +154,30 @@ const ribbonPath = (x1, a0, a1, x2, b0, b1) => {
   return `M ${x1} ${a0} C ${mx} ${a0}, ${mx} ${b0}, ${x2} ${b0} L ${x2} ${b1} C ${mx} ${b1}, ${mx} ${a1}, ${x1} ${a1} Z`;
 };
 
-// Apila items proporcionalmente en una columna vertical
-const stackSegments = (items, total, top, plot, gap) => {
-  const usable = plot - gap * Math.max(0, items.length - 1);
-  let cursor = top;
-  return items.map((item) => {
-    const height = Math.max(4, (item.value / total) * usable);
-    const segment = { item, y0: cursor, y1: cursor + height };
-    cursor += height + gap;
-    return segment;
-  });
-};
+const clampNum = (value, lo, hi) => Math.max(lo, Math.min(hi, value));
+const linspace = (a, b, n) =>
+  n === 1 ? [(a + b) / 2] : Array.from({ length: n }, (_, i) => a + ((b - a) * i) / (n - 1));
+
+// Verdes para lo que entra, cálidos para lo que sale (como el mockup)
+const FLOW_GREENS = ["#9cfb43", "#58eba4", "#b8f79b", "#2fd27a", "#7ddf6a"];
+const FLOW_WARMS = ["#ff915c", "#ff6e6e", "#ffd55c", "#f070b8", "#c97bff"];
 
 // Flujo real de la plata: de dónde entró (izquierda) → a dónde fue (derecha).
-// Versión con sentido del "sankey" decorativo del mockup.
+// Réplica con datos reales del sankey del mockup: cintas orgánicas con grosor
+// acotado (nunca una pared, nunca un hilo) y etiquetas como cajitas tooltip.
 const FlowChart = ({ leftItems, rightItems, currency }) => {
-  const left = leftItems.filter((item) => item.value > 0).slice(0, 5);
-  const right = rightItems.filter((item) => item.value > 0).slice(0, 6);
+  const left = leftItems
+    .filter((item) => item.value > 0)
+    .slice(0, 5)
+    .map((item, index) => ({ ...item, color: FLOW_GREENS[index % FLOW_GREENS.length] }));
+  const right = rightItems
+    .filter((item) => item.value > 0)
+    .slice(0, 6)
+    .map((item, index) =>
+      item.label === "Ahorro" || item.label === "Disponible"
+        ? item
+        : { ...item, color: FLOW_WARMS[index % FLOW_WARMS.length] }
+    );
   const totalLeft = left.reduce((acc, item) => acc + item.value, 0);
   const totalRight = right.reduce((acc, item) => acc + item.value, 0);
 
@@ -182,104 +189,97 @@ const FlowChart = ({ leftItems, rightItems, currency }) => {
     );
   }
 
-  const W = 680;
-  const TOP = 26;
-  const PLOT = 250;
-  const H = TOP + PLOT + 26;
-  const GAP = 8;
-  const LX = 190; // borde izquierdo de los nodos de ingreso
-  const TX = 332; // tronco central
-  const TW = 16;
-  const RX = 478; // nodos de destino
+  const W = 720;
+  const H = 340;
+  const TRUNK_X = 340;
+  const TRUNK_W = 26;
+  const L_END = 200;
+  const R_START = TRUNK_X + TRUNK_W;
+  const R_END = 500;
 
-  const lSegs = stackSegments(left, totalLeft, TOP, PLOT, GAP);
-  const rSegs = stackSegments(right, totalRight, TOP, PLOT, GAP);
-  const lTrunk = stackSegments(left, totalLeft, TOP, PLOT, 2);
-  const rTrunk = stackSegments(right, totalRight, TOP, PLOT, 2);
+  // Grosor de cada cinta con tope, y apilado centrado sobre el tronco
+  const thick = (share) => clampNum(share * 200, 16, 84);
+  const stack = (items, total) => {
+    const sizes = items.map((item) => thick(item.value / total));
+    const totalH = sizes.reduce((a, b) => a + b, 0) + 12 * (items.length - 1);
+    let y = (H - totalH) / 2;
+    return items.map((item, index) => {
+      const seg = { item, t: sizes[index], y0: y, y1: y + sizes[index] };
+      y += sizes[index] + 12;
+      return seg;
+    });
+  };
+  const lSegs = stack(left, totalLeft);
+  const rSegs = stack(right, totalRight);
+
+  // Extremos externos escalonados: los ingresos entran desde arriba y los
+  // destinos salen hacia abajo (le da la curva en S del mockup)
+  const lOuter = left.length === 1 ? [104] : linspace(78, 272, left.length);
+  const rOuter = right.length === 1 ? [236] : linspace(88, 288, right.length);
+
+  const trunkTop = Math.min(lSegs[0].y0, rSegs[0].y0) - 14;
+  const trunkBot = Math.max(lSegs[lSegs.length - 1].y1, rSegs[rSegs.length - 1].y1) + 14;
+
+  // Cajita de etiqueta (tipo tooltip del mockup)
+  const LabelBox = ({ x, y, item, total }) => {
+    const pct = ((item.value / total) * 100).toFixed(0);
+    return (
+      <g>
+        <rect x={x} y={y - 21} width="176" height="42" rx="10" className={style.flowBox} />
+        <circle cx={x + 14} cy={y - 7} r="4" fill={item.color} />
+        <text x={x + 24} y={y - 3} className={style.flowLabel}>
+          {truncLabel(item.label)}
+        </text>
+        <text x={x + 24} y={y + 13} className={style.flowMoney}>
+          {formatMoney(item.value, currency)} · {pct}%
+        </text>
+      </g>
+    );
+  };
 
   return (
     <div className={style.flowWrap}>
       <svg className={style.flowSvg} viewBox={`0 0 ${W} ${H}`} role="img">
-        {/* Cintas: ingresos → tronco */}
         {lSegs.map((seg, index) => (
           <path
             key={`l-${seg.item.label}`}
-            d={ribbonPath(LX + 10, seg.y0, seg.y1, TX, lTrunk[index].y0, lTrunk[index].y1)}
+            d={ribbonPath(L_END, lOuter[index] - seg.t / 2, lOuter[index] + seg.t / 2, TRUNK_X, seg.y0, seg.y1)}
             fill={seg.item.color}
-            opacity="0.45"
+            opacity="0.55"
           >
             <title>{`${seg.item.label} · ${formatMoney(seg.item.value, currency)}`}</title>
           </path>
         ))}
-        {/* Cintas: tronco → destinos */}
         {rSegs.map((seg, index) => (
           <path
             key={`r-${seg.item.label}`}
-            d={ribbonPath(TX + TW, rTrunk[index].y0, rTrunk[index].y1, RX, seg.y0, seg.y1)}
+            d={ribbonPath(R_START, seg.y0, seg.y1, R_END, rOuter[index] - seg.t / 2, rOuter[index] + seg.t / 2)}
             fill={seg.item.color}
-            opacity="0.45"
+            opacity="0.55"
           >
             <title>{`${seg.item.label} · ${formatMoney(seg.item.value, currency)}`}</title>
           </path>
         ))}
 
-        {/* Nodos */}
-        {lSegs.map((seg) => (
-          <rect
-            key={`ln-${seg.item.label}`}
-            x={LX}
-            y={seg.y0}
-            width="10"
-            height={seg.y1 - seg.y0}
-            rx="4"
-            fill={seg.item.color}
-          />
-        ))}
-        <rect x={TX} y={TOP} width={TW} height={PLOT} rx="7" fill="var(--color-verde)" opacity="0.9" />
-        {rSegs.map((seg) => (
-          <rect
-            key={`rn-${seg.item.label}`}
-            x={RX}
-            y={seg.y0}
-            width="10"
-            height={seg.y1 - seg.y0}
-            rx="4"
-            fill={seg.item.color}
-          />
-        ))}
-
-        {/* Etiquetas */}
-        <text x={TX + TW / 2} y={TOP - 10} textAnchor="middle" className={style.flowTrunkLabel}>
+        <rect
+          x={TRUNK_X}
+          y={trunkTop}
+          width={TRUNK_W}
+          height={trunkBot - trunkTop}
+          rx="13"
+          fill="var(--color-verde)"
+          opacity="0.9"
+        />
+        <text x={TRUNK_X + TRUNK_W / 2} y={trunkTop - 8} textAnchor="middle" className={style.flowTrunkLabel}>
           100%
         </text>
-        {lSegs.map((seg) => {
-          const mid = (seg.y0 + seg.y1) / 2;
-          const pct = ((seg.item.value / totalLeft) * 100).toFixed(0);
-          return (
-            <g key={`lt-${seg.item.label}`}>
-              <text x={LX - 8} y={mid - 2} textAnchor="end" className={style.flowLabel}>
-                {truncLabel(seg.item.label)}
-              </text>
-              <text x={LX - 8} y={mid + 12} textAnchor="end" className={style.flowMoney}>
-                {formatMoney(seg.item.value, currency)} · {pct}%
-              </text>
-            </g>
-          );
-        })}
-        {rSegs.map((seg) => {
-          const mid = (seg.y0 + seg.y1) / 2;
-          const pct = ((seg.item.value / totalRight) * 100).toFixed(0);
-          return (
-            <g key={`rt-${seg.item.label}`}>
-              <text x={RX + 18} y={mid - 2} className={style.flowLabel}>
-                {truncLabel(seg.item.label)}
-              </text>
-              <text x={RX + 18} y={mid + 12} className={style.flowMoney}>
-                {formatMoney(seg.item.value, currency)} · {pct}%
-              </text>
-            </g>
-          );
-        })}
+
+        {lSegs.map((seg, index) => (
+          <LabelBox key={`lb-${seg.item.label}`} x={L_END - 186} y={lOuter[index]} item={seg.item} total={totalLeft} />
+        ))}
+        {rSegs.map((seg, index) => (
+          <LabelBox key={`rb-${seg.item.label}`} x={R_END + 10} y={rOuter[index]} item={seg.item} total={totalRight} />
+        ))}
       </svg>
       <div className={style.flowFootRow}>
         <span>← De dónde entró</span>
