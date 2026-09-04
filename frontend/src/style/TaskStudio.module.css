@@ -3914,3 +3914,41 @@ button.folderItem {
 .pageTabAdd:hover {
   background: rgba(47, 111, 53, 0.08);
 }
+
+/* Pestañas de páginas y grupos de la toolbar en tema oscuro */
+:global(body[data-theme="dark"]) .pageTab {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+:global(body[data-theme="dark"]) .pageTabActive {
+  background: rgba(20, 217, 95, 0.14);
+  border-color: rgba(20, 217, 95, 0.45);
+  box-shadow: none;
+}
+
+:global(body[data-theme="dark"]) .pageTabSelect {
+  color: rgba(236, 246, 243, 0.65);
+}
+
+:global(body[data-theme="dark"]) .pageTabActive .pageTabSelect {
+  color: #ecf6f3;
+}
+
+:global(body[data-theme="dark"]) .pageTabAdd {
+  border-color: rgba(20, 217, 95, 0.5);
+  color: #14d95f;
+}
+
+:global(body[data-theme="dark"]) .pageTabAdd:hover {
+  background: rgba(20, 217, 95, 0.1);
+}
+
+:global(body[data-theme="dark"]) .toolGroup + .toolGroup {
+  border-left-color: rgba(255, 255, 255, 0.14);
+}
+
+:global(body[data-theme="dark"]) .toolGroupLabel,
+:global(body[data-theme="dark"]) .paperLabel {
+  color: rgba(236, 246, 243, 0.55);
+}

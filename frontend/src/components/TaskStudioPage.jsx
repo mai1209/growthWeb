@@ -228,7 +228,7 @@ const buildInitialFormState = () => ({
   contenido: "",
   fecha: getDateInputValue(new Date()),
   horario: getTimeInputValue(new Date()),
-  color: "color1",
+  color: "color10", // papel blanco por defecto
   carpeta: "",
   flashcards: [],
 });
