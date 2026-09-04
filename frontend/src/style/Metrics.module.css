@@ -161,16 +161,15 @@
   flex: 1 0 auto;
   min-width: 160px;
   scroll-snap-align: start;
-  padding: 1rem;
+  padding: 1rem 1.1rem;
   display: grid;
   gap: 0.45rem;
-  background:
-    linear-gradient(135deg, rgba(152, 255, 106, 0.12), rgba(255, 163, 108, 0.08)),
-    var(--surface-card);
+  /* Card plana como el mockup (sin degradado) */
+  background: var(--surface-card);
 }
 
 .statCard strong {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   overflow-wrap: anywhere;
 }
 
@@ -180,9 +179,10 @@
   font-size:0.8rem ;
 }
 
+/* Composición angosta + Gastos por categoría ancho, como el mockup */
 .chartGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
   gap: 1rem;
 }
 
@@ -216,9 +216,24 @@
   align-items: center;
 }
 
+/* Donut a la izquierda + leyenda al lado, como el mockup */
 .chartGrid .donutLayout {
-  grid-template-columns: 1fr;
-  justify-items: center;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.chartGrid .donut {
+  width: 168px;
+  height: 168px;
+}
+
+.chartGrid .donut > div {
+  width: 92px;
+  height: 92px;
+}
+
+.chartGrid .donut strong {
+  font-size: 1.1rem;
 }
 
 .chartGrid .legend {
@@ -268,12 +283,13 @@
   gap: 0.55rem;
 }
 
+/* Leyenda liviana, sin cajitas (como el mockup) */
 .legendItem {
   justify-content: space-between;
-  padding: 0.7rem 0.8rem;
-  background: var(--surface-input);
-  border: 1px solid rgba(216, 241, 224, 0.08);
-  border-radius: 14px;
+  padding: 0.32rem 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .legendItem i,
@@ -709,4 +725,63 @@
   border-radius: 999px;
   min-width: 4px;
   transition: width 0.35s ease;
+}
+
+/* ===== Cabecera limpia estilo mockup (sin card) ===== */
+.pageHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.pageTitle {
+  margin: 0 0 0.55rem;
+  font-size: 1.9rem;
+  line-height: 1.1;
+}
+
+.periodRow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.periodRow > span {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.periodRow select,
+.periodRow input {
+  min-height: 40px;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--border-color);
+  background: var(--surface-input);
+  color: var(--color-text);
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+/* Banda inferior: Evolución + Ranking lado a lado */
+.bottomGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 1000px) {
+  .bottomGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .chartGrid .donutLayout {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
 }

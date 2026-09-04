@@ -154,6 +154,7 @@ const DonutCard = ({ title, subtitle, items, emptyLabel, currency, centerTitle, 
           <span className={style.kicker}>{title}</span>
           <h2>{subtitle}</h2>
         </div>
+        <strong>{total ? "100%" : "0%"}</strong>
       </div>
 
       {total ? (
@@ -303,10 +304,36 @@ function MetricsPage({
 
   return (
     <section className={style.container}>
-      <div className={style.hero}>
+      {/* Cabecera limpia estilo mockup: título grande + "Periodo activo" con
+          desplegables inline, y el switch de moneda arriba a la derecha. */}
+      <header className={style.pageHead}>
         <div>
-          <p className={style.kicker}>Métricas</p>
-       
+          <h1 className={style.pageTitle}>Métricas</h1>
+          <div className={style.periodRow}>
+            <span>Periodo activo:</span>
+            <select value={period} onChange={(event) => setPeriod(event.target.value)}>
+              {PERIOD_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {period === "year" ? (
+              <select value={selectedYear} onChange={(event) => setSelectedYear(event.target.value)}>
+                {availableYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(event) => setSelectedMonth(event.target.value)}
+              />
+            )}
+          </div>
         </div>
 
         <div
@@ -327,47 +354,7 @@ function MetricsPage({
             </button>
           ))}
         </div>
-      </div>
-
-      <div className={style.filters}>
-        <label>
-          <span>Vista</span>
-          <select value={period} onChange={(event) => setPeriod(event.target.value)}>
-            {PERIOD_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {period === "year" ? (
-          <label>
-            <span>Año</span>
-            <select value={selectedYear} onChange={(event) => setSelectedYear(event.target.value)}>
-              {availableYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : (
-          <label>
-            <span>Mes base</span>
-            <input
-              type="month"
-              value={selectedMonth}
-              onChange={(event) => setSelectedMonth(event.target.value)}
-            />
-          </label>
-        )}
-
-        <div className={style.period}>
-          <p>Período activo</p>
-          <strong>{range.label}</strong>
-        </div>
-      </div>
+      </header>
 
       <div className={style.summaryGrid}>
         <article className={style.statCard}>
@@ -420,8 +407,7 @@ function MetricsPage({
           subtitle="Ingresos, gastos, ahorro y deuda"
           items={typeItems}
           currency={currency}
-          centerTitle="100%"
-          centerSub="del flujo"
+          centerSub="tipos"
           emptyLabel="No hay movimientos en este corte."
         />
 
@@ -434,6 +420,8 @@ function MetricsPage({
         />
       </div>
 
+      {/* Banda inferior estilo mockup: Evolución + Ranking lado a lado */}
+      <div className={style.bottomGrid}>
       <section className={style.timelineCard}>
         <div className={style.chartHeader}>
           <div>
@@ -606,6 +594,7 @@ function MetricsPage({
           </p>
         )}
       </section>
+      </div>
     </section>
   );
 }
