@@ -142,6 +142,153 @@ const buildMonthlyBuckets = (movimientos, from, to) => {
   }));
 };
 
+const truncLabel = (value, max = 12) =>
+  value.length > max ? `${value.slice(0, max - 1)}…` : value;
+
+const compactMoney = (value) =>
+  `$${new Intl.NumberFormat("es-AR", { notation: "compact", maximumFractionDigits: 1 }).format(value)}`;
+
+// Cinta curva entre dos columnas (para el diagrama de flujo estilo sankey)
+const ribbonPath = (x1, a0, a1, x2, b0, b1) => {
+  const mx = (x1 + x2) / 2;
+  return `M ${x1} ${a0} C ${mx} ${a0}, ${mx} ${b0}, ${x2} ${b0} L ${x2} ${b1} C ${mx} ${b1}, ${mx} ${a1}, ${x1} ${a1} Z`;
+};
+
+// Apila items proporcionalmente en una columna vertical
+const stackSegments = (items, total, top, plot, gap) => {
+  const usable = plot - gap * Math.max(0, items.length - 1);
+  let cursor = top;
+  return items.map((item) => {
+    const height = Math.max(4, (item.value / total) * usable);
+    const segment = { item, y0: cursor, y1: cursor + height };
+    cursor += height + gap;
+    return segment;
+  });
+};
+
+// Flujo real de la plata: de dónde entró (izquierda) → a dónde fue (derecha).
+// Versión con sentido del "sankey" decorativo del mockup.
+const FlowChart = ({ leftItems, rightItems, currency }) => {
+  const left = leftItems.filter((item) => item.value > 0).slice(0, 5);
+  const right = rightItems.filter((item) => item.value > 0).slice(0, 6);
+  const totalLeft = left.reduce((acc, item) => acc + item.value, 0);
+  const totalRight = right.reduce((acc, item) => acc + item.value, 0);
+
+  if (!totalLeft || !totalRight) {
+    return (
+      <p className={style.emptyText}>
+        Para dibujar el flujo hacen falta ingresos y destinos (gastos/ahorro) en el período.
+      </p>
+    );
+  }
+
+  const W = 680;
+  const TOP = 26;
+  const PLOT = 250;
+  const H = TOP + PLOT + 26;
+  const GAP = 8;
+  const LX = 190; // borde izquierdo de los nodos de ingreso
+  const TX = 332; // tronco central
+  const TW = 16;
+  const RX = 478; // nodos de destino
+
+  const lSegs = stackSegments(left, totalLeft, TOP, PLOT, GAP);
+  const rSegs = stackSegments(right, totalRight, TOP, PLOT, GAP);
+  const lTrunk = stackSegments(left, totalLeft, TOP, PLOT, 2);
+  const rTrunk = stackSegments(right, totalRight, TOP, PLOT, 2);
+
+  return (
+    <div className={style.flowWrap}>
+      <svg className={style.flowSvg} viewBox={`0 0 ${W} ${H}`} role="img">
+        {/* Cintas: ingresos → tronco */}
+        {lSegs.map((seg, index) => (
+          <path
+            key={`l-${seg.item.label}`}
+            d={ribbonPath(LX + 10, seg.y0, seg.y1, TX, lTrunk[index].y0, lTrunk[index].y1)}
+            fill={seg.item.color}
+            opacity="0.45"
+          >
+            <title>{`${seg.item.label} · ${formatMoney(seg.item.value, currency)}`}</title>
+          </path>
+        ))}
+        {/* Cintas: tronco → destinos */}
+        {rSegs.map((seg, index) => (
+          <path
+            key={`r-${seg.item.label}`}
+            d={ribbonPath(TX + TW, rTrunk[index].y0, rTrunk[index].y1, RX, seg.y0, seg.y1)}
+            fill={seg.item.color}
+            opacity="0.45"
+          >
+            <title>{`${seg.item.label} · ${formatMoney(seg.item.value, currency)}`}</title>
+          </path>
+        ))}
+
+        {/* Nodos */}
+        {lSegs.map((seg) => (
+          <rect
+            key={`ln-${seg.item.label}`}
+            x={LX}
+            y={seg.y0}
+            width="10"
+            height={seg.y1 - seg.y0}
+            rx="4"
+            fill={seg.item.color}
+          />
+        ))}
+        <rect x={TX} y={TOP} width={TW} height={PLOT} rx="7" fill="var(--color-verde)" opacity="0.9" />
+        {rSegs.map((seg) => (
+          <rect
+            key={`rn-${seg.item.label}`}
+            x={RX}
+            y={seg.y0}
+            width="10"
+            height={seg.y1 - seg.y0}
+            rx="4"
+            fill={seg.item.color}
+          />
+        ))}
+
+        {/* Etiquetas */}
+        <text x={TX + TW / 2} y={TOP - 10} textAnchor="middle" className={style.flowTrunkLabel}>
+          100%
+        </text>
+        {lSegs.map((seg) => {
+          const mid = (seg.y0 + seg.y1) / 2;
+          const pct = ((seg.item.value / totalLeft) * 100).toFixed(0);
+          return (
+            <g key={`lt-${seg.item.label}`}>
+              <text x={LX - 8} y={mid - 2} textAnchor="end" className={style.flowLabel}>
+                {truncLabel(seg.item.label)}
+              </text>
+              <text x={LX - 8} y={mid + 12} textAnchor="end" className={style.flowMoney}>
+                {formatMoney(seg.item.value, currency)} · {pct}%
+              </text>
+            </g>
+          );
+        })}
+        {rSegs.map((seg) => {
+          const mid = (seg.y0 + seg.y1) / 2;
+          const pct = ((seg.item.value / totalRight) * 100).toFixed(0);
+          return (
+            <g key={`rt-${seg.item.label}`}>
+              <text x={RX + 18} y={mid - 2} className={style.flowLabel}>
+                {truncLabel(seg.item.label)}
+              </text>
+              <text x={RX + 18} y={mid + 12} className={style.flowMoney}>
+                {formatMoney(seg.item.value, currency)} · {pct}%
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <div className={style.flowFootRow}>
+        <span>← De dónde entró</span>
+        <span>A dónde fue →</span>
+      </div>
+    </div>
+  );
+};
+
 // Donut real (conic-gradient) + leyenda con monto y porcentaje de cada porción
 const DonutCard = ({ title, subtitle, items, emptyLabel, currency, centerTitle, centerSub }) => {
   const shown = items.filter((item) => item.value > 0);
@@ -288,6 +435,19 @@ function MetricsPage({
   const rankingTotal = rankingType === "egreso" ? summary.egreso : summary.ingreso;
   const rankingMax = rankingItems[0]?.value || 1;
 
+  // Destinos del flujo (sankey): gastos por categoría + ahorro + lo que quedó
+  const flowRightItems = useMemo(() => {
+    const items = expenseCategoryItems.slice(0, 4).map((item) => ({ ...item }));
+    if (summary.ahorro > 0) {
+      items.push({ label: "Ahorro", value: summary.ahorro, color: "#58eba4" });
+    }
+    const disponible = summary.ingreso - summary.egreso - summary.ahorro;
+    if (disponible > 0) {
+      items.push({ label: "Disponible", value: Number(disponible.toFixed(2)), color: "#69a7ff" });
+    }
+    return items;
+  }, [expenseCategoryItems, summary]);
+
   const monthlyBuckets = useMemo(
     () => buildMonthlyBuckets(periodMovimientos, range.from, range.to),
     [periodMovimientos, range.from, range.to]
@@ -411,17 +571,22 @@ function MetricsPage({
           emptyLabel="No hay movimientos en este corte."
         />
 
-        <DonutCard
-          title="Gastos por categoría"
-          subtitle="Dónde se fue la plata"
-          items={expenseCategoryItems}
-          currency={currency}
-          emptyLabel="No hay egresos para graficar."
-        />
+        <article className={style.chartCard}>
+          <div className={style.chartHeader}>
+            <div>
+              <span className={style.kicker}>Composición</span>
+              <h2>Composición total y categorías</h2>
+            </div>
+            <strong>100%</strong>
+          </div>
+          <FlowChart
+            leftItems={incomeCategoryItems}
+            rightItems={flowRightItems}
+            currency={currency}
+          />
+        </article>
       </div>
 
-      {/* Banda inferior estilo mockup: Evolución + Ranking lado a lado */}
-      <div className={style.bottomGrid}>
       <section className={style.timelineCard}>
         <div className={style.chartHeader}>
           <div>
@@ -558,35 +723,90 @@ function MetricsPage({
         </div>
 
         {rankingItems.length ? (
-          <div className={style.rankList}>
-            {rankingItems.map((item, index) => (
-              <div key={item.label} className={style.rankRow}>
-                <span className={style.rankPos}>{index + 1}</span>
-                <div className={style.rankBody}>
-                  <div className={style.rankMeta}>
-                    <span className={style.rankLabel}>{item.label}</span>
-                    <span className={style.rankValue}>
-                      {formatMoney(item.value, currency)}
-                      <em>
-                        {rankingTotal
-                          ? ((item.value / rankingTotal) * 100).toFixed(1)
-                          : 0}
-                        %
-                      </em>
-                    </span>
-                  </div>
-                  <div className={style.rankTrack}>
-                    <div
-                      className={style.rankFill}
-                      style={{
-                        width: `${(item.value / rankingMax) * 100}%`,
-                        background: item.color,
-                      }}
-                    />
-                  </div>
+          <div className={style.rankSplit}>
+            {/* Leyenda a la izquierda, como el mockup */}
+            <div className={style.rankLegend}>
+              {rankingItems.map((item) => (
+                <div key={item.label} className={style.legendItem}>
+                  <i style={{ background: item.color }} />
+                  <span>{item.label}</span>
+                  <strong>{formatMoney(item.value, currency)}</strong>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* Barras verticales ordenadas de mayor a menor */}
+            <div className={style.rankChartWrap}>
+              {(() => {
+                const COL = 72;
+                const AXIS = 52;
+                const TOP = 20;
+                const PLOT = 180;
+                const H = 240;
+                const max = rankingMax * 1.12;
+                const W = AXIS + rankingItems.length * COL;
+                const yFor = (value) => TOP + PLOT * (1 - value / max);
+                return (
+                  <svg
+                    className={style.rankSvg}
+                    width={W}
+                    height={H}
+                    viewBox={`0 0 ${W} ${H}`}
+                    role="img"
+                  >
+                    {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+                      <g key={t}>
+                        <line
+                          x1={AXIS}
+                          x2={W}
+                          y1={TOP + PLOT * t}
+                          y2={TOP + PLOT * t}
+                          stroke="var(--border-color)"
+                          strokeWidth="1"
+                          opacity="0.4"
+                        />
+                        <text
+                          x={AXIS - 7}
+                          y={TOP + PLOT * t + 4}
+                          textAnchor="end"
+                          className={style.rankAxisText}
+                        >
+                          {compactMoney(max * (1 - t))}
+                        </text>
+                      </g>
+                    ))}
+                    {rankingItems.map((item, index) => {
+                      const cx = AXIS + index * COL + COL / 2;
+                      const top = yFor(item.value);
+                      const pct = rankingTotal
+                        ? ((item.value / rankingTotal) * 100).toFixed(1)
+                        : 0;
+                      return (
+                        <g key={item.label}>
+                          <title>
+                            {`${item.label} · ${formatMoney(item.value, currency)} · ${pct}%`}
+                          </title>
+                          <rect
+                            x={cx - 17}
+                            y={top}
+                            width="34"
+                            height={Math.max(3, TOP + PLOT - top)}
+                            rx="6"
+                            fill={item.color}
+                          />
+                          <text x={cx} y={top - 7} textAnchor="middle" className={style.rankPctText}>
+                            {pct}%
+                          </text>
+                          <text x={cx} y={H - 6} textAnchor="middle" className={style.rankAxisText}>
+                            {truncLabel(item.label, 10)}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                );
+              })()}
+            </div>
           </div>
         ) : (
           <p className={style.emptyText}>
@@ -594,7 +814,6 @@ function MetricsPage({
           </p>
         )}
       </section>
-      </div>
     </section>
   );
 }
