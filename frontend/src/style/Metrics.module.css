@@ -869,3 +869,183 @@
   stroke: var(--border-color);
   stroke-width: 1;
 }
+
+/* ===== Formato "lila": barras de composición, anillos, línea, ranking lista ===== */
+
+.trioGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 1100px) {
+  .trioGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Composición: barritas horizontales con % a la derecha */
+.compList {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.compLabel {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.compRow {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.compBarLine {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.compTrack {
+  flex: 1;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--surface-input);
+  overflow: hidden;
+}
+
+.compFill {
+  height: 100%;
+  border-radius: 999px;
+  min-width: 6px;
+  transition: width 0.35s ease;
+}
+
+.compPct {
+  min-width: 52px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+}
+
+/* Anillos por categoría (100% al centro, categoría principal debajo) */
+.ringWrap {
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+  padding: 0.4rem 0 0.2rem;
+}
+
+.ring {
+  width: 152px;
+  height: 152px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 16px 30px rgba(0, 0, 0, 0.16);
+}
+
+.ringHole {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface-card-strong);
+  border: 1px solid var(--border-color);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.ringTopCat {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+/* Evolución: línea suave */
+.lineChartWrap {
+  overflow: hidden;
+}
+
+.lineSvg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.lineTag {
+  fill: var(--surface-input);
+  stroke: var(--border-color);
+}
+
+.lineTagText {
+  fill: var(--color-text);
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.lineAxisText {
+  fill: var(--color-muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+/* Ranking en lista numerada (formato del mockup) */
+.rankRows {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.rankItemRow {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.65rem 0.8rem;
+  background: var(--surface-input);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+}
+
+.rankChip {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--accent-surface);
+  border: 1px solid var(--accent-border);
+  color: var(--color-verde);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.rankName {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rankAmt {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rankAmt em {
+  font-style: normal;
+  color: var(--color-muted);
+  font-weight: 700;
+  font-size: 0.75rem;
+  margin-left: 0.45rem;
+}

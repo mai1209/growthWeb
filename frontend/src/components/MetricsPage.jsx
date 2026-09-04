@@ -1,3 +1,8 @@
+// Métricas — formato del mockup "lila" pero con la paleta actual de la app:
+// KPIs con chip de ícono · Composición en barras horizontales con % ·
+// Ingresos/Gastos por categoría como anillos (100% al centro, categoría
+// principal abajo) · Evolución como línea suave con puntos verde/rojo ·
+// Ranking como lista numerada.
 import { useMemo, useState } from "react";
 import { FiActivity, FiClock, FiTrendingDown, FiTrendingUp } from "react-icons/fi";
 import style from "../style/Metrics.module.css";
@@ -5,7 +10,6 @@ import {
   CURRENCY_OPTIONS,
   filterMovimientosByCurrency,
   formatMoney,
-  getMovementTypeMeta,
   normalizeCurrency,
   summarizeByType,
 } from "../utils/finance";
@@ -139,158 +143,12 @@ const buildMonthlyBuckets = (movimientos, from, to) => {
     ingreso: Number(bucket.ingreso.toFixed(2)),
     egreso: Number(bucket.egreso.toFixed(2)),
     ahorro: Number(bucket.ahorro.toFixed(2)),
+    balance: Number((bucket.ingreso - bucket.egreso).toFixed(2)),
   }));
 };
 
-const truncLabel = (value, max = 12) =>
-  value.length > max ? `${value.slice(0, max - 1)}…` : value;
-
-const compactMoney = (value) =>
-  `$${new Intl.NumberFormat("es-AR", { notation: "compact", maximumFractionDigits: 1 }).format(value)}`;
-
-// Cinta curva entre dos columnas (para el diagrama de flujo estilo sankey)
-const ribbonPath = (x1, a0, a1, x2, b0, b1) => {
-  const mx = (x1 + x2) / 2;
-  return `M ${x1} ${a0} C ${mx} ${a0}, ${mx} ${b0}, ${x2} ${b0} L ${x2} ${b1} C ${mx} ${b1}, ${mx} ${a1}, ${x1} ${a1} Z`;
-};
-
-const clampNum = (value, lo, hi) => Math.max(lo, Math.min(hi, value));
-const linspace = (a, b, n) =>
-  n === 1 ? [(a + b) / 2] : Array.from({ length: n }, (_, i) => a + ((b - a) * i) / (n - 1));
-
-// Verdes para lo que entra, cálidos para lo que sale (como el mockup)
-const FLOW_GREENS = ["#9cfb43", "#58eba4", "#b8f79b", "#2fd27a", "#7ddf6a"];
-const FLOW_WARMS = ["#ff915c", "#ff6e6e", "#ffd55c", "#f070b8", "#c97bff"];
-
-// Flujo real de la plata: de dónde entró (izquierda) → a dónde fue (derecha).
-// Réplica con datos reales del sankey del mockup: cintas orgánicas con grosor
-// acotado (nunca una pared, nunca un hilo) y etiquetas como cajitas tooltip.
-const FlowChart = ({ leftItems, rightItems, currency }) => {
-  const left = leftItems
-    .filter((item) => item.value > 0)
-    .slice(0, 5)
-    .map((item, index) => ({ ...item, color: FLOW_GREENS[index % FLOW_GREENS.length] }));
-  const right = rightItems
-    .filter((item) => item.value > 0)
-    .slice(0, 6)
-    .map((item, index) =>
-      item.label === "Ahorro" || item.label === "Disponible"
-        ? item
-        : { ...item, color: FLOW_WARMS[index % FLOW_WARMS.length] }
-    );
-  const totalLeft = left.reduce((acc, item) => acc + item.value, 0);
-  const totalRight = right.reduce((acc, item) => acc + item.value, 0);
-
-  if (!totalLeft || !totalRight) {
-    return (
-      <p className={style.emptyText}>
-        Para dibujar el flujo hacen falta ingresos y destinos (gastos/ahorro) en el período.
-      </p>
-    );
-  }
-
-  const W = 720;
-  const H = 340;
-  const TRUNK_X = 340;
-  const TRUNK_W = 26;
-  const L_END = 200;
-  const R_START = TRUNK_X + TRUNK_W;
-  const R_END = 500;
-
-  // Grosor de cada cinta con tope, y apilado centrado sobre el tronco
-  const thick = (share) => clampNum(share * 200, 16, 84);
-  const stack = (items, total) => {
-    const sizes = items.map((item) => thick(item.value / total));
-    const totalH = sizes.reduce((a, b) => a + b, 0) + 12 * (items.length - 1);
-    let y = (H - totalH) / 2;
-    return items.map((item, index) => {
-      const seg = { item, t: sizes[index], y0: y, y1: y + sizes[index] };
-      y += sizes[index] + 12;
-      return seg;
-    });
-  };
-  const lSegs = stack(left, totalLeft);
-  const rSegs = stack(right, totalRight);
-
-  // Extremos externos escalonados: los ingresos entran desde arriba y los
-  // destinos salen hacia abajo (le da la curva en S del mockup)
-  const lOuter = left.length === 1 ? [104] : linspace(78, 272, left.length);
-  const rOuter = right.length === 1 ? [236] : linspace(88, 288, right.length);
-
-  const trunkTop = Math.min(lSegs[0].y0, rSegs[0].y0) - 14;
-  const trunkBot = Math.max(lSegs[lSegs.length - 1].y1, rSegs[rSegs.length - 1].y1) + 14;
-
-  // Cajita de etiqueta (tipo tooltip del mockup)
-  const LabelBox = ({ x, y, item, total }) => {
-    const pct = ((item.value / total) * 100).toFixed(0);
-    return (
-      <g>
-        <rect x={x} y={y - 21} width="176" height="42" rx="10" className={style.flowBox} />
-        <circle cx={x + 14} cy={y - 7} r="4" fill={item.color} />
-        <text x={x + 24} y={y - 3} className={style.flowLabel}>
-          {truncLabel(item.label)}
-        </text>
-        <text x={x + 24} y={y + 13} className={style.flowMoney}>
-          {formatMoney(item.value, currency)} · {pct}%
-        </text>
-      </g>
-    );
-  };
-
-  return (
-    <div className={style.flowWrap}>
-      <svg className={style.flowSvg} viewBox={`0 0 ${W} ${H}`} role="img">
-        {lSegs.map((seg, index) => (
-          <path
-            key={`l-${seg.item.label}`}
-            d={ribbonPath(L_END, lOuter[index] - seg.t / 2, lOuter[index] + seg.t / 2, TRUNK_X, seg.y0, seg.y1)}
-            fill={seg.item.color}
-            opacity="0.55"
-          >
-            <title>{`${seg.item.label} · ${formatMoney(seg.item.value, currency)}`}</title>
-          </path>
-        ))}
-        {rSegs.map((seg, index) => (
-          <path
-            key={`r-${seg.item.label}`}
-            d={ribbonPath(R_START, seg.y0, seg.y1, R_END, rOuter[index] - seg.t / 2, rOuter[index] + seg.t / 2)}
-            fill={seg.item.color}
-            opacity="0.55"
-          >
-            <title>{`${seg.item.label} · ${formatMoney(seg.item.value, currency)}`}</title>
-          </path>
-        ))}
-
-        <rect
-          x={TRUNK_X}
-          y={trunkTop}
-          width={TRUNK_W}
-          height={trunkBot - trunkTop}
-          rx="13"
-          fill="var(--color-verde)"
-          opacity="0.9"
-        />
-        <text x={TRUNK_X + TRUNK_W / 2} y={trunkTop - 8} textAnchor="middle" className={style.flowTrunkLabel}>
-          100%
-        </text>
-
-        {lSegs.map((seg, index) => (
-          <LabelBox key={`lb-${seg.item.label}`} x={L_END - 186} y={lOuter[index]} item={seg.item} total={totalLeft} />
-        ))}
-        {rSegs.map((seg, index) => (
-          <LabelBox key={`rb-${seg.item.label}`} x={R_END + 10} y={rOuter[index]} item={seg.item} total={totalRight} />
-        ))}
-      </svg>
-      <div className={style.flowFootRow}>
-        <span>← De dónde entró</span>
-        <span>A dónde fue →</span>
-      </div>
-    </div>
-  );
-};
-
-// Donut real (conic-gradient) + leyenda con monto y porcentaje de cada porción
-const DonutCard = ({ title, subtitle, items, emptyLabel, currency, centerTitle, centerSub }) => {
+// Anillo por categorías: 100% al centro y la categoría principal debajo (mockup)
+const RingCard = ({ title, subtitle, items, emptyLabel }) => {
   const shown = items.filter((item) => item.value > 0);
   const total = shown.reduce((acc, item) => acc + item.value, 0);
 
@@ -305,31 +163,17 @@ const DonutCard = ({ title, subtitle, items, emptyLabel, currency, centerTitle, 
       </div>
 
       {total ? (
-        <div className={style.donutLayout}>
+        <div className={style.ringWrap}>
           <div
-            className={style.donut}
+            className={style.ring}
             style={{ background: buildConicGradient(shown) }}
-            aria-label={subtitle}
+            title={shown
+              .map((item) => `${item.label} ${((item.value / total) * 100).toFixed(1)}%`)
+              .join(" · ")}
           >
-            <div>
-              <strong>{centerTitle ?? shown.length}</strong>
-              <span>{centerSub ?? "rubros"}</span>
-            </div>
+            <div className={style.ringHole}>100%</div>
           </div>
-          <div className={style.legend}>
-            {shown.map((item) => (
-              <div key={item.label} className={style.legendItem}>
-                <i style={{ background: item.color }} />
-                <span>{item.label}</span>
-                <strong>
-                  {formatMoney(item.value, currency)}
-                  <em className={style.legendPct}>
-                    {((item.value / total) * 100).toFixed(1)}%
-                  </em>
-                </strong>
-              </div>
-            ))}
-          </div>
+          <p className={style.ringTopCat}>{shown[0].label}</p>
         </div>
       ) : (
         <p className={style.emptyText}>{emptyLabel}</p>
@@ -346,7 +190,6 @@ function MetricsPage({
   const [period, setPeriod] = useState("month");
   const [selectedMonth, setSelectedMonth] = useState(getMonthInputValue(new Date()));
   const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
-  // Ranking: compara categorías entre sí dentro del período (egresos o ingresos)
   const [rankingType, setRankingType] = useState("egreso");
   const currency = normalizeCurrency(currentCurrency);
 
@@ -393,9 +236,9 @@ function MetricsPage({
     [summary]
   );
 
-  const expenseCategoryItems = useMemo(() => {
+  const buildCategoryItems = (tipo) => {
     const buckets = periodMovimientos.reduce((acc, movimiento) => {
-      if (movimiento.tipo !== "egreso") return acc;
+      if (movimiento.tipo !== tipo) return acc;
       const category = movimiento.categoria?.trim() || "Sin categoria";
       acc[category] = (acc[category] || 0) + (Number(movimiento.monto) || 0);
       return acc;
@@ -409,63 +252,33 @@ function MetricsPage({
         value: Number(value.toFixed(2)),
         color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
       }));
-  }, [periodMovimientos]);
+  };
 
-  const incomeCategoryItems = useMemo(() => {
-    const buckets = periodMovimientos.reduce((acc, movimiento) => {
-      if (movimiento.tipo !== "ingreso") return acc;
-      const category = movimiento.categoria?.trim() || "Sin categoria";
-      acc[category] = (acc[category] || 0) + (Number(movimiento.monto) || 0);
-      return acc;
-    }, {});
-
-    return Object.entries(buckets)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
-      .map(([label, value], index) => ({
-        label,
-        value: Number(value.toFixed(2)),
-        color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
-      }));
-  }, [periodMovimientos]);
-
-  // Datos del ranking según el toggle. El % se calcula contra el total real del
-  // tipo en el período (no solo contra el top 8), para no mentir.
-  const rankingItems = rankingType === "egreso" ? expenseCategoryItems : incomeCategoryItems;
-  const rankingTotal = rankingType === "egreso" ? summary.egreso : summary.ingreso;
-  const rankingMax = rankingItems[0]?.value || 1;
-
-  // Destinos del flujo (sankey): gastos por categoría + ahorro + lo que quedó
-  const flowRightItems = useMemo(() => {
-    const items = expenseCategoryItems.slice(0, 4).map((item) => ({ ...item }));
-    if (summary.ahorro > 0) {
-      items.push({ label: "Ahorro", value: summary.ahorro, color: "#58eba4" });
-    }
-    const disponible = summary.ingreso - summary.egreso - summary.ahorro;
-    if (disponible > 0) {
-      items.push({ label: "Disponible", value: Number(disponible.toFixed(2)), color: "#69a7ff" });
-    }
-    return items;
-  }, [expenseCategoryItems, summary]);
+  const expenseCategoryItems = useMemo(
+    () => buildCategoryItems("egreso"),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [periodMovimientos]
+  );
+  const incomeCategoryItems = useMemo(
+    () => buildCategoryItems("ingreso"),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [periodMovimientos]
+  );
 
   const monthlyBuckets = useMemo(
     () => buildMonthlyBuckets(periodMovimientos, range.from, range.to),
     [periodMovimientos, range.from, range.to]
   );
-  const maxMonthlyAmount = Math.max(
-    1,
-    ...monthlyBuckets.flatMap((bucket) => [
-      bucket.ingreso,
-      bucket.egreso,
-      bucket.ahorro,
-    ])
-  );
+
+  const rankingItems = rankingType === "egreso" ? expenseCategoryItems : incomeCategoryItems;
+  const rankingTotal = rankingType === "egreso" ? summary.egreso : summary.ingreso;
+
   const totalTypeAmount = typeItems.reduce((acc, item) => acc + item.value, 0);
+  const compositionItems = typeItems.filter((item) => item.value > 0);
 
   return (
     <section className={style.container}>
-      {/* Cabecera limpia estilo mockup: título grande + "Periodo activo" con
-          desplegables inline, y el switch de moneda arriba a la derecha. */}
+      {/* Cabecera: título grande + "Periodo activo" inline + switch de moneda */}
       <header className={style.pageHead}>
         <div>
           <h1 className={style.pageTitle}>Métricas</h1>
@@ -516,6 +329,7 @@ function MetricsPage({
         </div>
       </header>
 
+      {/* KPIs */}
       <div className={style.summaryGrid}>
         <article className={style.statCard}>
           <div className={style.statHead}>
@@ -559,261 +373,217 @@ function MetricsPage({
         </article>
       </div>
 
-      {/* Composición por TIPO (vista general) + zoom por CATEGORÍA de los gastos.
-          Los ingresos por categoría viven en el toggle del Ranking. */}
-      <div className={style.chartGrid}>
-        <DonutCard
-          title="Composición"
-          subtitle="Ingresos, gastos, ahorro y deuda"
-          items={typeItems}
-          currency={currency}
-          centerSub="tipos"
-          emptyLabel="No hay movimientos en este corte."
-        />
-
+      {/* Trío del mockup: Composición en barras + dos anillos por categoría */}
+      <div className={style.trioGrid}>
         <article className={style.chartCard}>
           <div className={style.chartHeader}>
             <div>
               <span className={style.kicker}>Composición</span>
-              <h2>Composición total y categorías</h2>
+              <h2>Ingresos, gastos, ahorro y deuda</h2>
             </div>
-            <strong>100%</strong>
+            <strong>{compositionItems.length ? "100%" : "0%"}</strong>
           </div>
-          <FlowChart
-            leftItems={incomeCategoryItems}
-            rightItems={flowRightItems}
-            currency={currency}
-          />
-        </article>
-      </div>
 
-      <section className={style.timelineCard}>
-        <div className={style.chartHeader}>
-          <div>
-            <span className={style.kicker}>Evolución</span>
-            <h2>Comparación mensual</h2>
-          </div>
-          <p>Vela por mes: verde si cerró positivo (ingresos &gt; egresos), roja si negativo.</p>
-        </div>
-
-        <div className={style.candleChart}>
-          {monthlyBuckets.length ? (
-            <div className={style.candleScroll}>
-              {(() => {
-                const COL = 46; // ancho de columna por vela (px)
-                const BODY = 18; // ancho del cuerpo
-                const TOP = 12;
-                const PLOT = 186; // alto del área de ploteo
-                const H = 236;
-                const W = monthlyBuckets.length * COL;
-                const max = (maxMonthlyAmount || 1) * 1.15; // headroom para que no toque los bordes
-                const yVal = (v) => TOP + PLOT * (1 - v / max);
+          {compositionItems.length ? (
+            <div className={style.compList}>
+              {compositionItems.map((item) => {
+                const pct = ((item.value / totalTypeAmount) * 100).toFixed(1);
                 return (
-                  <svg
-                    className={style.candleSvg}
-                    width={W}
-                    height={H}
-                    viewBox={`0 0 ${W} ${H}`}
-                    role="img"
-                  >
-                    {/* Grilla horizontal */}
-                    {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-                      <line
-                        key={t}
-                        x1="0"
-                        x2={W}
-                        y1={TOP + PLOT * t}
-                        y2={TOP + PLOT * t}
-                        stroke="var(--border-color)"
-                        strokeWidth="1"
-                        opacity="0.4"
-                      />
-                    ))}
-                    {/* Velas */}
-                    {monthlyBuckets.map((bucket, i) => {
-                      const open = bucket.egreso;
-                      const close = bucket.ingreso;
-                      const high = Math.max(bucket.ingreso, bucket.egreso, bucket.ahorro);
-                      const low = Math.min(bucket.ingreso, bucket.egreso, bucket.ahorro, 0);
-                      const up = close >= open;
-                      const color = up ? TYPE_COLORS.ingreso : TYPE_COLORS.egreso;
-                      const cx = i * COL + COL / 2;
-                      const bodyTop = yVal(Math.max(open, close));
-                      const bodyH = Math.max(3, yVal(Math.min(open, close)) - bodyTop);
-                      return (
-                        <g key={bucket.key}>
-                          <title>
-                            {`${bucket.label} · Ingresos ${formatMoney(bucket.ingreso, currency)} · Egresos ${formatMoney(bucket.egreso, currency)} · Ahorro ${formatMoney(bucket.ahorro, currency)}`}
-                          </title>
-                          {/* Mecha */}
-                          <line
-                            x1={cx}
-                            x2={cx}
-                            y1={yVal(high)}
-                            y2={yVal(low)}
-                            stroke={color}
-                            strokeWidth="2"
-                          />
-                          {/* Cuerpo */}
-                          <rect
-                            x={cx - BODY / 2}
-                            y={bodyTop}
-                            width={BODY}
-                            height={bodyH}
-                            rx="3"
-                            fill={color}
-                          />
-                          {/* Etiqueta del mes */}
-                          <text x={cx} y={H - 7} textAnchor="middle" className={style.candleLabelText}>
-                            {bucket.label}
-                          </text>
-                        </g>
-                      );
-                    })}
-                  </svg>
+                  <div key={item.label} className={style.compRow} title={formatMoney(item.value, currency)}>
+                    <span className={style.compLabel}>{item.label}</span>
+                    <div className={style.compBarLine}>
+                      <div className={style.compTrack}>
+                        <div
+                          className={style.compFill}
+                          style={{ width: `${pct}%`, background: item.color }}
+                        />
+                      </div>
+                      <strong className={style.compPct}>{pct}%</strong>
+                    </div>
+                  </div>
                 );
-              })()}
+              })}
             </div>
           ) : (
-            <p className={style.candleEmpty}>Sin datos para graficar en este período.</p>
+            <p className={style.emptyText}>No hay movimientos en este corte.</p>
           )}
-        </div>
+        </article>
 
-        <div className={style.chartLegendRow}>
-          <span>
-            <i style={{ background: TYPE_COLORS.ingreso }} />
-            Mes positivo
-          </span>
-          <span>
-            <i style={{ background: TYPE_COLORS.egreso }} />
-            Mes negativo
-          </span>
-        </div>
-      </section>
+        <RingCard
+          title="Ingresos por categoría"
+          subtitle="De dónde entró la plata"
+          items={incomeCategoryItems}
+          emptyLabel="No hay ingresos para graficar."
+        />
 
-      {/* Ranking: categorías comparadas entre sí dentro del período activo,
-          en barras horizontales ordenadas de mayor a menor. */}
-      <section className={style.categoryPanel}>
-        <div className={style.chartHeader}>
-          <div>
-            <span className={style.kicker}>Ranking</span>
-            <h2>
-              {rankingType === "egreso"
-                ? "¿En qué se fue la plata?"
-                : "¿De dónde entró la plata?"}
-            </h2>
+        <RingCard
+          title="Gastos por categoría"
+          subtitle="Dónde se fue la plata"
+          items={expenseCategoryItems}
+          emptyLabel="No hay egresos para graficar."
+        />
+      </div>
+
+      {/* Banda inferior del mockup: línea de evolución + ranking en lista */}
+      <div className={style.bottomGrid}>
+        <section className={style.timelineCard}>
+          <div className={style.chartHeader}>
+            <div>
+              <span className={style.kicker}>Evolución</span>
+              <h2>Comparación mensual</h2>
+            </div>
           </div>
-          <div className={style.rankSwitch}>
-            {[
-              ["egreso", "Egresos"],
-              ["ingreso", "Ingresos"],
-            ].map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                className={`${style.rankSwitchBtn} ${
-                  rankingType === value ? style.rankSwitchOn : ""
-                }`}
-                onClick={() => setRankingType(value)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        {rankingItems.length ? (
-          <div className={style.rankSplit}>
-            {/* Leyenda a la izquierda, como el mockup */}
-            <div className={style.rankLegend}>
-              {rankingItems.map((item) => (
-                <div key={item.label} className={style.legendItem}>
-                  <i style={{ background: item.color }} />
-                  <span>{item.label}</span>
-                  <strong>{formatMoney(item.value, currency)}</strong>
+          {monthlyBuckets.length ? (
+            <>
+              <div className={style.lineChartWrap}>
+                {(() => {
+                  const W = 560;
+                  const H = 210;
+                  const PADX = 26;
+                  const TOP = 34;
+                  const BOT = 34;
+                  const buckets = monthlyBuckets;
+                  const balances = buckets.map((b) => b.balance);
+                  const maxV = Math.max(...balances, 0);
+                  const minV = Math.min(...balances, 0);
+                  const span = maxV - minV || 1;
+                  const plot = H - TOP - BOT;
+                  const xFor = (i) =>
+                    buckets.length === 1
+                      ? W / 2
+                      : PADX + ((W - PADX * 2) * i) / (buckets.length - 1);
+                  const yFor = (v) => TOP + plot * (1 - (v - minV) / span);
+                  const pts = buckets.map((b, i) => ({ x: xFor(i), y: yFor(b.balance), b }));
+                  // Línea suave: curvas horizontales entre punto y punto
+                  const path = pts
+                    .map((p, i) => {
+                      if (i === 0) return `M ${p.x} ${p.y}`;
+                      const prev = pts[i - 1];
+                      const mx = (prev.x + p.x) / 2;
+                      return `C ${mx} ${prev.y}, ${mx} ${p.y}, ${p.x} ${p.y}`;
+                    })
+                    .join(" ");
+                  const last = pts[pts.length - 1];
+                  const tagW = 74;
+                  const tagX = Math.min(W - tagW - 4, Math.max(4, last.x - tagW / 2));
+                  return (
+                    <svg className={style.lineSvg} viewBox={`0 0 ${W} ${H}`} role="img">
+                      {/* Línea de cero, de referencia */}
+                      <line
+                        x1={PADX}
+                        x2={W - PADX}
+                        y1={yFor(0)}
+                        y2={yFor(0)}
+                        stroke="var(--border-color)"
+                        strokeDasharray="4 5"
+                        opacity="0.7"
+                      />
+                      <path d={path} fill="none" stroke="var(--color-verde)" strokeWidth="3" strokeLinecap="round" opacity="0.9" />
+                      {pts.map((p) => (
+                        <g key={p.b.key}>
+                          <title>
+                            {`${p.b.label} · Balance ${formatMoney(p.b.balance, currency)} · Ingresos ${formatMoney(p.b.ingreso, currency)} · Egresos ${formatMoney(p.b.egreso, currency)}`}
+                          </title>
+                          <circle
+                            cx={p.x}
+                            cy={p.y}
+                            r="6"
+                            fill={p.b.balance >= 0 ? TYPE_COLORS.ingreso : "#ff6e6e"}
+                            stroke="var(--surface-card-strong)"
+                            strokeWidth="2.5"
+                          />
+                        </g>
+                      ))}
+                      {/* Tag del último mes, como en el mockup */}
+                      <g>
+                        <rect x={tagX} y={last.y - 34 < 4 ? last.y + 12 : last.y - 34} width={tagW} height="22" rx="8" className={style.lineTag} />
+                        <text
+                          x={tagX + tagW / 2}
+                          y={(last.y - 34 < 4 ? last.y + 12 : last.y - 34) + 15}
+                          textAnchor="middle"
+                          className={style.lineTagText}
+                        >
+                          {last.b.label}
+                        </text>
+                      </g>
+                      {/* Meses en el eje */}
+                      {pts.map((p) => (
+                        <text key={`x-${p.b.key}`} x={p.x} y={H - 8} textAnchor="middle" className={style.lineAxisText}>
+                          {p.b.label}
+                        </text>
+                      ))}
+                    </svg>
+                  );
+                })()}
+              </div>
+              <div className={style.chartLegendRow}>
+                <span>
+                  <i style={{ background: TYPE_COLORS.ingreso }} />
+                  Mes positivo
+                </span>
+                <span>
+                  <i style={{ background: "#ff6e6e" }} />
+                  Mes negativo
+                </span>
+              </div>
+            </>
+          ) : (
+            <p className={style.emptyText}>Sin datos para graficar en este período.</p>
+          )}
+        </section>
+
+        <section className={style.categoryPanel}>
+          <div className={style.chartHeader}>
+            <div>
+              <span className={style.kicker}>Ranking</span>
+              <h2>
+                {rankingType === "egreso"
+                  ? "Categorías con mayor egreso"
+                  : "Categorías con mayor ingreso"}
+              </h2>
+            </div>
+            <div className={style.rankSwitch}>
+              {[
+                ["egreso", "Egresos"],
+                ["ingreso", "Ingresos"],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`${style.rankSwitchBtn} ${
+                    rankingType === value ? style.rankSwitchOn : ""
+                  }`}
+                  onClick={() => setRankingType(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {rankingItems.length ? (
+            <div className={style.rankRows}>
+              {rankingItems.map((item, index) => (
+                <div key={item.label} className={style.rankItemRow}>
+                  <span className={style.rankChip}>{index + 1}</span>
+                  <span className={style.rankName}>{item.label}</span>
+                  <span className={style.rankAmt}>
+                    {formatMoney(item.value, currency)}
+                    <em>
+                      {rankingTotal ? ((item.value / rankingTotal) * 100).toFixed(1) : 0}%
+                    </em>
+                  </span>
                 </div>
               ))}
             </div>
-
-            {/* Barras verticales ordenadas de mayor a menor */}
-            <div className={style.rankChartWrap}>
-              {(() => {
-                const COL = 72;
-                const AXIS = 52;
-                const TOP = 20;
-                const PLOT = 180;
-                const H = 240;
-                const max = rankingMax * 1.12;
-                const W = AXIS + rankingItems.length * COL;
-                const yFor = (value) => TOP + PLOT * (1 - value / max);
-                return (
-                  <svg
-                    className={style.rankSvg}
-                    width={W}
-                    height={H}
-                    viewBox={`0 0 ${W} ${H}`}
-                    role="img"
-                  >
-                    {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-                      <g key={t}>
-                        <line
-                          x1={AXIS}
-                          x2={W}
-                          y1={TOP + PLOT * t}
-                          y2={TOP + PLOT * t}
-                          stroke="var(--border-color)"
-                          strokeWidth="1"
-                          opacity="0.4"
-                        />
-                        <text
-                          x={AXIS - 7}
-                          y={TOP + PLOT * t + 4}
-                          textAnchor="end"
-                          className={style.rankAxisText}
-                        >
-                          {compactMoney(max * (1 - t))}
-                        </text>
-                      </g>
-                    ))}
-                    {rankingItems.map((item, index) => {
-                      const cx = AXIS + index * COL + COL / 2;
-                      const top = yFor(item.value);
-                      const pct = rankingTotal
-                        ? ((item.value / rankingTotal) * 100).toFixed(1)
-                        : 0;
-                      return (
-                        <g key={item.label}>
-                          <title>
-                            {`${item.label} · ${formatMoney(item.value, currency)} · ${pct}%`}
-                          </title>
-                          <rect
-                            x={cx - 17}
-                            y={top}
-                            width="34"
-                            height={Math.max(3, TOP + PLOT - top)}
-                            rx="6"
-                            fill={item.color}
-                          />
-                          <text x={cx} y={top - 7} textAnchor="middle" className={style.rankPctText}>
-                            {pct}%
-                          </text>
-                          <text x={cx} y={H - 6} textAnchor="middle" className={style.rankAxisText}>
-                            {truncLabel(item.label, 10)}
-                          </text>
-                        </g>
-                      );
-                    })}
-                  </svg>
-                );
-              })()}
-            </div>
-          </div>
-        ) : (
-          <p className={style.emptyText}>
-            No hay {rankingType === "egreso" ? "egresos" : "ingresos"} en este período.
-          </p>
-        )}
-      </section>
+          ) : (
+            <p className={style.emptyText}>
+              No hay {rankingType === "egreso" ? "egresos" : "ingresos"} en este período.
+            </p>
+          )}
+        </section>
+      </div>
     </section>
   );
 }
