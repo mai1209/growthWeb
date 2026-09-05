@@ -28,6 +28,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Svg, { Defs, LinearGradient, Stop, Rect } from "react-native-svg";
 import * as SecureStore from "expo-secure-store";
 import { movimientoService } from "../api";
+import { useTheme } from "../theme";
 import MovementFormModal from "../components/MovementFormModal";
 import HistoryModal from "../components/HistoryModal";
 import {
@@ -40,15 +41,9 @@ import {
   summarizeByType,
 } from "../utils/finance";
 
-// Paleta fija del rediseño (no sigue el tema claro/oscuro: el Figma es uno solo)
-const BG = "#071821"; // teal oscuro del tema, como el resto de la app
+// Acentos fijos; el resto de la paleta sigue el tema claro/oscuro
 const VERDE = "#75f94c";
 const ROJO = "#eb3223";
-const GRIS_BORDE = "#4e4e4e";
-const GRIS_PILL = "#4f4f4f";
-const TXT = "#ffffff";
-const MUTED = "rgba(255,255,255,0.6)";
-const LINEA = "rgba(255,255,255,0.14)";
 
 // Colores de la columna Balance, calcados del Figma
 const ACCENTS = {
@@ -185,7 +180,26 @@ const CARD_ORDER = ["grafito", "holo", "platino", "titanio", "chrome", "esmerald
 export default function HomeScreen() {
   const { width } = useWindowDimensions();
   const u = (width / 738) * 1.15;
-  const styles = useMemo(() => makeStyles(u), [u]);
+  const { colors: tema, isDark } = useTheme();
+  // Paleta derivada del tema: en oscuro conserva el look del rediseño
+  const pal = useMemo(
+    () => ({
+      bg: tema.bg,
+      txt: tema.text,
+      muted: tema.muted,
+      linea: tema.cardBorder,
+      tabBorder: isDark ? "#4e4e4e" : "rgba(22, 41, 31, 0.25)",
+      pillBg: isDark ? "#4f4f4f" : "#16241d",
+      pillText: isDark ? "#000000" : "#ffffff",
+      panelBg: isDark ? "rgba(255,255,255,0.03)" : tema.card,
+      panelBg2: isDark ? "rgba(255,255,255,0.06)" : tema.cardSoft,
+      rowBg: isDark ? "rgba(255,255,255,0.05)" : tema.card,
+      verdeTexto: isDark ? VERDE : tema.greenDark,
+      cardBackBg: isDark ? "#0d2430" : tema.card,
+    }),
+    [tema, isDark]
+  );
+  const styles = useMemo(() => makeStyles(u, pal), [u, pal]);
   const [fontsLoaded] = useFonts({
     "Menda-Bold": require("../../assets/fonts/Menda-Bold.ttf"),
     "Menda-Medium": require("../../assets/fonts/Menda-Medium.ttf"),
@@ -380,7 +394,7 @@ export default function HomeScreen() {
     { label: "Deuda pendiente", icon: "card-outline", color: ACCENTS.deuda, value: money(historical.deudaPendiente), onPress: () => goToFilter("deuda") },
   ];
 
-  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: BG }} />;
+  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: pal.bg }} />;
 
   return (
     <SafeAreaView style={styles.safe} edges={[]}>
@@ -506,7 +520,7 @@ export default function HomeScreen() {
                         onPress={() => setShowHistory(true)}
                         hitSlop={6}
                       >
-                        <MaterialCommunityIcons name="history" size={25 * u} color={BG} />
+                        <MaterialCommunityIcons name="history" size={25 * u} color="#0d1f28" />
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={styles.bcIconBtn}
@@ -516,11 +530,11 @@ export default function HomeScreen() {
                         <Ionicons
                           name={visible ? "eye-outline" : "eye-off-outline"}
                           size={25 * u}
-                          color={BG}
+                          color="#0d1f28"
                         />
                       </TouchableOpacity>
                       <TouchableOpacity style={styles.bcIconBtn} onPress={flipCard} hitSlop={6}>
-                        <Ionicons name="color-palette-outline" size={25 * u} color={BG} />
+                        <Ionicons name="color-palette-outline" size={25 * u} color="#0d1f28" />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -595,7 +609,7 @@ export default function HomeScreen() {
                     {resumenTab === "historial" ? (
                       <TouchableOpacity onPress={() => setShowHistory(true)} hitSlop={8} style={styles.verTodosWrap}>
                         <Text style={styles.verTodos}>Ver todos</Text>
-                        <Ionicons name="chevron-forward" size={14} color={VERDE} />
+                        <Ionicons name="chevron-forward" size={14} color={pal.verdeTexto} />
                       </TouchableOpacity>
                     ) : (
                       <View />
@@ -671,7 +685,7 @@ export default function HomeScreen() {
                                     {money(c.val)}
                                   </Text>
                                   {d != null ? (
-                                    <Text style={[styles.ieDelta, { color: favorable ? VERDE : "#ff6b5e" }]}>
+                                    <Text style={[styles.ieDelta, { color: favorable ? pal.verdeTexto : "#ff6b5e" }]}>
                                       {d > 0 ? "+" : ""}{d}% vs {mesPrevNombre}
                                     </Text>
                                   ) : (
@@ -701,7 +715,7 @@ export default function HomeScreen() {
                           <View style={styles.movCountDot} />
                           <Text style={styles.resSlimLabel}>Movimientos del mes</Text>
                           <Text style={styles.resSlimVal}>{visible ? monthCount : "••"}</Text>
-                          <Ionicons name="chevron-forward" size={17} color={MUTED} />
+                          <Ionicons name="chevron-forward" size={17} color={pal.muted} />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -779,7 +793,7 @@ export default function HomeScreen() {
                                       <Ionicons
                                         name={abierto ? "chevron-up" : "chevron-down"}
                                         size={17}
-                                        color={MUTED}
+                                        color={pal.muted}
                                         style={{ marginLeft: 4 }}
                                       />
                                     </TouchableOpacity>
@@ -808,7 +822,7 @@ export default function HomeScreen() {
                                           )}
                                           <View style={styles.movRedIcons}>
                                             <TouchableOpacity onPress={() => setEditMov(item)} hitSlop={8}>
-                                              <Ionicons name="pencil" size={18} color={MUTED} />
+                                              <Ionicons name="pencil" size={18} color={pal.muted} />
                                             </TouchableOpacity>
                                             <TouchableOpacity onPress={() => handleDeleteMov(item)} hitSlop={8}>
                                               <Ionicons name="trash-outline" size={18} color="#ff6b5e" />
@@ -840,7 +854,7 @@ export default function HomeScreen() {
                       hitSlop={8}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="information-circle-outline" size={19} color={MUTED} />
+                      <Ionicons name="information-circle-outline" size={19} color={pal.muted} />
                     </TouchableOpacity>
                   </View>
 
@@ -869,7 +883,7 @@ export default function HomeScreen() {
                       <Ionicons
                         name={visible ? "eye-outline" : "eye-off-outline"}
                         size={19}
-                        color={TXT}
+                        color={pal.txt}
                       />
                     </TouchableOpacity>
                   </View>
@@ -913,7 +927,7 @@ export default function HomeScreen() {
 
                 <Text style={styles.sectionLabel}>Movimientos</Text>
                 {loading ? (
-                  <ActivityIndicator color={VERDE} style={{ alignSelf: "flex-start", marginTop: 6 }} />
+                  <ActivityIndicator color={pal.verdeTexto} style={{ alignSelf: "flex-start", marginTop: 6 }} />
                 ) : error ? (
                   <Text style={styles.error}>{error}</Text>
                 ) : typeMovs.length === 0 ? (
@@ -1028,7 +1042,7 @@ export default function HomeScreen() {
                 {tab === "deuda" ? "Cómo funcionan las deudas" : "Cómo funcionan los ahorros"}
               </Text>
               <TouchableOpacity onPress={() => setInfoOpen(false)} hitSlop={8}>
-                <Ionicons name="close" size={22} color={VERDE} />
+                <Ionicons name="close" size={22} color={pal.verdeTexto} />
               </TouchableOpacity>
             </View>
 
@@ -1106,7 +1120,7 @@ export default function HomeScreen() {
             <View style={styles.infoHead}>
               <Text style={styles.infoTitle}>Saldo total</Text>
               <TouchableOpacity onPress={() => setSaldoInfoOpen(false)} hitSlop={8}>
-                <Ionicons name="close" size={22} color={VERDE} />
+                <Ionicons name="close" size={22} color={pal.verdeTexto} />
               </TouchableOpacity>
             </View>
 
@@ -1121,7 +1135,7 @@ export default function HomeScreen() {
                 <Text style={styles.infoStrong}>transferencia</Text>.
               </Text>
               <View style={styles.saldoTip}>
-                <Ionicons name="funnel-outline" size={16} color={VERDE} />
+                <Ionicons name="funnel-outline" size={16} color={pal.verdeTexto} />
                 <Text style={styles.saldoTipText}>
                   ¿Querés ver cuánto es en efectivo y cuánto en transferencia por separado?
                   Buscalo en Filtros, en la barra de abajo: cada movimiento muestra su medio.
@@ -1139,15 +1153,15 @@ export default function HomeScreen() {
   );
 }
 
-const makeStyles = (u) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BG },
+const makeStyles = (u, p) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: p.bg },
   content: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 28 },
 
   // Contenedor redondeado de los tabs (borde gris, radio 34 del Figma).
   // Con moneda activa lleva un espaciador que después tapa la card (overlap).
   tabsShell: {
     borderWidth: 2,
-    borderColor: GRIS_BORDE,
+    borderColor: p.tabBorder,
     borderRadius: 34 * u,
     paddingTop: 10 * u,
     paddingHorizontal: 14 * u,
@@ -1160,12 +1174,12 @@ const makeStyles = (u) => StyleSheet.create({
     paddingVertical: 8 * u,
     borderRadius: 15 * u,
   },
-  segmentActive: { backgroundColor: GRIS_PILL },
-  segmentText: { fontFamily: "Menda-Medium", fontSize: 25 * u, letterSpacing: -1 * u, color: TXT },
-  segmentTextActive: { fontFamily: "Menda-Bold", color: "#000000" },
+  segmentActive: { backgroundColor: p.pillBg },
+  segmentText: { fontFamily: "Menda-Medium", fontSize: 25 * u, letterSpacing: -1 * u, color: p.txt },
+  segmentTextActive: { fontFamily: "Menda-Bold", color: p.pillText },
 
   sectionLabel: {
-    color: MUTED,
+    color: p.muted,
     fontSize: 12,
     fontWeight: "600",
     letterSpacing: 0.5,
@@ -1180,7 +1194,7 @@ const makeStyles = (u) => StyleSheet.create({
     height: 34,
     borderRadius: 17,
     borderWidth: 1,
-    borderColor: LINEA,
+    borderColor: p.linea,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1198,17 +1212,17 @@ const makeStyles = (u) => StyleSheet.create({
   },
   balanceLabel: {
     fontFamily: "Menda-Bold",
-    color: TXT,
+    color: p.txt,
     fontSize: 22 * u,
     letterSpacing: -1 * u,
   },
   infoBtn: { padding: 1 },
   curSwitch: {
     flexDirection: "row",
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: p.panelBg2,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: LINEA,
+    borderColor: p.linea,
     padding: 2,
   },
   curSwitchBtn: {
@@ -1217,7 +1231,7 @@ const makeStyles = (u) => StyleSheet.create({
     borderRadius: 999,
   },
   curSwitchBtnActive: { backgroundColor: VERDE },
-  curSwitchText: { color: MUTED, fontWeight: "800", fontSize: 12 },
+  curSwitchText: { color: p.muted, fontWeight: "800", fontSize: 12 },
   curSwitchTextActive: { color: "#000000" },
   infoOverlay: {
     flex: 1,
@@ -1226,7 +1240,7 @@ const makeStyles = (u) => StyleSheet.create({
     padding: 22,
   },
   infoCard: {
-    backgroundColor: BG,
+    backgroundColor: p.bg,
     borderRadius: 22 * u,
     borderWidth: 1,
     borderColor: VERDE,
@@ -1239,12 +1253,12 @@ const makeStyles = (u) => StyleSheet.create({
     gap: 10,
     marginBottom: 12,
   },
-  infoTitle: { fontFamily: "Menda-Bold", color: TXT, fontSize: 16, flex: 1 },
+  infoTitle: { fontFamily: "Menda-Bold", color: p.txt, fontSize: 16, flex: 1 },
   infoBody: { gap: 10 },
   infoText: { color: "rgba(255,255,255,0.8)", fontSize: 14, lineHeight: 21 },
-  infoStrong: { color: TXT, fontWeight: "800" },
+  infoStrong: { color: p.txt, fontWeight: "800" },
   infoTip: {
-    color: TXT,
+    color: p.txt,
     fontSize: 13.5,
     lineHeight: 20,
     backgroundColor: "rgba(117, 249, 76, 0.12)",
@@ -1262,7 +1276,7 @@ const makeStyles = (u) => StyleSheet.create({
     padding: 12,
     marginTop: 2,
   },
-  saldoTipText: { flex: 1, color: TXT, fontSize: 13.5, lineHeight: 20 },
+  saldoTipText: { flex: 1, color: p.txt, fontSize: 13.5, lineHeight: 20 },
   infoOk: {
     marginTop: 18,
     alignSelf: "flex-end",
@@ -1287,15 +1301,15 @@ const makeStyles = (u) => StyleSheet.create({
     backgroundColor: "#4f4f4f", // respaldo hasta que el SVG mida la tarjeta
   },
   cardBack: {
-    backgroundColor: "#0d2430",
+    backgroundColor: p.cardBackBg,
     borderWidth: 1,
-    borderColor: LINEA,
+    borderColor: p.linea,
     alignItems: "center",
     justifyContent: "center",
     gap: 14,
     paddingVertical: 26,
   },
-  cardBackTitle: { fontFamily: "Menda-Bold", color: TXT, fontSize: 13 },
+  cardBackTitle: { fontFamily: "Menda-Bold", color: p.txt, fontSize: 13 },
   swatchRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 12 },
   swatch: {
     width: 34,
@@ -1385,9 +1399,9 @@ const makeStyles = (u) => StyleSheet.create({
   },
   ticketSwitch: {
     flexDirection: "row",
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: p.panelBg2,
     borderWidth: 1,
-    borderColor: LINEA,
+    borderColor: p.linea,
     borderRadius: 14 * u,
     padding: 4 * u,
     gap: 4 * u,
@@ -1399,17 +1413,17 @@ const makeStyles = (u) => StyleSheet.create({
     alignItems: "center",
   },
   ticketSegOn: { backgroundColor: VERDE },
-  ticketSegText: { fontFamily: "Menda-Medium", fontSize: 25 * u, letterSpacing: -1 * u, color: TXT },
+  ticketSegText: { fontFamily: "Menda-Medium", fontSize: 25 * u, letterSpacing: -1 * u, color: p.txt },
   ticketSegTextOn: { color: "#000000" },
   verTodosWrap: { flexDirection: "row", alignItems: "center", gap: 2, paddingLeft: 4 },
-  verTodos: { fontFamily: "Menda-Medium", color: VERDE, fontSize: 14.5 },
+  verTodos: { fontFamily: "Menda-Medium", color: p.verdeTexto, fontSize: 14.5 },
 
   ticketBody: { marginTop: 18 * u, gap: 14 * u },
   // Caja con borde (la usa el historial reducido)
   resGroup: {
     borderWidth: 1,
-    borderColor: LINEA,
-    backgroundColor: "rgba(255,255,255,0.03)",
+    borderColor: p.linea,
+    backgroundColor: p.panelBg,
     borderRadius: 18 * u,
     overflow: "hidden",
   },
@@ -1418,8 +1432,8 @@ const makeStyles = (u) => StyleSheet.create({
   // ---- Panel estilo analytics del resumen ----
   resPanel: {
     borderWidth: 1,
-    borderColor: LINEA,
-    backgroundColor: "rgba(255,255,255,0.03)",
+    borderColor: p.linea,
+    backgroundColor: p.panelBg,
     borderRadius: 20 * u,
     padding: 16 * u,
   },
@@ -1434,12 +1448,12 @@ const makeStyles = (u) => StyleSheet.create({
     fontFamily: "Menda-Bold",
     fontSize: 17,
     letterSpacing: -0.4,
-    color: TXT,
+    color: p.txt,
   },
   resPanelMes: {
     fontFamily: "Menda-Medium",
     fontSize: 13.5,
-    color: MUTED,
+    color: p.muted,
     textTransform: "capitalize",
   },
 
@@ -1457,13 +1471,13 @@ const makeStyles = (u) => StyleSheet.create({
   // Columnas Ingresos | Egresos
   ieRow: { flexDirection: "row", alignItems: "stretch" },
   ieCol: { flex: 1, gap: 4 * u },
-  ieSep: { width: 1, backgroundColor: LINEA, marginHorizontal: 14 * u },
+  ieSep: { width: 1, backgroundColor: p.linea, marginHorizontal: 14 * u },
   ieHead: { flexDirection: "row", alignItems: "center", gap: 6 * u },
   ieLabel: {
     fontFamily: "Menda-Medium",
     fontSize: 14.5,
     letterSpacing: -0.3,
-    color: MUTED,
+    color: p.muted,
   },
   ieVal: {
     fontFamily: "Menda-Bold",
@@ -1472,9 +1486,9 @@ const makeStyles = (u) => StyleSheet.create({
     fontVariant: ["tabular-nums"],
   },
   ieDelta: { fontFamily: "Menda-Medium", fontSize: 12.5, letterSpacing: -0.2 },
-  ieDeltaMuted: { fontFamily: "Menda-Medium", fontSize: 12.5, color: MUTED, letterSpacing: -0.2 },
+  ieDeltaMuted: { fontFamily: "Menda-Medium", fontSize: 12.5, color: p.muted, letterSpacing: -0.2 },
 
-  resDivider: { height: 1, backgroundColor: LINEA, marginVertical: 12 * u },
+  resDivider: { height: 1, backgroundColor: p.linea, marginVertical: 12 * u },
 
   // Filas finas (ahorro / deuda / movimientos)
   resSlimRow: {
@@ -1488,13 +1502,13 @@ const makeStyles = (u) => StyleSheet.create({
     fontFamily: "Menda-Medium",
     fontSize: 15.5,
     letterSpacing: -0.3,
-    color: TXT,
+    color: p.txt,
   },
   resSlimVal: {
     fontFamily: "Menda-Bold",
     fontSize: 17,
     letterSpacing: -0.4,
-    color: TXT,
+    color: p.txt,
     fontVariant: ["tabular-nums"],
   },
   movCountDot: {
@@ -1506,7 +1520,7 @@ const makeStyles = (u) => StyleSheet.create({
   },
 
   // ---- Historial reducido, agrupado por día ----
-  movEmpty: { color: MUTED, fontSize: 13.5, textAlign: "center", paddingVertical: 22 },
+  movEmpty: { color: p.muted, fontSize: 13.5, textAlign: "center", paddingVertical: 22 },
   movDayHead: {
     flexDirection: "row",
     alignItems: "center",
@@ -1515,13 +1529,13 @@ const makeStyles = (u) => StyleSheet.create({
     marginBottom: 2,
   },
   movDayLabel: {
-    color: MUTED,
+    color: p.muted,
     fontSize: 12,
     fontWeight: "800",
     textTransform: "uppercase",
     letterSpacing: 0.7,
   },
-  movTkDividerTop: { borderTopWidth: 1, borderColor: LINEA },
+  movTkDividerTop: { borderTopWidth: 1, borderColor: p.linea },
   movTkTop: { flexDirection: "row", alignItems: "center", gap: 11, paddingVertical: 12 },
   movTkInfo: { flex: 1, gap: 2 },
   movTkRight: { alignItems: "flex-end", gap: 2 },
@@ -1534,8 +1548,8 @@ const makeStyles = (u) => StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  movRedTitle: { color: TXT, fontSize: 15.5, fontWeight: "700" },
-  movRedMeta: { color: MUTED, fontSize: 12.5 },
+  movRedTitle: { color: p.txt, fontSize: 15.5, fontWeight: "700" },
+  movRedMeta: { color: p.muted, fontSize: 12.5 },
   movRedAmount: { fontSize: 16, fontWeight: "800", fontVariant: ["tabular-nums"] },
   movPendTag: {
     color: "#f4c622",
@@ -1544,7 +1558,7 @@ const makeStyles = (u) => StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.4,
   },
-  movRedDetail: { color: MUTED, fontSize: 13.5 },
+  movRedDetail: { color: p.muted, fontSize: 13.5 },
   movRedDebt: { color: VERDE, fontSize: 13, fontWeight: "700" },
   movRedPay: {
     flexDirection: "row",
@@ -1566,7 +1580,7 @@ const makeStyles = (u) => StyleSheet.create({
   },
   movRedIcons: { flexDirection: "row", alignItems: "center", gap: 18 },
 
-  balanceSub: { color: MUTED, fontSize: 13, marginTop: 6 },
+  balanceSub: { color: p.muted, fontSize: 13, marginTop: 6 },
   potText: { color: "#2bb888", fontSize: 14, fontWeight: "800", marginTop: 6 },
   typeBtnRow: { flexDirection: "row", gap: 8, marginTop: 14, flexWrap: "wrap" },
   addTypeBtn: {
@@ -1590,22 +1604,22 @@ const makeStyles = (u) => StyleSheet.create({
     backgroundColor: "rgba(43, 184, 136, 0.12)",
   },
   useTypeText: { color: "#2bb888", fontWeight: "800", fontSize: 12.5 },
-  emptyText: { color: MUTED, fontSize: 14, marginTop: 4 },
+  emptyText: { color: p.muted, fontSize: 14, marginTop: 4 },
   movRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: p.rowBg,
     borderWidth: 1,
-    borderColor: LINEA,
+    borderColor: p.linea,
     borderRadius: 14,
     paddingVertical: 12,
     paddingHorizontal: 14,
   },
-  movTitle: { color: TXT, fontSize: 14, fontWeight: "700" },
-  movSub: { color: MUTED, fontSize: 12, marginTop: 2 },
+  movTitle: { color: p.txt, fontSize: 14, fontWeight: "700" },
+  movSub: { color: p.muted, fontSize: 12, marginTop: 2 },
   movMetaRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4 },
-  movDate: { color: MUTED, fontSize: 11 },
+  movDate: { color: p.muted, fontSize: 11 },
   movChip: { fontSize: 11, fontWeight: "800" },
-  movAmount: { color: TXT, fontSize: 15, fontWeight: "800" },
+  movAmount: { color: p.txt, fontSize: 15, fontWeight: "800" },
 });
