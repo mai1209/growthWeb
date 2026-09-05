@@ -738,7 +738,7 @@ export default function HomeScreen() {
                                 {i > 0 ? <View style={styles.ieSep} /> : null}
                                 <TouchableOpacity style={styles.ieCol} activeOpacity={0.7} onPress={() => goToFilter(c.tipo)}>
                                   <View style={styles.ieHead}>
-                                    <Ionicons name={c.icon} size={14 * u} color={c.color} />
+                                    <Ionicons name={c.icon} size={16 * u} color={c.color} />
                                     <Text style={styles.ieLabel}>{c.label}</Text>
                                   </View>
                                   <Text
@@ -767,7 +767,7 @@ export default function HomeScreen() {
                         {/* Filas finas: ahorro, deuda y movimientos */}
                         {resRows.map((r) => (
                           <TouchableOpacity key={r.label} style={styles.resSlimRow} activeOpacity={0.6} onPress={r.onPress}>
-                            <Ionicons name={r.icon} size={16 * u} color={r.color} />
+                            <Ionicons name={r.icon} size={18 * u} color={r.color} />
                             <Text style={styles.resSlimLabel}>{r.label}</Text>
                             <Text style={[styles.resSlimVal, { color: r.color }]}>{r.value}</Text>
                           </TouchableOpacity>
@@ -780,7 +780,7 @@ export default function HomeScreen() {
                           <View style={styles.movCountDot} />
                           <Text style={styles.resSlimLabel}>Movimientos del mes</Text>
                           <Text style={styles.resSlimVal}>{visible ? monthCount : "••"}</Text>
-                          <Ionicons name="chevron-forward" size={15 * u} color={MUTED} />
+                          <Ionicons name="chevron-forward" size={17 * u} color={MUTED} />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -1369,14 +1369,22 @@ const makeStyles = (u) => StyleSheet.create({
     fontSize: 22 * u,
     letterSpacing: -1 * u,
   },
-  bcIcons: { flexDirection: "row", gap: 4 * u },
+  bcIcons: { flexDirection: "row", gap: 7 * u },
+  // Con relieve para que se lean como botones apretables
   bcIconBtn: {
-    width: 45 * u,
-    height: 45 * u,
-    borderRadius: 23 * u,
-    backgroundColor: "#d9d9d9",
+    width: 47 * u,
+    height: 47 * u,
+    borderRadius: 24 * u,
+    backgroundColor: "#f4f4f4",
+    borderWidth: 1.5,
+    borderColor: "rgba(0,0,0,0.18)",
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2.5 },
+    elevation: 5,
   },
   bcBalance: {
     fontFamily: "Menda-Bold",
@@ -1476,13 +1484,13 @@ const makeStyles = (u) => StyleSheet.create({
   },
   resPanelTitle: {
     fontFamily: "Menda-Bold",
-    fontSize: 16 * u,
+    fontSize: 18.5 * u,
     letterSpacing: -0.5 * u,
     color: TXT,
   },
   resPanelMes: {
     fontFamily: "Menda-Medium",
-    fontSize: 13 * u,
+    fontSize: 14.5 * u,
     color: MUTED,
     textTransform: "capitalize",
   },
@@ -1505,18 +1513,18 @@ const makeStyles = (u) => StyleSheet.create({
   ieHead: { flexDirection: "row", alignItems: "center", gap: 6 * u },
   ieLabel: {
     fontFamily: "Menda-Medium",
-    fontSize: 13.5 * u,
+    fontSize: 15.5 * u,
     letterSpacing: -0.4 * u,
     color: MUTED,
   },
   ieVal: {
     fontFamily: "Menda-Bold",
-    fontSize: 23 * u,
-    letterSpacing: -0.7 * u,
+    fontSize: 27 * u,
+    letterSpacing: -0.8 * u,
     fontVariant: ["tabular-nums"],
   },
-  ieDelta: { fontFamily: "Menda-Medium", fontSize: 12 * u, letterSpacing: -0.3 * u },
-  ieDeltaMuted: { fontFamily: "Menda-Medium", fontSize: 12 * u, color: MUTED, letterSpacing: -0.3 * u },
+  ieDelta: { fontFamily: "Menda-Medium", fontSize: 13.5 * u, letterSpacing: -0.3 * u },
+  ieDeltaMuted: { fontFamily: "Menda-Medium", fontSize: 13.5 * u, color: MUTED, letterSpacing: -0.3 * u },
 
   resDivider: { height: 1, backgroundColor: LINEA, marginVertical: 12 * u },
 
@@ -1530,13 +1538,13 @@ const makeStyles = (u) => StyleSheet.create({
   resSlimLabel: {
     flex: 1,
     fontFamily: "Menda-Medium",
-    fontSize: 15 * u,
+    fontSize: 17 * u,
     letterSpacing: -0.4 * u,
     color: TXT,
   },
   resSlimVal: {
     fontFamily: "Menda-Bold",
-    fontSize: 16.5 * u,
+    fontSize: 19 * u,
     letterSpacing: -0.5 * u,
     color: TXT,
     fontVariant: ["tabular-nums"],
