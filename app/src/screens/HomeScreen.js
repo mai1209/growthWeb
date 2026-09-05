@@ -26,6 +26,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Svg, { Defs, LinearGradient, Stop, Rect } from "react-native-svg";
+import { BlurView } from "expo-blur";
 import * as SecureStore from "expo-secure-store";
 import { movimientoService } from "../api";
 import MovementFormModal from "../components/MovementFormModal";
@@ -534,12 +535,12 @@ export default function HomeScreen() {
                         onPress={() => setModalMode(a.key)}
                         activeOpacity={0.7}
                       >
-                        <View style={styles.bcQuickBtn}>
+                        <BlurView intensity={28} tint="dark" style={styles.bcQuickBtn}>
                           <Ionicons name={a.icon} size={22} color={a.color} />
                           {a.extra ? (
                             <Ionicons name={a.extra} size={13} color={a.color} style={styles.quickExtra} />
                           ) : null}
-                        </View>
+                        </BlurView>
                         <Text style={[styles.bcQuickLabel, { color: card.text }]} numberOfLines={1}>
                           {a.label}
                         </Text>
@@ -1345,21 +1346,18 @@ const makeStyles = (u) => StyleSheet.create({
     marginTop: 22 * u,
   },
   bcQuickItem: { flex: 1, alignItems: "center", gap: 6 },
+  // Cuadrado redondeado, negro con blur (glass oscuro sobre la card)
   bcQuickBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#f4f4f4",
-    borderWidth: 1.5,
-    borderColor: "rgba(0,0,0,0.18)",
+    width: 50,
+    height: 50,
+    borderRadius: 15,
+    overflow: "hidden",
+    backgroundColor: "rgba(0,0,0,0.3)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
-    shadowColor: "#000",
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2.5 },
-    elevation: 5,
   },
   bcQuickLabel: { fontFamily: "Menda-Medium", fontSize: 12.5, letterSpacing: -0.3 },
   quickExtra: { marginLeft: -3, marginBottom: -9 },
