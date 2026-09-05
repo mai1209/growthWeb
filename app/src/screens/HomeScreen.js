@@ -99,11 +99,13 @@ const BalanceSpark = ({ serie, width, height, color, fillColor }) => {
   if (!width || serie.length < 2) return null;
   const min = Math.min(...serie);
   const max = Math.max(...serie);
+  const flat = max - min === 0;
   const span = max - min || 1;
   const padY = height * 0.16;
   const pts = serie.map((v, i) => ({
     x: (i / (serie.length - 1)) * width,
-    y: height - padY - ((v - min) / span) * (height - padY * 2),
+    // Serie sin variación: línea al medio, no pegada al piso
+    y: flat ? height / 2 : height - padY - ((v - min) / span) * (height - padY * 2),
   }));
   const line = smoothPath(pts);
   const area = `${line} L${width} ${height} L0 ${height} Z`;
@@ -405,6 +407,11 @@ export default function HomeScreen() {
       acc += porDia[dayKey(d)] || 0;
       serie.push(acc);
     }
+    // Recorta el arranque muerto: si los primeros días son todos iguales
+    // (sin movimientos), empieza un día antes del primer cambio para que
+    // se vea la progresión y no una línea plana.
+    const primerCambio = serie.findIndex((v) => v !== serie[0]);
+    if (primerCambio > 1) return serie.slice(primerCambio - 1);
     return serie;
   }, [movimientos, currency]);
 
@@ -539,7 +546,14 @@ export default function HomeScreen() {
                           style={{ alignSelf: "flex-start", marginVertical: 14 * u }}
                         />
                       ) : (
-                        <Text style={[styles.bcBalance, { color: card.text }]}>{money(historical.total)}</Text>
+                        <Text
+                          style={[styles.bcBalance, { color: card.text }]}
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.55}
+                        >
+                          {money(historical.total)}
+                        </Text>
                       )}
                     </View>
 
@@ -668,26 +682,27 @@ export default function HomeScreen() {
 
                   {resumenTab === "resumen" ? (
                     <View style={styles.ticketBody}>
-                      <View style={styles.ticketHeadRow}>
-                        <Text style={styles.ticketCaption}>Resumen del mes * {currencyTag}</Text>
-                        <Text style={styles.ticketCaption}>Balance</Text>
-                      </View>
-                      {stats.map((s) => (
-                        <TouchableOpacity
-                          key={s.label}
-                          style={styles.ticketRow}
-                          activeOpacity={0.6}
-                          onPress={() => goToFilter(s.tipo)}
-                        >
-                          <Text style={styles.ticketLabel} numberOfLines={1}>
-                            {s.label}
-                          </Text>
-                          <Text style={[styles.ticketValue, { color: s.accent }]}>{s.value}</Text>
-                        </TouchableOpacity>
+                      {/* Dos cajas con borde, como el mockup: 4 filas del mes y aparte deuda + movimientos */}
+                      {[stats.slice(0, 4), stats.slice(4)].map((grupo, gi) => (
+                        <View key={gi} style={styles.resGroup}>
+                          {grupo.map((s, i) => (
+                            <TouchableOpacity
+                              key={s.label}
+                              style={[styles.ticketRow, i > 0 && styles.ticketRowDivider]}
+                              activeOpacity={0.6}
+                              onPress={() => goToFilter(s.tipo)}
+                            >
+                              <Text style={styles.ticketLabel} numberOfLines={1}>
+                                {s.label}
+                              </Text>
+                              <Text style={[styles.ticketValue, { color: s.accent }]}>{s.value}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
                       ))}
                     </View>
                   ) : (
-                    <View style={styles.ticketBody}>
+                    <View style={[styles.ticketBody, styles.resGroup, styles.resGroupPad]}>
                       {monthMovs.length === 0 ? (
                         <Text style={styles.movEmpty}>No hay movimientos este mes.</Text>
                       ) : (
@@ -777,17 +792,14 @@ export default function HomeScreen() {
                     </View>
                   )}
 
-                  {/* Separador punteado antes del footer (formato abierto del mockup) */}
-                  <View style={styles.ticketCut}>
-                    <View style={styles.ticketDash} />
+                  {/* Footer en su propia caja, como el mockup */}
+                  <View style={styles.footBox}>
+                    <Text style={styles.ticketGracias}>Gracias por utilizar GROWTH MANAGER</Text>
+                    <Text style={styles.ticketWeb}>
+                      Utiliza la version web{"\n"}
+                      <Text style={styles.ticketWebLink}>www.growthmanager.app</Text>
+                    </Text>
                   </View>
-
-                  {/* Footer del ticket, como en el Figma */}
-                  <Text style={styles.ticketGracias}>Gracias por utilizar GROWTH MANAGER</Text>
-                  <Text style={styles.ticketWeb}>
-                    Utiliza la version web{"\n"}
-                    <Text style={styles.ticketWebLink}>www.growthmanager.app</Text>
-                  </Text>
                 </View>
               </>
             ) : (
@@ -1293,7 +1305,7 @@ const makeStyles = (u) => StyleSheet.create({
   },
   bcBalance: {
     fontFamily: "Menda-Bold",
-    fontSize: 45 * u,
+    fontSize: 37 * u,
     letterSpacing: -1.5 * u,
     marginTop: 6 * u,
     fontVariant: ["tabular-nums"],
@@ -1302,21 +1314,33 @@ const makeStyles = (u) => StyleSheet.create({
   // Sparkline dentro de la tarjeta
   bcSparkWrap: { marginTop: 18 * u, minHeight: 70 * u, justifyContent: "flex-end" },
 
-  // Acciones rápidas fuera de la tarjeta: círculo + etiqueta + barrita de color
-  quickRow: { flexDirection: "row", alignItems: "flex-start", marginTop: 26 * u },
-  quickItem: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 * u },
+  // Acciones rápidas: 4 tiles con borde (mockup 3), cada uno con círculo,
+  // etiqueta y barrita de color abajo
+  quickRow: { flexDirection: "row", alignItems: "stretch", marginTop: 26 * u, gap: 10 * u },
+  quickItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8 * u,
+    borderWidth: 1,
+    borderColor: LINEA,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 18 * u,
+    paddingVertical: 14 * u,
+    paddingHorizontal: 4 * u,
+  },
   quickCircle: {
-    width: 62 * u,
-    height: 62 * u,
-    borderRadius: 31 * u,
+    width: 50 * u,
+    height: 50 * u,
+    borderRadius: 25 * u,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
   },
   quickExtra: { marginLeft: -3 * u, marginBottom: -10 * u },
-  quickLabel: { fontFamily: "Menda-Medium", fontSize: 14 * u, letterSpacing: -0.5 * u, color: TXT },
-  quickBar: { width: 34 * u, height: 5 * u, borderRadius: 3 * u },
+  quickLabel: { fontFamily: "Menda-Medium", fontSize: 13 * u, letterSpacing: -0.5 * u, color: TXT },
+  quickBar: { width: "62%", height: 5 * u, borderRadius: 3 * u },
 
   statGrid: { gap: 10 },
 
@@ -1327,41 +1351,47 @@ const makeStyles = (u) => StyleSheet.create({
     paddingBottom: 10 * u,
     marginTop: 30 * u,
   },
-  // Pastillas centradas, como en el mockup
-  ticketSwitchRow: { alignItems: "center" },
+  // Switch Resumen/Historial: contenedor cuadrado a la derecha (mockup 3)
+  ticketSwitchRow: { alignItems: "flex-end" },
   ticketSwitch: {
     flexDirection: "row",
-    gap: 12 * u,
-  },
-  ticketSeg: {
-    paddingVertical: 9 * u,
-    paddingHorizontal: 38 * u,
-    borderRadius: 999,
-    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: 1,
     borderColor: LINEA,
+    borderRadius: 14 * u,
+    padding: 4 * u,
+    gap: 4 * u,
   },
-  ticketSegOn: { backgroundColor: VERDE, borderColor: VERDE },
+  ticketSeg: {
+    paddingVertical: 8 * u,
+    paddingHorizontal: 26 * u,
+    borderRadius: 10 * u,
+    alignItems: "center",
+  },
+  ticketSegOn: { backgroundColor: VERDE },
   ticketSegText: { fontFamily: "Menda-Medium", fontSize: 25 * u, letterSpacing: -1 * u, color: TXT },
   ticketSegTextOn: { color: "#000000" },
   verTodosWrap: { alignSelf: "flex-end", marginTop: 10 * u, marginRight: 8 * u },
   verTodos: { fontFamily: "Menda-Medium", color: VERDE, fontSize: 18 * u },
 
-  ticketBody: { paddingHorizontal: 22 * u },
-  ticketHeadRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 32 * u,
-    marginBottom: 8 * u,
+  ticketBody: { marginTop: 18 * u, gap: 14 * u },
+  // Caja con borde que agrupa filas (mockup 3)
+  resGroup: {
+    borderWidth: 1,
+    borderColor: LINEA,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 18 * u,
+    overflow: "hidden",
   },
-  ticketCaption: { fontFamily: "Menda-Medium", fontSize: 18 * u, letterSpacing: -0.6 * u, color: TXT },
+  resGroupPad: { paddingHorizontal: 14 * u, paddingVertical: 4 * u },
   ticketRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 8.5 * u,
+    paddingVertical: 11 * u,
+    paddingHorizontal: 18 * u,
   },
+  ticketRowDivider: { borderTopWidth: 1, borderColor: LINEA },
   ticketLabel: {
     fontFamily: "Menda-Medium",
     fontSize: 18 * u,
@@ -1377,31 +1407,31 @@ const makeStyles = (u) => StyleSheet.create({
     fontVariant: ["tabular-nums"],
   },
 
-  // Separador punteado antes del footer
-  ticketCut: { height: 20 * u, justifyContent: "center", marginTop: 40 * u },
-  ticketDash: {
-    borderBottomWidth: 1,
-    borderStyle: "dashed",
-    borderColor: "rgba(117, 249, 76, 0.55)",
-    marginHorizontal: 14 * u,
+  // Footer en su propia caja
+  footBox: {
+    borderWidth: 1,
+    borderColor: LINEA,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 18 * u,
+    paddingVertical: 18 * u,
+    paddingHorizontal: 14 * u,
+    marginTop: 14 * u,
   },
-
   ticketGracias: {
     fontFamily: "Menda-Medium",
-    fontSize: 18 * u,
+    fontSize: 16 * u,
     letterSpacing: -0.6 * u,
     color: TXT,
     textAlign: "center",
-    marginTop: 24 * u,
   },
   ticketWeb: {
     fontFamily: "Menda-Medium",
-    fontSize: 25 * u,
-    lineHeight: 30 * u,
+    fontSize: 21 * u,
+    lineHeight: 27 * u,
     letterSpacing: -1 * u,
     color: TXT,
     textAlign: "center",
-    marginTop: 16 * u,
+    marginTop: 10 * u,
   },
   ticketWebLink: { color: VERDE },
 
