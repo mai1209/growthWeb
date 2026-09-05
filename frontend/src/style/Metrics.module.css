@@ -1238,3 +1238,130 @@
     border-top: 1px solid var(--border-color);
   }
 }
+
+/* ===== KPIs unificados: los 4 de arriba en una sola tira con líneas ===== */
+.summaryGrid {
+  gap: 0;
+  overflow: hidden;
+  padding-bottom: 0;
+  border: 1px solid var(--border-color);
+  background: var(--panel-background);
+  box-shadow: var(--shadow-soft);
+  border-radius: 24px;
+}
+
+.summaryGrid .statCard {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  position: relative;
+}
+
+.summaryGrid .statCard + .statCard {
+  border-left: 1px solid var(--border-color);
+}
+
+/* ===== Luz sutil que recorre las líneas divisorias ===== */
+@keyframes luzLineaV {
+  0% { background-position: 50% 0%; }
+  100% { background-position: 50% 100%; }
+}
+
+@keyframes luzLineaH {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.unifiedPanel .trioGrid > *,
+.unifiedPanel .bottomGrid > * {
+  position: relative;
+}
+
+/* Destello vertical sobre cada línea divisoria */
+.summaryGrid .statCard + .statCard::before,
+.unifiedPanel .trioGrid > * + *::before,
+.unifiedPanel .bottomGrid > * + *::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 42%,
+    rgba(117, 249, 76, 0.45) 50%,
+    transparent 58%,
+    transparent 100%
+  );
+  background-size: 100% 320%;
+  animation: luzLineaV 8s linear infinite;
+}
+
+/* Desfases para que las luces no viajen todas juntas */
+.summaryGrid .statCard:nth-child(3)::before { animation-delay: -2.6s; }
+.summaryGrid .statCard:nth-child(4)::before { animation-delay: -5.2s; }
+.unifiedPanel .trioGrid > *:nth-child(2)::before { animation-delay: -1.4s; }
+.unifiedPanel .trioGrid > *:nth-child(3)::before { animation-delay: -4.1s; }
+.unifiedPanel .bottomGrid > *:nth-child(2)::before { animation-delay: -3.2s; }
+
+/* Destello horizontal sobre la línea que separa las dos filas del panel */
+.unifiedPanel .bottomGrid {
+  position: relative;
+}
+
+.unifiedPanel .bottomGrid::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 42%,
+    rgba(117, 249, 76, 0.45) 50%,
+    transparent 58%,
+    transparent 100%
+  );
+  background-size: 320% 100%;
+  animation: luzLineaH 11s linear infinite;
+}
+
+/* Accesibilidad: sin animación si el sistema pide menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .summaryGrid .statCard + .statCard::before,
+  .unifiedPanel .trioGrid > * + *::before,
+  .unifiedPanel .bottomGrid > * + *::before,
+  .unifiedPanel .bottomGrid::before {
+    animation: none;
+    background: none;
+  }
+}
+
+/* Mobile: la tira de KPIs es grilla 2x2, líneas acomodadas a esa forma */
+@media (max-width: 1000px) {
+  .summaryGrid .statCard + .statCard {
+    border-left: none;
+  }
+
+  .summaryGrid .statCard:nth-child(2n)::before,
+  .unifiedPanel .trioGrid > * + *::before,
+  .unifiedPanel .bottomGrid > * + *::before {
+    animation: none;
+    background: none;
+  }
+
+  .summaryGrid .statCard:nth-child(2n) {
+    border-left: 1px solid var(--border-color);
+  }
+
+  .summaryGrid .statCard:nth-child(n + 3) {
+    border-top: 1px solid var(--border-color);
+  }
+}
