@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 import { Ionicons } from "@expo/vector-icons";
 
-const BG = "#10150f";
+const BG = "#071821"; // teal oscuro del tema, como el resto de la app
 const VERDE = "#75f94c";
 const GRIS_LINEA = "#4f4f4f";
 

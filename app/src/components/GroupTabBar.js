@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { NAV_GROUPS } from "./RadialTabBar";
 
-const BG = "#10150f";
+const BG = "#071821"; // teal oscuro del tema, como el resto de la app
 const VERDE = "#75f94c";
 
 export default function GroupTabBar({ state, navigation, groupId }) {

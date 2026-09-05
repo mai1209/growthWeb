@@ -32,7 +32,7 @@ export default class ErrorBoundary extends React.Component {
 const styles = StyleSheet.create({
   wrap: {
     flex: 1,
-    backgroundColor: "#10150f",
+    backgroundColor: "#071821",
     alignItems: "center",
     justifyContent: "center",
     padding: 32,

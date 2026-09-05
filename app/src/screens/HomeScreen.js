@@ -41,7 +41,7 @@ import {
 } from "../utils/finance";
 
 // Paleta fija del rediseño (no sigue el tema claro/oscuro: el Figma es uno solo)
-const BG = "#10150f";
+const BG = "#071821"; // teal oscuro del tema, como el resto de la app
 const VERDE = "#75f94c";
 const ROJO = "#eb3223";
 const GRIS_BORDE = "#4e4e4e";
@@ -636,7 +636,7 @@ export default function HomeScreen() {
                           cardStyleKey === k && styles.swatchActive,
                         ]}
                       >
-                        {cardStyleKey === k ? <Ionicons name="checkmark" size={18} color="#0e1a0e" /> : null}
+                        {cardStyleKey === k ? <Ionicons name="checkmark" size={18} color="#071821" /> : null}
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -1366,7 +1366,7 @@ const makeStyles = (u) => StyleSheet.create({
     backgroundColor: "#4f4f4f", // respaldo hasta que el SVG mida la tarjeta
   },
   cardBack: {
-    backgroundColor: "#1a201a",
+    backgroundColor: "#0d2430",
     borderWidth: 1,
     borderColor: LINEA,
     alignItems: "center",
