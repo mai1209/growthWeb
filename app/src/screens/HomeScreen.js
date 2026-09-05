@@ -800,14 +800,10 @@ export default function HomeScreen() {
                             const k = String(m.fecha || "").slice(0, 10);
                             let g = grupos[grupos.length - 1];
                             if (!g || g.k !== k) {
-                              g = { k, items: [], neto: 0 };
+                              g = { k, items: [] };
                               grupos.push(g);
                             }
                             g.items.push(m);
-                            const amt = Number(m.monto) || 0;
-                            if (m.tipo === "ingreso") g.neto += amt;
-                            else if (m.tipo === "ahorro") g.neto -= amt;
-                            else if (m.tipo !== "deuda" && !m.desdeAhorro) g.neto -= amt;
                           });
                           const nombreDia = (k) =>
                             k === hoyKey
@@ -822,11 +818,6 @@ export default function HomeScreen() {
                             <View key={g.k}>
                               <View style={styles.movDayHead}>
                                 <Text style={styles.movDayLabel}>{nombreDia(g.k)}</Text>
-                                <Text style={[styles.movDayNeto, { color: g.neto >= 0 ? VERDE : ROJO }]}>
-                                  {visible
-                                    ? `${g.neto >= 0 ? "+" : "-"} ${formatMoney(Math.abs(g.neto), currency)}`
-                                    : "••••"}
-                                </Text>
                               </View>
                               {g.items.map((item, idx) => {
                                 const meta = getMovementTypeMeta(item.tipo);
@@ -1614,7 +1605,6 @@ const makeStyles = (u) => StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.7,
   },
-  movDayNeto: { fontSize: 13.5, fontWeight: "800", fontVariant: ["tabular-nums"] },
   movTkDividerTop: { borderTopWidth: 1, borderColor: LINEA },
   movTkTop: { flexDirection: "row", alignItems: "center", gap: 11, paddingVertical: 12 },
   movTkInfo: { flex: 1, gap: 2 },
