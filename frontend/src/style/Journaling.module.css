@@ -1436,3 +1436,58 @@
     min-height: auto;
   }
 }
+
+/* Métricas de ánimo dentro del rail angosto: sin doble marco, sin desborde */
+.railCard > * {
+  min-width: 0;
+}
+
+.railCard .metricasPanel {
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.3rem 0.1rem;
+  border: none;
+  background: transparent;
+  gap: 0.85rem;
+}
+
+.railCard .metricasHead {
+  gap: 0.5rem;
+}
+
+.railCard .metricasEmojiBig {
+  font-size: 1.55rem;
+}
+
+.railCard .metricasTitulo {
+  font-size: 0.9rem;
+}
+
+.railCard .metricasSub {
+  font-size: 0.76rem;
+}
+
+.railCard .metricasDistRow {
+  gap: 0.45rem;
+}
+
+.railCard .metricasCara {
+  font-size: 0.95rem;
+}
+
+.railCard .metricasBarTrack {
+  height: 9px;
+}
+
+.railCard .metricasSerie {
+  height: 84px;
+  gap: 0.22rem;
+}
+
+.railCard .metricasColTrack {
+  width: 9px;
+}
+
+.railCard .metricasDiaCara {
+  font-size: 0.62rem;
+}
