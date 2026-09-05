@@ -591,6 +591,15 @@ export default function HomeScreen() {
                 {/* ===== Ticket con borde verde: Resumen / Historial ===== */}
                 <View style={styles.ticket}>
                   <View style={styles.ticketSwitchRow}>
+                    {/* Ver todos a la izquierda, en la misma fila que el switch */}
+                    {resumenTab === "historial" ? (
+                      <TouchableOpacity onPress={() => setShowHistory(true)} hitSlop={8} style={styles.verTodosWrap}>
+                        <Text style={styles.verTodos}>Ver todos</Text>
+                        <Ionicons name="chevron-forward" size={14} color={VERDE} />
+                      </TouchableOpacity>
+                    ) : (
+                      <View />
+                    )}
                     <View style={styles.ticketSwitch}>
                       {[
                         ["resumen", "Resumen"],
@@ -607,11 +616,6 @@ export default function HomeScreen() {
                       ))}
                     </View>
                   </View>
-                  {resumenTab === "historial" ? (
-                    <TouchableOpacity onPress={() => setShowHistory(true)} hitSlop={8} style={styles.verTodosWrap}>
-                      <Text style={styles.verTodos}>Ver todos</Text>
-                    </TouchableOpacity>
-                  ) : null}
 
                   {resumenTab === "resumen" ? (
                     <View style={styles.ticketBody}>
@@ -1374,7 +1378,11 @@ const makeStyles = (u) => StyleSheet.create({
     marginTop: 30 * u,
   },
   // Switch Resumen/Historial: contenedor cuadrado a la derecha (mockup 3)
-  ticketSwitchRow: { alignItems: "flex-end" },
+  ticketSwitchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   ticketSwitch: {
     flexDirection: "row",
     backgroundColor: "rgba(255,255,255,0.06)",
@@ -1393,8 +1401,8 @@ const makeStyles = (u) => StyleSheet.create({
   ticketSegOn: { backgroundColor: VERDE },
   ticketSegText: { fontFamily: "Menda-Medium", fontSize: 25 * u, letterSpacing: -1 * u, color: TXT },
   ticketSegTextOn: { color: "#000000" },
-  verTodosWrap: { alignSelf: "flex-end", marginTop: 10 * u, marginRight: 8 * u },
-  verTodos: { fontFamily: "Menda-Medium", color: VERDE, fontSize: 18 * u },
+  verTodosWrap: { flexDirection: "row", alignItems: "center", gap: 2, paddingLeft: 4 },
+  verTodos: { fontFamily: "Menda-Medium", color: VERDE, fontSize: 14.5 },
 
   ticketBody: { marginTop: 18 * u, gap: 14 * u },
   // Caja con borde (la usa el historial reducido)
