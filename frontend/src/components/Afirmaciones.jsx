@@ -1,10 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FiCheck, FiPlay, FiPlus, FiSquare, FiSun, FiTrash2 } from "react-icons/fi";
+import {
+  FiCheck,
+  FiChevronLeft,
+  FiChevronRight,
+  FiPlay,
+  FiPlus,
+  FiSquare,
+  FiSun,
+  FiTrash2,
+} from "react-icons/fi";
 import { afirmacionService } from "../api";
 import style from "../style/Afirmaciones.module.css";
 
 const RENGLONES_INICIALES = 5;
 const MAX_RENGLONES = 30;
+
+// Tintes de las tarjetas del carrusel (paleta de la app, rotan en orden)
+const CARD_TINTS = ["#9cfb43", "#58eba4", "#ffd55c", "#69a7ff", "#f070b8"];
 
 // Fecha local del navegador en formato YYYY-MM-DD. No usamos toISOString() a
 // secas porque eso devuelve UTC y a la noche te cambia el día antes de tiempo.
@@ -154,6 +166,36 @@ function Afirmaciones() {
 
   const hayEscritas = useMemo(() => lineas.some((l) => l.trim()), [lineas]);
 
+  // ---- Carrusel de tarjetas (las afirmaciones escritas, para leerlas lindo) ----
+  const escritas = useMemo(
+    () =>
+      lineas
+        .map((linea, i) => ({ texto: linea.trim(), i }))
+        .filter((x) => x.texto),
+    [lineas]
+  );
+  const carruselRef = useRef(null);
+  const [cardActiva, setCardActiva] = useState(0);
+
+  const pasoCarrusel = () => {
+    const el = carruselRef.current;
+    if (!el || !el.firstElementChild) return 0;
+    return el.firstElementChild.getBoundingClientRect().width + 14;
+  };
+  const irACard = (k) => {
+    const paso = pasoCarrusel();
+    if (paso) carruselRef.current?.scrollTo({ left: k * paso, behavior: "smooth" });
+  };
+  const moverCarrusel = (dir) =>
+    irACard(Math.max(0, Math.min(escritas.length - 1, cardActiva + dir)));
+  const onScrollCarrusel = () => {
+    const paso = pasoCarrusel();
+    if (!paso) return;
+    setCardActiva(
+      Math.max(0, Math.round((carruselRef.current?.scrollLeft || 0) / paso))
+    );
+  };
+
   // ---- Voz: leer las afirmaciones en voz alta con la voz del navegador ----
   const [hablando, setHablando] = useState(false);
   const [leyendoIdx, setLeyendoIdx] = useState(null);
@@ -215,6 +257,14 @@ function Afirmaciones() {
     },
     []
   );
+
+  // Cuando se leen en voz alta, el carrusel sigue a la tarjeta que suena.
+  useEffect(() => {
+    if (leyendoIdx == null) return;
+    const k = escritas.findIndex((x) => x.i === leyendoIdx);
+    if (k >= 0) irACard(k);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leyendoIdx]);
 
   const alternarRepetir = async () => {
     const proximo = !repetirDiario;
@@ -303,6 +353,62 @@ function Afirmaciones() {
           ? "Escribí tus afirmaciones y leelas todos los días. Mañana van a estar acá mismo: podés editarlas cuando quieras."
           : "Cada día vas a empezar con los renglones vacíos. Lo que escribas hoy se guarda igual, no se pierde."}
       </p>
+
+      {/* Carrusel de tarjetas (diseño del mockup, con nuestra paleta) */}
+      {escritas.length ? (
+        <>
+          <div className={style.carruselWrap}>
+            <button
+              type="button"
+              className={style.carruselFlecha}
+              onClick={() => moverCarrusel(-1)}
+              disabled={cardActiva <= 0}
+              aria-label="Afirmación anterior"
+            >
+              <FiChevronLeft />
+            </button>
+            <div className={style.carrusel} ref={carruselRef} onScroll={onScrollCarrusel}>
+              {escritas.map(({ texto, i }, k) => {
+                const tint = CARD_TINTS[k % CARD_TINTS.length];
+                return (
+                  <div
+                    key={i}
+                    className={`${style.carta} ${leyendoIdx === i ? style.cartaLeyendo : ""} ${
+                      resaltadas.has(i) ? style.cartaResaltada : ""
+                    }`}
+                    style={{ background: `${tint}1f`, borderColor: `${tint}59` }}
+                  >
+                    <p className={style.cartaTexto}>{texto}</p>
+                    {resaltadas.has(i) ? (
+                      <span className={style.cartaDot} style={{ background: tint }} />
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              className={style.carruselFlecha}
+              onClick={() => moverCarrusel(1)}
+              disabled={cardActiva >= escritas.length - 1}
+              aria-label="Afirmación siguiente"
+            >
+              <FiChevronRight />
+            </button>
+          </div>
+          <div className={style.carruselDots}>
+            {escritas.map((x, k) => (
+              <button
+                key={x.i}
+                type="button"
+                className={`${style.dot} ${k === cardActiva ? style.dotOn : ""}`}
+                onClick={() => irACard(k)}
+                aria-label={`Ir a la afirmación ${k + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
 
       <ol className={style.lista}>
         {lineas.map((linea, indice) => (

@@ -410,3 +410,108 @@
   color: var(--color-verde);
   box-shadow: inset 0 0 0 1px var(--accent-border, rgba(93, 199, 45, 0.4));
 }
+
+/* ===== Carrusel de tarjetas (Opción 2 del mockup, paleta propia) ===== */
+.carruselWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.3rem 0 0.2rem;
+}
+
+.carruselFlecha {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-color, rgba(127, 137, 129, 0.3));
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.carruselFlecha:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.carrusel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 0.35rem 0.1rem;
+  scrollbar-width: none;
+}
+
+.carrusel::-webkit-scrollbar {
+  display: none;
+}
+
+.carta {
+  position: relative;
+  flex: 0 0 236px;
+  min-height: 190px;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  padding: 1.1rem 1.2rem;
+  scroll-snap-align: start;
+}
+
+.cartaTexto {
+  margin: 0;
+  text-align: center;
+  color: var(--color-text);
+  font-size: 1.06rem;
+  font-weight: 700;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.cartaLeyendo {
+  outline: 2px solid #5dc72d;
+  outline-offset: 2px;
+}
+
+.cartaResaltada {
+  border-width: 2px;
+}
+
+.cartaDot {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+}
+
+.carruselDots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 0.4rem;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(127, 137, 129, 0.4);
+  cursor: pointer;
+  padding: 0;
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.dotOn {
+  width: 18px;
+  background: #5dc72d;
+}
