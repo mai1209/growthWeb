@@ -403,7 +403,9 @@ function MetricsPage({
         </article>
       </div>
 
-      {/* Trío del mockup: Composición en barras + dos anillos por categoría */}
+      {/* Panel unificado: composición + anillos arriba, evolución + ranking
+          abajo, todo sobre un mismo fondo con líneas divisorias */}
+      <div className={style.unifiedPanel}>
       <div className={style.trioGrid}>
         <article className={style.chartCard}>
           <div className={style.chartHeader}>
@@ -612,6 +614,7 @@ function MetricsPage({
             </p>
           )}
         </section>
+      </div>
       </div>
     </section>
   );

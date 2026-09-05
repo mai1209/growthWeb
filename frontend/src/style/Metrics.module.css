@@ -1184,3 +1184,57 @@
     border-top: 1px solid var(--border-color);
   }
 }
+
+/* ===== Panel unificado: trío de composición + evolución y ranking, todo
+   sobre UN solo fondo con líneas divisorias ===== */
+.unifiedPanel {
+  border: 1px solid var(--border-color);
+  background: var(--panel-background);
+  box-shadow: var(--shadow-soft);
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+/* Las grillas internas pierden su propio marco */
+.unifiedPanel .trioGrid,
+.unifiedPanel .bottomGrid {
+  gap: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* Línea horizontal entre la fila de arriba y la de abajo */
+.unifiedPanel .bottomGrid {
+  border-top: 1px solid var(--border-color);
+}
+
+/* Las secciones internas sin card propia, separadas por líneas verticales */
+.unifiedPanel .trioGrid > *,
+.unifiedPanel .bottomGrid > * {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.unifiedPanel .trioGrid > * + *,
+.unifiedPanel .bottomGrid > * + * {
+  border-left: 1px solid var(--border-color);
+}
+
+/* Apiladas en pantallas angostas: las divisiones pasan a horizontales */
+@media (max-width: 1100px) {
+  .unifiedPanel .trioGrid > * + * {
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+  }
+}
+
+@media (max-width: 1000px) {
+  .unifiedPanel .bottomGrid > * + * {
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+  }
+}
