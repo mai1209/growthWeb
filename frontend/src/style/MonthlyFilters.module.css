@@ -1872,3 +1872,122 @@
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
+
+/* ===== Unión y líneas (como Métricas): tira de totales + columna derecha ===== */
+@keyframes fLuzV {
+  0% { background-position: 50% 0%; }
+  100% { background-position: 50% 100%; }
+}
+
+@keyframes fLuzH {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+/* Tira de totales: un solo fondo con líneas verticales */
+.summaryStrip {
+  gap: 0;
+  padding-bottom: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--border-color);
+  background: var(--panel-background);
+  box-shadow: var(--shadow-soft);
+  border-radius: 24px;
+}
+
+.summaryStrip .summaryCard {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.summaryStrip .summaryCard + .summaryCard {
+  border-left: 1px solid var(--border-color);
+}
+
+.summaryStrip .summaryCard + .summaryCard::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 42%,
+    rgba(117, 249, 76, 0.45) 50%,
+    transparent 58%,
+    transparent 100%
+  );
+  background-size: 100% 320%;
+  animation: fLuzV 8s linear infinite;
+}
+
+.summaryStrip .summaryCard:nth-child(3)::after { animation-delay: -2.6s; }
+.summaryStrip .summaryCard:nth-child(4)::after { animation-delay: -5.2s; }
+
+/* Columna derecha: Resumen + Distribución + Insights en una sola card */
+.sideCol {
+  gap: 0;
+  border: 1px solid var(--border-color);
+  background: var(--panel-background);
+  box-shadow: var(--shadow-soft);
+  border-radius: 20px;
+  overflow: hidden;
+  align-self: start;
+}
+
+.sideCol .sideCard {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  position: relative;
+}
+
+.sideCol .sideCard + .sideCard {
+  border-top: 1px solid var(--border-color);
+}
+
+.sideCol .sideCard + .sideCard::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 42%,
+    rgba(117, 249, 76, 0.45) 50%,
+    transparent 58%,
+    transparent 100%
+  );
+  background-size: 320% 100%;
+  animation: fLuzH 11s linear infinite;
+}
+
+.sideCol .sideCard:nth-child(3)::before { animation-delay: -4.5s; }
+
+/* Accesibilidad y mobile: luces apagadas */
+@media (prefers-reduced-motion: reduce) {
+  .summaryStrip .summaryCard + .summaryCard::after,
+  .sideCol .sideCard + .sideCard::before {
+    animation: none;
+    background: none;
+  }
+}
+
+@media (max-width: 1000px) {
+  .summaryStrip .summaryCard + .summaryCard::after,
+  .sideCol .sideCard + .sideCard::before {
+    animation: none;
+    background: none;
+  }
+}
