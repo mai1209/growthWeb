@@ -26,7 +26,6 @@ import { useNavigation } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Svg, { Defs, LinearGradient, Stop, Rect } from "react-native-svg";
-import { BlurView } from "expo-blur";
 import * as SecureStore from "expo-secure-store";
 import { movimientoService } from "../api";
 import MovementFormModal from "../components/MovementFormModal";
@@ -535,12 +534,17 @@ export default function HomeScreen() {
                         onPress={() => setModalMode(a.key)}
                         activeOpacity={0.7}
                       >
-                        <BlurView intensity={28} tint="dark" style={styles.bcQuickBtn}>
+                        <View
+                          style={[
+                            styles.bcQuickBtn,
+                            { backgroundColor: card.iconBg, borderColor: card.iconBorder },
+                          ]}
+                        >
                           <Ionicons name={a.icon} size={22} color={a.color} />
                           {a.extra ? (
                             <Ionicons name={a.extra} size={13} color={a.color} style={styles.quickExtra} />
                           ) : null}
-                        </BlurView>
+                        </View>
                         <Text style={[styles.bcQuickLabel, { color: card.text }]} numberOfLines={1}>
                           {a.label}
                         </Text>
@@ -1346,15 +1350,13 @@ const makeStyles = (u) => StyleSheet.create({
     marginTop: 22 * u,
   },
   bcQuickItem: { flex: 1, alignItems: "center", gap: 6 },
-  // Cuadrado redondeado, negro con blur (glass oscuro sobre la card)
+  // Cuadrado redondeado con el vidrio propio de cada estilo de tarjeta
+  // (backgroundColor y borderColor se pasan inline desde card.iconBg/iconBorder)
   bcQuickBtn: {
     width: 50,
     height: 50,
     borderRadius: 15,
-    overflow: "hidden",
-    backgroundColor: "rgba(0,0,0,0.3)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
