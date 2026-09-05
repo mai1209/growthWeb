@@ -809,8 +809,6 @@ function Journaling() {
     <div className={style.wrap}>
       <header className={style.header}>
         <div className={style.fechaBloque}>
-          <FiFeather className={style.fechaIcono} />
-          <span className={style.fecha}>Journaling</span>
           {racha > 0 ? (
             <span className={style.racha} title={`${racha} días seguidos escribiendo`}>
               🔥 {racha} {racha === 1 ? "día" : "días"}
