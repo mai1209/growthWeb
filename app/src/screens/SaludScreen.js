@@ -631,6 +631,7 @@ export default function SaludScreen() {
   // ---------------- Peso ----------------
   const [pesoDias, setPesoDias] = useState({});
   const [pesoInput, setPesoInput] = useState("");
+  const [pesoEditOpen, setPesoEditOpen] = useState(false); // editor visible
 
   const guardarPeso = () => {
     const kg = parseFloat(String(pesoInput).replace(",", "."));
@@ -649,6 +650,7 @@ export default function SaludScreen() {
     });
     pushSalud({ peso: { [hoy]: kg } });
     setPesoInput("");
+    setPesoEditOpen(false);
   };
 
   const pesoEntries = useMemo(
@@ -1374,7 +1376,23 @@ export default function SaludScreen() {
               <Ionicons name="body-outline" size={18} color={colors.greenDark} />
               <Text style={styles.cardTitle}>Peso</Text>
             </View>
+            {/* Botón claro para que se entienda que se edita desde acá */}
+            <TouchableOpacity
+              style={styles.metaBtn}
+              onPress={() => setPesoEditOpen((v) => !v)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={pesoEditOpen ? "close-outline" : "create-outline"}
+                size={14}
+                color={colors.muted}
+              />
+              <Text style={styles.metaBtnText}>
+                {pesoEditOpen ? "Cancelar" : "Actualizar"}
+              </Text>
+            </TouchableOpacity>
           </View>
+
           <View style={styles.pesoRow}>
             <View style={{ flex: 1 }}>
               <Text style={styles.ringBig}>{pesoActual != null ? `${pesoActual} kg` : "—"}</Text>
@@ -1383,23 +1401,33 @@ export default function SaludScreen() {
                   {pesoDelta > 0 ? "▲" : "▼"} {Math.abs(pesoDelta).toFixed(1)} kg vs. anterior
                 </Text>
               ) : (
-                <Text style={styles.ringSub}>Cargalo cuando quieras</Text>
+                <Text style={styles.ringSub}>
+                  {pesoActual == null ? "Tocá Actualizar para registrar tu peso" : "Cargalo cuando quieras"}
+                </Text>
               )}
             </View>
-            <View style={styles.pesoInputRow}>
-              <TextInput
-                style={styles.pesoInput}
-                value={pesoInput}
-                onChangeText={(v) => setPesoInput(v.replace(/[^0-9.,]/g, ""))}
-                keyboardType="decimal-pad"
-                placeholder="kg"
-                placeholderTextColor={colors.muted}
-              />
-              <TouchableOpacity style={styles.pesoSave} onPress={guardarPeso}>
-                <Text style={styles.pesoSaveText}>Guardar</Text>
-              </TouchableOpacity>
-            </View>
           </View>
+
+          {pesoEditOpen ? (
+            <View style={styles.pesoEditBox}>
+              <Text style={styles.pesoEditLabel}>Nuevo peso de hoy (kg)</Text>
+              <View style={styles.pesoInputRow}>
+                <TextInput
+                  style={[styles.pesoInput, { flex: 1 }]}
+                  value={pesoInput}
+                  onChangeText={(v) => setPesoInput(v.replace(/[^0-9.,]/g, ""))}
+                  keyboardType="decimal-pad"
+                  placeholder={pesoActual != null ? String(pesoActual) : "72.5"}
+                  placeholderTextColor={colors.muted}
+                  autoFocus
+                />
+                <TouchableOpacity style={styles.pesoSave} onPress={guardarPeso}>
+                  <Ionicons name="checkmark" size={15} color="#06210a" />
+                  <Text style={styles.pesoSaveText}>Guardar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : null}
         </View>
 
         </>
@@ -1707,12 +1735,26 @@ const makeStyles = (colors) =>
       textAlign: "center",
     },
     pesoSave: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
       paddingHorizontal: 14,
       paddingVertical: 11,
       borderRadius: 12,
       backgroundColor: colors.greenBright,
     },
     pesoSaveText: { color: "#06210a", fontSize: 13, fontWeight: "800" },
+    // Editor de peso desplegable
+    pesoEditBox: {
+      marginTop: 12,
+      padding: 12,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.bg,
+      gap: 8,
+    },
+    pesoEditLabel: { color: colors.muted, fontSize: 12.5, fontWeight: "700" },
 
     caminataBtn: {
       flexDirection: "row",
