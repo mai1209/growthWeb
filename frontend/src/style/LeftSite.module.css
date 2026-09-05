@@ -1335,3 +1335,86 @@ border: 1px solid rgba(255, 255, 255, 0.12);
     font-size: 0.86rem;
   }
 }
+/* ===== Stat cards del Home unidas: un solo fondo con líneas y luz sutil ===== */
+@keyframes homeLuzH {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.statGrid {
+  gap: 0;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+  background: var(--panel-background, var(--surface-card));
+  box-shadow: var(--shadow-soft, 0 8px 18px rgba(0, 0, 0, 0.14));
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.statGrid .statCard {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.statGrid .statCard + .statCard {
+  border-top: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+}
+
+/* Destello que recorre cada línea horizontal (la barrita de acento de la
+   izquierda usa ::before, así que acá va ::after) */
+.statGrid .statCard + .statCard::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 42%,
+    rgba(117, 249, 76, 0.4) 50%,
+    transparent 58%,
+    transparent 100%
+  );
+  background-size: 320% 100%;
+  animation: homeLuzH 10s linear infinite;
+}
+
+.statGrid .statCard:nth-child(3)::after { animation-delay: -1.7s; }
+.statGrid .statCard:nth-child(4)::after { animation-delay: -3.4s; }
+.statGrid .statCard:nth-child(5)::after { animation-delay: -5.1s; }
+.statGrid .statCard:nth-child(6)::after { animation-delay: -6.8s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .statGrid .statCard + .statCard::after {
+    animation: none;
+    background: none;
+  }
+}
+
+/* En la grilla 2x de pantallas chicas las líneas se acomodan y sin luces */
+@media (max-width: 1000px) {
+  .statGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .statGrid .statCard + .statCard {
+    border-top: none;
+  }
+
+  .statGrid .statCard + .statCard::after {
+    animation: none;
+    background: none;
+  }
+
+  .statGrid .statCard:nth-child(2n) {
+    border-left: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+  }
+
+  .statGrid .statCard:nth-child(n + 3) {
+    border-top: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+  }
+}

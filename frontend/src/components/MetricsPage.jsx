@@ -4,7 +4,7 @@
 // principal abajo) · Evolución como línea suave con puntos verde/rojo ·
 // Ranking como lista numerada.
 import { useMemo, useState } from "react";
-import { FiActivity, FiClock, FiTrendingDown, FiTrendingUp } from "react-icons/fi";
+import { FiClock, FiDollarSign, FiTrendingDown, FiTrendingUp } from "react-icons/fi";
 import style from "../style/Metrics.module.css";
 import {
   CURRENCY_OPTIONS,
@@ -367,7 +367,7 @@ function MetricsPage({
           <div className={style.statHead}>
             <span>Balance</span>
             <i className={style.statIcon} style={{ background: "rgba(105, 167, 255, 0.16)", color: "#69a7ff" }}>
-              <FiActivity />
+              <FiDollarSign />
             </i>
           </div>
           <strong>{formatMoney(summary.total, currency)}</strong>
