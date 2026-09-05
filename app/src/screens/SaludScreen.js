@@ -1036,7 +1036,11 @@ export default function SaludScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={[]}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+      >
         <View style={styles.headerRow}>
           <View style={styles.headerTitle}>
             <Ionicons
