@@ -789,88 +789,128 @@ export default function HomeScreen() {
                       {monthMovs.length === 0 ? (
                         <Text style={styles.movEmpty}>No hay movimientos este mes.</Text>
                       ) : (
-                        monthMovs.map((item, idx) => {
-                          const meta = getMovementTypeMeta(item.tipo);
-                          const abierto = expandedMovs.has(item._id);
-                          const isDebt = item.tipo === "deuda";
-                          const isPendingDebt = isDebt && item.deudaEstado !== "pagada";
-                          const debtPaid = Number(item.deudaPagado) || 0;
-                          const debtRemaining = (Number(item.monto) || 0) - debtPaid;
-                          const isPartialDebt = isPendingDebt && debtPaid > 0;
-                          return (
-                            <View
-                              key={item._id}
-                              style={[styles.movTkItem, idx < monthMovs.length - 1 && styles.movTkDivider]}
-                            >
-                              <TouchableOpacity
-                                style={styles.movTkTop}
-                                activeOpacity={0.7}
-                                onPress={() => toggleMovExpand(item._id)}
-                              >
-                                <View style={[styles.movRedIcon, { borderColor: meta.color + "55", backgroundColor: meta.color + "1f" }]}>
-                                  <Ionicons name={movementIcon(item)} size={17} color={TXT} />
-                                </View>
-                                <Text style={styles.movRedTitle} numberOfLines={1}>
-                                  {item.categoria || "Sin categoría"}
+                        (() => {
+                          // Agrupado por día (más recientes primero) con el neto del día
+                          const hoyKey = new Date().toISOString().slice(0, 10);
+                          const ayerD = new Date();
+                          ayerD.setDate(ayerD.getDate() - 1);
+                          const ayerKey = ayerD.toISOString().slice(0, 10);
+                          const grupos = [];
+                          monthMovs.forEach((m) => {
+                            const k = String(m.fecha || "").slice(0, 10);
+                            let g = grupos[grupos.length - 1];
+                            if (!g || g.k !== k) {
+                              g = { k, items: [], neto: 0 };
+                              grupos.push(g);
+                            }
+                            g.items.push(m);
+                            const amt = Number(m.monto) || 0;
+                            if (m.tipo === "ingreso") g.neto += amt;
+                            else if (m.tipo === "ahorro") g.neto -= amt;
+                            else if (m.tipo !== "deuda" && !m.desdeAhorro) g.neto -= amt;
+                          });
+                          const nombreDia = (k) =>
+                            k === hoyKey
+                              ? "Hoy"
+                              : k === ayerKey
+                                ? "Ayer"
+                                : new Date(`${k}T12:00:00`).toLocaleDateString("es-AR", {
+                                    day: "numeric",
+                                    month: "long",
+                                  });
+                          return grupos.map((g) => (
+                            <View key={g.k}>
+                              <View style={styles.movDayHead}>
+                                <Text style={styles.movDayLabel}>{nombreDia(g.k)}</Text>
+                                <Text style={[styles.movDayNeto, { color: g.neto >= 0 ? VERDE : ROJO }]}>
+                                  {visible
+                                    ? `${g.neto >= 0 ? "+" : "-"} ${formatMoney(Math.abs(g.neto), currency)}`
+                                    : "••••"}
                                 </Text>
-                                <Text style={[styles.movRedAmount, { color: meta.color }]}>
-                                  {visible ? formatSignedMoney(item.monto, currency, item.tipo) : "••••"}
-                                </Text>
-                                <Ionicons
-                                  name={abierto ? "chevron-up" : "chevron-down"}
-                                  size={18}
-                                  color={MUTED}
-                                  style={{ marginLeft: 6 }}
-                                />
-                              </TouchableOpacity>
+                              </View>
+                              {g.items.map((item, idx) => {
+                                const meta = getMovementTypeMeta(item.tipo);
+                                const abierto = expandedMovs.has(item._id);
+                                const isDebt = item.tipo === "deuda";
+                                const isPendingDebt = isDebt && item.deudaEstado !== "pagada";
+                                const debtPaid = Number(item.deudaPagado) || 0;
+                                const debtRemaining = (Number(item.monto) || 0) - debtPaid;
+                                const isPartialDebt = isPendingDebt && debtPaid > 0;
+                                return (
+                                  <View key={item._id} style={idx > 0 ? styles.movTkDividerTop : null}>
+                                    <TouchableOpacity
+                                      style={styles.movTkTop}
+                                      activeOpacity={0.7}
+                                      onPress={() => toggleMovExpand(item._id)}
+                                    >
+                                      <View style={[styles.movRedIcon, { borderColor: meta.color + "55", backgroundColor: meta.color + "1f" }]}>
+                                        <Ionicons name={movementIcon(item)} size={17} color={meta.color} />
+                                      </View>
+                                      <View style={styles.movTkInfo}>
+                                        <Text style={styles.movRedTitle} numberOfLines={1}>
+                                          {item.categoria || "Sin categoría"}
+                                        </Text>
+                                        <Text style={styles.movRedMeta} numberOfLines={1}>
+                                          {meta.label}
+                                          {item.medio ? ` · ${item.medio}` : ""}
+                                          {item.desdeAhorro ? " · Uso de ahorro" : ""}
+                                        </Text>
+                                      </View>
+                                      <View style={styles.movTkRight}>
+                                        <Text style={[styles.movRedAmount, { color: meta.color }]}>
+                                          {visible ? formatSignedMoney(item.monto, currency, item.tipo) : "••••"}
+                                        </Text>
+                                        {isPendingDebt ? (
+                                          <Text style={styles.movPendTag}>{isPartialDebt ? "Parcial" : "Pendiente"}</Text>
+                                        ) : null}
+                                      </View>
+                                      <Ionicons
+                                        name={abierto ? "chevron-up" : "chevron-down"}
+                                        size={17}
+                                        color={MUTED}
+                                        style={{ marginLeft: 4 }}
+                                      />
+                                    </TouchableOpacity>
 
-                              {abierto ? (
-                                <View style={styles.movTkBody}>
-                                  <Text style={styles.movRedFecha}>{fmtDate(item.fecha)}</Text>
-                                  {item.detalle ? <Text style={styles.movRedDetail}>{item.detalle}</Text> : null}
-                                  {isDebt && item.deudaAcreedor ? (
-                                    <Text style={styles.movRedDetail}>Acreedor: {item.deudaAcreedor}</Text>
-                                  ) : null}
-                                  {isPendingDebt ? (
-                                    <Text style={styles.movRedDebt}>
-                                      {isPartialDebt
-                                        ? `Pagado ${formatMoney(debtPaid, currency)} · resta ${formatMoney(debtRemaining, currency)}`
-                                        : "Pendiente de pago"}
-                                    </Text>
-                                  ) : null}
-                                  <View style={styles.movRedChips}>
-                                    <Text style={[styles.movRedChip, { color: meta.color }]}>{meta.label}</Text>
-                                    {isPartialDebt ? (
-                                      <Text style={[styles.movRedChip, { color: VERDE }]}>Parcial</Text>
+                                    {abierto ? (
+                                      <View style={styles.movTkBody}>
+                                        {item.detalle ? <Text style={styles.movRedDetail}>{item.detalle}</Text> : null}
+                                        {isDebt && item.deudaAcreedor ? (
+                                          <Text style={styles.movRedDetail}>Acreedor: {item.deudaAcreedor}</Text>
+                                        ) : null}
+                                        {isPendingDebt ? (
+                                          <Text style={styles.movRedDebt}>
+                                            {isPartialDebt
+                                              ? `Pagado ${formatMoney(debtPaid, currency)} · resta ${formatMoney(debtRemaining, currency)}`
+                                              : "Pendiente de pago"}
+                                          </Text>
+                                        ) : null}
+                                        <View style={styles.movRedActions}>
+                                          {isPendingDebt ? (
+                                            <TouchableOpacity style={styles.movRedPay} onPress={() => setShowHistory(true)}>
+                                              <Ionicons name="cash-outline" size={15} color="#3a2d05" />
+                                              <Text style={styles.movRedPayText}>Pagar deuda</Text>
+                                            </TouchableOpacity>
+                                          ) : (
+                                            <View />
+                                          )}
+                                          <View style={styles.movRedIcons}>
+                                            <TouchableOpacity onPress={() => setEditMov(item)} hitSlop={8}>
+                                              <Ionicons name="pencil" size={18} color={MUTED} />
+                                            </TouchableOpacity>
+                                            <TouchableOpacity onPress={() => handleDeleteMov(item)} hitSlop={8}>
+                                              <Ionicons name="trash-outline" size={18} color="#ff6b5e" />
+                                            </TouchableOpacity>
+                                          </View>
+                                        </View>
+                                      </View>
                                     ) : null}
-                                    {item.desdeAhorro ? (
-                                      <Text style={[styles.movRedChip, { color: "#4fb6c9" }]}>Uso de ahorro</Text>
-                                    ) : null}
-                                    {item.medio ? <Text style={styles.movRedChip}>{item.medio}</Text> : null}
                                   </View>
-                                  <View style={styles.movRedActions}>
-                                    {isPendingDebt ? (
-                                      <TouchableOpacity style={styles.movRedPay} onPress={() => setShowHistory(true)}>
-                                        <Ionicons name="cash-outline" size={15} color="#3a2d05" />
-                                        <Text style={styles.movRedPayText}>Pagar deuda</Text>
-                                      </TouchableOpacity>
-                                    ) : (
-                                      <View />
-                                    )}
-                                    <View style={styles.movRedIcons}>
-                                      <TouchableOpacity onPress={() => setEditMov(item)} hitSlop={8}>
-                                        <Ionicons name="pencil" size={18} color={MUTED} />
-                                      </TouchableOpacity>
-                                      <TouchableOpacity onPress={() => handleDeleteMov(item)} hitSlop={8}>
-                                        <Ionicons name="trash-outline" size={18} color="#ff6b5e" />
-                                      </TouchableOpacity>
-                                    </View>
-                                  </View>
-                                </View>
-                              ) : null}
+                                );
+                              })}
                             </View>
-                          );
-                        })
+                          ));
+                        })()
                       )}
                     </View>
                   )}
@@ -1558,27 +1598,48 @@ const makeStyles = (u) => StyleSheet.create({
     marginHorizontal: 5,
   },
 
-  // ---- Historial reducido dentro del ticket ----
-  movEmpty: { color: MUTED, fontSize: 13, textAlign: "center", paddingVertical: 22 },
-  movTkItem: {},
-  movTkDivider: { borderBottomWidth: 1, borderColor: LINEA },
-  movTkTop: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12 },
+  // ---- Historial reducido, agrupado por día ----
+  movEmpty: { color: MUTED, fontSize: 13.5, textAlign: "center", paddingVertical: 22 },
+  movDayHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 14,
+    marginBottom: 2,
+  },
+  movDayLabel: {
+    color: MUTED,
+    fontSize: 12,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+  },
+  movDayNeto: { fontSize: 13.5, fontWeight: "800", fontVariant: ["tabular-nums"] },
+  movTkDividerTop: { borderTopWidth: 1, borderColor: LINEA },
+  movTkTop: { flexDirection: "row", alignItems: "center", gap: 11, paddingVertical: 12 },
+  movTkInfo: { flex: 1, gap: 2 },
+  movTkRight: { alignItems: "flex-end", gap: 2 },
   movTkBody: { paddingBottom: 12, paddingTop: 2, gap: 4 },
   movRedIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
-  movRedTitle: { flex: 1, color: TXT, fontSize: 14.5, fontWeight: "700" },
-  movRedAmount: { fontSize: 14.5, fontWeight: "800", fontVariant: ["tabular-nums"] },
-  movRedFecha: { color: MUTED, fontSize: 12, fontWeight: "700" },
-  movRedDetail: { color: MUTED, fontSize: 13 },
+  movRedTitle: { color: TXT, fontSize: 15.5, fontWeight: "700" },
+  movRedMeta: { color: MUTED, fontSize: 12.5 },
+  movRedAmount: { fontSize: 16, fontWeight: "800", fontVariant: ["tabular-nums"] },
+  movPendTag: {
+    color: "#f4c622",
+    fontSize: 10.5,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  movRedDetail: { color: MUTED, fontSize: 13.5 },
   movRedDebt: { color: VERDE, fontSize: 13, fontWeight: "700" },
-  movRedChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
-  movRedChip: { color: MUTED, fontSize: 11.5, fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.4 },
   movRedPay: {
     flexDirection: "row",
     alignItems: "center",
