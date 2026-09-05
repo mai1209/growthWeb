@@ -12,6 +12,7 @@ import {
   FiFeather,
   FiGrid,
   FiPlus,
+  FiShare2,
   FiTrash2,
   FiX,
 } from "react-icons/fi";
@@ -52,6 +53,37 @@ const CAMPOS = [
   { campo: "mejor", placeholder: "Un momento, una persona, un logro." },
   { campo: "distinto", placeholder: "Sin culpa: es para mañana." },
 ];
+
+// Estilos de papel de la hoja (preferencia local del navegador)
+const PAPEL_ESTILOS = [
+  { id: "crema", nombre: "Crema", fondo: "#faf5e9" },
+  { id: "blanco", nombre: "Blanco", fondo: "#ffffff" },
+  { id: "rosa", nombre: "Rosa", fondo: "#fbeef0" },
+  { id: "celeste", nombre: "Celeste", fondo: "#eaf3f8" },
+  { id: "verde", nombre: "Verde", fondo: "#eef6e4" },
+];
+
+// Textarea sin bordes que crece con el contenido: se escribe "sobre el papel".
+function AutoTextarea({ value, onChange, placeholder, className }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
+  return (
+    <textarea
+      ref={ref}
+      rows={1}
+      className={className}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      autoCapitalize="sentences"
+    />
+  );
+}
 
 // Plantillas de preguntas por nivel/tema (arranque para quien no sabe qué
 // poner; igual se pueden editar o reemplazar). Cada una llena las 3 base y
@@ -174,17 +206,23 @@ function Journaling() {
   const [extras, setExtras] = useState([]); // definiciones [{id, texto}]
   const [borradorExtras, setBorradorExtras] = useState([]);
   const [plantillasOpen, setPlantillasOpen] = useState(false);
-  const [vista, setVista] = useState("libro"); // libro | calendario
+  const [metricasOpen, setMetricasOpen] = useState(false);
   const [ayudaOpen, setAyudaOpen] = useState(false);
   const [calRef, setCalRef] = useState(() => new Date());
-  // Páginas internas de un mismo día: el contenido fluye en columnas del ancho
-  // de la hoja (sin scroll) y las flechitas de arriba deslizan entre columnas.
-  const GAP_COL = 60;
-  const [pagInterna, setPagInterna] = useState(0);
-  const [numPagsInternas, setNumPagsInternas] = useState(1);
-  const [anchoHoja, setAnchoHoja] = useState(0);
-  const viewportRef = useRef(null);
-  const columnasRef = useRef(null);
+  // Estilo del papel de la hoja (se recuerda en este navegador)
+  const [papelEstilo, setPapelEstilo] = useState(() => {
+    try {
+      return localStorage.getItem("gw-journal-papel") || "crema";
+    } catch {
+      return "crema";
+    }
+  });
+  const elegirPapel = (id) => {
+    setPapelEstilo(id);
+    try {
+      localStorage.setItem("gw-journal-papel", id);
+    } catch {}
+  };
   const guardadoRef = useRef(null);
 
   const aplicar = useCallback((data) => {
@@ -336,13 +374,12 @@ function Journaling() {
     }
   };
 
-  const irADia = async (f, { libro = false } = {}) => {
+  const irADia = async (f) => {
     if (!f) return;
     if (f !== fecha) {
       await flushGuardado();
       setFecha(f);
     }
-    if (libro) setVista("libro");
   };
 
   // Todas las entradas: historial (otros días con contenido) + el día activo
@@ -403,41 +440,8 @@ function Journaling() {
     ? extras
     : (entrada.extras || []).map((x) => ({ id: x.id, texto: x.texto }));
 
-  // Al cambiar de día, arrancamos en la primera página interna.
-  const pagsPreviasRef = useRef(0);
-  useEffect(() => {
-    setPagInterna(0);
-    pagsPreviasRef.current = 0;
-  }, [libroIdx]);
-
-  // Mide el ancho de la hoja y cuántas páginas internas ocupa el contenido.
-  useEffect(() => {
-    if (vista !== "libro") return undefined;
-    const medir = () => {
-      const viewport = viewportRef.current;
-      if (!viewport) return;
-      const w = viewport.clientWidth;
-      setAnchoHoja(w);
-      requestAnimationFrame(() => {
-        const cols = columnasRef.current;
-        if (!cols || !w) return;
-        const paginas = Math.max(1, Math.round((cols.scrollWidth + GAP_COL) / (w + GAP_COL)));
-        setNumPagsInternas(paginas);
-        // Si estás escribiendo el día de hoy y se llenó la hoja, pasa sola a
-        // la página nueva (donde sigue el texto). Para días viejos no salta.
-        const escribiendoHoy = entradas[libroIdx]?.fecha === fecha;
-        if (paginas > pagsPreviasRef.current && escribiendoHoy) {
-          setPagInterna(paginas - 1);
-        } else {
-          setPagInterna((prev) => Math.min(prev, paginas - 1));
-        }
-        pagsPreviasRef.current = paginas;
-      });
-    };
-    medir();
-    window.addEventListener("resize", medir);
-    return () => window.removeEventListener("resize", medir);
-  }, [vista, libroIdx, entradas, preguntas, anchoHoja, fecha]);
+  // (Las "páginas internas" con columnas desaparecieron: ahora se escribe
+  // directamente sobre la hoja y esta crece con el contenido.)
 
   if (cargando) {
     return <p className={style.cargando}>Cargando tu journal…</p>;
@@ -498,7 +502,7 @@ function Journaling() {
                 className={`${style.calCell} ${d.getMonth() !== mesActual ? style.calCellFuera : ""} ${
                   esHoy ? style.calCellHoy : ""
                 } ${e ? style.calCellConEntrada : ""} ${key === fecha ? style.calCellActiva : ""}`}
-                onClick={() => irADia(key, { libro: true })}
+                onClick={() => irADia(key)}
                 disabled={esFuturo}
                 title={e ? `Abrir el ${fechaLarga(key)}` : `Escribir el ${fechaLarga(key)}`}
               >
@@ -773,140 +777,32 @@ function Journaling() {
     doc.save("mi-journaling.pdf");
   };
 
-  const renderLibro = () => {
-    if (libroIdx < 0) {
-      return (
-        <div className={style.libroVacio}>
-          <FiBookOpen />
-          <p>Todavía no hay páginas escritas. Lo que escribas hoy va a aparecer acá.</p>
-        </div>
-      );
+  // Comparte el día activo como texto (share nativo del sistema o portapapeles)
+  const compartirDia = async () => {
+    const partes = [`Journaling — ${fechaLarga(fecha)}`];
+    if (Number(entrada.animo) > 0) {
+      partes.push(`Ánimo: ${emojiDe(entrada.animo)} ${ANIMO_LABELS[Number(entrada.animo)] || ""}`);
     }
-
-    const e = entradas[libroIdx];
-
-    return (
-      <>
-      <div className={style.libroPage}>
-        <div className={style.libroTopControles}>
-          {numPagsInternas > 1 ? (
-            <>
-              <button
-                type="button"
-                className={`${style.libroNavBtn} ${style.libroNavBtnChico}`}
-                onClick={() => setPagInterna((prev) => Math.max(0, prev - 1))}
-                disabled={pagInterna <= 0}
-                aria-label="Página interna anterior"
-              >
-                <FiChevronLeft />
-              </button>
-              <span className={style.libroPaginaChica}>
-                {pagInterna + 1}/{numPagsInternas}
-              </span>
-              <button
-                type="button"
-                className={`${style.libroNavBtn} ${style.libroNavBtnChico}`}
-                onClick={() => setPagInterna((prev) => Math.min(numPagsInternas - 1, prev + 1))}
-                disabled={pagInterna >= numPagsInternas - 1}
-                aria-label="Página interna siguiente"
-              >
-                <FiChevronRight />
-              </button>
-            </>
-          ) : null}
-          {racha > 0 ? (
-            <span className={style.rachaEnHoja} title={`${racha} días seguidos escribiendo`}>
-              🔥 {racha} {racha === 1 ? "día" : "días"}
-            </span>
-          ) : null}
-        </div>
-
-        <div className={style.libroViewport} ref={viewportRef}>
-          <div
-            className={style.libroColumnas}
-            ref={columnasRef}
-            style={
-              anchoHoja
-                ? {
-                    columnWidth: anchoHoja,
-                    WebkitColumnWidth: anchoHoja,
-                    columnGap: GAP_COL,
-                    transform: `translateX(-${pagInterna * (anchoHoja + GAP_COL)}px)`,
-                  }
-                : undefined
-            }
-          >
-            <p className={style.libroFecha}>{fechaLarga(e.fecha)}</p>
-            {Number(e.animo) > 0 ? (
-              <p className={style.libroAnimo}>
-                <span className={style.libroAnimoEmoji}>{emojiDe(e.animo)}</span>
-                <span className={style.libroAnimoTexto}>
-                  {e.fecha === hoyLocal() ? "Hoy me siento" : "Me sentí"}{" "}
-                  {ANIMO_LABELS[Number(e.animo)] || ""}
-                </span>
-              </p>
-            ) : null}
-
-            {CAMPOS.map((p) =>
-              e[p.campo] ? (
-                <div key={p.campo} className={style.libroBloque}>
-                  <p className={style.libroPregunta}>{preguntasVista(e)[p.campo]}</p>
-                  <p className={style.libroTexto}>{e[p.campo]}</p>
-                </div>
-              ) : null
-            )}
-            {(e.extras || []).map((x) =>
-              String(x.valor || "").trim() ? (
-                <div key={x.id} className={style.libroBloque}>
-                  <p className={style.libroPregunta}>{x.texto}</p>
-                  <p className={style.libroTexto}>{x.valor}</p>
-                </div>
-              ) : null
-            )}
-            {e.libre ? (
-              <div className={style.libroBloque}>
-                <p className={style.libroTexto}>{e.libre}</p>
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        {/* Paginador dentro de la hoja, en tinta */}
-        <div className={style.libroNav}>
-          <button
-            type="button"
-            className={style.libroNavBtn}
-            onClick={() => irADia(entradas[libroIdx - 1]?.fecha)}
-            disabled={libroIdx <= 0}
-            aria-label="Día anterior"
-          >
-            <FiChevronLeft />
-          </button>
-          <span className={style.libroPagina}>
-            Página {libroIdx + 1} de {entradas.length}
-          </span>
-          <button
-            type="button"
-            className={style.libroNavBtn}
-            onClick={() => irADia(entradas[libroIdx + 1]?.fecha)}
-            disabled={libroIdx >= entradas.length - 1}
-            aria-label="Día siguiente"
-          >
-            <FiChevronRight />
-          </button>
-        </div>
-      </div>
-
-      {hayPaginasEscritas ? (
-        <div className={style.descargarRow}>
-          <button type="button" className={style.descargarBtn} onClick={descargarPDF}>
-            <FiDownload />
-            Descargar como PDF
-          </button>
-        </div>
-      ) : null}
-      </>
-    );
+    CAMPOS.forEach((p) => {
+      if (String(entrada[p.campo] || "").trim()) {
+        partes.push(`${preguntasActivas[p.campo]}\n${entrada[p.campo]}`);
+      }
+    });
+    (entrada.extras || []).forEach((x) => {
+      if (String(x.valor || "").trim()) partes.push(`${x.texto}\n${x.valor}`);
+    });
+    if (String(entrada.libre || "").trim()) partes.push(entrada.libre);
+    const texto = partes.join("\n\n");
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Mi journaling", text: texto });
+      } else {
+        await navigator.clipboard.writeText(texto);
+        window.alert("Copiado al portapapeles ✅");
+      }
+    } catch {
+      /* compartir cancelado */
+    }
   };
 
   return (
@@ -914,47 +810,48 @@ function Journaling() {
       <header className={style.header}>
         <div className={style.fechaBloque}>
           <FiFeather className={style.fechaIcono} />
-          <span className={style.fecha}>{fechaLarga(fecha)}</span>
-          {fecha !== hoyLocal() ? (
-            <button type="button" className={style.hoyBtn} onClick={() => irADia(hoyLocal())}>
-              Volver a hoy
-            </button>
+          <span className={style.fecha}>Journaling</span>
+          {racha > 0 ? (
+            <span className={style.racha} title={`${racha} días seguidos escribiendo`}>
+              🔥 {racha} {racha === 1 ? "día" : "días"}
+            </span>
           ) : null}
         </div>
         <div className={style.headerAcciones}>
-          <div className={style.vistaToggle} role="tablist" aria-label="Cómo ver tus entradas">
-            {/* Pastilla verde que se desliza detrás de la opción activa */}
-            <span
-              className={`${style.vistaThumb} ${vista === "calendario" ? style.vistaThumbDer : ""}`}
-              aria-hidden="true"
-            />
-            <button
-              type="button"
-              className={`${style.vistaBtn} ${vista === "libro" ? style.vistaBtnActivo : ""}`}
-              onClick={() => setVista("libro")}
-              aria-pressed={vista === "libro"}
-            >
-              <FiBookOpen /> Libro
-            </button>
-            <button
-              type="button"
-              className={`${style.vistaBtn} ${vista === "calendario" ? style.vistaBtnActivo : ""}`}
-              onClick={() => setVista("calendario")}
-              aria-pressed={vista === "calendario"}
-            >
-              <FiCalendar /> Calendario
-            </button>
-          </div>
-
-          <button
-            type="button"
-            className={`${style.metricasBtn} ${vista === "metricas" ? style.metricasBtnActivo : ""}`}
-            onClick={() => setVista(vista === "metricas" ? "libro" : "metricas")}
-            aria-pressed={vista === "metricas"}
-            title="Ver tu ánimo en el tiempo"
-          >
-            <FiBarChart2 /> Métricas
+          <button type="button" className={style.ayudaLink} onClick={() => setAyudaOpen(true)}>
+            <FiHelpCircle /> Sugerencias de preguntas
           </button>
+
+          {/* Personalizar preguntas (sólo hoy) */}
+          {esHoy ? (
+            editandoPreguntas ? (
+              <>
+                <button type="button" className={style.preguntasBtn} onClick={guardarPreguntas}>
+                  <FiCheck /> Guardar preguntas
+                </button>
+                <button
+                  type="button"
+                  className={style.preguntasBtn}
+                  onClick={() => setEditandoPreguntas(false)}
+                >
+                  <FiX /> Cancelar
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                className={style.preguntasBtn}
+                onClick={() => {
+                  setBorradorPreguntas(preguntas);
+                  setBorradorExtras(extras.map((x) => ({ ...x })));
+                  setEditandoPreguntas(true);
+                }}
+                title="Cambiá tus preguntas o agregá más"
+              >
+                <FiEdit2 /> Personalizar
+              </button>
+            )
+          ) : null}
 
           {/* Plantillas de preguntas por nivel (sólo hoy) */}
           {esHoy ? (
@@ -1011,195 +908,232 @@ function Journaling() {
       </header>
 
       <div className={style.cols}>
-        {/* Columna izquierda: escribir hoy */}
+        {/* La hoja: se escribe DIRECTAMENTE sobre el papel (lo que ves es lo
+            que se exporta). */}
         <div className={style.colIzq}>
-          <div className={style.animoBox}>
-            <div className={style.animoLabelRow}>
-              <p className={style.animoLabel}>¿Cómo te sentís hoy?</p>
-              <button
-                type="button"
-                className={style.ayudaLink}
-                onClick={() => setAyudaOpen(true)}
-              >
-                <FiHelpCircle /> Sugerencias de preguntas
-              </button>
-            </div>
-            {/* Extremos fijos; la carita del nivel actual viaja en el pulgar */}
-            <div className={style.animoSliderRow}>
-              <div className={style.animoSliderWrap}>
-                <input
-                  type="range"
-                  min="0"
-                  max="5"
-                  step="1"
-                  value={Number(entrada.animo) || 0}
-                  onChange={(e) => editar("animo", Number(e.target.value))}
-                  className={style.animoSlider}
-                  style={{
-                    background: `linear-gradient(to right, #5dc72d ${
-                      ((Number(entrada.animo) || 0) / 5) * 100
-                    }%, rgba(127, 137, 129, 0.3) ${((Number(entrada.animo) || 0) / 5) * 100}%)`,
-                  }}
-                  aria-label="Ánimo del día (0 sin marcar, 5 muy bien)"
-                />
-                {/* Puntitos: acá cambia la cara */}
-                {[1, 2, 3, 4, 5].map((v) => (
-                  <i
-                    key={v}
-                    className={style.animoTick}
-                    style={{ left: `calc(${(v / 5) * 100}% - ${(v / 5) * 30}px + 15px)` }}
-                    aria-hidden="true"
-                  />
-                ))}
-                <span
-                  className={style.animoThumb}
-                  style={{
-                    left: `calc(${((Number(entrada.animo) || 0) / 5) * 100}% - ${
-                      ((Number(entrada.animo) || 0) / 5) * 30
-                    }px)`,
-                  }}
-                  aria-hidden="true"
-                >
-                  {Number(entrada.animo) > 0 ? emojiDe(entrada.animo) : CARA_VACIA}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Preguntas guiadas (el texto es personalizable, sólo hoy) */}
-          {esHoy ? (
-          <div className={style.preguntasHead}>
-            {editandoPreguntas ? (
-              <>
-                <button type="button" className={style.preguntasBtn} onClick={guardarPreguntas}>
-                  <FiCheck /> Guardar preguntas
+          <div className={`${style.hoja} ${style[`papel_${papelEstilo}`] || ""}`}>
+            <div className={style.hojaHead}>
+              <h2 className={style.hojaTitulo}>{fechaLarga(fecha)}</h2>
+              {fecha !== hoyLocal() ? (
+                <button type="button" className={style.hoyBtn} onClick={() => irADia(hoyLocal())}>
+                  Volver a hoy
                 </button>
-                <button
-                  type="button"
-                  className={style.preguntasBtn}
-                  onClick={() => setEditandoPreguntas(false)}
-                >
-                  <FiX /> Cancelar
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                className={style.preguntasBtn}
-                onClick={() => {
-                  setBorradorPreguntas(preguntas);
-                  setBorradorExtras(extras.map((x) => ({ ...x })));
-                  setEditandoPreguntas(true);
-                }}
-                title="Cambiá tus preguntas o agregá más"
-              >
-                <FiEdit2 /> Personalizar preguntas
-              </button>
-            )}
-          </div>
-          ) : null}
+              ) : null}
+            </div>
 
-          {editandoPreguntas && esHoy ? (
-            <div className={style.editorPreguntas}>
-              {CAMPOS.map((p) => (
-                <input
-                  key={p.campo}
-                  className={style.preguntaInput}
-                  value={borradorPreguntas[p.campo]}
-                  onChange={(e) =>
-                    setBorradorPreguntas((prev) => ({ ...prev, [p.campo]: e.target.value }))
-                  }
-                  placeholder={PREGUNTAS_DEFAULT[p.campo]}
-                  maxLength={200}
-                />
-              ))}
-              {borradorExtras.map((x) => (
-                <div key={x.id} className={style.extraEditRow}>
+            {/* Ánimo del día, sobre el papel */}
+            <div className={style.hojaAnimo}>
+              <p className={style.hojaPregunta}>
+                {esHoy ? "¿Cómo te sentís hoy?" : "¿Cómo me sentí ese día?"}
+              </p>
+              <div className={style.animoSliderRow}>
+                <div className={style.animoSliderWrap}>
                   <input
+                    type="range"
+                    min="0"
+                    max="5"
+                    step="1"
+                    value={Number(entrada.animo) || 0}
+                    onChange={(e) => editar("animo", Number(e.target.value))}
+                    className={style.animoSlider}
+                    style={{
+                      background: `linear-gradient(to right, #5dc72d ${
+                        ((Number(entrada.animo) || 0) / 5) * 100
+                      }%, rgba(127, 137, 129, 0.3) ${((Number(entrada.animo) || 0) / 5) * 100}%)`,
+                    }}
+                    aria-label="Ánimo del día (0 sin marcar, 5 muy bien)"
+                  />
+                  {[1, 2, 3, 4, 5].map((v) => (
+                    <i
+                      key={v}
+                      className={style.animoTick}
+                      style={{ left: `calc(${(v / 5) * 100}% - ${(v / 5) * 30}px + 15px)` }}
+                      aria-hidden="true"
+                    />
+                  ))}
+                  <span
+                    className={style.animoThumb}
+                    style={{
+                      left: `calc(${((Number(entrada.animo) || 0) / 5) * 100}% - ${
+                        ((Number(entrada.animo) || 0) / 5) * 30
+                      }px)`,
+                    }}
+                    aria-hidden="true"
+                  >
+                    {Number(entrada.animo) > 0 ? emojiDe(entrada.animo) : CARA_VACIA}
+                  </span>
+                </div>
+              </div>
+              {Number(entrada.animo) > 0 ? (
+                <p className={style.hojaAnimoTexto}>
+                  {esHoy ? "Hoy me siento" : "Me sentí"}{" "}
+                  {ANIMO_LABELS[Number(entrada.animo)] || ""}
+                </p>
+              ) : null}
+            </div>
+
+            {editandoPreguntas && esHoy ? (
+              <div className={style.editorPreguntas}>
+                {CAMPOS.map((p) => (
+                  <input
+                    key={p.campo}
                     className={style.preguntaInput}
-                    value={x.texto}
+                    value={borradorPreguntas[p.campo]}
                     onChange={(e) =>
-                      setBorradorExtras((prev) =>
-                        prev.map((it) => (it.id === x.id ? { ...it, texto: e.target.value } : it))
-                      )
+                      setBorradorPreguntas((prev) => ({ ...prev, [p.campo]: e.target.value }))
                     }
-                    placeholder="Tu pregunta…"
+                    placeholder={PREGUNTAS_DEFAULT[p.campo]}
                     maxLength={200}
                   />
-                  <button
-                    type="button"
-                    className={style.extraDelBtn}
-                    onClick={() =>
-                      setBorradorExtras((prev) => prev.filter((it) => it.id !== x.id))
-                    }
-                    aria-label="Quitar pregunta"
-                  >
-                    <FiTrash2 />
-                  </button>
+                ))}
+                {borradorExtras.map((x) => (
+                  <div key={x.id} className={style.extraEditRow}>
+                    <input
+                      className={style.preguntaInput}
+                      value={x.texto}
+                      onChange={(e) =>
+                        setBorradorExtras((prev) =>
+                          prev.map((it) => (it.id === x.id ? { ...it, texto: e.target.value } : it))
+                        )
+                      }
+                      placeholder="Tu pregunta…"
+                      maxLength={200}
+                    />
+                    <button
+                      type="button"
+                      className={style.extraDelBtn}
+                      onClick={() =>
+                        setBorradorExtras((prev) => prev.filter((it) => it.id !== x.id))
+                      }
+                      aria-label="Quitar pregunta"
+                    >
+                      <FiTrash2 />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className={style.agregarPreguntaBtn}
+                  onClick={() => setBorradorExtras((prev) => [...prev, { id: nuevoId(), texto: "" }])}
+                >
+                  <FiPlus /> Agregar pregunta
+                </button>
+              </div>
+            ) : (
+              <>
+                {CAMPOS.map((p) => (
+                  <div key={p.campo} className={style.hojaBloque}>
+                    <p className={style.hojaPregunta}>{preguntasActivas[p.campo]}</p>
+                    <AutoTextarea
+                      className={style.hojaInput}
+                      value={entrada[p.campo]}
+                      onChange={onCap(entrada[p.campo], (v) => editar(p.campo, v))}
+                      placeholder={p.placeholder}
+                    />
+                  </div>
+                ))}
+                {extrasActivos.map((x) => (
+                  <div key={x.id} className={style.hojaBloque}>
+                    <p className={style.hojaPregunta}>{x.texto}</p>
+                    <AutoTextarea
+                      className={style.hojaInput}
+                      value={valorExtra(x.id)}
+                      onChange={onCap(valorExtra(x.id), (v) => editarExtra(x.id, v))}
+                      placeholder="Escribí tu respuesta…"
+                    />
+                  </div>
+                ))}
+                <div className={style.hojaBloque}>
+                  <p className={style.hojaPregunta}>Notas libres</p>
+                  <AutoTextarea
+                    className={`${style.hojaInput} ${style.hojaInputLibre}`}
+                    value={entrada.libre}
+                    onChange={onCap(entrada.libre, (v) => editar("libre", v))}
+                    placeholder="Lo que quieras dejar escrito de este día…"
+                  />
                 </div>
-              ))}
+              </>
+            )}
+
+            {/* Pie de la hoja: navegar entre días + estado de guardado */}
+            <div className={style.hojaPie}>
               <button
                 type="button"
-                className={style.agregarPreguntaBtn}
-                onClick={() => setBorradorExtras((prev) => [...prev, { id: nuevoId(), texto: "" }])}
+                className={style.hojaNavBtn}
+                onClick={() => irADia(entradas[libroIdx - 1]?.fecha)}
+                disabled={libroIdx <= 0}
+                aria-label="Día anterior"
               >
-                <FiPlus /> Agregar pregunta
+                <FiChevronLeft />
               </button>
+              <span className={style.hojaPagina}>
+                Página {libroIdx + 1} de {entradas.length}
+              </span>
+              <button
+                type="button"
+                className={style.hojaNavBtn}
+                onClick={() => irADia(entradas[libroIdx + 1]?.fecha)}
+                disabled={libroIdx >= entradas.length - 1}
+                aria-label="Día siguiente"
+              >
+                <FiChevronRight />
+              </button>
+              <span className={style.hojaGuardado}>
+                {guardando ? "Guardando…" : "Guardado ✓"}
+              </span>
             </div>
-          ) : (
-            <>
-              {CAMPOS.map((p) => (
-                <label key={p.campo} className={style.campo}>
-                  <span>{preguntasActivas[p.campo]}</span>
-                  <textarea
-                    className={style.input}
-                    value={entrada[p.campo]}
-                    onChange={onCap(entrada[p.campo], (v) => editar(p.campo, v))}
-                    placeholder={p.placeholder}
-                    autoCapitalize="sentences"
-                    rows={2}
-                  />
-                </label>
-              ))}
-              {extrasActivos.map((x) => (
-                <label key={x.id} className={style.campo}>
-                  <span>{x.texto}</span>
-                  <textarea
-                    className={style.input}
-                    value={valorExtra(x.id)}
-                    onChange={onCap(valorExtra(x.id), (v) => editarExtra(x.id, v))}
-                    placeholder="Escribí tu respuesta…"
-                    autoCapitalize="sentences"
-                    rows={2}
-                  />
-                </label>
-              ))}
-            </>
-          )}
-
-          <label className={style.campo}>
-            <span>Notas libres (opcional)</span>
-            <textarea
-              className={`${style.input} ${style.inputLibre}`}
-              value={entrada.libre}
-              onChange={onCap(entrada.libre, (v) => editar("libre", v))}
-              placeholder="Lo que quieras dejar escrito de este día…"
-              autoCapitalize="sentences"
-              rows={4}
-            />
-          </label>
-
-          <div className={style.pieGuardado}>{guardando ? "Guardando…" : ""}</div>
-          {/* El "Tu ánimo en el tiempo" se movió al botón Métricas del header. */}
+          </div>
         </div>
 
-        {/* Columna derecha: releer (calendario, libro o métricas de ánimo) */}
+        {/* Panel derecho: calendario + acciones (como el mockup) */}
         <div className={style.colDer}>
-          {vista === "metricas"
-            ? renderMetricas()
-            : vista === "calendario"
-              ? renderCalendario()
-              : renderLibro()}
+          {renderCalendario()}
+
+          <div className={style.railCard}>
+            <button
+              type="button"
+              className={style.railBtn}
+              onClick={compartirDia}
+              disabled={!tieneContenido(entrada)}
+            >
+              <FiShare2 /> Compartir
+            </button>
+            <button
+              type="button"
+              className={style.railBtn}
+              onClick={descargarPDF}
+              disabled={!hayPaginasEscritas}
+            >
+              <FiDownload /> Exportar (PDF)
+            </button>
+            <div className={style.papelRow}>
+              <span className={style.papelLabel}>Estilos de papel</span>
+              <div className={style.papelSwatches}>
+                {PAPEL_ESTILOS.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={`${style.papelSwatch} ${
+                      papelEstilo === p.id ? style.papelSwatchOn : ""
+                    }`}
+                    style={{ background: p.fondo }}
+                    onClick={() => elegirPapel(p.id)}
+                    title={`Papel ${p.nombre}`}
+                    aria-label={`Papel ${p.nombre}`}
+                  />
+                ))}
+              </div>
+            </div>
+            <button
+              type="button"
+              className={`${style.railBtn} ${metricasOpen ? style.railBtnOn : ""}`}
+              onClick={() => setMetricasOpen((prev) => !prev)}
+            >
+              <FiBarChart2 /> Métricas de ánimo
+            </button>
+          </div>
+
+          {metricasOpen ? <div className={style.railCard}>{renderMetricas()}</div> : null}
         </div>
       </div>
 
