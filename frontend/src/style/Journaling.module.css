@@ -1491,3 +1491,8 @@
 .railCard .metricasDiaCara {
   font-size: 0.62rem;
 }
+
+/* Título "Journaling" en verde, en la misma línea que la racha */
+.fecha {
+  color: var(--color-verde, #5dc72d);
+}
