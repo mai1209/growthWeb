@@ -118,7 +118,9 @@
           "savePhotosPermission": "Growth guarda la imagen de tu actividad en tu galería.",
           "isAccessMediaLocationEnabled": false
         }
-      ]
+      ],
+      "expo-sharing",
+      "expo-status-bar"
     ]
   }
 }
