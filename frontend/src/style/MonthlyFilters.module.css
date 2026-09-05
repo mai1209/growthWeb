@@ -2044,3 +2044,45 @@
 .expenseRow .rowIcon { background: rgba(255, 123, 107, 0.16); }
 .savingsRow .rowIcon { background: rgba(88, 235, 164, 0.16); }
 .debtRow .rowIcon { background: rgba(255, 213, 92, 0.16); }
+
+/* ===== Cards de movimiento en vidrio (blur) sobre los orbes del fondo ===== */
+.container {
+  position: relative;
+  isolation: isolate;
+}
+
+.container::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 60px;
+  right: -40px;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(117, 249, 76, 0.16), transparent 65%);
+}
+
+.row {
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+}
+
+/* El fondo de la card pasa a translúcido para que el vidrio se note */
+.incomeRow {
+  background: linear-gradient(150deg, rgba(117, 249, 76, 0.13), rgba(117, 249, 76, 0.04) 60%);
+}
+
+.expenseRow {
+  background: linear-gradient(150deg, rgba(255, 123, 107, 0.13), rgba(255, 123, 107, 0.04) 60%);
+}
+
+.savingsRow {
+  background: linear-gradient(150deg, rgba(88, 235, 164, 0.13), rgba(88, 235, 164, 0.04) 60%);
+}
+
+.debtRow {
+  background: linear-gradient(150deg, rgba(255, 213, 92, 0.13), rgba(255, 213, 92, 0.04) 60%);
+}

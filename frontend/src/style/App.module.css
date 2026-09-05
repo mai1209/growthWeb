@@ -1282,3 +1282,36 @@
 .dashboardInfoCard {
   padding: 0.3rem 0.3rem 0 0.4rem;
 }
+
+/* ===== Fondo con orbes de luz difusos (para que el blur de las cards tenga
+   algo atrás, como el mockup) ===== */
+.homeViewport {
+  position: relative;
+  isolation: isolate;
+}
+
+.homeViewport::before,
+.homeViewport::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+}
+
+.homeViewport::before {
+  width: 540px;
+  height: 540px;
+  top: -140px;
+  right: -60px;
+  background: radial-gradient(circle, rgba(117, 249, 76, 0.2), transparent 65%);
+}
+
+.homeViewport::after {
+  width: 480px;
+  height: 480px;
+  bottom: -120px;
+  left: 20%;
+  background: radial-gradient(circle, rgba(88, 235, 164, 0.16), transparent 65%);
+}
