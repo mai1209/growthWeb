@@ -340,18 +340,38 @@ export default function HomeScreen() {
     fetchData();
   }, [fetchData]);
 
-  const { historical, monthSummary, monthCount, monthMovs } = useMemo(() => {
+  const { historical, monthSummary, monthCount, monthMovs, prevSummary } = useMemo(() => {
     const byCurrency = filterMovimientosByCurrency(movimientos, currency);
     const mm = byCurrency
       .filter((m) => isSameMonth(m.fecha))
       .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+    // Mes anterior, para las variaciones del resumen
+    const ahora = new Date();
+    const prev = new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1);
+    const prevKey = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`;
+    const pm = byCurrency.filter((m) => String(m.fecha || "").slice(0, 7) === prevKey);
     return {
       historical: summarizeByType(byCurrency),
       monthSummary: summarizeByType(mm),
       monthCount: mm.length,
       monthMovs: mm,
+      prevSummary: summarizeByType(pm),
     };
   }, [movimientos, currency]);
+
+  // Nombres de mes para el encabezado y los deltas del resumen
+  const mesNombre = useMemo(
+    () => new Date().toLocaleDateString("es-AR", { month: "long" }),
+    []
+  );
+  const mesPrevNombre = useMemo(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth() - 1, 1).toLocaleDateString("es-AR", {
+      month: "long",
+    });
+  }, []);
+  const deltaPct = (cur, prevV) =>
+    prevV > 0 ? Math.round(((cur - prevV) / prevV) * 100) : null;
 
   // Movimientos del tipo activo (deuda / ahorro), más recientes primero.
   // En Ahorros entran también los usos (egresos pagados con ahorro).
@@ -428,12 +448,10 @@ export default function HomeScreen() {
     { key: "egreso-fijo", label: "Gasto fijo", icon: "arrow-up", extra: "time-outline", color: ROJO },
   ];
 
-  // KPIs del resumen: grilla 2×2 con icono y color por tipo (Movimientos aparte)
-  const kpis = [
-    { label: "Ingresos", tipo: "ingreso", icon: "arrow-down", color: ACCENTS.ingreso, value: money(monthSummary.ingreso) },
-    { label: "Egresos", tipo: "egreso", icon: "arrow-up", color: ACCENTS.egreso, value: money(monthSummary.egreso) },
-    { label: "Ahorro", tipo: "ahorro", icon: "wallet-outline", color: "#2bb888", value: money(monthSummary.ahorro) },
-    { label: "Deuda pend.", tipo: "deuda", icon: "card-outline", color: ACCENTS.deuda, value: money(historical.deudaPendiente) },
+  // Filas finas del resumen (debajo de la comparativa ingresos/egresos)
+  const resRows = [
+    { label: "Ahorro del mes", icon: "wallet-outline", color: "#2bb888", value: money(monthSummary.ahorro), onPress: () => goToFilter("ahorro") },
+    { label: "Deuda pendiente", icon: "card-outline", color: ACCENTS.deuda, value: money(historical.deudaPendiente), onPress: () => goToFilter("deuda") },
   ];
 
   if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: BG }} />;
@@ -680,61 +698,91 @@ export default function HomeScreen() {
 
                   {resumenTab === "resumen" ? (
                     <View style={styles.ticketBody}>
-                      {/* Resultado del mes como protagonista */}
-                      <View style={styles.resHero}>
-                        <Text style={styles.resHeroLabel}>Resultado mensual · {currencyTag}</Text>
-                        <Text
-                          style={[styles.resHeroValue, { color: monthSummary.total >= 0 ? VERDE : ROJO }]}
-                          numberOfLines={1}
-                          adjustsFontSizeToFit
-                          minimumFontScale={0.6}
-                        >
-                          {money(monthSummary.total)}
-                        </Text>
-                      </View>
+                      {/* Panel estilo analytics: ingresos vs egresos del mes */}
+                      <View style={styles.resPanel}>
+                        <View style={styles.resPanelHead}>
+                          <Text style={styles.resPanelTitle}>Resumen del mes</Text>
+                          <Text style={styles.resPanelMes}>{mesNombre} · {currencyTag}</Text>
+                        </View>
 
-                      {/* Grilla 2×2 de KPIs con icono y color por tipo */}
-                      <View style={styles.kpiGrid}>
-                        {kpis.map((k) => (
-                          <TouchableOpacity
-                            key={k.label}
-                            style={styles.kpiCard}
-                            activeOpacity={0.7}
-                            onPress={() => goToFilter(k.tipo)}
-                          >
-                            <View style={styles.kpiHead}>
-                              <View style={[styles.kpiIcon, { backgroundColor: k.color + "1f", borderColor: k.color + "55" }]}>
-                                <Ionicons name={k.icon} size={15 * u} color={k.color} />
-                              </View>
-                              <Text style={styles.kpiLabel} numberOfLines={1}>
-                                {k.label}
-                              </Text>
+                        {/* Barra proporcional ingresos (verde) vs egresos (rojo) */}
+                        {(() => {
+                          const inM = monthSummary.ingreso;
+                          const outM = monthSummary.egreso;
+                          const total = inM + outM;
+                          const fIn = total > 0 ? Math.max(inM / total, inM > 0 ? 0.05 : 0) : 0;
+                          const fOut = total > 0 ? Math.max(outM / total, outM > 0 ? 0.05 : 0) : 0;
+                          return (
+                            <View style={styles.ratioBar}>
+                              {total > 0 ? (
+                                <>
+                                  {fIn > 0 ? <View style={[styles.ratioSeg, { flex: fIn, backgroundColor: VERDE }]} /> : null}
+                                  {fOut > 0 ? <View style={[styles.ratioSeg, { flex: fOut, backgroundColor: ROJO }]} /> : null}
+                                </>
+                              ) : (
+                                <View style={[styles.ratioSeg, { flex: 1, backgroundColor: "rgba(255,255,255,0.12)" }]} />
+                              )}
                             </View>
-                            <Text
-                              style={[styles.kpiValue, { color: k.color }]}
-                              numberOfLines={1}
-                              adjustsFontSizeToFit
-                              minimumFontScale={0.6}
-                            >
-                              {k.value}
-                            </Text>
+                          );
+                        })()}
+
+                        <View style={styles.ieRow}>
+                          {[
+                            { label: "Ingresos", icon: "arrow-down", color: VERDE, val: monthSummary.ingreso, prev: prevSummary.ingreso, buenoSiSube: true, tipo: "ingreso" },
+                            { label: "Egresos", icon: "arrow-up", color: ROJO, val: monthSummary.egreso, prev: prevSummary.egreso, buenoSiSube: false, tipo: "egreso" },
+                          ].map((c, i) => {
+                            const d = deltaPct(c.val, c.prev);
+                            const favorable = d != null && (c.buenoSiSube ? d >= 0 : d <= 0);
+                            return (
+                              <React.Fragment key={c.label}>
+                                {i > 0 ? <View style={styles.ieSep} /> : null}
+                                <TouchableOpacity style={styles.ieCol} activeOpacity={0.7} onPress={() => goToFilter(c.tipo)}>
+                                  <View style={styles.ieHead}>
+                                    <Ionicons name={c.icon} size={14 * u} color={c.color} />
+                                    <Text style={styles.ieLabel}>{c.label}</Text>
+                                  </View>
+                                  <Text
+                                    style={[styles.ieVal, { color: c.color }]}
+                                    numberOfLines={1}
+                                    adjustsFontSizeToFit
+                                    minimumFontScale={0.6}
+                                  >
+                                    {money(c.val)}
+                                  </Text>
+                                  {d != null ? (
+                                    <Text style={[styles.ieDelta, { color: favorable ? VERDE : "#ff6b5e" }]}>
+                                      {d > 0 ? "+" : ""}{d}% vs {mesPrevNombre}
+                                    </Text>
+                                  ) : (
+                                    <Text style={styles.ieDeltaMuted}>sin datos de {mesPrevNombre}</Text>
+                                  )}
+                                </TouchableOpacity>
+                              </React.Fragment>
+                            );
+                          })}
+                        </View>
+
+                        <View style={styles.resDivider} />
+
+                        {/* Filas finas: ahorro, deuda y movimientos */}
+                        {resRows.map((r) => (
+                          <TouchableOpacity key={r.label} style={styles.resSlimRow} activeOpacity={0.6} onPress={r.onPress}>
+                            <Ionicons name={r.icon} size={16 * u} color={r.color} />
+                            <Text style={styles.resSlimLabel}>{r.label}</Text>
+                            <Text style={[styles.resSlimVal, { color: r.color }]}>{r.value}</Text>
                           </TouchableOpacity>
                         ))}
-                      </View>
-
-                      {/* Movimientos del mes → abre el historial */}
-                      <TouchableOpacity
-                        style={styles.movCountRow}
-                        activeOpacity={0.7}
-                        onPress={() => setResumenTab("historial")}
-                      >
-                        <Text style={styles.movCountLabel}>Movimientos del mes</Text>
-                        <View style={styles.movCountRight}>
+                        <TouchableOpacity
+                          style={styles.resSlimRow}
+                          activeOpacity={0.6}
+                          onPress={() => setResumenTab("historial")}
+                        >
                           <View style={styles.movCountDot} />
-                          <Text style={styles.movCountNum}>{visible ? monthCount : "••"}</Text>
-                          <Ionicons name="chevron-forward" size={16 * u} color={MUTED} />
-                        </View>
-                      </TouchableOpacity>
+                          <Text style={styles.resSlimLabel}>Movimientos del mes</Text>
+                          <Text style={styles.resSlimVal}>{visible ? monthCount : "••"}</Text>
+                          <Ionicons name="chevron-forward" size={15 * u} color={MUTED} />
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   ) : (
                     <View style={[styles.ticketBody, styles.resGroup, styles.resGroupPad]}>
@@ -1412,86 +1460,93 @@ const makeStyles = (u) => StyleSheet.create({
   },
   resGroupPad: { paddingHorizontal: 14 * u, paddingVertical: 4 * u },
 
-  // Resultado mensual protagonista
-  resHero: { alignItems: "center", marginTop: 4 * u, gap: 3 * u },
-  resHeroLabel: {
-    fontFamily: "Menda-Medium",
-    fontSize: 15 * u,
-    letterSpacing: -0.4 * u,
-    color: MUTED,
-  },
-  resHeroValue: {
-    fontFamily: "Menda-Bold",
-    fontSize: 34 * u,
-    letterSpacing: -1 * u,
-    fontVariant: ["tabular-nums"],
-  },
-
-  // Grilla 2×2 de KPIs
-  kpiGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 * u },
-  kpiCard: {
-    flexBasis: "47%",
-    flexGrow: 1,
+  // ---- Panel estilo analytics del resumen ----
+  resPanel: {
     borderWidth: 1,
     borderColor: LINEA,
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderRadius: 18 * u,
-    padding: 14 * u,
-    gap: 9 * u,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 20 * u,
+    padding: 16 * u,
   },
-  kpiHead: { flexDirection: "row", alignItems: "center", gap: 8 * u },
-  kpiIcon: {
-    width: 30 * u,
-    height: 30 * u,
-    borderRadius: 15 * u,
-    borderWidth: 1,
+  resPanelHead: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
+    marginBottom: 14 * u,
   },
-  kpiLabel: {
-    flex: 1,
+  resPanelTitle: {
+    fontFamily: "Menda-Bold",
+    fontSize: 16 * u,
+    letterSpacing: -0.5 * u,
+    color: TXT,
+  },
+  resPanelMes: {
+    fontFamily: "Menda-Medium",
+    fontSize: 13 * u,
+    color: MUTED,
+    textTransform: "capitalize",
+  },
+
+  // Barra proporcional ingresos/egresos
+  ratioBar: {
+    flexDirection: "row",
+    height: 10 * u,
+    borderRadius: 6 * u,
+    overflow: "hidden",
+    gap: 2,
+    marginBottom: 16 * u,
+  },
+  ratioSeg: { height: "100%", borderRadius: 6 * u },
+
+  // Columnas Ingresos | Egresos
+  ieRow: { flexDirection: "row", alignItems: "stretch" },
+  ieCol: { flex: 1, gap: 4 * u },
+  ieSep: { width: 1, backgroundColor: LINEA, marginHorizontal: 14 * u },
+  ieHead: { flexDirection: "row", alignItems: "center", gap: 6 * u },
+  ieLabel: {
     fontFamily: "Menda-Medium",
     fontSize: 13.5 * u,
     letterSpacing: -0.4 * u,
     color: MUTED,
   },
-  kpiValue: {
+  ieVal: {
     fontFamily: "Menda-Bold",
-    fontSize: 22 * u,
-    letterSpacing: -0.6 * u,
+    fontSize: 23 * u,
+    letterSpacing: -0.7 * u,
     fontVariant: ["tabular-nums"],
   },
+  ieDelta: { fontFamily: "Menda-Medium", fontSize: 12 * u, letterSpacing: -0.3 * u },
+  ieDeltaMuted: { fontFamily: "Menda-Medium", fontSize: 12 * u, color: MUTED, letterSpacing: -0.3 * u },
 
-  // Fila "Movimientos del mes" → historial
-  movCountRow: {
+  resDivider: { height: 1, backgroundColor: LINEA, marginVertical: 12 * u },
+
+  // Filas finas (ahorro / deuda / movimientos)
+  resSlimRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: LINEA,
-    backgroundColor: "rgba(255,255,255,0.03)",
-    borderRadius: 18 * u,
-    paddingVertical: 13 * u,
-    paddingHorizontal: 16 * u,
+    gap: 10 * u,
+    paddingVertical: 10 * u,
   },
-  movCountLabel: {
+  resSlimLabel: {
+    flex: 1,
     fontFamily: "Menda-Medium",
     fontSize: 15 * u,
     letterSpacing: -0.4 * u,
     color: TXT,
   },
-  movCountRight: { flexDirection: "row", alignItems: "center", gap: 8 * u },
+  resSlimVal: {
+    fontFamily: "Menda-Bold",
+    fontSize: 16.5 * u,
+    letterSpacing: -0.5 * u,
+    color: TXT,
+    fontVariant: ["tabular-nums"],
+  },
   movCountDot: {
     width: 8 * u,
     height: 8 * u,
     borderRadius: 4 * u,
     backgroundColor: ACCENTS.movimientos,
-  },
-  movCountNum: {
-    fontFamily: "Menda-Bold",
-    fontSize: 17 * u,
-    color: TXT,
-    fontVariant: ["tabular-nums"],
+    marginHorizontal: 4 * u,
   },
 
   // ---- Historial reducido dentro del ticket ----
