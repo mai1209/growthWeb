@@ -348,12 +348,6 @@ function Afirmaciones() {
         </div>
       </header>
 
-      <p className={style.ayuda}>
-        {repetirDiario
-          ? "Escribí tus afirmaciones y leelas todos los días. Mañana van a estar acá mismo: podés editarlas cuando quieras."
-          : "Cada día vas a empezar con los renglones vacíos. Lo que escribas hoy se guarda igual, no se pierde."}
-      </p>
-
       {/* Carrusel de tarjetas (diseño del mockup, con nuestra paleta) */}
       {escritas.length ? (
         <>
@@ -373,10 +367,24 @@ function Afirmaciones() {
                 return (
                   <div
                     key={i}
+                    role="button"
+                    tabIndex={0}
                     className={`${style.carta} ${leyendoIdx === i ? style.cartaLeyendo : ""} ${
                       resaltadas.has(i) ? style.cartaResaltada : ""
                     }`}
-                    style={{ background: `${tint}1f`, borderColor: `${tint}59` }}
+                    style={{
+                      background: `${tint}1f`,
+                      borderColor: `${tint}59`,
+                      boxShadow: resaltadas.has(i) ? `0 0 22px ${tint}73` : undefined,
+                    }}
+                    onClick={() => toggleResaltada(i)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleResaltada(i);
+                      }
+                    }}
+                    title="Tocá para resaltar esta afirmación"
                   >
                     <p className={style.cartaTexto}>{texto}</p>
                     {resaltadas.has(i) ? (

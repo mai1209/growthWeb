@@ -515,3 +515,13 @@
   width: 18px;
   background: #5dc72d;
 }
+
+/* Las tarjetas se tocan: brillan al resaltarlas y responden al click */
+.carta {
+  cursor: pointer;
+  transition: box-shadow 0.25s ease, transform 0.15s ease, border-color 0.2s ease;
+}
+
+.carta:active {
+  transform: scale(0.97);
+}
