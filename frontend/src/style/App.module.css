@@ -1315,3 +1315,9 @@
   left: 20%;
   background: radial-gradient(circle, rgba(88, 235, 164, 0.16), transparent 65%);
 }
+
+/* Sin orbes de luz en el fondo (quedó mejor el degradado limpio) */
+.homeViewport::before,
+.homeViewport::after {
+  content: none;
+}

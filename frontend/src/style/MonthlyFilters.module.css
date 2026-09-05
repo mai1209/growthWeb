@@ -2086,3 +2086,8 @@
 .debtRow {
   background: linear-gradient(150deg, rgba(255, 213, 92, 0.13), rgba(255, 213, 92, 0.04) 60%);
 }
+
+/* Sin orbe de luz en el fondo de filtros */
+.container::before {
+  content: none;
+}
