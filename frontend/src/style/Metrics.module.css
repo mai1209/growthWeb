@@ -1416,3 +1416,8 @@
     background: none;
   }
 }
+
+/* Subtítulos de las secciones más finos */
+.chartHeader h2 {
+  font-weight: 500;
+}
