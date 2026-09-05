@@ -1991,3 +1991,10 @@
     background: none;
   }
 }
+
+/* La columna derecha se estira hasta la altura de la lista de resultados:
+   la última sección (Insights) absorbe el espacio extra */
+.sideCol {
+  align-self: stretch;
+  grid-template-rows: auto auto 1fr;
+}
