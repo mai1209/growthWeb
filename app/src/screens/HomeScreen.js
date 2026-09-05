@@ -428,14 +428,12 @@ export default function HomeScreen() {
     { key: "egreso-fijo", label: "Gasto fijo", icon: "arrow-up", extra: "time-outline", color: ROJO },
   ];
 
-  // Filas del resumen en el orden del Figma (Movimientos al final)
-  const stats = [
-    { label: "Resultado mensual", value: money(monthSummary.total), accent: ACCENTS.resultado, tipo: null },
-    { label: "Ingresos del mes", value: money(monthSummary.ingreso), accent: ACCENTS.ingreso, tipo: "ingreso" },
-    { label: "Egresos del mes", value: money(monthSummary.egreso), accent: ACCENTS.egreso, tipo: "egreso" },
-    { label: "Ahorro del mes", value: money(monthSummary.ahorro), accent: ACCENTS.ahorro, tipo: "ahorro" },
-    { label: "Deuda pendiente", value: money(historical.deudaPendiente), accent: ACCENTS.deuda, tipo: "deuda" },
-    { label: "Movimientos del mes", value: visible ? String(monthCount) : "••", accent: ACCENTS.movimientos, tipo: null },
+  // KPIs del resumen: grilla 2×2 con icono y color por tipo (Movimientos aparte)
+  const kpis = [
+    { label: "Ingresos", tipo: "ingreso", icon: "arrow-down", color: ACCENTS.ingreso, value: money(monthSummary.ingreso) },
+    { label: "Egresos", tipo: "egreso", icon: "arrow-up", color: ACCENTS.egreso, value: money(monthSummary.egreso) },
+    { label: "Ahorro", tipo: "ahorro", icon: "wallet-outline", color: "#2bb888", value: money(monthSummary.ahorro) },
+    { label: "Deuda pend.", tipo: "deuda", icon: "card-outline", color: ACCENTS.deuda, value: money(historical.deudaPendiente) },
   ];
 
   if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: BG }} />;
@@ -682,24 +680,61 @@ export default function HomeScreen() {
 
                   {resumenTab === "resumen" ? (
                     <View style={styles.ticketBody}>
-                      {/* Dos cajas con borde, como el mockup: 4 filas del mes y aparte deuda + movimientos */}
-                      {[stats.slice(0, 4), stats.slice(4)].map((grupo, gi) => (
-                        <View key={gi} style={styles.resGroup}>
-                          {grupo.map((s, i) => (
-                            <TouchableOpacity
-                              key={s.label}
-                              style={[styles.ticketRow, i > 0 && styles.ticketRowDivider]}
-                              activeOpacity={0.6}
-                              onPress={() => goToFilter(s.tipo)}
-                            >
-                              <Text style={styles.ticketLabel} numberOfLines={1}>
-                                {s.label}
+                      {/* Resultado del mes como protagonista */}
+                      <View style={styles.resHero}>
+                        <Text style={styles.resHeroLabel}>Resultado mensual · {currencyTag}</Text>
+                        <Text
+                          style={[styles.resHeroValue, { color: monthSummary.total >= 0 ? VERDE : ROJO }]}
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.6}
+                        >
+                          {money(monthSummary.total)}
+                        </Text>
+                      </View>
+
+                      {/* Grilla 2×2 de KPIs con icono y color por tipo */}
+                      <View style={styles.kpiGrid}>
+                        {kpis.map((k) => (
+                          <TouchableOpacity
+                            key={k.label}
+                            style={styles.kpiCard}
+                            activeOpacity={0.7}
+                            onPress={() => goToFilter(k.tipo)}
+                          >
+                            <View style={styles.kpiHead}>
+                              <View style={[styles.kpiIcon, { backgroundColor: k.color + "1f", borderColor: k.color + "55" }]}>
+                                <Ionicons name={k.icon} size={15 * u} color={k.color} />
+                              </View>
+                              <Text style={styles.kpiLabel} numberOfLines={1}>
+                                {k.label}
                               </Text>
-                              <Text style={[styles.ticketValue, { color: s.accent }]}>{s.value}</Text>
-                            </TouchableOpacity>
-                          ))}
+                            </View>
+                            <Text
+                              style={[styles.kpiValue, { color: k.color }]}
+                              numberOfLines={1}
+                              adjustsFontSizeToFit
+                              minimumFontScale={0.6}
+                            >
+                              {k.value}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+
+                      {/* Movimientos del mes → abre el historial */}
+                      <TouchableOpacity
+                        style={styles.movCountRow}
+                        activeOpacity={0.7}
+                        onPress={() => setResumenTab("historial")}
+                      >
+                        <Text style={styles.movCountLabel}>Movimientos del mes</Text>
+                        <View style={styles.movCountRight}>
+                          <View style={styles.movCountDot} />
+                          <Text style={styles.movCountNum}>{visible ? monthCount : "••"}</Text>
+                          <Ionicons name="chevron-forward" size={16 * u} color={MUTED} />
                         </View>
-                      ))}
+                      </TouchableOpacity>
                     </View>
                   ) : (
                     <View style={[styles.ticketBody, styles.resGroup, styles.resGroupPad]}>
@@ -792,14 +827,6 @@ export default function HomeScreen() {
                     </View>
                   )}
 
-                  {/* Footer en su propia caja, como el mockup */}
-                  <View style={styles.footBox}>
-                    <Text style={styles.ticketGracias}>Gracias por utilizar GROWTH MANAGER</Text>
-                    <Text style={styles.ticketWeb}>
-                      Utiliza la version web{"\n"}
-                      <Text style={styles.ticketWebLink}>www.growthmanager.app</Text>
-                    </Text>
-                  </View>
                 </View>
               </>
             ) : (
@@ -1375,7 +1402,7 @@ const makeStyles = (u) => StyleSheet.create({
   verTodos: { fontFamily: "Menda-Medium", color: VERDE, fontSize: 18 * u },
 
   ticketBody: { marginTop: 18 * u, gap: 14 * u },
-  // Caja con borde que agrupa filas (mockup 3)
+  // Caja con borde (la usa el historial reducido)
   resGroup: {
     borderWidth: 1,
     borderColor: LINEA,
@@ -1384,56 +1411,88 @@ const makeStyles = (u) => StyleSheet.create({
     overflow: "hidden",
   },
   resGroupPad: { paddingHorizontal: 14 * u, paddingVertical: 4 * u },
-  ticketRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 11 * u,
-    paddingHorizontal: 18 * u,
-  },
-  ticketRowDivider: { borderTopWidth: 1, borderColor: LINEA },
-  ticketLabel: {
+
+  // Resultado mensual protagonista
+  resHero: { alignItems: "center", marginTop: 4 * u, gap: 3 * u },
+  resHeroLabel: {
     fontFamily: "Menda-Medium",
-    fontSize: 18 * u,
-    letterSpacing: -0.6 * u,
-    color: TXT,
-    flexShrink: 1,
-    marginRight: 12 * u,
+    fontSize: 15 * u,
+    letterSpacing: -0.4 * u,
+    color: MUTED,
   },
-  ticketValue: {
+  resHeroValue: {
     fontFamily: "Menda-Bold",
-    fontSize: 18 * u,
+    fontSize: 34 * u,
+    letterSpacing: -1 * u,
+    fontVariant: ["tabular-nums"],
+  },
+
+  // Grilla 2×2 de KPIs
+  kpiGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 * u },
+  kpiCard: {
+    flexBasis: "47%",
+    flexGrow: 1,
+    borderWidth: 1,
+    borderColor: LINEA,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 18 * u,
+    padding: 14 * u,
+    gap: 9 * u,
+  },
+  kpiHead: { flexDirection: "row", alignItems: "center", gap: 8 * u },
+  kpiIcon: {
+    width: 30 * u,
+    height: 30 * u,
+    borderRadius: 15 * u,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  kpiLabel: {
+    flex: 1,
+    fontFamily: "Menda-Medium",
+    fontSize: 13.5 * u,
+    letterSpacing: -0.4 * u,
+    color: MUTED,
+  },
+  kpiValue: {
+    fontFamily: "Menda-Bold",
+    fontSize: 22 * u,
     letterSpacing: -0.6 * u,
     fontVariant: ["tabular-nums"],
   },
 
-  // Footer en su propia caja
-  footBox: {
+  // Fila "Movimientos del mes" → historial
+  movCountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     borderWidth: 1,
     borderColor: LINEA,
     backgroundColor: "rgba(255,255,255,0.03)",
     borderRadius: 18 * u,
-    paddingVertical: 18 * u,
-    paddingHorizontal: 14 * u,
-    marginTop: 14 * u,
+    paddingVertical: 13 * u,
+    paddingHorizontal: 16 * u,
   },
-  ticketGracias: {
+  movCountLabel: {
     fontFamily: "Menda-Medium",
-    fontSize: 16 * u,
-    letterSpacing: -0.6 * u,
+    fontSize: 15 * u,
+    letterSpacing: -0.4 * u,
     color: TXT,
-    textAlign: "center",
   },
-  ticketWeb: {
-    fontFamily: "Menda-Medium",
-    fontSize: 21 * u,
-    lineHeight: 27 * u,
-    letterSpacing: -1 * u,
+  movCountRight: { flexDirection: "row", alignItems: "center", gap: 8 * u },
+  movCountDot: {
+    width: 8 * u,
+    height: 8 * u,
+    borderRadius: 4 * u,
+    backgroundColor: ACCENTS.movimientos,
+  },
+  movCountNum: {
+    fontFamily: "Menda-Bold",
+    fontSize: 17 * u,
     color: TXT,
-    textAlign: "center",
-    marginTop: 10 * u,
+    fontVariant: ["tabular-nums"],
   },
-  ticketWebLink: { color: VERDE },
 
   // ---- Historial reducido dentro del ticket ----
   movEmpty: { color: MUTED, fontSize: 13, textAlign: "center", paddingVertical: 22 },
