@@ -1365,3 +1365,54 @@
     border-top: 1px solid var(--border-color);
   }
 }
+
+/* Los KPIs entran al panel único: sin marco propio y con línea horizontal
+   (con su luz) hacia la fila de composición */
+.unifiedPanel .summaryGrid {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.unifiedPanel .trioGrid {
+  position: relative;
+  border-top: 1px solid var(--border-color);
+}
+
+.unifiedPanel .trioGrid::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 42%,
+    rgba(117, 249, 76, 0.45) 50%,
+    transparent 58%,
+    transparent 100%
+  );
+  background-size: 320% 100%;
+  animation: luzLineaH 11s linear infinite;
+  animation-delay: -5.5s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unifiedPanel .trioGrid::before {
+    animation: none;
+    background: none;
+  }
+}
+
+@media (max-width: 1000px) {
+  .unifiedPanel .trioGrid::before {
+    animation: none;
+    background: none;
+  }
+}

@@ -359,7 +359,9 @@ function MetricsPage({
         </div>
       </header>
 
-      {/* KPIs */}
+      {/* Panel ÚNICO: KPIs + composición/anillos + evolución/ranking, todo
+          sobre el mismo fondo con líneas divisorias */}
+      <div className={style.unifiedPanel}>
       <div className={style.summaryGrid}>
         <article className={style.statCard}>
           <div className={style.statHead}>
@@ -403,9 +405,6 @@ function MetricsPage({
         </article>
       </div>
 
-      {/* Panel unificado: composición + anillos arriba, evolución + ranking
-          abajo, todo sobre un mismo fondo con líneas divisorias */}
-      <div className={style.unifiedPanel}>
       <div className={style.trioGrid}>
         <article className={style.chartCard}>
           <div className={style.chartHeader}>
