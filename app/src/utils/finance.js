@@ -65,7 +65,7 @@ export const getMovementTypeMeta = (type) => {
   if (t === "ingreso") return { label: "Ingreso", sign: "+", color: "#2fa56f" };
   if (t === "ahorro") return { label: "Ahorro", sign: "-", color: "#2bb888" };
   if (t === "deuda") return { label: "Deuda", sign: null, color: "#d6a92e" };
-  return { label: "Egreso", sign: "-", color: "#e0654f" };
+  return { label: "Egreso", sign: "-", color: "#eb3223" }; // mismo rojo que el Home
 };
 
 export const formatSignedMoney = (amount, currency, type) => {
