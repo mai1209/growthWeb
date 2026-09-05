@@ -485,7 +485,10 @@ export default function MetricasScreen() {
 
           {/* Ranking en lista numerada con toggle */}
           <View style={styles.rankHeader}>
-            <Text style={[styles.sectionTitle, { flex: 1, marginTop: 0 }]} numberOfLines={2}>
+            <Text
+              style={[styles.sectionTitle, { flex: 1, marginTop: 0, fontSize: 10, letterSpacing: 0.2 }]}
+              numberOfLines={2}
+            >
               {rankingType === "egreso" ? "Categorías con mayor egreso" : "Categorías con mayor ingreso"}
             </Text>
             <View style={styles.rankSwitch}>
@@ -694,9 +697,9 @@ const makeStyles = (colors) =>
       borderRadius: 999,
       padding: 3,
     },
-    rankSwitchBtn: { paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999 },
+    rankSwitchBtn: { paddingVertical: 5, paddingHorizontal: 9, borderRadius: 999 },
     rankSwitchOn: { backgroundColor: colors.segActive },
-    rankSwitchText: { color: colors.muted, fontWeight: "800", fontSize: 12 },
+    rankSwitchText: { color: colors.muted, fontWeight: "800", fontSize: 11.5 },
     rankSwitchTextOn: { color: colors.segActiveText },
     rankRow: {
       flexDirection: "row",
