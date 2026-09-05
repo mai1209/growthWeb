@@ -25,7 +25,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import Svg, { Defs, LinearGradient, Stop, Rect, Path } from "react-native-svg";
+import Svg, { Defs, LinearGradient, Stop, Rect } from "react-native-svg";
 import * as SecureStore from "expo-secure-store";
 import { movimientoService } from "../api";
 import MovementFormModal from "../components/MovementFormModal";
@@ -81,40 +81,6 @@ const fmtDate = (value) => {
   const s = String(value || "").slice(0, 10);
   const [y, m, d] = s.split("-");
   return y && m && d ? `${d}/${m}/${y}` : s;
-};
-
-// Camino suavizado (curvas por punto medio, como los sparklines de la web)
-const smoothPath = (pts) => {
-  if (!pts.length) return "";
-  let d = `M${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
-  for (let i = 1; i < pts.length; i++) {
-    const mx = ((pts[i - 1].x + pts[i].x) / 2).toFixed(1);
-    d += ` C${mx} ${pts[i - 1].y.toFixed(1)}, ${mx} ${pts[i].y.toFixed(1)}, ${pts[i].x.toFixed(1)} ${pts[i].y.toFixed(1)}`;
-  }
-  return d;
-};
-
-// Sparkline del saldo dentro de la tarjeta (formato del mockup)
-const BalanceSpark = ({ serie, width, height, color, fillColor }) => {
-  if (!width || serie.length < 2) return null;
-  const min = Math.min(...serie);
-  const max = Math.max(...serie);
-  const flat = max - min === 0;
-  const span = max - min || 1;
-  const padY = height * 0.16;
-  const pts = serie.map((v, i) => ({
-    x: (i / (serie.length - 1)) * width,
-    // Serie sin variación: línea al medio, no pegada al piso
-    y: flat ? height / 2 : height - padY - ((v - min) / span) * (height - padY * 2),
-  }));
-  const line = smoothPath(pts);
-  const area = `${line} L${width} ${height} L0 ${height} Z`;
-  return (
-    <Svg width={width} height={height}>
-      <Path d={area} fill={fillColor} />
-      <Path d={line} fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" />
-    </Svg>
-  );
 };
 
 const CARD_STYLE_KEY = "gm_card_style";
@@ -395,46 +361,6 @@ export default function HomeScreen() {
     return pot;
   }, [movimientos]);
 
-  // Serie del sparkline: saldo acumulado día a día (últimos 30 días, cortado en hoy),
-  // con la misma cuenta que el saldo total (ingresos - egresos - ahorros).
-  const sparkSerie = useMemo(() => {
-    const byCurrency = filterMovimientosByCurrency(movimientos, currency);
-    const delta = (m) => {
-      const amount = Number(m.monto) || 0;
-      if (m.tipo === "ingreso") return amount;
-      if (m.tipo === "ahorro") return -amount;
-      if (m.tipo === "deuda" || m.desdeAhorro) return 0;
-      return -amount; // egreso
-    };
-    const hoy = new Date();
-    const dayKey = (d) => d.toISOString().slice(0, 10);
-    const inicio = new Date(hoy);
-    inicio.setDate(inicio.getDate() - 29);
-    const inicioKey = dayKey(inicio);
-    let base = 0;
-    const porDia = {};
-    byCurrency.forEach((m) => {
-      const k = String(m.fecha || "").slice(0, 10);
-      if (!k) return;
-      if (k < inicioKey) base += delta(m);
-      else porDia[k] = (porDia[k] || 0) + delta(m);
-    });
-    const serie = [];
-    let acc = base;
-    for (let i = 0; i < 30; i++) {
-      const d = new Date(inicio);
-      d.setDate(inicio.getDate() + i);
-      acc += porDia[dayKey(d)] || 0;
-      serie.push(acc);
-    }
-    // Recorta el arranque muerto: si los primeros días son todos iguales
-    // (sin movimientos), empieza un día antes del primer cambio para que
-    // se vea la progresión y no una línea plana.
-    const primerCambio = serie.findIndex((v) => v !== serie[0]);
-    if (primerCambio > 1) return serie.slice(primerCambio - 1);
-    return serie;
-  }, [movimientos, currency]);
-
   const currencyMeta = getCurrencyMeta(currency);
   const money = (amount) => (visible ? formatMoney(amount, currency) : "••••");
   const moneyOf = (amount, mon) => (visible ? formatMoney(amount, mon || "ARS") : "••••");
@@ -599,17 +525,26 @@ export default function HomeScreen() {
                     </View>
                   </View>
 
-                  {/* Sparkline del saldo dentro de la tarjeta (formato del mockup) */}
-                  <View style={styles.bcSparkWrap}>
-                    {cardSize.w > 0 && visible ? (
-                      <BalanceSpark
-                        serie={sparkSerie}
-                        width={cardSize.w - 72 * u}
-                        height={70 * u}
-                        color={card.text}
-                        fillColor={card.glow3}
-                      />
-                    ) : null}
+                  {/* Acciones dentro de la card, con el mismo relieve que los iconos de arriba */}
+                  <View style={styles.bcQuickRow}>
+                    {quickActions.map((a) => (
+                      <TouchableOpacity
+                        key={a.key}
+                        style={styles.bcQuickItem}
+                        onPress={() => setModalMode(a.key)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.bcQuickBtn}>
+                          <Ionicons name={a.icon} size={22} color={a.color} />
+                          {a.extra ? (
+                            <Ionicons name={a.extra} size={13} color={a.color} style={styles.quickExtra} />
+                          ) : null}
+                        </View>
+                        <Text style={[styles.bcQuickLabel, { color: card.text }]} numberOfLines={1}>
+                          {a.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
                   </View>
                 </Animated.View>
 
@@ -644,29 +579,6 @@ export default function HomeScreen() {
                     <Text style={styles.cardBackDoneText}>Listo</Text>
                   </TouchableOpacity>
                 </Animated.View>
-                </View>
-
-                {/* Acciones rápidas: círculos con barrita de color (formato del mockup) */}
-                <View style={styles.quickRow}>
-                  {quickActions.map((a) => (
-                    <TouchableOpacity
-                      key={a.key}
-                      style={styles.quickItem}
-                      onPress={() => setModalMode(a.key)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[styles.quickCircle, { backgroundColor: a.color + "1c", borderColor: a.color + "55" }]}>
-                        <Ionicons name={a.icon} size={27 * u} color={a.color} />
-                        {a.extra ? (
-                          <Ionicons name={a.extra} size={16 * u} color={a.color} style={styles.quickExtra} />
-                        ) : null}
-                      </View>
-                      <Text style={styles.quickLabel} numberOfLines={1}>
-                        {a.label}
-                      </Text>
-                      <View style={[styles.quickBar, { backgroundColor: a.color }]} />
-                    </TouchableOpacity>
-                  ))}
                 </View>
 
                 {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -1425,36 +1337,32 @@ const makeStyles = (u) => StyleSheet.create({
     fontVariant: ["tabular-nums"],
   },
 
-  // Sparkline dentro de la tarjeta
-  bcSparkWrap: { marginTop: 18 * u, minHeight: 70 * u, justifyContent: "flex-end" },
-
-  // Acciones rápidas: 4 tiles con borde (mockup 3), cada uno con círculo,
-  // etiqueta y barrita de color abajo
-  quickRow: { flexDirection: "row", alignItems: "stretch", marginTop: 26 * u, gap: 10 * u },
-  quickItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8 * u,
-    borderWidth: 1,
-    borderColor: LINEA,
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderRadius: 18 * u,
-    paddingVertical: 14 * u,
-    paddingHorizontal: 4 * u,
+  // Acciones dentro de la card: mismo relieve que los iconos de arriba
+  bcQuickRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginTop: 22 * u,
   },
-  quickCircle: {
-    width: 50 * u,
-    height: 50 * u,
-    borderRadius: 25 * u,
-    borderWidth: 1,
+  bcQuickItem: { flex: 1, alignItems: "center", gap: 6 },
+  bcQuickBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#f4f4f4",
+    borderWidth: 1.5,
+    borderColor: "rgba(0,0,0,0.18)",
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2.5 },
+    elevation: 5,
   },
-  quickExtra: { marginLeft: -3 * u, marginBottom: -10 * u },
-  quickLabel: { fontFamily: "Menda-Medium", fontSize: 13 * u, letterSpacing: -0.5 * u, color: TXT },
-  quickBar: { width: "62%", height: 5 * u, borderRadius: 3 * u },
+  bcQuickLabel: { fontFamily: "Menda-Medium", fontSize: 12.5, letterSpacing: -0.3 },
+  quickExtra: { marginLeft: -3, marginBottom: -9 },
 
   statGrid: { gap: 10 },
 
