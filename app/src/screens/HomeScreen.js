@@ -738,7 +738,7 @@ export default function HomeScreen() {
                                 {i > 0 ? <View style={styles.ieSep} /> : null}
                                 <TouchableOpacity style={styles.ieCol} activeOpacity={0.7} onPress={() => goToFilter(c.tipo)}>
                                   <View style={styles.ieHead}>
-                                    <Ionicons name={c.icon} size={16 * u} color={c.color} />
+                                    <Ionicons name={c.icon} size={16} color={c.color} />
                                     <Text style={styles.ieLabel}>{c.label}</Text>
                                   </View>
                                   <Text
@@ -767,7 +767,7 @@ export default function HomeScreen() {
                         {/* Filas finas: ahorro, deuda y movimientos */}
                         {resRows.map((r) => (
                           <TouchableOpacity key={r.label} style={styles.resSlimRow} activeOpacity={0.6} onPress={r.onPress}>
-                            <Ionicons name={r.icon} size={18 * u} color={r.color} />
+                            <Ionicons name={r.icon} size={19} color={r.color} />
                             <Text style={styles.resSlimLabel}>{r.label}</Text>
                             <Text style={[styles.resSlimVal, { color: r.color }]}>{r.value}</Text>
                           </TouchableOpacity>
@@ -780,7 +780,7 @@ export default function HomeScreen() {
                           <View style={styles.movCountDot} />
                           <Text style={styles.resSlimLabel}>Movimientos del mes</Text>
                           <Text style={styles.resSlimVal}>{visible ? monthCount : "••"}</Text>
-                          <Ionicons name="chevron-forward" size={17 * u} color={MUTED} />
+                          <Ionicons name="chevron-forward" size={17} color={MUTED} />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -1482,15 +1482,16 @@ const makeStyles = (u) => StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 14 * u,
   },
+  // Tipografía del panel en tamaños fijos (el factor u del Figma la dejaba ilegible)
   resPanelTitle: {
     fontFamily: "Menda-Bold",
-    fontSize: 18.5 * u,
-    letterSpacing: -0.5 * u,
+    fontSize: 17,
+    letterSpacing: -0.4,
     color: TXT,
   },
   resPanelMes: {
     fontFamily: "Menda-Medium",
-    fontSize: 14.5 * u,
+    fontSize: 13.5,
     color: MUTED,
     textTransform: "capitalize",
   },
@@ -1513,18 +1514,18 @@ const makeStyles = (u) => StyleSheet.create({
   ieHead: { flexDirection: "row", alignItems: "center", gap: 6 * u },
   ieLabel: {
     fontFamily: "Menda-Medium",
-    fontSize: 15.5 * u,
-    letterSpacing: -0.4 * u,
+    fontSize: 14.5,
+    letterSpacing: -0.3,
     color: MUTED,
   },
   ieVal: {
     fontFamily: "Menda-Bold",
-    fontSize: 27 * u,
-    letterSpacing: -0.8 * u,
+    fontSize: 24,
+    letterSpacing: -0.7,
     fontVariant: ["tabular-nums"],
   },
-  ieDelta: { fontFamily: "Menda-Medium", fontSize: 13.5 * u, letterSpacing: -0.3 * u },
-  ieDeltaMuted: { fontFamily: "Menda-Medium", fontSize: 13.5 * u, color: MUTED, letterSpacing: -0.3 * u },
+  ieDelta: { fontFamily: "Menda-Medium", fontSize: 12.5, letterSpacing: -0.2 },
+  ieDeltaMuted: { fontFamily: "Menda-Medium", fontSize: 12.5, color: MUTED, letterSpacing: -0.2 },
 
   resDivider: { height: 1, backgroundColor: LINEA, marginVertical: 12 * u },
 
@@ -1538,23 +1539,23 @@ const makeStyles = (u) => StyleSheet.create({
   resSlimLabel: {
     flex: 1,
     fontFamily: "Menda-Medium",
-    fontSize: 17 * u,
-    letterSpacing: -0.4 * u,
+    fontSize: 15.5,
+    letterSpacing: -0.3,
     color: TXT,
   },
   resSlimVal: {
     fontFamily: "Menda-Bold",
-    fontSize: 19 * u,
-    letterSpacing: -0.5 * u,
+    fontSize: 17,
+    letterSpacing: -0.4,
     color: TXT,
     fontVariant: ["tabular-nums"],
   },
   movCountDot: {
-    width: 8 * u,
-    height: 8 * u,
-    borderRadius: 4 * u,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
     backgroundColor: ACCENTS.movimientos,
-    marginHorizontal: 4 * u,
+    marginHorizontal: 5,
   },
 
   // ---- Historial reducido dentro del ticket ----
