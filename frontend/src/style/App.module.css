@@ -1261,3 +1261,12 @@
   filter: brightness(1.06);
   transform: translateY(-1px);
 }
+
+/* El panel de movimientos sin card de fondo propia: su contenido va directo
+   sobre la página (antes se apilaban demasiadas capas de verdes) */
+.dashboardInfoCard {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
