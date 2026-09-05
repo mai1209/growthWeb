@@ -1009,3 +1009,9 @@
   font-size: 0.9rem;
   font-weight: 700;
 }
+
+/* El rail comparte el fondo continuo de la página: transparente, separado
+   solo por su línea derecha */
+.rail {
+  background: transparent;
+}

@@ -47,3 +47,13 @@
     min-width: 0;
   }
 }
+
+/* Fondo ÚNICO y continuo para toda la pantalla: el degradado vive en el shell
+   y las capas de adentro son transparentes (chau franjas de tonos distintos) */
+.shell {
+  background: var(--page-background);
+}
+
+.content {
+  background: transparent;
+}
