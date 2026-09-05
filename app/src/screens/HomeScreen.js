@@ -1,10 +1,10 @@
-// Home de Finanzas — réplica del frame "Finance Section" del Figma (rediseño):
-// fondo #10150f, fuente Menda, tabs AR$/US$/Deudas/Ahorros en contenedor
-// redondeado gris, card de saldo con degradado gris (la tapa a mitad del
-// contenedor de tabs, como en el diseño), ticket con borde verde con
-// Resumen/Historial y footer "Gracias por utilizar GROWTH MANAGER".
-// Los 3 iconos de la card: historial (reemplaza al filtro: Filtros ahora vive
-// en la barra inferior), ojo (ocultar montos) y paleta (color de tarjeta).
+// Home de Finanzas — tabs AR$/US$/Deudas/Ahorros (contenedor redondeado gris)
+// y card de saldo que tapa el contenedor a la mitad, como en el Figma.
+// El medio sigue el formato del mockup "blanco": sparkline del saldo dentro de
+// la card, 4 acciones como círculos con barrita de color, pastillas
+// Resumen/Historial y lista abierta sin marco, con separador punteado y
+// footer "Gracias por utilizar GROWTH MANAGER".
+// Los 3 iconos de la card: historial, ojo (ocultar montos) y paleta (color).
 // Escala: u = (width/738) * 1.15, igual que el Lobby.
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -25,7 +25,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import Svg, { Defs, LinearGradient, Stop, Rect } from "react-native-svg";
+import Svg, { Defs, LinearGradient, Stop, Rect, Path } from "react-native-svg";
 import * as SecureStore from "expo-secure-store";
 import { movimientoService } from "../api";
 import MovementFormModal from "../components/MovementFormModal";
@@ -81,6 +81,38 @@ const fmtDate = (value) => {
   const s = String(value || "").slice(0, 10);
   const [y, m, d] = s.split("-");
   return y && m && d ? `${d}/${m}/${y}` : s;
+};
+
+// Camino suavizado (curvas por punto medio, como los sparklines de la web)
+const smoothPath = (pts) => {
+  if (!pts.length) return "";
+  let d = `M${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+  for (let i = 1; i < pts.length; i++) {
+    const mx = ((pts[i - 1].x + pts[i].x) / 2).toFixed(1);
+    d += ` C${mx} ${pts[i - 1].y.toFixed(1)}, ${mx} ${pts[i].y.toFixed(1)}, ${pts[i].x.toFixed(1)} ${pts[i].y.toFixed(1)}`;
+  }
+  return d;
+};
+
+// Sparkline del saldo dentro de la tarjeta (formato del mockup)
+const BalanceSpark = ({ serie, width, height, color, fillColor }) => {
+  if (!width || serie.length < 2) return null;
+  const min = Math.min(...serie);
+  const max = Math.max(...serie);
+  const span = max - min || 1;
+  const padY = height * 0.16;
+  const pts = serie.map((v, i) => ({
+    x: (i / (serie.length - 1)) * width,
+    y: height - padY - ((v - min) / span) * (height - padY * 2),
+  }));
+  const line = smoothPath(pts);
+  const area = `${line} L${width} ${height} L0 ${height} Z`;
+  return (
+    <Svg width={width} height={height}>
+      <Path d={area} fill={fillColor} />
+      <Path d={line} fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" />
+    </Svg>
+  );
 };
 
 const CARD_STYLE_KEY = "gm_card_style";
@@ -341,6 +373,41 @@ export default function HomeScreen() {
     return pot;
   }, [movimientos]);
 
+  // Serie del sparkline: saldo acumulado día a día (últimos 30 días, cortado en hoy),
+  // con la misma cuenta que el saldo total (ingresos - egresos - ahorros).
+  const sparkSerie = useMemo(() => {
+    const byCurrency = filterMovimientosByCurrency(movimientos, currency);
+    const delta = (m) => {
+      const amount = Number(m.monto) || 0;
+      if (m.tipo === "ingreso") return amount;
+      if (m.tipo === "ahorro") return -amount;
+      if (m.tipo === "deuda" || m.desdeAhorro) return 0;
+      return -amount; // egreso
+    };
+    const hoy = new Date();
+    const dayKey = (d) => d.toISOString().slice(0, 10);
+    const inicio = new Date(hoy);
+    inicio.setDate(inicio.getDate() - 29);
+    const inicioKey = dayKey(inicio);
+    let base = 0;
+    const porDia = {};
+    byCurrency.forEach((m) => {
+      const k = String(m.fecha || "").slice(0, 10);
+      if (!k) return;
+      if (k < inicioKey) base += delta(m);
+      else porDia[k] = (porDia[k] || 0) + delta(m);
+    });
+    const serie = [];
+    let acc = base;
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(inicio);
+      d.setDate(inicio.getDate() + i);
+      acc += porDia[dayKey(d)] || 0;
+      serie.push(acc);
+    }
+    return serie;
+  }, [movimientos, currency]);
+
   const currencyMeta = getCurrencyMeta(currency);
   const money = (amount) => (visible ? formatMoney(amount, currency) : "••••");
   const moneyOf = (amount, mon) => (visible ? formatMoney(amount, mon || "ARS") : "••••");
@@ -502,30 +569,17 @@ export default function HomeScreen() {
                     </View>
                   </View>
 
-                  {/* Acciones dentro de la tarjeta (banda translúcida del Figma) */}
-                  <View style={[styles.bcActions, { backgroundColor: card.iconBg }]}>
-                    {quickActions.map((a, i) => (
-                      <React.Fragment key={a.key}>
-                        {i > 0 ? (
-                          <View style={[styles.bcActionSep, { backgroundColor: card.lineColor }]} />
-                        ) : null}
-                        <TouchableOpacity
-                          style={styles.quickItem}
-                          onPress={() => setModalMode(a.key)}
-                          activeOpacity={0.7}
-                        >
-                          <View style={styles.quickIconRow}>
-                            <Ionicons name={a.icon} size={34 * u} color={a.color} />
-                            {a.extra ? (
-                              <Ionicons name={a.extra} size={20 * u} color={a.color} style={styles.quickExtra} />
-                            ) : null}
-                          </View>
-                          <Text style={[styles.quickLabel, { color: card.text }]} numberOfLines={1}>
-                            {a.label}
-                          </Text>
-                        </TouchableOpacity>
-                      </React.Fragment>
-                    ))}
+                  {/* Sparkline del saldo dentro de la tarjeta (formato del mockup) */}
+                  <View style={styles.bcSparkWrap}>
+                    {cardSize.w > 0 && visible ? (
+                      <BalanceSpark
+                        serie={sparkSerie}
+                        width={cardSize.w - 72 * u}
+                        height={70 * u}
+                        color={card.text}
+                        fillColor={card.glow3}
+                      />
+                    ) : null}
                   </View>
                 </Animated.View>
 
@@ -560,6 +614,29 @@ export default function HomeScreen() {
                     <Text style={styles.cardBackDoneText}>Listo</Text>
                   </TouchableOpacity>
                 </Animated.View>
+                </View>
+
+                {/* Acciones rápidas: círculos con barrita de color (formato del mockup) */}
+                <View style={styles.quickRow}>
+                  {quickActions.map((a) => (
+                    <TouchableOpacity
+                      key={a.key}
+                      style={styles.quickItem}
+                      onPress={() => setModalMode(a.key)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.quickCircle, { backgroundColor: a.color + "1c", borderColor: a.color + "55" }]}>
+                        <Ionicons name={a.icon} size={27 * u} color={a.color} />
+                        {a.extra ? (
+                          <Ionicons name={a.extra} size={16 * u} color={a.color} style={styles.quickExtra} />
+                        ) : null}
+                      </View>
+                      <Text style={styles.quickLabel} numberOfLines={1}>
+                        {a.label}
+                      </Text>
+                      <View style={[styles.quickBar, { backgroundColor: a.color }]} />
+                    </TouchableOpacity>
+                  ))}
                 </View>
 
                 {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -700,11 +777,9 @@ export default function HomeScreen() {
                     </View>
                   )}
 
-                  {/* Corte perforado tipo ticket (línea punteada + muescas verdes) */}
+                  {/* Separador punteado antes del footer (formato abierto del mockup) */}
                   <View style={styles.ticketCut}>
                     <View style={styles.ticketDash} />
-                    <View style={[styles.ticketNotch, styles.ticketNotchL]} />
-                    <View style={[styles.ticketNotch, styles.ticketNotchR]} />
                   </View>
 
                   {/* Footer del ticket, como en el Figma */}
@@ -1167,7 +1242,7 @@ const makeStyles = (u) => StyleSheet.create({
     paddingTop: 34 * u,
     paddingBottom: 30 * u,
     paddingHorizontal: 36 * u,
-    minHeight: 306 * u,
+    minHeight: 272 * u,
     justifyContent: "space-between",
     overflow: "hidden",
     backgroundColor: "#4f4f4f", // respaldo hasta que el SVG mida la tarjeta
@@ -1224,51 +1299,49 @@ const makeStyles = (u) => StyleSheet.create({
     fontVariant: ["tabular-nums"],
   },
 
-  bcActions: {
-    flexDirection: "row",
+  // Sparkline dentro de la tarjeta
+  bcSparkWrap: { marginTop: 18 * u, minHeight: 70 * u, justifyContent: "flex-end" },
+
+  // Acciones rápidas fuera de la tarjeta: círculo + etiqueta + barrita de color
+  quickRow: { flexDirection: "row", alignItems: "flex-start", marginTop: 26 * u },
+  quickItem: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 * u },
+  quickCircle: {
+    width: 62 * u,
+    height: 62 * u,
+    borderRadius: 31 * u,
+    borderWidth: 1,
     alignItems: "center",
-    marginTop: 24 * u,
-    paddingVertical: 12 * u,
-    borderRadius: 23 * u,
-    minHeight: 100 * u,
+    justifyContent: "center",
+    flexDirection: "row",
   },
-  bcActionSep: { width: 1, height: 44 * u, alignSelf: "center" },
-  quickItem: { flex: 1, alignItems: "center", justifyContent: "center", gap: 7 * u },
-  quickIconRow: { flexDirection: "row", alignItems: "flex-end" },
-  quickExtra: { marginLeft: -4 * u, marginBottom: 2 * u },
-  quickLabel: { fontFamily: "Menda-Bold", fontSize: 15 * u, letterSpacing: -0.5 * u },
+  quickExtra: { marginLeft: -3 * u, marginBottom: -10 * u },
+  quickLabel: { fontFamily: "Menda-Medium", fontSize: 14 * u, letterSpacing: -0.5 * u, color: TXT },
+  quickBar: { width: 34 * u, height: 5 * u, borderRadius: 3 * u },
 
   statGrid: { gap: 10 },
 
-  // ---- Ticket con borde verde (Figma) ----
+  // ---- Resumen/Historial en formato abierto (mockup): pastillas + lista sin marco ----
   ticket: {
-    borderWidth: 1,
-    borderColor: VERDE,
-    borderRadius: 34 * u,
-    paddingHorizontal: 20 * u,
-    paddingTop: 20 * u,
-    paddingBottom: 40 * u,
-    marginTop: 37 * u,
-    // Recorta las muescas del corte: queda solo el medio círculo que muerde el borde
-    overflow: "hidden",
+    paddingHorizontal: 4 * u,
+    paddingTop: 6 * u,
+    paddingBottom: 10 * u,
+    marginTop: 30 * u,
   },
-  // El switch Resumen/Historial va a la derecha, como en el Figma
-  ticketSwitchRow: { alignItems: "flex-end" },
+  // Pastillas centradas, como en el mockup
+  ticketSwitchRow: { alignItems: "center" },
   ticketSwitch: {
     flexDirection: "row",
-    borderWidth: 1,
-    borderColor: VERDE,
-    borderRadius: 17 * u,
-    padding: 6 * u,
-    gap: 6 * u,
+    gap: 12 * u,
   },
   ticketSeg: {
-    paddingVertical: 7 * u,
-    paddingHorizontal: 32 * u,
-    borderRadius: 15 * u,
+    paddingVertical: 9 * u,
+    paddingHorizontal: 38 * u,
+    borderRadius: 999,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: LINEA,
   },
-  ticketSegOn: { backgroundColor: VERDE },
+  ticketSegOn: { backgroundColor: VERDE, borderColor: VERDE },
   ticketSegText: { fontFamily: "Menda-Medium", fontSize: 25 * u, letterSpacing: -1 * u, color: TXT },
   ticketSegTextOn: { color: "#000000" },
   verTodosWrap: { alignSelf: "flex-end", marginTop: 10 * u, marginRight: 8 * u },
@@ -1279,7 +1352,7 @@ const makeStyles = (u) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 56 * u,
+    marginTop: 32 * u,
     marginBottom: 8 * u,
   },
   ticketCaption: { fontFamily: "Menda-Medium", fontSize: 18 * u, letterSpacing: -0.6 * u, color: TXT },
@@ -1304,26 +1377,14 @@ const makeStyles = (u) => StyleSheet.create({
     fontVariant: ["tabular-nums"],
   },
 
-  // Corte perforado: línea punteada verde + muescas en los bordes
-  ticketCut: { height: 44 * u, justifyContent: "center", marginHorizontal: -20 * u, marginTop: 60 * u },
+  // Separador punteado antes del footer
+  ticketCut: { height: 20 * u, justifyContent: "center", marginTop: 40 * u },
   ticketDash: {
     borderBottomWidth: 1,
     borderStyle: "dashed",
-    borderColor: VERDE,
-    marginHorizontal: 34 * u,
+    borderColor: "rgba(117, 249, 76, 0.55)",
+    marginHorizontal: 14 * u,
   },
-  ticketNotch: {
-    position: "absolute",
-    width: 44 * u,
-    height: 44 * u,
-    borderRadius: 22 * u,
-    backgroundColor: BG,
-    borderWidth: 1,
-    borderColor: VERDE,
-    top: 0,
-  },
-  ticketNotchL: { left: -22 * u },
-  ticketNotchR: { right: -22 * u },
 
   ticketGracias: {
     fontFamily: "Menda-Medium",
