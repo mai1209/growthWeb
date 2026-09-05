@@ -485,7 +485,7 @@ export default function MetricasScreen() {
 
           {/* Ranking en lista numerada con toggle */}
           <View style={styles.rankHeader}>
-            <Text style={[styles.sectionTitle, { flex: 1, marginTop: 0 }]}>
+            <Text style={[styles.sectionTitle, { flex: 1, marginTop: 0 }]} numberOfLines={2}>
               {rankingType === "egreso" ? "Categorías con mayor egreso" : "Categorías con mayor ingreso"}
             </Text>
             <View style={styles.rankSwitch}>
