@@ -1270,3 +1270,15 @@
   box-shadow: none;
   padding: 0;
 }
+
+/* El shell de la lista de movimientos también sin capa propia */
+.dashboardMovementShell {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Un respiro mínimo para que el título no se recorte contra el borde */
+.dashboardInfoCard {
+  padding: 0.3rem 0.3rem 0 0.4rem;
+}
