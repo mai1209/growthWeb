@@ -1998,3 +1998,49 @@
   align-self: stretch;
   grid-template-rows: auto auto 1fr;
 }
+
+/* ===== Cards de movimiento estilo mockup: tinte suave por tipo (funciona en
+   tema claro y oscuro porque el tinte va sobre la superficie del tema) ===== */
+.row {
+  border-radius: 18px;
+}
+
+.incomeRow {
+  background:
+    linear-gradient(150deg, rgba(117, 249, 76, 0.11), rgba(117, 249, 76, 0.03) 60%),
+    var(--surface-card);
+  border-color: rgba(117, 249, 76, 0.24);
+}
+
+.expenseRow {
+  background:
+    linear-gradient(150deg, rgba(255, 123, 107, 0.11), rgba(255, 123, 107, 0.03) 60%),
+    var(--surface-card);
+  border-color: rgba(255, 123, 107, 0.24);
+}
+
+.savingsRow {
+  background:
+    linear-gradient(150deg, rgba(88, 235, 164, 0.11), rgba(88, 235, 164, 0.03) 60%),
+    var(--surface-card);
+  border-color: rgba(88, 235, 164, 0.24);
+}
+
+.debtRow {
+  background:
+    linear-gradient(150deg, rgba(255, 213, 92, 0.11), rgba(255, 213, 92, 0.03) 60%),
+    var(--surface-card);
+  border-color: rgba(255, 213, 92, 0.24);
+}
+
+/* Ícono en circulito tintado, como el mockup */
+.rowIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+}
+
+.incomeRow .rowIcon { background: rgba(117, 249, 76, 0.16); }
+.expenseRow .rowIcon { background: rgba(255, 123, 107, 0.16); }
+.savingsRow .rowIcon { background: rgba(88, 235, 164, 0.16); }
+.debtRow .rowIcon { background: rgba(255, 213, 92, 0.16); }
