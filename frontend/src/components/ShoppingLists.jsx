@@ -12,7 +12,6 @@ import {
 } from "react-icons/fi";
 import { taskService } from "../api";
 import InputMonto from "./InputMonto";
-import colorStyle from "../style/TaskStudio.module.css";
 import style from "../style/ShoppingLists.module.css";
 
 const LIST_COLORS = [
@@ -41,6 +40,17 @@ const LIST_ACCENTS = {
 };
 const accentOf = (c) => LIST_ACCENTS[c] || LIST_ACCENTS.color1;
 
+// Categorías de ítems (chips de color dentro de la lista)
+const ITEM_CATS = [
+  { key: "hogar", label: "Hogar", emoji: "🏠", color: "#6ee14b" },
+  { key: "alimentos", label: "Alimentos", emoji: "🍎", color: "#ffd35c" },
+  { key: "limpieza", label: "Limpieza", emoji: "✨", color: "#a78bfa" },
+  { key: "bebidas", label: "Bebidas", emoji: "🥤", color: "#69a7ff" },
+  { key: "ropa", label: "Ropa", emoji: "👕", color: "#f070b8" },
+  { key: "otros", label: "Otros", emoji: "🏷️", color: "#9ba8b0" },
+];
+const catOf = (key) => ITEM_CATS.find((c) => c.key === key) || ITEM_CATS[ITEM_CATS.length - 1];
+
 // id local para los ítems (no depende del backend).
 let itemSeq = 0;
 const makeItemId = () => `it_${Date.now().toString(36)}_${(itemSeq++).toString(36)}`;
@@ -54,6 +64,7 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
   const [creating, setCreating] = useState(false);
   const [openListId, setOpenListId] = useState(null); // null => board; id => detalle
   const [draft, setDraft] = useState(""); // borrador del ítem en el detalle abierto
+  const [draftCat, setDraftCat] = useState("otros"); // categoría del ítem nuevo
   const [sortBy, setSortBy] = useState("recientes"); // orden del board
   const [menuId, setMenuId] = useState(null); // card con el menú ⋮ abierto
   const composerInputRef = useRef(null);
@@ -173,9 +184,17 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
   const handleAddItem = (listId) => {
     const text = draft.trim();
     if (!text) return;
-    mutateItems(listId, (items) => [...items, { id: makeItemId(), text, done: false }]);
+    mutateItems(listId, (items) => [
+      ...items,
+      { id: makeItemId(), text, done: false, categoria: draftCat },
+    ]);
     setDraft("");
   };
+
+  const handleSetCategoria = (listId, itemId, categoria) =>
+    mutateItems(listId, (items) =>
+      items.map((it) => (it.id === itemId ? { ...it, categoria } : it))
+    );
 
   const handleClearDone = (listId) =>
     mutateItems(listId, (items) => items.filter((it) => !it.done));
@@ -211,9 +230,10 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
     return (
       <ListDetail
         list={openList}
-        colorClass={colorStyle[openList.color] || colorStyle.color1}
         draft={draft}
         onDraftChange={setDraft}
+        draftCat={draftCat}
+        onDraftCatChange={setDraftCat}
         onBack={() => {
           setOpenListId(null);
           setDraft("");
@@ -225,6 +245,9 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
         onClearDone={() => handleClearDone(openList._id)}
         onSetPrice={(itemId, precio, cantidad) =>
           handleSetPrice(openList._id, itemId, precio, cantidad)
+        }
+        onSetCategoria={(itemId, categoria) =>
+          handleSetCategoria(openList._id, itemId, categoria)
         }
       />
     );
@@ -455,9 +478,10 @@ function PreviewCard({ list, menuOpen, onToggleMenu, onOpen, onDeleteList, onTog
 // Vista detalle: acá se anotan y tildan los ítems de la lista.
 function ListDetail({
   list,
-  colorClass,
   draft,
   onDraftChange,
+  draftCat,
+  onDraftCatChange,
   onBack,
   onAddItem,
   onToggleItem,
@@ -465,11 +489,35 @@ function ListDetail({
   onDeleteList,
   onClearDone,
   onSetPrice,
+  onSetCategoria,
 }) {
   const inputRef = useRef(null);
   const items = list.items || [];
   const doneCount = items.filter((it) => it.done).length;
-  const isDark = list.color === "color11";
+  const acc = accentOf(list.color);
+
+  // Filtro por categoría + orden de los ítems (solo presentación)
+  const [filtroCat, setFiltroCat] = useState("todas");
+  const [ordenItems, setOrdenItems] = useState("recientes");
+  const [catMenuId, setCatMenuId] = useState(null); // ítem con el selector de categoría abierto
+
+  useEffect(() => {
+    if (!catMenuId) return undefined;
+    const close = () => setCatMenuId(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [catMenuId]);
+
+  const visibleItems = useMemo(() => {
+    let arr = items;
+    if (filtroCat !== "todas") arr = arr.filter((it) => (it.categoria || "otros") === filtroCat);
+    arr = [...arr];
+    if (ordenItems === "recientes") arr.reverse();
+    else if (ordenItems === "az") arr.sort((a, b) => (a.text || "").localeCompare(b.text || "", "es"));
+    else if (ordenItems === "pendientes") arr.sort((a, b) => Number(a.done) - Number(b.done));
+    return arr;
+  }, [items, filtroCat, ordenItems]);
+  const pendVisible = visibleItems.filter((it) => !it.done).length;
 
   // Precio por ítem (precio unitario × cantidad); el total suma cada línea.
   const [priceOpenId, setPriceOpenId] = useState(null);
@@ -514,13 +562,25 @@ function ListDetail({
         Volver a las listas
       </button>
 
-      <section className={`${style.detailCard} ${colorClass} ${isDark ? style.cardDark : ""}`}>
-        <header className={style.detailHead}>
-          <div className={style.detailTitleWrap}>
-            <h3 className={style.detailTitle}>{list.meta || "Sin título"}</h3>
-            <span className={style.cardCount}>
-              {items.length ? `${doneCount}/${items.length}` : "vacía"}
-            </span>
+      <section className={style.detailV2} style={{ "--acc": acc }}>
+        {/* Encabezado con icono, rótulo y carrito de fondo */}
+        <FiShoppingCart className={style.detailV2Marca} aria-hidden />
+        <header className={style.detailV2Head}>
+          <span className={style.detailV2Icon}>
+            <FiShoppingCart />
+          </span>
+          <div className={style.detailV2Titles}>
+            <span className={style.detailV2Kicker}>Lista de compras</span>
+            <h3 className={style.detailV2Title}>{list.meta || "Sin título"}</h3>
+            <p className={style.detailV2Sub}>
+              {items.length
+                ? `${items.length} ítem${items.length === 1 ? "" : "s"} · ${
+                    items.length - doneCount === 0
+                      ? "todo comprado"
+                      : `${items.length - doneCount} pendiente${items.length - doneCount === 1 ? "" : "s"}`
+                  }`
+                : "Anotá lo que necesites comprar."}
+            </p>
           </div>
           <button
             type="button"
@@ -533,37 +593,128 @@ function ListDetail({
           </button>
         </header>
 
-        <form className={style.addRow} onSubmit={submitItem}>
+        {/* Barra de agregar: ítem + categoría + filtro */}
+        <form className={style.addRowV2} onSubmit={submitItem}>
           <input
             ref={inputRef}
-            className={style.addInput}
+            className={style.addInputV2}
             type="text"
             value={draft}
             onChange={(e) => onDraftChange(e.target.value)}
-            placeholder="Anotá un ítem y presioná Enter..."
+            placeholder="Agregar un ítem..."
             maxLength={120}
           />
-          <button type="submit" className={style.addBtn} disabled={!draft.trim()} aria-label="Agregar ítem">
+          <button type="submit" className={style.addBtnV2} disabled={!draft.trim()}>
             <FiPlus />
+            Agregar
           </button>
+          <div className={style.catDots} role="radiogroup" aria-label="Categoría del ítem nuevo">
+            {ITEM_CATS.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                className={`${style.catDot} ${draftCat === c.key ? style.catDotOn : ""}`}
+                style={{ "--cat": c.color }}
+                onClick={() => onDraftCatChange(c.key)}
+                aria-pressed={draftCat === c.key}
+                title={c.label}
+              >
+                <span aria-hidden>{c.emoji}</span>
+              </button>
+            ))}
+          </div>
+          <select
+            className={style.sortSelect}
+            value={filtroCat}
+            onChange={(e) => setFiltroCat(e.target.value)}
+            aria-label="Filtrar por categoría"
+          >
+            <option value="todas">Todas</option>
+            {ITEM_CATS.map((c) => (
+              <option key={c.key} value={c.key}>
+                {c.label}
+              </option>
+            ))}
+          </select>
         </form>
 
-        <ul className={style.items}>
-          {items.length === 0 ? (
-            <li className={style.itemEmpty}>Todavía no anotaste nada. Escribí arriba para empezar.</li>
+        {/* Stats + orden */}
+        <div className={style.detailStats}>
+          <span className={style.statChip}>
+            <FiList />
+            <strong>{visibleItems.length}</strong> ítem{visibleItems.length === 1 ? "" : "s"} ·{" "}
+            {pendVisible} pendiente{pendVisible === 1 ? "" : "s"}
+          </span>
+          <select
+            className={style.sortSelect}
+            value={ordenItems}
+            onChange={(e) => setOrdenItems(e.target.value)}
+            aria-label="Ordenar ítems"
+            style={{ marginLeft: "auto" }}
+          >
+            <option value="recientes">Más recientes</option>
+            <option value="antiguos">Más antiguos</option>
+            <option value="az">A → Z</option>
+            <option value="pendientes">Pendientes primero</option>
+          </select>
+        </div>
+
+        <ul className={style.itemsV2}>
+          {visibleItems.length === 0 ? (
+            <li className={style.itemEmpty}>
+              {items.length === 0
+                ? "Todavía no anotaste nada. Escribí arriba para empezar."
+                : "No hay ítems en esta categoría."}
+            </li>
           ) : (
-            items.map((it) => (
-              <li key={it.id} className={`${style.item} ${it.done ? style.itemDone : ""}`}>
+            visibleItems.map((it) => {
+              const cat = catOf(it.categoria);
+              return (
+              <li key={it.id} className={`${style.itemV2} ${it.done ? style.itemV2Done : ""}`}>
                 <button
                   type="button"
-                  className={`${style.check} ${it.done ? style.checkDone : ""}`}
+                  className={`${style.checkV2} ${it.done ? style.checkV2On : ""}`}
                   onClick={() => onToggleItem(it.id)}
                   aria-label={it.done ? "Marcar como pendiente" : "Marcar como comprado"}
                   aria-pressed={it.done}
                 >
                   {it.done ? <FiCheck /> : null}
                 </button>
-                <span className={style.itemText}>{it.text}</span>
+                <span className={style.itemTextV2}>{it.text}</span>
+
+                {/* Chip de categoría: click para cambiarla */}
+                <span className={style.catChipWrap}>
+                  <button
+                    type="button"
+                    className={style.catChip}
+                    style={{ "--cat": cat.color }}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setCatMenuId((prev) => (prev === it.id ? null : it.id));
+                    }}
+                    title="Cambiar categoría"
+                  >
+                    <span aria-hidden>{cat.emoji}</span> {cat.label}
+                  </button>
+                  {catMenuId === it.id ? (
+                    <div className={style.catMenu} onClick={(event) => event.stopPropagation()}>
+                      {ITEM_CATS.map((c) => (
+                        <button
+                          key={c.key}
+                          type="button"
+                          style={{ "--cat": c.color }}
+                          className={(it.categoria || "otros") === c.key ? style.catMenuOn : ""}
+                          onClick={() => {
+                            onSetCategoria(it.id, c.key);
+                            setCatMenuId(null);
+                          }}
+                        >
+                          <span aria-hidden>{c.emoji}</span> {c.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </span>
 
                 {priceOpenId === it.id ? (
                   <span
@@ -630,7 +781,8 @@ function ListDetail({
                   <FiX />
                 </button>
               </li>
-            ))
+              );
+            })
           )}
         </ul>
 
@@ -641,11 +793,22 @@ function ListDetail({
           </div>
         ) : null}
 
-        {doneCount > 0 ? (
-          <button type="button" className={style.clearDone} onClick={onClearDone}>
-            Quitar {doneCount} comprado{doneCount === 1 ? "" : "s"}
+        {/* Barra inferior: comprados + limpiar */}
+        <div className={style.footBarV2}>
+          <span className={style.footBarInfo}>
+            <FiShoppingCart />
+            {doneCount} comprado{doneCount === 1 ? "" : "s"}
+          </span>
+          <button
+            type="button"
+            className={style.footBarDelete}
+            onClick={onClearDone}
+            disabled={doneCount === 0}
+          >
+            <FiTrash2 />
+            Eliminar comprados
           </button>
-        ) : null}
+        </div>
       </section>
     </div>
   );

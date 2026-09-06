@@ -1072,3 +1072,360 @@
     justify-content: center;
   }
 }
+
+/* ============================================================
+   Detalle V2 — vista interna de una lista, formato mockup
+   ============================================================ */
+
+.detailV2 {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--acc) 30%, var(--border-color));
+  background:
+    radial-gradient(circle at 92% 0%, color-mix(in srgb, var(--acc) 12%, transparent), transparent 42%),
+    var(--surface-card);
+  padding: 1.3rem 1.4rem 1.1rem;
+}
+
+.detailV2Marca {
+  position: absolute;
+  top: 0.6rem;
+  right: 1.2rem;
+  font-size: 7rem;
+  color: color-mix(in srgb, var(--acc) 26%, transparent);
+  pointer-events: none;
+}
+
+.detailV2Head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+}
+
+.detailV2Icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 15px;
+  background: var(--acc);
+  color: #0b1a10;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.detailV2Titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.detailV2Kicker {
+  display: block;
+  color: var(--acc);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.detailV2Title {
+  margin: 0.1rem 0 0;
+  color: var(--color-text);
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detailV2Sub {
+  margin: 0.25rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+/* ---- Barra de agregar ---- */
+.addRowV2 {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  padding: 0.65rem 0.75rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--color-text) 3%, transparent);
+}
+
+.addInputV2 {
+  flex: 1 1 220px;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  padding: 0.5rem 0.4rem;
+}
+
+.addInputV2:focus {
+  outline: none;
+}
+
+.addBtnV2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: none;
+  border-radius: 12px;
+  padding: 0.55rem 1rem;
+  background: var(--color-verde, #75f94c);
+  color: #06210a;
+  font-weight: 800;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.addBtnV2:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.catDots {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.catDot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: color-mix(in srgb, var(--cat) 30%, transparent);
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.catDot:hover {
+  transform: scale(1.12);
+}
+
+.catDotOn {
+  background: color-mix(in srgb, var(--cat) 55%, transparent);
+  box-shadow: 0 0 0 2px var(--surface-card), 0 0 0 4px var(--cat);
+}
+
+/* ---- Stats del detalle ---- */
+.detailStats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* ---- Ítems ---- */
+.itemsV2 {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.itemV2 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--color-text) 3%, transparent);
+  min-width: 0;
+}
+
+.itemV2Done .itemTextV2 {
+  color: var(--color-muted);
+  text-decoration: line-through;
+}
+
+.checkV2 {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--acc) 55%, var(--border-color));
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #0b1a10;
+  font-size: 0.75rem;
+  padding: 0;
+  transition: background 0.12s ease, transform 0.12s ease;
+}
+
+.checkV2:hover {
+  transform: scale(1.1);
+}
+
+.checkV2On {
+  background: var(--acc);
+  border-color: var(--acc);
+}
+
+.itemTextV2 {
+  flex: 1;
+  min-width: 0;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Chip de categoría + selector */
+.catChipWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.catChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  background: color-mix(in srgb, var(--cat) 22%, transparent);
+  color: var(--color-text);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.catChip:hover {
+  background: color-mix(in srgb, var(--cat) 34%, transparent);
+}
+
+.catMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  min-width: 150px;
+  background: var(--surface-card-strong, var(--surface-card));
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.3rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+}
+
+.catMenu button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.catMenu button:hover {
+  background: color-mix(in srgb, var(--cat) 20%, transparent);
+}
+
+.catMenuOn {
+  background: color-mix(in srgb, var(--cat) 26%, transparent) !important;
+}
+
+/* ---- Barra inferior ---- */
+.footBarV2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--color-text) 3%, transparent);
+}
+
+.footBarInfo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.footBarInfo svg {
+  color: var(--acc);
+}
+
+.footBarDelete {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid rgba(255, 107, 94, 0.45);
+  border-radius: 12px;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 107, 94, 0.12);
+  color: #ff6b5e;
+  font-weight: 800;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.footBarDelete:hover:not(:disabled) {
+  background: rgba(255, 107, 94, 0.2);
+}
+
+.footBarDelete:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+@media (max-width: 720px) {
+  .detailV2Marca {
+    display: none;
+  }
+
+  .addRowV2 {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .catDots {
+    justify-content: center;
+  }
+
+  .detailStats {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .catChip span {
+    display: none; /* solo el emoji en pantallas chicas */
+  }
+
+  .catChip {
+    padding: 0.3rem 0.5rem;
+  }
+}

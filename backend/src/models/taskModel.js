@@ -68,6 +68,8 @@ const TaskSchema = new mongoose.Schema({
         // Precio unitario opcional + cantidad (para el total de la compra).
         precio: { type: Number, default: null },
         cantidad: { type: Number, default: 1 },
+        // Categoría del ítem (hogar/alimentos/limpieza/bebidas/ropa/otros).
+        categoria: { type: String, default: null },
         _id: false,
       },
     ],
