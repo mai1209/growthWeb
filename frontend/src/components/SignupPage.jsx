@@ -69,7 +69,7 @@ const newToken = res.data.token;
         <div className={style.containerForm}>
           <img src="./imgInicio.webp" alt="imgInicio" />
 
-          <form onSubmit={handleSubmit}>
+          <form className={style.formCol} onSubmit={handleSubmit}>
             <p className={style.title}>Registrate para comenzar</p>
 
             <div className={style.containerInput}>

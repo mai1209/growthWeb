@@ -131,7 +131,7 @@
 /* =========================
    FORM
 ========================= */
-form {
+.formCol {
   display: flex;
   flex-direction: column;
   width: 400px;
@@ -584,7 +584,7 @@ form {
     grid-template-columns: 1fr;
   }
 
-  form {
+  .formCol {
     width: 100%;
   }
 
