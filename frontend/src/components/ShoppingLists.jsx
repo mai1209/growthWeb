@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FiArrowLeft,
+  FiArrowRight,
   FiCheck,
-  FiChevronRight,
+  FiList,
+  FiMoreVertical,
   FiPlus,
   FiTrash2,
   FiShoppingCart,
@@ -23,6 +25,22 @@ const LIST_COLORS = [
   "color2",
 ];
 
+// Acento vivo por color de lista (la versión saturada del papel pastel)
+const LIST_ACCENTS = {
+  color1: "#6ee14b",
+  color2: "#ff9d5c",
+  color3: "#ffd35c",
+  color4: "#3ed9a4",
+  color5: "#69a7ff",
+  color6: "#f070b8",
+  color7: "#a78bfa",
+  color8: "#ff7a6e",
+  color9: "#9ab09a",
+  color10: "#a9bfae",
+  color11: "#8ea8a8",
+};
+const accentOf = (c) => LIST_ACCENTS[c] || LIST_ACCENTS.color1;
+
 // id local para los ítems (no depende del backend).
 let itemSeq = 0;
 const makeItemId = () => `it_${Date.now().toString(36)}_${(itemSeq++).toString(36)}`;
@@ -36,7 +54,18 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
   const [creating, setCreating] = useState(false);
   const [openListId, setOpenListId] = useState(null); // null => board; id => detalle
   const [draft, setDraft] = useState(""); // borrador del ítem en el detalle abierto
+  const [sortBy, setSortBy] = useState("recientes"); // orden del board
+  const [menuId, setMenuId] = useState(null); // card con el menú ⋮ abierto
+  const composerInputRef = useRef(null);
   const listsRef = useRef(lists); // estado fresco para mutaciones sincrónicas
+
+  // Cierra el menú ⋮ al hacer click en cualquier otro lado
+  useEffect(() => {
+    if (!menuId) return undefined;
+    const close = () => setMenuId(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [menuId]);
 
   useEffect(() => {
     listsRef.current = lists;
@@ -163,6 +192,18 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
     [lists]
   );
 
+  // Orden del board según el selector
+  const sortedLists = useMemo(() => {
+    const arr = [...lists];
+    const pend = (l) => (l.items || []).filter((it) => !it.done).length;
+    if (sortBy === "az") arr.sort((a, b) => (a.meta || "").localeCompare(b.meta || "", "es"));
+    else if (sortBy === "antiguas")
+      arr.sort((a, b) => String(a.fecha || "").localeCompare(String(b.fecha || "")));
+    else if (sortBy === "pendientes") arr.sort((a, b) => pend(b) - pend(a));
+    else arr.sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")));
+    return arr;
+  }, [lists, sortBy]);
+
   const openList = openListId ? lists.find((l) => l._id === openListId) : null;
 
   // ===== Vista detalle: dentro de una lista =====
@@ -192,35 +233,61 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
   // ===== Vista board: previews de todas las listas =====
   return (
     <div className={style.wrap}>
-      {/* Compositor: nueva lista */}
-      <form className={style.composer} onSubmit={handleCreateList}>
-        <div className={style.composerRow}>
-          <FiShoppingCart className={style.composerIcon} />
-          <input
-            className={style.composerInput}
-            type="text"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            placeholder="Nueva lista (ej. Supermercado, Ferretería...)"
-            maxLength={80}
-          />
-          <button type="submit" className={style.createBtn} disabled={!newTitle.trim() || creating}>
-            <FiPlus />
-            Crear lista
-          </button>
-          <div className={style.swatchRow} role="radiogroup" aria-label="Color de la lista">
-            {LIST_COLORS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                className={`${style.swatch} ${colorStyle[c]} ${newColor === c ? style.swatchActive : ""}`}
-                onClick={() => setNewColor(c)}
-                aria-label={`Color ${c}`}
-                aria-pressed={newColor === c}
-              />
-            ))}
-          </div>
+      {/* Encabezado de la sección */}
+      <header className={style.headV2}>
+        <div>
+          <span className={style.headKicker}>Listas</span>
+          <h2 className={style.headTitle}>
+            Listas <span>de compras</span>
+          </h2>
+          <p className={style.headSub}>
+            Organizá tus compras, ahorrá tiempo y llevá el control de lo que necesitás.
+          </p>
         </div>
+        <button
+          type="button"
+          className={style.headNewBtn}
+          onClick={() => composerInputRef.current?.focus()}
+        >
+          <FiShoppingCart />
+          Nueva lista
+          <FiPlus />
+        </button>
+      </header>
+
+      {/* Compositor: nueva lista */}
+      <form className={style.composerV2} onSubmit={handleCreateList}>
+        <span className={style.composerV2Icon} style={{ "--acc": accentOf(newColor) }}>
+          <FiShoppingCart />
+        </span>
+        <input
+          ref={composerInputRef}
+          className={style.composerV2Input}
+          type="text"
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          placeholder="Nueva lista (ej: Súper, Ferretería...)"
+          maxLength={80}
+        />
+        <div className={style.swatchRowV2} role="radiogroup" aria-label="Color de la lista">
+          {LIST_COLORS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              className={`${style.swatchV2} ${newColor === c ? style.swatchV2On : ""}`}
+              style={{ "--acc": accentOf(c) }}
+              onClick={() => setNewColor(c)}
+              aria-label={`Color ${c}`}
+              aria-pressed={newColor === c}
+            >
+              {newColor === c ? <FiCheck /> : null}
+            </button>
+          ))}
+        </div>
+        <button type="submit" className={style.createBtn} disabled={!newTitle.trim() || creating}>
+          <FiPlus />
+          Crear lista
+        </button>
       </form>
 
       {error ? <p className={style.error}>{error}</p> : null}
@@ -234,20 +301,39 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
         </p>
       ) : (
         <>
-          {totalPending > 0 ? (
-            <p className={style.summary}>
+          {/* Stats + orden */}
+          <div className={style.statsRow}>
+            <span className={style.statChip}>
+              <FiList />
+              <strong>{lists.length}</strong> lista{lists.length === 1 ? "" : "s"}
+            </span>
+            <span className={style.statText}>
               {totalPending} ítem{totalPending === 1 ? "" : "s"} pendiente
               {totalPending === 1 ? "" : "s"} en total
-            </p>
-          ) : null}
-          <div className={style.board}>
-            {lists.map((list) => (
+            </span>
+            <select
+              className={style.sortSelect}
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              aria-label="Ordenar listas"
+            >
+              <option value="recientes">Más recientes</option>
+              <option value="antiguas">Más antiguas</option>
+              <option value="az">A → Z</option>
+              <option value="pendientes">Más pendientes</option>
+            </select>
+          </div>
+
+          <div className={style.boardV2}>
+            {sortedLists.map((list) => (
               <PreviewCard
                 key={list._id}
                 list={list}
-                colorClass={colorStyle[list.color] || colorStyle.color1}
+                menuOpen={menuId === list._id}
+                onToggleMenu={() => setMenuId((prev) => (prev === list._id ? null : list._id))}
                 onOpen={() => setOpenListId(list._id)}
                 onDeleteList={() => handleDeleteList(list._id)}
+                onToggleItem={(itemId) => handleToggleItem(list._id, itemId)}
               />
             ))}
           </div>
@@ -257,22 +343,20 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
   );
 }
 
-// Tarjeta de vista previa: solo título + resumen + tachito. Se abre al hacer click.
-function PreviewCard({ list, colorClass, onOpen, onDeleteList }) {
+// Tarjeta de vista previa: tinte del color de la lista, anillo de progreso,
+// primeros ítems tildeables, "Ver lista →" y menú ⋮.
+const PREVIEW_MAX = 4;
+function PreviewCard({ list, menuOpen, onToggleMenu, onOpen, onDeleteList, onToggleItem }) {
   const items = list.items || [];
   const doneCount = items.filter((it) => it.done).length;
   const pending = items.length - doneCount;
-  const isDark = list.color === "color11";
-
-  const summary = !items.length
-    ? "Lista vacía"
-    : pending === 0
-    ? "Todo comprado"
-    : `${pending} pendiente${pending === 1 ? "" : "s"} · ${items.length} ítem${items.length === 1 ? "" : "s"}`;
+  const pct = items.length ? Math.round((doneCount / items.length) * 100) : 0;
+  const preview = items.slice(0, PREVIEW_MAX);
 
   return (
     <article
-      className={`${style.previewCard} ${colorClass} ${isDark ? style.cardDark : ""}`}
+      className={style.cardV2}
+      style={{ "--acc": accentOf(list.color), "--p": pct }}
       role="button"
       tabIndex={0}
       onClick={onOpen}
@@ -285,26 +369,85 @@ function PreviewCard({ list, colorClass, onOpen, onDeleteList }) {
       }}
       title={`Abrir "${list.meta || "Sin título"}"`}
     >
-      <div className={style.previewTopRight}>
-        <FiChevronRight className={style.previewChevron} />
+      <header className={style.cardV2Head}>
+        <span className={style.cardV2Icon}>
+          <FiShoppingCart />
+        </span>
+        <span className={style.cardV2Ring} aria-label={`${doneCount} de ${items.length} comprados`}>
+          <span>{items.length ? `${doneCount}/${items.length}` : "0"}</span>
+        </span>
+      </header>
+
+      <h3 className={style.cardV2Title}>{list.meta || "Sin título"}</h3>
+      <p className={style.cardV2Meta}>
+        {items.length
+          ? `${items.length} ítem${items.length === 1 ? "" : "s"} · ${
+              pending === 0 ? "todo comprado" : `${pending} pendiente${pending === 1 ? "" : "s"}`
+            }`
+          : "Lista vacía"}
+      </p>
+
+      {preview.length > 0 ? (
+        <ul className={style.cardV2Items}>
+          {preview.map((it) => (
+            <li key={it.id} className={it.done ? style.cardV2ItemDone : ""}>
+              <button
+                type="button"
+                className={`${style.cardV2Check} ${it.done ? style.cardV2CheckOn : ""}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleItem(it.id);
+                }}
+                aria-label={it.done ? "Marcar como pendiente" : "Marcar como comprado"}
+                aria-pressed={it.done}
+              >
+                {it.done ? <FiCheck /> : null}
+              </button>
+              <span>{it.text}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {items.length > PREVIEW_MAX ? (
+        <span className={style.cardV2More}>+{items.length - PREVIEW_MAX} más</span>
+      ) : null}
+
+      <footer className={style.cardV2Foot}>
         <button
           type="button"
-          className={style.deleteListBtn}
+          className={style.cardV2Open}
           onClick={(event) => {
             event.stopPropagation();
-            onDeleteList();
+            onOpen();
           }}
-          aria-label="Eliminar lista"
-          title="Eliminar lista"
         >
-          <FiTrash2 />
+          Ver lista <FiArrowRight />
         </button>
-      </div>
-
-      <h3 className={style.previewTitle}>{list.meta || "Sin título"}</h3>
-      <div className={style.previewFooter}>
-        <span className={style.previewSummary}>{summary}</span>
-      </div>
+        <div className={style.cardV2MenuWrap}>
+          <button
+            type="button"
+            className={style.cardV2MenuBtn}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleMenu();
+            }}
+            aria-label="Opciones de la lista"
+            aria-expanded={menuOpen}
+          >
+            <FiMoreVertical />
+          </button>
+          {menuOpen ? (
+            <div className={style.cardV2Menu} onClick={(event) => event.stopPropagation()}>
+              <button type="button" onClick={onOpen}>
+                <FiArrowRight /> Abrir
+              </button>
+              <button type="button" className={style.cardV2MenuDanger} onClick={onDeleteList}>
+                <FiTrash2 /> Eliminar
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </footer>
     </article>
   );
 }
