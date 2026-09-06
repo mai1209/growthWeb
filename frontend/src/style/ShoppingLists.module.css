@@ -1039,3 +1039,36 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Refuerzo del compositor: barra horizontal a todo el ancho, pase lo que pase */
+.composerV2 {
+  width: 100%;
+  box-sizing: border-box;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.composerV2Input {
+  flex: 1 1 240px;
+  width: auto;
+}
+
+.swatchRowV2 {
+  flex-shrink: 0;
+}
+
+.createBtn {
+  flex-shrink: 0;
+}
+
+@media (max-width: 720px) {
+  .composerV2 {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .swatchRowV2 {
+    justify-content: center;
+  }
+}

@@ -1567,8 +1567,9 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       <div className={style.layout}>
         <section className={style.listCard}>
             {/* En la vista notas el título va dentro de la columna de carpetas
-                (izquierda) para que la grilla quede a la misma altura. */}
-            {effectiveView !== "notes" && (
+                (izquierda) para que la grilla quede a la misma altura.
+                Compras trae su propio encabezado (ShoppingLists), no va acá. */}
+            {effectiveView !== "notes" && effectiveView !== "shopping" && (
               <div className={style.editorHeader}>
                 <div>
                   <p className={style.cardKicker}>
