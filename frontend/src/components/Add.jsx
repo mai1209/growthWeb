@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiArrowLeft, FiAlertTriangle, FiX } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 import style from "../style/Add.module.css";
 import InputMonto from "./InputMonto";
 import { movimientoService, categoriesService } from "../api";
@@ -146,6 +147,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
   const [catModalOpen, setCatModalOpen] = useState(false); // alta de categoría
   const [newCatName, setNewCatName] = useState("");
   const [newCatIcon, setNewCatIcon] = useState("🏷️");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false); // selector de cualquier emoji
   const [savingCat, setSavingCat] = useState(false);
 
   const loadCategories = async () => {
@@ -696,6 +698,35 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
                 </button>
               ))}
             </div>
+
+            <button
+              type="button"
+              className={style.catMoreEmojisBtn}
+              onClick={() => setShowEmojiPicker((v) => !v)}
+            >
+              {showEmojiPicker ? "▲ Ocultar selector" : "＋ Elegí cualquier emoji"}
+            </button>
+
+            {showEmojiPicker ? (
+              <div className={style.catEmojiPickerWrap}>
+                <EmojiPicker
+                  theme={
+                    document.body.getAttribute("data-theme") === "light"
+                      ? Theme.LIGHT
+                      : Theme.DARK
+                  }
+                  width="100%"
+                  height={330}
+                  searchPlaceholder="Buscar emoji…"
+                  previewConfig={{ showPreview: false }}
+                  skinTonesDisabled
+                  onEmojiClick={(emojiData) => {
+                    setNewCatIcon(emojiData.emoji);
+                    setShowEmojiPicker(false);
+                  }}
+                />
+              </div>
+            ) : null}
 
             <div className={style.catModalActions}>
               <button

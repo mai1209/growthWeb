@@ -960,6 +960,28 @@
   background: rgba(20, 217, 95, 0.12);
 }
 
+.catMoreEmojisBtn {
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.8rem;
+  border: 1px dashed var(--border-color);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-verde, #14d95f);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.catMoreEmojisBtn:hover {
+  background: rgba(20, 217, 95, 0.08);
+}
+
+.catEmojiPickerWrap {
+  margin-top: 0.6rem;
+  display: flex;
+  justify-content: center;
+}
+
 .catModalActions {
   display: flex;
   gap: 0.6rem;
