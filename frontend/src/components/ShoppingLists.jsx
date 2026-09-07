@@ -64,7 +64,6 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
   const [creating, setCreating] = useState(false);
   const [openListId, setOpenListId] = useState(null); // null => board; id => detalle
   const [draft, setDraft] = useState(""); // borrador del ítem en el detalle abierto
-  const [draftCat, setDraftCat] = useState("otros"); // categoría del ítem nuevo
   const [sortBy, setSortBy] = useState("recientes"); // orden del board
   const [menuId, setMenuId] = useState(null); // card con el menú ⋮ abierto
   const [composerFlash, setComposerFlash] = useState(false); // resaltado del compositor
@@ -200,10 +199,8 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
   const handleAddItem = (listId) => {
     const text = draft.trim();
     if (!text) return;
-    mutateItems(listId, (items) => [
-      ...items,
-      { id: makeItemId(), text, done: false, categoria: draftCat },
-    ]);
+    // Sin categoría por defecto: la lista es simple; la categoría es opcional
+    mutateItems(listId, (items) => [...items, { id: makeItemId(), text, done: false }]);
     setDraft("");
   };
 
@@ -248,8 +245,6 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
         list={openList}
         draft={draft}
         onDraftChange={setDraft}
-        draftCat={draftCat}
-        onDraftCatChange={setDraftCat}
         onBack={() => {
           setOpenListId(null);
           setDraft("");
@@ -489,8 +484,6 @@ function ListDetail({
   list,
   draft,
   onDraftChange,
-  draftCat,
-  onDraftCatChange,
   onBack,
   onAddItem,
   onToggleItem,
@@ -519,13 +512,26 @@ function ListDetail({
 
   const visibleItems = useMemo(() => {
     let arr = items;
-    if (filtroCat !== "todas") arr = arr.filter((it) => (it.categoria || "otros") === filtroCat);
+    if (filtroCat !== "todas") arr = arr.filter((it) => it.categoria === filtroCat);
     arr = [...arr];
     if (ordenItems === "recientes") arr.reverse();
     else if (ordenItems === "az") arr.sort((a, b) => (a.text || "").localeCompare(b.text || "", "es"));
     else if (ordenItems === "pendientes") arr.sort((a, b) => Number(a.done) - Number(b.done));
     return arr;
   }, [items, filtroCat, ordenItems]);
+
+  // Categorías realmente usadas en esta lista: el filtro solo aparece si hay alguna
+  const catsEnUso = useMemo(() => {
+    const set = new Set();
+    items.forEach((it) => {
+      if (it.categoria) set.add(it.categoria);
+    });
+    return ITEM_CATS.map((c) => c.key).filter((k) => set.has(k));
+  }, [items]);
+
+  useEffect(() => {
+    if (filtroCat !== "todas" && !catsEnUso.includes(filtroCat)) setFiltroCat("todas");
+  }, [catsEnUso, filtroCat]);
   const pendVisible = visibleItems.filter((it) => !it.done).length;
 
   // Precio por ítem (precio unitario × cantidad); el total suma cada línea.
@@ -615,34 +621,21 @@ function ListDetail({
             <FiPlus />
             Agregar
           </button>
-          <div className={style.catDots} role="radiogroup" aria-label="Categoría del ítem nuevo">
-            {ITEM_CATS.map((c) => (
-              <button
-                key={c.key}
-                type="button"
-                className={`${style.catDot} ${draftCat === c.key ? style.catDotOn : ""}`}
-                style={{ "--cat": c.color }}
-                onClick={() => onDraftCatChange(c.key)}
-                aria-pressed={draftCat === c.key}
-                title={c.label}
-              >
-                <span aria-hidden>{c.emoji}</span>
-              </button>
-            ))}
-          </div>
-          <select
-            className={style.sortSelect}
-            value={filtroCat}
-            onChange={(e) => setFiltroCat(e.target.value)}
-            aria-label="Filtrar por categoría"
-          >
-            <option value="todas">Todas</option>
-            {ITEM_CATS.map((c) => (
-              <option key={c.key} value={c.key}>
-                {c.label}
-              </option>
-            ))}
-          </select>
+          {catsEnUso.length > 0 ? (
+            <select
+              className={style.sortSelect}
+              value={filtroCat}
+              onChange={(e) => setFiltroCat(e.target.value)}
+              aria-label="Filtrar por categoría"
+            >
+              <option value="todas">Todas</option>
+              {catsEnUso.map((k) => (
+                <option key={k} value={k}>
+                  {catOf(k).label}
+                </option>
+              ))}
+            </select>
+          ) : null}
         </form>
 
         {/* Stats + orden */}
@@ -689,20 +682,36 @@ function ListDetail({
                 </button>
                 <span className={style.itemTextV2}>{it.text}</span>
 
-                {/* Chip de categoría: click para cambiarla */}
+                {/* Categoría opcional: chip solo si el ítem tiene una; si no,
+                    un botoncito discreto para asignarla */}
                 <span className={style.catChipWrap}>
-                  <button
-                    type="button"
-                    className={style.catChip}
-                    style={{ "--cat": cat.color }}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setCatMenuId((prev) => (prev === it.id ? null : it.id));
-                    }}
-                    title="Cambiar categoría"
-                  >
-                    <span aria-hidden>{cat.emoji}</span> {cat.label}
-                  </button>
+                  {it.categoria ? (
+                    <button
+                      type="button"
+                      className={style.catChip}
+                      style={{ "--cat": cat.color }}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setCatMenuId((prev) => (prev === it.id ? null : it.id));
+                      }}
+                      title="Cambiar categoría"
+                    >
+                      <span aria-hidden>{cat.emoji}</span> {cat.label}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className={style.catGhost}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setCatMenuId((prev) => (prev === it.id ? null : it.id));
+                      }}
+                      title="Ponerle categoría (opcional)"
+                      aria-label="Ponerle categoría"
+                    >
+                      <span aria-hidden>🏷️</span>
+                    </button>
+                  )}
                   {catMenuId === it.id ? (
                     <div className={style.catMenu} onClick={(event) => event.stopPropagation()}>
                       {ITEM_CATS.map((c) => (
@@ -710,7 +719,7 @@ function ListDetail({
                           key={c.key}
                           type="button"
                           style={{ "--cat": c.color }}
-                          className={(it.categoria || "otros") === c.key ? style.catMenuOn : ""}
+                          className={it.categoria === c.key ? style.catMenuOn : ""}
                           onClick={() => {
                             onSetCategoria(it.id, c.key);
                             setCatMenuId(null);
@@ -719,6 +728,18 @@ function ListDetail({
                           <span aria-hidden>{c.emoji}</span> {c.label}
                         </button>
                       ))}
+                      {it.categoria ? (
+                        <button
+                          type="button"
+                          style={{ "--cat": "#9ba8b0" }}
+                          onClick={() => {
+                            onSetCategoria(it.id, null);
+                            setCatMenuId(null);
+                          }}
+                        >
+                          <FiX /> Sin categoría
+                        </button>
+                      ) : null}
                     </div>
                   ) : null}
                 </span>

@@ -1450,3 +1450,23 @@
     box-shadow: none;
   }
 }
+
+/* Botón fantasma para asignar categoría (solo se insinúa) */
+.catGhost {
+  border: none;
+  background: none;
+  padding: 0.25rem 0.4rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0.3;
+  filter: grayscale(1);
+  transition: opacity 0.15s ease, filter 0.15s ease;
+}
+
+.itemV2:hover .catGhost,
+.catGhost:hover,
+.catGhost:focus-visible {
+  opacity: 1;
+  filter: none;
+}
