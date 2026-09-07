@@ -1470,3 +1470,40 @@
   opacity: 1;
   filter: none;
 }
+
+/* Editor de precio × cantidad, integrado al tema (sin fondo blanco) */
+.precioEdit {
+  gap: 0.45rem;
+}
+
+.precioEdit .precioInput,
+.precioEdit .cantInput {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.45rem 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.precioEdit .precioInput {
+  width: 120px;
+}
+
+.precioEdit .cantInput {
+  width: 60px;
+}
+
+.precioEdit .precioInput:focus,
+.precioEdit .cantInput:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--color-verde, #75f94c) 60%, transparent);
+  box-shadow: 0 0 0 3px rgba(117, 249, 76, 0.18);
+}
+
+.precioEdit .precioX {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+}
