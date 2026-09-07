@@ -352,9 +352,12 @@ function Afirmaciones() {
                 rows={1}
                 placeholder="Escribí tu afirmación…"
                 onChange={(e) => editarLinea(i, e.target.value)}
-                onInput={(e) => {
-                  e.target.style.height = "auto";
-                  e.target.style.height = `${e.target.scrollHeight}px`;
+                // El alto se recalcula en cada render (no solo al tipear):
+                // sin esto, las afirmaciones largas aparecían cortadas al cargar.
+                ref={(el) => {
+                  if (!el) return;
+                  el.style.height = "auto";
+                  el.style.height = `${el.scrollHeight}px`;
                 }}
               />
               {escrita ? (
