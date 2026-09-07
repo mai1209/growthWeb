@@ -2091,3 +2091,16 @@
 .container::before {
   content: none;
 }
+
+/* En pantallas angostas las filas vuelven a ser cards con aire: el viejo modo
+   "lista plana" (padding 0.1rem, sin borde) dejaba los montos pegados al borde
+   ahora que las cards van tintadas. El color del borde lo pone cada tono. */
+@media (max-width: 1000px) {
+  .row {
+    padding: 0.85rem 1rem;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 18px;
+    border-bottom-width: 1px;
+  }
+}
