@@ -531,12 +531,6 @@ export default function AfirmacionesPanel({ visible, onClose }) {
                 )
               ) : null}
 
-              <Text style={styles.ayuda}>
-                {repetirDiario
-                  ? "Escribí tus afirmaciones y leelas todos los días: podés editarlas cuando quieras."
-                  : "Lo que escribas hoy se guarda igual, no se pierde."}
-              </Text>
-
               {/* Cards: cada afirmación es una card tintada y se escribe directo
                   encima; la punteada del final es "Escribí tu afirmación…" */}
               {lineas.map((linea, indice) => {
@@ -700,7 +694,6 @@ const makeStyles = (colors, isDark = false) =>
       textTransform: "capitalize",
     },
 
-    ayuda: { color: colors.muted, fontSize: 13, lineHeight: 18 },
 
     switchRow: {
       flexDirection: "row",
