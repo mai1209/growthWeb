@@ -272,13 +272,15 @@ export default function LobbyScreen({ navigation }) {
               padding: 28 * u,
             }}
           >
+            {/* Tamaños fijos: con el factor u quedaban ilegibles (~10pt reales) */}
             <Text
               style={{
                 fontFamily: "Menda-Bold",
-                fontSize: 25 * u,
-                letterSpacing: -1.2 * u,
+                fontSize: 19,
+                letterSpacing: -0.6,
                 color: "#fff",
-                marginBottom: 14 * u,
+                marginBottom: 12,
+                paddingRight: 28,
               }}
             >
               {info?.titulo}
@@ -286,10 +288,10 @@ export default function LobbyScreen({ navigation }) {
             <Text
               style={{
                 fontFamily: "Menda-Medium",
-                fontSize: 16 * u,
-                lineHeight: 22 * u,
-                letterSpacing: -0.5 * u,
-                color: "#fff",
+                fontSize: 15.5,
+                lineHeight: 23,
+                letterSpacing: -0.3,
+                color: "rgba(255,255,255,0.92)",
               }}
             >
               {info?.desc}
@@ -297,9 +299,9 @@ export default function LobbyScreen({ navigation }) {
             <TouchableOpacity
               onPress={() => setInfo(null)}
               hitSlop={10}
-              style={{ position: "absolute", top: 12 * u, right: 12 * u }}
+              style={{ position: "absolute", top: 14, right: 14 }}
             >
-              <Ionicons name="close" size={26 * u} color={VERDE} />
+              <Ionicons name="close" size={24} color={VERDE} />
             </TouchableOpacity>
           </TouchableOpacity>
         </TouchableOpacity>
