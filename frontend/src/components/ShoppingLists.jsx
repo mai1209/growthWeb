@@ -67,7 +67,23 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
   const [draftCat, setDraftCat] = useState("otros"); // categoría del ítem nuevo
   const [sortBy, setSortBy] = useState("recientes"); // orden del board
   const [menuId, setMenuId] = useState(null); // card con el menú ⋮ abierto
+  const [composerFlash, setComposerFlash] = useState(false); // resaltado del compositor
   const composerInputRef = useRef(null);
+  const flashTimer = useRef(null);
+
+  // "Nueva lista" no crea nada: lleva el foco al input y lo hace brillar
+  const resaltarComposer = () => {
+    composerInputRef.current?.focus();
+    composerInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setComposerFlash(false);
+    clearTimeout(flashTimer.current);
+    requestAnimationFrame(() => {
+      setComposerFlash(true);
+      flashTimer.current = setTimeout(() => setComposerFlash(false), 1600);
+    });
+  };
+
+  useEffect(() => () => clearTimeout(flashTimer.current), []);
   const listsRef = useRef(lists); // estado fresco para mutaciones sincrónicas
 
   // Cierra el menú ⋮ al hacer click en cualquier otro lado
@@ -258,20 +274,10 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
     <div className={style.wrap}>
       {/* Encabezado de la sección */}
       <header className={style.headV2}>
-        <div>
-          <span className={style.headKicker}>Listas</span>
-          <h2 className={style.headTitle}>
-            Listas <span>de compras</span>
-          </h2>
-          <p className={style.headSub}>
-            Organizá tus compras, ahorrá tiempo y llevá el control de lo que necesitás.
-          </p>
-        </div>
-        <button
-          type="button"
-          className={style.headNewBtn}
-          onClick={() => composerInputRef.current?.focus()}
-        >
+        <h2 className={style.headTitle}>
+          Listas <span>de compras</span>
+        </h2>
+        <button type="button" className={style.headNewBtn} onClick={resaltarComposer}>
           <FiShoppingCart />
           Nueva lista
           <FiPlus />
@@ -279,7 +285,10 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
       </header>
 
       {/* Compositor: nueva lista */}
-      <form className={style.composerV2} onSubmit={handleCreateList}>
+      <form
+        className={`${style.composerV2} ${composerFlash ? style.composerFlash : ""}`}
+        onSubmit={handleCreateList}
+      >
         <span className={style.composerV2Icon} style={{ "--acc": accentOf(newColor) }}>
           <FiShoppingCart />
         </span>
@@ -563,8 +572,6 @@ function ListDetail({
       </button>
 
       <section className={style.detailV2} style={{ "--acc": acc }}>
-        {/* Encabezado con icono, rótulo y carrito de fondo */}
-        <FiShoppingCart className={style.detailV2Marca} aria-hidden />
         <header className={style.detailV2Head}>
           <span className={style.detailV2Icon}>
             <FiShoppingCart />

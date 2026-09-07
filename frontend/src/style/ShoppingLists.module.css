@@ -1429,3 +1429,24 @@
     padding: 0.3rem 0.5rem;
   }
 }
+
+/* Resaltado del compositor al tocar "Nueva lista": el input es el protagonista */
+.composerFlash {
+  animation: composerPulse 1.6s ease;
+}
+
+.composerFlash .composerV2Input {
+  border-color: var(--color-verde, #75f94c);
+  box-shadow: 0 0 0 3px rgba(117, 249, 76, 0.22);
+}
+
+@keyframes composerPulse {
+  0% {
+    border-color: var(--color-verde, #75f94c);
+    box-shadow: 0 0 0 6px rgba(117, 249, 76, 0.18), 0 0 26px rgba(117, 249, 76, 0.28);
+  }
+  100% {
+    border-color: var(--border-color);
+    box-shadow: none;
+  }
+}
