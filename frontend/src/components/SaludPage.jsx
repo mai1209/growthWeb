@@ -1323,18 +1323,11 @@ export default function SaludPage() {
         {/* Pasos de hoy + Tendencia (círculo a la izquierda, línea a la derecha) */}
         <section className={`${style.card} ${style.cardAncha}`}>
           <div className={style.cardHead}>
-            <h2>
-              <FiActivity /> Pasos de hoy
-            </h2>
-            <div className={style.pasosBtns}>
-              <button
-                type="button"
-                className={style.pasosManualBtn}
-                title="Ver los recorridos de tus caminatas por GPS"
-                onClick={() => setRecorridosOpen(true)}
-              >
-                <FiMap /> Recorridos
-              </button>
+            {/* El botón Manual va pegado al título: carga pasos a mano */}
+            <div className={style.pasosTituloRow}>
+              <h2>
+                <FiActivity /> Pasos de hoy
+              </h2>
               <button
                 type="button"
                 className={style.pasosManualBtn}
@@ -1353,6 +1346,14 @@ export default function SaludPage() {
                 <FiPlus /> Manual
               </button>
             </div>
+            <button
+              type="button"
+              className={style.recorridosBtn}
+              title="Ver los recorridos de tus caminatas por GPS"
+              onClick={() => setRecorridosOpen(true)}
+            >
+              <FiMap /> Ver recorridos
+            </button>
           </div>
 
           {/* Tabs de métrica para la tendencia (Pasos / Peso / Distancia) */}

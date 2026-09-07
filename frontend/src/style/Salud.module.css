@@ -1802,3 +1802,42 @@
     align-self: center;
   }
 }
+
+/* Título "Pasos de hoy" + botón Manual pegado (así se entiende a qué refiere) */
+.pasosTituloRow {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.pasosTituloRow h2 {
+  margin: 0;
+}
+
+/* Recorridos: botón grande y llamativo, que se note que es clickeable */
+.recorridosBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.15rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-verde, #75f94c);
+  color: #06210a;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(117, 249, 76, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.recorridosBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(117, 249, 76, 0.38);
+}
+
+.recorridosBtn svg {
+  font-size: 1.05rem;
+}
