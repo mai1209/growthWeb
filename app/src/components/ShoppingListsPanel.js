@@ -51,8 +51,9 @@ function ProgressRing({ acc, done, total, size = 46, trackColor }) {
   const circ = 2 * Math.PI * r;
   const pct = total ? done / total : 0;
   return (
+    // Svg absoluto de fondo y el número en flujo centrado (patrón seguro en RN 0.86)
     <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
-      <Svg width={size} height={size}>
+      <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
         <Circle cx={size / 2} cy={size / 2} r={r} stroke={trackColor} strokeWidth={stroke} fill="none" />
         <Circle
           cx={size / 2}
@@ -68,7 +69,6 @@ function ProgressRing({ acc, done, total, size = 46, trackColor }) {
       </Svg>
       <Text
         style={{
-          position: "absolute",
           fontSize: 10.5,
           fontWeight: "800",
           color: acc,

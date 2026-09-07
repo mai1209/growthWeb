@@ -12,13 +12,15 @@ export default function ProgressRing({ percent = 0, size = 96, stroke = 11 }) {
   const offset = c * (1 - pct / 100);
 
   return (
-    <View style={{ width: size, height: size }}>
-      <Svg width={size} height={size}>
+    // El texto va en flujo normal centrado y el Svg de fondo en absoluto:
+    // al revés (label absoluto) quedaba corrido con RN 0.86 / new arch.
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+      <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
         <Circle
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke="#1a2a1f22"
+          stroke={colors.cardBorder}
           strokeWidth={stroke}
           fill="none"
         />
@@ -35,16 +37,13 @@ export default function ProgressRing({ percent = 0, size = 96, stroke = 11 }) {
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </Svg>
-      <View style={styles.center}>
-        <Text style={styles.value}>{pct}%</Text>
-        <Text style={styles.label}>hecho</Text>
-      </View>
+      <Text style={styles.value}>{pct}%</Text>
+      <Text style={styles.label}>hecho</Text>
     </View>
   );
 }
 
 const makeStyles = (colors) => StyleSheet.create({
-  center: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center" },
   value: { color: colors.text, fontSize: 22, fontWeight: "900", lineHeight: 24 },
   label: {
     color: colors.muted,
