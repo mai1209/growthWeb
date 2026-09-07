@@ -1,3 +1,6 @@
+// Listas de compras — mismo diseño que la web: cards tintadas por color con
+// anillo de progreso y preview de ítems tildeables; detalle con hero de la
+// lista, barra de agregar, precio × cantidad y barra de comprados.
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Modal,
@@ -15,20 +18,73 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import Svg, { Circle } from "react-native-svg";
 import { taskService } from "../api";
 import { useTheme } from "../theme";
-import { getNoteColor } from "../utils/notes";
 import MoneyInput from "./MoneyInput";
 
 const LIST_COLORS = ["color1", "color4", "color3", "color5", "color7", "color6", "color2"];
 
+// Acento vivo por color de lista (mismos valores que la web)
+const LIST_ACCENTS = {
+  color1: "#6ee14b",
+  color2: "#ff9d5c",
+  color3: "#ffd35c",
+  color4: "#3ed9a4",
+  color5: "#69a7ff",
+  color6: "#f070b8",
+  color7: "#a78bfa",
+  color8: "#ff7a6e",
+  color9: "#9ab09a",
+  color10: "#a9bfae",
+  color11: "#8ea8a8",
+};
+const accentOf = (c) => LIST_ACCENTS[c] || LIST_ACCENTS.color1;
+
 let itemSeq = 0;
 const makeItemId = () => `it_${Date.now().toString(36)}_${(itemSeq++).toString(36)}`;
 
+// Anillo de progreso (comprados / total) con el acento de la lista
+function ProgressRing({ acc, done, total, size = 46, trackColor }) {
+  const stroke = 4;
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const pct = total ? done / total : 0;
+  return (
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+      <Svg width={size} height={size}>
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke={trackColor} strokeWidth={stroke} fill="none" />
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke={acc}
+          strokeWidth={stroke}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={`${circ * pct} ${circ}`}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+      </Svg>
+      <Text
+        style={{
+          position: "absolute",
+          fontSize: 10.5,
+          fontWeight: "800",
+          color: acc,
+          fontVariant: ["tabular-nums"],
+        }}
+      >
+        {total ? `${done}/${total}` : "0"}
+      </Text>
+    </View>
+  );
+}
+
 export default function ShoppingListsPanel({ visible, onClose }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const styles = makeStyles(colors);
+  const styles = makeStyles(colors, isDark);
 
   const [lists, setLists] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -167,6 +223,10 @@ export default function ShoppingListsPanel({ visible, onClose }) {
     );
 
   const openList = openListId ? lists.find((l) => l._id === openListId) : null;
+  const totalPending = lists.reduce(
+    (acc, l) => acc + (l.items || []).filter((it) => !it.done).length,
+    0
+  );
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent={false}>
@@ -187,7 +247,7 @@ export default function ShoppingListsPanel({ visible, onClose }) {
               </View>
             )}
             <Text style={styles.headerTitle} numberOfLines={1}>
-              {openList ? openList.meta || "Sin título" : "Listas de compras"}
+              {openList ? "Volver a las listas" : "Listas de compras"}
             </Text>
             <TouchableOpacity style={styles.headerBtn} onPress={onClose} hitSlop={8}>
               <Ionicons name="close" size={24} color={colors.text} />
@@ -223,11 +283,14 @@ export default function ShoppingListsPanel({ visible, onClose }) {
               {/* Compositor */}
               <View style={styles.composer}>
                 <View style={styles.composerRow}>
+                  <View style={[styles.composerIcon, { backgroundColor: accentOf(newColor) + "38" }]}>
+                    <Ionicons name="cart-outline" size={20} color={accentOf(newColor)} />
+                  </View>
                   <TextInput
                     style={styles.composerInput}
                     value={newTitle}
                     onChangeText={setNewTitle}
-                    placeholder="Nueva lista (ej. Supermercado)"
+                    placeholder="Nueva lista (ej: Súper)"
                     placeholderTextColor={colors.muted}
                     maxLength={80}
                     returnKeyType="done"
@@ -238,7 +301,7 @@ export default function ShoppingListsPanel({ visible, onClose }) {
                     onPress={handleCreateList}
                     disabled={!newTitle.trim() || creating}
                   >
-                    <Ionicons name="add" size={18} color="#fff" />
+                    <Ionicons name="add" size={18} color="#06210a" />
                     <Text style={styles.createBtnText}>Crear</Text>
                   </TouchableOpacity>
                 </View>
@@ -250,11 +313,13 @@ export default function ShoppingListsPanel({ visible, onClose }) {
                         key={c}
                         style={[
                           styles.swatch,
-                          { backgroundColor: getNoteColor(c).bg },
+                          { backgroundColor: accentOf(c) },
                           active && styles.swatchActive,
                         ]}
                         onPress={() => setNewColor(c)}
-                      />
+                      >
+                        {active ? <Ionicons name="checkmark" size={14} color="#0b1a10" /> : null}
+                      </TouchableOpacity>
                     );
                   })}
                 </View>
@@ -267,16 +332,27 @@ export default function ShoppingListsPanel({ visible, onClose }) {
                   Todavía no tenés listas. Creá la primera arriba y después entrá para anotar.
                 </Text>
               ) : (
-                lists.map((list) => (
-                  <PreviewCard
-                    key={list._id}
-                    colors={colors}
-                    styles={styles}
-                    list={list}
-                    onOpen={() => setOpenListId(list._id)}
-                    onDeleteList={() => handleDeleteList(list._id)}
-                  />
-                ))
+                <>
+                  <View style={styles.statsRow}>
+                    <Ionicons name="list-outline" size={15} color={colors.green} />
+                    <Text style={styles.statsText}>
+                      {lists.length} lista{lists.length === 1 ? "" : "s"} · {totalPending} pendiente
+                      {totalPending === 1 ? "" : "s"}
+                    </Text>
+                  </View>
+                  {lists.map((list) => (
+                    <PreviewCard
+                      key={list._id}
+                      colors={colors}
+                      isDark={isDark}
+                      styles={styles}
+                      list={list}
+                      onOpen={() => setOpenListId(list._id)}
+                      onDeleteList={() => handleDeleteList(list._id)}
+                      onToggleItem={(id) => handleToggleItem(list._id, id)}
+                    />
+                  ))}
+                </>
               )}
             </ScrollView>
           )}
@@ -286,39 +362,79 @@ export default function ShoppingListsPanel({ visible, onClose }) {
   );
 }
 
-function PreviewCard({ colors, styles, list, onOpen, onDeleteList }) {
+const PREVIEW_MAX = 4;
+function PreviewCard({ colors, isDark, styles, list, onOpen, onDeleteList, onToggleItem }) {
   const items = list.items || [];
   const doneCount = items.filter((it) => it.done).length;
   const pending = items.length - doneCount;
-  const palette = getNoteColor(list.color);
-
-  const summary = !items.length
-    ? "Lista vacía"
-    : pending === 0
-    ? "Todo comprado"
-    : `${pending} pendiente${pending === 1 ? "" : "s"} · ${items.length} ítem${items.length === 1 ? "" : "s"}`;
+  const acc = accentOf(list.color);
+  const preview = items.slice(0, PREVIEW_MAX);
 
   return (
     <TouchableOpacity
       activeOpacity={0.85}
-      style={[styles.previewCard, { backgroundColor: palette.bg }]}
+      style={[
+        styles.previewCard,
+        { backgroundColor: acc + (isDark ? "14" : "1c"), borderColor: acc + "55" },
+      ]}
       onPress={onOpen}
     >
       <View style={styles.previewTop}>
-        <Text style={[styles.previewTitle, { color: palette.text }]} numberOfLines={2}>
-          {list.meta || "Sin título"}
-        </Text>
-        <TouchableOpacity
-          style={styles.trashBtn}
-          onPress={onDeleteList}
-          hitSlop={8}
-        >
-          <Ionicons name="trash-outline" size={18} color={palette.text} />
-        </TouchableOpacity>
+        <View style={[styles.previewIcon, { backgroundColor: acc + "30" }]}>
+          <Ionicons name="cart-outline" size={19} color={acc} />
+        </View>
+        <ProgressRing
+          acc={acc}
+          done={doneCount}
+          total={items.length}
+          trackColor={acc + "30"}
+        />
       </View>
-      <View style={styles.previewBottom}>
-        <Text style={[styles.previewSummary, { color: palette.text }]}>{summary}</Text>
-        <Ionicons name="chevron-forward" size={18} color={palette.text} style={{ opacity: 0.5 }} />
+
+      <Text style={styles.previewTitle} numberOfLines={1}>
+        {list.meta || "Sin título"}
+      </Text>
+      <Text style={styles.previewMeta}>
+        {items.length
+          ? `${items.length} ítem${items.length === 1 ? "" : "s"} · ${
+              pending === 0 ? "todo comprado" : `${pending} pendiente${pending === 1 ? "" : "s"}`
+            }`
+          : "Lista vacía"}
+      </Text>
+
+      {preview.map((it) => (
+        <View key={it.id} style={styles.previewItemRow}>
+          <TouchableOpacity
+            style={[
+              styles.previewCheck,
+              { borderColor: acc + "88" },
+              it.done && { backgroundColor: acc, borderColor: acc },
+            ]}
+            onPress={() => onToggleItem(it.id)}
+            hitSlop={6}
+          >
+            {it.done ? <Ionicons name="checkmark" size={12} color="#0b1a10" /> : null}
+          </TouchableOpacity>
+          <Text
+            style={[styles.previewItemText, it.done && styles.previewItemTextDone]}
+            numberOfLines={1}
+          >
+            {it.text}
+          </Text>
+        </View>
+      ))}
+      {items.length > PREVIEW_MAX ? (
+        <Text style={styles.previewMore}>+{items.length - PREVIEW_MAX} más</Text>
+      ) : null}
+
+      <View style={[styles.previewFoot, { borderTopColor: acc + "30" }]}>
+        <View style={styles.previewOpen}>
+          <Text style={[styles.previewOpenText, { color: acc }]}>Ver lista</Text>
+          <Ionicons name="arrow-forward" size={15} color={acc} />
+        </View>
+        <TouchableOpacity style={styles.trashBtn} onPress={onDeleteList} hitSlop={8}>
+          <Ionicons name="trash-outline" size={17} color={colors.muted} />
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -339,14 +455,15 @@ function ListDetail({
 }) {
   const items = list.items || [];
   const doneCount = items.filter((it) => it.done).length;
-  const palette = getNoteColor(list.color);
+  const pending = items.length - doneCount;
+  const acc = accentOf(list.color);
 
   const [priceOpenId, setPriceOpenId] = useState(null);
   const [priceDraft, setPriceDraft] = useState("");
   const [qtyDraft, setQtyDraft] = useState("1");
   const fmt = (n) => Number(n || 0).toLocaleString("es-AR");
   const lineaTotal = (it) => (Number(it.precio) || 0) * (Number(it.cantidad) || 1);
-  const total = items.reduce((acc, it) => acc + lineaTotal(it), 0);
+  const total = items.reduce((acc2, it) => acc2 + lineaTotal(it), 0);
   const abrirPrecio = (it) => {
     setPriceOpenId(it.id);
     setPriceDraft(it.precio != null ? String(it.precio) : "");
@@ -367,50 +484,73 @@ function ListDetail({
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Barra de agregar ítem (arriba, para anotar directo) */}
-      <View style={styles.addRow}>
-        <TextInput
-          style={styles.addInput}
-          value={draft}
-          onChangeText={onDraftChange}
-          placeholder="Anotá un ítem y presioná +"
-          placeholderTextColor={colors.muted}
-          maxLength={120}
-          autoFocus
-          returnKeyType="done"
-          onSubmitEditing={onAddItem}
-        />
-        <TouchableOpacity
-          style={[styles.addBtn, !draft.trim() && styles.btnDisabled]}
-          onPress={onAddItem}
-          disabled={!draft.trim()}
-        >
-          <Ionicons name="add" size={22} color="#16241d" />
-        </TouchableOpacity>
-      </View>
-
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingTop: 6, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: 16, paddingTop: 10, paddingBottom: 40 }}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Hero de la lista */}
+        <View style={styles.detailHero}>
+          <View style={[styles.detailHeroIcon, { backgroundColor: acc }]}>
+            <Ionicons name="cart-outline" size={24} color="#0b1a10" />
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[styles.detailKicker, { color: acc }]}>LISTA DE COMPRAS</Text>
+            <Text style={styles.detailTitle} numberOfLines={1}>
+              {list.meta || "Sin título"}
+            </Text>
+            <Text style={styles.detailSub}>
+              {items.length
+                ? `${items.length} ítem${items.length === 1 ? "" : "s"} · ${
+                    pending === 0 ? "todo comprado" : `${pending} pendiente${pending === 1 ? "" : "s"}`
+                  }`
+                : "Anotá lo que necesites comprar."}
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.trashBtn} onPress={onDeleteList} hitSlop={8}>
+            <Ionicons name="trash-outline" size={19} color={colors.muted} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Barra de agregar */}
+        <View style={styles.addRow}>
+          <TextInput
+            style={styles.addInput}
+            value={draft}
+            onChangeText={onDraftChange}
+            placeholder="Agregar un ítem..."
+            placeholderTextColor={colors.muted}
+            maxLength={120}
+            returnKeyType="done"
+            onSubmitEditing={onAddItem}
+            blurOnSubmit={false}
+          />
+          <TouchableOpacity
+            style={[styles.addBtn, !draft.trim() && styles.btnDisabled]}
+            onPress={onAddItem}
+            disabled={!draft.trim()}
+          >
+            <Ionicons name="add" size={17} color="#06210a" />
+            <Text style={styles.addBtnText}>Agregar</Text>
+          </TouchableOpacity>
+        </View>
+
         {items.length === 0 ? (
           <Text style={styles.empty}>Todavía no anotaste nada. Escribí arriba para empezar.</Text>
         ) : (
           items.map((it) => (
-            <View
-              key={it.id}
-              style={[styles.item, { backgroundColor: palette.bg }]}
-            >
-              <TouchableOpacity style={styles.itemDelete} onPress={() => onDeleteItem(it.id)} hitSlop={6}>
-                <Ionicons name="close" size={16} color={palette.text} />
-              </TouchableOpacity>
-              <Text
+            <View key={it.id} style={styles.item}>
+              <TouchableOpacity
                 style={[
-                  styles.itemText,
-                  { color: palette.text },
-                  it.done && styles.itemTextDone,
+                  styles.check,
+                  { borderColor: acc + "88" },
+                  it.done && { backgroundColor: acc, borderColor: acc },
                 ]}
+                onPress={() => onToggleItem(it.id)}
+                hitSlop={6}
               >
+                {it.done ? <Ionicons name="checkmark" size={15} color="#0b1a10" /> : null}
+              </TouchableOpacity>
+              <Text style={[styles.itemText, it.done && styles.itemTextDone]} numberOfLines={1}>
                 {it.text}
               </Text>
 
@@ -433,23 +573,17 @@ function ListDetail({
                     onSubmitEditing={() => guardarPrecio(it.id)}
                     keyboardType="numeric"
                   />
-                  <TouchableOpacity
-                    style={styles.precioOk}
-                    onPress={() => guardarPrecio(it.id)}
-                  >
-                    <Text style={styles.precioOkText}>Listo</Text>
+                  <TouchableOpacity style={styles.precioOk} onPress={() => guardarPrecio(it.id)}>
+                    <Ionicons name="checkmark" size={16} color="#06210a" />
                   </TouchableOpacity>
                 </View>
               ) : (
                 <TouchableOpacity
-                  style={[styles.precioBtn, it.precio != null && styles.precioBtnSet]}
+                  style={[styles.precioBtn, it.precio != null && { borderColor: acc + "77" }]}
                   onPress={() => abrirPrecio(it)}
                 >
                   <Text
-                    style={[
-                      styles.precioBtnText,
-                      it.precio != null && styles.precioBtnTextSet,
-                    ]}
+                    style={[styles.precioBtnText, it.precio != null && { color: colors.text }]}
                   >
                     {it.precio != null
                       ? Number(it.cantidad) > 1
@@ -461,13 +595,11 @@ function ListDetail({
               )}
 
               <TouchableOpacity
-                style={[
-                  styles.check,
-                  it.done && { backgroundColor: colors.greenBright, borderColor: colors.greenBright },
-                ]}
-                onPress={() => onToggleItem(it.id)}
+                style={styles.itemDelete}
+                onPress={() => onDeleteItem(it.id)}
+                hitSlop={6}
               >
-                {it.done ? <Ionicons name="checkmark" size={16} color="#fff" /> : null}
+                <Ionicons name="close" size={16} color={colors.muted} />
               </TouchableOpacity>
             </View>
           ))
@@ -476,28 +608,35 @@ function ListDetail({
         {total > 0 ? (
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>TOTAL</Text>
-            <Text style={styles.totalMonto}>$ {fmt(total)}</Text>
+            <Text style={[styles.totalMonto, { color: acc }]}>$ {fmt(total)}</Text>
           </View>
         ) : null}
 
-        {doneCount > 0 ? (
-          <TouchableOpacity style={styles.clearDone} onPress={onClearDone}>
-            <Text style={styles.clearDoneText}>
-              Quitar {doneCount} comprado{doneCount === 1 ? "" : "s"}
-            </Text>
-          </TouchableOpacity>
+        {/* Barra inferior: comprados + limpiar */}
+        {items.length > 0 ? (
+          <View style={styles.footBar}>
+            <View style={styles.footBarInfo}>
+              <Ionicons name="cart-outline" size={16} color={acc} />
+              <Text style={styles.footBarText}>
+                {doneCount} comprado{doneCount === 1 ? "" : "s"}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.footBarDelete, doneCount === 0 && styles.btnDisabled]}
+              onPress={onClearDone}
+              disabled={doneCount === 0}
+            >
+              <Ionicons name="trash-outline" size={15} color="#ff6b5e" />
+              <Text style={styles.footBarDeleteText}>Eliminar comprados</Text>
+            </TouchableOpacity>
+          </View>
         ) : null}
-
-        <TouchableOpacity style={styles.deleteListRow} onPress={onDeleteList}>
-          <Ionicons name="trash-outline" size={16} color={colors.red} />
-          <Text style={styles.deleteListText}>Eliminar lista</Text>
-        </TouchableOpacity>
       </ScrollView>
     </View>
   );
 }
 
-const makeStyles = (colors) =>
+const makeStyles = (colors, isDark) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.bg },
     header: {
@@ -512,17 +651,26 @@ const makeStyles = (colors) =>
     headerBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
     headerTitle: { flex: 1, color: colors.text, fontSize: 18, fontWeight: "800" },
     error: { color: colors.red, paddingHorizontal: 16, paddingTop: 10 },
+    btnDisabled: { opacity: 0.45 },
 
+    // ---- Compositor ----
     composer: {
       backgroundColor: colors.card,
       borderWidth: 1,
       borderColor: colors.cardBorder,
-      borderRadius: 16,
+      borderRadius: 18,
       padding: 12,
       gap: 10,
-      marginBottom: 16,
+      marginBottom: 14,
     },
     composerRow: { flexDirection: "row", gap: 8, alignItems: "center" },
+    composerIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     composerInput: {
       flex: 1,
       backgroundColor: colors.cardSoft,
@@ -538,75 +686,133 @@ const makeStyles = (colors) =>
       flexDirection: "row",
       alignItems: "center",
       gap: 4,
-      backgroundColor: colors.greenBright,
+      backgroundColor: colors.segActive,
       borderRadius: 12,
-      paddingHorizontal: 14,
+      paddingHorizontal: 13,
       paddingVertical: 11,
     },
-    createBtnText: { color: "#fff", fontWeight: "800", fontSize: 14 },
-    btnDisabled: { opacity: 0.45 },
+    createBtnText: { color: "#06210a", fontWeight: "800", fontSize: 14 },
+    swatchRow: { flexDirection: "row", gap: 9, flexWrap: "wrap" },
+    swatch: {
+      width: 26,
+      height: 26,
+      borderRadius: 999,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    swatchActive: {
+      borderWidth: 2,
+      borderColor: colors.text,
+    },
 
-    swatchRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-    swatch: { width: 26, height: 26, borderRadius: 999, borderWidth: 2, borderColor: "rgba(0,0,0,0.12)" },
-    swatchActive: { borderColor: colors.greenDark, borderWidth: 3 },
+    statsRow: { flexDirection: "row", alignItems: "center", gap: 7, marginBottom: 10 },
+    statsText: { color: colors.muted, fontSize: 13.5, fontWeight: "700" },
 
     empty: { color: colors.muted, textAlign: "center", marginTop: 24, lineHeight: 21, paddingHorizontal: 8 },
 
+    // ---- Cards del board ----
     previewCard: {
-      borderRadius: 16,
+      borderRadius: 18,
+      borderWidth: 1,
       padding: 14,
       marginBottom: 12,
-      gap: 14,
-      minHeight: 92,
-      justifyContent: "space-between",
+      gap: 6,
     },
-    previewTop: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
-    previewTitle: { flex: 1, fontSize: 16, fontWeight: "800" },
+    previewTop: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      marginBottom: 2,
+    },
+    previewIcon: {
+      width: 38,
+      height: 38,
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    previewTitle: { color: colors.text, fontSize: 17, fontWeight: "800" },
+    previewMeta: { color: colors.muted, fontSize: 12.5, marginBottom: 4 },
+    previewItemRow: { flexDirection: "row", alignItems: "center", gap: 9, paddingVertical: 3 },
+    previewCheck: {
+      width: 17,
+      height: 17,
+      borderRadius: 999,
+      borderWidth: 2,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    previewItemText: { flex: 1, color: colors.text, fontSize: 13.5 },
+    previewItemTextDone: { color: colors.muted, textDecorationLine: "line-through" },
+    previewMore: { color: colors.muted, fontSize: 12, paddingLeft: 26 },
+    previewFoot: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      borderTopWidth: 1,
+      paddingTop: 9,
+      marginTop: 6,
+    },
+    previewOpen: { flexDirection: "row", alignItems: "center", gap: 5 },
+    previewOpenText: { fontSize: 13.5, fontWeight: "800" },
     trashBtn: {
       width: 30,
       height: 30,
       borderRadius: 999,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: "rgba(0,0,0,0.08)",
     },
-    previewBottom: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-    previewSummary: { fontSize: 13, fontWeight: "700", opacity: 0.75, flex: 1 },
 
-    addRow: {
-      flexDirection: "row",
-      gap: 8,
-      paddingHorizontal: 16,
-      paddingTop: 14,
-      paddingBottom: 6,
-    },
-    addInput: {
-      flex: 1,
-      backgroundColor: colors.card,
-      borderWidth: 1,
-      borderColor: colors.cardBorder,
-      borderRadius: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 11,
-      color: colors.text,
-      fontSize: 15,
-    },
-    addBtn: {
-      width: 44,
-      height: 44,
-      borderRadius: 12,
-      backgroundColor: "#ffffff",
-      borderWidth: 1,
-      borderColor: "rgba(0,0,0,0.12)",
+    // ---- Detalle ----
+    detailHero: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 14 },
+    detailHeroIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: 14,
       alignItems: "center",
       justifyContent: "center",
     },
+    detailKicker: { fontSize: 10.5, fontWeight: "800", letterSpacing: 1.4 },
+    detailTitle: { color: colors.text, fontSize: 22, fontWeight: "800", marginTop: 1 },
+    detailSub: { color: colors.muted, fontSize: 13, marginTop: 2 },
+
+    addRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      borderRadius: 14,
+      padding: 8,
+      marginBottom: 12,
+    },
+    addInput: {
+      flex: 1,
+      color: colors.text,
+      fontSize: 15,
+      paddingHorizontal: 8,
+      paddingVertical: 8,
+    },
+    addBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      backgroundColor: colors.segActive,
+      borderRadius: 11,
+      paddingHorizontal: 13,
+      paddingVertical: 10,
+    },
+    addBtnText: { color: "#06210a", fontWeight: "800", fontSize: 13.5 },
 
     item: {
       flexDirection: "row",
       alignItems: "center",
       gap: 10,
-      borderRadius: 12,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
       paddingVertical: 11,
       paddingHorizontal: 12,
       marginBottom: 8,
@@ -615,93 +821,102 @@ const makeStyles = (colors) =>
       width: 24,
       height: 24,
       borderRadius: 12,
-      borderWidth: 2.5,
-      borderColor: "rgba(0,0,0,0.35)",
+      borderWidth: 2,
       alignItems: "center",
       justifyContent: "center",
     },
-    itemText: { flex: 1, fontSize: 15, fontWeight: "600" },
-    itemTextDone: { textDecorationLine: "line-through", opacity: 0.5 },
-    itemDelete: { width: 26, height: 26, alignItems: "center", justifyContent: "center", opacity: 0.6 },
+    itemText: { flex: 1, color: colors.text, fontSize: 15, fontWeight: "600" },
+    itemTextDone: { textDecorationLine: "line-through", color: colors.muted },
+    itemDelete: { width: 26, height: 26, alignItems: "center", justifyContent: "center" },
 
-    // Botón "precio" + input inline por ítem
+    // Precio × cantidad, integrado al tema (sin fondos blancos)
     precioBtn: {
-      paddingVertical: 3,
-      paddingHorizontal: 9,
+      paddingVertical: 5,
+      paddingHorizontal: 11,
       borderRadius: 999,
       borderWidth: 1,
-      borderColor: "rgba(0,0,0,0.18)",
-      backgroundColor: "rgba(255,255,255,0.5)",
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.cardSoft,
     },
-    precioBtnSet: { borderColor: "rgba(20,120,40,0.5)" },
-    precioBtnText: { color: "#172018", fontSize: 12, fontWeight: "700" },
-    precioBtnTextSet: { color: "#0d5c1f" },
-    precioEdit: { flexDirection: "row", alignItems: "center", gap: 4 },
-    precioX: { color: "#0d5c1f", fontWeight: "800", fontSize: 13 },
-    cantInput: {
-      width: 42,
-      paddingVertical: 4,
-      paddingHorizontal: 6,
-      borderRadius: 999,
+    precioBtnText: { color: colors.muted, fontSize: 12.5, fontWeight: "700", fontVariant: ["tabular-nums"] },
+    precioEdit: { flexDirection: "row", alignItems: "center", gap: 5 },
+    precioX: { color: colors.muted, fontWeight: "800", fontSize: 14 },
+    precioInput: {
+      width: 84,
+      paddingVertical: 7,
+      paddingHorizontal: 10,
+      borderRadius: 10,
       borderWidth: 1,
-      borderColor: "#3bcb23",
-      backgroundColor: "rgba(255,255,255,0.9)",
-      color: "#172018",
-      fontSize: 13,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.cardSoft,
+      color: colors.text,
+      fontSize: 14.5,
+      fontWeight: "700",
+      fontVariant: ["tabular-nums"],
+    },
+    cantInput: {
+      width: 46,
+      paddingVertical: 7,
+      paddingHorizontal: 8,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.cardSoft,
+      color: colors.text,
+      fontSize: 14.5,
       fontWeight: "700",
       textAlign: "center",
+      fontVariant: ["tabular-nums"],
     },
     precioOk: {
-      paddingVertical: 4,
-      paddingHorizontal: 10,
+      width: 30,
+      height: 30,
       borderRadius: 999,
-      backgroundColor: "#3bcb23",
+      backgroundColor: colors.segActive,
       alignItems: "center",
       justifyContent: "center",
     },
-    precioOkText: { color: "#fff", fontSize: 12, fontWeight: "800" },
-    precioInput: {
-      width: 64,
-      paddingVertical: 4,
-      paddingHorizontal: 8,
-      borderRadius: 999,
-      borderWidth: 1,
-      borderColor: "rgba(20,120,40,0.5)",
-      backgroundColor: "rgba(255,255,255,0.85)",
-      color: "#172018",
-      fontSize: 13,
-      fontWeight: "700",
-    },
+
     totalRow: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginTop: 12,
-      paddingVertical: 10,
+      marginTop: 10,
+      paddingVertical: 11,
       paddingHorizontal: 14,
       borderRadius: 14,
-      backgroundColor: "rgba(255,255,255,0.45)",
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
     },
-    totalLabel: { fontSize: 12, fontWeight: "800", letterSpacing: 1, color: "#172018" },
-    totalMonto: { fontSize: 16, fontWeight: "800", color: "#0d5c1f" },
+    totalLabel: { fontSize: 12, fontWeight: "800", letterSpacing: 1, color: colors.muted },
+    totalMonto: { fontSize: 17, fontWeight: "800", fontVariant: ["tabular-nums"] },
 
-    clearDone: {
-      alignSelf: "flex-start",
-      backgroundColor: colors.cardSoft,
-      borderRadius: 999,
-      paddingHorizontal: 14,
-      paddingVertical: 8,
-      marginTop: 4,
+    footBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 10,
+      marginTop: 10,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
     },
-    clearDoneText: { color: colors.text, fontWeight: "700", fontSize: 13 },
-
-    deleteListRow: {
+    footBarInfo: { flexDirection: "row", alignItems: "center", gap: 7 },
+    footBarText: { color: colors.muted, fontSize: 13.5, fontWeight: "700" },
+    footBarDelete: {
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
-      alignSelf: "center",
-      marginTop: 22,
+      borderWidth: 1,
+      borderColor: "rgba(255, 107, 94, 0.45)",
+      backgroundColor: "rgba(255, 107, 94, 0.12)",
+      borderRadius: 11,
+      paddingHorizontal: 12,
       paddingVertical: 8,
     },
-    deleteListText: { color: colors.red, fontWeight: "700", fontSize: 14 },
+    footBarDeleteText: { color: "#ff6b5e", fontWeight: "800", fontSize: 13 },
   });
