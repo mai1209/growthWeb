@@ -525,3 +525,121 @@
 .carta:active {
   transform: scale(0.97);
 }
+
+/* ============================================================
+   Grilla de cards: la card ES la afirmación y se escribe encima
+   ============================================================ */
+
+.cartasGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+  margin-top: 1rem;
+}
+
+.cartaG {
+  position: relative;
+  min-height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22px;
+  border: 1px solid var(--border-color);
+  padding: 1.6rem 1.4rem;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.cartaG:hover {
+  transform: translateY(-2px);
+}
+
+/* La card de escribir: punteada y neutra */
+.cartaGVacia {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--color-verde, #75f94c) 40%, transparent);
+  background: color-mix(in srgb, var(--color-verde, #75f94c) 4%, transparent);
+}
+
+.cartaInput {
+  width: 100%;
+  border: none;
+  background: none;
+  resize: none;
+  overflow: hidden;
+  text-align: center;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+.cartaInput:focus {
+  outline: none;
+}
+
+.cartaInput::placeholder {
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+/* Botones de la card: resaltar (estrella) y borrar, discretos */
+.cartaResaltar,
+.cartaBorrar {
+  position: absolute;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--color-muted);
+  font-size: 1rem;
+  opacity: 0.35;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.cartaResaltar {
+  top: 10px;
+  right: 10px;
+}
+
+.cartaBorrar {
+  bottom: 10px;
+  right: 10px;
+}
+
+.cartaG:hover .cartaResaltar,
+.cartaG:hover .cartaBorrar,
+.cartaResaltar:focus-visible,
+.cartaBorrar:focus-visible {
+  opacity: 1;
+}
+
+.cartaResaltarOn {
+  opacity: 1;
+}
+
+.cartaResaltarOn svg {
+  fill: currentColor;
+}
+
+.cartaBorrar:hover {
+  color: #ff6b5e;
+}
+
+@media (max-width: 640px) {
+  .cartasGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .cartaG {
+    min-height: 150px;
+  }
+
+  .cartaInput {
+    font-size: 1.15rem;
+  }
+}

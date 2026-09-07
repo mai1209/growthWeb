@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FiCheck,
-  FiChevronLeft,
-  FiChevronRight,
   FiPlay,
-  FiPlus,
   FiSquare,
+  FiStar,
   FiSun,
   FiTrash2,
 } from "react-icons/fi";
@@ -133,15 +131,6 @@ function Afirmaciones() {
     });
   };
 
-  const agregarLinea = () => {
-    setLineas((prev) => {
-      if (prev.length >= MAX_RENGLONES) return prev;
-      const proximas = [...prev, ""];
-      guardarDiferido(proximas);
-      return proximas;
-    });
-  };
-
   // Borra TODAS las afirmaciones y arranca de cero (con confirmación).
   const resetearAfirmaciones = () => {
     const ok = window.confirm(
@@ -166,35 +155,19 @@ function Afirmaciones() {
 
   const hayEscritas = useMemo(() => lineas.some((l) => l.trim()), [lineas]);
 
-  // ---- Carrusel de tarjetas (las afirmaciones escritas, para leerlas lindo) ----
-  const escritas = useMemo(
-    () =>
-      lineas
-        .map((linea, i) => ({ texto: linea.trim(), i }))
-        .filter((x) => x.texto),
-    [lineas]
-  );
-  const carruselRef = useRef(null);
-  const [cardActiva, setCardActiva] = useState(0);
-
-  const pasoCarrusel = () => {
-    const el = carruselRef.current;
-    if (!el || !el.firstElementChild) return 0;
-    return el.firstElementChild.getBoundingClientRect().width + 14;
-  };
-  const irACard = (k) => {
-    const paso = pasoCarrusel();
-    if (paso) carruselRef.current?.scrollTo({ left: k * paso, behavior: "smooth" });
-  };
-  const moverCarrusel = (dir) =>
-    irACard(Math.max(0, Math.min(escritas.length - 1, cardActiva + dir)));
-  const onScrollCarrusel = () => {
-    const paso = pasoCarrusel();
-    if (!paso) return;
-    setCardActiva(
-      Math.max(0, Math.round((carruselRef.current?.scrollLeft || 0) / paso))
-    );
-  };
+  // ---- Grilla de tarjetas: se escribe directo sobre la card ----
+  // La primera línea vacía hace de "Escribí tu afirmación…"; si no queda
+  // ninguna vacía, agregamos un renglón solo para que siempre haya una card
+  // donde escribir (hasta el máximo).
+  const primeraVacia = useMemo(() => lineas.findIndex((l) => !l.trim()), [lineas]);
+  useEffect(() => {
+    if (primeraVacia === -1 && lineas.length < MAX_RENGLONES) {
+      setLineas((prev) => {
+        if (prev.some((l) => !l.trim()) || prev.length >= MAX_RENGLONES) return prev;
+        return [...prev, ""];
+      });
+    }
+  }, [primeraVacia, lineas.length]);
 
   // ---- Voz: leer las afirmaciones en voz alta con la voz del navegador ----
   const [hablando, setHablando] = useState(false);
@@ -258,12 +231,12 @@ function Afirmaciones() {
     []
   );
 
-  // Cuando se leen en voz alta, el carrusel sigue a la tarjeta que suena.
+  // Cuando se leen en voz alta, la vista sigue a la tarjeta que suena.
   useEffect(() => {
     if (leyendoIdx == null) return;
-    const k = escritas.findIndex((x) => x.i === leyendoIdx);
-    if (k >= 0) irACard(k);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    document
+      .getElementById(`afir-card-${leyendoIdx}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [leyendoIdx]);
 
   const alternarRepetir = async () => {
@@ -348,129 +321,75 @@ function Afirmaciones() {
         </div>
       </header>
 
-      {/* Carrusel de tarjetas (diseño del mockup, con nuestra paleta) */}
-      {escritas.length ? (
-        <>
-          <div className={style.carruselWrap}>
-            <button
-              type="button"
-              className={style.carruselFlecha}
-              onClick={() => moverCarrusel(-1)}
-              disabled={cardActiva <= 0}
-              aria-label="Afirmación anterior"
-            >
-              <FiChevronLeft />
-            </button>
-            <div className={style.carrusel} ref={carruselRef} onScroll={onScrollCarrusel}>
-              {escritas.map(({ texto, i }, k) => {
-                const tint = CARD_TINTS[k % CARD_TINTS.length];
-                return (
-                  <div
-                    key={i}
-                    role="button"
-                    tabIndex={0}
-                    className={`${style.carta} ${leyendoIdx === i ? style.cartaLeyendo : ""} ${
-                      resaltadas.has(i) ? style.cartaResaltada : ""
-                    }`}
-                    style={{
+      {/* Grilla de tarjetas: cada afirmación ES la card, y se escribe directo
+          encima. La card punteada del final es "Escribí tu afirmación…". */}
+      <div className={style.cartasGrid}>
+        {lineas.map((linea, i) => {
+          const escrita = Boolean(linea.trim());
+          // Las vacías no se muestran, salvo la primera: esa es la card de escribir
+          if (!escrita && i !== primeraVacia) return null;
+          const tint = CARD_TINTS[i % CARD_TINTS.length];
+          return (
+            <div
+              key={i}
+              id={`afir-card-${i}`}
+              className={`${style.cartaG} ${escrita ? "" : style.cartaGVacia} ${
+                leyendoIdx === i ? style.cartaLeyendo : ""
+              }`}
+              style={
+                escrita
+                  ? {
                       background: `${tint}1f`,
                       borderColor: `${tint}59`,
                       boxShadow: resaltadas.has(i) ? `0 0 22px ${tint}73` : undefined,
-                    }}
-                    onClick={() => toggleResaltada(i)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        toggleResaltada(i);
-                      }
-                    }}
-                    title="Tocá para resaltar esta afirmación"
-                  >
-                    <p className={style.cartaTexto}>{texto}</p>
-                    {resaltadas.has(i) ? (
-                      <span className={style.cartaDot} style={{ background: tint }} />
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-            <button
-              type="button"
-              className={style.carruselFlecha}
-              onClick={() => moverCarrusel(1)}
-              disabled={cardActiva >= escritas.length - 1}
-              aria-label="Afirmación siguiente"
+                    }
+                  : undefined
+              }
             >
-              <FiChevronRight />
-            </button>
-          </div>
-          <div className={style.carruselDots}>
-            {escritas.map((x, k) => (
-              <button
-                key={x.i}
-                type="button"
-                className={`${style.dot} ${k === cardActiva ? style.dotOn : ""}`}
-                onClick={() => irACard(k)}
-                aria-label={`Ir a la afirmación ${k + 1}`}
+              <textarea
+                className={style.cartaInput}
+                value={linea}
+                rows={1}
+                placeholder="Escribí tu afirmación…"
+                onChange={(e) => editarLinea(i, e.target.value)}
+                onInput={(e) => {
+                  e.target.style.height = "auto";
+                  e.target.style.height = `${e.target.scrollHeight}px`;
+                }}
               />
-            ))}
-          </div>
-        </>
-      ) : null}
-
-      <ol className={style.lista}>
-        {lineas.map((linea, indice) => (
-          <li
-            key={indice}
-            className={`${style.item} ${leyendoIdx === indice ? style.itemLeyendo : ""}`}
-          >
-            <span
-              className={`${style.numero} ${resaltadas.has(indice) ? style.numeroOn : ""}`}
-              onClick={() => toggleResaltada(indice)}
-              role="button"
-              title="Resaltar afirmación"
-            >
-              {indice + 1}
-            </span>
-            <textarea
-              className={`${style.input} ${resaltadas.has(indice) ? style.inputResaltada : ""}`}
-              value={linea}
-              rows={1}
-              placeholder="Escribí tu afirmación…"
-              onChange={(e) => editarLinea(indice, e.target.value)}
-              onInput={(e) => {
-                // Autoajuste de alto para que las afirmaciones largas se lean enteras.
-                e.target.style.height = "auto";
-                e.target.style.height = `${e.target.scrollHeight}px`;
-              }}
-            />
-            {lineas.length > 1 ? (
-              <button
-                type="button"
-                className={style.borrar}
-                onClick={() => borrarLinea(indice)}
-                aria-label={`Borrar renglón ${indice + 1}`}
-                title="Borrar renglón"
-              >
-                <FiTrash2 />
-              </button>
-            ) : null}
-          </li>
-        ))}
-      </ol>
-
-      <div className={style.acciones}>
-        <button
-          type="button"
-          className={style.agregar}
-          onClick={agregarLinea}
-          disabled={lineas.length >= MAX_RENGLONES}
-        >
-          <FiPlus />
-          Agregar renglón
-        </button>
-        <span className={style.guardando}>{guardando ? "Guardando…" : ""}</span>
+              {escrita ? (
+                <>
+                  <button
+                    type="button"
+                    className={`${style.cartaResaltar} ${
+                      resaltadas.has(i) ? style.cartaResaltarOn : ""
+                    }`}
+                    style={resaltadas.has(i) ? { color: tint } : undefined}
+                    onClick={() => toggleResaltada(i)}
+                    title={resaltadas.has(i) ? "Quitar resaltado" : "Resaltar esta afirmación"}
+                    aria-pressed={resaltadas.has(i)}
+                  >
+                    <FiStar />
+                  </button>
+                  {lineas.length > 1 ? (
+                    <button
+                      type="button"
+                      className={style.cartaBorrar}
+                      onClick={() => borrarLinea(i)}
+                      aria-label="Borrar afirmación"
+                      title="Borrar afirmación"
+                    >
+                      <FiTrash2 />
+                    </button>
+                  ) : null}
+                </>
+              ) : null}
+            </div>
+          );
+        })}
       </div>
+
+      <span className={style.guardando}>{guardando ? "Guardando…" : ""}</span>
 
       <button
         type="button"
