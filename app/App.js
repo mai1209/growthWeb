@@ -72,6 +72,10 @@ function TopBar() {
             <Ionicons name="globe-outline" size={23} color={colors.muted} />
           </TouchableOpacity>
         ) : null}
+        {/* Volver al Lobby (las 4 secciones) */}
+        <TouchableOpacity onPress={() => navigation.navigate("Lobby")} hitSlop={10}>
+          <Ionicons name="grid-outline" size={22} color={colors.muted} />
+        </TouchableOpacity>
         <TouchableOpacity onPress={toggleTheme} hitSlop={10}>
           <Ionicons
             name={isDark ? "sunny-outline" : "moon-outline"}

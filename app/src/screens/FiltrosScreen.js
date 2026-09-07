@@ -236,8 +236,9 @@ export default function FiltrosScreen() {
     const to = isYear
       ? new Date(year, 11, 31)
       : new Date(month.getFullYear(), month.getMonth() + 1, 0);
-    // Cada movimiento (deudas incluidas) se muestra en el mes de su fecha, igual
-    // que en la web: una deuda de agosto no debe aparecer en julio.
+    // Cada movimiento se muestra en el mes de su fecha, igual que en la web.
+    // Excepción: con el filtro DEUDA activo se ven todas las deudas sin
+    // importar el período — una deuda pendiente de otro mes tiene que aparecer.
     const byCurrency = filterMovimientosByCurrency(movimientos, currency);
     const fromTime = new Date(from).setHours(0, 0, 0, 0);
     const toTime = new Date(to).setHours(23, 59, 59, 999);
@@ -245,7 +246,7 @@ export default function FiltrosScreen() {
       const t = new Date(m?.fecha).getTime();
       return !Number.isNaN(t) && t >= fromTime && t <= toTime;
     };
-    const monthMovs = byCurrency.filter(inRange);
+    const monthMovs = type === "deuda" ? byCurrency : byCurrency.filter(inRange);
 
     const q = search.trim().toLowerCase();
     const filtered = monthMovs.filter((m) => {

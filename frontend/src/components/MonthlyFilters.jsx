@@ -280,7 +280,14 @@ function MonthlyFilters({
   const filteredMovimientos = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    return [...monthMovimientos]
+    // Con el filtro DEUDA activo se ven todas las deudas sin importar el
+    // período: una deuda pendiente de otro mes tiene que aparecer igual.
+    const base =
+      selectedType === "deuda"
+        ? filterMovimientosByCurrency(movimientos, currentCurrency)
+        : monthMovimientos;
+
+    return [...base]
       .filter((movimiento) => {
         if (selectedType === "ahorro") {
           // Ahorro incluye los usos de ahorro (egresos pagados con ahorro)
@@ -337,7 +344,7 @@ function MonthlyFilters({
         return haystack.includes(normalizedSearch);
       })
       .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
-  }, [monthMovimientos, searchTerm, selectedType, selectedRecurrence, selectedMethod]);
+  }, [monthMovimientos, movimientos, currentCurrency, searchTerm, selectedType, selectedRecurrence, selectedMethod]);
 
   const filteredSummary = useMemo(
     () => summarizeByType(filteredMovimientos),
