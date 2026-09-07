@@ -26,6 +26,9 @@ import { syncAfirmacionesReminder } from "../utils/afirmacionesReminder";
 const RENGLONES_INICIALES = 5;
 const MAX_RENGLONES = 30;
 
+// Tintes de las cards (misma paleta y rotación que la web)
+const CARD_TINTS = ["#9cfb43", "#58eba4", "#ffd55c", "#69a7ff", "#f070b8"];
+
 // Fecha local del teléfono en formato YYYY-MM-DD. No usamos toISOString() a
 // secas porque devuelve UTC y a la noche cambia el día antes de tiempo.
 const hoyLocal = () => {
@@ -230,6 +233,16 @@ export default function AfirmacionesPanel({ visible, onClose }) {
   };
 
   const hayEscritas = useMemo(() => lineas.some((l) => l.trim()), [lineas]);
+
+  // La primera línea vacía hace de card "Escribí tu afirmación…". Si no queda
+  // ninguna vacía, agregamos un renglón para que siempre haya dónde escribir.
+  const primeraVacia = useMemo(() => lineas.findIndex((l) => !l.trim()), [lineas]);
+  useEffect(() => {
+    if (!cargando && primeraVacia === -1 && lineas.length < MAX_RENGLONES) {
+      agregarLinea();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cargando, primeraVacia, lineas.length]);
 
   const guardarRecordatorio = async (rec) => {
     setRecordatorio(rec);
@@ -524,36 +537,27 @@ export default function AfirmacionesPanel({ visible, onClose }) {
                   : "Lo que escribas hoy se guarda igual, no se pierde."}
               </Text>
 
-              {/* Renglones */}
-              {lineas.map((linea, indice) => (
-                <View key={ids[indice] ?? `l${indice}`} style={styles.item}>
-                  <TouchableOpacity
-                    style={[styles.numero, resaltadas.has(indice) && styles.numeroOn]}
-                    onPress={() => toggleResaltada(indice)}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      style={[
-                        styles.numeroText,
-                        resaltadas.has(indice) && styles.numeroTextOn,
-                      ]}
-                    >
-                      {indice + 1}
-                    </Text>
-                  </TouchableOpacity>
+              {/* Cards: cada afirmación es una card tintada y se escribe directo
+                  encima; la punteada del final es "Escribí tu afirmación…" */}
+              {lineas.map((linea, indice) => {
+                const escrita = Boolean(linea.trim());
+                if (!escrita && indice !== primeraVacia) return null;
+                const tint = CARD_TINTS[indice % CARD_TINTS.length];
+                const activa = focoIdx === indice || leyendoIdx === indice;
+                return (
                   <View
+                    key={ids[indice] ?? `l${indice}`}
                     style={[
-                      styles.inputWrap,
-                      (focoIdx === indice || resaltadas.has(indice) || leyendoIdx === indice) &&
-                        styles.inputWrapFoco,
+                      styles.carta,
+                      escrita
+                        ? { backgroundColor: tint + "1f", borderColor: tint + "59" }
+                        : styles.cartaVacia,
+                      escrita && resaltadas.has(indice) && { borderColor: tint, borderWidth: 1.5 },
+                      activa && { borderColor: colors.greenBright, borderWidth: 1.5 },
                     ]}
                   >
                     <TextInput
-                      style={[
-                        styles.input,
-                        (focoIdx === indice || resaltadas.has(indice) || leyendoIdx === indice) &&
-                          styles.inputTextFoco,
-                      ]}
+                      style={styles.cartaInput}
                       value={linea}
                       onChangeText={(valor) => editarLinea(indice, valor)}
                       onFocus={() => setFocoIdx(indice)}
@@ -562,31 +566,37 @@ export default function AfirmacionesPanel({ visible, onClose }) {
                       placeholderTextColor={colors.muted}
                       multiline
                     />
-                    {lineas.length > 1 ? (
-                      <TouchableOpacity
-                        style={styles.borrar}
-                        onPress={() => borrarLinea(indice)}
-                        accessibilityLabel={`Borrar renglón ${indice + 1}`}
-                        hitSlop={8}
-                      >
-                        <Ionicons name="trash-outline" size={15} color={colors.muted} />
-                      </TouchableOpacity>
+                    {escrita ? (
+                      <>
+                        <TouchableOpacity
+                          style={styles.cartaStar}
+                          onPress={() => toggleResaltada(indice)}
+                          hitSlop={8}
+                          accessibilityLabel="Resaltar afirmación"
+                        >
+                          <Ionicons
+                            name={resaltadas.has(indice) ? "star" : "star-outline"}
+                            size={17}
+                            color={resaltadas.has(indice) ? tint : colors.muted}
+                          />
+                        </TouchableOpacity>
+                        {lineas.length > 1 ? (
+                          <TouchableOpacity
+                            style={styles.cartaTrash}
+                            onPress={() => borrarLinea(indice)}
+                            accessibilityLabel="Borrar afirmación"
+                            hitSlop={8}
+                          >
+                            <Ionicons name="trash-outline" size={15} color={colors.muted} />
+                          </TouchableOpacity>
+                        ) : null}
+                      </>
                     ) : null}
                   </View>
-                </View>
-              ))}
+                );
+              })}
 
-              <View style={styles.acciones}>
-                <TouchableOpacity
-                  style={styles.agregar}
-                  onPress={agregarLinea}
-                  disabled={lineas.length >= MAX_RENGLONES}
-                >
-                  <Ionicons name="add" size={17} color={colors.muted} />
-                  <Text style={styles.agregarText}>Agregar renglón</Text>
-                </TouchableOpacity>
-                {guardando ? <Text style={styles.guardando}>Guardando…</Text> : null}
-              </View>
+              {guardando ? <Text style={styles.guardando}>Guardando…</Text> : null}
             </ScrollView>
 
             {/* Botón del día, fijo abajo */}
@@ -750,74 +760,34 @@ const makeStyles = (colors, isDark = false) =>
     },
     horaListoText: { color: "#fff", fontSize: 13, fontWeight: "800" },
 
-    item: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
-    numero: {
-      width: 26,
-      height: 26,
-      marginTop: 9,
-      borderRadius: 999,
+    // ---- Cards de afirmaciones (mismo diseño que la web) ----
+    carta: {
+      minHeight: 120,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: colors.cardSoft,
-      // Borde fino verde (igual que en la web): marca el círculo interactivo.
-      borderWidth: 1,
-      borderColor: "rgba(59, 203, 35, 0.55)",
+      paddingVertical: 20,
+      paddingHorizontal: 18,
     },
-    numeroText: { color: colors.muted, fontSize: 12, fontWeight: "700" },
-    // Número activo cuando el renglón está resaltado.
-    numeroOn: {
-      backgroundColor: colors.greenBright,
-    },
-    numeroTextOn: { color: "#06210a" },
-    // El recuadro (borde/fondo/glow) ahora envuelve el input + el cesto.
-    inputWrap: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      minHeight: 44,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: colors.cardBorder,
-      backgroundColor: colors.card,
-      paddingRight: 4,
-    },
-    // Sin sombra/elevation: el glow verde causaba jank/freeze en Android al
-    // enfocar (se re-renderiza en cada tecla). Basta con el borde verde.
-    inputWrapFoco: {
-      borderColor: colors.greenBright,
-      borderWidth: 1.5,
-    },
-    input: {
-      flex: 1,
-      minHeight: 44,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      color: colors.text,
-      fontSize: 15,
-      lineHeight: 20,
-    },
-    // Sin textShadow: el brillo del texto se re-rasterizaba en cada letra y
-    // causaba tirones/freeze al escribir. El foco ya se marca con el borde.
-    inputTextFoco: {
-      color: colors.text,
-    },
-    // Renglón enfocado: borde verde brillante para saber dónde estás escribiendo
-    borrar: { padding: 6 },
-
-    acciones: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 2 },
-    agregar: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 5,
-      paddingHorizontal: 12,
-      paddingVertical: 9,
-      borderRadius: 12,
-      borderWidth: 1,
+    cartaVacia: {
       borderStyle: "dashed",
-      borderColor: colors.cardBorder,
+      borderColor: colors.greenBorder,
+      backgroundColor: colors.greenSoft,
     },
-    agregarText: { color: colors.muted, fontSize: 13, fontWeight: "700" },
-    guardando: { color: colors.muted, fontSize: 12 },
+    cartaInput: {
+      alignSelf: "stretch",
+      textAlign: "center",
+      color: colors.text,
+      fontSize: 17,
+      fontWeight: "700",
+      lineHeight: 24,
+      padding: 0,
+    },
+    cartaStar: { position: "absolute", top: 9, right: 9, padding: 4 },
+    cartaTrash: { position: "absolute", bottom: 9, right: 9, padding: 4 },
+    guardando: { color: colors.muted, fontSize: 12, textAlign: "center" },
 
     footer: {
       paddingHorizontal: 16,
