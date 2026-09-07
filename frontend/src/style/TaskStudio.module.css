@@ -3952,3 +3952,11 @@ button.folderItem {
 :global(body[data-theme="dark"]) .paperLabel {
   color: rgba(236, 246, 243, 0.55);
 }
+
+/* Notas / compras / journaling / afirmaciones directo sobre el fondo de la
+   página: el panel contenedor pierde fondo, borde y sombra. */
+.listCard {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
