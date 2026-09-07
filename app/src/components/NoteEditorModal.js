@@ -144,6 +144,15 @@ export default function NoteEditorModal({
     }
   }, [visible, note, defaultCarpeta]);
 
+  // Paleta del papel: el fondo elegido pinta el título y el área de escritura
+  // (antes solo afectaba la tarjeta en la lista y parecía que no funcionaba).
+  const palette = getNoteColor(color);
+  const cambiarColor = (next) => {
+    setColor(next);
+    // El RichEditor aplica su estilo al montar: remontamos conservando el html vivo
+    setEditorKey((k) => k + 1);
+  };
+
   // Pocos colores a la vista + "+" que abre el selector libre.
   const baseColors = NOTE_COLOR_KEYS.slice(0, 5);
   const isCustom = typeof color === "string" && color.startsWith("#");
@@ -370,7 +379,7 @@ export default function NoteEditorModal({
                 return (
                   <TouchableOpacity
                     key={key}
-                    onPress={() => setColor(key)}
+                    onPress={() => cambiarColor(key)}
                     style={[styles.colorDot, { backgroundColor: c.bg }, active && styles.colorDotActive]}
                   >
                     {active && <Ionicons name="checkmark" size={15} color={c.text} />}
@@ -400,29 +409,29 @@ export default function NoteEditorModal({
             {/* Título */}
             <Text style={styles.fieldLabel}>Título</Text>
             <TextInput
-              style={styles.titleInput}
+              style={[styles.titleInput, { backgroundColor: palette.bg, color: palette.text }]}
               value={meta}
               onChangeText={setMeta}
               placeholder="Ej: Ideas para promociones de junio"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={palette.text + "88"}
             />
 
             {/* Contenido enriquecido */}
             <Text style={styles.fieldLabel}>Contenido</Text>
-            <View style={styles.paper}>
+            <View style={[styles.paper, { backgroundColor: palette.bg }]}>
               <RichEditor
                 key={editorKey}
                 ref={richText}
-                initialContentHTML={note?.contenido || ""}
+                initialContentHTML={html}
                 onChange={setHtml}
                 placeholder="Escribí tu nota…"
                 useContainer
                 initialHeight={280}
                 editorStyle={{
-                  backgroundColor: colors.card,
-                  color: colors.text,
-                  placeholderColor: colors.muted,
-                  caretColor: colors.greenDark,
+                  backgroundColor: palette.bg,
+                  color: palette.text,
+                  placeholderColor: palette.text + "88",
+                  caretColor: palette.text,
                   contentCSSText:
                     "font-size: 16px; line-height: 1.6; padding: 12px; min-height: 280px;",
                 }}
@@ -469,7 +478,7 @@ export default function NoteEditorModal({
         visible={pickerOpen}
         initialColor={getNoteColor(color).bg}
         onClose={() => setPickerOpen(false)}
-        onSelect={(hex) => setColor(hex)}
+        onSelect={(hex) => cambiarColor(hex)}
       />
     </Modal>
   );
