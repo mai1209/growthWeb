@@ -400,7 +400,13 @@ export default function SaludScreen() {
       try {
         const ahora = new Date();
         const hoy = await Pedometer.getStepCountAsync(startOfDay(ahora), ahora);
-        if (vivo && hoy) setPasos(hoy.steps ?? 0);
+        if (vivo && hoy) {
+          const steps = hoy.steps ?? 0;
+          setPasos(steps);
+          // Espejo en la web también en cada refresco (antes solo al montar la
+          // pantalla): así lo que muestra el anillo y lo que ve la web coinciden.
+          if (steps > 0) guardarHist({ [dayKey(ahora)]: steps });
+        }
       } catch {}
     };
 
@@ -427,6 +433,15 @@ export default function SaludScreen() {
         } catch {}
         dias.push({ label: DIAS_SEMANA[d.getDay()], valor: steps });
         nuevos[dayKey(d)] = steps;
+      }
+      // Para hoy usamos el conteo vivo (la primera consulta) si es mayor: la
+      // consulta por rango a veces devuelve menos o 0, y eso se sincronizaba.
+      const hoyK = dayKey(ahora);
+      const vivoHoy = hoy?.steps ?? 0;
+      if (vivoHoy > (Number(nuevos[hoyK]) || 0)) {
+        nuevos[hoyK] = vivoHoy;
+        const ult = dias[dias.length - 1];
+        if (ult) ult.valor = vivoHoy;
       }
       if (vivo) {
         setPasosSemana(dias);
