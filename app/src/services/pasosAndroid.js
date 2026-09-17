@@ -74,3 +74,15 @@ export async function pasosSemanaAndroid() {
   }
   return out;
 }
+
+// ¿Ya tenemos permiso de actividad? (sin pedirlo: para sincronizar en silencio
+// al abrir la app sin disparar carteles).
+export async function pasosAndroidPermitido() {
+  if (!AP) return false;
+  try {
+    const act = await AP.getActivityPermissionStatus();
+    return Boolean(act?.granted);
+  } catch {
+    return false;
+  }
+}

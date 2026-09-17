@@ -8,6 +8,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AuthProvider, useAuth } from "./src/auth/AuthContext";
+import { iniciarSyncPasos } from "./src/utils/syncPasos";
 import { WorkspaceProvider, useWorkspace } from "./src/workspace/WorkspaceContext";
 import ProfileSwitcher from "./src/components/ProfileSwitcher";
 import { ThemeProvider, useTheme } from "./src/theme";
@@ -153,6 +154,13 @@ function Routes() {
     return () => {
       alive = false;
     };
+  }, [token]);
+
+  // Pasos del teléfono → servidor al abrir la app y al volver al frente, desde
+  // cualquier pantalla (la web mostraba 0 si no entrabas a Movilidad).
+  useEffect(() => {
+    if (!token) return undefined;
+    return iniciarSyncPasos();
   }, [token]);
 
   // Marca la versión como avisada y cierra (no vuelve a aparecer para esta versión).
