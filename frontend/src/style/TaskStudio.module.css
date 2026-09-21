@@ -4569,3 +4569,10 @@ button.folderItem {
   opacity: 1;
   color: #ff6b5e;
 }
+
+/* La estrella pegada al extremo derecho: anula el left de la versión anterior */
+.noteCardStar {
+  left: auto;
+  right: 10px;
+  width: auto;
+}
