@@ -33,6 +33,10 @@ import {
   FiType,
   FiUnderline,
   FiX,
+  FiRotateCcw,
+  FiRotateCw,
+  FiMoreVertical,
+  FiDroplet,
 } from "react-icons/fi";
 import Quill from "quill";
 import { isCloudinaryConfigured, uploadImageToCloudinary } from "../cloudinary";
@@ -54,6 +58,14 @@ const DEFAULT_FONT_PX = 16;
 
 // Vistas del estudio (las que se pueden deep-linkear desde el nav con ?view=).
 const VALID_VIEWS = ["notes", "shopping", "afirmaciones", "journal", "calendar"];
+
+// Puntito de color por carpeta (determinístico por nombre), como las etiquetas del mockup.
+const FOLDER_DOT_COLORS = ["#75f94c", "#69a7ff", "#a78bfa", "#f070b8", "#ffd55c", "#ff9d5c", "#3ed9a4"];
+const folderColor = (name) => {
+  let h = 0;
+  for (const ch of String(name || "")) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return FOLDER_DOT_COLORS[h % FOLDER_DOT_COLORS.length];
+};
 
 // Estilo inline para colores libres (hex) elegidos con el picker de la app.
 // El color del texto se decide por luminancia del fondo.
@@ -364,6 +376,22 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const [isEditorExpanded, setIsEditorExpanded] = useState(false);
   const [sheetWidth, setSheetWidth] = useState(readStoredSheetWidth);
   const [editorStats, setEditorStats] = useState({ words: 0, minutes: 0 });
+  // Menús plegables de la toolbar: "aa" (tamaño/mayúsculas), "color" (papel/texto), "more" (ancho)
+  const [toolMenu, setToolMenu] = useState(null);
+  useEffect(() => {
+    if (!toolMenu) return undefined;
+    const close = () => setToolMenu(null);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [toolMenu]);
+  // Fecha corta de la nota para el header ("lun 21 sep · 12:12")
+  const fechaNotaLabel = useMemo(() => {
+    if (!form.fecha) return "";
+    const d = new Date(`${form.fecha}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return form.fecha;
+    const txt = d.toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" });
+    return `${txt}${form.horario ? ` · ${form.horario}` : ""}`;
+  }, [form.fecha, form.horario]);
   const [outline, setOutline] = useState([]);
   const [showOutline, setShowOutline] = useState(false);
   const [isCardFormOpen, setIsCardFormOpen] = useState(false);
@@ -1842,6 +1870,10 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
             ) : (
               <div className={style.notesLayout}>
                 <div className={style.notesLeftCol}>
+                  <button type="button" className={style.newNoteSideBtn} onClick={() => handleNewNote()}>
+                    <FiPlus />
+                    Nueva nota
+                  </button>
                   <div className={style.notesSideTitle}>
                     <h2 className={style.listTitle}>
                       Tus notas
@@ -1889,7 +1921,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                             className={style.folderItemMain}
                             onClick={() => setActiveFolder(folder)}
                           >
-                            <FiFolder />
+                            <span className={style.folderDot} style={{ background: folderColor(folder) }} />
                             <span className={style.folderItemName}>{folder}</span>
                             <span className={style.folderItemCount}>{count}</span>
                           </button>
@@ -1952,14 +1984,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                                   >
                                     <FiBookOpen />
                                     Repaso{dueCountAll ? ` (${dueCountAll})` : ""}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className={style.secondaryButton}
-                                    onClick={() => handleNewNote()}
-                                  >
-                                    <FiPlus />
-                                    Nueva nota
                                   </button>
                                 </div>
                               </>
@@ -2063,24 +2087,38 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 </button>
               </div>
               <div className={style.editorActions}>
-                <span className={style.wordCount} title="Palabras escritas">
-                  {editorStats.words} palabra{editorStats.words === 1 ? "" : "s"}
+                <span className={style.noteFolderSelect} title="Cambiar la nota a otra carpeta">
+                  <FiFolder />
+                  <select
+                    value={form.carpeta || ""}
+                    onChange={(event) => handleFieldChange("carpeta", event.target.value)}
+                    aria-label="Cambiar la nota a otra carpeta"
+                  >
+                    <option value="">Sin carpeta</option>
+                    {(form.carpeta && !folders.includes(form.carpeta)
+                      ? [form.carpeta, ...folders]
+                      : folders
+                    ).map((folder) => (
+                      <option key={folder} value={folder}>
+                        {folder}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className={style.noteFolderAdd}
+                    onClick={handleCreateFolderInEditor}
+                    aria-label="Nueva carpeta"
+                    title="Nueva carpeta"
+                  >
+                    <FiFolderPlus />
+                  </button>
                 </span>
-                <div className={style.widthControl} role="group" aria-label="Ancho de la hoja">
-                  <span className={style.widthLabel}>Ancho</span>
-                  {SHEET_WIDTH_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      className={`${style.widthButton} ${sheetWidth === opt.value ? style.widthButtonActive : ""}`}
-                      onClick={() => setSheetWidth(opt.value)}
-                      title={opt.title}
-                      aria-pressed={sheetWidth === opt.value}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
+                {fechaNotaLabel ? (
+                  <span className={style.editorDate} title="Fecha de la nota">
+                    {fechaNotaLabel}
+                  </span>
+                ) : null}
                 <button
                   type="button"
                   className={style.iconButton}
@@ -2137,67 +2175,32 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
             </div>
 
           <form id="note-editor-form" className={style.form} onSubmit={handleSubmit}>
-            {/* Fila fina de metadatos: carpeta a la izquierda, fondo a la derecha.
-                El título vive arriba, en el header del editor. */}
-            <div className={style.noteHead}>
-              <div className={style.noteHeadMeta}>
-                <span
-                  className={style.noteFolderSelect}
-                  title="Cambiar la nota a otra carpeta"
-                >
-                  <FiFolder />
-                  <select
-                    value={form.carpeta || ""}
-                    onChange={(event) => handleFieldChange("carpeta", event.target.value)}
-                    aria-label="Cambiar la nota a otra carpeta"
-                  >
-                    <option value="">Sin carpeta</option>
-                    {(form.carpeta && !folders.includes(form.carpeta)
-                      ? [form.carpeta, ...folders]
-                      : folders
-                    ).map((folder) => (
-                      <option key={folder} value={folder}>
-                        {folder}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    className={style.noteFolderAdd}
-                    onClick={handleCreateFolderInEditor}
-                    aria-label="Nueva carpeta"
-                    title="Nueva carpeta"
-                  >
-                    <FiFolderPlus />
-                  </button>
-                </span>
-
-                <div className={style.backgroundPicker}>
-                  <span className={style.paperLabel} title="Color del papel de la nota">
-                    Papel
-                  </span>
-                  <div className={style.colorGrid}>
-                    {COLOR_OPTIONS.map((color) => (
-                      <button
-                        key={color.value}
-                        type="button"
-                        className={`${style.colorOption} ${style[color.value]} ${
-                          form.color === color.value ? style.colorOptionActive : ""
-                        }`}
-                        onClick={() => handleFieldChange("color", color.value)}
-                        aria-label={`Color de fondo ${color.label}`}
-                        title={`Fondo ${color.label}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <div className={style.editorBody}>
                             <div className={style.editorWorkspace}>
               <aside className={style.editorToolbar} aria-label="Herramientas de texto">
-                {/* Grupos con separadores: todo visible, ordenado por función */}
+                {/* Una sola fila compacta; lo secundario vive en los menús Aa / colores / ⋮ */}
+                <div className={style.toolGroup} role="group" aria-label="Deshacer y rehacer">
+                  <button
+                    type="button"
+                    className={style.toolbarButton}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => quillRef.current?.history?.undo()}
+                    aria-label="Deshacer"
+                    title="Deshacer (Cmd+Z)"
+                  >
+                    <FiRotateCcw />
+                  </button>
+                  <button
+                    type="button"
+                    className={style.toolbarButton}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => quillRef.current?.history?.redo()}
+                    aria-label="Rehacer"
+                    title="Rehacer (Cmd+Shift+Z)"
+                  >
+                    <FiRotateCw />
+                  </button>
+                </div>
                 <div className={style.toolGroup} role="group" aria-label="Títulos">
                   <button
                     type="button"
@@ -2219,49 +2222,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   >
                     <FiHash />
                   </button>
-                </div>
-
-                <div className={style.toolGroup} role="group" aria-label="Tamaño de letra">
-                  <div className={style.fontSizeControl} aria-label="Tamaño de letra">
-                    <button
-                      type="button"
-                      className={style.fontSizeStep}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => stepFontSize(-1)}
-                      aria-label="Achicar letra"
-                      title="Achicar letra"
-                    >
-                      −
-                    </button>
-                    <input
-                      type="number"
-                      className={style.fontSizeInput}
-                      value={sizeInput}
-                      min={MIN_FONT_PX}
-                      max={MAX_FONT_PX}
-                      onChange={(event) => setSizeInput(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault();
-                          commitSizeInput();
-                        }
-                      }}
-                      onBlur={commitSizeInput}
-                      aria-label="Tamaño de letra en píxeles"
-                      title="Tamaño de letra (px)"
-                    />
-                    <span className={style.fontSizeUnit}>px</span>
-                    <button
-                      type="button"
-                      className={style.fontSizeStep}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => stepFontSize(1)}
-                      aria-label="Agrandar letra"
-                      title="Agrandar letra"
-                    >
-                      +
-                    </button>
-                  </div>
                 </div>
 
                 <div className={style.toolGroup} role="group" aria-label="Formato de texto">
@@ -2373,44 +2333,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   </button>
                 </div>
 
-                <div className={style.toolGroup} role="group" aria-label="Mayúsculas y minúsculas">
-                  <button
-                    type="button"
-                    className={`${style.toolbarButton} ${autoCapEnabled ? style.toolbarButtonActive : ""}`}
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => setAutoCapEnabled((prev) => !prev)}
-                    aria-pressed={autoCapEnabled}
-                    aria-label="Mayúscula automática"
-                    title={
-                      autoCapEnabled
-                        ? "Mayúscula automática: activada (tocá para escribir en minúscula)"
-                        : "Mayúscula automática: desactivada"
-                    }
-                  >
-                    <span className={style.toolbarText}>Aa</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={style.toolbarButton}
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => applyCaseToSelection("lower")}
-                    aria-label="Pasar a minúsculas"
-                    title="Pasar la selección a minúsculas"
-                  >
-                    <span className={style.toolbarText}>aa</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={style.toolbarButton}
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => applyCaseToSelection("upper")}
-                    aria-label="Pasar a mayúsculas"
-                    title="Pasar la selección a MAYÚSCULAS"
-                  >
-                    <span className={style.toolbarText}>AA</span>
-                  </button>
-                </div>
-
                 <div className={style.toolGroup} role="group" aria-label="Insertar y alinear">
                   <button
                     type="button"
@@ -2454,8 +2376,137 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   </button>
                 </div>
 
-                <div className={style.toolGroup} role="group" aria-label="Color de texto">
-                  <span className={style.toolGroupLabel}>Texto</span>
+                <div className={style.toolSpacer} />
+
+                {/* Aa: tamaño de letra + mayúsculas */}
+                <div className={style.toolMenuWrap} onMouseDown={(event) => event.stopPropagation()}>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${toolMenu === "aa" ? style.toolbarButtonActive : ""}`}
+                    onClick={() => setToolMenu((m) => (m === "aa" ? null : "aa"))}
+                    aria-label="Tamaño de letra y mayúsculas"
+                    title="Tamaño de letra y mayúsculas"
+                    aria-expanded={toolMenu === "aa"}
+                  >
+                    <span className={style.toolbarText}>Aa</span>
+                  </button>
+                  {toolMenu === "aa" ? (
+                    <div className={style.toolMenu} role="group" aria-label="Tamaño y mayúsculas">
+                      <span className={style.toolMenuTitle}>Tamaño de letra</span>
+                  <div className={style.fontSizeControl} aria-label="Tamaño de letra">
+                    <button
+                      type="button"
+                      className={style.fontSizeStep}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => stepFontSize(-1)}
+                      aria-label="Achicar letra"
+                      title="Achicar letra"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      className={style.fontSizeInput}
+                      value={sizeInput}
+                      min={MIN_FONT_PX}
+                      max={MAX_FONT_PX}
+                      onChange={(event) => setSizeInput(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          commitSizeInput();
+                        }
+                      }}
+                      onBlur={commitSizeInput}
+                      aria-label="Tamaño de letra en píxeles"
+                      title="Tamaño de letra (px)"
+                    />
+                    <span className={style.fontSizeUnit}>px</span>
+                    <button
+                      type="button"
+                      className={style.fontSizeStep}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => stepFontSize(1)}
+                      aria-label="Agrandar letra"
+                      title="Agrandar letra"
+                    >
+                      +
+                    </button>
+                  </div>
+                
+                      <span className={style.toolMenuTitle}>Mayúsculas</span>
+                      <div className={style.toolMenuRow}>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${autoCapEnabled ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => setAutoCapEnabled((prev) => !prev)}
+                    aria-pressed={autoCapEnabled}
+                    aria-label="Mayúscula automática"
+                    title={
+                      autoCapEnabled
+                        ? "Mayúscula automática: activada (tocá para escribir en minúscula)"
+                        : "Mayúscula automática: desactivada"
+                    }
+                  >
+                    <span className={style.toolbarText}>Aa</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={style.toolbarButton}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyCaseToSelection("lower")}
+                    aria-label="Pasar a minúsculas"
+                    title="Pasar la selección a minúsculas"
+                  >
+                    <span className={style.toolbarText}>aa</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={style.toolbarButton}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyCaseToSelection("upper")}
+                    aria-label="Pasar a mayúsculas"
+                    title="Pasar la selección a MAYÚSCULAS"
+                  >
+                    <span className={style.toolbarText}>AA</span>
+                  </button>
+                
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                {/* Colores: papel + texto */}
+                <div className={style.toolMenuWrap} onMouseDown={(event) => event.stopPropagation()}>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${toolMenu === "color" ? style.toolbarButtonActive : ""}`}
+                    onClick={() => setToolMenu((m) => (m === "color" ? null : "color"))}
+                    aria-label="Color del papel y del texto"
+                    title="Color del papel y del texto"
+                    aria-expanded={toolMenu === "color"}
+                  >
+                    <FiDroplet />
+                  </button>
+                  {toolMenu === "color" ? (
+                    <div className={style.toolMenu} role="group" aria-label="Colores">
+                      <span className={style.toolMenuTitle}>Papel</span>
+                      <div className={style.colorGrid}>
+                        {COLOR_OPTIONS.map((color) => (
+                          <button
+                            key={color.value}
+                            type="button"
+                            className={`${style.colorOption} ${style[color.value]} ${
+                              form.color === color.value ? style.colorOptionActive : ""
+                            }`}
+                            onClick={() => handleFieldChange("color", color.value)}
+                            aria-label={`Color de fondo ${color.label}`}
+                            title={`Fondo ${color.label}`}
+                          />
+                        ))}
+                      </div>
+                      <span className={style.toolMenuTitle}>Texto</span>
                   <div className={style.textColorGrid} aria-label="Color de texto">
                     {TEXT_COLOR_OPTIONS.map((color) => {
                       const isDefault = !color.value && !activeFormats.color;
@@ -2475,7 +2526,46 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                       );
                     })}
                   </div>
+                
+                    </div>
+                  ) : null}
                 </div>
+
+                {/* ⋮: ancho de la hoja */}
+                <div className={style.toolMenuWrap} onMouseDown={(event) => event.stopPropagation()}>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${toolMenu === "more" ? style.toolbarButtonActive : ""}`}
+                    onClick={() => setToolMenu((m) => (m === "more" ? null : "more"))}
+                    aria-label="Más opciones"
+                    title="Más opciones (ancho de la hoja)"
+                    aria-expanded={toolMenu === "more"}
+                  >
+                    <FiMoreVertical />
+                  </button>
+                  {toolMenu === "more" ? (
+                    <div className={style.toolMenu} role="group" aria-label="Más opciones">
+                      <span className={style.toolMenuTitle}>Ancho de la hoja</span>
+                <div className={style.widthControl} role="group" aria-label="Ancho de la hoja">
+                  <span className={style.widthLabel}>Ancho</span>
+                  {SHEET_WIDTH_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={`${style.widthButton} ${sheetWidth === opt.value ? style.widthButtonActive : ""}`}
+                      onClick={() => setSheetWidth(opt.value)}
+                      title={opt.title}
+                      aria-pressed={sheetWidth === opt.value}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+
+                    </div>
+                  ) : null}
+                </div>
+
               </aside>
 
               {showOutline && outline.length > 0 ? (
@@ -2604,6 +2694,9 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   </button>
                   <div ref={editorRef} className={style.editor} />
                 </div>
+                <span className={style.wordCountPill} title="Palabras escritas">
+                  {editorStats.words} palabra{editorStats.words === 1 ? "" : "s"}
+                </span>
               </div>
               </div>
             </div>
