@@ -4473,15 +4473,60 @@ button.folderItem {
 }
 
 @media (min-width: 1000px) {
+  /* La página no scrollea de más: la tarjeta del editor ocupa justo el alto
+     de la pantalla y la hoja se estira (flex) hasta el pie, sea cual sea
+     el alto de la toolbar y de la barra de páginas. */
+  .page:has(.layoutEditing) {
+    padding-bottom: 0.7rem;
+  }
+
   .layout.layoutEditing .editorCard {
+    display: flex;
+    flex-direction: column;
     background: transparent;
     border: none;
     padding: 0 0 0 0.5rem;
-    min-height: calc(100vh - 110px);
+    min-height: calc(100vh - 1.4rem);
+  }
+
+  .layout.layoutEditing .editorCard .form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+  }
+
+  .layout.layoutEditing .editorBody {
+    flex: 1 1 auto;
+  }
+
+  .layout.layoutEditing .editorWorkspace {
+    align-self: stretch;
+  }
+
+  .layout.layoutEditing .editorField {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    align-self: stretch;
   }
 
   .layout.layoutEditing .notePaper {
-    min-height: calc(100vh - 330px);
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .layout.layoutEditing .notePaper .editor,
+  .layout.layoutEditing .notePaper .editor:global(.ql-container.ql-snow) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .layout.layoutEditing .notePaper .editor :global(.ql-editor) {
+    flex: 1 1 auto;
   }
 }
 
