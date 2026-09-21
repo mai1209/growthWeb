@@ -4521,3 +4521,51 @@ button.folderItem {
   filter: brightness(1.05);
   transform: translateY(-1px);
 }
+
+/* Tarjeta de nota: estrella arriba a la derecha, tachito en el pie, más aire */
+.noteCard {
+  padding-top: 1.1rem;
+  min-height: 190px;
+}
+
+.noteCardBody strong {
+  padding-right: 2rem; /* deja lugar a la estrella */
+  display: block;
+}
+
+.noteCardStar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  margin: 0;
+  padding: 0.3rem;
+  font-size: 1.05rem;
+  opacity: 0.55;
+}
+
+.noteCardStar:hover,
+.noteCardStarOn {
+  opacity: 1;
+}
+
+.noteCardFootLeft .noteCardDelete {
+  position: static;
+  top: auto;
+  right: auto;
+  margin-left: 0.2rem;
+  padding: 0.05rem 0.2rem;
+  width: auto;
+  height: auto;
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.55;
+  font-size: 0.95rem;
+  display: inline-grid;
+  place-items: center;
+}
+
+.noteCardFootLeft .noteCardDelete:hover {
+  opacity: 1;
+  color: #ff6b5e;
+}

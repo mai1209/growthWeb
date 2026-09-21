@@ -2132,20 +2132,19 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                                       </button>
                                     </span>
                                   ) : (
-                                    <>
-                                      <button
-                                        type="button"
-                                        className={style.noteCardDelete}
-                                        onClick={(event) => {
-                                          event.stopPropagation();
-                                          handleDelete(task._id);
-                                        }}
-                                        aria-label="Mover a la papelera"
-                                        title="Mover a la papelera"
-                                      >
-                                        <FiTrash2 />
-                                      </button>
-                                    </>
+                                    <button
+                                      type="button"
+                                      className={`${style.noteCardStar} ${task.favorita ? style.noteCardStarOn : ""}`}
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        toggleFavorita(task);
+                                      }}
+                                      aria-label={task.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                                      title={task.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                                      aria-pressed={Boolean(task.favorita)}
+                                    >
+                                      <FiStar />
+                                    </button>
                                   )}
 
                                   <div className={style.noteCardBody}>
@@ -2158,16 +2157,15 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                                       {!task.papelera ? (
                                         <button
                                           type="button"
-                                          className={`${style.noteCardStar} ${task.favorita ? style.noteCardStarOn : ""}`}
+                                          className={style.noteCardDelete}
                                           onClick={(event) => {
                                             event.stopPropagation();
-                                            toggleFavorita(task);
+                                            handleDelete(task._id);
                                           }}
-                                          aria-label={task.favorita ? "Quitar de favoritas" : "Marcar favorita"}
-                                          title={task.favorita ? "Quitar de favoritas" : "Marcar favorita"}
-                                          aria-pressed={Boolean(task.favorita)}
+                                          aria-label="Mover a la papelera"
+                                          title="Mover a la papelera"
                                         >
-                                          <FiStar />
+                                          <FiTrash2 />
                                         </button>
                                       ) : null}
                                     </span>
