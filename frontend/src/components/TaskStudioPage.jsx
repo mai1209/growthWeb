@@ -377,6 +377,14 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const [studyIndex, setStudyIndex] = useState(0);
   const [studyFlipped, setStudyFlipped] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  // Autoguardado (como el journaling): no hay botón de guardar. Estado del
+  // último guardado para el indicador del header.
+  const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error
+  const autosaveTimerRef = useRef(null);
+  const savePromiseRef = useRef(null); // guardado en curso (para encadenar)
+  const saveAgainRef = useRef(false); // hubo cambios mientras se guardaba
+  const formRef = useRef(null); // form fresco para el timer (evita closures viejos)
+  const notePagesRef = useRef(null);
   const [sizeInput, setSizeInput] = useState(DEFAULT_FONT_PX);
   const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState(() => {
@@ -441,14 +449,142 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     bulletList: formats.list === "bullet",
   });
 
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
+  useEffect(() => {
+    notePagesRef.current = notePages;
+  }, [notePages]);
+
   const markDirty = () => {
     isDirtyRef.current = true;
     setIsDirty(true);
+    programarAutosave();
   };
 
   const clearDirty = () => {
     isDirtyRef.current = false;
     setIsDirty(false);
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+  };
+
+  // ===== Autoguardado =====
+  const AUTOSAVE_MS = 900;
+  const textoPlano = (html) =>
+    String(html || "")
+      .replace(/<[^>]*>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .trim();
+
+  // Nota nueva sin título ni contenido: no se crea nada.
+  const notaVacia = () => {
+    const f = formRef.current || form;
+    if (f.meta.trim()) return false;
+    if (textoPlano(getCurrentEditorHtml())) return false;
+    const pages = notePagesRef.current || notePages;
+    return !pages.some(
+      (p, i) => i !== activeNotePageIndexRef.current && textoPlano(p.contenido)
+    );
+  };
+
+  const construirPayload = () => {
+    const f = formRef.current || form;
+    const pages = notePagesRef.current || notePages;
+    return {
+      tipo: "note",
+      workspace: activeWorkspace,
+      // Sin título no es un error: se guarda igual (la gente perdía notas por esto).
+      meta: f.meta.trim() || "Sin título",
+      contenido: serializeNotePages(
+        pages.map((page, index) =>
+          index === activeNotePageIndexRef.current
+            ? { ...page, contenido: getCurrentEditorHtml() }
+            : page
+        )
+      ),
+      fecha: f.fecha,
+      horario: f.horario,
+      color: f.color,
+      carpeta: f.carpeta || "",
+      flashcards: f.flashcards || [],
+    };
+  };
+
+  // Guarda ya (crea la nota si es nueva, la actualiza si existe). Devuelve una
+  // promesa con true/false. Si ya hay un guardado en curso, se encola detrás.
+  const guardarAhora = () => {
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+    if (savePromiseRef.current) {
+      saveAgainRef.current = true;
+      return savePromiseRef.current;
+    }
+    if (!isDirtyRef.current) return Promise.resolve(true);
+    const f = formRef.current || form;
+    if (!f.id && notaVacia()) {
+      clearDirty();
+      return Promise.resolve(true);
+    }
+
+    // Limpio ANTES de la request: si siguen escribiendo, vuelve a ensuciarse.
+    isDirtyRef.current = false;
+    setIsDirty(false);
+    setSaving(true);
+    setSaveStatus("saving");
+    setError("");
+
+    const tarea = (async () => {
+      try {
+        const payload = construirPayload();
+        const response = f.id
+          ? await taskService.update(f.id, payload)
+          : await taskService.create(payload);
+        const savedTask = response.data;
+        setTasks((prev) =>
+          f.id
+            ? prev.map((task) => (task._id === savedTask._id ? savedTask : task))
+            : [savedTask, ...prev]
+        );
+        if (!f.id) {
+          // La nota nueva ya existe: de acá en más se actualiza.
+          formRef.current = { ...(formRef.current || f), id: savedTask._id };
+          setForm((prev) => ({ ...prev, id: savedTask._id }));
+        }
+        setSaveStatus("saved");
+        return true;
+      } catch (saveError) {
+        isDirtyRef.current = true;
+        setIsDirty(true);
+        setSaveStatus("error");
+        setError(saveError.response?.data?.message || "No se pudo guardar la nota.");
+        return false;
+      } finally {
+        setSaving(false);
+      }
+    })().then((ok) => {
+      savePromiseRef.current = null;
+      if (saveAgainRef.current) {
+        saveAgainRef.current = false;
+        isDirtyRef.current = true;
+        return guardarAhora();
+      }
+      return ok;
+    });
+    savePromiseRef.current = tarea;
+    return tarea;
+  };
+
+  const programarAutosave = () => {
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      autosaveTimerRef.current = null;
+      guardarAhora();
+    }, AUTOSAVE_MS);
   };
 
   // Al cerrar/guardar consumimos la entrada extra de historial que metimos
@@ -684,7 +820,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   // Aviso del navegador al recargar / cerrar pestaña con cambios sin guardar.
   useEffect(() => {
     const handleBeforeUnload = (event) => {
-      if (isEditorOpen && isDirtyRef.current) {
+      if (isEditorOpen && (isDirtyRef.current || savePromiseRef.current)) {
+        guardarAhora(); // intenta guardar en el acto
         event.preventDefault();
         event.returnValue = "";
       }
@@ -704,17 +841,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     historyTrapRef.current = true;
 
     const handlePopState = () => {
-      if (isDirtyRef.current) {
-        const leave = window.confirm(
-          "Tenés cambios sin guardar en la nota. Si salís se pierden.\n\n¿Salir igual sin actualizar?"
-        );
-
-        if (!leave) {
-          // Se queda: re-armamos la trampa para mantenerlo en la nota.
-          window.history.pushState(null, "", window.location.href);
-          return;
-        }
-      }
+      // Con autoguardado no hace falta preguntar: guardamos y dejamos salir.
+      if (isDirtyRef.current) guardarAhora();
 
       historyTrapRef.current = false;
       window.removeEventListener("popstate", handlePopState);
@@ -1451,20 +1579,22 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       setForm((prev) => ({ ...prev, ...defaults }));
     }
     setError("");
+    setSaveStatus("idle");
     setIsEditorOpen(true);
   };
 
-  const handleCloseEditor = () => {
+  const handleCloseEditor = async () => {
+    // Antes de cerrar, guardamos lo pendiente. Solo si falla preguntamos.
+    const ok = await guardarAhora();
     if (
-      isDirtyRef.current &&
-      !window.confirm(
-        "Tenés cambios sin guardar en la nota. Si cerrás se pierden.\n\n¿Cerrar igual sin actualizar?"
-      )
+      !ok &&
+      !window.confirm("No se pudo guardar la nota. ¿Cerrar igual y perder los últimos cambios?")
     ) {
       return;
     }
 
     clearDirty();
+    setSaveStatus("idle");
     setIsEditorOpen(false);
     setIsEditorExpanded(false);
     resetForm();
@@ -1489,6 +1619,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     setMessage("");
     setError("");
     clearDirty();
+    setSaveStatus("saved");
     setIsEditorOpen(true);
   };
 
@@ -1507,58 +1638,24 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     }
   };
 
-  const handleSubmit = async (event) => {
+  // Enter en el título / Cmd+S: guarda ya, sin cerrar.
+  const handleSubmit = (event) => {
     event.preventDefault();
-    setSaving(true);
-    setError("");
-    setMessage("");
-
-    if (!form.meta.trim()) {
-      setError("El título es obligatorio.");
-      setSaving(false);
-      return;
-    }
-
-    const payload = {
-      tipo: "note",
-      workspace: activeWorkspace,
-      meta: form.meta.trim(),
-      contenido: serializeNotePages(
-        notePages.map((page, index) =>
-          index === activeNotePageIndexRef.current ? { ...page, contenido: getCurrentEditorHtml() } : page
-        )
-      ),
-      fecha: form.fecha,
-      horario: form.horario,
-      color: form.color,
-      carpeta: form.carpeta || "",
-      flashcards: form.flashcards || [],
-    };
-
-    try {
-      const response = form.id
-        ? await taskService.update(form.id, payload)
-        : await taskService.create(payload);
-
-      const savedTask = response.data;
-
-      setTasks((prev) =>
-        form.id
-          ? prev.map((task) => (task._id === savedTask._id ? savedTask : task))
-          : [savedTask, ...prev]
-      );
-
-      setMessage(form.id ? "Nota actualizada." : "Nota creada.");
-      clearDirty();
-      resetForm();
-      setIsEditorOpen(false);
-      consumeHistoryTrap();
-    } catch (submitError) {
-      setError(submitError.response?.data?.message || "No se pudo guardar la nota.");
-    } finally {
-      setSaving(false);
-    }
+    guardarAhora();
   };
+
+  useEffect(() => {
+    if (!isEditorOpen) return undefined;
+    const onKey = (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        guardarAhora();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditorOpen]);
 
   return (
     <section className={style.page}>
@@ -2008,26 +2105,31 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 >
                   {isEditorExpanded ? <FiMinimize2 /> : <FiMaximize2 />}
                 </button>
-                {isDirty ? (
-                  <span className={style.unsavedBadge}>
+                {saveStatus === "error" ? (
+                  <button
+                    type="button"
+                    className={`${style.unsavedBadge} ${style.retryBadge}`}
+                    onClick={guardarAhora}
+                    title="Volver a intentar guardar"
+                  >
                     <span className={style.unsavedDot} />
-                    Sin guardar
+                    No se guardó · reintentar
+                  </button>
+                ) : isDirty || saving ? (
+                  <span className={`${style.unsavedBadge} ${style.savingBadge}`}>
+                    <span className={style.unsavedDot} />
+                    Guardando…
                   </span>
                 ) : form.id ? (
                   <span className={style.savedBadge}>
                     <span className={style.savedDot} />
                     Guardado
                   </span>
-                ) : null}
-                <button
-                  type="submit"
-                  form="note-editor-form"
-                  className={style.saveButton}
-                  disabled={saving}
-                >
-                  <FiPlus />
-                  {saving ? "Guardando..." : form.id ? "Actualizar nota" : "Guardar nota"}
-                </button>
+                ) : (
+                  <span className={style.savedBadge} style={{ opacity: 0.6 }}>
+                    Se guarda solo
+                  </span>
+                )}
                 <button type="button" className={style.iconButton} onClick={handleCloseEditor} aria-label="Cerrar panel">
                   <FiX />
                 </button>

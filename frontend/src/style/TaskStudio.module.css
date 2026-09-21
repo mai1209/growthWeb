@@ -3960,3 +3960,28 @@ button.folderItem {
   background: transparent;
   box-shadow: none;
 }
+
+/* Autoguardado de notas: indicador en lugar del botón Guardar */
+.savingBadge .unsavedDot {
+  animation: notaGuardandoPulso 1s ease-in-out infinite;
+}
+
+@keyframes notaGuardandoPulso {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+.retryBadge {
+  cursor: pointer;
+  font: inherit;
+  border-color: rgba(255, 107, 94, 0.5) !important;
+  color: #ff6b5e !important;
+}
+
+.retryBadge .unsavedDot {
+  background: #ff6b5e !important;
+}
+
+.retryBadge:hover {
+  background: rgba(255, 107, 94, 0.12) !important;
+}
