@@ -4438,3 +4438,49 @@ button.folderItem {
     overflow: visible;
   }
 }
+
+/* Notas: estrella junto al título; editor y panel lateral sin fondo,
+   directo sobre el fondo general; la hoja llega hasta abajo. */
+.titleStar {
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.titleStar:hover {
+  color: #ffd55c;
+}
+
+.titleStarOn {
+  color: #ffd55c;
+}
+
+.titleStarOn svg {
+  fill: currentColor;
+}
+
+.sidePanel {
+  background: transparent;
+  border: none;
+  padding: 0.2rem 0;
+}
+
+@media (min-width: 1000px) {
+  .layout.layoutEditing .editorCard {
+    background: transparent;
+    border: none;
+    padding: 0 0 0 0.5rem;
+    min-height: calc(100vh - 110px);
+  }
+
+  .layout.layoutEditing .notePaper {
+    min-height: calc(100vh - 330px);
+  }
+}

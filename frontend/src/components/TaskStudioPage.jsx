@@ -2222,6 +2222,18 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 >
                   <FiEdit2 />
                 </button>
+                {notaAbierta ? (
+                  <button
+                    type="button"
+                    className={`${style.titleStar} ${notaAbierta.favorita ? style.titleStarOn : ""}`}
+                    onClick={() => toggleFavorita(notaAbierta)}
+                    aria-label={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                    title={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                    aria-pressed={Boolean(notaAbierta.favorita)}
+                  >
+                    <FiStar />
+                  </button>
+                ) : null}
               </div>
               <div className={style.editorActions}>
                 <span className={style.noteFolderSelect} title="Cambiar la nota a otra carpeta">
@@ -2255,18 +2267,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   <span className={style.editorDate} title="Fecha de la nota">
                     {fechaNotaLabel}
                   </span>
-                ) : null}
-                {notaAbierta ? (
-                  <button
-                    type="button"
-                    className={`${style.iconButton} ${notaAbierta.favorita ? style.iconStarOn : ""}`}
-                    onClick={() => toggleFavorita(notaAbierta)}
-                    aria-label={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
-                    title={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
-                    aria-pressed={Boolean(notaAbierta.favorita)}
-                  >
-                    <FiStar />
-                  </button>
                 ) : null}
                 <button
                   type="button"
