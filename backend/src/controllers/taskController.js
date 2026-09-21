@@ -459,6 +459,8 @@ export const updateTask = async (req, res) => {
       carpeta,
       flashcards,
       items,
+      favorita,
+      papelera,
     } =
       req.body;
 
@@ -480,6 +482,11 @@ export const updateTask = async (req, res) => {
     if (carpeta !== undefined) task.carpeta = typeof carpeta === "string" ? carpeta.trim() : "";
     if (flashcards !== undefined) task.flashcards = Array.isArray(flashcards) ? flashcards : [];
     if (items !== undefined) task.items = normalizeItems(items);
+    if (favorita !== undefined) task.favorita = Boolean(favorita);
+    if (papelera !== undefined) {
+      task.papelera = Boolean(papelera);
+      task.eliminadaAt = papelera ? new Date() : null;
+    }
 
     // 5. Guardamos el documento actualizado (esto SIEMPRE ejecuta las validaciones del modelo)
     const updatedTask = await task.save();

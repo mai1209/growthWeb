@@ -37,6 +37,8 @@ import {
   FiRotateCw,
   FiMoreVertical,
   FiDroplet,
+  FiStar,
+  FiTag,
 } from "react-icons/fi";
 import Quill from "quill";
 import { isCloudinaryConfigured, uploadImageToCloudinary } from "../cloudinary";
@@ -246,6 +248,8 @@ const buildInitialFormState = () => ({
 });
 
 const ALL_FOLDERS = "__all__";
+const FAV_FOLDER = "__fav__"; // Favoritas
+const TRASH_FOLDER = "__trash__"; // Papelera
 
 const getFoldersStorageKey = (workspace) => `growth-note-folders:${workspace || "personal"}`;
 
@@ -936,6 +940,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const notesByDay = useMemo(() => {
     const map = new Map();
     filteredTasks.forEach((task) => {
+      if (task.papelera) return; // la papelera no va al calendario
       const key = getDateInputValue(getLocalDateFromValue(task.fecha) || new Date());
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(task);
@@ -967,14 +972,19 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       : "notes"
     : view;
 
+  // Notas "vivas" (fuera de la papelera) para todo lo que no sea la papelera
+  const notasVivas = useMemo(() => tasks.filter((task) => !task.papelera), [tasks]);
+  const favCount = useMemo(() => notasVivas.filter((task) => task.favorita).length, [notasVivas]);
+  const trashCount = tasks.length - notasVivas.length;
+
   const folderCounts = useMemo(() => {
     const counts = new Map();
-    tasks.forEach((task) => {
+    notasVivas.forEach((task) => {
       const folder = (task.carpeta || "").trim();
       if (folder) counts.set(folder, (counts.get(folder) || 0) + 1);
     });
     return counts;
-  }, [tasks]);
+  }, [notasVivas]);
 
   const folders = useMemo(() => {
     const set = new Set(customFolders.filter(Boolean));
@@ -983,13 +993,11 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   }, [customFolders, folderCounts]);
 
   const boardTasks = useMemo(() => {
-    const base =
-      activeFolder === ALL_FOLDERS
-        ? tasks
-        : tasks.filter((task) => (task.carpeta || "").trim() === activeFolder);
-
-    return base;
-  }, [tasks, activeFolder]);
+    if (activeFolder === TRASH_FOLDER) return tasks.filter((task) => task.papelera);
+    if (activeFolder === FAV_FOLDER) return notasVivas.filter((task) => task.favorita);
+    if (activeFolder === ALL_FOLDERS) return notasVivas;
+    return notasVivas.filter((task) => (task.carpeta || "").trim() === activeFolder);
+  }, [tasks, notasVivas, activeFolder]);
 
   const boardGroups = useMemo(() => groupNotesForBoard(boardTasks), [boardTasks]);
 
@@ -1651,20 +1659,73 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     setIsEditorOpen(true);
   };
 
+  // Borrar = mandar a la papelera (se puede restaurar). Sin confirmación: es reversible.
   const handleDelete = async (taskId) => {
-    if (!window.confirm("¿Eliminar nota?")) return;
+    const snapshot = tasks;
+    setTasks((prev) =>
+      prev.map((task) =>
+        task._id === taskId ? { ...task, papelera: true, eliminadaAt: new Date().toISOString() } : task
+      )
+    );
+    if (form.id === taskId) {
+      clearDirty();
+      handleCloseEditor();
+    }
+    try {
+      await taskService.update(taskId, { papelera: true });
+    } catch {
+      setTasks(snapshot);
+      setError("No se pudo mover la nota a la papelera.");
+    }
+  };
 
+  const restaurarNota = async (taskId) => {
+    const snapshot = tasks;
+    setTasks((prev) =>
+      prev.map((task) => (task._id === taskId ? { ...task, papelera: false, eliminadaAt: null } : task))
+    );
+    try {
+      await taskService.update(taskId, { papelera: false });
+    } catch {
+      setTasks(snapshot);
+      setError("No se pudo restaurar la nota.");
+    }
+  };
+
+  const eliminarDefinitivo = async (taskId) => {
+    if (!window.confirm("¿Eliminar esta nota para siempre? No se puede deshacer.")) return;
     try {
       await taskService.delete(taskId);
       setTasks((prev) => prev.filter((task) => task._id !== taskId));
-      if (form.id === taskId) {
-        clearDirty();
-        handleCloseEditor();
-      }
-    } catch (deleteError) {
+    } catch {
       setError("No se pudo eliminar la nota.");
     }
   };
+
+  const vaciarPapelera = async () => {
+    const enPapelera = tasks.filter((task) => task.papelera);
+    if (!enPapelera.length) return;
+    if (!window.confirm(`¿Vaciar la papelera? Se eliminan ${enPapelera.length} nota${enPapelera.length === 1 ? "" : "s"} para siempre.`)) return;
+    try {
+      await Promise.all(enPapelera.map((task) => taskService.delete(task._id)));
+      setTasks((prev) => prev.filter((task) => !task.papelera));
+    } catch {
+      setError("No se pudo vaciar la papelera del todo.");
+    }
+  };
+
+  const toggleFavorita = async (task) => {
+    const next = !task.favorita;
+    const snapshot = tasks;
+    setTasks((prev) => prev.map((t) => (t._id === task._id ? { ...t, favorita: next } : t)));
+    try {
+      await taskService.update(task._id, { favorita: next });
+    } catch {
+      setTasks(snapshot);
+      setError("No se pudo marcar la nota.");
+    }
+  };
+  const notaAbierta = form.id ? tasks.find((task) => task._id === form.id) : null;
 
   // Enter en el título / Cmd+S: guarda ya, sin cerrar.
   const handleSubmit = (event) => {
@@ -1689,7 +1750,11 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     <section className={style.page}>
    
 
-      <div className={style.layout}>
+      <div
+        className={`${style.layout} ${
+          isEditorOpen && effectiveView === "notes" && !isEditorExpanded ? style.layoutEditing : ""
+        }`}
+      >
         <section className={style.listCard}>
             {/* En la vista notas el título va dentro de la columna de carpetas
                 (izquierda) para que la grilla quede a la misma altura.
@@ -1870,85 +1935,114 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
             ) : (
               <div className={style.notesLayout}>
                 <div className={style.notesLeftCol}>
-                  <button type="button" className={style.newNoteSideBtn} onClick={() => handleNewNote()}>
-                    <FiPlus />
-                    Nueva nota
-                  </button>
-                  <div className={style.notesSideTitle}>
-                    <h2 className={style.listTitle}>
-                      Tus notas
-                      {boardTasks.length ? (
-                        <span className={style.listCount}>{boardTasks.length}</span>
+                  <aside className={style.sidePanel} aria-label="Notas">
+                    <button type="button" className={style.newNoteSideBtn} onClick={() => handleNewNote()}>
+                      <FiPlus />
+                      Nueva nota
+                    </button>
+
+                    <nav className={style.sideNav} aria-label="Vistas">
+                      <button
+                        type="button"
+                        className={`${style.sideItem} ${activeFolder === ALL_FOLDERS ? style.sideItemOn : ""}`}
+                        onClick={() => setActiveFolder(ALL_FOLDERS)}
+                      >
+                        <FiFileText />
+                        <span className={style.sideItemName}>Todas las notas</span>
+                        <span className={style.sideCount}>{notasVivas.length}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`${style.sideItem} ${activeFolder === FAV_FOLDER ? style.sideItemOn : ""}`}
+                        onClick={() => setActiveFolder(FAV_FOLDER)}
+                      >
+                        <FiStar />
+                        <span className={style.sideItemName}>Favoritas</span>
+                        <span className={style.sideCount}>{favCount}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`${style.sideItem} ${activeFolder === TRASH_FOLDER ? style.sideItemOn : ""}`}
+                        onClick={() => setActiveFolder(TRASH_FOLDER)}
+                      >
+                        <FiTrash2 />
+                        <span className={style.sideItemName}>Papelera</span>
+                        <span className={style.sideCount}>{trashCount}</span>
+                      </button>
+                    </nav>
+
+                    <div className={style.sideDivider} />
+
+                    <div className={style.sideSectionHead}>
+                      <FiTag />
+                      <span>Etiquetas</span>
+                      <button
+                        type="button"
+                        className={style.sideSectionAdd}
+                        onClick={handleCreateFolder}
+                        aria-label="Nueva etiqueta"
+                        title="Nueva etiqueta"
+                      >
+                        <FiPlus />
+                      </button>
+                    </div>
+
+                    <div className={style.sideNav} aria-label="Etiquetas">
+                      {folders.length === 0 ? (
+                        <span className={style.sideEmpty}>Creá una etiqueta con el +</span>
                       ) : null}
-                    </h2>
-                  </div>
-                  <aside className={style.folderSidebar} aria-label="Carpetas">
-                  <div className={style.folderSidebarTop}>
-                    <span className={style.folderSidebarTitle}>Carpetas</span>
-                    <button
-                      type="button"
-                      className={style.folderAddIcon}
-                      onClick={handleCreateFolder}
-                      aria-label="Nueva carpeta"
-                      title="Nueva carpeta"
-                    >
-                      <FiFolderPlus />
-                    </button>
-                  </div>
-
-                  <div className={style.folderList}>
-                    <button
-                      type="button"
-                      className={`${style.folderItem} ${activeFolder === ALL_FOLDERS ? style.folderItemActive : ""}`}
-                      onClick={() => setActiveFolder(ALL_FOLDERS)}
-                    >
-                      <FiFolder />
-                      <span className={style.folderItemName}>Todas</span>
-                      <span className={style.folderItemCount}>{tasks.length}</span>
-                    </button>
-
-                    {folders.map((folder) => {
-                      const count = folderCounts.get(folder) || 0;
-                      const isActive = activeFolder === folder;
-
-                      return (
-                        <div
-                          key={folder}
-                          className={`${style.folderItem} ${isActive ? style.folderItemActive : ""}`}
-                        >
-                          <button
-                            type="button"
-                            className={style.folderItemMain}
-                            onClick={() => setActiveFolder(folder)}
-                          >
-                            <span className={style.folderDot} style={{ background: folderColor(folder) }} />
-                            <span className={style.folderItemName}>{folder}</span>
-                            <span className={style.folderItemCount}>{count}</span>
-                          </button>
-                          {count === 0 ? (
+                      {folders.map((folder) => {
+                        const count = folderCounts.get(folder) || 0;
+                        const isActive = activeFolder === folder;
+                        return (
+                          <div key={folder} className={style.sideRow}>
                             <button
                               type="button"
-                              className={style.folderItemDelete}
-                              onClick={() => handleDeleteFolder(folder)}
-                              aria-label={`Eliminar carpeta ${folder}`}
-                              title="Eliminar carpeta vacía"
+                              className={`${style.sideItem} ${isActive ? style.sideItemOn : ""}`}
+                              onClick={() => setActiveFolder(folder)}
                             >
-                              <FiX />
+                              <span className={style.folderDot} style={{ background: folderColor(folder) }} />
+                              <span className={style.sideItemName}>{folder}</span>
+                              <span className={style.sideCount}>{count}</span>
                             </button>
-                          ) : null}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </aside>
+                            {count === 0 ? (
+                              <button
+                                type="button"
+                                className={style.sideRowDelete}
+                                onClick={() => handleDeleteFolder(folder)}
+                                aria-label={`Eliminar etiqueta ${folder}`}
+                                title="Eliminar etiqueta vacía"
+                              >
+                                <FiX />
+                              </button>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </aside>
                 </div>
 
                 <div className={style.notesBoardWrap}>
+                  {activeFolder === TRASH_FOLDER && boardTasks.length > 0 ? (
+                    <div className={style.trashBar}>
+                      <span>
+                        <FiTrash2 /> Las notas en la papelera se pueden restaurar cuando quieras.
+                      </span>
+                      <button type="button" className={style.trashEmptyBtn} onClick={vaciarPapelera}>
+                        Vaciar papelera
+                      </button>
+                    </div>
+                  ) : null}
                   {boardTasks.length === 0 ? (
                     <p className={style.emptyState}>
                       {activeFolder === ALL_FOLDERS
                         ? "Todavía no tenés notas. Creá la primera con “Nueva nota”."
-                        : `La carpeta “${activeFolder}” está vacía.`}
+                        : activeFolder === FAV_FOLDER
+                          ? "Todavía no marcaste favoritas. Tocá la ⭐ de una nota para tenerla a mano."
+                          : activeFolder === TRASH_FOLDER
+                            ? "La papelera está vacía."
+                            : `La etiqueta “${activeFolder}” está vacía.`}
                     </p>
                   ) : (
                     <div className={style.notesBoard}>
@@ -2011,18 +2105,61 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                                   }}
                                   title={task.meta}
                                 >
-                                  <button
-                                    type="button"
-                                    className={style.noteCardDelete}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      handleDelete(task._id);
-                                    }}
-                                    aria-label="Eliminar nota"
-                                    title="Eliminar nota"
-                                  >
-                                    <FiTrash2 />
-                                  </button>
+                                  {task.papelera ? (
+                                    <span className={style.noteCardTrashActions}>
+                                      <button
+                                        type="button"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          restaurarNota(task._id);
+                                        }}
+                                        title="Restaurar nota"
+                                        aria-label="Restaurar nota"
+                                      >
+                                        <FiRotateCcw />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className={style.noteCardTrashDanger}
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          eliminarDefinitivo(task._id);
+                                        }}
+                                        title="Eliminar para siempre"
+                                        aria-label="Eliminar para siempre"
+                                      >
+                                        <FiTrash2 />
+                                      </button>
+                                    </span>
+                                  ) : (
+                                    <>
+                                      <button
+                                        type="button"
+                                        className={`${style.noteCardStar} ${task.favorita ? style.noteCardStarOn : ""}`}
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          toggleFavorita(task);
+                                        }}
+                                        aria-label={task.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                                        title={task.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                                        aria-pressed={Boolean(task.favorita)}
+                                      >
+                                        <FiStar />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className={style.noteCardDelete}
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          handleDelete(task._id);
+                                        }}
+                                        aria-label="Mover a la papelera"
+                                        title="Mover a la papelera"
+                                      >
+                                        <FiTrash2 />
+                                      </button>
+                                    </>
+                                  )}
 
                                   <div className={style.noteCardBody}>
                                     <strong>{task.meta || "Sin título"}</strong>
@@ -2118,6 +2255,18 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   <span className={style.editorDate} title="Fecha de la nota">
                     {fechaNotaLabel}
                   </span>
+                ) : null}
+                {notaAbierta ? (
+                  <button
+                    type="button"
+                    className={`${style.iconButton} ${notaAbierta.favorita ? style.iconStarOn : ""}`}
+                    onClick={() => toggleFavorita(notaAbierta)}
+                    aria-label={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                    title={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                    aria-pressed={Boolean(notaAbierta.favorita)}
+                  >
+                    <FiStar />
+                  </button>
                 ) : null}
                 <button
                   type="button"

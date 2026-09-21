@@ -35,6 +35,10 @@ const TaskSchema = new mongoose.Schema({
     default: 'personal',
     trim: true,
   },
+  // Notas: favorita y papelera (borrado suave, se puede restaurar)
+  favorita: { type: Boolean, default: false },
+  papelera: { type: Boolean, default: false },
+  eliminadaAt: { type: Date, default: null },
   carpeta: {
     type: String,
     default: '',
