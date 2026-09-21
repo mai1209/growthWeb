@@ -61,14 +61,15 @@ const aplicarCampos = (meta, body) => {
   if (Number.isFinite(Number(body.progresoManual))) {
     meta.progresoManual = Math.min(100, Math.max(0, Number(body.progresoManual)));
   }
-  if (["activa", "pausada", "completada"].includes(body.estado)) {
+  if (["activa", "pausada", "completada", "no_cumplida"].includes(body.estado)) {
     meta.estado = body.estado;
-    if (body.estado === "completada" && !meta.completadaEn) {
-      meta.completadaEn = esFecha(body.fechaLocal)
-        ? body.fechaLocal
-        : new Date().toISOString().slice(0, 10);
-    }
+    const hoy = esFecha(body.fechaLocal)
+      ? body.fechaLocal
+      : new Date().toISOString().slice(0, 10);
+    if (body.estado === "completada" && !meta.completadaEn) meta.completadaEn = hoy;
     if (body.estado !== "completada") meta.completadaEn = "";
+    if (body.estado === "no_cumplida" && !meta.cerradaEn) meta.cerradaEn = hoy;
+    if (body.estado !== "no_cumplida") meta.cerradaEn = "";
   }
 };
 

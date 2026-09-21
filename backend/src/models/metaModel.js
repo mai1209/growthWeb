@@ -69,10 +69,12 @@ const metaSchema = new mongoose.Schema(
     progresoManual: { type: Number, default: 0, min: 0, max: 100 },
     estado: {
       type: String,
-      enum: ["activa", "pausada", "completada"],
+      // no_cumplida = cerrada sin alcanzarla (vencida y se decidió no seguir)
+      enum: ["activa", "pausada", "completada", "no_cumplida"],
       default: "activa",
     },
     completadaEn: { type: String, default: "" },
+    cerradaEn: { type: String, default: "" },
   },
   { timestamps: true }
 );

@@ -4,6 +4,7 @@ import {
   FiCheck,
   FiCheckCircle,
   FiCheckSquare,
+  FiClock,
   FiEdit2,
   FiFlag,
   FiPause,
@@ -12,6 +13,7 @@ import {
   FiTarget,
   FiTrash2,
   FiX,
+  FiXCircle,
 } from "react-icons/fi";
 import { metaService, taskService } from "../api";
 import style from "../style/Metas.module.css";
@@ -118,9 +120,23 @@ const daysUntil = (fecha) => {
   );
 };
 
+// Suma días a una fecha YYYY-MM-DD (en local, sin líos de zona horaria).
+const sumarDias = (ymd, n) => {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const fecha = new Date(y, m - 1, d + n);
+  const mm = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dd = String(fecha.getDate()).padStart(2, "0");
+  return `${fecha.getFullYear()}-${mm}-${dd}`;
+};
+
+const fmtFechaCorta = (ymd) => (ymd ? ymd.split("-").reverse().join("/") : "");
+
 const dueLabel = (m) => {
   if (m.estado === "completada") {
-    return m.completadaEn ? `Completada el ${m.completadaEn.split("-").reverse().join("/")}` : "Completada";
+    return m.completadaEn ? `Completada el ${fmtFechaCorta(m.completadaEn)}` : "Completada";
+  }
+  if (m.estado === "no_cumplida") {
+    return m.cerradaEn ? `Cerrada sin cumplir el ${fmtFechaCorta(m.cerradaEn)}` : "Cerrada sin cumplir";
   }
   const dias = daysUntil(m.fechaObjetivo);
   if (dias === null) return "Sin fecha límite";
@@ -156,6 +172,7 @@ function MetasPage({ activeWorkspace }) {
   const [horizonteFiltro, setHorizonteFiltro] = useState("todas");
   const [estadoFiltro, setEstadoFiltro] = useState("activa");
   const [detalle, setDetalle] = useState(null); // meta abierta
+  const [extMenu, setExtMenu] = useState(null); // id de la meta con el menú "Extender plazo" abierto
   const [form, setForm] = useState(null); // formulario crear/editar
   const [taskLink, setTaskLink] = useState(null); // hito -> tarea { meta, indice, texto }
   const [taskForm, setTaskForm] = useState(null); // datos del form de tarea
@@ -292,9 +309,32 @@ function MetasPage({ activeWorkspace }) {
   };
 
   const cambiarEstado = (meta, estado) => {
-    reemplazar({ ...meta, estado, completadaEn: estado === "completada" ? hoyLocal() : "" });
+    reemplazar({
+      ...meta,
+      estado,
+      completadaEn: estado === "completada" ? hoyLocal() : "",
+      cerradaEn: estado === "no_cumplida" ? hoyLocal() : "",
+    });
     actualizar(meta, { estado, fechaLocal: hoyLocal() });
   };
+
+  // Meta vencida: corre la fecha objetivo (contando desde hoy) y la deja activa.
+  const extenderPlazo = (meta, fechaObjetivo) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaObjetivo || "")) return;
+    setExtMenu(null);
+    reemplazar({ ...meta, fechaObjetivo });
+    actualizar(meta, { fechaObjetivo });
+  };
+
+  // El menú de extender se cierra al clickear afuera.
+  useEffect(() => {
+    if (!extMenu) return undefined;
+    const cerrar = (e) => {
+      if (!e.target.closest?.("[data-ext-menu]")) setExtMenu(null);
+    };
+    document.addEventListener("mousedown", cerrar);
+    return () => document.removeEventListener("mousedown", cerrar);
+  }, [extMenu]);
 
   const eliminar = async (meta) => {
     const seguro = window.confirm(`¿Eliminar la meta “${meta.titulo}”?`);
@@ -385,7 +425,9 @@ function MetasPage({ activeWorkspace }) {
       HORIZONTES.map((h) => ({
         label: h.label,
         color: PLAZO_COLORS[h.value],
-        value: metas.filter((m) => m.horizonte === h.value && m.estado !== "completada").length,
+        value: metas.filter(
+          (m) => m.horizonte === h.value && !["completada", "no_cumplida"].includes(m.estado)
+        ).length,
       })),
     [metas]
   );
@@ -413,6 +455,52 @@ function MetasPage({ activeWorkspace }) {
 
   const horizonteLabel = (value) => HORIZONTES.find((h) => h.value === value)?.label || value;
 
+  /* ===== Acciones de una meta vencida: extender el plazo o cerrarla ===== */
+  const renderVencidaAcciones = (meta) => {
+    const hoy = hoyLocal();
+    const abierto = extMenu === meta._id;
+    return (
+      <div className={style.vencidaAcciones} onClick={(e) => e.stopPropagation()}>
+        <div className={style.extWrap} data-ext-menu="true">
+          <button
+            type="button"
+            className={`${style.btnVencida} ${abierto ? style.btnVencidaActivo : ""}`}
+            onClick={() => setExtMenu(abierto ? null : meta._id)}
+            aria-expanded={abierto}
+          >
+            <FiClock /> Extender plazo
+          </button>
+          {abierto ? (
+            <div className={style.extMenu} role="menu">
+              <button type="button" className={style.extOpcion} onClick={() => extenderPlazo(meta, sumarDias(hoy, 7))}>
+                +7 días <small>{fmtFechaCorta(sumarDias(hoy, 7))}</small>
+              </button>
+              <button type="button" className={style.extOpcion} onClick={() => extenderPlazo(meta, sumarDias(hoy, 30))}>
+                +30 días <small>{fmtFechaCorta(sumarDias(hoy, 30))}</small>
+              </button>
+              <label className={style.extFecha}>
+                Elegir fecha
+                <input
+                  type="date"
+                  min={hoy}
+                  onChange={(e) => extenderPlazo(meta, e.target.value)}
+                />
+              </label>
+            </div>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          className={`${style.btnVencida} ${style.btnCerrar}`}
+          onClick={() => cambiarEstado(meta, "no_cumplida")}
+          title="Cerrar la meta sin cumplirla (podés reactivarla después)"
+        >
+          <FiXCircle /> Cerrar
+        </button>
+      </div>
+    );
+  };
+
   /* ===== Render de una card ===== */
   const renderCard = (meta) => {
     const progreso = progressOf(meta);
@@ -420,13 +508,23 @@ function MetasPage({ activeWorkspace }) {
     const vencida = meta.estado === "activa" && dias !== null && dias < 0;
 
     return (
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         key={meta._id}
         className={`${style.card} ${style[`card_${meta.horizonte}`] || ""} ${
           meta.estado === "completada" ? style.cardCompletada : ""
-        } ${meta.estado === "pausada" ? style.cardPausada : ""}`}
+        } ${meta.estado === "pausada" ? style.cardPausada : ""} ${
+          meta.estado === "no_cumplida" ? style.cardNoCumplida : ""
+        }`}
         onClick={() => setDetalle(meta)}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setDetalle(meta);
+          }
+        }}
       >
         <div className={style.cardTop}>
           <span className={`${style.pill} ${style[`pill_${meta.horizonte}`]}`}>
@@ -435,6 +533,9 @@ function MetasPage({ activeWorkspace }) {
           {meta.area ? <span className={style.pillArea}>{meta.area}</span> : null}
           {meta.estado === "pausada" ? (
             <span className={style.pillPausada}>En pausa</span>
+          ) : null}
+          {meta.estado === "no_cumplida" ? (
+            <span className={style.pillNoCumplida}>No cumplida</span>
           ) : null}
         </div>
 
@@ -457,7 +558,8 @@ function MetasPage({ activeWorkspace }) {
             {dueLabel(meta)}
           </span>
         </div>
-      </button>
+        {vencida ? renderVencidaAcciones(meta) : null}
+      </div>
     );
   };
 
@@ -641,6 +743,16 @@ function MetasPage({ activeWorkspace }) {
                 onMouseUp={(e) => guardarManual(meta, Number(e.target.value))}
                 onTouchEnd={(e) => guardarManual(meta, Number(e.target.value))}
               />
+            </div>
+          ) : null}
+
+          {/* Meta vencida: extender o cerrar, igual que en la card */}
+          {meta.estado === "activa" && daysUntil(meta.fechaObjetivo) !== null && daysUntil(meta.fechaObjetivo) < 0 ? (
+            <div className={style.panelVencida}>
+              <p className={style.panelVencidaTexto}>
+                <FiClock /> {dueLabel(meta)}
+              </p>
+              {renderVencidaAcciones(meta)}
             </div>
           ) : null}
 
@@ -1068,6 +1180,7 @@ function MetasPage({ activeWorkspace }) {
             { value: "activa", label: "Activas" },
             { value: "pausada", label: "Pausadas" },
             { value: "completada", label: "Completadas" },
+            { value: "no_cumplida", label: "No cumplidas" },
             { value: "todas", label: "Todas" },
           ].map((e) => (
             <button
