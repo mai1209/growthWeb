@@ -2135,19 +2135,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                                     <>
                                       <button
                                         type="button"
-                                        className={`${style.noteCardStar} ${task.favorita ? style.noteCardStarOn : ""}`}
-                                        onClick={(event) => {
-                                          event.stopPropagation();
-                                          toggleFavorita(task);
-                                        }}
-                                        aria-label={task.favorita ? "Quitar de favoritas" : "Marcar favorita"}
-                                        title={task.favorita ? "Quitar de favoritas" : "Marcar favorita"}
-                                        aria-pressed={Boolean(task.favorita)}
-                                      >
-                                        <FiStar />
-                                      </button>
-                                      <button
-                                        type="button"
                                         className={style.noteCardDelete}
                                         onClick={(event) => {
                                           event.stopPropagation();
@@ -2166,7 +2153,24 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                                     <p>{preview || "Sin contenido"}</p>
                                   </div>
                                   <div className={style.noteCardFooter}>
-                                    <span>{formatShortDate(task.fecha)}</span>
+                                    <span className={style.noteCardFootLeft}>
+                                      {formatShortDate(task.fecha)}
+                                      {!task.papelera ? (
+                                        <button
+                                          type="button"
+                                          className={`${style.noteCardStar} ${task.favorita ? style.noteCardStarOn : ""}`}
+                                          onClick={(event) => {
+                                            event.stopPropagation();
+                                            toggleFavorita(task);
+                                          }}
+                                          aria-label={task.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                                          title={task.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                                          aria-pressed={Boolean(task.favorita)}
+                                        >
+                                          <FiStar />
+                                        </button>
+                                      ) : null}
+                                    </span>
                                     {task.carpeta ? (
                                       <span className={style.noteCardFolder}>
                                         <FiFolder />
@@ -2317,7 +2321,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     Se guarda solo
                   </span>
                 )}
-                <button type="button" className={style.iconButton} onClick={handleCloseEditor} aria-label="Cerrar panel">
+                <button type="button" className={`${style.iconButton} ${style.closeEditorBtn}`} onClick={handleCloseEditor} aria-label="Cerrar nota" title="Cerrar nota">
                   <FiX />
                 </button>
               </div>
