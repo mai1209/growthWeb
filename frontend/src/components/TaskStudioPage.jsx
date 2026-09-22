@@ -35,8 +35,6 @@ import {
   FiX,
   FiRotateCcw,
   FiRotateCw,
-  FiMoreVertical,
-  FiDroplet,
   FiStar,
   FiTag,
 } from "react-icons/fi";
@@ -380,14 +378,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const [isEditorExpanded, setIsEditorExpanded] = useState(false);
   const [sheetWidth, setSheetWidth] = useState(readStoredSheetWidth);
   const [editorStats, setEditorStats] = useState({ words: 0, minutes: 0 });
-  // Menús plegables de la toolbar: "aa" (tamaño/mayúsculas), "color" (papel/texto), "more" (ancho)
-  const [toolMenu, setToolMenu] = useState(null);
-  useEffect(() => {
-    if (!toolMenu) return undefined;
-    const close = () => setToolMenu(null);
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [toolMenu]);
   // Fecha corta de la nota para el header ("lun 21 sep · 12:12")
   const fechaNotaLabel = useMemo(() => {
     if (!form.fecha) return "";
@@ -2201,7 +2191,100 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
           }`}
           data-sheet={sheetWidth}
         >
-            <div className={style.editorHeader}>
+          <form id="note-editor-form" className={style.form} onSubmit={handleSubmit}>
+            <div className={style.editorBody}>
+              <div className={style.editorWorkspace}>
+              {showOutline && outline.length > 0 ? (
+                <div className={style.outlinePanel}>
+                  <div className={style.outlinePanelHead}>
+                    <p className={style.outlineTitle}>Índice</p>
+                    <button
+                      type="button"
+                      className={style.outlineClose}
+                      onClick={() => setShowOutline(false)}
+                      aria-label="Cerrar índice"
+                    >
+                      <FiX />
+                    </button>
+                  </div>
+                  <div className={style.outlineList}>
+                    {outline.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className={`${style.outlineItem} ${item.level === 2 ? style.outlineItemSub : ""}`}
+                        onClick={() => scrollToHeading(item.id)}
+                      >
+                        {item.text}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className={`${style.field} ${style.editorField}`}>
+                <div
+                  className={`${style.editorShell} ${style.notePaper} ${style[form.color] || style.color1}`}
+                  style={customNoteStyle(form.color)}
+                >
+                  <button
+                    type="button"
+                    className={style.expandButton}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => setIsEditorExpanded((prev) => !prev)}
+                    aria-label={isEditorExpanded ? "Achicar área de escritura" : "Expandir área de escritura"}
+                    title={isEditorExpanded ? "Achicar" : "Expandir"}
+                  >
+                    {isEditorExpanded ? <FiMinimize2 /> : <FiMaximize2 />}
+                  </button>
+                  <div ref={editorRef} className={style.editor} />
+                </div>
+                <span className={style.wordCountPill} title="Palabras escritas">
+                  {editorStats.words} palabra{editorStats.words === 1 ? "" : "s"}
+                </span>
+              </div>
+              </div>
+            </div>
+
+            {error ? <p className={style.errorText}>{error}</p> : null}
+            {message ? <p className={style.successText}>{message}</p> : null}
+          </form>
+
+          {/* Panel lateral estilo inspector (Figma): info de la nota, páginas y herramientas por secciones */}
+          <aside className={style.inspector} aria-label="Panel de la nota">
+            <div className={style.inspectorTop}>
+                {saveStatus === "error" ? (
+                  <button
+                    type="button"
+                    className={`${style.unsavedBadge} ${style.retryBadge}`}
+                    onClick={guardarAhora}
+                    title="Volver a intentar guardar"
+                  >
+                    <span className={style.unsavedDot} />
+                    No se guardó · reintentar
+                  </button>
+                ) : isDirty || saving ? (
+                  <span className={`${style.unsavedBadge} ${style.savingBadge}`}>
+                    <span className={style.unsavedDot} />
+                    Guardando…
+                  </span>
+                ) : form.id ? (
+                  <span className={style.savedBadge}>
+                    <span className={style.savedDot} />
+                    Guardado
+                  </span>
+                ) : (
+                  <span className={style.savedBadge} style={{ opacity: 0.6 }}>
+                    Se guarda solo
+                  </span>
+                )}
+                <button type="button" className={`${style.iconButton} ${style.closeEditorBtn}`} onClick={handleCloseEditor} aria-label="Cerrar nota" title="Cerrar nota">
+                  <FiX />
+                </button>
+            </div>
+
+            <section className={`${style.inspectorSection} ${style.inspectorNota}`}>
+              <h4 className={style.inspectorTitle}>Nota</h4>
               <div className={style.headerTitleWrap}>
                 <input
                   ref={titleInputRef}
@@ -2237,7 +2320,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   </button>
                 ) : null}
               </div>
-              <div className={style.editorActions}>
+              <div className={style.inspectorRow}>
                 <span className={style.noteFolderSelect} title="Cambiar la nota a otra carpeta">
                   <FiFolder />
                   <select
@@ -2265,6 +2348,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     <FiFolderPlus />
                   </button>
                 </span>
+              </div>
+              <div className={style.inspectorRow}>
                 {fechaNotaLabel ? (
                   <span className={style.editorDate} title="Fecha de la nota">
                     {fechaNotaLabel}
@@ -2285,51 +2370,95 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     <span className={style.iconBadge}>{dueCountNote}</span>
                   ) : null}
                 </button>
+              </div>
+            </section>
+
+            <section className={`${style.inspectorSection} ${style.inspectorPaginas}`}>
+              <h4 className={style.inspectorTitle}>Páginas</h4>
+              <div className={style.pagesTabs} aria-label="Páginas de la nota">
+                {notePages.map((page, index) => {
+                  const isActive = index === activeNotePageIndex;
+                  const isEditing = editingPageIndex === index;
+
+                  return (
+                    <div
+                      key={`page-${index}`}
+                      className={`${style.pageTab} ${isActive ? style.pageTabActive : ""}`}
+                    >
+                      {isEditing ? (
+                        <input
+                          className={style.notePageRenameInput}
+                          value={editingTitle}
+                          autoFocus
+                          onChange={(event) => setEditingTitle(event.target.value)}
+                          onBlur={() => commitRename(index)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              event.preventDefault();
+                              commitRename(index);
+                            }
+                            if (event.key === "Escape") {
+                              event.preventDefault();
+                              cancelRename();
+                            }
+                          }}
+                        />
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className={style.pageTabSelect}
+                            onClick={() => handleSelectPage(index)}
+                            onDoubleClick={() => startRename(index)}
+                            title={getPageLabel(page, index)}
+                          >
+                            <span className={style.notePageNumber}>{index + 1}</span>
+                            <span className={style.pageTabName}>{getPageLabel(page, index)}</span>
+                          </button>
+                          {isActive ? (
+                            <span className={style.pageTabActions}>
+                              <button
+                                type="button"
+                                className={style.notePageActionButton}
+                                onClick={() => startRename(index)}
+                                aria-label="Renombrar página"
+                                title="Renombrar"
+                              >
+                                <FiEdit2 />
+                              </button>
+                              <button
+                                type="button"
+                                className={`${style.notePageActionButton} ${style.notePageDeleteButton}`}
+                                onClick={() => handleDeletePage(index)}
+                                disabled={notePages.length <= 1}
+                                aria-label="Eliminar página"
+                                title={notePages.length <= 1 ? "No podés eliminar la única página" : "Eliminar página"}
+                              >
+                                <FiTrash2 />
+                              </button>
+                            </span>
+                          ) : null}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
                 <button
                   type="button"
-                  className={`${style.iconButton} ${isEditorExpanded ? style.iconButtonActive : ""}`}
-                  onClick={() => setIsEditorExpanded((prev) => !prev)}
-                  aria-label="Modo foco"
-                  title="Modo foco"
+                  className={style.pageTabAdd}
+                  onClick={handleAddPage}
+                  aria-label="Agregar página"
+                  title="Agregar página"
                 >
-                  {isEditorExpanded ? <FiMinimize2 /> : <FiMaximize2 />}
-                </button>
-                {saveStatus === "error" ? (
-                  <button
-                    type="button"
-                    className={`${style.unsavedBadge} ${style.retryBadge}`}
-                    onClick={guardarAhora}
-                    title="Volver a intentar guardar"
-                  >
-                    <span className={style.unsavedDot} />
-                    No se guardó · reintentar
-                  </button>
-                ) : isDirty || saving ? (
-                  <span className={`${style.unsavedBadge} ${style.savingBadge}`}>
-                    <span className={style.unsavedDot} />
-                    Guardando…
-                  </span>
-                ) : form.id ? (
-                  <span className={style.savedBadge}>
-                    <span className={style.savedDot} />
-                    Guardado
-                  </span>
-                ) : (
-                  <span className={style.savedBadge} style={{ opacity: 0.6 }}>
-                    Se guarda solo
-                  </span>
-                )}
-                <button type="button" className={`${style.iconButton} ${style.closeEditorBtn}`} onClick={handleCloseEditor} aria-label="Cerrar nota" title="Cerrar nota">
-                  <FiX />
+                  <FiFilePlus />
+                  Página
                 </button>
               </div>
-            </div>
+            </section>
 
-          <form id="note-editor-form" className={style.form} onSubmit={handleSubmit}>
-            <div className={style.editorBody}>
-                            <div className={style.editorWorkspace}>
-              <aside className={style.editorToolbar} aria-label="Herramientas de texto">
-                {/* Una sola fila compacta; lo secundario vive en los menús Aa / colores / ⋮ */}
+            <section className={style.inspectorSection}>
+              <h4 className={style.inspectorTitle}>Texto</h4>
+              <div className={style.editorToolbar} role="toolbar" aria-label="Herramientas de texto">
                 <div className={style.toolGroup} role="group" aria-label="Deshacer y rehacer">
                   <button
                     type="button"
@@ -2526,24 +2655,11 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     <FiAlignRight />
                   </button>
                 </div>
+              </div>
+            </section>
 
-                <div className={style.toolSpacer} />
-
-                {/* Aa: tamaño de letra + mayúsculas */}
-                <div className={style.toolMenuWrap} onMouseDown={(event) => event.stopPropagation()}>
-                  <button
-                    type="button"
-                    className={`${style.toolbarButton} ${toolMenu === "aa" ? style.toolbarButtonActive : ""}`}
-                    onClick={() => setToolMenu((m) => (m === "aa" ? null : "aa"))}
-                    aria-label="Tamaño de letra y mayúsculas"
-                    title="Tamaño de letra y mayúsculas"
-                    aria-expanded={toolMenu === "aa"}
-                  >
-                    <span className={style.toolbarText}>Aa</span>
-                  </button>
-                  {toolMenu === "aa" ? (
-                    <div className={style.toolMenu} role="group" aria-label="Tamaño y mayúsculas">
-                      <span className={style.toolMenuTitle}>Tamaño de letra</span>
+            <section className={style.inspectorSection}>
+              <h4 className={style.inspectorTitle}>Tamaño de letra</h4>
                   <div className={style.fontSizeControl} aria-label="Tamaño de letra">
                     <button
                       type="button"
@@ -2584,9 +2700,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                       +
                     </button>
                   </div>
-                
-                      <span className={style.toolMenuTitle}>Mayúsculas</span>
-                      <div className={style.toolMenuRow}>
+              <h4 className={style.inspectorTitle}>Mayúsculas</h4>
+              <div className={style.toolMenuRow}>
                   <button
                     type="button"
                     className={`${style.toolbarButton} ${autoCapEnabled ? style.toolbarButtonActive : ""}`}
@@ -2622,27 +2737,11 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   >
                     <span className={style.toolbarText}>AA</span>
                   </button>
-                
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
+              </div>
+            </section>
 
-                {/* Colores: papel + texto */}
-                <div className={style.toolMenuWrap} onMouseDown={(event) => event.stopPropagation()}>
-                  <button
-                    type="button"
-                    className={`${style.toolbarButton} ${toolMenu === "color" ? style.toolbarButtonActive : ""}`}
-                    onClick={() => setToolMenu((m) => (m === "color" ? null : "color"))}
-                    aria-label="Color del papel y del texto"
-                    title="Color del papel y del texto"
-                    aria-expanded={toolMenu === "color"}
-                  >
-                    <FiDroplet />
-                  </button>
-                  {toolMenu === "color" ? (
-                    <div className={style.toolMenu} role="group" aria-label="Colores">
-                      <span className={style.toolMenuTitle}>Papel</span>
+            <section className={style.inspectorSection}>
+              <h4 className={style.inspectorTitle}>Papel</h4>
                       <div className={style.colorGrid}>
                         {COLOR_OPTIONS.map((color) => (
                           <button
@@ -2657,7 +2756,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                           />
                         ))}
                       </div>
-                      <span className={style.toolMenuTitle}>Texto</span>
+              <h4 className={style.inspectorTitle}>Color de texto</h4>
                   <div className={style.textColorGrid} aria-label="Color de texto">
                     {TEXT_COLOR_OPTIONS.map((color) => {
                       const isDefault = !color.value && !activeFormats.color;
@@ -2677,26 +2776,10 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                       );
                     })}
                   </div>
-                
-                    </div>
-                  ) : null}
-                </div>
+            </section>
 
-                {/* ⋮: ancho de la hoja */}
-                <div className={style.toolMenuWrap} onMouseDown={(event) => event.stopPropagation()}>
-                  <button
-                    type="button"
-                    className={`${style.toolbarButton} ${toolMenu === "more" ? style.toolbarButtonActive : ""}`}
-                    onClick={() => setToolMenu((m) => (m === "more" ? null : "more"))}
-                    aria-label="Más opciones"
-                    title="Más opciones (ancho de la hoja)"
-                    aria-expanded={toolMenu === "more"}
-                  >
-                    <FiMoreVertical />
-                  </button>
-                  {toolMenu === "more" ? (
-                    <div className={style.toolMenu} role="group" aria-label="Más opciones">
-                      <span className={style.toolMenuTitle}>Ancho de la hoja</span>
+            <section className={style.inspectorSection}>
+              <h4 className={style.inspectorTitle}>Ancho de la hoja</h4>
                 <div className={style.widthControl} role="group" aria-label="Ancho de la hoja">
                   <span className={style.widthLabel}>Ancho</span>
                   {SHEET_WIDTH_OPTIONS.map((opt) => (
@@ -2712,150 +2795,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     </button>
                   ))}
                 </div>
-
-                    </div>
-                  ) : null}
-                </div>
-
-              </aside>
-
-              {showOutline && outline.length > 0 ? (
-                <div className={style.outlinePanel}>
-                  <div className={style.outlinePanelHead}>
-                    <p className={style.outlineTitle}>Índice</p>
-                    <button
-                      type="button"
-                      className={style.outlineClose}
-                      onClick={() => setShowOutline(false)}
-                      aria-label="Cerrar índice"
-                    >
-                      <FiX />
-                    </button>
-                  </div>
-                  <div className={style.outlineList}>
-                    {outline.map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        className={`${style.outlineItem} ${item.level === 2 ? style.outlineItemSub : ""}`}
-                        onClick={() => scrollToHeading(item.id)}
-                      >
-                        {item.text}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-                            {/* Páginas como pestañas del papel (como solapas de cuaderno) */}
-              <div className={style.pagesTabs} aria-label="Páginas de la nota">
-                {notePages.map((page, index) => {
-                  const isActive = index === activeNotePageIndex;
-                  const isEditing = editingPageIndex === index;
-
-                  return (
-                    <div
-                      key={`page-${index}`}
-                      className={`${style.pageTab} ${isActive ? style.pageTabActive : ""}`}
-                    >
-                      {isEditing ? (
-                        <input
-                          className={style.notePageRenameInput}
-                          value={editingTitle}
-                          autoFocus
-                          onChange={(event) => setEditingTitle(event.target.value)}
-                          onBlur={() => commitRename(index)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") {
-                              event.preventDefault();
-                              commitRename(index);
-                            }
-                            if (event.key === "Escape") {
-                              event.preventDefault();
-                              cancelRename();
-                            }
-                          }}
-                        />
-                      ) : (
-                        <>
-                          <button
-                            type="button"
-                            className={style.pageTabSelect}
-                            onClick={() => handleSelectPage(index)}
-                            onDoubleClick={() => startRename(index)}
-                            title={getPageLabel(page, index)}
-                          >
-                            <span className={style.notePageNumber}>{index + 1}</span>
-                            <span className={style.pageTabName}>{getPageLabel(page, index)}</span>
-                          </button>
-                          {isActive ? (
-                            <span className={style.pageTabActions}>
-                              <button
-                                type="button"
-                                className={style.notePageActionButton}
-                                onClick={() => startRename(index)}
-                                aria-label="Renombrar página"
-                                title="Renombrar"
-                              >
-                                <FiEdit2 />
-                              </button>
-                              <button
-                                type="button"
-                                className={`${style.notePageActionButton} ${style.notePageDeleteButton}`}
-                                onClick={() => handleDeletePage(index)}
-                                disabled={notePages.length <= 1}
-                                aria-label="Eliminar página"
-                                title={notePages.length <= 1 ? "No podés eliminar la única página" : "Eliminar página"}
-                              >
-                                <FiTrash2 />
-                              </button>
-                            </span>
-                          ) : null}
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
-                <button
-                  type="button"
-                  className={style.pageTabAdd}
-                  onClick={handleAddPage}
-                  aria-label="Agregar página"
-                  title="Agregar página"
-                >
-                  <FiFilePlus />
-                  Página
-                </button>
-              </div>
-
-              <div className={`${style.field} ${style.editorField}`}>
-                <div
-                  className={`${style.editorShell} ${style.notePaper} ${style[form.color] || style.color1}`}
-                  style={customNoteStyle(form.color)}
-                >
-                  <button
-                    type="button"
-                    className={style.expandButton}
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => setIsEditorExpanded((prev) => !prev)}
-                    aria-label={isEditorExpanded ? "Achicar área de escritura" : "Expandir área de escritura"}
-                    title={isEditorExpanded ? "Achicar" : "Expandir"}
-                  >
-                    {isEditorExpanded ? <FiMinimize2 /> : <FiMaximize2 />}
-                  </button>
-                  <div ref={editorRef} className={style.editor} />
-                </div>
-                <span className={style.wordCountPill} title="Palabras escritas">
-                  {editorStats.words} palabra{editorStats.words === 1 ? "" : "s"}
-                </span>
-              </div>
-              </div>
-            </div>
-
-            {error ? <p className={style.errorText}>{error}</p> : null}
-            {message ? <p className={style.successText}>{message}</p> : null}
-
-          </form>
+            </section>
+          </aside>
         </section>
       </div>
 

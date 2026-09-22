@@ -4621,3 +4621,268 @@ button.folderItem {
   right: 10px;
   width: auto;
 }
+
+/* =====================================================================
+   Notas: hoja a la izquierda + inspector vertical a la derecha (estilo
+   panel de propiedades de Figma). La cabecera y la toolbar horizontal
+   desaparecen: todo vive en el inspector, por secciones.
+   ===================================================================== */
+.inspector {
+  flex: 0 0 300px;
+  width: 300px;
+  min-width: 0;
+  align-self: flex-start;
+  position: sticky;
+  top: 0.7rem;
+  max-height: calc(100vh - 1.4rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0.2rem 1rem 0.9rem;
+  border-left: 1px solid var(--border-color);
+  scrollbar-width: thin;
+}
+
+.inspectorTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0 0.65rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.inspectorSection {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.inspectorSection:last-child {
+  border-bottom: none;
+}
+
+.inspectorTitle {
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.inspectorTitle + .inspectorTitle,
+.fontSizeControl + .inspectorTitle,
+.colorGrid + .inspectorTitle {
+  margin-top: 0.35rem;
+}
+
+.inspectorRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Título y carpeta, versión compacta para el panel */
+.inspector .headerTitleWrap {
+  gap: 0.1rem;
+}
+
+.inspector .titleGhost {
+  font-size: 1.05rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 12px;
+}
+
+.inspector .titleEditBtn,
+.inspector .titleStar {
+  width: 30px;
+  height: 30px;
+  font-size: 1.05rem;
+}
+
+.inspector .noteFolderSelect {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.inspector .noteFolderSelect select {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.inspector .editorDate {
+  flex: 1 1 auto;
+}
+
+/* Páginas: lista vertical */
+.inspector .pagesTabs {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  margin: 0;
+}
+
+.inspector .pageTab {
+  justify-content: space-between;
+  border-radius: 10px;
+}
+
+.inspector .pageTabSelect {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.inspector .pageTabName {
+  max-width: none;
+}
+
+.inspector .pageTabAdd {
+  justify-content: center;
+}
+
+/* Herramientas de texto: grilla de botones, sin barra ni separadores */
+.inspector .editorToolbar {
+  position: static;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+:global(body[data-theme="dark"]) .inspector .editorToolbar {
+  background: transparent;
+  border: none;
+}
+
+.inspector .toolGroup {
+  padding: 0;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.inspector .toolGroup + .toolGroup {
+  border-left: none;
+}
+
+.inspector .toolbarButton {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  border-radius: 9px;
+  border: 1px solid var(--border-color);
+}
+
+.inspector .toolMenuRow {
+  display: flex;
+  gap: 4px;
+}
+
+.inspector .colorGrid,
+.inspector .textColorGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.inspector .widthControl {
+  display: inline-flex;
+  align-self: flex-start;
+}
+
+.inspector .widthLabel {
+  display: none;
+}
+
+/* Modo foco: solo quedan las herramientas */
+.editorCard.editorExpanded {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0.9rem;
+}
+
+.editorCard.editorExpanded .inspectorNota,
+.editorCard.editorExpanded .inspectorPaginas {
+  display: none;
+}
+
+.editorCard.editorExpanded .form {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Escritorio: hoja hasta arriba y hasta abajo, inspector fijo al costado */
+@media (min-width: 1000px) {
+  .layout.layoutEditing .editorCard {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0.9rem;
+  }
+
+  .layout.layoutEditing .editorCard .form {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    margin: 0 auto;
+    padding-bottom: 0;
+  }
+
+  .layout.layoutEditing .editorCard[data-sheet="narrow"] .form {
+    max-width: 960px;
+  }
+
+  .layout.layoutEditing .editorCard[data-sheet="medium"] .form {
+    max-width: 1240px;
+  }
+
+  .layout.layoutEditing .editorCard[data-sheet="wide"] .form {
+    max-width: 1600px;
+  }
+
+  .layout.layoutEditing .editorCard[data-sheet="full"] .form {
+    max-width: none;
+  }
+}
+
+/* Pantallas chicas: el inspector va arriba de la hoja, apilado */
+@media (max-width: 999px) {
+  .editorCard {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .inspector {
+    order: -1;
+    position: static;
+    flex: 0 0 auto;
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    padding: 0 0 0.6rem;
+    border-left: none;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0.6rem;
+  }
+
+  .inspectorTop {
+    position: sticky;
+    top: 0;
+    z-index: 8;
+    background: inherit;
+  }
+}
