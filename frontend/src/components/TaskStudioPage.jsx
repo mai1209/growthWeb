@@ -2222,6 +2222,86 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 </div>
               ) : null}
 
+              <div className={style.pagesTabs} aria-label="Páginas de la nota">
+                {notePages.map((page, index) => {
+                  const isActive = index === activeNotePageIndex;
+                  const isEditing = editingPageIndex === index;
+
+                  return (
+                    <div
+                      key={`page-${index}`}
+                      className={`${style.pageTab} ${isActive ? style.pageTabActive : ""}`}
+                    >
+                      {isEditing ? (
+                        <input
+                          className={style.notePageRenameInput}
+                          value={editingTitle}
+                          autoFocus
+                          onChange={(event) => setEditingTitle(event.target.value)}
+                          onBlur={() => commitRename(index)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              event.preventDefault();
+                              commitRename(index);
+                            }
+                            if (event.key === "Escape") {
+                              event.preventDefault();
+                              cancelRename();
+                            }
+                          }}
+                        />
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className={style.pageTabSelect}
+                            onClick={() => handleSelectPage(index)}
+                            onDoubleClick={() => startRename(index)}
+                            title={getPageLabel(page, index)}
+                          >
+                            <span className={style.notePageNumber}>{index + 1}</span>
+                            <span className={style.pageTabName}>{getPageLabel(page, index)}</span>
+                          </button>
+                          {isActive ? (
+                            <span className={style.pageTabActions}>
+                              <button
+                                type="button"
+                                className={style.notePageActionButton}
+                                onClick={() => startRename(index)}
+                                aria-label="Renombrar página"
+                                title="Renombrar"
+                              >
+                                <FiEdit2 />
+                              </button>
+                              <button
+                                type="button"
+                                className={`${style.notePageActionButton} ${style.notePageDeleteButton}`}
+                                onClick={() => handleDeletePage(index)}
+                                disabled={notePages.length <= 1}
+                                aria-label="Eliminar página"
+                                title={notePages.length <= 1 ? "No podés eliminar la única página" : "Eliminar página"}
+                              >
+                                <FiTrash2 />
+                              </button>
+                            </span>
+                          ) : null}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+                <button
+                  type="button"
+                  className={style.pageTabAdd}
+                  onClick={handleAddPage}
+                  aria-label="Agregar página"
+                  title="Agregar página"
+                >
+                  <FiFilePlus />
+                  Página
+                </button>
+              </div>
+
               <div className={`${style.field} ${style.editorField}`}>
                 <div
                   className={`${style.editorShell} ${style.notePaper} ${style[form.color] || style.color1}`}
@@ -2369,89 +2449,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   {dueCountNote ? (
                     <span className={style.iconBadge}>{dueCountNote}</span>
                   ) : null}
-                </button>
-              </div>
-            </section>
-
-            <section className={`${style.inspectorSection} ${style.inspectorPaginas}`}>
-              <h4 className={style.inspectorTitle}>Páginas</h4>
-              <div className={style.pagesTabs} aria-label="Páginas de la nota">
-                {notePages.map((page, index) => {
-                  const isActive = index === activeNotePageIndex;
-                  const isEditing = editingPageIndex === index;
-
-                  return (
-                    <div
-                      key={`page-${index}`}
-                      className={`${style.pageTab} ${isActive ? style.pageTabActive : ""}`}
-                    >
-                      {isEditing ? (
-                        <input
-                          className={style.notePageRenameInput}
-                          value={editingTitle}
-                          autoFocus
-                          onChange={(event) => setEditingTitle(event.target.value)}
-                          onBlur={() => commitRename(index)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") {
-                              event.preventDefault();
-                              commitRename(index);
-                            }
-                            if (event.key === "Escape") {
-                              event.preventDefault();
-                              cancelRename();
-                            }
-                          }}
-                        />
-                      ) : (
-                        <>
-                          <button
-                            type="button"
-                            className={style.pageTabSelect}
-                            onClick={() => handleSelectPage(index)}
-                            onDoubleClick={() => startRename(index)}
-                            title={getPageLabel(page, index)}
-                          >
-                            <span className={style.notePageNumber}>{index + 1}</span>
-                            <span className={style.pageTabName}>{getPageLabel(page, index)}</span>
-                          </button>
-                          {isActive ? (
-                            <span className={style.pageTabActions}>
-                              <button
-                                type="button"
-                                className={style.notePageActionButton}
-                                onClick={() => startRename(index)}
-                                aria-label="Renombrar página"
-                                title="Renombrar"
-                              >
-                                <FiEdit2 />
-                              </button>
-                              <button
-                                type="button"
-                                className={`${style.notePageActionButton} ${style.notePageDeleteButton}`}
-                                onClick={() => handleDeletePage(index)}
-                                disabled={notePages.length <= 1}
-                                aria-label="Eliminar página"
-                                title={notePages.length <= 1 ? "No podés eliminar la única página" : "Eliminar página"}
-                              >
-                                <FiTrash2 />
-                              </button>
-                            </span>
-                          ) : null}
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
-                <button
-                  type="button"
-                  className={style.pageTabAdd}
-                  onClick={handleAddPage}
-                  aria-label="Agregar página"
-                  title="Agregar página"
-                >
-                  <FiFilePlus />
-                  Página
                 </button>
               </div>
             </section>

@@ -4721,32 +4721,6 @@ button.folderItem {
   flex: 1 1 auto;
 }
 
-/* Páginas: lista vertical */
-.inspector .pagesTabs {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-  margin: 0;
-}
-
-.inspector .pageTab {
-  justify-content: space-between;
-  border-radius: 10px;
-}
-
-.inspector .pageTabSelect {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.inspector .pageTabName {
-  max-width: none;
-}
-
-.inspector .pageTabAdd {
-  justify-content: center;
-}
-
 /* Herramientas de texto: grilla de botones, sin barra ni separadores */
 .inspector .editorToolbar {
   position: static;
@@ -4816,8 +4790,7 @@ button.folderItem {
   gap: 0.9rem;
 }
 
-.editorCard.editorExpanded .inspectorNota,
-.editorCard.editorExpanded .inspectorPaginas {
+.editorCard.editorExpanded .inspectorNota {
   display: none;
 }
 
@@ -4885,4 +4858,42 @@ button.folderItem {
     z-index: 8;
     background: inherit;
   }
+}
+
+/* Páginas: pestañas arriba de la hoja, estilo navegador (lápiz, tachito y +
+   viven ahí mismo). Se pegan al borde superior del papel. */
+.editorWorkspace .pagesTabs {
+  width: 100%;
+  align-items: flex-end;
+  gap: 4px;
+  margin: 0;
+  padding: 0 0 0 20px;
+  flex-wrap: wrap;
+}
+
+.editorWorkspace .pageTab,
+.editorWorkspace .pageTabAdd {
+  border-radius: 12px 12px 0 0;
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.editorWorkspace .pageTab {
+  padding-bottom: 1px;
+}
+
+.editorWorkspace .pageTabActive {
+  position: relative;
+  z-index: 1;
+  box-shadow: none;
+}
+
+.editorWorkspace .pageTabAdd {
+  border-style: dashed;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.editorWorkspace .pagesTabs + .editorField .editorShell {
+  border-top-left-radius: 12px;
 }
