@@ -4897,3 +4897,94 @@ button.folderItem {
 .editorWorkspace .pagesTabs + .editorField .editorShell {
   border-top-left-radius: 12px;
 }
+
+/* ===== Hoja cuadrada + pestañas del color del papel (todo conectado) ===== */
+.editorWorkspace .pagesTabs {
+  padding-left: 0;
+  gap: 3px;
+}
+
+.editorWorkspace .pageTab,
+.editorWorkspace .pageTabAdd {
+  border-radius: 0;
+  border: 1px solid rgba(17, 24, 20, 0.12);
+  border-bottom: none;
+  opacity: 0.72;
+}
+
+.editorWorkspace .pageTabActive,
+.editorWorkspace .pageTabAdd:hover {
+  opacity: 1;
+}
+
+.editorWorkspace .pageTabActive {
+  box-shadow: none;
+}
+
+.editorWorkspace .pageTab .pageTabSelect,
+.editorWorkspace .pageTab .notePageActionButton,
+.editorWorkspace .pageTabAdd {
+  color: inherit;
+}
+
+.editorWorkspace .pageTabAdd {
+  border-style: dashed;
+  background-clip: padding-box;
+}
+
+.editorWorkspace .pagesTabs + .editorField .editorShell,
+.layout.layoutEditing .notePaper,
+.editorCard.editorExpanded .notePaper,
+.layout.layoutEditing .notePaper .editor,
+.layout.layoutEditing .notePaper .editor :global(.ql-editor) {
+  border-radius: 0;
+}
+
+.layout.layoutEditing .notePaper .editor {
+  border: none;
+}
+
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTabAdd {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Alturas explícitas: nada de height:100% de Quill dentro de la cadena flex
+   (evita que el .ql-editor quede en 0px y el texto no se vea). */
+@media (min-width: 1000px) {
+  .layout.layoutEditing .notePaper .editor,
+  .layout.layoutEditing .notePaper .editor:global(.ql-container.ql-snow),
+  .layout.layoutEditing .notePaper .editor :global(.ql-editor) {
+    height: auto;
+    overflow: visible;
+  }
+
+  /* El panel lateral de notas arranca a la misma altura que la grilla
+     (con top: 84px el sticky lo empujaba hacia abajo sin haber scrolleado). */
+  .notesLeftCol {
+    top: 1rem;
+  }
+}
+
+/* Calendario: botón para volver a las notas */
+.monthNavBack {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 36px;
+  padding: 0 0.85rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--surface-card);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.monthNavBack:hover {
+  border-color: var(--accent-border, rgba(93, 199, 45, 0.4));
+  color: var(--color-verde, #5dc72d);
+}

@@ -7,6 +7,7 @@ import {
   FiAlignRight,
   FiBold,
   FiCalendar,
+  FiArrowLeft,
   FiChevronLeft,
   FiChevronRight,
   FiCheckSquare,
@@ -58,6 +59,8 @@ const DEFAULT_FONT_PX = 16;
 
 // Vistas del estudio (las que se pueden deep-linkear desde el nav con ?view=).
 const VALID_VIEWS = ["notes", "shopping", "afirmaciones", "journal", "calendar"];
+// Repaso / flashcards: oculto hasta que la función esté lista.
+const MOSTRAR_REPASO = false;
 
 // Puntito de color por carpeta (determinístico por nombre), como las etiquetas del mockup.
 const FOLDER_DOT_COLORS = ["#75f94c", "#69a7ff", "#a78bfa", "#f070b8", "#ffd55c", "#ff9d5c", "#3ed9a4"];
@@ -1781,6 +1784,15 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
               <div className={style.monthNav}>
                 <button
                   type="button"
+                  className={style.monthNavBack}
+                  onClick={() => setView("notes")}
+                  aria-label="Volver a notas"
+                  title="Volver a notas"
+                >
+                  <FiArrowLeft /> Notas
+                </button>
+                <button
+                  type="button"
                   className={style.monthNavArrow}
                   onClick={() => shiftMonth(-1)}
                   aria-label="Mes anterior"
@@ -2057,18 +2069,20 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                                       Calendario
                                     </button>
                                   ) : null}
-                                  <button
-                                    type="button"
-                                    className={style.viewToggleButton}
-                                    onClick={() => {
-                                      setDeckScope("all");
-                                      setIsDeckOpen(true);
-                                    }}
-                                    title="Tus flashcards de repaso"
-                                  >
-                                    <FiBookOpen />
-                                    Repaso{dueCountAll ? ` (${dueCountAll})` : ""}
-                                  </button>
+                                  {MOSTRAR_REPASO ? (
+                                    <button
+                                      type="button"
+                                      className={style.viewToggleButton}
+                                      onClick={() => {
+                                        setDeckScope("all");
+                                        setIsDeckOpen(true);
+                                      }}
+                                      title="Tus flashcards de repaso"
+                                    >
+                                      <FiBookOpen />
+                                      Repaso{dueCountAll ? ` (${dueCountAll})` : ""}
+                                    </button>
+                                  ) : null}
                                 </div>
                               </>
                             ) : null}
@@ -2230,7 +2244,10 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   return (
                     <div
                       key={`page-${index}`}
-                      className={`${style.pageTab} ${isActive ? style.pageTabActive : ""}`}
+                      className={`${style.pageTab} ${isActive ? style.pageTabActive : ""} ${
+                        style[form.color] || style.color1
+                      }`}
+                      style={customNoteStyle(form.color)}
                     >
                       {isEditing ? (
                         <input
@@ -2292,7 +2309,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 })}
                 <button
                   type="button"
-                  className={style.pageTabAdd}
+                  className={`${style.pageTabAdd} ${style[form.color] || style.color1}`}
+                  style={customNoteStyle(form.color)}
                   onClick={handleAddPage}
                   aria-label="Agregar página"
                   title="Agregar página"
@@ -2435,21 +2453,23 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     {fechaNotaLabel}
                   </span>
                 ) : null}
-                <button
-                  type="button"
-                  className={style.iconButton}
-                  onClick={() => {
-                    setDeckScope("note");
-                    setIsDeckOpen(true);
-                  }}
-                  aria-label="Flashcards de esta nota"
-                  title="Flashcards de esta nota"
-                >
-                  <FiLayers />
-                  {dueCountNote ? (
-                    <span className={style.iconBadge}>{dueCountNote}</span>
-                  ) : null}
-                </button>
+                {MOSTRAR_REPASO ? (
+                  <button
+                    type="button"
+                    className={style.iconButton}
+                    onClick={() => {
+                      setDeckScope("note");
+                      setIsDeckOpen(true);
+                    }}
+                    aria-label="Flashcards de esta nota"
+                    title="Flashcards de esta nota"
+                  >
+                    <FiLayers />
+                    {dueCountNote ? (
+                      <span className={style.iconBadge}>{dueCountNote}</span>
+                    ) : null}
+                  </button>
+                ) : null}
               </div>
             </section>
 
