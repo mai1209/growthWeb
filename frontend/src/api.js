@@ -80,6 +80,8 @@ export const taskService = {
   delete: (taskId) => api.delete(`/api/task/${taskId}`),
   create: (data) => api.post("/api/task", data),
   update: (taskId, data) => api.put(`/api/task/${taskId}`, data),
+  // 🖼️ Imagen de nota (data URI) → URL en Vercel Blob
+  subirImagen: (data) => api.post("/api/task/imagen", data),
   // 👥 Compartir tareas
   buscarUsuario: (u) => api.get("/api/task/buscar-usuario", { params: { u } }),
   compartir: (taskId, data) => api.post(`/api/task/${taskId}/compartir`, data),

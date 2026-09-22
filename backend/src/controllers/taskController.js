@@ -2,6 +2,7 @@ import Task from "../models/taskModel.js";
 import Meta from "../models/metaModel.js";
 import User from "../models/userModel.js";
 import mongoose from "mongoose";
+import { subirImagen } from "../lib/blob.js";
 
 // Datos públicos mínimos de un usuario (para dueño/colaboradores de una tarea).
 const pubUser = (u) =>
@@ -662,5 +663,21 @@ export const quitarColaborador = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error al quitar colaborador" });
+  }
+};
+
+// POST /api/task/imagen — sube una imagen de nota (data URI) a Vercel Blob y
+// devuelve la URL. Sin token de Blob devuelve el data URI tal cual (degrada
+// seguro: la imagen queda embebida en la nota, pero no rompe).
+export const subirImagenNota = async (req, res) => {
+  try {
+    const url = await subirImagen(req.body?.imagen, "notas");
+    if (!url) {
+      return res.status(400).json({ message: "Imagen inválida (usá png, jpg, webp o gif)." });
+    }
+    return res.status(200).json({ url });
+  } catch (error) {
+    console.error("subirImagenNota:", error);
+    return res.status(500).json({ message: "No se pudo subir la imagen." });
   }
 };

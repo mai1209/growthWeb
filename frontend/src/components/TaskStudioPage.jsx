@@ -40,7 +40,7 @@ import {
   FiTag,
 } from "react-icons/fi";
 import Quill from "quill";
-import { isCloudinaryConfigured, uploadImageToCloudinary } from "../cloudinary";
+import { uploadNoteImage } from "../noteImages";
 import "quill/dist/quill.snow.css";
 import { taskService } from "../api";
 import ShoppingLists from "./ShoppingLists";
@@ -121,6 +121,17 @@ const TEXT_COLOR_OPTIONS = [
   { value: "#db2777", label: "Rosa", swatch: "#db2777" },
   { value: "#dc2626", label: "Rojo", swatch: "#dc2626" },
   { value: "#d97706", label: "Naranja", swatch: "#d97706" },
+];
+// Colores de resaltado (marcador): solo pintan el fondo del texto.
+const HIGHLIGHT_OPTIONS = [
+  { value: false, label: "Sin resaltado", swatch: "transparent" },
+  { value: "#fff2a8", label: "Amarillo", swatch: "#fff2a8" },
+  { value: "#d6f5c9", label: "Verde", swatch: "#d6f5c9" },
+  { value: "#d5e8ff", label: "Celeste", swatch: "#d5e8ff" },
+  { value: "#ffd6e8", label: "Rosa", swatch: "#ffd6e8" },
+  { value: "#ffe0b8", label: "Naranja", swatch: "#ffe0b8" },
+  { value: "#e8dcff", label: "Lila", swatch: "#e8dcff" },
+  { value: "#e6e9e6", label: "Gris", swatch: "#e6e9e6" },
 ];
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
@@ -461,7 +472,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     align: formats.align || "",
     bold: Boolean(formats.bold),
     blockquote: formats.blockquote === true,
-    background: Boolean(formats.background),
+    background: formats.background || "",
     codeBlock: Boolean(formats["code-block"]),
     color: formats.color || "",
     header: formats.header || false,
@@ -739,7 +750,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     };
 
     // Pegar una foto: en vez de incrustarla como base64 (pesadísimo y el server
-    // la rechaza), la subimos a Cloudinary e insertamos solo la URL.
+    // la rechaza), la subimos por el API e insertamos solo la URL.
     const handleImagePaste = (event) => {
       const items = event.clipboardData?.items;
       if (!items) return;
@@ -752,17 +763,12 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       const file = imageItem.getAsFile();
       if (!file) return;
 
-      if (!isCloudinaryConfigured()) {
-        setError("Para pegar fotos falta configurar Cloudinary (src/cloudinary.js).");
-        return;
-      }
-
       const range = quill.getSelection(true) || { index: quill.getLength(), length: 0 };
       const index = range.index;
       const placeholder = "⏳ Subiendo imagen…";
       quill.insertText(index, placeholder + "\n", "user");
 
-      uploadImageToCloudinary(file)
+      uploadNoteImage(file)
         .then((url) => {
           quill.deleteText(index, placeholder.length + 1, "user");
           quill.insertEmbed(index, "image", url, "user");
@@ -1160,12 +1166,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     handleFieldChange("carpeta", name);
   };
 
-  // Insertar imagen desde el selector de archivos (sube a Cloudinary → URL).
+  // Insertar imagen desde el selector de archivos (sube por el API a Vercel Blob → URL).
   const handleInsertImage = () => {
-    if (!isCloudinaryConfigured()) {
-      setError("Para subir fotos falta configurar Cloudinary (src/cloudinary.js).");
-      return;
-    }
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
@@ -1177,7 +1179,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       const index = range.index;
       const placeholder = "⏳ Subiendo imagen…";
       quill.insertText(index, placeholder + "\n", "user");
-      uploadImageToCloudinary(file)
+      uploadNoteImage(file)
         .then((url) => {
           quill.deleteText(index, placeholder.length + 1, "user");
           quill.insertEmbed(index, "image", url, "user");
@@ -1398,8 +1400,9 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     applySizePx(value);
   };
 
-  // Resalta (o quita) la selección con color marcador.
-  const toggleHighlight = () => {
+  // Resalta la selección con un color de marcador (false = quitar). Solo toca
+  // el fondo: no cambia el color del texto ni las mayúsculas.
+  const applyHighlight = (value) => {
     if (!quillRef.current) return;
 
     const quill = quillRef.current;
@@ -1410,12 +1413,9 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     if (range) {
       quill.setSelection(range);
       selectionRef.current = range;
-      const formats = quill.getFormat(range);
-      quill.format("background", formats.background ? false : "#fff2a8");
-      return;
     }
 
-    quill.format("background", "#fff2a8");
+    quill.format("background", value || false);
   };
 
   // Devuelve el texto seleccionado en el editor (para crear flashcards).
@@ -2618,16 +2618,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   >
                     <FiCode />
                   </button>
-                  <button
-                    type="button"
-                    className={`${style.toolbarButton} ${style.highlightButton} ${activeFormats.background ? style.toolbarButtonActive : ""}`}
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={toggleHighlight}
-                    aria-label="Resaltar"
-                    title="Resaltar (marcador)"
-                  >
-                    <span className={style.highlightSwatch} />
-                  </button>
                 </div>
 
                 <div className={style.toolGroup} role="group" aria-label="Insertar y alinear">
@@ -2773,6 +2763,28 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                           />
                         ))}
                       </div>
+              <h4 className={style.inspectorTitle}>Resaltado</h4>
+              <div className={style.textColorGrid} aria-label="Color de resaltado">
+                {HIGHLIGHT_OPTIONS.map((color) => {
+                  const isNone = !color.value && !activeFormats.background;
+                  const isActive = color.value && activeFormats.background === color.value;
+
+                  return (
+                    <button
+                      key={color.label}
+                      type="button"
+                      className={`${style.textColorOption} ${style.highlightOption} ${
+                        !color.value ? style.highlightOptionNone : ""
+                      } ${isNone || isActive ? style.textColorOptionActive : ""}`}
+                      style={{ backgroundColor: color.swatch }}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => applyHighlight(color.value)}
+                      aria-label={`Resaltado ${color.label}`}
+                      title={color.label}
+                    />
+                  );
+                })}
+              </div>
               <h4 className={style.inspectorTitle}>Color de texto</h4>
                   <div className={style.textColorGrid} aria-label="Color de texto">
                     {TEXT_COLOR_OPTIONS.map((color) => {

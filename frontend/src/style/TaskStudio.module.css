@@ -5248,3 +5248,88 @@ button.folderItem {
 .editorWorkspace .pageTabAdd.color11 {
   border-color: rgba(255, 255, 255, 0.3);
 }
+
+/* ===== Inspector más compacto ===== */
+.inspector .toolbarButton {
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  border-radius: 8px;
+}
+
+.inspector .toolbarButton svg {
+  width: 15px;
+  height: 15px;
+}
+
+.inspector .toolbarText {
+  font-size: 0.8rem;
+}
+
+.inspector .toolGroup {
+  gap: 3px;
+}
+
+.inspector .editorToolbar {
+  gap: 3px;
+}
+
+.inspector .fontSizeControl {
+  align-self: flex-start;
+}
+
+.inspector .fontSizeStep {
+  width: 24px;
+  height: 26px;
+}
+
+.inspector .fontSizeInput {
+  width: 36px;
+  height: 26px;
+}
+
+.inspector .colorOption {
+  width: 22px;
+  height: 22px;
+  min-height: 22px;
+}
+
+.inspector .textColorOption {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+}
+
+.inspector .widthButton {
+  min-width: 28px;
+  height: 26px;
+  font-size: 0.74rem;
+}
+
+.inspector .inspectorSection {
+  padding: 0.7rem 0;
+  gap: 0.45rem;
+}
+
+/* Swatches de resaltado: cuadraditos (marcador), "sin resaltado" tachado */
+.inspector .highlightOption {
+  border-radius: 5px;
+  border-color: rgba(17, 24, 20, 0.18);
+}
+
+.inspector .highlightOptionNone {
+  position: relative;
+  background: transparent !important;
+  overflow: hidden;
+}
+
+.inspector .highlightOptionNone::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: #e5484d;
+  transform: rotate(45deg);
+}

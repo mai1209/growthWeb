@@ -13,12 +13,15 @@ import {
   aceptarInvitacionTarea,
   salirDeTarea,
   quitarColaborador,
+  subirImagenNota,
 } from '../controllers/taskController.js';
 import { requireAuth } from '../middlewares/authJwt.js';
 
 const router = express.Router();
 
 router.post('/', requireAuth, createHabito);
+// 🖼️ Imagen de una nota → Vercel Blob (devuelve { url })
+router.post('/imagen', requireAuth, subirImagenNota);
 router.get('/', requireAuth, getTasks);
 
 // --- 👥 Compartir tareas (rutas específicas ANTES de las de /:id) ---
