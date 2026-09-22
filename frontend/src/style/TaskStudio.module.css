@@ -4988,3 +4988,32 @@ button.folderItem {
   border-color: var(--accent-border, rgba(93, 199, 45, 0.4));
   color: var(--color-verde, #5dc72d);
 }
+
+/* Cerrar nota (inspector): sin fondo, solo el icono en verde, más delicado */
+.inspector .closeEditorBtn {
+  background: transparent !important;
+  color: var(--color-verde, #75f94c) !important;
+  box-shadow: none;
+  width: 36px;
+  height: 36px;
+}
+
+.inspector .closeEditorBtn:hover {
+  background: rgba(117, 249, 76, 0.12) !important;
+  transform: none;
+}
+
+.inspector .closeEditorBtn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Modo foco: aire arriba para que las pestañas no queden pegadas al borde */
+.editorCard.editorExpanded {
+  padding-top: 1.25rem;
+}
+
+.editorCard.editorExpanded .inspector {
+  top: 0;
+  max-height: calc(100vh - 1.25rem);
+}
