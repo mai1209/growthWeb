@@ -5121,3 +5121,130 @@ button.folderItem {
 .editorCard.editorExpanded .pageTabAdd.color11::before {
   background: rgba(255, 255, 255, 0.07);
 }
+
+/* ===== Pestañas: mismo fondo que el papel (gana a las reglas de tema oscuro)
+   y texto oscuro; papel oscuro (color11) con texto claro. ===== */
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab.color1,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTabAdd.color1,
+.editorWorkspace .pageTab.color1,
+.editorWorkspace .pageTabAdd.color1 {
+  background: linear-gradient(135deg, #e7f8d8, #c9efae);
+}
+
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab.color2,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTabAdd.color2,
+.editorWorkspace .pageTab.color2,
+.editorWorkspace .pageTabAdd.color2 {
+  background: linear-gradient(135deg, #ffe4cd, #ffc69a);
+}
+
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab.color3,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTabAdd.color3,
+.editorWorkspace .pageTab.color3,
+.editorWorkspace .pageTabAdd.color3 {
+  background: linear-gradient(135deg, #fff5bf, #ffe88a);
+}
+
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab.color4,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTabAdd.color4,
+.editorWorkspace .pageTab.color4,
+.editorWorkspace .pageTabAdd.color4 {
+  background: linear-gradient(135deg, #d8f6e7, #aeeccb);
+}
+
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab.color5,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTabAdd.color5,
+.editorWorkspace .pageTab.color5,
+.editorWorkspace .pageTabAdd.color5 {
+  background: linear-gradient(135deg, #dceeff, #b8dcff);
+}
+
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab.color6,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTabAdd.color6,
+.editorWorkspace .pageTab.color6,
+.editorWorkspace .pageTabAdd.color6 {
+  background: linear-gradient(135deg, #ffe0ee, #ffc0dc);
+}
+
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab.color7,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTabAdd.color7,
+.editorWorkspace .pageTab.color7,
+.editorWorkspace .pageTabAdd.color7 {
+  background: linear-gradient(135deg, #eee3ff, #d8c5ff);
+}
+
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab.color8,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTabAdd.color8,
+.editorWorkspace .pageTab.color8,
+.editorWorkspace .pageTabAdd.color8 {
+  background: linear-gradient(135deg, #ffe1de, #ffbdb7);
+}
+
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab.color9,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTabAdd.color9,
+.editorWorkspace .pageTab.color9,
+.editorWorkspace .pageTabAdd.color9 {
+  background: linear-gradient(135deg, #eef2ee, #d7ded7);
+}
+
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab.color10,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTabAdd.color10,
+.editorWorkspace .pageTab.color10,
+.editorWorkspace .pageTabAdd.color10 {
+  background: linear-gradient(135deg, #ffffff, #edf2ec);
+}
+
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab.color11,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTabAdd.color11,
+.editorWorkspace .pageTab.color11,
+.editorWorkspace .pageTabAdd.color11 {
+  background: linear-gradient(135deg, #2a302c, #111613);
+}
+
+.editorWorkspace .pageTab,
+.editorWorkspace .pageTabAdd,
+.editorWorkspace .pageTabActive {
+  opacity: 1;
+}
+
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab .pageTabSelect,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab .notePageNumber,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab .notePageActionButton,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTabAdd,
+.editorWorkspace .pageTab .pageTabSelect,
+.editorWorkspace .pageTab .notePageNumber,
+.editorWorkspace .pageTab .notePageActionButton,
+.editorWorkspace .pageTabAdd {
+  color: #172018;
+}
+
+.editorWorkspace .pageTab:not(.pageTabActive) .pageTabSelect {
+  color: #4a574d;
+}
+
+.editorWorkspace .pageTab .notePageNumber {
+  background: rgba(17, 24, 20, 0.08);
+}
+
+.editorWorkspace .pageTabAdd {
+  border-color: rgba(17, 24, 20, 0.28);
+}
+
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab.color11 .pageTabSelect,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab.color11 .notePageNumber,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTab.color11 .notePageActionButton,
+:global(body[data-theme="dark"]) .editorWorkspace .pageTabAdd.color11,
+.editorWorkspace .pageTab.color11 .pageTabSelect,
+.editorWorkspace .pageTab.color11 .notePageNumber,
+.editorWorkspace .pageTab.color11 .notePageActionButton,
+.editorWorkspace .pageTabAdd.color11 {
+  color: #f7fff9;
+}
+
+.editorWorkspace .pageTab.color11 .notePageNumber {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.editorWorkspace .pageTabAdd.color11 {
+  border-color: rgba(255, 255, 255, 0.3);
+}
