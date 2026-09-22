@@ -5333,3 +5333,27 @@ button.folderItem {
   background: #e5484d;
   transform: rotate(45deg);
 }
+
+/* Pestañas de página: un borde finito arriba (y a los lados) para que se
+   recorten del fondo; abajo siguen abiertas hacia la hoja. */
+.editorWorkspace .pageTab,
+.editorWorkspace .pageTabAdd {
+  border-top: 1px solid rgba(17, 24, 20, 0.22);
+  border-left: 1px solid rgba(17, 24, 20, 0.22);
+  border-right: 1px solid rgba(17, 24, 20, 0.22);
+  border-bottom: none;
+}
+
+.editorWorkspace .pageTabActive {
+  border-top-color: rgba(17, 24, 20, 0.3);
+}
+
+.editorWorkspace .pageTabAdd {
+  border-style: dashed;
+  border-bottom: none;
+}
+
+.editorWorkspace .pageTab.color11,
+.editorWorkspace .pageTabAdd.color11 {
+  border-color: rgba(255, 255, 255, 0.28);
+}
