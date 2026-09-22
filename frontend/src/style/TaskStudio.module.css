@@ -5017,3 +5017,107 @@ button.folderItem {
   top: 0;
   max-height: calc(100vh - 1.25rem);
 }
+
+/* ===== Modo foco: nada de fondos detrás de la hoja =====
+   El papel (con su color) es la hoja: se centra y se regula con S/M/L/Full.
+   La página de Quill lo llena sin márgenes, ni radio, ni sombra. */
+.editorCard.editorExpanded .editorWorkspace {
+  align-items: stretch;
+}
+
+.editorCard.editorExpanded .editorField {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.editorCard.editorExpanded .pagesTabs {
+  width: 100%;
+  margin-inline: auto;
+}
+
+.editorCard.editorExpanded[data-sheet="narrow"] .pagesTabs,
+.editorCard.editorExpanded[data-sheet="narrow"] .editorField {
+  max-width: 680px;
+}
+
+.editorCard.editorExpanded[data-sheet="medium"] .pagesTabs,
+.editorCard.editorExpanded[data-sheet="medium"] .editorField {
+  max-width: 900px;
+}
+
+.editorCard.editorExpanded[data-sheet="wide"] .pagesTabs,
+.editorCard.editorExpanded[data-sheet="wide"] .editorField {
+  max-width: 1200px;
+}
+
+.editorCard.editorExpanded[data-sheet="full"] .pagesTabs,
+.editorCard.editorExpanded[data-sheet="full"] .editorField {
+  max-width: none;
+}
+
+.editorCard.editorExpanded .notePaper {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border-radius: 0;
+}
+
+.editorCard.editorExpanded .notePaper .editor {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  border: none;
+  border-radius: 0;
+}
+
+.editorCard.editorExpanded[data-sheet="narrow"] .editor :global(.ql-editor),
+.editorCard.editorExpanded[data-sheet="medium"] .editor :global(.ql-editor),
+.editorCard.editorExpanded[data-sheet="wide"] .editor :global(.ql-editor),
+.editorCard.editorExpanded[data-sheet="full"] .editor :global(.ql-editor),
+.editorCard.editorExpanded .editor :global(.ql-editor) {
+  flex: 1 1 auto;
+  height: auto;
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* ===== Pestañas de página del MISMO color que la hoja =====
+   La hoja es papel + velo blanco (0.1 normal, 0.55 en modo foco); las
+   pestañas repiten ese velo con un ::before, así quedan idénticas. */
+.editorWorkspace .pageTab,
+.editorWorkspace .pageTabAdd {
+  position: relative;
+  isolation: isolate;
+}
+
+.editorWorkspace .pageTab::before,
+.editorWorkspace .pageTabAdd::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+.editorCard.editorExpanded .pageTab::before,
+.editorCard.editorExpanded .pageTabAdd::before {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.editorWorkspace .pageTab.color11::before,
+.editorWorkspace .pageTabAdd.color11::before {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.editorCard.editorExpanded .pageTab.color11::before,
+.editorCard.editorExpanded .pageTabAdd.color11::before {
+  background: rgba(255, 255, 255, 0.07);
+}
