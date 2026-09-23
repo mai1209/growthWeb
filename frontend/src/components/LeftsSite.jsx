@@ -392,6 +392,39 @@ function LeftSite({
 
         {viewTab === "money" ? (
         <section className={style.mesResumen} aria-label="Resumen del mes">
+          {/* Resultado del mes + cantidad de movimientos + barra ingresos vs egresos */}
+          <div
+            className={`${style.mesTop} ${style.mesClickable}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => goToFilter(null)}
+            onKeyDown={(event) => handleCardKeyDown(event, null)}
+          >
+            <div className={style.mesTopHead}>
+              <span className={style.mesLabel}>Resultado mensual</span>
+              <span className={style.mesMovPill}>
+                {monthMovimientos.length} {monthMovimientos.length === 1 ? "movimiento" : "movimientos"}
+              </span>
+            </div>
+            <strong
+              className={`${style.mesTotal} ${
+                monthSummary.total > 0 ? style.tonoIngreso : monthSummary.total < 0 ? style.tonoEgreso : ""
+              }`}
+            >
+              {hideableMoney(monthSummary.total)}
+            </strong>
+            {(() => {
+              const suma = (monthSummary.ingreso || 0) + (monthSummary.egreso || 0);
+              const pct = suma ? Math.round(((monthSummary.ingreso || 0) / suma) * 100) : 50;
+              return (
+                <div className={style.mesBar} title={`Ingresos ${pct}% · Egresos ${100 - pct}%`}>
+                  <span className={style.mesBarIngreso} style={{ width: `${pct}%` }} />
+                  <span className={style.mesBarEgreso} style={{ width: `${100 - pct}%` }} />
+                </div>
+              );
+            })()}
+          </div>
+
           {/* Rombo: una punta por tipo (Ingresos arriba, Egresos derecha,
               Deuda abajo, Ahorro izquierda), escala compartida. Leyenda
               clickeable con los montos debajo. */}
