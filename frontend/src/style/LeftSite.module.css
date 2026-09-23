@@ -1418,3 +1418,166 @@ border: 1px solid rgba(255, 255, 255, 0.12);
     border-top: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
   }
 }
+
+/* =====================================================================
+   Resumen del mes (debajo de Saldo total), rediseñado: sin barritas de
+   color a la izquierda; el color va en el número, con peso más fino.
+   Arriba el resultado del mes + movimientos + barra ingresos/egresos;
+   abajo una grilla 2×2 con ícono, etiqueta y valor.
+   ===================================================================== */
+.mesResumen {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.mesClickable {
+  cursor: pointer;
+  transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
+}
+
+.mesClickable:hover {
+  border-color: rgba(159, 220, 132, 0.4);
+  transform: translateY(-1px);
+}
+
+.mesClickable:focus-visible {
+  outline: 2px solid rgba(159, 220, 132, 0.6);
+  outline-offset: 2px;
+}
+
+.mesTop {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.95rem 1.05rem 0.9rem;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+  border-radius: 18px;
+  background: var(--surface-card);
+}
+
+.mesTopHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.mesLabel {
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mesMovPill {
+  flex: 0 0 auto;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mesTotal {
+  font-size: 1.55rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Barra fina: proporción ingresos (verde) vs egresos (naranja) */
+.mesBar {
+  display: flex;
+  height: 5px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.mesBarIngreso {
+  background: #2fd66a;
+}
+
+.mesBarEgreso {
+  background: #ff8f7b;
+}
+
+.mesTiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.mesTile {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+  border-radius: 16px;
+  background: var(--surface-card);
+  min-width: 0;
+}
+
+.mesTileIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.mesTileIcon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.mesValor {
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+
+.tonoIngreso {
+  color: #2fd66a;
+}
+
+.tonoEgreso {
+  color: #ff8f7b;
+}
+
+.tonoAhorro {
+  color: #35cfa4;
+}
+
+.tonoDeuda {
+  color: #e6bc3f;
+}
+
+:global(body[data-theme="light"]) .mesTop,
+:global(body[data-theme="light"]) .mesTile {
+  background: #ffffff;
+  border-color: rgba(20, 40, 30, 0.1);
+}
+
+:global(body[data-theme="light"]) .mesMovPill {
+  background: rgba(20, 40, 30, 0.04);
+}
+
+:global(body[data-theme="light"]) .mesBar {
+  background: rgba(20, 40, 30, 0.08);
+}
+
+:global(body[data-theme="light"]) .tonoIngreso { color: #1f9d4a; }
+:global(body[data-theme="light"]) .tonoEgreso { color: #d9573f; }
+:global(body[data-theme="light"]) .tonoAhorro { color: #1f9c7a; }
+:global(body[data-theme="light"]) .tonoDeuda { color: #b8891a; }

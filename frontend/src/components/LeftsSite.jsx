@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiEye, FiEyeOff, FiInfo, FiX, FiDroplet, FiCheck, FiTrendingUp, FiTarget, FiPieChart, FiCheckSquare, FiFlag } from "react-icons/fi";
+import { FiEye, FiEyeOff, FiInfo, FiX, FiDroplet, FiCheck, FiTrendingUp, FiTrendingDown, FiPocket, FiCreditCard, FiTarget, FiPieChart, FiCheckSquare, FiFlag } from "react-icons/fi";
 import style from "../style/LeftSite.module.css";
 import {
   filterMovimientosByCurrency,
@@ -391,73 +391,90 @@ function LeftSite({
         )}
 
         {viewTab === "money" ? (
-        <div className={style.statGrid}>
-          <article
-            className={`${style.statCard} ${style.statMovimientos} ${style.statClickable}`}
+        <section className={style.mesResumen} aria-label="Resumen del mes">
+          {/* Resultado del mes + cantidad de movimientos + barra ingresos vs egresos */}
+          <div
+            className={`${style.mesTop} ${style.mesClickable}`}
             role="button"
             tabIndex={0}
             onClick={() => goToFilter(null)}
             onKeyDown={(event) => handleCardKeyDown(event, null)}
           >
-            <span>Movimientos del mes</span>
-            <strong>{monthMovimientos.length}</strong>
-          </article>
+            <div className={style.mesTopHead}>
+              <span className={style.mesLabel}>Resultado mensual</span>
+              <span className={style.mesMovPill}>
+                {monthMovimientos.length} {monthMovimientos.length === 1 ? "movimiento" : "movimientos"}
+              </span>
+            </div>
+            <strong
+              className={`${style.mesTotal} ${
+                monthSummary.total > 0 ? style.tonoIngreso : monthSummary.total < 0 ? style.tonoEgreso : ""
+              }`}
+            >
+              {hideableMoney(monthSummary.total)}
+            </strong>
+            {(() => {
+              const suma = (monthSummary.ingreso || 0) + (monthSummary.egreso || 0);
+              const pct = suma ? Math.round(((monthSummary.ingreso || 0) / suma) * 100) : 50;
+              return (
+                <div className={style.mesBar} title={`Ingresos ${pct}% · Egresos ${100 - pct}%`}>
+                  <span className={style.mesBarIngreso} style={{ width: `${pct}%` }} />
+                  <span className={style.mesBarEgreso} style={{ width: `${100 - pct}%` }} />
+                </div>
+              );
+            })()}
+          </div>
 
-          <article
-            className={`${style.statCard} ${style.statTotal} ${style.statClickable}`}
-            role="button"
-            tabIndex={0}
-            onClick={() => goToFilter(null)}
-            onKeyDown={(event) => handleCardKeyDown(event, null)}
-          >
-            <span>Resultado mensual</span>
-            <strong>{hideableMoney(monthSummary.total)}</strong>
-          </article>
+          <div className={style.mesTiles}>
+            <article
+              className={`${style.mesTile} ${style.mesClickable}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => goToFilter("ingreso")}
+              onKeyDown={(event) => handleCardKeyDown(event, "ingreso")}
+            >
+              <i className={`${style.mesTileIcon} ${style.tonoIngreso}`}><FiTrendingUp /></i>
+              <span className={style.mesLabel}>Ingresos</span>
+              <strong className={`${style.mesValor} ${style.tonoIngreso}`}>{hideableMoney(monthSummary.ingreso)}</strong>
+            </article>
 
-          <article
-            className={`${style.statCard} ${style.statIngreso} ${style.statClickable}`}
-            role="button"
-            tabIndex={0}
-            onClick={() => goToFilter("ingreso")}
-            onKeyDown={(event) => handleCardKeyDown(event, "ingreso")}
-          >
-            <span>Ingresos del mes</span>
-            <strong>{hideableMoney(monthSummary.ingreso)}</strong>
-          </article>
+            <article
+              className={`${style.mesTile} ${style.mesClickable}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => goToFilter("egreso")}
+              onKeyDown={(event) => handleCardKeyDown(event, "egreso")}
+            >
+              <i className={`${style.mesTileIcon} ${style.tonoEgreso}`}><FiTrendingDown /></i>
+              <span className={style.mesLabel}>Egresos</span>
+              <strong className={`${style.mesValor} ${style.tonoEgreso}`}>{hideableMoney(monthSummary.egreso)}</strong>
+            </article>
 
-          <article
-            className={`${style.statCard} ${style.statEgreso} ${style.statClickable}`}
-            role="button"
-            tabIndex={0}
-            onClick={() => goToFilter("egreso")}
-            onKeyDown={(event) => handleCardKeyDown(event, "egreso")}
-          >
-            <span>Egresos del mes</span>
-            <strong>{hideableMoney(monthSummary.egreso)}</strong>
-          </article>
+            <article
+              className={`${style.mesTile} ${style.mesClickable}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => goToFilter("ahorro")}
+              onKeyDown={(event) => handleCardKeyDown(event, "ahorro")}
+            >
+              <i className={`${style.mesTileIcon} ${style.tonoAhorro}`}><FiPocket /></i>
+              <span className={style.mesLabel}>Ahorro</span>
+              <strong className={`${style.mesValor} ${style.tonoAhorro}`}>{hideableMoney(monthSummary.ahorro)}</strong>
+            </article>
 
-          <article
-            className={`${style.statCard} ${style.statAhorro} ${style.statClickable}`}
-            role="button"
-            tabIndex={0}
-            onClick={() => goToFilter("ahorro")}
-            onKeyDown={(event) => handleCardKeyDown(event, "ahorro")}
-          >
-            <span>Ahorro del mes</span>
-            <strong>{hideableMoney(monthSummary.ahorro)}</strong>
-          </article>
-
-          <article
-            className={`${style.statCard} ${style.statDeuda} ${style.statClickable}`}
-            role="button"
-            tabIndex={0}
-            onClick={() => goToFilter("deuda")}
-            onKeyDown={(event) => handleCardKeyDown(event, "deuda")}
-          >
-            <span>Deuda pendiente</span>
-            <strong>{hideableMoney(historicalSummary.deudaPendiente)}</strong>
-          </article>
-        </div>
+            <article
+              className={`${style.mesTile} ${style.mesClickable}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => goToFilter("deuda")}
+              onKeyDown={(event) => handleCardKeyDown(event, "deuda")}
+            >
+              <i className={`${style.mesTileIcon} ${style.tonoDeuda}`}><FiCreditCard /></i>
+              <span className={style.mesLabel}>Deuda pendiente</span>
+              <strong className={`${style.mesValor} ${style.tonoDeuda}`}>{hideableMoney(historicalSummary.deudaPendiente)}</strong>
+            </article>
+          </div>
+        </section>
         ) : null}
 
         {/* Apoyo: Growth es gratis, invitamos a compartir y a donar */}
