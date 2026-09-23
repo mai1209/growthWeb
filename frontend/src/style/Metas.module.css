@@ -1179,3 +1179,47 @@
   font-size: 0.82rem;
   font-weight: 800;
 }
+
+/* Área: "+ Agregar nueva" abre un campo inline con Agregar / cancelar */
+.areaNuevaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.areaNuevaRow .input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.areaNuevaOk {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 42px;
+  padding: 0 0.85rem;
+  border: none;
+  border-radius: 20px;
+  background: var(--accent, #5dc72d);
+  color: var(--accent-contrast, #0e1a0e);
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.areaNuevaCancel {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.areaNuevaCancel:hover {
+  color: var(--color-text);
+}

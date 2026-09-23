@@ -52,20 +52,44 @@ const AREAS_EJEMPLO = ["Finanzas", "Salud", "Carrera", "Personal", "Aprendizaje"
 
 // Sugerencias de área = ejemplos + las áreas que ya usaste en tus metas, sin
 // repetir (sin distinguir mayúsculas). Las usadas van primero.
-const areasSugeridas = (metas) => {
+// Áreas creadas a mano con "+ Agregar nueva" (quedan guardadas en el navegador
+// aunque todavía ninguna meta las use).
+const AREAS_KEY = "gw-metas-areas";
+const leerAreasGuardadas = () => {
+  try {
+    const raw = localStorage.getItem(AREAS_KEY);
+    const lista = raw ? JSON.parse(raw) : [];
+    return Array.isArray(lista) ? lista.filter((a) => typeof a === "string" && a.trim()) : [];
+  } catch {
+    return [];
+  }
+};
+const guardarAreas = (lista) => {
+  try {
+    localStorage.setItem(AREAS_KEY, JSON.stringify(lista));
+  } catch {
+    /* nada */
+  }
+};
+
+const areasSugeridas = (metas, extras = []) => {
   const usadas = [];
   const vistas = new Set();
-  metas.forEach((m) => {
-    const a = String(m.area || "").trim();
-    const k = a.toLowerCase();
-    if (a && !vistas.has(k)) {
+  const agregar = (a) => {
+    const texto = String(a || "").trim();
+    const k = texto.toLowerCase();
+    if (texto && !vistas.has(k)) {
       vistas.add(k);
-      usadas.push(a);
+      usadas.push(texto);
     }
-  });
+  };
+  metas.forEach((m) => agregar(m.area));
+  extras.forEach(agregar);
   const extra = AREAS_EJEMPLO.filter((a) => !vistas.has(a.toLowerCase()));
   return [...usadas, ...extra];
 };
+
+const NUEVA_AREA = "__nueva_area__";
 
 const MEDICIONES = [
   { value: "hitos", label: "Por hitos", hint: "una checklist de pasos" },
@@ -193,6 +217,24 @@ function MetasPage({ activeWorkspace }) {
     });
   };
   const [hitoNuevo, setHitoNuevo] = useState("");
+  const [areasExtra, setAreasExtra] = useState(leerAreasGuardadas); // áreas agregadas a mano
+  const [areaNueva, setAreaNueva] = useState(null); // texto del campo "+ Agregar nueva" (null = cerrado)
+
+  const confirmarAreaNueva = () => {
+    const texto = String(areaNueva || "").trim().slice(0, 60);
+    if (!texto) {
+      setAreaNueva(null);
+      return;
+    }
+    setAreasExtra((prev) => {
+      const yaEsta = prev.some((a) => a.toLowerCase() === texto.toLowerCase());
+      const lista = yaEsta ? prev : [...prev, texto];
+      guardarAreas(lista);
+      return lista;
+    });
+    setForm((prev) => (prev ? { ...prev, area: texto } : prev));
+    setAreaNueva(null);
+  };
   const [numeroNuevo, setNumeroNuevo] = useState("");
   const [guardando, setGuardando] = useState(false);
 
@@ -848,18 +890,66 @@ function MetasPage({ activeWorkspace }) {
         <div className={style.dosCol}>
           <label className={style.campo}>
             <span>Área</span>
-            <input
-              className={style.input}
-              list="areas-metas"
-              value={form.area}
-              onChange={(e) => setForm({ ...form, area: e.target.value })}
-              placeholder="Finanzas, Salud…"
-            />
-            <datalist id="areas-metas">
-              {areasSugeridas(metas).map((a) => (
-                <option key={a} value={a} />
-              ))}
-            </datalist>
+            {areaNueva === null ? (
+              <select
+                className={style.input}
+                value={form.area}
+                onChange={(e) => {
+                  if (e.target.value === NUEVA_AREA) {
+                    setAreaNueva("");
+                    return;
+                  }
+                  setForm({ ...form, area: e.target.value });
+                }}
+              >
+                <option value="">Sin área</option>
+                {(form.area &&
+                !areasSugeridas(metas, areasExtra).some(
+                  (a) => a.toLowerCase() === form.area.toLowerCase()
+                )
+                  ? [form.area, ...areasSugeridas(metas, areasExtra)]
+                  : areasSugeridas(metas, areasExtra)
+                ).map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+                <option value={NUEVA_AREA}>+ Agregar nueva…</option>
+              </select>
+            ) : (
+              <div className={style.areaNuevaRow}>
+                <input
+                  className={style.input}
+                  autoFocus
+                  value={areaNueva}
+                  onChange={(e) => setAreaNueva(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      confirmarAreaNueva();
+                    }
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      setAreaNueva(null);
+                    }
+                  }}
+                  placeholder="Nombre del área (ej: Estudio)"
+                  maxLength={60}
+                />
+                <button type="button" className={style.areaNuevaOk} onClick={confirmarAreaNueva}>
+                  <FiCheck /> Agregar
+                </button>
+                <button
+                  type="button"
+                  className={style.areaNuevaCancel}
+                  onClick={() => setAreaNueva(null)}
+                  aria-label="Cancelar"
+                  title="Cancelar"
+                >
+                  <FiX />
+                </button>
+              </div>
+            )}
           </label>
 
           <label className={style.campo}>
