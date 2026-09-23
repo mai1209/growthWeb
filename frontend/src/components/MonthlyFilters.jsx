@@ -19,7 +19,7 @@ import {
   FiZap,
 } from "react-icons/fi";
 import style from "../style/MonthlyFilters.module.css";
-import MovementCard from "./MovementCard";
+import MovementCard, { MovementTableHead } from "./MovementCard";
 import { movimientoService } from "../api";
 import {
   CURRENCY_OPTIONS,
@@ -1051,6 +1051,7 @@ function MonthlyFilters({
                 </div>
               ) : (
                 <div className={style.list}>
+                  <MovementTableHead />
                   {groupedFilteredMovimientos.map(renderMovementGroup)}
                 </div>
               )}

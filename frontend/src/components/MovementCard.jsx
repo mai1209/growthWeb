@@ -1,18 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FiArrowDown,
   FiArrowUp,
   FiCreditCard,
+  FiDollarSign,
   FiPocket,
   FiRepeat,
+  FiSend,
   FiEdit2,
   FiTrash2,
 } from "react-icons/fi";
 import style from "../style/MonthlyFilters.module.css";
 import { ARCA_HABILITADO } from "../featureFlags";
 import InputMonto from "./InputMonto";
-import { movimientoService } from "../api";
+import { categoriesService, movimientoService } from "../api";
 import {
   getDebtStatusMeta,
   formatMoney,
@@ -29,6 +31,54 @@ const movementIcon = (m) => {
   if (m.tipo === "deuda") return <FiCreditCard />;
   return <FiArrowUp />; // egreso
 };
+
+// Emojis de las categorías del usuario (nombre en minúscula → emoji). Se piden
+// una sola vez y se comparten entre todas las filas.
+let categoryIconsPromise = null;
+let categoryIconsCache = null;
+const loadCategoryIcons = () => {
+  if (categoryIconsCache) return Promise.resolve(categoryIconsCache);
+  if (!categoryIconsPromise) {
+    categoryIconsPromise = categoriesService
+      .getAll()
+      .then((res) => {
+        const map = {};
+        (Array.isArray(res.data) ? res.data : []).forEach((c) => {
+          if (c?.nombre) map[String(c.nombre).trim().toLowerCase()] = c.icono || "🏷️";
+        });
+        categoryIconsCache = map;
+        return map;
+      })
+      .catch(() => ({}));
+  }
+  return categoryIconsPromise;
+};
+
+const useCategoryIcon = (nombre) => {
+  const [icons, setIcons] = useState(categoryIconsCache);
+  useEffect(() => {
+    let alive = true;
+    loadCategoryIcons().then((map) => {
+      if (alive) setIcons(map);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return icons?.[String(nombre || "").trim().toLowerCase()] || "🏷️";
+};
+
+// Cabecera de columnas de la tabla de movimientos (una sola vez por lista).
+export const MovementTableHead = () => (
+  <div className={style.tblHead} aria-hidden="true">
+    <span>Fecha</span>
+    <span>Descripción</span>
+    <span>Categoría</span>
+    <span>Método</span>
+    <span className={style.tblHeadRight}>Monto</span>
+    <span />
+  </div>
+);
 
 const getDayInputValue = (date = new Date()) => {
   const year = date.getFullYear();
@@ -68,6 +118,7 @@ export default function MovementCard({
   const [settleAmount, setSettleAmount] = useState("");
   const [settling, setSettling] = useState(false);
 
+  const categoryIcon = useCategoryIcon(movimiento.categoria);
   const typeMeta = getMovementTypeMeta(movimiento.tipo);
   const methodMeta = getMovementMethodMeta(movimiento.medio);
   const debtStatusMeta = getDebtStatusMeta(movimiento.deudaEstado);
@@ -194,105 +245,89 @@ export default function MovementCard({
   };
 
   return (
-    <article className={`${style.row} ${toneClass}`}>
-      <div className={style.rowHead}>
-        <span className={style.rowIcon}>{movementIcon(movimiento)}</span>
+    <article className={`${style.row} ${style.tblRow} ${toneClass}`}>
+      <span className={style.tblDate}>{formatDate(movimiento.fecha)}</span>
 
+      <div className={style.tblDesc}>
+        <span className={style.rowIcon}>{movementIcon(movimiento)}</span>
         <div className={style.rowText}>
           <p className={style.rowCategory}>{movimiento.categoria}</p>
           <p className={style.rowDetail}>{movimiento.detalle || "Sin detalle"}</p>
           {isDebt && movimiento.deudaAcreedor ? (
             <p className={style.rowExtra}>Acreedor: {movimiento.deudaAcreedor}</p>
           ) : null}
-        </div>
-
-        <div className={style.rowActions}>
-          {isPendingDebt ? (
-            <button
-              type="button"
-              className={style.payDebtButton}
-              onClick={handleStartSettle}
-            >
-              Pagar
-            </button>
+          {isDebt || movimiento.esRecurrente || movimiento.desdeAhorro || (ARCA_HABILITADO && movimiento.tipo === "ingreso") ? (
+            <div className={style.tblBadges}>
+              {isDebt ? (
+                <span className={debtStatusMeta.tone === "paid" ? style.badgeNeutral : style.badgeWarning}>
+                  {isPartialDebt ? "Parcial" : debtStatusMeta.label}
+                </span>
+              ) : null}
+              {isDebt && movimiento.deudaEstado === "pagada" ? (
+                <span className={style.badge}>Pagada {formatDate(movimiento.deudaPagadaAt)}</span>
+              ) : null}
+              {isPartialDebt ? (
+                <span className={style.badge}>
+                  Pagado {formatMoney(debtPaid, currentCurrency)} · resta {formatMoney(debtRemaining, currentCurrency)}
+                </span>
+              ) : null}
+              {movimiento.esRecurrente ? (
+                <span className={style.badgeAccent}>Fijo {movimiento.frecuencia}</span>
+              ) : null}
+              {movimiento.desdeAhorro ? <span className={style.badgeAccent}>Uso de ahorro</span> : null}
+              {ARCA_HABILITADO && movimiento.tipo === "ingreso" ? (
+                movimiento.factura && movimiento.factura.cae ? (
+                  <span className={style.badgeAccent}>
+                    {movimiento.factura.tipoNombre} N° {movimiento.factura.numero}
+                  </span>
+                ) : (
+                  <button type="button" className={style.facturaBtn} onClick={handleEmitirFactura} disabled={facturaBusy}>
+                    {facturaBusy ? "Emitiendo..." : "Emitir factura"}
+                  </button>
+                )
+              ) : null}
+            </div>
           ) : null}
-          <button
-            type="button"
-            className={style.actionButton}
-            onClick={handleEdit}
-            aria-label="Editar movimiento"
-          >
-            <FiEdit2 />
-          </button>
-          <button
-            type="button"
-            className={`${style.actionButton} ${style.actionButtonDanger}`}
-            onClick={handleDelete}
-            aria-label="Eliminar movimiento"
-          >
-            <FiTrash2 />
-          </button>
         </div>
       </div>
 
-      <div className={style.rowFooter}>
-        <div className={style.rowBadges}>
-          <span className={style.badge}>{typeMeta.label}</span>
-          {ARCA_HABILITADO && movimiento.tipo === "ingreso" ? (
-            movimiento.factura && movimiento.factura.cae ? (
-              <span className={style.badgeAccent}>
-                {movimiento.factura.tipoNombre} N° {movimiento.factura.numero}
-              </span>
-            ) : (
-              <button
-                type="button"
-                className={style.facturaBtn}
-                onClick={handleEmitirFactura}
-                disabled={facturaBusy}
-              >
-                {facturaBusy ? "Emitiendo..." : "Emitir factura"}
-              </button>
-            )
-          ) : null}
-          {isDebt ? (
-            <span
-              className={
-                debtStatusMeta.tone === "paid"
-                  ? style.badgeNeutral
-                  : style.badgeWarning
-              }
-            >
-              {isPartialDebt ? "Parcial" : debtStatusMeta.label}
-            </span>
-          ) : null}
-          {!isPendingDebt ? (
-            <span className={style.badge}>{methodMeta.label}</span>
-          ) : null}
-          {movimiento.esRecurrente ? (
-            <span className={style.badgeAccent}>Fijo {movimiento.frecuencia}</span>
-          ) : null}
-          {movimiento.desdeAhorro ? (
-            <span className={style.badgeAccent}>Uso de ahorro</span>
-          ) : null}
-        </div>
-
-        <span className={style.rowDate}>
-          {formatDate(movimiento.fecha)}
-          {" · "}
-          {isDebt
-            ? movimiento.deudaEstado === "pagada"
-              ? `Pagada ${formatDate(movimiento.deudaPagadaAt)}`
-              : isPartialDebt
-                ? `Pagado ${formatMoney(debtPaid, currentCurrency)} · resta ${formatMoney(debtRemaining, currentCurrency)}`
-                : "Pendiente de pago"
-            : movimiento.isVirtualOccurrence
-              ? "Automático"
-              : "Manual"}
+      <div className={style.tblCell}>
+        <span className={style.tblPill} title={`Categoría: ${movimiento.categoria}`}>
+          <em className={style.tblPillEmoji}>{categoryIcon}</em>
+          <span className={style.tblPillText}>{movimiento.categoria}</span>
         </span>
+      </div>
 
-        <strong className={`${style.rowAmount} ${amountTone}`}>
-          {amountLabel}
-        </strong>
+      <div className={style.tblCell}>
+        {!isPendingDebt ? (
+          <span className={style.tblPill} title={`Método: ${methodMeta.label}`}>
+            {methodMeta.value === "transferencia" ? <FiSend /> : <FiDollarSign />}
+            <span className={style.tblPillText}>{methodMeta.label}</span>
+          </span>
+        ) : (
+          <span className={`${style.tblPill} ${style.tblPillMuted}`}>{typeMeta.label}</span>
+        )}
+      </div>
+
+      <strong className={`${style.tblAmount} ${amountTone}`}>{amountLabel}</strong>
+
+      <div className={`${style.rowActions} ${style.tblActions}`}>
+        {isPendingDebt ? (
+          <button type="button" className={style.payDebtButton} onClick={handleStartSettle}>
+            Pagar
+          </button>
+        ) : null}
+        <button type="button" className={style.actionButton} onClick={handleEdit} aria-label="Editar movimiento">
+          <FiEdit2 />
+        </button>
+        <button
+          type="button"
+          className={`${style.actionButton} ${style.actionButtonDanger}`}
+          onClick={handleDelete}
+          aria-label="Eliminar movimiento"
+        >
+          <FiTrash2 />
+        </button>
       </div>
 
       {facturaMsg ? (

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Add from "./Add";
 import { FiX } from "react-icons/fi";
 import style from "../style/App.module.css";
-import MovementCard from "./MovementCard";
+import MovementCard, { MovementTableHead } from "./MovementCard";
 import {
   filterMovimientosByCurrency,
   getCurrencyMeta,
@@ -174,6 +174,7 @@ function Dashboard({
               </div>
             ) : (
               <div className={style.dashboardMovementList}>
+                <MovementTableHead />
                 {groupedScopedMovimientos.map((group) => (
                   <section
                     key={group.key}
