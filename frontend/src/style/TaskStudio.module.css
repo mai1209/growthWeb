@@ -5381,3 +5381,16 @@ button.folderItem {
   letter-spacing: inherit;
   text-transform: none;
 }
+
+/* Pestañas de página: esquinas de arriba redondeadas (como pestañas de
+   navegador); abajo siguen rectas, pegadas a la hoja. */
+.editorWorkspace .pageTab,
+.editorWorkspace .pageTabAdd {
+  border-radius: 10px 10px 0 0;
+  overflow: hidden;
+}
+
+.editorWorkspace .pageTab::before,
+.editorWorkspace .pageTabAdd::before {
+  border-radius: 10px 10px 0 0;
+}
