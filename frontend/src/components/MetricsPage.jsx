@@ -1,7 +1,8 @@
 // Métricas — formato del mockup "lila" pero con la paleta actual de la app:
 // KPIs con chip de ícono · Composición en barras horizontales con % ·
-// Ingresos/Gastos por categoría como anillos (100% al centro, categoría
-// principal abajo) · Evolución como línea suave con puntos verde/rojo ·
+// Ingresos/Gastos por categoría como gráfico de radar (una punta por
+// categoría, como el "rombo" de servicios) · Evolución como línea suave
+// con puntos verde/rojo ·
 // Ranking como lista numerada.
 import { useMemo, useState } from "react";
 import { FiClock, FiDollarSign, FiTrendingDown, FiTrendingUp } from "react-icons/fi";
@@ -90,26 +91,6 @@ const getPeriodRange = (period, monthValue, yearValue) => {
   };
 };
 
-const buildConicGradient = (items) => {
-  const total = items.reduce((acc, item) => acc + item.value, 0);
-  let cursor = 0;
-
-  if (!total) {
-    return "conic-gradient(rgba(255,255,255,0.08) 0deg 360deg)";
-  }
-
-  const stops = items
-    .filter((item) => item.value > 0)
-    .map((item) => {
-      const start = cursor;
-      const end = cursor + (item.value / total) * 360;
-      cursor = end;
-      return `${item.color} ${start}deg ${end}deg`;
-    });
-
-  return `conic-gradient(${stops.join(", ")})`;
-};
-
 const buildMonthlyBuckets = (movimientos, from, to) => {
   const buckets = [];
   const cursor = new Date(from.getFullYear(), from.getMonth(), 1);
@@ -147,10 +128,38 @@ const buildMonthlyBuckets = (movimientos, from, to) => {
   }));
 };
 
-// Anillo por categorías: 100% al centro y la categoría principal debajo (mockup)
-const RingCard = ({ title, subtitle, items, emptyLabel }) => {
+// Recorta una etiqueta larga para que entre junto al eje del radar
+// (la versión completa siempre va en la leyenda y en el title del SVG).
+const acortarEtiqueta = (texto, max = 12) =>
+  texto.length > max ? `${texto.slice(0, max - 1).trimEnd()}…` : texto;
+
+// Gráfico de radar por categorías: una punta por categoría (como el "rombo"
+// de servicios), con leyenda de color · categoría · monto · % abajo.
+// Con menos de 3 categorías un polígono no dice nada, así que se muestra
+// como barras horizontales (mismo look que "Composición").
+const RadarCard = ({ title, subtitle, items, emptyLabel, currency }) => {
   const shown = items.filter((item) => item.value > 0);
   const total = shown.reduce((acc, item) => acc + item.value, 0);
+  const maxValue = Math.max(...shown.map((item) => item.value), 0);
+
+  const W = 240;
+  const H = 240;
+  const cx = W / 2;
+  const cy = H / 2;
+  const R = 78; // radio máximo del polígono (deja aire para las etiquetas)
+  const n = shown.length;
+
+  // Ángulo de cada eje, arrancando arriba (como el reloj) y en sentido horario.
+  const angleFor = (i) => -Math.PI / 2 + (i * 2 * Math.PI) / n;
+  const pointFor = (i, radius) => ({
+    x: cx + radius * Math.cos(angleFor(i)),
+    y: cy + radius * Math.sin(angleFor(i)),
+  });
+
+  const axisPoints = shown.map((_, i) => pointFor(i, R));
+  const valuePoints = shown.map((item, i) => pointFor(i, maxValue ? (item.value / maxValue) * R : 0));
+  const polygonPath = valuePoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
+  const rings = [0.25, 0.5, 0.75, 1];
 
   return (
     <article className={style.chartCard}>
@@ -162,18 +171,73 @@ const RingCard = ({ title, subtitle, items, emptyLabel }) => {
         <strong>{total ? "100%" : "0%"}</strong>
       </div>
 
-      {total ? (
-        <div className={style.ringWrap}>
-          <div
-            className={style.ring}
-            style={{ background: buildConicGradient(shown) }}
-            title={shown
-              .map((item) => `${item.label} ${((item.value / total) * 100).toFixed(1)}%`)
-              .join(" · ")}
-          >
-            <div className={style.ringHole}>100%</div>
+      {n >= 3 ? (
+        <>
+          <div className={style.radarWrap}>
+            <svg className={style.radarSvg} viewBox={`0 0 ${W} ${H}`} role="img">
+              {rings.map((ratio) => (
+                <polygon
+                  key={ratio}
+                  points={shown.map((_, i) => {
+                    const p = pointFor(i, R * ratio);
+                    return `${p.x},${p.y}`;
+                  }).join(" ")}
+                  className={style.radarGrid}
+                />
+              ))}
+              {axisPoints.map((p, i) => (
+                <line key={shown[i].label} x1={cx} y1={cy} x2={p.x} y2={p.y} className={style.radarGrid} />
+              ))}
+              <path d={polygonPath} className={style.radarArea} />
+              {valuePoints.map((p, i) => (
+                <circle key={shown[i].label} cx={p.x} cy={p.y} r="3.5" fill={shown[i].color} className={style.radarDot} />
+              ))}
+              {axisPoints.map((p, i) => {
+                const label = pointFor(i, R + 20);
+                const anchor = Math.abs(Math.cos(angleFor(i))) < 0.35 ? "middle" : label.x > cx ? "start" : "end";
+                return (
+                  <text
+                    key={`label-${shown[i].label}`}
+                    x={label.x}
+                    y={label.y}
+                    textAnchor={anchor}
+                    dominantBaseline="middle"
+                    className={style.radarAxisText}
+                  >
+                    <title>{shown[i].label}</title>
+                    {acortarEtiqueta(shown[i].label)}
+                  </text>
+                );
+              })}
+            </svg>
           </div>
-          <p className={style.ringTopCat}>{shown[0].label}</p>
+          <ul className={style.radarLegend}>
+            {shown.map((item) => (
+              <li key={item.label}>
+                <i style={{ background: item.color }} />
+                <span className={style.radarLegendLabel}>{item.label}</span>
+                <span className={style.radarLegendPct}>{((item.value / total) * 100).toFixed(0)}%</span>
+                <strong className={style.radarLegendValue}>{formatMoney(item.value, currency)}</strong>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : total ? (
+        <div className={style.compList}>
+          {shown.map((item) => {
+            const pct = ((item.value / total) * 100).toFixed(1);
+            return (
+              <div key={item.label} className={style.compRow} title={formatMoney(item.value, currency)}>
+                <span className={style.compLabel}>{item.label}</span>
+                <div className={style.compBarLine}>
+                  <div className={style.compTrack}>
+                    <div className={style.compFill} style={{ width: `${pct}%`, background: item.color, color: item.color }} />
+                  </div>
+                  <strong className={style.compPct}>{pct}%</strong>
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <p className={style.emptyText}>{emptyLabel}</p>
@@ -440,18 +504,20 @@ function MetricsPage({
           )}
         </article>
 
-        <RingCard
+        <RadarCard
           title="Ingresos por categoría"
           subtitle="De dónde entró la plata"
           items={incomeCategoryItems}
           emptyLabel="No hay ingresos para graficar."
+          currency={currency}
         />
 
-        <RingCard
+        <RadarCard
           title="Gastos por categoría"
           subtitle="Dónde se fue la plata"
           items={expenseCategoryItems}
           emptyLabel="No hay egresos para graficar."
+          currency={currency}
         />
       </div>
 

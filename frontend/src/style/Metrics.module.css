@@ -929,41 +929,85 @@
   font-size: 0.85rem;
 }
 
-/* Anillos por categoría (100% al centro, categoría principal debajo) */
-.ringWrap {
+/* Radar por categoría (una punta por categoría, leyenda abajo) */
+.radarWrap {
   display: grid;
   justify-items: center;
-  gap: 0.7rem;
-  padding: 0.4rem 0 0.2rem;
+  padding: 0.2rem 0 0.1rem;
 }
 
-.ring {
-  width: 152px;
-  height: 152px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 16px 30px rgba(0, 0, 0, 0.16);
+.radarSvg {
+  width: 100%;
+  max-width: 240px;
+  overflow: visible;
 }
 
-.ringHole {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--surface-card-strong);
-  border: 1px solid var(--border-color);
-  font-size: 1.15rem;
-  font-weight: 800;
+.radarGrid {
+  fill: none;
+  stroke: var(--border-color);
+  stroke-width: 1;
 }
 
-.ringTopCat {
-  margin: 0;
+.radarArea {
+  fill: rgba(156, 251, 67, 0.22);
+  stroke: var(--color-verde);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.radarDot {
+  stroke: var(--surface-card-strong);
+  stroke-width: 1.5;
+}
+
+.radarAxisText {
+  fill: var(--color-muted);
+  font-size: 8px;
   font-weight: 700;
-  font-size: 0.95rem;
+}
+
+.radarLegend {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.radarLegend li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.radarLegend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.radarLegendLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text);
+}
+
+.radarLegendPct {
+  flex: 0 0 auto;
+  min-width: 34px;
+  text-align: right;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.radarLegendValue {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Evolución: línea suave */
@@ -1081,14 +1125,6 @@
 
 .lineSvg circle {
   filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.35));
-}
-
-/* Anillos por categoría */
-.ring {
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 0 32px rgba(156, 251, 67, 0.16),
-    0 16px 30px rgba(0, 0, 0, 0.16);
 }
 
 /* Barritas de composición: cada una brilla con su propio color */
