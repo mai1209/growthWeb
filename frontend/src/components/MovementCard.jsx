@@ -310,18 +310,15 @@ export default function MovementCard({
             <span className={style.tblPillText}>{methodMeta.label}</span>
           </span>
         ) : (
-          <span className={`${style.tblPill} ${style.tblPillMuted}`}>{typeMeta.label}</span>
+          <button type="button" className={`${style.payDebtButton} ${style.tblPayBtn}`} onClick={handleStartSettle}>
+            Pagar
+          </button>
         )}
       </div>
 
       <strong className={`${style.tblAmount} ${amountTone}`}>{amountLabel}</strong>
 
       <div className={`${style.rowActions} ${style.tblActions}`}>
-        {isPendingDebt ? (
-          <button type="button" className={style.payDebtButton} onClick={handleStartSettle}>
-            Pagar
-          </button>
-        ) : null}
         <button type="button" className={style.actionButton} onClick={handleEdit} aria-label="Editar movimiento">
           <FiEdit2 />
         </button>

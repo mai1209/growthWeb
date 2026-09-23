@@ -2330,3 +2330,13 @@
     min-width: 0;
   }
 }
+
+/* Deuda pendiente: el botón Pagar vive en la columna Método (la de acciones
+   tiene ancho fijo y lo pisaba con el monto) */
+.tblPayBtn {
+  height: 30px;
+  padding: 0 0.9rem;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
