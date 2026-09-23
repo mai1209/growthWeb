@@ -5357,3 +5357,27 @@ button.folderItem {
 .editorWorkspace .pageTabAdd.color11 {
   border-color: rgba(255, 255, 255, 0.28);
 }
+
+/* La hoja ya NO está dentro de `.field`: esa regla (`.field span`) vestía a
+   todo span del editor (resaltados, colores) como etiqueta de formulario:
+   mayúsculas, chiquito, verde. Acá recuperamos lo que sí queremos. */
+.editorField {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.wordCountPill {
+  display: inline-flex;
+  align-items: center;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Cinturón y tiradores: por si algún otro contenedor vuelve a envolver la hoja */
+.editor :global(.ql-editor span) {
+  display: inline;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  text-transform: none;
+}

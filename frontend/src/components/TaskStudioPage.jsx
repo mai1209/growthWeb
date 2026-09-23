@@ -2320,7 +2320,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 </button>
               </div>
 
-              <div className={`${style.field} ${style.editorField}`}>
+              <div className={style.editorField}>
                 <div
                   className={`${style.editorShell} ${style.notePaper} ${style[form.color] || style.color1}`}
                   style={customNoteStyle(form.color)}
