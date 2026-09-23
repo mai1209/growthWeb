@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiEye, FiEyeOff, FiInfo, FiX, FiDroplet, FiCheck, FiTrendingUp, FiTrendingDown, FiPocket, FiCreditCard, FiTarget, FiPieChart, FiCheckSquare, FiFlag } from "react-icons/fi";
+import { FiEye, FiEyeOff, FiInfo, FiX, FiDroplet, FiCheck, FiTrendingUp, FiTarget, FiPieChart, FiCheckSquare, FiFlag } from "react-icons/fi";
 import style from "../style/LeftSite.module.css";
 import {
   filterMovimientosByCurrency,
@@ -425,55 +425,74 @@ function LeftSite({
             })()}
           </div>
 
-          <div className={style.mesTiles}>
-            <article
-              className={`${style.mesTile} ${style.mesClickable}`}
-              role="button"
-              tabIndex={0}
-              onClick={() => goToFilter("ingreso")}
-              onKeyDown={(event) => handleCardKeyDown(event, "ingreso")}
-            >
-              <i className={`${style.mesTileIcon} ${style.tonoIngreso}`}><FiTrendingUp /></i>
-              <span className={style.mesLabel}>Ingresos</span>
-              <strong className={`${style.mesValor} ${style.tonoIngreso}`}>{hideableMoney(monthSummary.ingreso)}</strong>
-            </article>
-
-            <article
-              className={`${style.mesTile} ${style.mesClickable}`}
-              role="button"
-              tabIndex={0}
-              onClick={() => goToFilter("egreso")}
-              onKeyDown={(event) => handleCardKeyDown(event, "egreso")}
-            >
-              <i className={`${style.mesTileIcon} ${style.tonoEgreso}`}><FiTrendingDown /></i>
-              <span className={style.mesLabel}>Egresos</span>
-              <strong className={`${style.mesValor} ${style.tonoEgreso}`}>{hideableMoney(monthSummary.egreso)}</strong>
-            </article>
-
-            <article
-              className={`${style.mesTile} ${style.mesClickable}`}
-              role="button"
-              tabIndex={0}
-              onClick={() => goToFilter("ahorro")}
-              onKeyDown={(event) => handleCardKeyDown(event, "ahorro")}
-            >
-              <i className={`${style.mesTileIcon} ${style.tonoAhorro}`}><FiPocket /></i>
-              <span className={style.mesLabel}>Ahorro</span>
-              <strong className={`${style.mesValor} ${style.tonoAhorro}`}>{hideableMoney(monthSummary.ahorro)}</strong>
-            </article>
-
-            <article
-              className={`${style.mesTile} ${style.mesClickable}`}
-              role="button"
-              tabIndex={0}
-              onClick={() => goToFilter("deuda")}
-              onKeyDown={(event) => handleCardKeyDown(event, "deuda")}
-            >
-              <i className={`${style.mesTileIcon} ${style.tonoDeuda}`}><FiCreditCard /></i>
-              <span className={style.mesLabel}>Deuda pendiente</span>
-              <strong className={`${style.mesValor} ${style.tonoDeuda}`}>{hideableMoney(historicalSummary.deudaPendiente)}</strong>
-            </article>
-          </div>
+          {/* Rombo: una punta por tipo (Ingresos arriba, Egresos derecha,
+              Deuda abajo, Ahorro izquierda), escala compartida. Leyenda
+              clickeable con los montos debajo. */}
+          {(() => {
+            const ejes = [
+              { key: "ingreso", label: "Ingresos", value: monthSummary.ingreso || 0, tono: style.tonoIngreso, color: "#2fd66a" },
+              { key: "egreso", label: "Egresos", value: monthSummary.egreso || 0, tono: style.tonoEgreso, color: "#ff8f7b" },
+              { key: "deuda", label: "Deuda", value: historicalSummary.deudaPendiente || 0, tono: style.tonoDeuda, color: "#e6bc3f" },
+              { key: "ahorro", label: "Ahorro", value: monthSummary.ahorro || 0, tono: style.tonoAhorro, color: "#35cfa4" },
+            ];
+            const W = 240;
+            const H = 200;
+            const cx = W / 2;
+            const cy = H / 2;
+            const R = 64;
+            const maxV = Math.max(...ejes.map((e) => e.value), 0);
+            const ang = (i) => -Math.PI / 2 + (i * Math.PI) / 2;
+            const pt = (i, r) => ({ x: cx + r * Math.cos(ang(i)), y: cy + r * Math.sin(ang(i)) });
+            const anillo = (ratio) => ejes.map((_, i) => { const p = pt(i, R * ratio); return `${p.x},${p.y}`; }).join(" ");
+            const valores = ejes.map((e, i) => pt(i, maxV ? (e.value / maxV) * R : 0));
+            const path = valores.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
+            const etiquetas = ejes.map((e, i) => {
+              const p = pt(i, R + 16);
+              const anchor = i === 1 ? "start" : i === 3 ? "end" : "middle";
+              const dy = i === 0 ? -2 : i === 2 ? 8 : 4;
+              return { ...e, x: p.x, y: p.y + dy, anchor };
+            });
+            return (
+              <div className={style.mesRadarCard}>
+                <svg className={style.mesRadarSvg} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Ingresos, egresos, deuda y ahorro del mes">
+                  {[0.33, 0.66, 1].map((r) => (
+                    <polygon key={r} points={anillo(r)} className={style.mesRadarGrid} />
+                  ))}
+                  {ejes.map((e, i) => {
+                    const p = pt(i, R);
+                    return <line key={e.key} x1={cx} y1={cy} x2={p.x} y2={p.y} className={style.mesRadarGrid} />;
+                  })}
+                  {maxV ? <path d={path} className={style.mesRadarArea} /> : null}
+                  {maxV
+                    ? valores.map((p, i) => (
+                        <circle key={ejes[i].key} cx={p.x} cy={p.y} r="3.5" fill={ejes[i].color} className={style.mesRadarDot} />
+                      ))
+                    : null}
+                  {etiquetas.map((e) => (
+                    <text key={e.key} x={e.x} y={e.y} textAnchor={e.anchor} className={style.mesRadarText}>
+                      {e.label}
+                    </text>
+                  ))}
+                </svg>
+                <ul className={style.mesLeyenda}>
+                  {ejes.map((e) => (
+                    <li
+                      key={e.key}
+                      className={style.mesClickable}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => goToFilter(e.key)}
+                      onKeyDown={(event) => handleCardKeyDown(event, e.key)}
+                    >
+                      <i style={{ background: e.color }} />
+                      <span className={style.mesLeyendaLabel}>{e.key === "deuda" ? "Deuda pendiente" : e.label}</span>
+                      <strong className={`${style.mesValor} ${e.tono}`}>{hideableMoney(e.value)}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
         </section>
         ) : null}
 

@@ -1581,3 +1581,95 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 :global(body[data-theme="light"]) .tonoEgreso { color: #d9573f; }
 :global(body[data-theme="light"]) .tonoAhorro { color: #1f9c7a; }
 :global(body[data-theme="light"]) .tonoDeuda { color: #b8891a; }
+
+/* Resumen del mes como rombo (prueba): radar de 4 puntas + leyenda */
+.mesRadarCard {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.6rem 0.9rem 0.8rem;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+  border-radius: 18px;
+  background: var(--surface-card);
+}
+
+.mesRadarSvg {
+  width: 100%;
+  max-width: 260px;
+  justify-self: center;
+  overflow: visible;
+}
+
+.mesRadarGrid {
+  fill: none;
+  stroke: var(--border-color, rgba(216, 241, 224, 0.14));
+  stroke-width: 1;
+}
+
+.mesRadarArea {
+  fill: rgba(47, 214, 106, 0.2);
+  stroke: #2fd66a;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.mesRadarDot {
+  stroke: var(--surface-card);
+  stroke-width: 1.5;
+}
+
+.mesRadarText {
+  fill: var(--color-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mesLeyenda {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mesLeyenda li {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+}
+
+.mesLeyenda li:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.mesLeyenda i {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.mesLeyendaLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.mesLeyenda .mesValor {
+  font-size: 0.95rem;
+}
+
+:global(body[data-theme="light"]) .mesRadarCard {
+  background: #ffffff;
+  border-color: rgba(20, 40, 30, 0.1);
+}
+
+:global(body[data-theme="light"]) .mesLeyenda li:hover {
+  background: rgba(20, 40, 30, 0.04);
+}
