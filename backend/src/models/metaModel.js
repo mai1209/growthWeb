@@ -67,6 +67,8 @@ const metaSchema = new mongoose.Schema(
     actualNumero: { type: Number, default: 0 },
     unidad: { type: String, default: "", trim: true },
     progresoManual: { type: Number, default: 0, min: 0, max: 100 },
+    // Fecha (YYYY-MM-DD) del último ajuste del avance manual
+    progresoManualAt: { type: String, default: "" },
     estado: {
       type: String,
       // no_cumplida = cerrada sin alcanzarla (vencida y se decidió no seguir)

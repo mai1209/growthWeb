@@ -347,7 +347,14 @@ function MetasPage({ activeWorkspace }) {
   };
 
   const guardarManual = (meta, valor) => {
-    actualizar(meta, { progresoManual: valor });
+    const v = Math.min(100, Math.max(0, Math.round(Number(valor) || 0)));
+    reemplazar({ ...meta, progresoManual: v, progresoManualAt: hoyLocal() });
+    actualizar(meta, { progresoManual: v, fechaLocal: hoyLocal() });
+  };
+
+  // Suma (o resta) un delta al avance manual y lo guarda.
+  const sumarManual = (meta, delta) => {
+    guardarManual(meta, (Number(meta.progresoManual) || 0) + delta);
   };
 
   const cambiarEstado = (meta, estado) => {
@@ -773,18 +780,63 @@ function MetasPage({ activeWorkspace }) {
 
           {meta.medicion === "manual" ? (
             <div className={style.hitosBox}>
-              <p className={style.boxLabel}>Avance manual</p>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="5"
-                value={meta.progresoManual || 0}
-                className={style.slider}
-                onChange={(e) => cambiarManual(meta, Number(e.target.value))}
-                onMouseUp={(e) => guardarManual(meta, Number(e.target.value))}
-                onTouchEnd={(e) => guardarManual(meta, Number(e.target.value))}
-              />
+              <div className={style.manualHead}>
+                <p className={style.boxLabel}>Avance manual</p>
+                {meta.progresoManualAt ? (
+                  <span className={style.manualFecha}>
+                    Última actualización: {fmtFechaCorta(meta.progresoManualAt)}
+                  </span>
+                ) : (
+                  <span className={style.manualFecha}>Todavía sin actualizar</span>
+                )}
+              </div>
+              <div className={style.manualRow}>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={meta.progresoManual || 0}
+                  className={style.slider}
+                  onChange={(e) => cambiarManual(meta, Number(e.target.value))}
+                  onMouseUp={(e) => guardarManual(meta, Number(e.target.value))}
+                  onTouchEnd={(e) => guardarManual(meta, Number(e.target.value))}
+                  onKeyUp={(e) => guardarManual(meta, Number(e.target.value))}
+                  aria-label="Avance manual"
+                />
+                <label className={style.manualPct}>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={meta.progresoManual || 0}
+                    onChange={(e) => cambiarManual(meta, Number(e.target.value))}
+                    onBlur={(e) => guardarManual(meta, Number(e.target.value))}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        guardarManual(meta, Number(e.target.value));
+                      }
+                    }}
+                    aria-label="Porcentaje de avance"
+                  />
+                  <span>%</span>
+                </label>
+              </div>
+              <div className={style.manualQuick}>
+                <button type="button" className={style.manualBtn} onClick={() => sumarManual(meta, -10)} disabled={(meta.progresoManual || 0) <= 0}>
+                  −10
+                </button>
+                <button type="button" className={style.manualBtn} onClick={() => sumarManual(meta, 10)} disabled={(meta.progresoManual || 0) >= 100}>
+                  +10
+                </button>
+                <button type="button" className={style.manualBtn} onClick={() => sumarManual(meta, 25)} disabled={(meta.progresoManual || 0) >= 100}>
+                  +25
+                </button>
+                <button type="button" className={`${style.manualBtn} ${style.manualBtnFull}`} onClick={() => guardarManual(meta, 100)} disabled={(meta.progresoManual || 0) >= 100}>
+                  Al 100%
+                </button>
+              </div>
             </div>
           ) : null}
 
@@ -1003,13 +1055,17 @@ function MetasPage({ activeWorkspace }) {
               />
             </label>
             <label className={style.campo}>
-              <span>Unidad</span>
+              <span>Unidad (qué contás)</span>
               <input
                 className={style.input}
                 value={form.unidad}
                 onChange={(e) => setForm({ ...form, unidad: e.target.value })}
-                placeholder="$, km, libros"
+                placeholder="ej: libros, km, $, clientes"
+                maxLength={20}
               />
+              <small className={style.campoAyuda}>
+                Es solo la etiqueta: con objetivo 12 y unidad “libros” la meta muestra “3 de 12 libros”.
+              </small>
             </label>
           </div>
         ) : null}

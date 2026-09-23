@@ -59,7 +59,13 @@ const aplicarCampos = (meta, body) => {
   }
   if (typeof body.unidad === "string") meta.unidad = body.unidad.trim().slice(0, 20);
   if (Number.isFinite(Number(body.progresoManual))) {
-    meta.progresoManual = Math.min(100, Math.max(0, Number(body.progresoManual)));
+    const nuevo = Math.min(100, Math.max(0, Number(body.progresoManual)));
+    if (nuevo !== meta.progresoManual) {
+      meta.progresoManualAt = esFecha(body.fechaLocal)
+        ? body.fechaLocal
+        : new Date().toISOString().slice(0, 10);
+    }
+    meta.progresoManual = nuevo;
   }
   if (["activa", "pausada", "completada", "no_cumplida"].includes(body.estado)) {
     meta.estado = body.estado;
