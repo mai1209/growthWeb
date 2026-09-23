@@ -2113,7 +2113,9 @@
 .tblHead,
 .tblRow {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr) auto 76px;
+  /* Anchos fijos en fecha, monto y acciones: así las columnas del medio miden
+     lo mismo en todas las filas y las pills quedan alineadas. */
+  grid-template-columns: 104px minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) 150px 72px;
   align-items: center;
   column-gap: 0.9rem;
 }
@@ -2228,13 +2230,6 @@
   height: 14px;
   flex: 0 0 auto;
   color: var(--color-muted);
-}
-
-.tblPillEmoji {
-  font-style: normal;
-  font-size: 0.9rem;
-  line-height: 1;
-  flex: 0 0 auto;
 }
 
 .tblPillText {

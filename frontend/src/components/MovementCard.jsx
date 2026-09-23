@@ -1,20 +1,36 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FiArrowDown,
   FiArrowUp,
+  FiBook,
+  FiBriefcase,
+  FiCoffee,
   FiCreditCard,
   FiDollarSign,
+  FiEdit2,
+  FiGift,
+  FiHeart,
+  FiHome,
+  FiMap,
+  FiMusic,
   FiPocket,
   FiRepeat,
   FiSend,
-  FiEdit2,
+  FiShoppingBag,
+  FiShoppingCart,
+  FiSmartphone,
+  FiTag,
   FiTrash2,
+  FiTrendingUp,
+  FiTruck,
+  FiUsers,
+  FiZap,
 } from "react-icons/fi";
 import style from "../style/MonthlyFilters.module.css";
 import { ARCA_HABILITADO } from "../featureFlags";
 import InputMonto from "./InputMonto";
-import { categoriesService, movimientoService } from "../api";
+import { movimientoService } from "../api";
 import {
   getDebtStatusMeta,
   formatMoney,
@@ -32,40 +48,31 @@ const movementIcon = (m) => {
   return <FiArrowUp />; // egreso
 };
 
-// Emojis de las categorías del usuario (nombre en minúscula → emoji). Se piden
-// una sola vez y se comparten entre todas las filas.
-let categoryIconsPromise = null;
-let categoryIconsCache = null;
-const loadCategoryIcons = () => {
-  if (categoryIconsCache) return Promise.resolve(categoryIconsCache);
-  if (!categoryIconsPromise) {
-    categoryIconsPromise = categoriesService
-      .getAll()
-      .then((res) => {
-        const map = {};
-        (Array.isArray(res.data) ? res.data : []).forEach((c) => {
-          if (c?.nombre) map[String(c.nombre).trim().toLowerCase()] = c.icono || "🏷️";
-        });
-        categoryIconsCache = map;
-        return map;
-      })
-      .catch(() => ({}));
-  }
-  return categoryIconsPromise;
-};
-
-const useCategoryIcon = (nombre) => {
-  const [icons, setIcons] = useState(categoryIconsCache);
-  useEffect(() => {
-    let alive = true;
-    loadCategoryIcons().then((map) => {
-      if (alive) setIcons(map);
-    });
-    return () => {
-      alive = false;
-    };
-  }, []);
-  return icons?.[String(nombre || "").trim().toLowerCase()] || "🏷️";
+// Ícono de línea por categoría (todos del mismo color), elegido por palabra
+// clave del nombre. Si no matchea nada, una etiqueta genérica.
+const CATEGORY_ICONS = [
+  [/super|almac|mercado|verdul|carnic|compra/i, FiShoppingCart],
+  [/comida|resto|deliver|cafe|caf[eé]|bar\b|almuerzo|cena|desayuno/i, FiCoffee],
+  [/trabajo|sueldo|salario|honorario|freelance|cliente/i, FiBriefcase],
+  [/tarjeta|cr[eé]dito|d[eé]bito|pr[eé]stamo|cuota/i, FiCreditCard],
+  [/invers|acci[oó]n|cripto|plazo fijo|bono|dividend/i, FiTrendingUp],
+  [/servicio|luz|gas|agua|internet|celular|tel[eé]fono|expensa|suscrip/i, FiZap],
+  [/salud|m[eé]dic|farmacia|obra social|gimnas|gym/i, FiHeart],
+  [/transporte|nafta|combustible|uber|taxi|colectivo|subte|auto|peaje|estacion/i, FiTruck],
+  [/casa|hogar|alquiler|mueble|limpieza|ferreter/i, FiHome],
+  [/educ|curso|libro|universidad|colegio|estudio/i, FiBook],
+  [/ropa|indument|zapat|calzado|moda/i, FiShoppingBag],
+  [/viaje|vacacion|hotel|pasaje|vuelo|turismo/i, FiMap],
+  [/regalo|cumple|fiesta|evento/i, FiGift],
+  [/entreten|ocio|cine|juego|netflix|spotify|m[uú]sica|salida/i, FiMusic],
+  [/tecno|electr[oó]nic|celu|computadora|notebook|app\b/i, FiSmartphone],
+  [/familia|hijo|mascota|amig|pareja/i, FiUsers],
+];
+const CategoryIcon = ({ nombre }) => {
+  const texto = String(nombre || "");
+  const match = CATEGORY_ICONS.find(([re]) => re.test(texto));
+  const Icon = match ? match[1] : FiTag;
+  return <Icon />;
 };
 
 // Cabecera de columnas de la tabla de movimientos (una sola vez por lista).
@@ -87,13 +94,12 @@ const getDayInputValue = (date = new Date()) => {
   return `${year}-${month}-${day}`;
 };
 
+const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const formatDate = (value) => {
   if (!value) return "-";
-  return new Date(value).toLocaleDateString("es-AR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "-";
+  return `${String(d.getDate()).padStart(2, "0")} ${MESES_CORTOS[d.getMonth()]} ${d.getFullYear()}`;
 };
 
 /**
@@ -118,7 +124,6 @@ export default function MovementCard({
   const [settleAmount, setSettleAmount] = useState("");
   const [settling, setSettling] = useState(false);
 
-  const categoryIcon = useCategoryIcon(movimiento.categoria);
   const typeMeta = getMovementTypeMeta(movimiento.tipo);
   const methodMeta = getMovementMethodMeta(movimiento.medio);
   const debtStatusMeta = getDebtStatusMeta(movimiento.deudaEstado);
@@ -293,7 +298,7 @@ export default function MovementCard({
 
       <div className={style.tblCell}>
         <span className={style.tblPill} title={`Categoría: ${movimiento.categoria}`}>
-          <em className={style.tblPillEmoji}>{categoryIcon}</em>
+          <CategoryIcon nombre={movimiento.categoria} />
           <span className={style.tblPillText}>{movimiento.categoria}</span>
         </span>
       </div>
