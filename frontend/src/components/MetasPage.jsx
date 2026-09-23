@@ -171,6 +171,14 @@ const dueLabel = (m) => {
 
 const fmtNum = (n) => Number(n || 0).toLocaleString("es-AR");
 
+// "3 de 12 libros" para unidades-palabra; "$3.000 de $12.000" para símbolos.
+const esSimbolo = (u) => /^[^\p{L}\p{N}]{1,3}$/u.test(String(u || "").trim());
+const conUnidad = (n, unidad) => {
+  const u = String(unidad || "").trim();
+  if (!u) return fmtNum(n);
+  return esSimbolo(u) ? `${u}${fmtNum(n)}` : `${fmtNum(n)} ${u}`;
+};
+
 // Colores por plazo (los mismos de las pills).
 const PLAZO_COLORS = { corto: "#5b8ad6", mediano: "#c9a23a", largo: "#b06ad6" };
 
@@ -497,7 +505,9 @@ function MetasPage({ activeWorkspace }) {
       return `${hechos} de ${(m.hitos || []).length} hitos`;
     }
     if (m.medicion === "numero") {
-      return `${m.unidad}${fmtNum(m.actualNumero)} de ${m.unidad}${fmtNum(m.objetivoNumero)}`;
+      return esSimbolo(m.unidad)
+        ? `${conUnidad(m.actualNumero, m.unidad)} de ${conUnidad(m.objetivoNumero, m.unidad)}`
+        : `${fmtNum(m.actualNumero)} de ${conUnidad(m.objetivoNumero, m.unidad)}`;
     }
     return "Avance manual";
   };
@@ -750,12 +760,8 @@ function MetasPage({ activeWorkspace }) {
             <div className={style.hitosBox}>
               <p className={style.boxLabel}>Avance</p>
               <p className={style.numeroActual}>
-                {meta.unidad}
-                {fmtNum(meta.actualNumero)}{" "}
-                <span className={style.numeroObjetivo}>
-                  de {meta.unidad}
-                  {fmtNum(meta.objetivoNumero)}
-                </span>
+                {esSimbolo(meta.unidad) ? conUnidad(meta.actualNumero, meta.unidad) : fmtNum(meta.actualNumero)}{" "}
+                <span className={style.numeroObjetivo}>de {conUnidad(meta.objetivoNumero, meta.unidad)}</span>
               </p>
               <div className={style.hitoAddRow}>
                 <input
@@ -771,8 +777,8 @@ function MetasPage({ activeWorkspace }) {
                   }}
                   placeholder={`Nuevo valor (${meta.unidad || "total"} acumulado)`}
                 />
-                <button type="button" className={style.btnChico} onClick={() => registrarAvance(meta)}>
-                  <FiCheck /> Registrar
+                <button type="button" className={`${style.btnChico} ${style.btnGuardarAvance}`} onClick={() => registrarAvance(meta)}>
+                  <FiCheck /> Guardar
                 </button>
               </div>
             </div>
