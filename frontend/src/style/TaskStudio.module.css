@@ -4632,28 +4632,22 @@ button.folderItem {
   width: 300px;
   min-width: 0;
   align-self: flex-start;
-  /* Sticky "puro": nada de scroll propio. Antes tenía max-height +
-     overflow-y:auto, así que al pasar el mouse por el panel la rueda
-     scrolleaba SOLO el panel (no la hoja) y parecía que no te seguía.
-     Ahora es un solo scroll: el panel se desplaza junto con la página. */
   position: sticky;
   top: 0.7rem;
+  /* El panel suele ser más alto que la ventana (Nota + Texto + Tamaño +
+     Papel/Resaltado/Color + Ancho no entran siempre en una pantalla), así
+     que necesita su propio scroll para no perder los controles de abajo.
+     La clave es dejar que, al llegar al final del panel, la rueda siga
+     de largo y mueva la hoja (scroll chaining) en vez de trabarse ahí:
+     eso es lo que antes lo hacía "no seguir" con overscroll-behavior:contain. */
+  max-height: calc(100vh - 1.4rem);
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+  scrollbar-width: thin;
   display: flex;
   flex-direction: column;
   padding: 0 0.2rem 1rem 0.9rem;
   border-left: 1px solid var(--border-color);
-}
-
-/* Red de seguridad solo en ventanas bajas: si el panel no entra entero en
-   alto, ahí sí aparece un scroll propio para no perder controles de abajo
-   (Color de texto, Ancho de la hoja). En ventanas normales no se activa. */
-@media (max-height: 700px) {
-  .inspector {
-    max-height: calc(100vh - 1.4rem);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-  }
 }
 
 .inspectorTop {
