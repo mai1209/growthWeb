@@ -4632,22 +4632,30 @@ button.folderItem {
   width: 300px;
   min-width: 0;
   align-self: flex-start;
+  /* Sticky puro: sin scroll propio, siempre entero a la vista. El título,
+     la carpeta y la fecha de la nota viven ahora arriba de la hoja (fuera
+     de este panel), así que lo que queda acá (Texto, Tamaño, Papel,
+     Resaltado, Color, Ancho) entra en pantalla en cualquier ventana normal. */
   position: sticky;
   top: 0.7rem;
-  /* El panel suele ser más alto que la ventana (Nota + Texto + Tamaño +
-     Papel/Resaltado/Color + Ancho no entran siempre en una pantalla), así
-     que necesita su propio scroll para no perder los controles de abajo.
-     La clave es dejar que, al llegar al final del panel, la rueda siga
-     de largo y mueva la hoja (scroll chaining) en vez de trabarse ahí:
-     eso es lo que antes lo hacía "no seguir" con overscroll-behavior:contain. */
-  max-height: calc(100vh - 1.4rem);
-  overflow-y: auto;
-  overscroll-behavior-y: auto;
-  scrollbar-width: thin;
   display: flex;
   flex-direction: column;
   padding: 0 0.2rem 1rem 0.9rem;
   border-left: 1px solid var(--border-color);
+}
+
+/* Red de seguridad solo en ventanas MUY bajas (una laptop chica sin
+   maximizar, con barra de marcadores, etc.): ahí sí aparece scroll propio
+   para no perder los controles de abajo. Deja pasar la rueda a la hoja
+   una vez que el panel llega a su final (scroll chaining), para que no
+   se sienta trabado como antes con overscroll-behavior:contain. */
+@media (max-height: 620px) {
+  .inspector {
+    max-height: calc(100vh - 1.4rem);
+    overflow-y: auto;
+    overscroll-behavior-y: auto;
+    scrollbar-width: thin;
+  }
 }
 
 .inspectorTop {
@@ -4687,44 +4695,26 @@ button.folderItem {
   margin-top: 0.35rem;
 }
 
-.inspectorRow {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-/* Título y carpeta, versión compacta para el panel */
-.inspector .headerTitleWrap {
+/* Título y carpeta, versión compacta (fila arriba de la hoja) */
+.noteMetaHeader .headerTitleWrap {
   gap: 0.1rem;
 }
 
-.inspector .titleGhost {
-  font-size: 1.05rem;
+.noteMetaHeader .titleGhost {
+  font-size: 1.3rem;
   padding: 0.3rem 0.5rem;
   border-radius: 12px;
 }
 
-.inspector .titleEditBtn,
-.inspector .titleStar {
-  width: 30px;
-  height: 30px;
-  font-size: 1.05rem;
+.noteMetaHeader .titleEditBtn,
+.noteMetaHeader .titleStar {
+  width: 32px;
+  height: 32px;
+  font-size: 1.1rem;
 }
 
-.inspector .noteFolderSelect {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.inspector .noteFolderSelect select {
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: none;
-}
-
-.inspector .editorDate {
-  flex: 1 1 auto;
+.noteMetaHeader .noteFolderSelect select {
+  max-width: 220px;
 }
 
 /* Herramientas de texto: grilla de botones, sin barra ni separadores */
@@ -4796,7 +4786,7 @@ button.folderItem {
   gap: 0.9rem;
 }
 
-.editorCard.editorExpanded .inspectorNota {
+.editorCard.editorExpanded .noteMetaHeader {
   display: none;
 }
 
@@ -4868,6 +4858,23 @@ button.folderItem {
 
 /* Páginas: pestañas arriba de la hoja, estilo navegador (lápiz, tachito y +
    viven ahí mismo). Se pegan al borde superior del papel. */
+/* Título, carpeta y fecha de la nota: fila compacta arriba de la hoja, en
+   el flujo normal de la página (NO en el panel fijo de la derecha). Así el
+   panel de herramientas queda corto y entra siempre en pantalla. */
+.noteMetaHeader {
+  display: grid;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0 0 0.55rem 4px;
+}
+
+.noteMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .editorWorkspace .pagesTabs {
   width: 100%;
   align-items: flex-end;

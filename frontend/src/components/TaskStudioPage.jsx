@@ -2208,6 +2208,99 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
           <form id="note-editor-form" className={style.form} onSubmit={handleSubmit}>
             <div className={style.editorBody}>
               <div className={style.editorWorkspace}>
+              {/* Título, carpeta y fecha: viven arriba de la hoja (no en el
+                  panel fijo) porque se tocan una sola vez, no mientras
+                  escribís — así el panel de la derecha queda corto y entra
+                  siempre en pantalla. */}
+              <div className={style.noteMetaHeader}>
+                <div className={style.headerTitleWrap}>
+                  <input
+                    ref={titleInputRef}
+                    type="text"
+                    value={form.meta}
+                    onChange={(event) => handleFieldChange("meta", event.target.value)}
+                    placeholder="Título de la nota…"
+                    className={style.titleGhost}
+                    aria-label="Título de la nota"
+                  />
+                  <button
+                    type="button"
+                    className={style.titleEditBtn}
+                    onClick={() => {
+                      titleInputRef.current?.focus();
+                      titleInputRef.current?.select();
+                    }}
+                    aria-label="Editar título"
+                    title="Editar título"
+                  >
+                    <FiEdit2 />
+                  </button>
+                  {notaAbierta ? (
+                    <button
+                      type="button"
+                      className={`${style.titleStar} ${notaAbierta.favorita ? style.titleStarOn : ""}`}
+                      onClick={() => toggleFavorita(notaAbierta)}
+                      aria-label={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                      title={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                      aria-pressed={Boolean(notaAbierta.favorita)}
+                    >
+                      <FiStar />
+                    </button>
+                  ) : null}
+                </div>
+                <div className={style.noteMetaRow}>
+                  <span className={style.noteFolderSelect} title="Cambiar la nota a otra carpeta">
+                    <FiFolder />
+                    <select
+                      value={form.carpeta || ""}
+                      onChange={(event) => handleFieldChange("carpeta", event.target.value)}
+                      aria-label="Cambiar la nota a otra carpeta"
+                    >
+                      <option value="">Sin carpeta</option>
+                      {(form.carpeta && !folders.includes(form.carpeta)
+                        ? [form.carpeta, ...folders]
+                        : folders
+                      ).map((folder) => (
+                        <option key={folder} value={folder}>
+                          {folder}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className={style.noteFolderAdd}
+                      onClick={handleCreateFolderInEditor}
+                      aria-label="Nueva carpeta"
+                      title="Nueva carpeta"
+                    >
+                      <FiFolderPlus />
+                    </button>
+                  </span>
+                  {fechaNotaLabel ? (
+                    <span className={style.editorDate} title="Fecha de la nota">
+                      {fechaNotaLabel}
+                    </span>
+                  ) : null}
+                  {MOSTRAR_REPASO ? (
+                    <button
+                      type="button"
+                      className={style.iconButton}
+                      onClick={() => {
+                        setDeckScope("note");
+                        setIsDeckOpen(true);
+                      }}
+                      aria-label="Flashcards de esta nota"
+                      title="Flashcards de esta nota"
+                    >
+                      <FiLayers />
+                      {dueCountNote ? (
+                        <span className={style.iconBadge}>{dueCountNote}</span>
+                      ) : null}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+
               {showOutline && outline.length > 0 ? (
                 <div className={style.outlinePanel}>
                   <div className={style.outlinePanelHead}>
@@ -2380,98 +2473,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   <FiX />
                 </button>
             </div>
-
-            <section className={`${style.inspectorSection} ${style.inspectorNota}`}>
-              <h4 className={style.inspectorTitle}>Nota</h4>
-              <div className={style.headerTitleWrap}>
-                <input
-                  ref={titleInputRef}
-                  type="text"
-                  value={form.meta}
-                  onChange={(event) => handleFieldChange("meta", event.target.value)}
-                  placeholder="Título de la nota…"
-                  className={style.titleGhost}
-                  aria-label="Título de la nota"
-                />
-                <button
-                  type="button"
-                  className={style.titleEditBtn}
-                  onClick={() => {
-                    titleInputRef.current?.focus();
-                    titleInputRef.current?.select();
-                  }}
-                  aria-label="Editar título"
-                  title="Editar título"
-                >
-                  <FiEdit2 />
-                </button>
-                {notaAbierta ? (
-                  <button
-                    type="button"
-                    className={`${style.titleStar} ${notaAbierta.favorita ? style.titleStarOn : ""}`}
-                    onClick={() => toggleFavorita(notaAbierta)}
-                    aria-label={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
-                    title={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
-                    aria-pressed={Boolean(notaAbierta.favorita)}
-                  >
-                    <FiStar />
-                  </button>
-                ) : null}
-              </div>
-              <div className={style.inspectorRow}>
-                <span className={style.noteFolderSelect} title="Cambiar la nota a otra carpeta">
-                  <FiFolder />
-                  <select
-                    value={form.carpeta || ""}
-                    onChange={(event) => handleFieldChange("carpeta", event.target.value)}
-                    aria-label="Cambiar la nota a otra carpeta"
-                  >
-                    <option value="">Sin carpeta</option>
-                    {(form.carpeta && !folders.includes(form.carpeta)
-                      ? [form.carpeta, ...folders]
-                      : folders
-                    ).map((folder) => (
-                      <option key={folder} value={folder}>
-                        {folder}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    className={style.noteFolderAdd}
-                    onClick={handleCreateFolderInEditor}
-                    aria-label="Nueva carpeta"
-                    title="Nueva carpeta"
-                  >
-                    <FiFolderPlus />
-                  </button>
-                </span>
-              </div>
-              <div className={style.inspectorRow}>
-                {fechaNotaLabel ? (
-                  <span className={style.editorDate} title="Fecha de la nota">
-                    {fechaNotaLabel}
-                  </span>
-                ) : null}
-                {MOSTRAR_REPASO ? (
-                  <button
-                    type="button"
-                    className={style.iconButton}
-                    onClick={() => {
-                      setDeckScope("note");
-                      setIsDeckOpen(true);
-                    }}
-                    aria-label="Flashcards de esta nota"
-                    title="Flashcards de esta nota"
-                  >
-                    <FiLayers />
-                    {dueCountNote ? (
-                      <span className={style.iconBadge}>{dueCountNote}</span>
-                    ) : null}
-                  </button>
-                ) : null}
-              </div>
-            </section>
 
             <section className={style.inspectorSection}>
               <h4 className={style.inspectorTitle}>Texto</h4>
