@@ -4478,6 +4478,19 @@ button.folderItem {
      el alto de la toolbar y de la barra de páginas. */
   .page:has(.layoutEditing) {
     padding-bottom: 0.7rem;
+    /* LA CAUSA de que el panel de la derecha no siguiera el scroll (se
+       perdía por completo, no solo se cortaba): .page tiene
+       "overflow-x: hidden" para no scrollear de más a lo ancho, pero por
+       una regla del propio CSS, si un eje es "hidden" y el otro no se
+       especifica, el navegador computa el otro como "auto". Eso convierte
+       a .page en un "contenedor de scroll" — aunque nunca muestre su
+       propia barra (crece sin límite, nunca desborda) — y ESO ROMPE
+       position:sticky de todo lo que está adentro, porque el sticky pasa
+       a calcularse contra un contenedor que nunca se mueve, en vez de
+       contra la ventana real. Acá, solo mientras editás una nota,
+       devolvemos overflow visible para que el panel vuelva a pegarse a
+       la ventana de verdad. */
+    overflow-x: visible;
   }
 
   .layout.layoutEditing .editorCard {
