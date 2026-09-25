@@ -5420,3 +5420,68 @@ button.folderItem {
 .editorWorkspace .pageTabAdd::before {
   border-radius: 10px 10px 0 0;
 }
+
+/* ===== Más herramientas de texto ===== */
+
+/* Estilos de numeración (clase ql-liststyle-* en el <li>; el número lo pone
+   el CSS con los mismos contadores que usa Quill) */
+.editor :global(.ql-editor li[data-list="ordered"].ql-liststyle-paren > .ql-ui::before) {
+  content: counter(list-0, decimal) ") ";
+}
+.editor :global(.ql-editor li[data-list="ordered"].ql-liststyle-dash > .ql-ui::before) {
+  content: counter(list-0, decimal) "- ";
+}
+.editor :global(.ql-editor li[data-list="ordered"].ql-liststyle-alpha > .ql-ui::before) {
+  content: counter(list-0, lower-alpha) ". ";
+}
+.editor :global(.ql-editor li[data-list="ordered"].ql-liststyle-roman > .ql-ui::before) {
+  content: counter(list-0, lower-roman) ". ";
+}
+/* Con sangría (listas anidadas) cada nivel usa su propio contador */
+.editor :global(.ql-editor li[data-list="ordered"].ql-indent-1.ql-liststyle-paren > .ql-ui::before) { content: counter(list-1, decimal) ") "; }
+.editor :global(.ql-editor li[data-list="ordered"].ql-indent-1.ql-liststyle-dash > .ql-ui::before) { content: counter(list-1, decimal) "- "; }
+.editor :global(.ql-editor li[data-list="ordered"].ql-indent-1.ql-liststyle-alpha > .ql-ui::before) { content: counter(list-1, lower-alpha) ". "; }
+.editor :global(.ql-editor li[data-list="ordered"].ql-indent-1.ql-liststyle-roman > .ql-ui::before) { content: counter(list-1, lower-roman) ". "; }
+.editor :global(.ql-editor li[data-list="ordered"].ql-indent-2.ql-liststyle-paren > .ql-ui::before) { content: counter(list-2, decimal) ") "; }
+.editor :global(.ql-editor li[data-list="ordered"].ql-indent-2.ql-liststyle-dash > .ql-ui::before) { content: counter(list-2, decimal) "- "; }
+.editor :global(.ql-editor li[data-list="ordered"].ql-indent-2.ql-liststyle-alpha > .ql-ui::before) { content: counter(list-2, lower-alpha) ". "; }
+.editor :global(.ql-editor li[data-list="ordered"].ql-indent-2.ql-liststyle-roman > .ql-ui::before) { content: counter(list-2, lower-roman) ". "; }
+
+/* Línea separadora */
+.editor :global(.ql-editor hr) {
+  margin: 0.9em 0;
+  border: none;
+  border-top: 1px solid rgba(17, 24, 20, 0.22);
+}
+
+.notePaper.color11 .editor :global(.ql-editor hr) {
+  border-top-color: rgba(255, 255, 255, 0.24);
+}
+
+/* Enlaces dentro de la nota */
+.editor :global(.ql-editor a) {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.notePaper.color11 .editor :global(.ql-editor a) {
+  color: #8ab4ff;
+}
+
+/* Botones de estilo de numeración: texto chico, todos del mismo ancho */
+.inspector .numberingButton .toolbarText {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.inspector .clearFormatText {
+  font-size: 0.7rem;
+  text-decoration: line-through;
+}
+
+.inspector .toolbarButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

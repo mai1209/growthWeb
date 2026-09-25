@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   FiAlignCenter,
+  FiAlignJustify,
   FiAlignLeft,
   FiImage,
   FiAlignRight,
@@ -10,6 +11,8 @@ import {
   FiArrowLeft,
   FiChevronLeft,
   FiChevronRight,
+  FiChevronsLeft,
+  FiChevronsRight,
   FiCheckSquare,
   FiCode,
   FiEdit2,
@@ -21,6 +24,7 @@ import {
   FiItalic,
   FiLayers,
   FiBookOpen,
+  FiLink,
   FiList,
   FiMaximize2,
   FiMinimize2,
@@ -52,6 +56,50 @@ import style from "../style/TaskStudio.module.css";
 const SizeStyle = Quill.import("attributors/style/size");
 SizeStyle.whitelist = null; // permitir cualquier valor en px
 Quill.register(SizeStyle, true);
+
+// Estilo de numeración de las listas ordenadas: 1. (default) / 1) / 1- / a. / i.
+// Es una clase en el <li> (ql-liststyle-xxx); el número lo dibuja el CSS.
+const Parchment = Quill.import("parchment");
+const ListStyleClass = new Parchment.ClassAttributor("liststyle", "ql-liststyle", {
+  scope: Parchment.Scope.BLOCK,
+  whitelist: ["paren", "dash", "alpha", "roman"],
+});
+Quill.register(ListStyleClass, true);
+
+// Línea separadora (<hr>) como bloque embebido.
+const BlockEmbed = Quill.import("blots/block/embed");
+class DividerBlot extends BlockEmbed {}
+DividerBlot.blotName = "divider";
+DividerBlot.tagName = "hr";
+Quill.register(DividerBlot, true);
+
+const NUMBERING_STYLES = [
+  { value: "", label: "1.", title: "Números con punto" },
+  { value: "paren", label: "1)", title: "Números con paréntesis" },
+  { value: "dash", label: "1-", title: "Números con guion" },
+  { value: "alpha", label: "a.", title: "Letras" },
+  { value: "roman", label: "i.", title: "Números romanos" },
+];
+
+// Pide una URL y la aplica como enlace a la selección (o lo quita si ya hay uno).
+const promptLinkFor = (quill) => {
+  const range = quill.getSelection(true);
+  if (!range) return;
+  const formats = quill.getFormat(range);
+  if (formats.link) {
+    quill.format("link", false, "user");
+    return;
+  }
+  if (range.length === 0) {
+    window.alert("Seleccioná el texto que querés convertir en enlace.");
+    return;
+  }
+  const url = window.prompt("Pegá el enlace (URL):", "https://");
+  if (!url || url.trim() === "" || url.trim() === "https://") return;
+  const clean = url.trim();
+  const withProto = /^(https?:\/\/|mailto:|tel:)/i.test(clean) ? clean : `https://${clean}`;
+  quill.format("link", withProto, "user");
+};
 
 const MIN_FONT_PX = 8;
 const MAX_FONT_PX = 96;
@@ -478,6 +526,10 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     header: formats.header || false,
     italic: Boolean(formats.italic),
     orderedList: formats.list === "ordered",
+    listStyle: formats.liststyle || "",
+    indent: Number(formats.indent) || 0,
+    link: Boolean(formats.link),
+    script: formats.script || "",
     checkList: formats.list === "checked" || formats.list === "unchecked",
     strike: Boolean(formats.strike),
     size: formats.size || "",
@@ -780,6 +832,12 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
         });
     };
     quill.root.addEventListener("paste", handleImagePaste, true);
+
+    // Cmd/Ctrl+K: enlace, como en cualquier procesador de texto.
+    quill.keyboard.addBinding({ key: "k", shortKey: true }, () => {
+      promptLinkFor(quill);
+      return false;
+    });
 
     quill.on("text-change", handleTextChange);
     quill.on("selection-change", handleSelectionChange);
@@ -1332,6 +1390,84 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     }
 
     quill.format(format, value);
+  };
+
+  // Estilo de numeración: convierte la línea en lista numerada si no lo es
+  // y le pone el estilo elegido ("" = 1. por defecto).
+  const setNumberingStyle = (value) => {
+    if (!quillRef.current) return;
+    const quill = quillRef.current;
+    const range = getEditorRange();
+    quill.focus();
+    if (range) {
+      quill.setSelection(range);
+      selectionRef.current = range;
+    }
+    const formats = quill.getFormat(range || quill.getSelection(true) || { index: 0, length: 0 });
+    if (formats.list !== "ordered") quill.format("list", "ordered", "user");
+    quill.format("liststyle", value || false, "user");
+  };
+
+  // Sangría: +1 / -1 nivel (también sirve para anidar listas).
+  const changeIndent = (delta) => {
+    if (!quillRef.current) return;
+    const quill = quillRef.current;
+    const range = getEditorRange();
+    quill.focus();
+    if (range) {
+      quill.setSelection(range);
+      selectionRef.current = range;
+    }
+    quill.format("indent", delta > 0 ? "+1" : "-1", "user");
+  };
+
+  const toggleLink = () => {
+    if (!quillRef.current) return;
+    const quill = quillRef.current;
+    const range = getEditorRange();
+    quill.focus();
+    if (range) {
+      quill.setSelection(range);
+      selectionRef.current = range;
+    }
+    promptLinkFor(quill);
+  };
+
+  // Subíndice / superíndice (toggle).
+  const toggleScript = (value) => {
+    if (!quillRef.current) return;
+    const quill = quillRef.current;
+    const range = getEditorRange();
+    quill.focus();
+    if (range) {
+      quill.setSelection(range);
+      selectionRef.current = range;
+    }
+    const formats = quill.getFormat(range || { index: 0, length: 0 });
+    quill.format("script", formats.script === value ? false : value, "user");
+  };
+
+  // Limpiar formato de la selección (negrita, color, tamaño, listas, etc.).
+  const clearFormatting = () => {
+    if (!quillRef.current) return;
+    const quill = quillRef.current;
+    const range = getEditorRange();
+    quill.focus();
+    if (!range || range.length === 0) return;
+    quill.setSelection(range);
+    selectionRef.current = range;
+    quill.removeFormat(range.index, range.length, "user");
+  };
+
+  // Línea separadora en el lugar del cursor.
+  const insertDivider = () => {
+    if (!quillRef.current) return;
+    const quill = quillRef.current;
+    quill.focus();
+    const range = quill.getSelection(true) || { index: quill.getLength() - 1, length: 0 };
+    quill.insertText(range.index, "\n", "user");
+    quill.insertEmbed(range.index + 1, "divider", true, "user");
+    quill.setSelection(range.index + 2, 0, "silent");
   };
 
   const applyAlign = (value) => {
@@ -2596,6 +2732,46 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   >
                     <FiCheckSquare />
                   </button>
+                  <button
+                    type="button"
+                    className={style.toolbarButton}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => changeIndent(-1)}
+                    disabled={!activeFormats.indent}
+                    aria-label="Quitar sangría"
+                    title="Quitar sangría (Shift+Tab)"
+                  >
+                    <FiChevronsLeft />
+                  </button>
+                  <button
+                    type="button"
+                    className={style.toolbarButton}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => changeIndent(1)}
+                    aria-label="Aumentar sangría"
+                    title="Aumentar sangría (Tab)"
+                  >
+                    <FiChevronsRight />
+                  </button>
+                </div>
+
+                {/* Estilo de la numeración: 1. / 1) / 1- / a. / i. */}
+                <div className={`${style.toolGroup} ${style.numberingGroup}`} role="group" aria-label="Estilo de numeración">
+                  {NUMBERING_STYLES.map((opt) => (
+                    <button
+                      key={opt.value || "dot"}
+                      type="button"
+                      className={`${style.toolbarButton} ${style.numberingButton} ${
+                        activeFormats.orderedList && activeFormats.listStyle === opt.value ? style.toolbarButtonActive : ""
+                      }`}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => setNumberingStyle(opt.value)}
+                      aria-label={opt.title}
+                      title={opt.title}
+                    >
+                      <span className={style.toolbarText}>{opt.label}</span>
+                    </button>
+                  ))}
                 </div>
 
                 <div className={style.toolGroup} role="group" aria-label="Bloques">
@@ -2661,6 +2837,69 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     title="Alinear derecha"
                   >
                     <FiAlignRight />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.align === "justify" ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyAlign("justify")}
+                    aria-label="Justificar"
+                    title="Justificar"
+                  >
+                    <FiAlignJustify />
+                  </button>
+                </div>
+
+                <div className={style.toolGroup} role="group" aria-label="Más herramientas">
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.link ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={toggleLink}
+                    aria-label="Enlace"
+                    title="Enlace (Cmd+K) · si ya hay uno, lo quita"
+                  >
+                    <FiLink />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.script === "super" ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => toggleScript("super")}
+                    aria-label="Superíndice"
+                    title="Superíndice"
+                  >
+                    <span className={style.toolbarText}>x²</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`${style.toolbarButton} ${activeFormats.script === "sub" ? style.toolbarButtonActive : ""}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => toggleScript("sub")}
+                    aria-label="Subíndice"
+                    title="Subíndice"
+                  >
+                    <span className={style.toolbarText}>x₂</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={style.toolbarButton}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={insertDivider}
+                    aria-label="Línea separadora"
+                    title="Línea separadora"
+                  >
+                    <span className={style.toolbarText}>─</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={style.toolbarButton}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={clearFormatting}
+                    aria-label="Limpiar formato"
+                    title="Limpiar formato de la selección"
+                  >
+                    <span className={`${style.toolbarText} ${style.clearFormatText}`}>Tx</span>
                   </button>
                 </div>
               </div>
