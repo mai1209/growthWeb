@@ -428,7 +428,7 @@
 }
 
 .drawerHeader {
-  padding: 1.5rem;
+  padding: 1.1rem 1.5rem 0.7rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -465,12 +465,14 @@
 }
 
 /* Panel Dashboard (mobile): scrollea y deja aire abajo para que el último
-   botón ("Quiero apoyar") no quede tapado por el borde/home-indicator. */
+   botón ("Quiero apoyar") no quede tapado por el borde/home-indicator.
+   Menos padding arriba (queda pegado al header) y a los costados (todo el
+   contenido, como el switch ARS/USD/Deudas/Ahorros, se ve más ancho). */
 .panelContent {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 1rem 1rem calc(2rem + env(safe-area-inset-bottom, 0px));
+  padding: 0.6rem 0.65rem calc(2rem + env(safe-area-inset-bottom, 0px));
 }
 
 .profileMenuMobile {

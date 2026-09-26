@@ -2337,14 +2337,16 @@
     grid-column: 2;
     grid-row: 2;
     min-width: 0;
-    justify-self: start;
+    /* Se deja en "stretch" (default): así ocupa el ancho real de su
+       columna y el texto largo trunca con puntos suspensivos, en vez de
+       crecer a lo ancho de su contenido y pisar la celda de al lado
+       (eso pasaba antes con justify-self:start). */
   }
 
   .tblCellMethod {
     grid-column: 3;
     grid-row: 2;
     min-width: 0;
-    justify-self: start;
   }
 
   .tblActions {
@@ -2354,6 +2356,9 @@
   }
 
   .tblPill {
+    /* inline-flex no llena el ancho del contenedor solo: hay que pedírselo
+       para que .tblPillText tenga un límite real contra el que truncar. */
+    width: 100%;
     max-width: 100%;
     height: 24px;
     padding: 0 0.45rem;
