@@ -2434,6 +2434,40 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                       ) : null}
                     </button>
                   ) : null}
+                  {saveStatus === "error" ? (
+                    <button
+                      type="button"
+                      className={`${style.unsavedBadge} ${style.retryBadge}`}
+                      onClick={guardarAhora}
+                      title="Volver a intentar guardar"
+                    >
+                      <span className={style.unsavedDot} />
+                      No se guardó · reintentar
+                    </button>
+                  ) : isDirty || saving ? (
+                    <span className={`${style.unsavedBadge} ${style.savingBadge}`}>
+                      <span className={style.unsavedDot} />
+                      Guardando…
+                    </span>
+                  ) : form.id ? (
+                    <span className={style.savedBadge}>
+                      <span className={style.savedDot} />
+                      Guardado
+                    </span>
+                  ) : (
+                    <span className={style.savedBadge} style={{ opacity: 0.6 }}>
+                      Se guarda solo
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    className={`${style.iconButton} ${style.closeEditorBtn}`}
+                    onClick={handleCloseEditor}
+                    aria-label="Cerrar nota"
+                    title="Cerrar nota"
+                  >
+                    <FiX />
+                  </button>
                 </div>
               </div>
 
@@ -2579,37 +2613,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
 
           {/* Panel lateral estilo inspector (Figma): info de la nota, páginas y herramientas por secciones */}
           <aside className={style.inspector} aria-label="Panel de la nota">
-            <div className={style.inspectorTop}>
-                {saveStatus === "error" ? (
-                  <button
-                    type="button"
-                    className={`${style.unsavedBadge} ${style.retryBadge}`}
-                    onClick={guardarAhora}
-                    title="Volver a intentar guardar"
-                  >
-                    <span className={style.unsavedDot} />
-                    No se guardó · reintentar
-                  </button>
-                ) : isDirty || saving ? (
-                  <span className={`${style.unsavedBadge} ${style.savingBadge}`}>
-                    <span className={style.unsavedDot} />
-                    Guardando…
-                  </span>
-                ) : form.id ? (
-                  <span className={style.savedBadge}>
-                    <span className={style.savedDot} />
-                    Guardado
-                  </span>
-                ) : (
-                  <span className={style.savedBadge} style={{ opacity: 0.6 }}>
-                    Se guarda solo
-                  </span>
-                )}
-                <button type="button" className={`${style.iconButton} ${style.closeEditorBtn}`} onClick={handleCloseEditor} aria-label="Cerrar nota" title="Cerrar nota">
-                  <FiX />
-                </button>
-            </div>
-
             <section className={style.inspectorSection}>
               <h4 className={style.inspectorTitle}>Texto</h4>
               <div className={style.editorToolbar} role="toolbar" aria-label="Herramientas de texto">

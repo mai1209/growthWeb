@@ -4671,15 +4671,6 @@ button.folderItem {
   }
 }
 
-.inspectorTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.45rem 0 0.65rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
 .inspectorSection {
   display: flex;
   flex-direction: column;
@@ -4861,12 +4852,6 @@ button.folderItem {
     margin-bottom: 0.6rem;
   }
 
-  .inspectorTop {
-    position: sticky;
-    top: 0;
-    z-index: 8;
-    background: inherit;
-  }
 }
 
 /* Páginas: pestañas arriba de la hoja, estilo navegador (lápiz, tachito y +
@@ -4874,12 +4859,27 @@ button.folderItem {
 /* Título, carpeta y fecha de la nota: fila compacta arriba de la hoja, en
    el flujo normal de la página (NO en el panel fijo de la derecha). Así el
    panel de herramientas queda corto y entra siempre en pantalla. */
+/* Barra fija arriba de la hoja: título + editar + favorita + carpeta +
+   fecha + estado de guardado + cerrar, todo junto y siempre a la vista
+   (antes "Guardado"/cerrar vivían arriba del todo, lejos del título, y no
+   quedaba claro que esa X cerraba la nota). El título ocupa el lugar
+   sobrante y empuja el resto a la derecha; si no entra todo, pasa a una
+   segunda línea en vez de recortarse. */
 .noteMetaHeader {
-  display: grid;
-  gap: 0.35rem;
+  position: sticky;
+  top: 0.7rem;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.7rem;
   width: 100%;
-  padding: 0 0 0.55rem 4px;
+  margin: 0 0 0.6rem;
+  padding: 0.5rem 0.3rem 0.5rem 4px;
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--border-color);
 }
+
 
 .noteMetaRow {
   display: flex;
