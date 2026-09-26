@@ -1068,8 +1068,20 @@
     align-items: stretch;
   }
 
+  /* Bug: "flex: 1 1 240px" define el ANCHO en fila, pero acá el compositor
+     pasa a columna y esos 240px pasan a ser la ALTURA — el input quedaba
+     gigante. En columna no necesita crecer, solo ocupar el ancho. */
+  .composerV2Input {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
   .swatchRowV2 {
     justify-content: center;
+  }
+
+  .headTitle {
+    font-size: 1.35rem;
   }
 }
 
