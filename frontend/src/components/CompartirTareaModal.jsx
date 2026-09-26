@@ -40,7 +40,14 @@ const fila = {
   padding: "0.4rem 0",
 };
 
-export default function CompartirTareaModal({ task, onClose, onCambio }) {
+export default function CompartirTareaModal({
+  task,
+  onClose,
+  onCambio,
+  titulo = "Compartir tarea",
+  descripcion = "Buscá a la persona por su @usuario. Cuando acepte, van a ver y completar esta tarea los dos.",
+  vacio = "Todavía no compartiste esta tarea",
+}) {
   const [q, setQ] = useState("");
   const [resultados, setResultados] = useState([]);
   const [buscando, setBuscando] = useState(false);
@@ -105,11 +112,11 @@ export default function CompartirTareaModal({ task, onClose, onCambio }) {
   });
 
   return (
-    <Modal titulo="Compartir tarea" onClose={onClose}>
+    <Modal titulo={titulo} onClose={onClose}>
       <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.9rem" }}>
         <div style={{ color: "var(--color-text)", fontSize: "1.05rem", fontWeight: 800 }}>{task.meta}</div>
         <p style={{ color: "var(--color-muted)", fontSize: "0.85rem", lineHeight: 1.45, margin: 0 }}>
-          Buscá a la persona por su @usuario. Cuando acepte, van a ver y completar esta tarea los dos.
+          {descripcion}
         </p>
 
         <div
@@ -195,7 +202,7 @@ export default function CompartirTareaModal({ task, onClose, onCambio }) {
             marginTop: "0.2rem",
           }}
         >
-          {colaboradores.length > 0 ? "Colaboradores" : "Todavía no compartiste esta tarea"}
+          {colaboradores.length > 0 ? "Colaboradores" : vacio}
         </div>
         {colaboradores.map((c) => (
           <div key={c.id} style={fila}>

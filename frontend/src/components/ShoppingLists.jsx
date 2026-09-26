@@ -4,14 +4,17 @@ import {
   FiArrowRight,
   FiCheck,
   FiList,
+  FiLogOut,
   FiMoreVertical,
   FiPlus,
   FiTrash2,
   FiShoppingCart,
+  FiUsers,
   FiX,
 } from "react-icons/fi";
 import { taskService } from "../api";
 import InputMonto from "./InputMonto";
+import CompartirTareaModal from "./CompartirTareaModal";
 import style from "../style/ShoppingLists.module.css";
 
 const LIST_COLORS = [
@@ -67,6 +70,8 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
   const [sortBy, setSortBy] = useState("recientes"); // orden del board
   const [menuId, setMenuId] = useState(null); // card con el menú ⋮ abierto
   const [composerFlash, setComposerFlash] = useState(false); // resaltado del compositor
+  const [compartirList, setCompartirList] = useState(null); // lista con el modal de compartir abierto
+  const [invitaciones, setInvitaciones] = useState([]); // invitaciones pendientes a listas de otros
   const composerInputRef = useRef(null);
   const flashTimer = useRef(null);
 
@@ -110,7 +115,46 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
     } finally {
       setLoading(false);
     }
+    // Invitaciones a listas compartidas (solo las de tipo shopping; las de
+    // tareas se ven en Tareas).
+    taskService
+      .invitaciones()
+      .then(({ data }) => setInvitaciones((data?.invitaciones || []).filter((i) => i.tipo === "shopping")))
+      .catch(() => {});
   }, [activeWorkspace]);
+
+  const aceptarInvitacion = async (inv) => {
+    setInvitaciones((prev) => prev.filter((x) => x.id !== inv.id));
+    try {
+      await taskService.aceptarInvitacion(inv.id);
+    } catch {
+      /* no-op */
+    }
+    fetchLists();
+  };
+
+  const rechazarInvitacion = async (inv) => {
+    setInvitaciones((prev) => prev.filter((x) => x.id !== inv.id));
+    try {
+      await taskService.salir(inv.id);
+    } catch {
+      /* no-op */
+    }
+  };
+
+  // Dejar de colaborar en una lista que compartieron conmigo.
+  const handleLeaveList = async (listId) => {
+    if (!window.confirm("¿Dejar de colaborar en esta lista? Va a desaparecer de tus listas.")) return;
+    const snapshot = lists;
+    if (openListId === listId) setOpenListId(null);
+    setLists((prev) => prev.filter((list) => list._id !== listId));
+    try {
+      await taskService.salir(listId);
+    } catch {
+      setError("No se pudo salir de la lista.");
+      setLists(snapshot);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -253,6 +297,20 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
         onToggleItem={(itemId) => handleToggleItem(openList._id, itemId)}
         onDeleteItem={(itemId) => handleDeleteItem(openList._id, itemId)}
         onDeleteList={() => handleDeleteList(openList._id)}
+        onLeaveList={() => handleLeaveList(openList._id)}
+        onShare={() => setCompartirList(openList)}
+        shareModal={
+          compartirList ? (
+            <CompartirTareaModal
+              task={compartirList}
+              titulo="Compartir lista"
+              descripcion="Buscá a la persona por su @usuario. Cuando acepte, van a ver y tildar esta lista los dos."
+              vacio="Todavía no compartiste esta lista"
+              onClose={() => setCompartirList(null)}
+              onCambio={fetchLists}
+            />
+          ) : null
+        }
         onClearDone={() => handleClearDone(openList._id)}
         onSetPrice={(itemId, precio, cantidad) =>
           handleSetPrice(openList._id, itemId, precio, cantidad)
@@ -351,6 +409,25 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
             </select>
           </div>
 
+          {invitaciones.length > 0 ? (
+            <div className={style.invList}>
+              {invitaciones.map((inv) => (
+                <div key={inv.id} className={style.invCard}>
+                  <FiUsers className={style.invIcon} />
+                  <p className={style.invText}>
+                    <strong>{inv.de?.fullName || inv.de?.username || "Alguien"}</strong> te invitó a la lista “{inv.meta}”
+                  </p>
+                  <button type="button" className={style.invAceptar} onClick={() => aceptarInvitacion(inv)}>
+                    Aceptar
+                  </button>
+                  <button type="button" className={style.invRechazar} onClick={() => rechazarInvitacion(inv)} aria-label="Rechazar">
+                    <FiX />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
           <div className={style.boardV2}>
             {sortedLists.map((list) => (
               <PreviewCard
@@ -360,12 +437,28 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
                 onToggleMenu={() => setMenuId((prev) => (prev === list._id ? null : list._id))}
                 onOpen={() => setOpenListId(list._id)}
                 onDeleteList={() => handleDeleteList(list._id)}
+                onLeaveList={() => handleLeaveList(list._id)}
+                onShare={() => {
+                  setMenuId(null);
+                  setCompartirList(list);
+                }}
                 onToggleItem={(itemId) => handleToggleItem(list._id, itemId)}
               />
             ))}
           </div>
         </>
       )}
+
+      {compartirList ? (
+        <CompartirTareaModal
+          task={compartirList}
+          titulo="Compartir lista"
+          descripcion="Buscá a la persona por su @usuario. Cuando acepte, van a ver y tildar esta lista los dos."
+          vacio="Todavía no compartiste esta lista"
+          onClose={() => setCompartirList(null)}
+          onCambio={fetchLists}
+        />
+      ) : null}
     </div>
   );
 }
@@ -373,7 +466,8 @@ function ShoppingLists({ activeWorkspace = "personal" }) {
 // Tarjeta de vista previa: tinte del color de la lista, anillo de progreso,
 // primeros ítems tildeables, "Ver lista →" y menú ⋮.
 const PREVIEW_MAX = 4;
-function PreviewCard({ list, menuOpen, onToggleMenu, onOpen, onDeleteList, onToggleItem }) {
+function PreviewCard({ list, menuOpen, onToggleMenu, onOpen, onDeleteList, onLeaveList, onShare, onToggleItem }) {
+  const esDeOtro = list.soyOwner === false;
   const items = list.items || [];
   const doneCount = items.filter((it) => it.done).length;
   const pending = items.length - doneCount;
@@ -406,6 +500,11 @@ function PreviewCard({ list, menuOpen, onToggleMenu, onOpen, onDeleteList, onTog
       </header>
 
       <h3 className={style.cardV2Title}>{list.meta || "Sin título"}</h3>
+      {list.compartida ? (
+        <span className={style.cardV2Shared} title={esDeOtro ? `Lista de ${list.owner?.fullName || list.owner?.username || "otra persona"}` : "Compartida con otras personas"}>
+          <FiUsers /> {esDeOtro ? "Compartida conmigo" : "Compartida"}
+        </span>
+      ) : null}
       <p className={style.cardV2Meta}>
         {items.length
           ? `${items.length} ítem${items.length === 1 ? "" : "s"} · ${
@@ -468,9 +567,18 @@ function PreviewCard({ list, menuOpen, onToggleMenu, onOpen, onDeleteList, onTog
               <button type="button" onClick={onOpen}>
                 <FiArrowRight /> Abrir
               </button>
-              <button type="button" className={style.cardV2MenuDanger} onClick={onDeleteList}>
-                <FiTrash2 /> Eliminar
+              <button type="button" onClick={onShare}>
+                <FiUsers /> Compartir
               </button>
+              {esDeOtro ? (
+                <button type="button" className={style.cardV2MenuDanger} onClick={onLeaveList}>
+                  <FiLogOut /> Salir
+                </button>
+              ) : (
+                <button type="button" className={style.cardV2MenuDanger} onClick={onDeleteList}>
+                  <FiTrash2 /> Eliminar
+                </button>
+              )}
             </div>
           ) : null}
         </div>
@@ -489,11 +597,15 @@ function ListDetail({
   onToggleItem,
   onDeleteItem,
   onDeleteList,
+  onLeaveList,
+  onShare,
+  shareModal,
   onClearDone,
   onSetPrice,
   onSetCategoria,
 }) {
   const inputRef = useRef(null);
+  const esDeOtro = list.soyOwner === false;
   const items = list.items || [];
   const doneCount = items.filter((it) => it.done).length;
   const acc = accentOf(list.color);
@@ -595,16 +707,45 @@ function ListDetail({
                 : "Anotá lo que necesites comprar."}
             </p>
           </div>
-          <button
-            type="button"
-            className={style.deleteListBtn}
-            onClick={onDeleteList}
-            aria-label="Eliminar lista"
-            title="Eliminar lista"
-          >
-            <FiTrash2 />
-          </button>
+          <div className={style.detailV2Actions}>
+            {list.compartida ? (
+              <span className={style.cardV2Shared}>
+                <FiUsers /> {esDeOtro ? "Compartida conmigo" : "Compartida"}
+              </span>
+            ) : null}
+            <button
+              type="button"
+              className={style.deleteListBtn}
+              onClick={onShare}
+              aria-label="Compartir lista"
+              title="Compartir lista con otro usuario"
+            >
+              <FiUsers />
+            </button>
+            {esDeOtro ? (
+              <button
+                type="button"
+                className={style.deleteListBtn}
+                onClick={onLeaveList}
+                aria-label="Salir de la lista"
+                title="Dejar de colaborar en esta lista"
+              >
+                <FiLogOut />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className={style.deleteListBtn}
+                onClick={onDeleteList}
+                aria-label="Eliminar lista"
+                title="Eliminar lista"
+              >
+                <FiTrash2 />
+              </button>
+            )}
+          </div>
         </header>
+        {shareModal}
 
         {/* Barra de agregar: ítem + categoría + filtro */}
         <form className={style.addRowV2} onSubmit={submitItem}>

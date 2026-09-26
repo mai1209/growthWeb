@@ -380,7 +380,8 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
       // Invitaciones a tareas compartidas (banner de arriba).
       taskService
         .invitaciones()
-        .then(({ data }) => setInvitaciones(data?.invitaciones || []))
+        // Las invitaciones a listas de compras se muestran en Compras, no acá.
+        .then(({ data }) => setInvitaciones((data?.invitaciones || []).filter((i) => i.tipo !== "shopping")))
         .catch(() => {});
     } catch (err) {
       setError("No se pudieron cargar las tareas.");
