@@ -22,6 +22,7 @@ import Svg, { Circle } from "react-native-svg";
 import { taskService } from "../api";
 import { useTheme } from "../theme";
 import MoneyInput from "./MoneyInput";
+import CompartirTareaModal from "./CompartirTareaModal";
 
 const LIST_COLORS = ["color1", "color4", "color3", "color5", "color7", "color6", "color2"];
 
@@ -94,6 +95,8 @@ export default function ShoppingListsPanel({ visible, onClose }) {
   const [creating, setCreating] = useState(false);
   const [openListId, setOpenListId] = useState(null);
   const [draft, setDraft] = useState("");
+  const [compartirList, setCompartirList] = useState(null); // lista con el modal de compartir abierto
+  const [invitaciones, setInvitaciones] = useState([]); // invitaciones a listas de otros
   const listsRef = useRef(lists);
 
   useEffect(() => {
@@ -113,7 +116,53 @@ export default function ShoppingListsPanel({ visible, onClose }) {
     } finally {
       setLoading(false);
     }
+    // Invitaciones a listas compartidas (solo tipo shopping; las de tareas van en Tareas).
+    taskService
+      .invitaciones()
+      .then(({ data }) => setInvitaciones((data?.invitaciones || []).filter((i) => i.tipo === "shopping")))
+      .catch(() => {});
   }, []);
+
+  const aceptarInvitacion = async (inv) => {
+    setInvitaciones((prev) => prev.filter((x) => x.id !== inv.id));
+    try {
+      await taskService.aceptarInvitacion(inv.id);
+    } catch {
+      /* no-op */
+    }
+    fetchLists();
+  };
+
+  const rechazarInvitacion = async (inv) => {
+    setInvitaciones((prev) => prev.filter((x) => x.id !== inv.id));
+    try {
+      await taskService.salir(inv.id);
+    } catch {
+      /* no-op */
+    }
+  };
+
+  // Dejar de colaborar en una lista que compartieron conmigo.
+  const handleLeaveList = (list) => {
+    Alert.alert("Salir de la lista", `¿Dejar de colaborar en "${list.meta || "esta lista"}"? Va a desaparecer de tus listas.`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Salir",
+        style: "destructive",
+        onPress: async () => {
+          const snapshot = listsRef.current;
+          if (openListId === list._id) setOpenListId(null);
+          setLists((prev) => prev.filter((l) => l._id !== list._id));
+          try {
+            await taskService.salir(list._id);
+          } catch {
+            setError("No se pudo salir de la lista.");
+            setLists(snapshot);
+          }
+        },
+      },
+    ]);
+  };
 
   useEffect(() => {
     if (!visible) return;
@@ -267,6 +316,8 @@ export default function ShoppingListsPanel({ visible, onClose }) {
               onToggleItem={(id) => handleToggleItem(openList._id, id)}
               onDeleteItem={(id) => handleDeleteItem(openList._id, id)}
               onDeleteList={() => handleDeleteList(openList._id)}
+              onLeaveList={() => handleLeaveList(openList)}
+              onShare={() => setCompartirList(openList)}
               onClearDone={() => handleClearDone(openList._id)}
               onSetPrice={(id, precio, cantidad) =>
                 handleSetPrice(openList._id, id, precio, cantidad)
@@ -325,6 +376,23 @@ export default function ShoppingListsPanel({ visible, onClose }) {
                 </View>
               </View>
 
+              {invitaciones.map((inv) => (
+                <View key={inv.id} style={styles.invCard}>
+                  <Ionicons name="people" size={20} color={colors.greenBright} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.invTitulo} numberOfLines={2}>
+                      {inv.de?.fullName || inv.de?.username || "Alguien"} te invitó a la lista “{inv.meta}”
+                    </Text>
+                  </View>
+                  <TouchableOpacity style={styles.invAceptar} onPress={() => aceptarInvitacion(inv)} hitSlop={6}>
+                    <Text style={styles.invAceptarTxt}>Aceptar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => rechazarInvitacion(inv)} hitSlop={8}>
+                    <Ionicons name="close" size={20} color={colors.muted} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+
               {loading ? (
                 <ActivityIndicator color={colors.green} style={{ marginTop: 24 }} />
               ) : lists.length === 0 ? (
@@ -348,6 +416,8 @@ export default function ShoppingListsPanel({ visible, onClose }) {
                       styles={styles}
                       list={list}
                       onOpen={() => setOpenListId(list._id)}
+                      onShare={() => setCompartirList(list)}
+                      onLeaveList={() => handleLeaveList(list)}
                       onDeleteList={() => handleDeleteList(list._id)}
                       onToggleItem={(id) => handleToggleItem(list._id, id)}
                     />
@@ -357,13 +427,24 @@ export default function ShoppingListsPanel({ visible, onClose }) {
             </ScrollView>
           )}
         </KeyboardAvoidingView>
+
+        {compartirList ? (
+          <CompartirTareaModal
+            task={compartirList}
+            titulo="Compartir lista"
+            descripcion="Buscá a la persona por su @usuario. Cuando acepte, van a ver y tildar esta lista los dos."
+            vacio="Todavía no compartiste esta lista"
+            onClose={() => setCompartirList(null)}
+            onCambio={fetchLists}
+          />
+        ) : null}
       </View>
     </Modal>
   );
 }
 
 const PREVIEW_MAX = 4;
-function PreviewCard({ colors, isDark, styles, list, onOpen, onDeleteList, onToggleItem }) {
+function PreviewCard({ colors, isDark, styles, list, onOpen, onDeleteList, onToggleItem, onShare, onLeaveList }) {
   const items = list.items || [];
   const doneCount = items.filter((it) => it.done).length;
   const pending = items.length - doneCount;
@@ -394,6 +475,14 @@ function PreviewCard({ colors, isDark, styles, list, onOpen, onDeleteList, onTog
       <Text style={styles.previewTitle} numberOfLines={1}>
         {list.meta || "Sin título"}
       </Text>
+      {list.compartida ? (
+        <View style={styles.compartidaChip}>
+          <Ionicons name="people" size={11} color="#16241d" />
+          <Text style={styles.compartidaChipTxt}>
+            {list.soyOwner === false ? "Compartida conmigo" : "Compartida"}
+          </Text>
+        </View>
+      ) : null}
       <Text style={styles.previewMeta}>
         {items.length
           ? `${items.length} ítem${items.length === 1 ? "" : "s"} · ${
@@ -432,9 +521,20 @@ function PreviewCard({ colors, isDark, styles, list, onOpen, onDeleteList, onTog
           <Text style={[styles.previewOpenText, { color: acc }]}>Ver lista</Text>
           <Ionicons name="arrow-forward" size={15} color={acc} />
         </View>
-        <TouchableOpacity style={styles.trashBtn} onPress={onDeleteList} hitSlop={8}>
-          <Ionicons name="trash-outline" size={17} color={colors.muted} />
-        </TouchableOpacity>
+        <View style={styles.previewActions}>
+          <TouchableOpacity style={styles.trashBtn} onPress={onShare} hitSlop={8} accessibilityLabel="Compartir lista">
+            <Ionicons name="people-outline" size={17} color={colors.muted} />
+          </TouchableOpacity>
+          {list.soyOwner === false ? (
+            <TouchableOpacity style={styles.trashBtn} onPress={onLeaveList} hitSlop={8} accessibilityLabel="Salir de la lista">
+              <Ionicons name="exit-outline" size={17} color={colors.muted} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.trashBtn} onPress={onDeleteList} hitSlop={8} accessibilityLabel="Eliminar lista">
+              <Ionicons name="trash-outline" size={17} color={colors.muted} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -450,6 +550,8 @@ function ListDetail({
   onToggleItem,
   onDeleteItem,
   onDeleteList,
+  onLeaveList,
+  onShare,
   onClearDone,
   onSetPrice,
 }) {
@@ -505,10 +607,29 @@ function ListDetail({
                   }`
                 : "Anotá lo que necesites comprar."}
             </Text>
+            {list.compartida ? (
+              <View style={[styles.compartidaChip, { marginTop: 6 }]}>
+                <Ionicons name="people" size={11} color="#16241d" />
+                <Text style={styles.compartidaChipTxt}>
+                  {list.soyOwner === false ? "Compartida conmigo" : "Compartida"}
+                </Text>
+              </View>
+            ) : null}
           </View>
-          <TouchableOpacity style={styles.trashBtn} onPress={onDeleteList} hitSlop={8}>
-            <Ionicons name="trash-outline" size={19} color={colors.muted} />
-          </TouchableOpacity>
+          <View style={styles.previewActions}>
+            <TouchableOpacity style={styles.trashBtn} onPress={onShare} hitSlop={8} accessibilityLabel="Compartir lista">
+              <Ionicons name="people-outline" size={19} color={colors.muted} />
+            </TouchableOpacity>
+            {list.soyOwner === false ? (
+              <TouchableOpacity style={styles.trashBtn} onPress={onLeaveList} hitSlop={8} accessibilityLabel="Salir de la lista">
+                <Ionicons name="exit-outline" size={19} color={colors.muted} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.trashBtn} onPress={onDeleteList} hitSlop={8} accessibilityLabel="Eliminar lista">
+                <Ionicons name="trash-outline" size={19} color={colors.muted} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* Barra de agregar */}
@@ -755,6 +876,38 @@ const makeStyles = (colors, isDark) =>
     },
     previewOpen: { flexDirection: "row", alignItems: "center", gap: 5 },
     previewOpenText: { fontSize: 13.5, fontWeight: "800" },
+    previewActions: { flexDirection: "row", alignItems: "center", gap: 2 },
+    compartidaChip: {
+      alignSelf: "flex-start",
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      backgroundColor: "rgba(0,0,0,0.10)",
+      borderRadius: 999,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      marginBottom: 6,
+    },
+    compartidaChipTxt: { color: "#16241d", fontSize: 11.5, fontWeight: "800" },
+    invCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      padding: 12,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: "rgba(93,199,45,0.35)",
+      backgroundColor: "rgba(93,199,45,0.10)",
+      marginBottom: 10,
+    },
+    invTitulo: { color: colors.text, fontSize: 13.5, fontWeight: "700", lineHeight: 19 },
+    invAceptar: {
+      backgroundColor: colors.greenBright,
+      borderRadius: 999,
+      paddingVertical: 6,
+      paddingHorizontal: 14,
+    },
+    invAceptarTxt: { color: "#06210a", fontSize: 13, fontWeight: "800" },
     trashBtn: {
       width: 30,
       height: 30,

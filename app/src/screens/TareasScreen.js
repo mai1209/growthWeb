@@ -129,7 +129,8 @@ export default function TareasScreen() {
       // Invitaciones a tareas compartidas (para el banner de arriba).
       taskService
         .invitaciones()
-        .then(({ data }) => setInvitaciones(data?.invitaciones || []))
+        // Las de listas de compras se muestran en Compras, no acá.
+        .then(({ data }) => setInvitaciones((data?.invitaciones || []).filter((i) => i.tipo !== "shopping")))
         .catch(() => {});
       // Espeja las tareas pendientes de hoy al widget de iOS (App Group),
       // ordenadas por horario y con la hora que muestra el widget.

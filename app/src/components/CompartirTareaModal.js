@@ -38,7 +38,14 @@ function Avatar({ user, size = 40, colors }) {
   );
 }
 
-export default function CompartirTareaModal({ task, onClose, onCambio }) {
+export default function CompartirTareaModal({
+  task,
+  onClose,
+  onCambio,
+  titulo = "Compartir tarea",
+  descripcion = "Buscá a la persona por su @usuario. Cuando acepte, van a ver y completar esta tarea los dos.",
+  vacio = "Todavía no compartiste esta tarea",
+}) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
@@ -104,7 +111,7 @@ export default function CompartirTareaModal({ task, onClose, onCambio }) {
             <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.title} numberOfLines={1}>
-            Compartir tarea
+            {titulo}
           </Text>
           <View style={{ width: 24 }} />
         </View>
@@ -113,9 +120,7 @@ export default function CompartirTareaModal({ task, onClose, onCambio }) {
           <Text style={styles.tareaNombre} numberOfLines={2}>
             {task.meta}
           </Text>
-          <Text style={styles.ayuda}>
-            Buscá a la persona por su @usuario. Cuando acepte, van a ver y completar esta tarea los dos.
-          </Text>
+          <Text style={styles.ayuda}>{descripcion}</Text>
 
           <View style={styles.buscarWrap}>
             <Ionicons name="search" size={18} color={colors.muted} />
@@ -165,7 +170,7 @@ export default function CompartirTareaModal({ task, onClose, onCambio }) {
           ) : null}
 
           <Text style={styles.seccion}>
-            {colaboradores.length > 0 ? "Colaboradores" : "Todavía no compartiste esta tarea"}
+            {colaboradores.length > 0 ? "Colaboradores" : vacio}
           </Text>
           {colaboradores.map((c) => (
             <View key={c.id} style={styles.fila}>
