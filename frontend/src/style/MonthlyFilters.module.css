@@ -2370,6 +2370,20 @@
     width: 12px;
     height: 12px;
   }
+
+  /* Se saca el doble fondo: antes .listShell (la tarjeta grande con borde)
+     envolvía a cada movimiento (que ya tiene su propio fondo). Ahora solo
+     quedan los resultados con fondo, y al sacarle el padding a .list las
+     tarjetas usan el ancho que se liberó. */
+  .listShell {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .list {
+    padding: 0.4rem 0;
+  }
 }
 
 /* Deuda pendiente: el botón Pagar vive en la columna Método (la de acciones
