@@ -533,6 +533,36 @@
   .categoryRow {
     grid-template-columns: 1fr;
   }
+
+  /* Ranking: nombre + monto + % no entraban en una sola línea y se
+     cortaban. Pasa a 2 líneas: arriba el nombre a lo ancho, abajo el
+     monto y el % alineados a la derecha; el chip del puesto ocupa las
+     dos líneas de alto. */
+  .rankItemRow {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 0.7rem;
+    row-gap: 0.2rem;
+    padding: 0.6rem 0.7rem;
+  }
+
+  .rankChip {
+    grid-column: 1;
+    grid-row: 1 / 3;
+  }
+
+  .rankName {
+    grid-column: 2;
+    grid-row: 1;
+    white-space: normal;
+  }
+
+  .rankAmt {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+    font-size: 0.85rem;
+  }
 }
 
 /* ============================================================
@@ -747,11 +777,6 @@
   align-items: center;
   gap: 0.55rem;
   flex-wrap: wrap;
-}
-
-.periodRow > span {
-  color: var(--color-muted);
-  font-size: 0.9rem;
 }
 
 .periodRow select,

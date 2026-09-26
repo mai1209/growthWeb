@@ -377,7 +377,6 @@ function MetricsPage({
         <div>
           <h1 className={style.pageTitle}>Métricas</h1>
           <div className={style.periodRow}>
-            <span>Periodo activo:</span>
             <select value={period} onChange={(event) => setPeriod(event.target.value)}>
               {PERIOD_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
