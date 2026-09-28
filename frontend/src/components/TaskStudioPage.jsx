@@ -2357,33 +2357,54 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   className={style.titleGhost}
                   aria-label="Título de la nota"
                 />
-                <button
-                  type="button"
-                  className={style.titleEditBtn}
-                  onClick={() => {
-                    titleInputRef.current?.focus();
-                    titleInputRef.current?.select();
-                  }}
-                  aria-label="Editar título"
-                  title="Editar título"
-                >
-                  <FiEdit2 />
-                </button>
-                {notaAbierta ? (
+                <div className={style.noteHeaderActions}>
+                  {notaAbierta ? (
+                    <button
+                      type="button"
+                      className={`${style.titleStar} ${notaAbierta.favorita ? style.titleStarOn : ""}`}
+                      onClick={() => toggleFavorita(notaAbierta)}
+                      aria-label={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                      title={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                      aria-pressed={Boolean(notaAbierta.favorita)}
+                    >
+                      <FiStar />
+                    </button>
+                  ) : null}
+                  {MOSTRAR_REPASO ? (
+                    <button
+                      type="button"
+                      className={style.iconButton}
+                      onClick={() => {
+                        setDeckScope("note");
+                        setIsDeckOpen(true);
+                      }}
+                      aria-label="Flashcards de esta nota"
+                      title="Flashcards de esta nota"
+                    >
+                      <FiLayers />
+                      {dueCountNote ? (
+                        <span className={style.iconBadge}>{dueCountNote}</span>
+                      ) : null}
+                    </button>
+                  ) : null}
                   <button
                     type="button"
-                    className={`${style.titleStar} ${notaAbierta.favorita ? style.titleStarOn : ""}`}
-                    onClick={() => toggleFavorita(notaAbierta)}
-                    aria-label={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
-                    title={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
-                    aria-pressed={Boolean(notaAbierta.favorita)}
+                    className={style.closeEditorBtn}
+                    onClick={handleCloseEditor}
+                    aria-label="Cerrar nota"
+                    title="Cerrar nota"
                   >
-                    <FiStar />
+                    <FiX />
                   </button>
-                ) : null}
+                </div>
               </div>
+
+              {/* Metadatos como una sola línea muted, sin pastillas: carpeta ·
+                  fecha · estado de guardado. La carpeta sigue siendo un
+                  <select> real (funciona igual), solo que ya no se ve como
+                  un botón aparte. */}
               <div className={style.noteMetaRow}>
-                <span className={style.noteFolderSelect} title="Cambiar la nota a otra carpeta">
+                <label className={style.noteMetaFolder} title="Cambiar la nota a otra carpeta">
                   <FiFolder />
                   <select
                     value={form.carpeta || ""}
@@ -2400,38 +2421,25 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                       </option>
                     ))}
                   </select>
-                  <button
-                    type="button"
-                    className={style.noteFolderAdd}
-                    onClick={handleCreateFolderInEditor}
-                    aria-label="Nueva carpeta"
-                    title="Nueva carpeta"
-                  >
-                    <FiFolderPlus />
-                  </button>
-                </span>
+                </label>
+                <button
+                  type="button"
+                  className={style.noteFolderAdd}
+                  onClick={handleCreateFolderInEditor}
+                  aria-label="Nueva carpeta"
+                  title="Nueva carpeta"
+                >
+                  <FiFolderPlus />
+                </button>
                 {fechaNotaLabel ? (
-                  <span className={style.editorDate} title="Fecha de la nota">
-                    {fechaNotaLabel}
-                  </span>
+                  <>
+                    <span className={style.noteMetaDot} aria-hidden="true" />
+                    <span className={style.editorDate} title="Fecha de la nota">
+                      {fechaNotaLabel}
+                    </span>
+                  </>
                 ) : null}
-                {MOSTRAR_REPASO ? (
-                  <button
-                    type="button"
-                    className={style.iconButton}
-                    onClick={() => {
-                      setDeckScope("note");
-                      setIsDeckOpen(true);
-                    }}
-                    aria-label="Flashcards de esta nota"
-                    title="Flashcards de esta nota"
-                  >
-                    <FiLayers />
-                    {dueCountNote ? (
-                      <span className={style.iconBadge}>{dueCountNote}</span>
-                    ) : null}
-                  </button>
-                ) : null}
+                <span className={style.noteMetaDot} aria-hidden="true" />
                 {saveStatus === "error" ? (
                   <button
                     type="button"
@@ -2457,15 +2465,6 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                     Se guarda solo
                   </span>
                 )}
-                <button
-                  type="button"
-                  className={`${style.iconButton} ${style.closeEditorBtn}`}
-                  onClick={handleCloseEditor}
-                  aria-label="Cerrar nota"
-                  title="Cerrar nota"
-                >
-                  <FiX />
-                </button>
               </div>
             </div>
           <div className={style.editorMain}>
