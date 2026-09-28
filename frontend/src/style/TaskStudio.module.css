@@ -4565,19 +4565,26 @@ button.folderItem {
 }
 
 /* Cerrar nota: mismo estilo que "Nueva nota" (fondo verde, icono oscuro) */
+/* Cerrar nota: sin fondo ni caja, solo el ícono en verde, más delicado */
 .closeEditorBtn {
-  background: var(--color-verde, #75f94c) !important;
-  color: #06210a !important;
+  background: transparent !important;
+  color: var(--color-verde, #75f94c) !important;
   border: none !important;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 12px !important;
-  box-shadow: 0 4px 14px rgba(117, 249, 76, 0.28);
+  box-shadow: none;
 }
 
 .closeEditorBtn:hover {
-  filter: brightness(1.05);
-  transform: translateY(-1px);
+  background: rgba(117, 249, 76, 0.12) !important;
+  filter: none;
+  transform: none;
+}
+
+.closeEditorBtn svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* Tarjeta de nota: estrella arriba a la derecha, tachito en el pie, más aire */
@@ -4892,11 +4899,7 @@ button.folderItem {
   gap: 0.5rem 0.7rem;
   width: 100%;
   padding: 0.5rem 0.3rem 0.5rem 4px;
-  /* Opaco (no "transparent" de verdad): al quedar fija, tiene que tapar la
-     hoja y el panel cuando scrollean por debajo. Usa el fondo general de
-     la página en vez de un color de tarjeta aparte, así no se ve como una
-     caja separada (lo que pedía sacar). */
-  background: var(--page-background, var(--panel-background));
+  background: transparent;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -5033,25 +5036,6 @@ button.folderItem {
 .monthNavBack:hover {
   border-color: var(--accent-border, rgba(93, 199, 45, 0.4));
   color: var(--color-verde, #5dc72d);
-}
-
-/* Cerrar nota (inspector): sin fondo, solo el icono en verde, más delicado */
-.inspector .closeEditorBtn {
-  background: transparent !important;
-  color: var(--color-verde, #75f94c) !important;
-  box-shadow: none;
-  width: 36px;
-  height: 36px;
-}
-
-.inspector .closeEditorBtn:hover {
-  background: rgba(117, 249, 76, 0.12) !important;
-  transform: none;
-}
-
-.inspector .closeEditorBtn svg {
-  width: 20px;
-  height: 20px;
 }
 
 /* Modo foco: aire arriba para que las pestañas no queden pegadas al borde */
