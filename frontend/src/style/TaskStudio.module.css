@@ -4646,11 +4646,14 @@ button.folderItem {
   min-width: 0;
   align-self: flex-start;
   /* Sticky puro: sin scroll propio, siempre entero a la vista. El título,
-     la carpeta y la fecha de la nota viven ahora arriba de la hoja (fuera
-     de este panel), así que lo que queda acá (Texto, Tamaño, Papel,
-     Resaltado, Color, Ancho) entra en pantalla en cualquier ventana normal. */
+     la carpeta y la fecha de la nota viven en la barra fija de arriba
+     (.noteMetaHeader, hermana de este panel), así que lo que queda acá
+     (Texto, Tamaño, Papel, Resaltado, Color, Ancho) entra en pantalla en
+     cualquier ventana normal. El "top" deja lugar para esa barra (si el
+     título es corto y entra en una sola línea, queda un poco de aire de
+     más acá abajo; mejor eso que taparla). */
   position: sticky;
-  top: 0.7rem;
+  top: 3.75rem;
   display: flex;
   flex-direction: column;
   padding: 0 0.2rem 1rem 0.9rem;
@@ -4783,7 +4786,9 @@ button.folderItem {
 }
 
 /* Modo foco: solo quedan las herramientas */
-.editorCard.editorExpanded {
+/* .editorCard sigue siendo columna (barra + editorMain): en foco la barra
+   se oculta (regla de abajo) y editorMain pasa a fila hoja+panel. */
+.editorCard.editorExpanded .editorMain {
   display: flex;
   flex-direction: row;
   align-items: stretch;
@@ -4799,9 +4804,10 @@ button.folderItem {
   min-width: 0;
 }
 
-/* Escritorio: hoja hasta arriba y hasta abajo, inspector fijo al costado */
+/* Escritorio: hoja hasta arriba y hasta abajo, inspector fijo al costado.
+   .editorCard queda como columna (barra arriba + esta fila abajo). */
 @media (min-width: 1000px) {
-  .layout.layoutEditing .editorCard {
+  .layout.layoutEditing .editorMain {
     flex-direction: row;
     align-items: stretch;
     gap: 0.9rem;
@@ -4854,6 +4860,17 @@ button.folderItem {
 
 }
 
+/* Fila hoja + panel (antes vivía directo en .editorCard: ahora .editorCard
+   es la columna barra-fija+esto, y acá es donde pasa a fila en escritorio
+   y en modo foco — ver esos media queries/reglas .editorExpanded más abajo). */
+.editorMain {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 1rem;
+}
+
 /* Páginas: pestañas arriba de la hoja, estilo navegador (lápiz, tachito y +
    viven ahí mismo). Se pegan al borde superior del papel. */
 /* Título, carpeta y fecha de la nota: fila compacta arriba de la hoja, en
@@ -4867,16 +4884,19 @@ button.folderItem {
    segunda línea en vez de recortarse. */
 .noteMetaHeader {
   position: sticky;
-  top: 0.7rem;
+  top: 0;
   z-index: 6;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.5rem 0.7rem;
   width: 100%;
-  margin: 0 0 0.6rem;
   padding: 0.5rem 0.3rem 0.5rem 4px;
-  background: var(--surface-card);
+  /* Opaco (no "transparent" de verdad): al quedar fija, tiene que tapar la
+     hoja y el panel cuando scrollean por debajo. Usa el fondo general de
+     la página en vez de un color de tarjeta aparte, así no se ve como una
+     caja separada (lo que pedía sacar). */
+  background: var(--page-background, var(--panel-background));
   border-bottom: 1px solid var(--border-color);
 }
 

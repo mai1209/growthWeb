@@ -2341,135 +2341,137 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
           }`}
           data-sheet={sheetWidth}
         >
+              {/* Barra fija de punta a punta (título, carpeta, fecha,
+                  guardado y cerrar): va ANTES de .editorMain, como hijo
+                  directo de la tarjeta del editor, así ocupa todo el
+                  ancho (hoja + panel) y el panel de herramientas empieza
+                  recién debajo, no al lado. */}
+            <div className={style.noteMetaHeader}>
+              <div className={style.headerTitleWrap}>
+                <input
+                  ref={titleInputRef}
+                  type="text"
+                  value={form.meta}
+                  onChange={(event) => handleFieldChange("meta", event.target.value)}
+                  placeholder="Título de la nota…"
+                  className={style.titleGhost}
+                  aria-label="Título de la nota"
+                />
+                <button
+                  type="button"
+                  className={style.titleEditBtn}
+                  onClick={() => {
+                    titleInputRef.current?.focus();
+                    titleInputRef.current?.select();
+                  }}
+                  aria-label="Editar título"
+                  title="Editar título"
+                >
+                  <FiEdit2 />
+                </button>
+                {notaAbierta ? (
+                  <button
+                    type="button"
+                    className={`${style.titleStar} ${notaAbierta.favorita ? style.titleStarOn : ""}`}
+                    onClick={() => toggleFavorita(notaAbierta)}
+                    aria-label={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                    title={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
+                    aria-pressed={Boolean(notaAbierta.favorita)}
+                  >
+                    <FiStar />
+                  </button>
+                ) : null}
+              </div>
+              <div className={style.noteMetaRow}>
+                <span className={style.noteFolderSelect} title="Cambiar la nota a otra carpeta">
+                  <FiFolder />
+                  <select
+                    value={form.carpeta || ""}
+                    onChange={(event) => handleFieldChange("carpeta", event.target.value)}
+                    aria-label="Cambiar la nota a otra carpeta"
+                  >
+                    <option value="">Sin carpeta</option>
+                    {(form.carpeta && !folders.includes(form.carpeta)
+                      ? [form.carpeta, ...folders]
+                      : folders
+                    ).map((folder) => (
+                      <option key={folder} value={folder}>
+                        {folder}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className={style.noteFolderAdd}
+                    onClick={handleCreateFolderInEditor}
+                    aria-label="Nueva carpeta"
+                    title="Nueva carpeta"
+                  >
+                    <FiFolderPlus />
+                  </button>
+                </span>
+                {fechaNotaLabel ? (
+                  <span className={style.editorDate} title="Fecha de la nota">
+                    {fechaNotaLabel}
+                  </span>
+                ) : null}
+                {MOSTRAR_REPASO ? (
+                  <button
+                    type="button"
+                    className={style.iconButton}
+                    onClick={() => {
+                      setDeckScope("note");
+                      setIsDeckOpen(true);
+                    }}
+                    aria-label="Flashcards de esta nota"
+                    title="Flashcards de esta nota"
+                  >
+                    <FiLayers />
+                    {dueCountNote ? (
+                      <span className={style.iconBadge}>{dueCountNote}</span>
+                    ) : null}
+                  </button>
+                ) : null}
+                {saveStatus === "error" ? (
+                  <button
+                    type="button"
+                    className={`${style.unsavedBadge} ${style.retryBadge}`}
+                    onClick={guardarAhora}
+                    title="Volver a intentar guardar"
+                  >
+                    <span className={style.unsavedDot} />
+                    No se guardó · reintentar
+                  </button>
+                ) : isDirty || saving ? (
+                  <span className={`${style.unsavedBadge} ${style.savingBadge}`}>
+                    <span className={style.unsavedDot} />
+                    Guardando…
+                  </span>
+                ) : form.id ? (
+                  <span className={style.savedBadge}>
+                    <span className={style.savedDot} />
+                    Guardado
+                  </span>
+                ) : (
+                  <span className={style.savedBadge} style={{ opacity: 0.6 }}>
+                    Se guarda solo
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className={`${style.iconButton} ${style.closeEditorBtn}`}
+                  onClick={handleCloseEditor}
+                  aria-label="Cerrar nota"
+                  title="Cerrar nota"
+                >
+                  <FiX />
+                </button>
+              </div>
+            </div>
+          <div className={style.editorMain}>
           <form id="note-editor-form" className={style.form} onSubmit={handleSubmit}>
             <div className={style.editorBody}>
               <div className={style.editorWorkspace}>
-              {/* Título, carpeta y fecha: viven arriba de la hoja (no en el
-                  panel fijo) porque se tocan una sola vez, no mientras
-                  escribís — así el panel de la derecha queda corto y entra
-                  siempre en pantalla. */}
-              <div className={style.noteMetaHeader}>
-                <div className={style.headerTitleWrap}>
-                  <input
-                    ref={titleInputRef}
-                    type="text"
-                    value={form.meta}
-                    onChange={(event) => handleFieldChange("meta", event.target.value)}
-                    placeholder="Título de la nota…"
-                    className={style.titleGhost}
-                    aria-label="Título de la nota"
-                  />
-                  <button
-                    type="button"
-                    className={style.titleEditBtn}
-                    onClick={() => {
-                      titleInputRef.current?.focus();
-                      titleInputRef.current?.select();
-                    }}
-                    aria-label="Editar título"
-                    title="Editar título"
-                  >
-                    <FiEdit2 />
-                  </button>
-                  {notaAbierta ? (
-                    <button
-                      type="button"
-                      className={`${style.titleStar} ${notaAbierta.favorita ? style.titleStarOn : ""}`}
-                      onClick={() => toggleFavorita(notaAbierta)}
-                      aria-label={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
-                      title={notaAbierta.favorita ? "Quitar de favoritas" : "Marcar favorita"}
-                      aria-pressed={Boolean(notaAbierta.favorita)}
-                    >
-                      <FiStar />
-                    </button>
-                  ) : null}
-                </div>
-                <div className={style.noteMetaRow}>
-                  <span className={style.noteFolderSelect} title="Cambiar la nota a otra carpeta">
-                    <FiFolder />
-                    <select
-                      value={form.carpeta || ""}
-                      onChange={(event) => handleFieldChange("carpeta", event.target.value)}
-                      aria-label="Cambiar la nota a otra carpeta"
-                    >
-                      <option value="">Sin carpeta</option>
-                      {(form.carpeta && !folders.includes(form.carpeta)
-                        ? [form.carpeta, ...folders]
-                        : folders
-                      ).map((folder) => (
-                        <option key={folder} value={folder}>
-                          {folder}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className={style.noteFolderAdd}
-                      onClick={handleCreateFolderInEditor}
-                      aria-label="Nueva carpeta"
-                      title="Nueva carpeta"
-                    >
-                      <FiFolderPlus />
-                    </button>
-                  </span>
-                  {fechaNotaLabel ? (
-                    <span className={style.editorDate} title="Fecha de la nota">
-                      {fechaNotaLabel}
-                    </span>
-                  ) : null}
-                  {MOSTRAR_REPASO ? (
-                    <button
-                      type="button"
-                      className={style.iconButton}
-                      onClick={() => {
-                        setDeckScope("note");
-                        setIsDeckOpen(true);
-                      }}
-                      aria-label="Flashcards de esta nota"
-                      title="Flashcards de esta nota"
-                    >
-                      <FiLayers />
-                      {dueCountNote ? (
-                        <span className={style.iconBadge}>{dueCountNote}</span>
-                      ) : null}
-                    </button>
-                  ) : null}
-                  {saveStatus === "error" ? (
-                    <button
-                      type="button"
-                      className={`${style.unsavedBadge} ${style.retryBadge}`}
-                      onClick={guardarAhora}
-                      title="Volver a intentar guardar"
-                    >
-                      <span className={style.unsavedDot} />
-                      No se guardó · reintentar
-                    </button>
-                  ) : isDirty || saving ? (
-                    <span className={`${style.unsavedBadge} ${style.savingBadge}`}>
-                      <span className={style.unsavedDot} />
-                      Guardando…
-                    </span>
-                  ) : form.id ? (
-                    <span className={style.savedBadge}>
-                      <span className={style.savedDot} />
-                      Guardado
-                    </span>
-                  ) : (
-                    <span className={style.savedBadge} style={{ opacity: 0.6 }}>
-                      Se guarda solo
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    className={`${style.iconButton} ${style.closeEditorBtn}`}
-                    onClick={handleCloseEditor}
-                    aria-label="Cerrar nota"
-                    title="Cerrar nota"
-                  >
-                    <FiX />
-                  </button>
-                </div>
-              </div>
 
               {showOutline && outline.length > 0 ? (
                 <div className={style.outlinePanel}>
@@ -3069,6 +3071,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                 </div>
             </section>
           </aside>
+          </div>
         </section>
       </div>
 
