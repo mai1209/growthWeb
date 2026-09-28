@@ -4899,7 +4899,12 @@ button.folderItem {
   gap: 0.5rem 0.7rem;
   width: 100%;
   padding: 0.5rem 0.3rem 0.5rem 4px;
-  background: transparent;
+  /* Vidrio esmerilado: transparente de verdad pero legible. Sin esto, al
+     hacer scroll el texto de la hoja pasa por detrás del título y no se
+     distingue nada. */
+  background: color-mix(in srgb, var(--surface-card) 55%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border-color);
 }
 
