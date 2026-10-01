@@ -1204,7 +1204,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   };
 
   const handleCreateFolder = () => {
-    const name = window.prompt("Nombre de la carpeta")?.trim();
+    const name = window.prompt("Nombre de la etiqueta")?.trim();
     if (!name) return;
 
     setCustomFolders((prev) => (prev.includes(name) ? prev : [...prev, name]));
@@ -1217,7 +1217,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   };
 
   const handleCreateFolderInEditor = () => {
-    const name = window.prompt("Nombre de la carpeta")?.trim();
+    const name = window.prompt("Nombre de la etiqueta")?.trim();
     if (!name) return;
 
     setCustomFolders((prev) => (prev.includes(name) ? prev : [...prev, name]));
@@ -2404,14 +2404,14 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   <select> real (funciona igual), solo que ya no se ve como
                   un botón aparte. */}
               <div className={style.noteMetaRow}>
-                <label className={style.noteMetaFolder} title="Cambiar la nota a otra carpeta">
+                <label className={style.noteMetaFolder} title="Cambiar la etiqueta de la nota">
                   <FiFolder />
                   <select
                     value={form.carpeta || ""}
                     onChange={(event) => handleFieldChange("carpeta", event.target.value)}
-                    aria-label="Cambiar la nota a otra carpeta"
+                    aria-label="Cambiar la etiqueta de la nota"
                   >
-                    <option value="">Sin carpeta</option>
+                    <option value="">Sin etiquetas</option>
                     {(form.carpeta && !folders.includes(form.carpeta)
                       ? [form.carpeta, ...folders]
                       : folders
@@ -2426,8 +2426,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   type="button"
                   className={style.noteFolderAdd}
                   onClick={handleCreateFolderInEditor}
-                  aria-label="Nueva carpeta"
-                  title="Nueva carpeta"
+                  aria-label="Nueva etiqueta"
+                  title="Nueva etiqueta"
                 >
                   <FiFolderPlus />
                 </button>
