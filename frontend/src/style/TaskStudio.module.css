@@ -2834,11 +2834,11 @@ button.folderItem {
   color: #ffb1a2;
 }
 
-:global(body[data-theme="dark"]) .notePageRenameInput {
-  border-color: rgba(144, 211, 106, 0.4);
-  background: rgba(255, 255, 255, 0.06);
-  color: #ecf6f3;
-}
+/* Sin override de tema oscuro a propósito: la pestaña activa toma el color
+   del papel de la nota (puede ser un pastel claro), y acá se había puesto
+   texto casi blanco sobre un fondo casi transparente — contra un papel
+   claro quedaba texto claro sobre fondo claro, ilegible. Blanco sólido +
+   texto oscuro se lee siempre, sea cual sea el color del papel. */
 
 :global(body[data-theme="dark"]) .addPageButton {
   border-color: rgba(144, 211, 106, 0.34);
