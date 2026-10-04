@@ -3956,21 +3956,32 @@ button.folderItem {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: none;
+  padding: 0.7rem 1rem;
+  /* Sin relleno ni brillo: solo borde de rayitas cortas y letra verde */
+  border: 1.5px dashed rgba(93, 199, 45, 0.7);
   border-radius: 14px;
-  background: var(--color-verde, #75f94c);
-  color: #06210a;
+  background: transparent;
+  color: #5dc72d;
   font-weight: 800;
   font-size: 0.95rem;
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(117, 249, 76, 0.22);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .newNoteSideBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 26px rgba(117, 249, 76, 0.32);
+  border-color: #5dc72d;
+  background: rgba(93, 199, 45, 0.1);
+}
+
+/* En tema claro el verde #5dc72d sobre blanco queda pálido: uno más profundo */
+:global(body[data-theme="light"]) .newNoteSideBtn {
+  border-color: rgba(38, 140, 26, 0.65);
+  color: #2a8a1c;
+}
+
+:global(body[data-theme="light"]) .newNoteSideBtn:hover {
+  border-color: #2a8a1c;
+  background: rgba(42, 138, 28, 0.08);
 }
 
 .folderDot {
