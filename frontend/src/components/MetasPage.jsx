@@ -1128,7 +1128,6 @@ function MetasPage({ activeWorkspace }) {
     <section className={style.page}>
       <header className={style.header}>
         <div>
-          <p className={style.kicker}>Metas</p>
           <h1 className={style.titulo}>Tus metas</h1>
         </div>
         <div className={style.headerAcciones}>

@@ -1334,3 +1334,31 @@
 .btnGuardarAvance:hover {
   filter: brightness(1.05);
 }
+
+/* ---- Controles más chicos y cuadrados (mismo criterio que Home, Filtros y Métricas) ---- */
+.btnNueva {
+  min-height: 36px;
+  padding: 0 0.95rem;
+  border-radius: 10px;
+  background: #75f94c;
+  color: #06210a;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.btnGrafico {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.chip {
+  padding: 0.38rem 0.8rem;
+  border-radius: 9px;
+  font-size: 0.76rem;
+  font-weight: 500;
+}
+
+.chipActivo {
+  font-weight: 700;
+}
