@@ -114,11 +114,41 @@ body {
   overflow-x: clip;
 }
 
+/* Letra de toda la web: Menda (la misma de la app). Solo trae dos pesos:
+   Medium para el texto normal y Bold para todo lo que sea 600 o más. */
+@font-face {
+  font-family: "Menda";
+  src: url("./fonts/Menda-Medium.ttf") format("truetype");
+  font-weight: 100 599;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Menda";
+  src: url("./fonts/Menda-Bold.ttf") format("truetype");
+  font-weight: 600 900;
+  font-display: swap;
+}
+
+/* Menda es más ancha que la letra del sistema: se achica toda la escala
+   (los tamaños están en rem) para que los textos sigan entrando. */
+html {
+  font-size: 14.5px;
+}
+
+/* Los controles de formulario no heredan la letra por defecto */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
 body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: "Menda", -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;

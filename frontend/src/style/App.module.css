@@ -1321,3 +1321,53 @@
 .homeViewport::after {
   content: none;
 }
+
+/* Panel de movimientos: Hoy / Mensual / Anual y "Cargar movimiento" del mismo
+   alto y con esquinas cuadradas suaves, igual que Resumen / Historial del
+   panel de la izquierda. */
+.dashboardPeriodSwitch {
+  width: auto;
+  grid-template-columns: repeat(3, auto);
+  gap: 3px;
+  padding: 3px;
+  border-radius: 10px;
+  background: transparent;
+}
+
+.dashboardPeriodButton {
+  min-height: 34px;
+  padding: 0 1.1rem;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.dashboardPeriodButtonActive {
+  background: #75f94c;
+  color: #06210a;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.dashboardAddBtn {
+  min-height: 42px; /* = alto del selector (34 + 3 + 3 + bordes) */
+  padding: 0 1.1rem;
+  border-radius: 10px;
+  background: #75f94c;
+  color: #06210a;
+  font-size: 0.8rem;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+@media (max-width: 760px) {
+  .dashboardPeriodSwitch {
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dashboardPeriodButton {
+    padding: 0 0.5rem;
+  }
+}

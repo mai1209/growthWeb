@@ -1587,20 +1587,7 @@ border: 1px solid rgba(255, 255, 255, 0.12);
    Letra Menda, pestañas en contenedor redondeado que la tarjeta tapa a
    medias, tarjeta con acciones adentro y bloque Resumen / Historial.
    ===================================================================== */
-@font-face {
-  font-family: "Menda";
-  src: url("../fonts/Menda-Medium.ttf") format("truetype");
-  font-weight: 400 599;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Menda";
-  src: url("../fonts/Menda-Bold.ttf") format("truetype");
-  font-weight: 600 900;
-  font-display: swap;
-}
-
+/* (la @font-face de Menda vive en index.css: es la letra de toda la web) */
 .panel,
 .panel button,
 .infoModal {
