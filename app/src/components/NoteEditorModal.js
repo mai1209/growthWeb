@@ -514,8 +514,11 @@ export default function NoteEditorModal({
           >
             {/* Etiqueta: escribí una nueva o elegí una del desplegable (flecha) */}
             <View style={styles.metaBar}>
-              <View style={[styles.metaPill, { flex: 1 }]}>
-                <Ionicons name="pricetag-outline" size={13} color={colors.greenDark} />
+              {/* Como en la web: borde de rayitas si no tiene etiqueta, liso si tiene */}
+              <View
+                style={[styles.metaPill, { flex: 1 }, !carpeta.trim() && styles.metaPillEmpty]}
+              >
+                <Ionicons name="pricetag-outline" size={14} color={colors.greenBright2} />
                 <TextInput
                   ref={tagInputRef}
                   style={styles.metaInput}
@@ -812,12 +815,12 @@ const makeStyles = (colors) =>
       alignItems: "center",
       gap: 6,
       paddingHorizontal: 12,
-      paddingVertical: 4,
-      borderRadius: 999,
+      paddingVertical: 2,
+      borderRadius: 9,
       borderWidth: 1,
       borderColor: colors.cardBorder,
-      backgroundColor: colors.cardSoft,
     },
+    metaPillEmpty: { borderStyle: "dashed", borderColor: colors.muted },
     metaChevron: { paddingLeft: 6, marginLeft: 2, borderLeftWidth: 1, borderLeftColor: colors.cardBorder },
     metaPillText: { color: colors.text, fontWeight: "700", fontSize: 13 },
     // Alto fijo: con paddingVertical 0 y sin alto, el placeholder salía cortado
