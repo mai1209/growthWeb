@@ -630,3 +630,34 @@
     flex: 0 0 auto;
   }
 }
+
+/* ---- Menos brillo: verde más apagado en toda la página, sin resplandores ---- */
+.page {
+  --accent: #5dc72d;
+  --accent-border: rgba(93, 199, 45, 0.3);
+  --accent-surface: rgba(93, 199, 45, 0.1);
+  --ring-accent: 0 0 0 3px rgba(93, 199, 45, 0.16);
+}
+
+.ringProgress {
+  filter: none;
+  stroke-width: 7;
+}
+
+.ringTrack {
+  stroke-width: 7;
+}
+
+.primaryBtn,
+.primaryBtn:hover,
+:global(body[data-theme="light"]) .primaryBtn {
+  background: #5dc72d;
+  color: #06210a;
+  box-shadow: none;
+}
+
+.primaryBtn {
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
