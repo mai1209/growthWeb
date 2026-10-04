@@ -861,7 +861,6 @@ export default function MetasScreen() {
     <SafeAreaView style={styles.safe} edges={[]}>
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.kicker}>METAS</Text>
           <Text style={styles.title}>Tus metas</Text>
         </View>
         <View style={styles.headerAcciones}>
