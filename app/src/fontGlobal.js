@@ -30,6 +30,14 @@ const estiloMenda = (peso) => ({
   fontWeight: undefined,
 });
 
+// Menda es más ancha que la letra del sistema: los tamaños pensados para la
+// del sistema no entraban. Se achica todo en la misma proporción desde acá
+// (un solo número para ajustar). Las pantallas que ya usaban Menda a mano
+// (Home, Lobby) no pasan por esto: ya estaban medidas para Menda.
+export const MENDA_ESCALA = 0.9;
+const TAMANIO_BASE = 14; // el de React Native cuando no se indica fontSize
+const achicar = (tamanio) => Math.round(tamanio * MENDA_ESCALA * 10) / 10;
+
 // null = no estoy dentro de otro <Text>; "menda" = el padre ya tiene Menda;
 // "propia" = el padre trae su propia familia (no meterse).
 const TextoPadre = createContext(null);
@@ -45,9 +53,16 @@ function MendaText(props) {
     paraHijos = "propia";
   } else if (padre === "propia") {
     paraHijos = "propia";
-  } else if (padre === null || flat.fontWeight != null) {
-    // Un <Text> anidado sin peso propio hereda la familia del de afuera.
-    extra = estiloMenda(flat.fontWeight);
+  } else {
+    // Un <Text> anidado hereda del de afuera lo que no define él mismo
+    // (familia si no trae peso, tamaño si no trae tamaño).
+    const raiz = padre === null;
+    if (raiz || flat.fontWeight != null) extra = estiloMenda(flat.fontWeight);
+    if (typeof flat.fontSize === "number") {
+      extra = { ...extra, fontSize: achicar(flat.fontSize) };
+    } else if (raiz) {
+      extra = { ...extra, fontSize: achicar(TAMANIO_BASE) };
+    }
   }
 
   const elemento = createElementOriginal(
@@ -65,7 +80,11 @@ function MendaTextInput(props) {
   if (flat.fontFamily) return createElementOriginal(TextInput, props);
   return createElementOriginal(TextInput, {
     ...props,
-    style: [props.style, estiloMenda(flat.fontWeight)],
+    style: [
+      props.style,
+      estiloMenda(flat.fontWeight),
+      { fontSize: achicar(typeof flat.fontSize === "number" ? flat.fontSize : TAMANIO_BASE) },
+    ],
   });
 }
 
