@@ -414,7 +414,9 @@ export default function CompartidosScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={[]}>
       <View style={styles.listHeader}>
-        <Text style={styles.listTitle}>Grupos compartidos</Text>
+        <Text style={styles.listTitle} numberOfLines={1}>
+          Grupos compartidos
+        </Text>
         <TouchableOpacity style={styles.newBtn} onPress={() => setShowCreate(true)}>
           <Ionicons name="add" size={18} color="#fff" />
           <Text style={styles.newBtnText}>Nuevo</Text>
@@ -467,7 +469,7 @@ const makeStyles = (colors) => StyleSheet.create({
     paddingTop: 2,
     paddingBottom: 8,
   },
-  listTitle: { color: colors.text, fontSize: 20, fontWeight: "800" },
+  listTitle: { flexShrink: 1, color: colors.text, fontSize: 17, fontWeight: "800" },
   newBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -483,7 +485,7 @@ const makeStyles = (colors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    backgroundColor: colors.card,
+    backgroundColor: colors.bg, // sin relleno: solo borde
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 16,
