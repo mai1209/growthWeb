@@ -13,6 +13,7 @@ function MainLayout({
   movimientos,
   panelCurrency,
   onPanelCurrencyChange,
+  setMovementToEdit,
   theme,
   onThemeToggle,
   activeWorkspace,
@@ -89,6 +90,8 @@ function MainLayout({
       movimientos={movimientos}
       currentCurrency={panelCurrency}
       onCurrencyChange={onPanelCurrencyChange}
+      onUpdate={onUpdate}
+      onEditMovement={setMovementToEdit}
     />
   );
   const CurrentSidebar = sidebarMap[location.pathname];

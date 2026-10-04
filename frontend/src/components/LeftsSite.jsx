@@ -1,18 +1,51 @@
-import { useMemo, useState } from "react";
+// Panel del Home de finanzas — mismo estilo, formato y flujo que el Home de la
+// app: pestañas AR$/US$/Deudas/Ahorros en un contenedor redondeado, tarjeta de
+// saldo (grafito por defecto) con historial/ojo/paleta y las 4 acciones
+// adentro, y debajo el bloque Resumen / Historial (comparativa del mes contra
+// el anterior, y los movimientos del mes agrupados por día y desplegables).
+import { Fragment, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiEye, FiEyeOff, FiInfo, FiX, FiDroplet, FiCheck, FiTrendingUp, FiTrendingDown, FiPocket, FiCreditCard, FiTarget, FiPieChart, FiCheckSquare, FiFlag } from "react-icons/fi";
+import {
+  FiArrowDown,
+  FiArrowUp,
+  FiCheck,
+  FiCheckSquare,
+  FiChevronDown,
+  FiChevronRight,
+  FiChevronUp,
+  FiClock,
+  FiCreditCard,
+  FiDroplet,
+  FiEdit2,
+  FiEye,
+  FiEyeOff,
+  FiFilter,
+  FiFlag,
+  FiInfo,
+  FiLock,
+  FiPieChart,
+  FiPocket,
+  FiRepeat,
+  FiRotateCcw,
+  FiTarget,
+  FiTrash2,
+  FiTrendingUp,
+  FiX,
+} from "react-icons/fi";
+import { movimientoService } from "../api";
 import style from "../style/LeftSite.module.css";
 import {
   filterMovimientosByCurrency,
   formatMoney,
-  getCurrencyMeta,
+  formatSignedMoney,
+  getMovementTypeMeta,
   isSameMonth,
   summarizeByType,
 } from "../utils/finance";
 
 const HOME_TABS = [
-  { key: "ARS", label: "ARS" },
-  { key: "USD", label: "USD" },
+  { key: "ARS", label: "AR$" },
+  { key: "USD", label: "US$" },
   { key: "deuda", label: "Deudas" },
   { key: "ahorro", label: "Ahorros" },
 ];
@@ -25,7 +58,14 @@ const fmtShortDate = (value) => {
 const CARD_STYLE_KEY = "gw-card-style";
 
 // Estilos de la tarjeta de saldo (elegibles dando vuelta la tarjeta).
+// "grafito" es el degradado gris de la app y queda como predeterminado.
 const CARD_STYLES = {
+  grafito: {
+    swatch: "#4f4f4f",
+    bg: "linear-gradient(135deg, #4f4f4f 0%, #7e7c7c 50%, #4f4f4f 100%)",
+    text: "#ffffff",
+    muted: "rgba(255, 255, 255, 0.72)",
+  },
   holo: {
     swatch: "#c8b8ff",
     bg: "linear-gradient(120deg, #a8e6ff 0%, #c8b8ff 25%, #ffc2e6 50%, #b8f5cf 72%, #a6d0ff 100%)",
@@ -63,13 +103,36 @@ const CARD_STYLES = {
     muted: "rgba(42, 32, 16, 0.62)",
   },
 };
-const CARD_ORDER = ["holo", "platino", "titanio", "chrome", "esmeralda", "champagne"];
+const CARD_ORDER = ["grafito", "holo", "platino", "titanio", "chrome", "esmeralda", "champagne"];
+
+// Acciones de la tarjeta, como en la app: flecha verde ↓, flecha roja ↑,
+// fijo = flecha + candado / reloj.
+const QUICK_ACTIONS = [
+  { key: "ingreso", label: "Ingreso", Icon: FiArrowDown, tone: "in" },
+  { key: "egreso", label: "Egreso", Icon: FiArrowUp, tone: "out" },
+  { key: "ingreso-fijo", label: "Ingreso fijo", Icon: FiArrowDown, Extra: FiLock, tone: "in" },
+  { key: "egreso-fijo", label: "Gasto fijo", Icon: FiArrowUp, Extra: FiClock, tone: "out" },
+];
+
+// Ícono y tono según el tipo de movimiento (mismo criterio que la app).
+const movementLook = (m) => {
+  if (m.desdeAhorro) return { Icon: FiRepeat, tone: "tonoAhorro" };
+  if (m.tipo === "ingreso") return { Icon: FiArrowDown, tone: "tonoIngreso" };
+  if (m.tipo === "ahorro") return { Icon: FiPocket, tone: "tonoAhorro" };
+  if (m.tipo === "deuda") return { Icon: FiCreditCard, tone: "tonoDeuda" };
+  return { Icon: FiArrowUp, tone: "tonoEgreso" };
+};
+
+const dayKey = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
 function LeftSite({
 
   movimientos = [],
   currentCurrency,
   onCurrencyChange,
+  onUpdate,
+  onEditMovement,
 }) {
   const navigate = useNavigate();
   const [areTotalsVisible, setAreTotalsVisible] = useState(true);
@@ -77,10 +140,22 @@ function LeftSite({
   const [infoOpen, setInfoOpen] = useState(false); // popup "cómo funciona"
   const [cardStyle, setCardStyle] = useState(() => {
     const saved = typeof localStorage !== "undefined" ? localStorage.getItem(CARD_STYLE_KEY) : null;
-    return saved && CARD_STYLES[saved] ? saved : "holo";
+    return saved && CARD_STYLES[saved] ? saved : "grafito";
   });
   const [cardFlipped, setCardFlipped] = useState(false);
-  const currentCardStyle = CARD_STYLES[cardStyle] || CARD_STYLES.holo;
+  const currentCardStyle = CARD_STYLES[cardStyle] || CARD_STYLES.grafito;
+  const [saldoInfoOpen, setSaldoInfoOpen] = useState(false); // popup info del saldo total
+  const [resumenTab, setResumenTab] = useState("resumen"); // resumen | historial
+  const [expandedMovs, setExpandedMovs] = useState(() => new Set()); // filas abiertas
+  const [typeCurrency, setTypeCurrency] = useState("ARS"); // ARS/USD dentro de Deuda/Ahorro
+
+  const toggleMovExpand = (id) =>
+    setExpandedMovs((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   const chooseCard = (key) => {
     setCardStyle(key);
     try {
@@ -110,8 +185,9 @@ function LeftSite({
       .filter((m) =>
         viewTab === "ahorro" ? m.tipo === "ahorro" || m.desdeAhorro : m.tipo === viewTab
       )
+      .filter((m) => (m.moneda === "USD" ? "USD" : "ARS") === typeCurrency)
       .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
-  }, [movimientos, viewTab]);
+  }, [movimientos, viewTab, typeCurrency]);
 
   // Ahorro disponible por moneda (ahorrado - usado)
   const savingsPot = useMemo(() => {
@@ -130,14 +206,7 @@ function LeftSite({
     navigate(tipo ? `/filtros?tipo=${tipo}` : "/filtros");
   };
 
-  const handleCardKeyDown = (event, tipo) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      goToFilter(tipo);
-    }
-  };
-
-  const currencyMeta = getCurrencyMeta(currentCurrency);
+  const currencyTag = currentCurrency === "USD" ? "US$" : "AR$";
 
   const currencyMovimientos = useMemo(() => {
   const result = filterMovimientosByCurrency(movimientos, currentCurrency);
@@ -163,8 +232,64 @@ function LeftSite({
     () => summarizeByType(monthMovimientos),
     [monthMovimientos]
   );
-  const monthResultLabel =
-    monthSummary.total > 0 ? "Mes positivo" : monthSummary.total < 0 ? "Mes en rojo" : "Mes equilibrado";
+
+  // Mes anterior, para las variaciones del resumen ("+12% vs septiembre")
+  const prevSummary = useMemo(() => {
+    const ahora = new Date();
+    const prev = new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1);
+    return summarizeByType(currencyMovimientos.filter((m) => isSameMonth(m.fecha, prev)));
+  }, [currencyMovimientos]);
+  const mesNombre = new Date().toLocaleDateString("es-AR", { month: "long" });
+  const mesPrevNombre = (() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth() - 1, 1).toLocaleDateString("es-AR", {
+      month: "long",
+    });
+  })();
+  const deltaPct = (cur, prevV) => (prevV > 0 ? Math.round(((cur - prevV) / prevV) * 100) : null);
+
+  // Movimientos del mes agrupados por día (más recientes primero)
+  const monthGroups = useMemo(() => {
+    const sorted = [...monthMovimientos].sort(
+      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+    );
+    const grupos = [];
+    sorted.forEach((m) => {
+      const k = dayKey(new Date(m.fecha));
+      let g = grupos[grupos.length - 1];
+      if (!g || g.k !== k) {
+        g = { k, items: [] };
+        grupos.push(g);
+      }
+      g.items.push(m);
+    });
+    return grupos;
+  }, [monthMovimientos]);
+
+  const nombreDia = (k) => {
+    const hoy = new Date();
+    const ayer = new Date();
+    ayer.setDate(ayer.getDate() - 1);
+    if (k === dayKey(hoy)) return "Hoy";
+    if (k === dayKey(ayer)) return "Ayer";
+    return new Date(`${k}T12:00:00`).toLocaleDateString("es-AR", { day: "numeric", month: "long" });
+  };
+
+  const handleEditMov = (mov) => {
+    onEditMovement?.(mov.sourceMovimiento || mov);
+    navigate("/add");
+  };
+
+  const handleDeleteMov = async (mov) => {
+    const id = mov.sourceId || mov._id;
+    if (!id || !window.confirm(`¿Borrar "${mov.categoria || "movimiento"}"?`)) return;
+    try {
+      await movimientoService.delete(id);
+      onUpdate?.();
+    } catch {
+      alert("No se pudo eliminar el movimiento");
+    }
+  };
 
   const hideableMoney = (amount) =>
     areTotalsVisible ? formatMoney(amount, currentCurrency) : "••••";
@@ -172,25 +297,29 @@ function LeftSite({
   return (
     <aside className={style.container}>
       <div className={style.panel}>
-        {/* Pestañas ARS · USD · Deudas · Ahorros (como la app) */}
-        <div className={style.segmentTabs}>
-          {HOME_TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              className={`${style.segmentTab} ${
-                t.key === activeTabKey ? style.segmentTabActive : ""
-              }`}
-              onClick={() => handleTabClick(t.key)}
-            >
-              {t.label}
-            </button>
-          ))}
+        {/* Contenedor redondeado de pestañas (borde gris). Con moneda activa,
+            la tarjeta de saldo lo tapa desde la mitad, igual que en la app. */}
+        <div className={`${style.tabsShell} ${viewTab === "money" ? style.tabsShellCard : ""}`}>
+          <div className={style.segmentTabs}>
+            {HOME_TABS.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                className={`${style.segmentTab} ${
+                  t.key === activeTabKey ? style.segmentTabActive : ""
+                }`}
+                onClick={() => handleTabClick(t.key)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {viewTab === "money" ? (
-          /* Tarjeta de saldo — se da vuelta para elegir color */
-          <div className={style.ccFlip}>
+          <>
+          {/* Tarjeta de saldo — se da vuelta para elegir color */}
+          <div className={`${style.ccFlip} ${style.ccOverlap}`}>
             <div className={`${style.ccFlipInner} ${cardFlipped ? style.ccFlipped : ""}`}>
               {/* Frente */}
               <div
@@ -202,16 +331,28 @@ function LeftSite({
                 }}
               >
                 <div className={style.ccTop}>
-                  <p className={style.ccKicker}>Saldo total</p>
+                  <p className={style.ccKicker}>
+                    Saldo total
+                    <button
+                      type="button"
+                      className={style.ccInfo}
+                      onClick={() => setSaldoInfoOpen(true)}
+                      aria-label="Qué es el saldo total"
+                      title="Qué es el saldo total"
+                    >
+                      <FiInfo />
+                    </button>
+                  </p>
+                  {/* Historial · Ojo · Paleta */}
                   <div className={style.ccActions}>
                     <button
                       type="button"
-                      onClick={() => setCardFlipped(true)}
+                      onClick={() => goToFilter(null)}
                       className={style.ccEye}
-                      aria-label="Cambiar color de la tarjeta"
-                      title="Cambiar color"
+                      aria-label="Ver historial completo"
+                      title="Historial completo"
                     >
-                      <FiDroplet />
+                      <FiRotateCcw />
                     </button>
                     <button
                       type="button"
@@ -221,6 +362,15 @@ function LeftSite({
                       title={areTotalsVisible ? "Ocultar saldo" : "Mostrar saldo"}
                     >
                       {areTotalsVisible ? <FiEye /> : <FiEyeOff />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCardFlipped(true)}
+                      className={style.ccEye}
+                      aria-label="Cambiar color de la tarjeta"
+                      title="Cambiar color"
+                    >
+                      <FiDroplet />
                     </button>
                   </div>
                 </div>
@@ -243,9 +393,26 @@ function LeftSite({
                   );
                 })()}
 
-                <div className={style.ccFooter}>
-                  <span className={style.statusPill}>{monthResultLabel}</span>
-                  <span className={style.ccCurrency}>{currencyMeta.codeLabel}</span>
+                {/* Acciones dentro de la tarjeta: cargar ingreso / egreso / fijos */}
+                <div className={style.ccQuickRow}>
+                  {QUICK_ACTIONS.map(({ key, label, Icon, Extra, tone }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className={style.ccQuickItem}
+                      onClick={() => navigate(`/add?tipo=${key}`)}
+                    >
+                      <span
+                        className={`${style.ccQuickBtn} ${
+                          tone === "in" ? style.ccQuickIn : style.ccQuickOut
+                        }`}
+                      >
+                        <Icon />
+                        {Extra ? <Extra className={style.ccQuickExtra} /> : null}
+                      </span>
+                      <span className={style.ccQuickLabel}>{label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -272,6 +439,222 @@ function LeftSite({
               </div>
             </div>
           </div>
+
+          {/* ===== Bloque Resumen / Historial ===== */}
+          <section className={style.ticket} aria-label="Resumen e historial del mes">
+            <div className={style.ticketSwitchRow}>
+              {resumenTab === "historial" ? (
+                <button type="button" className={style.verTodos} onClick={() => goToFilter(null)}>
+                  Ver todos <FiChevronRight />
+                </button>
+              ) : (
+                <span />
+              )}
+              <div className={style.ticketSwitch}>
+                {[
+                  ["resumen", "Resumen"],
+                  ["historial", "Historial"],
+                ].map(([k, l]) => (
+                  <button
+                    key={k}
+                    type="button"
+                    className={`${style.ticketSeg} ${resumenTab === k ? style.ticketSegOn : ""}`}
+                    onClick={() => setResumenTab(k)}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {resumenTab === "resumen" ? (
+              <div className={style.resPanel}>
+                <div className={style.resPanelHead}>
+                  <strong>Resumen del mes</strong>
+                  <span>
+                    {mesNombre} · {currencyTag}
+                  </span>
+                </div>
+
+                {/* Barra proporcional ingresos (verde) vs egresos (rojo) */}
+                {(() => {
+                  const inM = monthSummary.ingreso || 0;
+                  const outM = monthSummary.egreso || 0;
+                  const total = inM + outM;
+                  const pct = total ? Math.min(95, Math.max(5, (inM / total) * 100)) : 0;
+                  return (
+                    <div className={style.ratioBar}>
+                      {total > 0 ? (
+                        <>
+                          {inM > 0 ? (
+                            <span className={style.ratioIn} style={{ width: outM > 0 ? `${pct}%` : "100%" }} />
+                          ) : null}
+                          {outM > 0 ? <span className={style.ratioOut} style={{ flex: 1 }} /> : null}
+                        </>
+                      ) : null}
+                    </div>
+                  );
+                })()}
+
+                <div className={style.ieRow}>
+                  {[
+                    { label: "Ingresos", Icon: FiArrowDown, tone: style.tonoIngreso, val: monthSummary.ingreso || 0, prev: prevSummary.ingreso || 0, buenoSiSube: true, tipo: "ingreso" },
+                    { label: "Egresos", Icon: FiArrowUp, tone: style.tonoEgreso, val: monthSummary.egreso || 0, prev: prevSummary.egreso || 0, buenoSiSube: false, tipo: "egreso" },
+                  ].map((c, i) => {
+                    const d = deltaPct(c.val, c.prev);
+                    const favorable = d != null && (c.buenoSiSube ? d >= 0 : d <= 0);
+                    return (
+                      <Fragment key={c.label}>
+                        {i > 0 ? <span className={style.ieSep} /> : null}
+                        <button type="button" className={style.ieCol} onClick={() => goToFilter(c.tipo)}>
+                          <span className={style.ieHead}>
+                            <c.Icon className={c.tone} />
+                            {c.label}
+                          </span>
+                          <strong className={`${style.ieVal} ${c.tone}`}>{hideableMoney(c.val)}</strong>
+                          {d != null ? (
+                            <small className={favorable ? style.ieDeltaOk : style.ieDeltaBad}>
+                              {d > 0 ? "+" : ""}
+                              {d}% vs {mesPrevNombre}
+                            </small>
+                          ) : (
+                            <small className={style.ieDeltaMuted}>sin datos de {mesPrevNombre}</small>
+                          )}
+                        </button>
+                      </Fragment>
+                    );
+                  })}
+                </div>
+
+                <div className={style.resDivider} />
+
+                {/* Filas finas: ahorro, deuda y movimientos */}
+                <button type="button" className={style.resSlimRow} onClick={() => goToFilter("ahorro")}>
+                  <FiPocket className={style.tonoAhorro} />
+                  <span>Ahorro del mes</span>
+                  <strong className={style.tonoAhorro}>{hideableMoney(monthSummary.ahorro)}</strong>
+                </button>
+                <button type="button" className={style.resSlimRow} onClick={() => goToFilter("deuda")}>
+                  <FiCreditCard className={style.tonoDeuda} />
+                  <span>Deuda pendiente</span>
+                  <strong className={style.tonoDeuda}>{hideableMoney(historicalSummary.deudaPendiente)}</strong>
+                </button>
+                <button type="button" className={style.resSlimRow} onClick={() => setResumenTab("historial")}>
+                  <i className={style.movCountDot} />
+                  <span>Movimientos del mes</span>
+                  <strong>{areTotalsVisible ? monthMovimientos.length : "••"}</strong>
+                  <FiChevronRight className={style.resSlimChevron} />
+                </button>
+              </div>
+            ) : (
+              <div className={style.histPanel}>
+                {monthGroups.length === 0 ? (
+                  <p className={style.typeEmpty}>No hay movimientos este mes.</p>
+                ) : (
+                  monthGroups.map((g) => (
+                    <div key={g.k}>
+                      <p className={style.movDayLabel}>{nombreDia(g.k)}</p>
+                      {g.items.map((item, idx) => {
+                        const meta = getMovementTypeMeta(item.tipo);
+                        const look = movementLook(item);
+                        const abierto = expandedMovs.has(item._id);
+                        const isDebt = item.tipo === "deuda";
+                        const isPendingDebt = isDebt && item.deudaEstado !== "pagada";
+                        const debtPaid = Number(item.deudaPagado) || 0;
+                        const debtRemaining = (Number(item.monto) || 0) - debtPaid;
+                        const isPartialDebt = isPendingDebt && debtPaid > 0;
+                        const monto = isDebt
+                          ? formatMoney(item.monto, currentCurrency)
+                          : formatSignedMoney(item.monto, currentCurrency, item.tipo === "ingreso");
+                        return (
+                          <div key={item._id} className={idx > 0 ? style.movDivider : undefined}>
+                            <button
+                              type="button"
+                              className={style.movTop}
+                              onClick={() => toggleMovExpand(item._id)}
+                              aria-expanded={abierto}
+                            >
+                              <i className={`${style.movIcon} ${style[look.tone]}`}>
+                                <look.Icon />
+                              </i>
+                              <span className={style.movInfo}>
+                                <strong>{item.categoria || "Sin categoría"}</strong>
+                                <small>
+                                  {meta.label}
+                                  {item.medio ? ` · ${item.medio}` : ""}
+                                  {item.desdeAhorro ? " · Uso de ahorro" : ""}
+                                </small>
+                              </span>
+                              <span className={style.movRight}>
+                                <strong className={style[look.tone]}>
+                                  {areTotalsVisible ? monto : "••••"}
+                                </strong>
+                                {isPendingDebt ? (
+                                  <small>{isPartialDebt ? "Parcial" : "Pendiente"}</small>
+                                ) : null}
+                              </span>
+                              {abierto ? (
+                                <FiChevronUp className={style.movChevron} />
+                              ) : (
+                                <FiChevronDown className={style.movChevron} />
+                              )}
+                            </button>
+
+                            {abierto ? (
+                              <div className={style.movBody}>
+                                {item.detalle ? <p>{item.detalle}</p> : null}
+                                {isDebt && item.deudaAcreedor ? <p>Acreedor: {item.deudaAcreedor}</p> : null}
+                                {isPendingDebt ? (
+                                  <p className={style.tonoDeuda}>
+                                    {isPartialDebt
+                                      ? `Pagado ${formatMoney(debtPaid, currentCurrency)} · resta ${formatMoney(debtRemaining, currentCurrency)}`
+                                      : "Pendiente de pago"}
+                                  </p>
+                                ) : null}
+                                <div className={style.movActions}>
+                                  {isPendingDebt ? (
+                                    <button
+                                      type="button"
+                                      className={style.movPay}
+                                      onClick={() => goToFilter("deuda")}
+                                    >
+                                      Pagar deuda
+                                    </button>
+                                  ) : (
+                                    <span />
+                                  )}
+                                  <span className={style.movIcons}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleEditMov(item)}
+                                      aria-label="Editar movimiento"
+                                      title="Editar"
+                                    >
+                                      <FiEdit2 />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={style.movDelete}
+                                      onClick={() => handleDeleteMov(item)}
+                                      aria-label="Eliminar movimiento"
+                                      title="Eliminar"
+                                    >
+                                      <FiTrash2 />
+                                    </button>
+                                  </span>
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </section>
+          </>
         ) : (
           /* Lista de deudas / ahorros (como la app) */
           <div className={style.typePanel}>
@@ -292,46 +675,64 @@ function LeftSite({
                 {viewTab === "ahorro" ? (
                   <p className={style.typePot}>
                     Disponible:{" "}
-                    {areTotalsVisible
-                      ? [
-                          savingsPot.ARS !== 0 || savingsPot.USD === 0
-                            ? formatMoney(savingsPot.ARS, "ARS")
-                            : null,
-                          savingsPot.USD !== 0 ? formatMoney(savingsPot.USD, "USD") : null,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")
-                      : "••••"}
+                    {areTotalsVisible ? formatMoney(savingsPot[typeCurrency], typeCurrency) : "••••"}
                   </p>
                 ) : (
                   <p className={style.typeCount}>
-                    {typeMovs.length} {typeMovs.length === 1 ? "movimiento" : "movimientos"}
+                    {typeMovs.length} {typeMovs.length === 1 ? "movimiento" : "movimientos"} en{" "}
+                    {typeCurrency}
                   </p>
                 )}
               </div>
-              <div className={style.typeActions}>
-                {viewTab === "ahorro" ? (
-                  <button
-                    type="button"
-                    className={style.typeUse}
-                    onClick={() => navigate("/add?tipo=ahorro-uso")}
-                  >
-                    Usar ahorro
-                  </button>
-                ) : null}
+              {/* Sub-switch ARS/USD para separar deuda/ahorro por moneda + ojo */}
+              <div className={style.typeHeadRight}>
+                <div className={style.curSwitch}>
+                  {["ARS", "USD"].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={typeCurrency === c ? style.curSwitchOn : ""}
+                      onClick={() => setTypeCurrency(c)}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
                 <button
                   type="button"
-                  className={style.typeAdd}
-                  onClick={() => navigate(`/add?tipo=${viewTab}`)}
+                  className={style.typeEye}
+                  onClick={() => setAreTotalsVisible((prev) => !prev)}
+                  aria-label={areTotalsVisible ? "Ocultar montos" : "Mostrar montos"}
+                  title={areTotalsVisible ? "Ocultar montos" : "Mostrar montos"}
                 >
-                  {viewTab === "deuda" ? "Cargar deuda" : "Nuevo ahorro"}
+                  {areTotalsVisible ? <FiEye /> : <FiEyeOff />}
                 </button>
               </div>
             </div>
 
+            <div className={style.typeActions}>
+              <button
+                type="button"
+                className={`${style.typeAdd} ${viewTab === "deuda" ? style.typeAddDeuda : style.typeAddAhorro}`}
+                onClick={() => navigate(`/add?tipo=${viewTab}`)}
+              >
+                {viewTab === "deuda" ? "Cargar deuda" : "Nuevo ahorro"}
+              </button>
+              {viewTab === "ahorro" ? (
+                <button
+                  type="button"
+                  className={style.typeUse}
+                  onClick={() => navigate("/add?tipo=ahorro-uso")}
+                >
+                  Usar ahorro
+                </button>
+              ) : null}
+            </div>
+
+            <p className={style.movDayLabel}>Movimientos</p>
             {typeMovs.length === 0 ? (
               <p className={style.typeEmpty}>
-                No hay {viewTab === "deuda" ? "deudas" : "ahorros"} cargados todavía.
+                No hay {viewTab === "deuda" ? "deudas" : "ahorros"} en {typeCurrency} todavía.
               </p>
             ) : (
               <div className={style.typeList}>
@@ -390,93 +791,6 @@ function LeftSite({
           </div>
         )}
 
-        {viewTab === "money" ? (
-        <section className={style.mesResumen} aria-label="Resumen del mes">
-          {/* Resultado del mes + cantidad de movimientos + barra ingresos vs egresos */}
-          <div
-            className={`${style.mesTop} ${style.mesClickable}`}
-            role="button"
-            tabIndex={0}
-            onClick={() => goToFilter(null)}
-            onKeyDown={(event) => handleCardKeyDown(event, null)}
-          >
-            <div className={style.mesTopHead}>
-              <span className={style.mesLabel}>Resultado mensual</span>
-              <span className={style.mesMovPill}>
-                {monthMovimientos.length} {monthMovimientos.length === 1 ? "movimiento" : "movimientos"}
-              </span>
-            </div>
-            <strong
-              className={`${style.mesTotal} ${
-                monthSummary.total > 0 ? style.tonoIngreso : monthSummary.total < 0 ? style.tonoEgreso : ""
-              }`}
-            >
-              {hideableMoney(monthSummary.total)}
-            </strong>
-            {(() => {
-              const suma = (monthSummary.ingreso || 0) + (monthSummary.egreso || 0);
-              const pct = suma ? Math.round(((monthSummary.ingreso || 0) / suma) * 100) : 50;
-              return (
-                <div className={style.mesBar} title={`Ingresos ${pct}% · Egresos ${100 - pct}%`}>
-                  <span className={style.mesBarIngreso} style={{ width: `${pct}%` }} />
-                  <span className={style.mesBarEgreso} style={{ width: `${100 - pct}%` }} />
-                </div>
-              );
-            })()}
-          </div>
-
-          <div className={style.mesTiles}>
-            <article
-              className={`${style.mesTile} ${style.mesClickable}`}
-              role="button"
-              tabIndex={0}
-              onClick={() => goToFilter("ingreso")}
-              onKeyDown={(event) => handleCardKeyDown(event, "ingreso")}
-            >
-              <i className={`${style.mesTileIcon} ${style.tonoIngreso}`}><FiTrendingUp /></i>
-              <span className={style.mesLabel}>Ingresos</span>
-              <strong className={`${style.mesValor} ${style.tonoIngreso}`}>{hideableMoney(monthSummary.ingreso)}</strong>
-            </article>
-
-            <article
-              className={`${style.mesTile} ${style.mesClickable}`}
-              role="button"
-              tabIndex={0}
-              onClick={() => goToFilter("egreso")}
-              onKeyDown={(event) => handleCardKeyDown(event, "egreso")}
-            >
-              <i className={`${style.mesTileIcon} ${style.tonoEgreso}`}><FiTrendingDown /></i>
-              <span className={style.mesLabel}>Egresos</span>
-              <strong className={`${style.mesValor} ${style.tonoEgreso}`}>{hideableMoney(monthSummary.egreso)}</strong>
-            </article>
-
-            <article
-              className={`${style.mesTile} ${style.mesClickable}`}
-              role="button"
-              tabIndex={0}
-              onClick={() => goToFilter("ahorro")}
-              onKeyDown={(event) => handleCardKeyDown(event, "ahorro")}
-            >
-              <i className={`${style.mesTileIcon} ${style.tonoAhorro}`}><FiPocket /></i>
-              <span className={style.mesLabel}>Ahorro</span>
-              <strong className={`${style.mesValor} ${style.tonoAhorro}`}>{hideableMoney(monthSummary.ahorro)}</strong>
-            </article>
-
-            <article
-              className={`${style.mesTile} ${style.mesClickable}`}
-              role="button"
-              tabIndex={0}
-              onClick={() => goToFilter("deuda")}
-              onKeyDown={(event) => handleCardKeyDown(event, "deuda")}
-            >
-              <i className={`${style.mesTileIcon} ${style.tonoDeuda}`}><FiCreditCard /></i>
-              <span className={style.mesLabel}>Deuda pendiente</span>
-              <strong className={`${style.mesValor} ${style.tonoDeuda}`}>{hideableMoney(historicalSummary.deudaPendiente)}</strong>
-            </article>
-          </div>
-        </section>
-        ) : null}
-
         {/* Apoyo: Growth es gratis, invitamos a compartir y a donar */}
         <section className={style.sideSupport}>
           <div className={style.sideSupportBg} aria-hidden="true">
@@ -523,6 +837,47 @@ function LeftSite({
           </div>
         </section>
       </div>
+
+      {saldoInfoOpen ? (
+        <div className={style.infoOverlay} onClick={() => setSaldoInfoOpen(false)} role="presentation">
+          <div
+            className={style.infoModal}
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-label="Saldo total"
+          >
+            <div className={style.infoHead}>
+              <h3>Saldo total</h3>
+              <button
+                type="button"
+                className={style.infoClose}
+                onClick={() => setSaldoInfoOpen(false)}
+                aria-label="Cerrar"
+              >
+                <FiX />
+              </button>
+            </div>
+            <div className={style.infoBody}>
+              <p>
+                El saldo total es la <strong>diferencia entre tus ingresos y tus egresos</strong>.
+              </p>
+              <p>
+                Incluye todo junto: lo que movés en <strong>efectivo</strong> y en{" "}
+                <strong>transferencia</strong>.
+              </p>
+              <p className={style.infoTip}>
+                <FiFilter /> ¿Querés ver cuánto es en efectivo y cuánto en transferencia por
+                separado? Buscalo en Filtros: cada movimiento muestra su medio.
+              </p>
+            </div>
+            <div className={style.infoActions}>
+              <button type="button" className={style.infoOk} onClick={() => setSaldoInfoOpen(false)}>
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {infoOpen ? (
         <div

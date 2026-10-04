@@ -127,6 +127,7 @@ function AppRoutes({
             onUpdate={onUpdate}
             panelCurrency={panelCurrency}
             onPanelCurrencyChange={onPanelCurrencyChange}
+            setMovementToEdit={setMovementToEdit}
             theme={theme}
             onThemeToggle={onThemeToggle}
             activeWorkspace={activeWorkspace}

@@ -1581,3 +1581,666 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 :global(body[data-theme="light"]) .tonoEgreso { color: #d9573f; }
 :global(body[data-theme="light"]) .tonoAhorro { color: #1f9c7a; }
 :global(body[data-theme="light"]) .tonoDeuda { color: #b8891a; }
+
+/* =====================================================================
+   Home con el estilo de la app
+   Letra Menda, pestañas en contenedor redondeado que la tarjeta tapa a
+   medias, tarjeta con acciones adentro y bloque Resumen / Historial.
+   ===================================================================== */
+@font-face {
+  font-family: "Menda";
+  src: url("/Menda%20Font/Menda%20Medium.ttf") format("truetype");
+  font-weight: 400 599;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Menda";
+  src: url("/Menda%20Font/Menda%20Bold.ttf") format("truetype");
+  font-weight: 600 900;
+  font-display: swap;
+}
+
+.panel,
+.panel button,
+.infoModal {
+  font-family: "Menda", "Inter", system-ui, sans-serif;
+}
+
+/* ---- Pestañas ---- */
+.tabsShell {
+  border: 1px solid #4e4e4e;
+  border-radius: 26px;
+  padding: 0.35rem;
+}
+
+/* Con moneda activa deja lugar abajo: la tarjeta sube y lo tapa a medias */
+.tabsShellCard {
+  padding-bottom: 5.2rem;
+}
+
+.tabsShell .segmentTabs {
+  padding: 0;
+  border: none;
+  background: transparent;
+  gap: 0.2rem;
+}
+
+.tabsShell .segmentTab {
+  min-height: 38px;
+  border-radius: 999px;
+  color: var(--color-text);
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.tabsShell .segmentTabActive,
+.tabsShell .segmentTabActive:hover {
+  background: #4f4f4f;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+:global(body[data-theme="light"]) .tabsShell {
+  border-color: rgba(22, 41, 31, 0.25);
+}
+
+:global(body[data-theme="light"]) .tabsShell .segmentTabActive {
+  background: #16241d;
+  color: #ffffff;
+}
+
+/* ---- Tarjeta ---- */
+.ccOverlap {
+  margin-top: -5.6rem;
+}
+
+.ccOverlap .creditCard {
+  min-height: 0;
+  gap: 0.75rem;
+  padding: 1.05rem 1.1rem 1rem;
+  border-radius: 26px;
+  justify-content: flex-start;
+}
+
+.ccOverlap .ccKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--cardText);
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+
+.ccInfo {
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--cardText);
+  opacity: 0.85;
+  cursor: pointer;
+}
+
+.ccInfo svg {
+  width: 15px;
+  height: 15px;
+}
+
+.ccOverlap .ccActions {
+  gap: 0.4rem;
+}
+
+/* Círculos grises claros con ícono oscuro, como en la app */
+.ccOverlap .ccEye {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: rgba(255, 255, 255, 0.82);
+  color: #0d1f28;
+}
+
+.ccOverlap .ccEye:hover {
+  background: #ffffff;
+}
+
+.ccOverlap .ccBalance {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.ccQuickRow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+}
+
+.ccQuickItem {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.ccQuickBtn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--cardText) 28%, transparent);
+  background: color-mix(in srgb, var(--cardText) 12%, transparent);
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+
+.ccQuickItem:hover .ccQuickBtn {
+  transform: translateY(-2px);
+  background: color-mix(in srgb, var(--cardText) 20%, transparent);
+}
+
+.ccQuickBtn svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 2.6;
+}
+
+.ccQuickIn {
+  color: #75f94c;
+}
+
+.ccQuickOut {
+  color: #eb3223;
+}
+
+.ccQuickBtn .ccQuickExtra {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 11px;
+  height: 11px;
+}
+
+.ccQuickLabel {
+  color: var(--cardText);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ---- Bloque Resumen / Historial ---- */
+.ticket {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.ticketSwitchRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.ticketSwitch {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+  border-radius: 999px;
+}
+
+.ticketSeg {
+  border: none;
+  border-radius: 999px;
+  padding: 0.4rem 0.95rem;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ticketSegOn {
+  background: #75f94c;
+  color: #06210a;
+  font-weight: 700;
+}
+
+.verTodos {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #75f94c;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.resPanel,
+.histPanel {
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+  border-radius: 20px;
+  padding: 0.95rem 1rem;
+}
+
+.resPanelHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
+}
+
+.resPanelHead strong {
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.resPanelHead span {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
+.ratioBar {
+  display: flex;
+  gap: 3px;
+  height: 7px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.ratioIn {
+  background: #75f94c;
+  border-radius: 999px;
+}
+
+.ratioOut {
+  background: #eb3223;
+  border-radius: 999px;
+}
+
+.ieRow {
+  display: flex;
+  align-items: stretch;
+  gap: 0.8rem;
+  margin-top: 0.85rem;
+}
+
+.ieSep {
+  width: 1px;
+  background: var(--border-color, rgba(216, 241, 224, 0.1));
+}
+
+.ieCol {
+  flex: 1 1 0;
+  min-width: 0;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ieHead {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
+.ieVal {
+  font-size: 1.12rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+
+.ieCol small {
+  font-size: 0.7rem;
+}
+
+.ieDeltaOk {
+  color: #75f94c;
+}
+
+.ieDeltaBad {
+  color: #ff6b5e;
+}
+
+.ieDeltaMuted {
+  color: var(--color-muted);
+}
+
+.resDivider {
+  height: 1px;
+  margin: 0.85rem 0 0.3rem;
+  background: var(--border-color, rgba(216, 241, 224, 0.1));
+}
+
+.resSlimRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.55rem 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.resSlimRow > svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
+
+.resSlimRow span {
+  flex: 1 1 auto;
+}
+
+.resSlimRow strong {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.resSlimRow:hover span {
+  color: #75f94c;
+}
+
+.resSlimRow .resSlimChevron {
+  color: var(--color-muted);
+}
+
+.movCountDot {
+  width: 9px;
+  height: 9px;
+  margin: 0 4px;
+  border-radius: 50%;
+  background: #ff3465;
+  flex: 0 0 auto;
+}
+
+/* Historial del mes: por día, filas desplegables */
+.histPanel {
+  padding: 0.5rem 1rem 0.7rem;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.movDayLabel {
+  margin: 0.7rem 0 0.3rem;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: capitalize;
+}
+
+.movDivider {
+  border-top: 1px dashed var(--border-color, rgba(216, 241, 224, 0.1));
+}
+
+.movTop {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.6rem 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.movIcon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.movIcon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.movInfo {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.movInfo strong,
+.movInfo small {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.movInfo strong {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.movInfo small {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  text-transform: capitalize;
+}
+
+.movRight {
+  display: grid;
+  justify-items: end;
+  gap: 0.1rem;
+  flex: 0 0 auto;
+}
+
+.movRight strong {
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.movRight small {
+  color: #e6bc3f;
+  font-size: 0.68rem;
+}
+
+.movChevron {
+  flex: 0 0 auto;
+  color: var(--color-muted);
+}
+
+.movBody {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0 0 0.7rem 2.6rem;
+}
+
+.movBody p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.movActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+}
+
+.movPay {
+  border: none;
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  background: #f4c622;
+  color: #3a2d05;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.movIcons {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+
+.movIcons button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.movIcons button:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--color-text);
+}
+
+.movIcons .movDelete {
+  color: #ff6b5e;
+}
+
+/* ---- Deudas / Ahorros ---- */
+.typePanel {
+  background: transparent;
+  border-color: var(--border-color, rgba(216, 241, 224, 0.1));
+}
+
+.typeHeadRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.curSwitch {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+  border-radius: 999px;
+}
+
+.curSwitch button {
+  border: none;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.curSwitch .curSwitchOn {
+  background: #4f4f4f;
+  color: #ffffff;
+}
+
+.typeEye {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.typePanel .typeActions {
+  justify-content: flex-start;
+}
+
+.typeAddDeuda {
+  background: #f4c622;
+  color: #3a2d05;
+}
+
+.typeAddAhorro {
+  background: #2bb888;
+  color: #ffffff;
+}
+
+.infoTip svg {
+  vertical-align: -2px;
+  margin-right: 0.25rem;
+}
+
+:global(body[data-theme="light"]) .ratioBar {
+  background: rgba(20, 40, 30, 0.1);
+}
+
+:global(body[data-theme="light"]) .verTodos,
+:global(body[data-theme="light"]) .ieDeltaOk {
+  color: #1f9d4a;
+}
+
+:global(body[data-theme="light"]) .movIcons button:hover {
+  background: rgba(20, 40, 30, 0.06);
+}
+
+:global(body[data-theme="light"]) .curSwitch .curSwitchOn {
+  background: #16241d;
+}
+
+/* La columna en desktop está clavada al alto del monitor: con la tarjeta, el
+   resumen y el historial puede no entrar todo, así que scrollea adentro. */
+@media (min-width: 1001px) {
+  .panel {
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .panel::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* que el scroll no aplaste los bloques */
+  .panel > * {
+    flex-shrink: 0;
+  }
+}
