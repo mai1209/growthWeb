@@ -638,7 +638,6 @@ function MonthlyFilters({
     <section className={style.container}>
       <div className={style.hero}>
         <div className={style.heroMonthBlock}>
-          <p className={style.panelKicker}>{period === "year" ? "Año" : "Mes"}</p>
           <div className={style.heroTitleRow}>
             <h1 className={style.heroMonthTitle}>{periodLabel}</h1>
             {period === "month" ? (
