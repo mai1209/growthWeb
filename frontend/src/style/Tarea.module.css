@@ -2459,3 +2459,60 @@
   letter-spacing: 0;
   text-transform: none;
 }
+
+/* ---- Historial de tareas: controles cuadrados y chicos, sin rellenos ---- */
+.historyPeriods {
+  gap: 3px;
+  padding: 3px;
+  border-radius: 10px;
+  background: transparent;
+}
+
+.historyPeriodButton {
+  min-height: 32px;
+  padding: 0 0.8rem;
+  border-radius: 7px;
+  font-size: 0.76rem;
+  font-weight: 500;
+}
+
+.historyPeriodActive {
+  background: #75f94c;
+  color: #06210a;
+  font-weight: 700;
+}
+
+.historyNav {
+  gap: 0.35rem;
+}
+
+.historyNav span {
+  min-width: 7.5rem;
+  font-size: 0.82rem;
+}
+
+.historyNav button {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.historyStat,
+.historyChart {
+  border-radius: 12px;
+  background: transparent;
+}
+
+.historyStat {
+  padding: 0.75rem 0.85rem;
+}
+
+.historyStat strong {
+  font-size: 1.15rem;
+}
+
+.historyStat span,
+.historyLegend {
+  font-size: 0.72rem;
+}
