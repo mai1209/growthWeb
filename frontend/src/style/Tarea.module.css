@@ -2399,3 +2399,63 @@
     white-space: nowrap;
   }
 }
+
+/* ---- Cabecera de Tareas: sin fondo, fecha chica y controles cuadrados
+        (mismo criterio que Home, Filtros, Métricas y Metas) ---- */
+.headerCard {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.dayTitle {
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+}
+
+.dayNavBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.todayBtn {
+  padding: 0.36rem 0.75rem;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.viewSwitch {
+  gap: 3px;
+  padding: 3px;
+  border-radius: 10px;
+  background: transparent;
+}
+
+.viewSwitchButton {
+  min-height: 32px;
+  padding: 0 0.8rem;
+  border-radius: 7px;
+  font-size: 0.76rem;
+  font-weight: 500;
+}
+
+.viewSwitchActive {
+  background: #75f94c;
+  color: #06210a;
+  font-weight: 700;
+}
+
+.viewSwitchAction {
+  background: #75f94c;
+  color: #06210a;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
