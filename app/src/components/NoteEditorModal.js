@@ -815,12 +815,23 @@ const makeStyles = (colors) =>
       alignItems: "center",
       gap: 6,
       paddingHorizontal: 12,
-      paddingVertical: 0,
+      paddingVertical: 8,
       borderRadius: 9,
       borderWidth: 1,
       borderColor: colors.cardBorder,
     },
     metaPillEmpty: { borderStyle: "dashed", borderColor: colors.muted },
+    metaChevron: { paddingLeft: 6, marginLeft: 2, borderLeftWidth: 1, borderLeftColor: colors.cardBorder },
+    metaPillText: { color: colors.text, fontWeight: "700", fontSize: 13 },
+    // El alto lo da el padding de la pastilla, NO el del input: en iOS, cuanto
+    // más alto es el TextInput, más abajo dibuja el texto (quedaba descentrado).
+    metaInput: {
+      flex: 1,
+      color: colors.text,
+      fontWeight: "700",
+      fontSize: 13,
+      paddingVertical: 1,
+    },
     metaChevron: { paddingLeft: 6, marginLeft: 2, borderLeftWidth: 1, borderLeftColor: colors.cardBorder },
     metaPillText: { color: colors.text, fontWeight: "700", fontSize: 13 },
     // Sin alto fijo (dejaba el texto caído hacia abajo): el alto sale del
