@@ -33,6 +33,8 @@ import GroupTabBar from "./src/components/GroupTabBar";
 import { appService } from "./src/api";
 import { APP_VERSION, COMUNIDAD_HABILITADA } from "./src/config";
 import * as SecureStore from "expo-secure-store";
+import { useFonts } from "expo-font";
+import { MENDA_FONTS, setMendaEnabled } from "./src/fontGlobal";
 
 const UPDATE_SEEN_KEY = "update_aviso_visto_v"; // guarda la última versión ya avisada
 
@@ -229,11 +231,20 @@ function ThemedApp() {
 }
 
 export default function App() {
+  // Letra Menda en toda la app: se espera a que cargue antes de dibujar (el
+  // splash sigue puesto). Si fallara la carga, se sigue con la del sistema.
+  const [fontsLoaded, fontsError] = useFonts(MENDA_FONTS);
+  const fontsListas = fontsLoaded || Boolean(fontsError);
+  setMendaEnabled(fontsLoaded);
+
   useEffect(() => {
+    if (!fontsListas) return undefined;
     // Oculta el splash apenas la app montó (clave: si no, queda pegado)
     const t = setTimeout(() => SplashScreen.hideAsync().catch(() => {}), 200);
     return () => clearTimeout(t);
-  }, []);
+  }, [fontsListas]);
+
+  if (!fontsListas) return null;
 
   return (
     <ErrorBoundary>

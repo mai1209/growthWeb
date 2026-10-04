@@ -1,3 +1,5 @@
+// Primero que nada: letra Menda global (ver src/fontGlobal.js)
+import './src/fontGlobal';
 import { registerRootComponent } from 'expo';
 import { Platform } from 'react-native';
 
