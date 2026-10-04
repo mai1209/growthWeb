@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Alert,
@@ -35,6 +34,13 @@ const parseYMD = (value) => {
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? new Date() : d;
 };
+const snapshotOf = ({ meta, html, color, carpeta }) =>
+  JSON.stringify([meta.trim(), html, color, carpeta.trim()]);
+const textoPlano = (html) =>
+  String(html || "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .trim();
 const TOOLBAR_ACTIONS = [
   actions.setBold,
   actions.setItalic,
@@ -69,14 +75,22 @@ export default function NoteEditorModal({
   const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const richText = useRef(null);
-  const isEdit = !!note;
+  const titleRef = useRef(null);
+  const tagInputRef = useRef(null);
+  // Id de la nota en el servidor: la que vino abierta, o la que se crea sola
+  // con el primer guardado automático de una nota nueva.
+  const [noteId, setNoteId] = useState(null);
+  const isEdit = !!noteId;
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [paperOpen, setPaperOpen] = useState(false);
+  // idle | saving | saved | error
+  const [saveStatus, setSaveStatus] = useState("idle");
   const [meta, setMeta] = useState("");
   const [html, setHtml] = useState("");
   const [color, setColor] = useState("color1");
   const [carpeta, setCarpeta] = useState("");
   const [date, setDate] = useState(new Date());
   const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [folderListOpen, setFolderListOpen] = useState(false);
@@ -137,12 +151,27 @@ export default function NoteEditorModal({
       setCarpeta(note?.carpeta || defaultCarpeta || "");
       setDate(parseYMD(note?.fecha));
       setError("");
-      setSaving(false);
       setPickerOpen(false);
       setFolderListOpen(false);
+      setPaperOpen(false);
+      setNoteId(note?._id || null);
+      noteIdRef.current = note?._id || null;
+      // Nota nueva: arranca con el título listo para escribir
+      setEditingTitle(!note);
+      setSaveStatus(note ? "saved" : "idle");
+      savedSnapshotRef.current = snapshotOf({
+        meta: note?.meta || "",
+        html: note?.contenido || "",
+        color: note?.color || "color1",
+        carpeta: note?.carpeta || defaultCarpeta || "",
+      });
+      changedRef.current = false;
       setEditorKey((k) => k + 1); // remonta el editor con el contenido nuevo
     }
-  }, [visible, note, defaultCarpeta]);
+    // Solo al abrir: si el padre refresca la lista mientras se escribe, no hay
+    // que pisar lo que se está editando.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   // Paleta del papel: el fondo elegido pinta el título y el área de escritura
   // (antes solo afectaba la tarjeta en la lista y parecía que no funcionaba).
@@ -153,59 +182,109 @@ export default function NoteEditorModal({
     setEditorKey((k) => k + 1);
   };
 
-  // Pocos colores a la vista + "+" que abre el selector libre.
-  const baseColors = NOTE_COLOR_KEYS.slice(0, 5);
   const isCustom = typeof color === "string" && color.startsWith("#");
-  const visibleColors =
-    !isCustom && !baseColors.includes(color)
-      ? [...baseColors.slice(0, 4), color]
-      : baseColors;
 
-  const handleSave = async () => {
-    if (!meta.trim()) return setError("El título es obligatorio.");
-    setError("");
-    setSaving(true);
-    let contenido = html;
-    try {
-      const fresh = await richText.current?.getContentHtml();
-      if (typeof fresh === "string") contenido = fresh;
-    } catch {
-      // usa el último onChange
-    }
+  // ===== Guardado automático (como la web) =====
+  const noteIdRef = useRef(null);
+  const savedSnapshotRef = useRef("");
+  const changedRef = useRef(false); // hubo al menos un guardado → refrescar la lista al cerrar
+  const saveQueueRef = useRef(Promise.resolve(true));
+  const saveTimerRef = useRef(null);
+  const liveRef = useRef({});
+  liveRef.current = { meta, html, color, carpeta, date };
+
+  const doSave = async (htmlOverride) => {
+    const cur = liveRef.current;
+    const contenido = typeof htmlOverride === "string" ? htmlOverride : cur.html;
+    const titulo = cur.meta.trim();
+    const vacio = !titulo && !textoPlano(contenido);
+    // Una nota nueva sin título ni texto todavía no existe: no se crea.
+    if (!noteIdRef.current && vacio) return true;
+    const snap = snapshotOf({ meta: cur.meta, html: contenido, color: cur.color, carpeta: cur.carpeta });
+    if (snap === savedSnapshotRef.current) return true;
+
+    setSaveStatus("saving");
     const payload = {
       tipo: "note",
-      meta: meta.trim(),
+      meta: titulo || "Sin título",
       contenido,
-      fecha: toYMD(date),
+      fecha: toYMD(cur.date),
       horario: note?.horario || nowHM(),
-      color,
-      carpeta: carpeta.trim(),
+      color: cur.color,
+      carpeta: cur.carpeta.trim(),
       flashcards: note?.flashcards || [],
     };
     try {
-      const res = isEdit
-        ? await taskService.update(note._id, payload)
-        : await taskService.create(payload);
-      onSaved?.(res.data);
-      onClose?.();
+      if (noteIdRef.current) {
+        await taskService.update(noteIdRef.current, payload);
+      } else {
+        const res = await taskService.create(payload);
+        const id = res.data?._id || res.data?.task?._id || null;
+        noteIdRef.current = id;
+        setNoteId(id);
+      }
+      savedSnapshotRef.current = snap;
+      changedRef.current = true;
+      setError("");
+      setSaveStatus("saved");
+      return true;
     } catch (err) {
       setError(err.response?.data?.message || "No se pudo guardar la nota.");
-    } finally {
-      setSaving(false);
+      setSaveStatus("error");
+      return false;
     }
   };
 
+  // Los guardados van en fila: nunca dos a la vez (evita crear la nota dos veces).
+  const persist = (htmlOverride) => {
+    saveQueueRef.current = saveQueueRef.current.then(() => doSave(htmlOverride));
+    return saveQueueRef.current;
+  };
+
+  // Cada cambio (título, texto, papel, etiqueta) guarda solo tras una pausa corta.
+  useEffect(() => {
+    if (!visible) return undefined;
+    if (snapshotOf({ meta, html, color, carpeta }) === savedSnapshotRef.current) return undefined;
+    clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => persist(), 1200);
+    return () => clearTimeout(saveTimerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meta, html, color, carpeta, visible]);
+
+  // Cerrar: guarda lo pendiente antes de salir.
+  const handleClose = async () => {
+    clearTimeout(saveTimerRef.current);
+    let fresh;
+    try {
+      fresh = await richText.current?.getContentHtml();
+    } catch {
+      // usa el último onChange
+    }
+    const ok = await persist(typeof fresh === "string" ? fresh : undefined);
+    const salir = () => {
+      if (changedRef.current) onSaved?.();
+      onClose?.();
+    };
+    if (ok) return salir();
+    Alert.alert("No se pudo guardar", "¿Cerrar igual y perder los últimos cambios?", [
+      { text: "Seguir editando", style: "cancel" },
+      { text: "Cerrar igual", style: "destructive", onPress: salir },
+    ]);
+  };
+
   const handleDelete = () => {
-    if (!note) return;
-    Alert.alert("¿Eliminar nota?", `Se va a borrar "${note.meta}".`, [
+    if (!noteIdRef.current) return;
+    Alert.alert("¿Eliminar nota?", `Se va a borrar "${meta.trim() || "Sin título"}".`, [
       { text: "Cancelar", style: "cancel" },
       {
         text: "Eliminar",
         style: "destructive",
         onPress: async () => {
           try {
-            await taskService.delete(note._id);
-            onDeleted?.(note._id);
+            clearTimeout(saveTimerRef.current);
+            await saveQueueRef.current;
+            await taskService.delete(noteIdRef.current);
+            onDeleted?.(noteIdRef.current);
             onClose?.();
           } catch {
             Alert.alert("Error", "No se pudo eliminar.");
@@ -216,34 +295,73 @@ export default function NoteEditorModal({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible={visible} animationType="slide" onRequestClose={handleClose} statusBarTranslucent>
       <View style={[styles.safe, { paddingBottom: insets.bottom }]}>
-        {/* Header */}
+        {/* Header: cerrar · título (editable con el lápiz) · editar · borrar */}
         <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-          <TouchableOpacity onPress={onClose} hitSlop={10} style={styles.closeBtn}>
+          <TouchableOpacity onPress={handleClose} hitSlop={10} style={styles.closeBtn}>
             <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={styles.headerKicker}>EDITOR</Text>
-            <Text style={styles.headerTitle} numberOfLines={1}>
-              {isEdit ? meta || "Editar nota" : "Nueva nota"}
-            </Text>
+            <View style={styles.kickerRow}>
+              <Text style={styles.headerKicker}>EDITOR</Text>
+              {saveStatus !== "idle" ? (
+                <Text
+                  style={[
+                    styles.saveStatus,
+                    saveStatus === "error" && { color: colors.red },
+                    saveStatus === "saving" && { color: colors.muted },
+                  ]}
+                >
+                  {saveStatus === "saving"
+                    ? "· Guardando…"
+                    : saveStatus === "error"
+                    ? "· No se guardó"
+                    : "· Guardado"}
+                </Text>
+              ) : null}
+            </View>
+            {editingTitle ? (
+              <TextInput
+                ref={titleRef}
+                style={styles.headerTitleInput}
+                value={meta}
+                onChangeText={setMeta}
+                placeholder="Título de la nota…"
+                placeholderTextColor={colors.muted}
+                autoFocus
+                returnKeyType="done"
+                onSubmitEditing={() => setEditingTitle(false)}
+                onBlur={() => setEditingTitle(false)}
+              />
+            ) : (
+              <TouchableOpacity onPress={() => setEditingTitle(true)} activeOpacity={0.7}>
+                <Text
+                  style={[styles.headerTitle, !meta.trim() && { color: colors.muted }]}
+                  numberOfLines={1}
+                >
+                  {meta.trim() || "Título de la nota…"}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
+          <TouchableOpacity
+            onPress={() => setEditingTitle((v) => !v)}
+            hitSlop={10}
+            style={styles.iconBtn}
+            accessibilityLabel="Editar título"
+          >
+            <Ionicons
+              name="pencil"
+              size={19}
+              color={editingTitle ? colors.greenBright : colors.muted}
+            />
+          </TouchableOpacity>
           {isEdit && (
             <TouchableOpacity onPress={handleDelete} hitSlop={10} style={styles.iconBtn}>
               <Ionicons name="trash-outline" size={21} color={colors.red} />
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
-            {saving ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <>
-                <Ionicons name="checkmark" size={16} color="#fff" />
-                <Text style={styles.saveText}>{isEdit ? "Actualizar" : "Guardar"}</Text>
-              </>
-            )}
-          </TouchableOpacity>
         </View>
 
         <KeyboardAvoidingView
@@ -257,15 +375,16 @@ export default function NoteEditorModal({
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled
           >
-            {/* Carpeta: elegí una existente o escribí una nueva */}
+            {/* Etiqueta: escribí una nueva o elegí una del desplegable (flecha) */}
             <View style={styles.metaBar}>
               <View style={[styles.metaPill, { flex: 1 }]}>
-                <Ionicons name="folder-outline" size={13} color={colors.muted} />
+                <Ionicons name="pricetag-outline" size={13} color={colors.greenDark} />
                 <TextInput
+                  ref={tagInputRef}
                   style={styles.metaInput}
                   value={carpeta}
                   onChangeText={setCarpeta}
-                  placeholder="Sin carpeta · escribí una nueva"
+                  placeholder="Sin etiquetas · escribí una nueva"
                   placeholderTextColor={colors.muted}
                 />
                 {carpeta ? (
@@ -273,60 +392,25 @@ export default function NoteEditorModal({
                     <Ionicons name="close-circle" size={16} color={colors.muted} />
                   </TouchableOpacity>
                 ) : null}
-              </View>
-            </View>
-            {folders.length > 0 ? (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-                contentContainerStyle={styles.folderChips}
-              >
                 <TouchableOpacity
-                  style={[styles.folderChip, !carpeta.trim() && styles.folderChipActive]}
-                  onPress={() => setCarpeta("")}
-                >
-                  <Text style={[styles.folderChipText, !carpeta.trim() && styles.folderChipTextActive]}>
-                    Sin carpeta
-                  </Text>
-                </TouchableOpacity>
-                {folders.map((f) => {
-                  const active = carpeta.trim() === f;
-                  return (
-                    <TouchableOpacity
-                      key={f}
-                      style={[styles.folderChip, active && styles.folderChipActive]}
-                      onPress={() => setCarpeta(f)}
-                    >
-                      <Ionicons
-                        name="folder"
-                        size={12}
-                        color={active ? colors.greenDark : colors.muted}
-                      />
-                      <Text style={[styles.folderChipText, active && styles.folderChipTextActive]}>
-                        {f}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-                <TouchableOpacity
-                  style={[styles.folderChip, styles.folderChipMore2]}
                   onPress={() => setFolderListOpen((o) => !o)}
-                  accessibilityLabel="Ver todas las carpetas"
+                  hitSlop={10}
+                  style={styles.metaChevron}
+                  accessibilityLabel="Ver etiquetas"
                 >
                   <Ionicons
                     name={folderListOpen ? "chevron-up" : "chevron-down"}
-                    size={15}
-                    color={colors.greenDark}
+                    size={16}
+                    color={colors.muted}
                   />
                 </TouchableOpacity>
-              </ScrollView>
-            ) : null}
+              </View>
+            </View>
 
-            {folderListOpen && folders.length > 0 ? (
+            {folderListOpen ? (
               <View style={styles.folderDropdown}>
                 <ScrollView
-                  style={{ maxHeight: 180 }}
+                  style={{ maxHeight: 220 }}
                   keyboardShouldPersistTaps="handled"
                   nestedScrollEnabled
                 >
@@ -337,11 +421,11 @@ export default function NoteEditorModal({
                       setFolderListOpen(false);
                     }}
                   >
-                    <Ionicons name="albums-outline" size={16} color={colors.muted} />
+                    <Ionicons name="pricetag-outline" size={15} color={colors.muted} />
                     <Text
                       style={[styles.folderRowText, !carpeta.trim() && { color: colors.greenDark }]}
                     >
-                      Sin carpeta
+                      Sin etiquetas
                     </Text>
                   </TouchableOpacity>
                   {folders.map((f) => {
@@ -356,8 +440,8 @@ export default function NoteEditorModal({
                         }}
                       >
                         <Ionicons
-                          name="folder-outline"
-                          size={16}
+                          name={active ? "pricetag" : "pricetag-outline"}
+                          size={15}
                           color={active ? colors.greenDark : colors.muted}
                         />
                         <Text style={[styles.folderRowText, active && { color: colors.greenDark }]}>
@@ -366,58 +450,81 @@ export default function NoteEditorModal({
                       </TouchableOpacity>
                     );
                   })}
+                  <TouchableOpacity
+                    style={[styles.folderRow2, { borderBottomWidth: 0 }]}
+                    onPress={() => {
+                      setCarpeta("");
+                      setFolderListOpen(false);
+                      tagInputRef.current?.focus();
+                    }}
+                  >
+                    <Ionicons name="add" size={17} color={colors.greenBright} />
+                    <Text style={[styles.folderRowText, { color: colors.greenDark }]}>
+                      Nueva etiqueta
+                    </Text>
+                  </TouchableOpacity>
                 </ScrollView>
               </View>
             ) : null}
 
-            {/* Fondo: pocos colores + "+" que despliega la paleta completa */}
-            <Text style={styles.fieldLabel}>Fondo</Text>
-            <View style={styles.colorRow}>
-              {visibleColors.map((key) => {
-                const c = getNoteColor(key);
-                const active = color === key;
-                return (
+            {/* Papel: cerrado muestra solo el color elegido; al tocarlo se
+                despliegan todos y al elegir uno se vuelve a cerrar. */}
+            <View style={styles.paperRow}>
+              <Text style={styles.paperLabel}>Papel</Text>
+              {paperOpen ? (
+                <View style={styles.colorRow}>
+                  {NOTE_COLOR_KEYS.map((key) => {
+                    const c = getNoteColor(key);
+                    const active = color === key;
+                    return (
+                      <TouchableOpacity
+                        key={key}
+                        onPress={() => {
+                          if (!active) cambiarColor(key);
+                          setPaperOpen(false);
+                        }}
+                        hitSlop={4}
+                        style={[styles.colorDot, { backgroundColor: c.bg }, active && styles.colorDotActive]}
+                      />
+                    );
+                  })}
+                  {isCustom && (
+                    <TouchableOpacity
+                      onPress={() => setPaperOpen(false)}
+                      hitSlop={4}
+                      style={[
+                        styles.colorDot,
+                        { backgroundColor: palette.bg },
+                        styles.colorDotActive,
+                      ]}
+                    />
+                  )}
+                  {/* "+" abre el selector libre */}
                   <TouchableOpacity
-                    key={key}
-                    onPress={() => cambiarColor(key)}
-                    style={[styles.colorDot, { backgroundColor: c.bg }, active && styles.colorDotActive]}
+                    style={styles.colorMore}
+                    hitSlop={4}
+                    onPress={() => {
+                      setPaperOpen(false);
+                      setPickerOpen(true);
+                    }}
                   >
-                    {active && <Ionicons name="checkmark" size={15} color={c.text} />}
+                    <Ionicons name="add" size={15} color={colors.muted} />
                   </TouchableOpacity>
-                );
-              })}
-              {/* Color libre elegido con el picker */}
-              {isCustom && (
+                </View>
+              ) : (
                 <TouchableOpacity
-                  onPress={() => setPickerOpen(true)}
-                  style={[
-                    styles.colorDot,
-                    { backgroundColor: getNoteColor(color).bg },
-                    styles.colorDotActive,
-                  ]}
+                  onPress={() => setPaperOpen(true)}
+                  hitSlop={10}
+                  style={styles.paperCurrent}
+                  accessibilityLabel="Cambiar el color del papel"
                 >
-                  <Ionicons name="checkmark" size={15} color={getNoteColor(color).text} />
+                  <View style={[styles.colorDot, { backgroundColor: palette.bg }, styles.colorDotActive]} />
+                  <Ionicons name="chevron-forward" size={14} color={colors.muted} />
                 </TouchableOpacity>
               )}
-
-              {/* "+" abre el selector completo (cuadrado + barra de matiz) */}
-              <TouchableOpacity style={styles.colorMore} onPress={() => setPickerOpen(true)}>
-                <Ionicons name="add" size={18} color={colors.muted} />
-              </TouchableOpacity>
             </View>
 
-            {/* Título */}
-            <Text style={styles.fieldLabel}>Título</Text>
-            <TextInput
-              style={[styles.titleInput, { backgroundColor: palette.bg, color: palette.text }]}
-              value={meta}
-              onChangeText={setMeta}
-              placeholder="Ej: Ideas para promociones de junio"
-              placeholderTextColor={palette.text + "88"}
-            />
-
             {/* Contenido enriquecido */}
-            <Text style={styles.fieldLabel}>Contenido</Text>
             <View style={[styles.paper, { backgroundColor: palette.bg }]}>
               <RichEditor
                 key={editorKey}
@@ -499,20 +606,22 @@ const makeStyles = (colors) =>
     },
     closeBtn: { padding: 2 },
     iconBtn: { padding: 4 },
+    kickerRow: { flexDirection: "row", alignItems: "center", gap: 5 },
     headerKicker: { color: colors.greenDark, fontSize: 9, fontWeight: "800", letterSpacing: 1.3 },
-    headerTitle: { color: colors.text, fontSize: 16, fontWeight: "800", marginTop: 1 },
-    saveBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 5,
-      backgroundColor: colors.greenBright,
-      borderRadius: 12,
-      paddingHorizontal: 14,
-      paddingVertical: 9,
-      minWidth: 96,
-      justifyContent: "center",
+    saveStatus: { color: colors.greenDark, fontSize: 10, fontWeight: "700" },
+    headerTitle: { color: colors.text, fontSize: 14, fontWeight: "800", marginTop: 1, paddingVertical: 4 },
+    // Título en edición: mismo borde verde fino que la web
+    headerTitleInput: {
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: "800",
+      marginTop: 2,
+      paddingVertical: 3,
+      paddingHorizontal: 8,
+      borderWidth: 1,
+      borderColor: colors.greenBright2,
+      borderRadius: 9,
     },
-    saveText: { color: "#fff", fontWeight: "800", fontSize: 13 },
 
     body: { padding: 16, paddingBottom: 30 },
     metaBar: { flexDirection: "row", gap: 8, alignItems: "center" },
@@ -527,6 +636,7 @@ const makeStyles = (colors) =>
       borderColor: colors.cardBorder,
       backgroundColor: colors.cardSoft,
     },
+    metaChevron: { paddingLeft: 6, marginLeft: 2, borderLeftWidth: 1, borderLeftColor: colors.cardBorder },
     metaPillText: { color: colors.text, fontWeight: "700", fontSize: 13 },
     metaInput: { flex: 1, color: colors.text, fontWeight: "700", fontSize: 13, paddingVertical: 0 },
     folderChips: { gap: 7, paddingVertical: 10, paddingRight: 8 },
@@ -568,34 +678,31 @@ const makeStyles = (colors) =>
     folderChipText: { color: colors.muted, fontWeight: "700", fontSize: 12 },
     folderChipTextActive: { color: colors.greenDark },
 
-    fieldLabel: {
+    paperRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 14, marginBottom: 12 },
+    paperLabel: {
       color: colors.muted,
       fontSize: 11,
       fontWeight: "800",
       textTransform: "uppercase",
       letterSpacing: 0.8,
-      marginTop: 18,
-      marginBottom: 9,
     },
-    colorRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 2 },
+    paperCurrent: { flexDirection: "row", alignItems: "center", gap: 6 },
+    colorRow: { flex: 1, flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 9 },
     colorDot: {
-      width: 34,
-      height: 34,
-      borderRadius: 11,
-      borderWidth: 1.5,
-      borderColor: "rgba(17,24,20,0.14)",
-      alignItems: "center",
-      justifyContent: "center",
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: "rgba(127,127,127,0.35)",
     },
-    colorDotActive: { borderWidth: 2.5, borderColor: colors.greenBright, transform: [{ scale: 1.06 }] },
+    colorDotActive: { borderWidth: 2, borderColor: colors.greenBright },
     colorMore: {
-      width: 34,
-      height: 34,
-      borderRadius: 11,
-      borderWidth: 1.5,
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 1,
       borderStyle: "dashed",
-      borderColor: colors.cardBorder,
-      backgroundColor: colors.card,
+      borderColor: colors.muted,
       alignItems: "center",
       justifyContent: "center",
     },
