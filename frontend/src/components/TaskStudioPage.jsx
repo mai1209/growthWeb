@@ -1784,6 +1784,20 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     consumeHistoryTrap();
   };
 
+  // Si con una nota abierta se navega (desde el nav) a Journaling, Compras o
+  // Afirmaciones, el editor no puede quedarse abierto: sin la vista de notas
+  // detrás pierde su layout (hoja + panel lado a lado) y se tapa todo.
+  // Se cierra guardando lo pendiente, igual que con la X.
+  useEffect(() => {
+    if (
+      isEditorOpen &&
+      (effectiveView === "journal" || effectiveView === "shopping" || effectiveView === "afirmaciones")
+    ) {
+      handleCloseEditor();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveView]);
+
   const handleEdit = (task) => {
     const pages = parseNotePages(task.contenido || "");
     activeNotePageIndexRef.current = 0;
