@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   FiAlignCenter,
@@ -412,6 +412,24 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const editorRef = useRef(null);
   const quillRef = useRef(null);
   const titleInputRef = useRef(null);
+  // La barra de arriba es sticky (top:-1px) y no tiene fondo hasta que se
+  // "pega" al borde: ahí el IntersectionObserver ve que ya no está entera
+  // visible (ratio < 1) y se le pone el vidrio.
+  const [headerPegado, setHeaderPegado] = useState(false);
+  const headerObserverRef = useRef(null);
+  const noteHeaderRef = useCallback((node) => {
+    if (headerObserverRef.current) {
+      headerObserverRef.current.disconnect();
+      headerObserverRef.current = null;
+    }
+    if (!node || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setHeaderPegado(entry.intersectionRatio < 1),
+      { threshold: [1] }
+    );
+    observer.observe(node);
+    headerObserverRef.current = observer;
+  }, []);
   const selectionRef = useRef(null);
   const monthInputRef = useRef(null);
   const activeNotePageIndexRef = useRef(0);
@@ -2346,7 +2364,10 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   directo de la tarjeta del editor, así ocupa todo el
                   ancho (hoja + panel) y el panel de herramientas empieza
                   recién debajo, no al lado. */}
-            <div className={style.noteMetaHeader}>
+            <div
+              ref={noteHeaderRef}
+              className={`${style.noteMetaHeader} ${headerPegado ? style.noteMetaHeaderStuck : ""}`}
+            >
               <div className={style.headerTitleWrap}>
                 <div className={style.titleField}>
                   <input

@@ -4847,18 +4847,26 @@ button.folderItem {
    transparente de antes dejaba los íconos casi invisibles al scrollear. */
 .noteMetaHeader {
   position: sticky;
-  top: 0;
+  /* -1px a propósito: así el IntersectionObserver detecta cuándo se pega
+     (queda 1px afuera) y se le agrega .noteMetaHeaderStuck */
+  top: -1px;
   z-index: 6;
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
   width: 100%;
   padding: 0.5rem 0.3rem 0.65rem 4px;
-  /* "Sin fondo": usa el mismo color de la tarjeta que tiene detrás, así no
-     se nota ninguna caja, pero el texto que scrollea por debajo no se
-     transparenta (sticky). Solo queda la línea fina de abajo. */
-  background: var(--panel-background);
+  background: transparent;
   border-bottom: 1px solid var(--border-color);
+  transition: background 0.18s ease, backdrop-filter 0.18s ease;
+}
+
+/* Sin fondo en reposo; recién al scrollear (barra pegada) aparece el vidrio
+   para que el texto que pasa por detrás no se mezcle con el título. */
+.noteMetaHeaderStuck {
+  background: var(--surface-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 /* Fila de abajo: etiquetas a la izquierda, fecha + guardado en el extremo derecho */
