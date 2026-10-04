@@ -150,7 +150,13 @@ export default function RadialTabBar({ state, navigation }) {
   const go = (item) => {
     setSelectedGroup(activeGroup); // el grupo desde el que se eligió queda resaltado
     const target = item.route;
-    const params = { ...(item.params || {}), _navTs: Date.now() };
+    // _from: pantalla de origen, para volver a ella al cerrar un panel que vive
+    // en otra pantalla (Compras / Journaling / Afirmaciones viven en Notas).
+    const params = {
+      ...(item.params || {}),
+      _navTs: Date.now(),
+      _from: state?.routes?.[state.index]?.name,
+    };
     // Cerramos el dial y navegamos recién cuando su Modal se desmontó: si navegáramos
     // en el acto, iOS descartaría la presentación del panel destino (dos Modales a la vez).
     close(() => setTimeout(() => navigation.navigate(target, params), 60));

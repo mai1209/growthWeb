@@ -11,7 +11,7 @@ import {
   Modal,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { taskService } from "../api";
 import { useTheme } from "../theme";
@@ -44,6 +44,18 @@ export default function NotasScreen() {
   const [folderSearch, setFolderSearch] = useState("");
   const [customFolders, setCustom] = useState([]);
   const route = useRoute();
+  const navigation = useNavigation();
+
+  // Compras / Journaling / Afirmaciones son paneles que viven en esta pantalla,
+  // pero se abren desde el menú estando en cualquier otra (ej. Finanzas → Compras).
+  // Al cerrarlos hay que volver a la pantalla desde la que se abrieron, no
+  // quedarse en Notas.
+  const cerrarPanel = (setOpen) => {
+    setOpen(false);
+    const origen = route.params?.view ? route.params?._from : null;
+    navigation.setParams({ view: undefined, _from: undefined });
+    if (origen && origen !== route.name) navigation.navigate(origen);
+  };
 
   // Permite abrir un sub-panel directo desde el menú (Compras / Journaling / Afirmaciones).
   useEffect(() => {
@@ -280,12 +292,12 @@ export default function NotasScreen() {
         onDeleted={fetchNotes}
       />
 
-      <ShoppingListsPanel visible={shoppingOpen} onClose={() => setShoppingOpen(false)} />
+      <ShoppingListsPanel visible={shoppingOpen} onClose={() => cerrarPanel(setShoppingOpen)} />
       <AfirmacionesPanel
         visible={afirmacionesOpen}
-        onClose={() => setAfirmacionesOpen(false)}
+        onClose={() => cerrarPanel(setAfirmacionesOpen)}
       />
-      <JournalingPanel visible={journalOpen} onClose={() => setJournalOpen(false)} />
+      <JournalingPanel visible={journalOpen} onClose={() => cerrarPanel(setJournalOpen)} />
 
       {/* Todas las carpetas: buscador + lista con conteo */}
       <Modal

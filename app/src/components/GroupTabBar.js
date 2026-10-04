@@ -45,7 +45,13 @@ export default function GroupTabBar({ state, navigation, groupId }) {
             style={styles.tab}
             onPress={() => {
               setPressed(i);
-              navigation.navigate(it.route, { ...(it.params || {}), _navTs: Date.now() });
+              // _from: desde qué pantalla se abrió; si el ítem abre un panel sobre otra
+              // pantalla (Compras vive en Notas), al cerrarlo se vuelve a esta.
+              navigation.navigate(it.route, {
+                ...(it.params || {}),
+                _navTs: Date.now(),
+                _from: currentRoute,
+              });
             }}
           >
             <Ionicons name={it.icon} size={22} color={tint} />
