@@ -402,3 +402,107 @@
   margin: 0;
   color: var(--color-text);
 }
+
+/* ---- Aviso de actualización de la app ---- */
+.avisoGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.8rem;
+}
+
+.avisoGrid .field {
+  margin-top: 0;
+}
+
+.field > span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  background: var(--surface-card-strong);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.9rem;
+  outline: none;
+  resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--accent-border);
+}
+
+.segment {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.segment button {
+  border: none;
+  border-radius: 9px;
+  padding: 0.45rem 0.9rem;
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.segment .segmentOn {
+  background: var(--accent-surface);
+  color: var(--color-text);
+}
+
+.segment .segmentOnDanger {
+  background: rgba(224, 82, 82, 0.18);
+  color: #e86a6a;
+}
+
+.avisoFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.check input {
+  accent-color: #5dc72d;
+}
+
+@media (max-width: 640px) {
+  .avisoGrid {
+    grid-template-columns: 1fr;
+  }
+}

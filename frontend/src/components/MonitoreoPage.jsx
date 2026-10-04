@@ -9,6 +9,7 @@ import {
   FiLock,
   FiRefreshCw,
   FiSearch,
+  FiSmartphone,
   FiUsers,
 } from "react-icons/fi";
 import { adminService } from "../api";
@@ -53,6 +54,33 @@ function MonitoreoPage() {
   const [forbidden, setForbidden] = useState(false);
   const [error, setError] = useState("");
   const [busqueda, setBusqueda] = useState("");
+  // Aviso de actualización de la app (popup al abrir)
+  const [aviso, setAviso] = useState(null);
+  const [avisoEstado, setAvisoEstado] = useState(""); // "" | saving | ok | mensaje de error
+
+  const cambiarAviso = (campo, valor) => {
+    setAviso((prev) => ({ ...prev, [campo]: valor }));
+    setAvisoEstado("");
+  };
+
+  const guardarAviso = async () => {
+    if (!aviso) return;
+    setAvisoEstado("saving");
+    try {
+      const res = await adminService.saveAppUpdate({
+        activo: aviso.activo,
+        latest: aviso.latest,
+        obligatorio: aviso.obligatorio,
+        title: aviso.title,
+        message: aviso.message,
+        changes: String(aviso.changesText || "").split("\n"),
+      });
+      setAviso({ ...res.data, changesText: (res.data.changes || []).join("\n") });
+      setAvisoEstado("ok");
+    } catch (err) {
+      setAvisoEstado(err.response?.data?.message || "No se pudo guardar.");
+    }
+  };
 
   const cargar = useCallback(async () => {
     setLoading(true);
@@ -66,6 +94,13 @@ function MonitoreoPage() {
       setOverview(ov.data);
       setHealth(he.data);
       setSecurity(se.data);
+      // Aparte: si esto falla no tiene que tirar abajo el resto del panel
+      adminService
+        .appUpdate()
+        .then((res) =>
+          setAviso({ ...res.data, changesText: (res.data.changes || []).join("\n") })
+        )
+        .catch(() => {});
       setForbidden(false);
     } catch (err) {
       if (err.response?.status === 403) setForbidden(true);
@@ -178,6 +213,112 @@ function MonitoreoPage() {
           <span>{dias[29]?.label}</span>
         </div>
       </section>
+
+      {/* ===== Aviso de actualización de la app ===== */}
+      {aviso ? (
+        <section className={style.card}>
+          <h2 className={style.cardTitle}>
+            <FiSmartphone /> Aviso de actualización de la app
+          </h2>
+          <p className={style.mutedSmall}>
+            Al abrir la app, quien tenga una versión MENOR a la que pongas acá ve un popup para
+            actualizar. Cargalo recién cuando la versión nueva esté aprobada y publicada en las
+            dos tiendas.
+          </p>
+          <div className={style.avisoGrid}>
+            <label className={style.field}>
+              <span>Versión publicada en las tiendas</span>
+              <input
+                value={aviso.latest}
+                onChange={(e) => cambiarAviso("latest", e.target.value)}
+                placeholder="1.0.17"
+                inputMode="decimal"
+              />
+            </label>
+            <label className={style.field}>
+              <span>Título del popup</span>
+              <input
+                value={aviso.title}
+                onChange={(e) => cambiarAviso("title", e.target.value)}
+                placeholder="¡Nueva versión disponible!"
+                maxLength={120}
+              />
+            </label>
+          </div>
+          <label className={style.field}>
+            <span>Mensaje</span>
+            <textarea
+              rows={3}
+              value={aviso.message}
+              onChange={(e) => cambiarAviso("message", e.target.value)}
+              placeholder="Actualizá Growth para ver las últimas mejoras."
+              maxLength={600}
+            />
+          </label>
+          <label className={style.field}>
+            <span>Novedades (una por línea, opcional)</span>
+            <textarea
+              rows={4}
+              value={aviso.changesText}
+              onChange={(e) => cambiarAviso("changesText", e.target.value)}
+              placeholder={"Notas con páginas\nGuardado automático"}
+            />
+          </label>
+
+          <div className={style.field}>
+            <span>¿Se puede posponer?</span>
+            <div className={style.segment}>
+              <button
+                type="button"
+                className={!aviso.obligatorio ? style.segmentOn : ""}
+                onClick={() => cambiarAviso("obligatorio", false)}
+              >
+                Con “Más tarde”
+              </button>
+              <button
+                type="button"
+                className={aviso.obligatorio ? style.segmentOnDanger : ""}
+                onClick={() => cambiarAviso("obligatorio", true)}
+              >
+                Obligatorio
+              </button>
+            </div>
+            <p className={style.mutedSmall}>
+              {aviso.obligatorio
+                ? "Obligatorio: el popup no se puede cerrar; hasta que actualicen no pueden usar la app. (Las versiones viejas de la app, anteriores a esta función, lo siguen pudiendo cerrar.)"
+                : "Con “Más tarde”: lo ven una sola vez por versión y lo pueden cerrar."}
+            </p>
+          </div>
+
+          <div className={style.avisoFooter}>
+            <label className={style.check}>
+              <input
+                type="checkbox"
+                checked={aviso.activo}
+                onChange={(e) => cambiarAviso("activo", e.target.checked)}
+              />
+              Aviso activo
+            </label>
+            <span className={style.mutedSmall}>
+              {avisoEstado === "ok"
+                ? "Guardado ✓"
+                : avisoEstado && avisoEstado !== "saving"
+                ? avisoEstado
+                : aviso.updatedAt
+                ? `Último cambio: ${fmtFechaHora(aviso.updatedAt)}`
+                : ""}
+            </span>
+            <button
+              type="button"
+              className={style.refreshBtn}
+              onClick={guardarAviso}
+              disabled={avisoEstado === "saving"}
+            >
+              {avisoEstado === "saving" ? "Guardando…" : "Guardar aviso"}
+            </button>
+          </div>
+        </section>
+      ) : null}
 
       <div className={style.twoCols}>
         {/* ===== Salud de la base ===== */}

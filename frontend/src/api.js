@@ -267,6 +267,8 @@ export const adminService = {
   overview: () => api.get("/api/admin/overview"),
   health: () => api.get("/api/admin/health"),
   security: () => api.get("/api/admin/security"),
+  appUpdate: () => api.get("/api/admin/app-update"),
+  saveAppUpdate: (data) => api.put("/api/admin/app-update", data),
 };
 
 export default api;

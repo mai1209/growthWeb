@@ -17,17 +17,20 @@ export default function UpdateModal({ visible, info, onClose }) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
   if (!info) return null;
+  const obligatorio = Boolean(info.required);
 
   const openStore = () => {
     // Cada plataforma abre SU tienda (antes usaba siempre info.ios → en Android
     // mandaba a la App Store, tienda equivocada).
     const url = Platform.OS === "android" ? info.android || info.ios : info.ios || info.android;
     if (url) Linking.openURL(url).catch(() => {});
-    onClose?.(); // marca la versión como avisada: no vuelve a aparecer
+    // Opcional: se cierra (ya quedó marcada como avisada). Obligatorio: el
+    // popup se queda hasta que vuelvan con la versión nueva.
+    if (!obligatorio) onClose?.();
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={obligatorio ? () => {} : onClose}>
       <View style={styles.overlay}>
         <View style={styles.card}>
           <View style={styles.iconWrap}>
@@ -37,7 +40,9 @@ export default function UpdateModal({ visible, info, onClose }) {
               resizeMode="contain"
             />
           </View>
-          <Text style={styles.title}>{info.title || "Nueva versión disponible"}</Text>
+          <Text style={styles.title}>
+            {info.title || (obligatorio ? "Actualización necesaria" : "Nueva versión disponible")}
+          </Text>
           {info.message ? <Text style={styles.message}>{info.message}</Text> : null}
 
           {Array.isArray(info.changes) && info.changes.length ? (
@@ -59,9 +64,15 @@ export default function UpdateModal({ visible, info, onClose }) {
             <Ionicons name="cloud-download-outline" size={18} color="#06210a" />
             <Text style={styles.primaryText}>Actualizar ahora</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={onClose} style={styles.ghost} hitSlop={8}>
-            <Text style={styles.ghostText}>Ahora no</Text>
-          </TouchableOpacity>
+          {obligatorio ? (
+            <Text style={styles.requiredNote}>
+              Necesitás esta versión para seguir usando la app.
+            </Text>
+          ) : (
+            <TouchableOpacity onPress={onClose} style={styles.ghost} hitSlop={8}>
+              <Text style={styles.ghostText}>Más tarde</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </Modal>
@@ -123,5 +134,6 @@ const makeStyles = (colors) =>
     },
     primaryText: { color: "#06210a", fontWeight: "900", fontSize: 15.5 },
     ghost: { paddingVertical: 8 },
+    requiredNote: { color: colors.muted, fontSize: 12.5, textAlign: "center", paddingVertical: 4 },
     ghostText: { color: colors.muted, fontWeight: "700", fontSize: 14 },
   });

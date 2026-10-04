@@ -815,12 +815,26 @@ const makeStyles = (colors) =>
       alignItems: "center",
       gap: 6,
       paddingHorizontal: 12,
-      paddingVertical: 2,
+      paddingVertical: 0,
       borderRadius: 9,
       borderWidth: 1,
       borderColor: colors.cardBorder,
     },
     metaPillEmpty: { borderStyle: "dashed", borderColor: colors.muted },
+    metaChevron: { paddingLeft: 6, marginLeft: 2, borderLeftWidth: 1, borderLeftColor: colors.cardBorder },
+    metaPillText: { color: colors.text, fontWeight: "700", fontSize: 13 },
+    // Sin alto fijo (dejaba el texto caído hacia abajo): el alto sale del
+    // padding, con un punto más abajo que arriba para que quede centrado a ojo.
+    metaInput: {
+      flex: 1,
+      color: colors.text,
+      fontWeight: "700",
+      fontSize: 13,
+      paddingTop: 8,
+      paddingBottom: 10,
+      includeFontPadding: false,
+      textAlignVertical: "center",
+    },
     metaChevron: { paddingLeft: 6, marginLeft: 2, borderLeftWidth: 1, borderLeftColor: colors.cardBorder },
     metaPillText: { color: colors.text, fontWeight: "700", fontSize: 13 },
     // Alto fijo: con paddingVertical 0 y sin alto, el placeholder salía cortado
