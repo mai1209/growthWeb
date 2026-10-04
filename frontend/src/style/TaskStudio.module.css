@@ -4851,19 +4851,22 @@ button.folderItem {
   z-index: 6;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.45rem;
   width: 100%;
-  padding: 0.65rem 0.3rem 0.6rem 4px;
-  background: var(--surface-card);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  padding: 0.5rem 0.3rem 0.65rem 4px;
+  /* "Sin fondo": usa el mismo color de la tarjeta que tiene detrás, así no
+     se nota ninguna caja, pero el texto que scrollea por debajo no se
+     transparenta (sticky). Solo queda la línea fina de abajo. */
+  background: var(--panel-background);
   border-bottom: 1px solid var(--border-color);
 }
 
+/* Fila de abajo: etiquetas a la izquierda, fecha + guardado en el extremo derecho */
 .noteMetaRow {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
   flex-wrap: wrap;
   padding-left: 0.5rem;
   color: var(--color-muted);
@@ -4871,15 +4874,42 @@ button.folderItem {
   font-weight: 600;
 }
 
-/* Carpeta como texto plano clickeable, no como pastilla con borde */
+.noteTags {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.noteMetaRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* Selector de etiqueta: pastilla fina con borde, ícono de etiqueta y chevron */
 .noteMetaFolder {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  color: inherit;
+  height: 28px;
+  padding: 0 0.55rem 0 0.6rem;
+  gap: 0.4rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--color-text);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.noteMetaFolder:hover,
+.noteMetaFolder:focus-within {
+  border-color: rgba(93, 199, 45, 0.55);
+  background: rgba(93, 199, 45, 0.06);
 }
 
 .noteMetaFolder svg {
@@ -4891,6 +4921,7 @@ button.folderItem {
 
 .noteMetaFolder select {
   max-width: 180px;
+  padding: 0 0.9rem 0 0;
   border: none;
   background: transparent;
   color: inherit;
@@ -4898,11 +4929,106 @@ button.folderItem {
   font-weight: 700;
   cursor: pointer;
   outline: none;
+  appearance: none;
+  -webkit-appearance: none;
   text-overflow: ellipsis;
 }
 
-.noteMetaFolder:hover select {
+.noteMetaFolder select option {
+  background: #ffffff;
+  color: #172018;
+}
+
+.noteMetaFolder .noteMetaChevron {
+  position: absolute;
+  right: 0.5rem;
+  width: 12px;
+  height: 12px;
+  color: var(--color-muted);
+  pointer-events: none;
+}
+
+/* Agregar etiqueta: botón fantasma de borde punteado, con "+" y texto */
+.noteMetaRow .noteFolderAdd {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: auto;
+  height: 28px;
+  padding: 0 0.65rem 0 0.5rem;
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-muted);
+  font: inherit;
+  font-weight: 700;
+  transform: none;
+}
+
+.noteMetaRow .noteFolderAdd:hover {
+  border-color: #5dc72d;
+  background: rgba(93, 199, 45, 0.08);
   color: var(--color-text);
+  transform: none;
+}
+
+.noteMetaRow .noteFolderAdd svg {
+  width: 13px;
+  height: 13px;
+  color: #5dc72d;
+}
+
+@media (max-width: 520px) {
+  .noteFolderAddText {
+    display: none;
+  }
+
+  .noteMetaRow .noteFolderAdd {
+    padding: 0 0.5rem;
+  }
+}
+
+/* Título editable: sin borde en reposo; al pasar el mouse aparece un borde
+   verde finito y un lápiz que avisa que se puede editar. */
+.titleField {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.titleEditIcon {
+  position: absolute;
+  right: 0.8rem;
+  width: 15px;
+  height: 15px;
+  color: #5dc72d;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.titleField:hover .titleEditIcon {
+  opacity: 0.9;
+}
+
+.titleField:focus-within .titleEditIcon {
+  opacity: 0;
+}
+
+.titleField .titleGhost {
+  padding-right: 2.3rem;
+  border-width: 1px;
+}
+
+.titleField:hover .titleGhost {
+  border-color: rgba(93, 199, 45, 0.55);
+}
+
+.titleField .titleGhost:focus {
+  border-color: #5dc72d;
+  box-shadow: none;
 }
 
 /* Separador entre metadatos: un puntito, no una barra ni un "·" de texto */

@@ -19,7 +19,7 @@ import {
   FiFilePlus,
   FiFileText,
   FiFolder,
-  FiFolderPlus,
+  FiChevronDown,
   FiHash,
   FiItalic,
   FiLayers,
@@ -2348,15 +2348,18 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   recién debajo, no al lado. */}
             <div className={style.noteMetaHeader}>
               <div className={style.headerTitleWrap}>
-                <input
-                  ref={titleInputRef}
-                  type="text"
-                  value={form.meta}
-                  onChange={(event) => handleFieldChange("meta", event.target.value)}
-                  placeholder="Título de la nota…"
-                  className={style.titleGhost}
-                  aria-label="Título de la nota"
-                />
+                <div className={style.titleField}>
+                  <input
+                    ref={titleInputRef}
+                    type="text"
+                    value={form.meta}
+                    onChange={(event) => handleFieldChange("meta", event.target.value)}
+                    placeholder="Título de la nota…"
+                    className={style.titleGhost}
+                    aria-label="Título de la nota"
+                  />
+                  <FiEdit2 className={style.titleEditIcon} aria-hidden="true" />
+                </div>
                 <div className={style.noteHeaderActions}>
                   {notaAbierta ? (
                     <button
@@ -2404,67 +2407,72 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                   <select> real (funciona igual), solo que ya no se ve como
                   un botón aparte. */}
               <div className={style.noteMetaRow}>
-                <label className={style.noteMetaFolder} title="Cambiar la etiqueta de la nota">
-                  <FiFolder />
-                  <select
-                    value={form.carpeta || ""}
-                    onChange={(event) => handleFieldChange("carpeta", event.target.value)}
-                    aria-label="Cambiar la etiqueta de la nota"
+                <div className={style.noteTags}>
+                  <label className={style.noteMetaFolder} title="Cambiar la etiqueta de la nota">
+                    <FiTag />
+                    <select
+                      value={form.carpeta || ""}
+                      onChange={(event) => handleFieldChange("carpeta", event.target.value)}
+                      aria-label="Cambiar la etiqueta de la nota"
+                    >
+                      <option value="">Sin etiquetas</option>
+                      {(form.carpeta && !folders.includes(form.carpeta)
+                        ? [form.carpeta, ...folders]
+                        : folders
+                      ).map((folder) => (
+                        <option key={folder} value={folder}>
+                          {folder}
+                        </option>
+                      ))}
+                    </select>
+                    <FiChevronDown className={style.noteMetaChevron} aria-hidden="true" />
+                  </label>
+                  <button
+                    type="button"
+                    className={style.noteFolderAdd}
+                    onClick={handleCreateFolderInEditor}
+                    aria-label="Nueva etiqueta"
+                    title="Nueva etiqueta"
                   >
-                    <option value="">Sin etiquetas</option>
-                    {(form.carpeta && !folders.includes(form.carpeta)
-                      ? [form.carpeta, ...folders]
-                      : folders
-                    ).map((folder) => (
-                      <option key={folder} value={folder}>
-                        {folder}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  className={style.noteFolderAdd}
-                  onClick={handleCreateFolderInEditor}
-                  aria-label="Nueva etiqueta"
-                  title="Nueva etiqueta"
-                >
-                  <FiFolderPlus />
-                </button>
-                {fechaNotaLabel ? (
-                  <>
-                    <span className={style.noteMetaDot} aria-hidden="true" />
+                    <FiPlus />
+                    <span className={style.noteFolderAddText}>Nueva etiqueta</span>
+                  </button>
+                </div>
+                <div className={style.noteMetaRight}>
+                  {fechaNotaLabel ? (
                     <span className={style.editorDate} title="Fecha de la nota">
                       {fechaNotaLabel}
                     </span>
-                  </>
-                ) : null}
-                <span className={style.noteMetaDot} aria-hidden="true" />
-                {saveStatus === "error" ? (
-                  <button
-                    type="button"
-                    className={`${style.unsavedBadge} ${style.retryBadge}`}
-                    onClick={guardarAhora}
-                    title="Volver a intentar guardar"
-                  >
-                    <span className={style.unsavedDot} />
-                    No se guardó · reintentar
-                  </button>
-                ) : isDirty || saving ? (
-                  <span className={`${style.unsavedBadge} ${style.savingBadge}`}>
-                    <span className={style.unsavedDot} />
-                    Guardando…
-                  </span>
-                ) : form.id ? (
-                  <span className={style.savedBadge}>
-                    <span className={style.savedDot} />
-                    Guardado
-                  </span>
-                ) : (
-                  <span className={style.savedBadge} style={{ opacity: 0.6 }}>
-                    Se guarda solo
-                  </span>
-                )}
+                  ) : null}
+                  {fechaNotaLabel ? (
+                    <span className={style.noteMetaDot} aria-hidden="true" />
+                  ) : null}
+                  {saveStatus === "error" ? (
+                    <button
+                      type="button"
+                      className={`${style.unsavedBadge} ${style.retryBadge}`}
+                      onClick={guardarAhora}
+                      title="Volver a intentar guardar"
+                    >
+                      <span className={style.unsavedDot} />
+                      No se guardó · reintentar
+                    </button>
+                  ) : isDirty || saving ? (
+                    <span className={`${style.unsavedBadge} ${style.savingBadge}`}>
+                      <span className={style.unsavedDot} />
+                      Guardando…
+                    </span>
+                  ) : form.id ? (
+                    <span className={style.savedBadge}>
+                      <span className={style.savedDot} />
+                      Guardado
+                    </span>
+                  ) : (
+                    <span className={style.savedBadge} style={{ opacity: 0.6 }}>
+                      Se guarda solo
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           <div className={style.editorMain}>
