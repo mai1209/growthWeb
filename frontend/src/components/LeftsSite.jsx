@@ -9,7 +9,6 @@ import {
   FiArrowDown,
   FiArrowUp,
   FiCheck,
-  FiCheckSquare,
   FiChevronDown,
   FiChevronRight,
   FiChevronUp,
@@ -20,16 +19,12 @@ import {
   FiEye,
   FiEyeOff,
   FiFilter,
-  FiFlag,
   FiInfo,
   FiLock,
-  FiPieChart,
   FiPocket,
   FiRepeat,
   FiRotateCcw,
-  FiTarget,
   FiTrash2,
-  FiTrendingUp,
   FiX,
 } from "react-icons/fi";
 import { movimientoService } from "../api";
@@ -380,12 +375,12 @@ function LeftSite({
                   const saldoStr = hideableMoney(historicalSummary.total);
                   const saldoSize =
                     saldoStr.length > 17
-                      ? "1.35rem"
+                      ? "1.15rem"
                       : saldoStr.length > 14
-                      ? "1.65rem"
+                      ? "1.4rem"
                       : saldoStr.length > 11
-                      ? "2rem"
-                      : "2.4rem";
+                      ? "1.65rem"
+                      : "1.9rem";
                   return (
                     <p className={style.ccBalance} style={{ fontSize: saldoSize }}>
                       {saldoStr}
@@ -790,52 +785,6 @@ function LeftSite({
             )}
           </div>
         )}
-
-        {/* Apoyo: Growth es gratis, invitamos a compartir y a donar */}
-        <section className={style.sideSupport}>
-          <div className={style.sideSupportBg} aria-hidden="true">
-            <FiTrendingUp className={style.sideSupportBgIcon} style={{ top: "12%", left: "7%", animationDelay: "0s" }} />
-            <FiTarget className={style.sideSupportBgIcon} style={{ top: "20%", right: "9%", animationDelay: "1.2s" }} />
-            <FiPieChart className={style.sideSupportBgIcon} style={{ bottom: "34%", left: "6%", animationDelay: "0.6s" }} />
-            <FiCheckSquare className={style.sideSupportBgIcon} style={{ bottom: "14%", right: "8%", animationDelay: "1.8s" }} />
-            <FiFlag className={style.sideSupportBgIcon} style={{ top: "50%", right: "26%", animationDelay: "2.4s" }} />
-          </div>
-          <p className={style.sideSupportLabel}>Apoyá Growth 💚</p>
-          <p className={style.sideSupportText}>
-            Growth es 100% gratis. Si te sirve, compartila o invitanos un
-            cafecito para seguir mejorándola.
-          </p>
-          <div className={style.sideSupportBtns}>
-            <button
-              type="button"
-              className={style.sideSupportShare}
-              onClick={async () => {
-                const url = "https://growthmanager.app";
-                const texto =
-                  "Estoy usando Growth Manager para ordenar mi plata, tareas y metas. ¡Está buenísima y es gratis! 🌱";
-                try {
-                  if (navigator.share) {
-                    await navigator.share({ title: "Growth Manager", text: texto, url });
-                  } else {
-                    await navigator.clipboard.writeText(`${texto} ${url}`);
-                    alert("¡Link copiado! Compartilo con quien quieras 💚");
-                  }
-                } catch {
-                  /* el usuario canceló el compartir */
-                }
-              }}
-            >
-              Compartir Growth
-            </button>
-            <button
-              type="button"
-              className={style.sideSupportDonate}
-              onClick={() => navigate("/apoyar")}
-            >
-              💚 Quiero apoyar
-            </button>
-          </div>
-        </section>
       </div>
 
       {saldoInfoOpen ? (

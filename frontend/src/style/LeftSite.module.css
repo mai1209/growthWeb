@@ -2244,3 +2244,134 @@ border: 1px solid rgba(255, 255, 255, 0.12);
     flex-shrink: 0;
   }
 }
+
+/* ---- Ajustes: textos más chicos y formas más cuadradas (como la app) ---- */
+.tabsShell {
+  border-radius: 20px;
+}
+
+.tabsShell .segmentTab {
+  min-height: 34px;
+  border-radius: 9px;
+  font-size: 0.8rem;
+}
+
+.ccOverlap .creditCard {
+  border-radius: 20px;
+}
+
+.ccOverlap .ccKicker {
+  font-size: 0.8rem;
+}
+
+.ccOverlap .ccEye {
+  width: 30px;
+  height: 30px;
+}
+
+.ccOverlap .ccEye svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Acciones: cuadrado de esquinas suaves, no círculo */
+.ccQuickBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.ccQuickBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ccQuickLabel {
+  font-size: 0.66rem;
+}
+
+.ticketSwitch {
+  border-radius: 10px;
+}
+
+.ticketSeg {
+  border-radius: 7px;
+  padding: 0.36rem 0.85rem;
+  font-size: 0.74rem;
+}
+
+.verTodos {
+  font-size: 0.74rem;
+}
+
+.resPanel,
+.histPanel {
+  border-radius: 16px;
+}
+
+.resPanelHead {
+  align-items: center;
+}
+
+.resPanelHead strong {
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+.resPanelHead span {
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.ieHead {
+  font-size: 0.7rem;
+}
+
+.ieVal {
+  font-size: 0.98rem;
+}
+
+.ieCol small {
+  font-size: 0.64rem;
+}
+
+.resSlimRow {
+  font-size: 0.78rem;
+  padding: 0.48rem 0;
+}
+
+.resSlimRow > svg {
+  width: 15px;
+  height: 15px;
+}
+
+.movInfo strong,
+.movRight strong {
+  font-size: 0.8rem;
+}
+
+.movInfo small {
+  font-size: 0.66rem;
+}
+
+.movBody p {
+  font-size: 0.74rem;
+}
+
+.movDayLabel {
+  font-size: 0.66rem;
+}
+
+.curSwitch {
+  border-radius: 10px;
+}
+
+.curSwitch button {
+  border-radius: 7px;
+}
+
+.typePanel .typeAdd,
+.typePanel .typeUse {
+  border-radius: 10px;
+  font-size: 0.76rem;
+}
