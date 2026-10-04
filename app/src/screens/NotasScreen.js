@@ -179,7 +179,7 @@ export default function NotasScreen() {
                 setFolderSearch("");
                 setFoldersOpen(true);
               }}
-              accessibilityLabel="Ver todas las carpetas"
+              accessibilityLabel="Ver todas las etiquetas"
             >
               <Ionicons name="chevron-down" size={16} color={colors.greenDark} />
             </TouchableOpacity>
@@ -200,7 +200,7 @@ export default function NotasScreen() {
             <Text style={styles.empty}>
               {folder === ALL_FOLDERS
                 ? 'Todavía no tenés notas. Creá la primera con "Nueva nota".'
-                : `La carpeta "${folder}" está vacía.`}
+                : `La etiqueta "${folder}" no tiene notas.`}
             </Text>
           ) : (
             groups.map((g) => (
@@ -240,7 +240,7 @@ export default function NotasScreen() {
                           {n.carpeta ? (
                             <View style={styles.cardFolder}>
                               <Ionicons
-                                name="folder-outline"
+                                name="pricetag-outline"
                                 size={11}
                                 color={palette.text}
                                 style={{ opacity: 0.6 }}
@@ -295,7 +295,7 @@ export default function NotasScreen() {
       >
         <View style={[styles.foldersModal, { paddingTop: insets.top + 6, paddingBottom: insets.bottom }]}>
           <View style={styles.foldersHeader}>
-            <Text style={styles.foldersTitle}>Carpetas</Text>
+            <Text style={styles.foldersTitle}>Etiquetas</Text>
             <TouchableOpacity onPress={() => setFoldersOpen(false)} hitSlop={8}>
               <Ionicons name="close" size={24} color={colors.text} />
             </TouchableOpacity>
@@ -307,7 +307,7 @@ export default function NotasScreen() {
               style={styles.searchInput}
               value={folderSearch}
               onChangeText={setFolderSearch}
-              placeholder="Buscar carpeta..."
+              placeholder="Buscar etiqueta..."
               placeholderTextColor={colors.muted}
               autoCorrect={false}
             />
@@ -320,12 +320,12 @@ export default function NotasScreen() {
 
           {/* Crear nueva carpeta */}
           <View style={styles.newFolderRow}>
-            <Ionicons name="folder-open-outline" size={16} color={colors.greenDark} />
+            <Ionicons name="pricetag-outline" size={16} color={colors.greenDark} />
             <TextInput
               style={styles.searchInput}
               value={newFolderName}
               onChangeText={setNewFolderName}
-              placeholder="Nueva carpeta..."
+              placeholder="Nueva etiqueta..."
               placeholderTextColor={colors.muted}
               autoCorrect={false}
               returnKeyType="done"
@@ -365,7 +365,7 @@ export default function NotasScreen() {
                   setFoldersOpen(false);
                 }}
               >
-                <Ionicons name="folder-outline" size={18} color={colors.muted} />
+                <Ionicons name="pricetag-outline" size={18} color={colors.muted} />
                 <Text style={styles.folderItemName} numberOfLines={1}>
                   {f}
                 </Text>
@@ -374,7 +374,7 @@ export default function NotasScreen() {
             ))}
 
             {foldersFiltered.length === 0 ? (
-              <Text style={styles.foldersEmpty}>No hay carpetas que coincidan.</Text>
+              <Text style={styles.foldersEmpty}>No hay etiquetas que coincidan.</Text>
             ) : null}
           </ScrollView>
         </View>

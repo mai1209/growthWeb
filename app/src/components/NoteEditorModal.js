@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Pressable,
   KeyboardAvoidingView,
   Platform,
   Alert,
@@ -41,6 +42,59 @@ const textoPlano = (html) =>
     .replace(/<[^>]*>/g, "")
     .replace(/&nbsp;/g, " ")
     .trim();
+
+// ===== Páginas (mismo formato que la web) =====
+// Una sola página se guarda como HTML plano; varias, como <section
+// data-note-page> una detrás de otra. Así una nota con páginas hecha en la
+// web se abre y se guarda bien desde la app, y al revés.
+const PAGE_OPEN = '<section data-note-page="true"';
+const PAGE_CONTENT = 'data-note-page-content="true">';
+const escapeHtml = (v) =>
+  String(v)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+const unescapeHtml = (v) =>
+  String(v)
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
+const parsePages = (contenido = "") => {
+  const raw = String(contenido || "");
+  if (!raw.includes(PAGE_OPEN)) return [{ title: "Página 1", contenido: raw }];
+  const pages = raw
+    .split(PAGE_OPEN)
+    .slice(1)
+    .map((chunk, index) => {
+      const title = chunk.match(/data-page-title="([^"]*)"/);
+      const start = chunk.indexOf(PAGE_CONTENT);
+      const end = chunk.lastIndexOf("</div>");
+      const body =
+        start >= 0 && end > start ? chunk.slice(start + PAGE_CONTENT.length, end) : "";
+      return {
+        title: title ? unescapeHtml(title[1]) : `Página ${index + 1}`,
+        contenido: body,
+      };
+    });
+  return pages.length ? pages : [{ title: "Página 1", contenido: raw }];
+};
+const serializePages = (pages, activeIndex, activeHtml) => {
+  const list = pages.map((pg, i) => (i === activeIndex ? { ...pg, contenido: activeHtml } : pg));
+  if (list.length <= 1) return list[0]?.contenido || "";
+  return list
+    .map(
+      (pg, i) =>
+        `<section data-note-page="true" data-page-title="${escapeHtml(
+          pg.title || `Página ${i + 1}`
+        )}"><div data-note-page-content="true">${pg.contenido || ""}</div></section>`
+    )
+    .join("");
+};
+
 const TOOLBAR_ACTIONS = [
   actions.setBold,
   actions.setItalic,
@@ -86,7 +140,9 @@ export default function NoteEditorModal({
   // idle | saving | saved | error
   const [saveStatus, setSaveStatus] = useState("idle");
   const [meta, setMeta] = useState("");
-  const [html, setHtml] = useState("");
+  const [html, setHtml] = useState(""); // HTML de la página activa
+  const [pages, setPages] = useState([{ title: "Página 1", contenido: "" }]);
+  const [activePage, setActivePage] = useState(0);
   const [color, setColor] = useState("color1");
   const [carpeta, setCarpeta] = useState("");
   const [date, setDate] = useState(new Date());
@@ -145,7 +201,10 @@ export default function NoteEditorModal({
   useEffect(() => {
     if (visible) {
       setMeta(note?.meta || "");
-      setHtml(note?.contenido || "");
+      const parsed = parsePages(note?.contenido || "");
+      setPages(parsed);
+      setActivePage(0);
+      setHtml(parsed[0].contenido);
       setColor(note?.color || "color1");
       // Nota nueva: si venís desde una carpeta, la dejamos autocompletada.
       setCarpeta(note?.carpeta || defaultCarpeta || "");
@@ -161,7 +220,7 @@ export default function NoteEditorModal({
       setSaveStatus(note ? "saved" : "idle");
       savedSnapshotRef.current = snapshotOf({
         meta: note?.meta || "",
-        html: note?.contenido || "",
+        html: serializePages(parsed, 0, parsed[0].contenido),
         color: note?.color || "color1",
         carpeta: note?.carpeta || defaultCarpeta || "",
       });
@@ -191,11 +250,17 @@ export default function NoteEditorModal({
   const saveQueueRef = useRef(Promise.resolve(true));
   const saveTimerRef = useRef(null);
   const liveRef = useRef({});
-  liveRef.current = { meta, html, color, carpeta, date };
+  liveRef.current = { meta, html, color, carpeta, date, pages, activePage };
+  // Contenido completo de la nota (todas las páginas) tal como se guarda
+  const fullContent = serializePages(pages, activePage, html);
 
   const doSave = async (htmlOverride) => {
     const cur = liveRef.current;
-    const contenido = typeof htmlOverride === "string" ? htmlOverride : cur.html;
+    const contenido = serializePages(
+      cur.pages,
+      cur.activePage,
+      typeof htmlOverride === "string" ? htmlOverride : cur.html
+    );
     const titulo = cur.meta.trim();
     const vacio = !titulo && !textoPlano(contenido);
     // Una nota nueva sin título ni texto todavía no existe: no se crea.
@@ -244,12 +309,84 @@ export default function NoteEditorModal({
   // Cada cambio (título, texto, papel, etiqueta) guarda solo tras una pausa corta.
   useEffect(() => {
     if (!visible) return undefined;
-    if (snapshotOf({ meta, html, color, carpeta }) === savedSnapshotRef.current) return undefined;
+    if (snapshotOf({ meta, html: fullContent, color, carpeta }) === savedSnapshotRef.current)
+      return undefined;
     clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => persist(), 1200);
     return () => clearTimeout(saveTimerRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meta, html, color, carpeta, visible]);
+  }, [meta, fullContent, color, carpeta, visible]);
+
+  // ===== Páginas =====
+  const irAPagina = (index) => {
+    if (index === activePage) return;
+    // Guarda en la lista lo escrito en la página actual antes de cambiar
+    const next = pages.map((pg, i) => (i === activePage ? { ...pg, contenido: html } : pg));
+    setPages(next);
+    setActivePage(index);
+    setHtml(next[index]?.contenido || "");
+    setEditorKey((k) => k + 1);
+  };
+
+  const agregarPagina = () => {
+    const next = pages.map((pg, i) => (i === activePage ? { ...pg, contenido: html } : pg));
+    next.push({ title: `Página ${next.length + 1}`, contenido: "" });
+    setPages(next);
+    setActivePage(next.length - 1);
+    setHtml("");
+    setEditorKey((k) => k + 1);
+  };
+
+  const eliminarPagina = (index) => {
+    if (pages.length <= 1) return;
+    const next = pages
+      .map((pg, i) => (i === activePage ? { ...pg, contenido: html } : pg))
+      .filter((_, i) => i !== index);
+    const nuevoActivo = Math.min(index === activePage ? index : activePage > index ? activePage - 1 : activePage, next.length - 1);
+    setPages(next);
+    setActivePage(nuevoActivo);
+    setHtml(next[nuevoActivo].contenido);
+    setEditorKey((k) => k + 1);
+  };
+
+  const renombrarPagina = (index, titulo) => {
+    const limpio = String(titulo || "").trim();
+    if (!limpio) return;
+    setPages((prev) => prev.map((pg, i) => (i === index ? { ...pg, title: limpio } : pg)));
+  };
+
+  // Mantener apretada una pestaña: renombrar / eliminar
+  const opcionesPagina = (index) => {
+    const pg = pages[index];
+    const botones = [];
+    if (Platform.OS === "ios") {
+      botones.push({
+        text: "Renombrar",
+        onPress: () =>
+          Alert.prompt(
+            "Nombre de la página",
+            undefined,
+            (texto) => renombrarPagina(index, texto),
+            "plain-text",
+            pg.title
+          ),
+      });
+    }
+    if (pages.length > 1) {
+      botones.push({
+        text: "Eliminar página",
+        style: "destructive",
+        onPress: () =>
+          Alert.alert("¿Eliminar página?", `Se va a borrar "${pg.title}" con todo su texto.`, [
+            { text: "Cancelar", style: "cancel" },
+            { text: "Eliminar", style: "destructive", onPress: () => eliminarPagina(index) },
+          ]),
+      });
+    }
+    if (!botones.length) return;
+    botones.push({ text: "Cancelar", style: "cancel" });
+    Alert.alert(pg.title, undefined, botones);
+  };
 
   // Cerrar: guarda lo pendiente antes de salir.
   const handleClose = async () => {
@@ -524,8 +661,51 @@ export default function NoteEditorModal({
               )}
             </View>
 
-            {/* Contenido enriquecido */}
-            <View style={[styles.paper, { backgroundColor: palette.bg }]}>
+            {/* Páginas como pestañas pegadas a la hoja (mantener apretada:
+                renombrar / eliminar) + "Página" para agregar otra */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              style={styles.pageTabsScroll}
+              contentContainerStyle={styles.pageTabs}
+            >
+              {pages.map((pg, i) => {
+                const active = i === activePage;
+                return (
+                  <TouchableOpacity
+                    key={`${i}-${pg.title}`}
+                    style={[styles.pageTab, active && { backgroundColor: palette.bg }]}
+                    onPress={() => irAPagina(i)}
+                    onLongPress={() => opcionesPagina(i)}
+                    activeOpacity={0.8}
+                  >
+                    <Text
+                      style={[styles.pageTabNum, active && { color: palette.text, opacity: 0.55 }]}
+                    >
+                      {i + 1}
+                    </Text>
+                    <Text
+                      style={[styles.pageTabText, active && { color: palette.text }]}
+                      numberOfLines={1}
+                    >
+                      {pg.title}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+              <TouchableOpacity style={styles.pageTabAdd} onPress={agregarPagina} activeOpacity={0.8}>
+                <Ionicons name="add" size={14} color={colors.greenDark} />
+                <Text style={styles.pageTabAddText}>Página</Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            {/* Hoja: llega hasta el final de la pantalla; tocar la parte vacía
+                también pone el cursor en el texto */}
+            <Pressable
+              style={[styles.paper, { backgroundColor: palette.bg }]}
+              onPress={() => richText.current?.focusContentEditor?.()}
+            >
               <RichEditor
                 key={editorKey}
                 ref={richText}
@@ -542,9 +722,9 @@ export default function NoteEditorModal({
                   contentCSSText:
                     "font-size: 16px; line-height: 1.6; padding: 12px; min-height: 280px;",
                 }}
-                style={styles.editor}
+                style={[styles.editor, { backgroundColor: palette.bg }]}
               />
-            </View>
+            </Pressable>
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
           </ScrollView>
@@ -602,7 +782,8 @@ const makeStyles = (colors) =>
       paddingVertical: 10,
       borderBottomWidth: 1,
       borderBottomColor: colors.cardBorder,
-      backgroundColor: colors.card,
+      // Mismo fondo oscuro que el resto de la pantalla (antes: color de tarjeta)
+      backgroundColor: colors.bg,
     },
     closeBtn: { padding: 2 },
     iconBtn: { padding: 4 },
@@ -623,14 +804,15 @@ const makeStyles = (colors) =>
       borderRadius: 9,
     },
 
-    body: { padding: 16, paddingBottom: 30 },
+    // flexGrow: la hoja estira hasta abajo aunque la nota tenga poco texto
+    body: { flexGrow: 1, padding: 16, paddingBottom: 0 },
     metaBar: { flexDirection: "row", gap: 8, alignItems: "center" },
     metaPill: {
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
       paddingHorizontal: 12,
-      paddingVertical: 8,
+      paddingVertical: 4,
       borderRadius: 999,
       borderWidth: 1,
       borderColor: colors.cardBorder,
@@ -638,7 +820,16 @@ const makeStyles = (colors) =>
     },
     metaChevron: { paddingLeft: 6, marginLeft: 2, borderLeftWidth: 1, borderLeftColor: colors.cardBorder },
     metaPillText: { color: colors.text, fontWeight: "700", fontSize: 13 },
-    metaInput: { flex: 1, color: colors.text, fontWeight: "700", fontSize: 13, paddingVertical: 0 },
+    // Alto fijo: con paddingVertical 0 y sin alto, el placeholder salía cortado
+    metaInput: {
+      flex: 1,
+      height: 34,
+      color: colors.text,
+      fontWeight: "700",
+      fontSize: 13,
+      paddingVertical: 0,
+      textAlignVertical: "center",
+    },
     folderChips: { gap: 7, paddingVertical: 10, paddingRight: 8 },
     folderChip: {
       flexDirection: "row",
@@ -717,12 +908,40 @@ const makeStyles = (colors) =>
       paddingVertical: 12,
       backgroundColor: colors.card,
     },
-    paper: {
-      marginTop: 4,
-      borderRadius: 16,
-      minHeight: 300,
+    pageTabsScroll: { flexGrow: 0 },
+    pageTabs: { alignItems: "flex-end", gap: 4 },
+    pageTab: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      maxWidth: 170,
+      paddingHorizontal: 11,
+      paddingVertical: 8,
+      borderTopLeftRadius: 10,
+      borderTopRightRadius: 10,
+      backgroundColor: colors.cardSoft,
+    },
+    pageTabNum: { color: colors.muted, fontSize: 11, fontWeight: "800" },
+    pageTabText: { color: colors.muted, fontSize: 13, fontWeight: "700", flexShrink: 1 },
+    pageTabAdd: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingHorizontal: 11,
+      paddingVertical: 8,
+      borderTopLeftRadius: 10,
+      borderTopRightRadius: 10,
       borderWidth: 1,
-      borderColor: colors.cardBorder,
+      borderBottomWidth: 0,
+      borderStyle: "dashed",
+      borderColor: colors.greenBorder,
+    },
+    pageTabAddText: { color: colors.greenDark, fontSize: 13, fontWeight: "700" },
+    // Hoja: pegada a las pestañas arriba y hasta el borde de abajo
+    paper: {
+      flex: 1,
+      minHeight: 300,
+      borderTopRightRadius: 14,
       overflow: "hidden",
       backgroundColor: colors.card,
     },
