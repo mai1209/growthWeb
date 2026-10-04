@@ -957,7 +957,7 @@ const makeStyles = (colors) => StyleSheet.create({
     margin: 16,
     marginBottom: 0,
     gap: 10,
-    backgroundColor: colors.card,
+    backgroundColor: colors.bg, // sin relleno: solo borde, como las cards del Home
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 16,
@@ -1006,7 +1006,7 @@ const makeStyles = (colors) => StyleSheet.create({
   summaryRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16 },
   summaryCard: {
     minWidth: 128,
-    backgroundColor: colors.card,
+    backgroundColor: colors.bg, // sin relleno: solo borde, como las cards del Home
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 14,
@@ -1020,7 +1020,7 @@ const makeStyles = (colors) => StyleSheet.create({
 
   // ---- Resumen del mes / Distribución / Insights (header de la lista) ----
   resumenCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.bg, // sin relleno: solo borde, como las cards del Home
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 16,
@@ -1147,7 +1147,7 @@ const makeStyles = (colors) => StyleSheet.create({
 
   // Tarjetas del desglose por mes (vista anual)
   monthCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.bg, // sin relleno: solo borde, como las cards del Home
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 16,
@@ -1192,7 +1192,7 @@ const makeStyles = (colors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    backgroundColor: colors.card,
+    backgroundColor: colors.bg, // sin relleno: solo borde, como las cards del Home
     borderWidth: 1,
     borderColor: colors.cardBorder,
     borderRadius: 14,
