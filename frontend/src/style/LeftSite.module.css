@@ -1589,14 +1589,14 @@ border: 1px solid rgba(255, 255, 255, 0.12);
    ===================================================================== */
 @font-face {
   font-family: "Menda";
-  src: url("/Menda%20Font/Menda%20Medium.ttf") format("truetype");
+  src: url("../fonts/Menda-Medium.ttf") format("truetype");
   font-weight: 400 599;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Menda";
-  src: url("/Menda%20Font/Menda%20Bold.ttf") format("truetype");
+  src: url("../fonts/Menda-Bold.ttf") format("truetype");
   font-weight: 600 900;
   font-display: swap;
 }
