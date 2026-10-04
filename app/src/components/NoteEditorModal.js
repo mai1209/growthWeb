@@ -137,6 +137,7 @@ export default function NoteEditorModal({
   const isEdit = !!noteId;
   const [editingTitle, setEditingTitle] = useState(false);
   const [paperOpen, setPaperOpen] = useState(false);
+  const [tagEditing, setTagEditing] = useState(false);
   // idle | saving | saved | error
   const [saveStatus, setSaveStatus] = useState("idle");
   const [meta, setMeta] = useState("");
@@ -213,6 +214,7 @@ export default function NoteEditorModal({
       setPickerOpen(false);
       setFolderListOpen(false);
       setPaperOpen(false);
+      setTagEditing(false);
       setNoteId(note?._id || null);
       noteIdRef.current = note?._id || null;
       // Nota nueva: arranca con el título listo para escribir
@@ -519,14 +521,31 @@ export default function NoteEditorModal({
                 style={[styles.metaPill, { flex: 1 }, !carpeta.trim() && styles.metaPillEmpty]}
               >
                 <Ionicons name="pricetag-outline" size={14} color={colors.greenBright2} />
-                <TextInput
-                  ref={tagInputRef}
-                  style={styles.metaInput}
-                  value={carpeta}
-                  onChangeText={setCarpeta}
-                  placeholder="Sin etiquetas · escribí una nueva"
-                  placeholderTextColor={colors.muted}
-                />
+                {/* En reposo es un Text (queda centrado seguro); recién al
+                    tocarlo pasa a ser un input para escribir. */}
+                {tagEditing ? (
+                  <TextInput
+                    ref={tagInputRef}
+                    style={styles.metaInput}
+                    value={carpeta}
+                    onChangeText={setCarpeta}
+                    placeholder="Escribí una etiqueta"
+                    placeholderTextColor={colors.muted}
+                    autoFocus
+                    returnKeyType="done"
+                    onSubmitEditing={() => setTagEditing(false)}
+                    onBlur={() => setTagEditing(false)}
+                  />
+                ) : (
+                  <Pressable style={styles.metaTextWrap} onPress={() => setTagEditing(true)}>
+                    <Text
+                      style={[styles.metaText, !carpeta.trim() && { color: colors.muted }]}
+                      numberOfLines={1}
+                    >
+                      {carpeta.trim() || "Sin etiquetas · escribí una nueva"}
+                    </Text>
+                  </Pressable>
+                )}
                 {carpeta ? (
                   <TouchableOpacity onPress={() => setCarpeta("")} hitSlop={8}>
                     <Ionicons name="close-circle" size={16} color={colors.muted} />
@@ -595,7 +614,7 @@ export default function NoteEditorModal({
                     onPress={() => {
                       setCarpeta("");
                       setFolderListOpen(false);
-                      tagInputRef.current?.focus();
+                      setTagEditing(true);
                     }}
                   >
                     <Ionicons name="add" size={17} color={colors.greenBright} />
@@ -814,13 +833,25 @@ const makeStyles = (colors) =>
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 9,
+      // Alto fijo y más chico; todo lo de adentro se centra en vertical
+      height: 30,
+      paddingHorizontal: 10,
+      borderRadius: 8,
       borderWidth: 1,
       borderColor: colors.cardBorder,
     },
     metaPillEmpty: { borderStyle: "dashed", borderColor: colors.muted },
+    metaChevron: { paddingLeft: 6, marginLeft: 2, borderLeftWidth: 1, borderLeftColor: colors.cardBorder },
+    metaPillText: { color: colors.text, fontWeight: "700", fontSize: 13 },
+    metaTextWrap: { flex: 1, alignSelf: "stretch", justifyContent: "center" },
+    metaText: { color: colors.text, fontWeight: "700", fontSize: 12.5 },
+    metaInput: {
+      flex: 1,
+      color: colors.text,
+      fontWeight: "700",
+      fontSize: 12.5,
+      padding: 0,
+    },
     metaChevron: { paddingLeft: 6, marginLeft: 2, borderLeftWidth: 1, borderLeftColor: colors.cardBorder },
     metaPillText: { color: colors.text, fontWeight: "700", fontSize: 13 },
     // El alto lo da el padding de la pastilla, NO el del input: en iOS, cuanto
