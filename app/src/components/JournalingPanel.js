@@ -13,12 +13,15 @@ import {
   Keyboard,
   PanResponder,
   Animated,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { journalService } from "../api";
 import { useTheme } from "../theme";
 import JournalAyudaModal from "./JournalAyudaModal";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
 
 // Ánimo del día: 1 (muy mal) a 5 (muy bien). El 0 muestra la carita sin boca.
 const CARA_VACIA = "😶";
@@ -109,6 +112,13 @@ const fechaLarga = (fecha) => {
   });
 };
 
+const ANIMO_LABELS = { 1: "Muy mal", 2: "Mal", 3: "Normal", 4: "Bien", 5: "Muy bien" };
+const escapeHtml = (t) =>
+  String(t ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br/>");
 const emojiDe = (animo) => ANIMOS.find((a) => a.valor === Number(animo))?.emoji || "·";
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -440,6 +450,98 @@ export default function JournalingPanel({ visible, onClose }) {
     };
   };
 
+  // Exporta todas las hojas escritas como PDF con estilo de diario (papel
+  // crema, renglones, margen coral, portada), igual que la web, y abre el
+  // share del sistema para guardarlo o mandarlo.
+  const [exportando, setExportando] = useState(false);
+  const descargarPDF = async () => {
+    const hojas = entradas;
+    if (!hojas.length || exportando) return;
+    setExportando(true);
+    try {
+      const fechaCorta = (f) => {
+        const [y, m, d] = String(f).split("-");
+        return `${d}/${m}/${y}`;
+      };
+      const animoColor = (v) => (v <= 2 ? "#c96c56" : v === 3 ? "#d4a248" : "#7ca248");
+      const rango =
+        hojas.length > 1
+          ? `${fechaCorta(hojas[0].fecha)} &nbsp;—&nbsp; ${fechaCorta(hojas[hojas.length - 1].fecha)}`
+          : fechaCorta(hojas[0].fecha);
+      const bloque = (titulo, texto) =>
+        String(texto || "").trim()
+          ? `<div class="bloque">${titulo ? `<p class="pregunta">${escapeHtml(titulo)}</p>` : ""}<p class="texto">${escapeHtml(texto)}</p></div>`
+          : "";
+      const paginas = hojas
+        .map((e, idx) => {
+          const preg = preguntasVista(e);
+          const animo = Number(e.animo) > 0 ? Number(e.animo) : 0;
+          return `<section class="hoja">
+            <div class="margen"></div>
+            <header>
+              <h2>${escapeHtml(fechaLarga(e.fecha))}</h2>
+              ${animo ? `<span class="animo" style="background:${animoColor(animo)}">${ANIMO_LABELS[animo] || ""}</span>` : ""}
+            </header>
+            ${CAMPOS.map((p) => bloque(preg[p.campo], e[p.campo])).join("")}
+            ${(e.extras || []).map((x) => bloque(x.texto, x.valor)).join("")}
+            ${bloque(null, e.libre)}
+            <footer>${idx + 1}</footer>
+          </section>`;
+        })
+        .join("");
+      const html = `<!doctype html><html><head><meta charset="utf-8"/>
+        <style>
+          @page { size: A5; margin: 0; }
+          * { box-sizing: border-box; }
+          body { margin: 0; font-family: Georgia, "Times New Roman", serif; color: #2c2620; }
+          section { width: 148mm; height: 210mm; page-break-after: always; position: relative; background: #faf5e9; overflow: hidden; }
+          section:last-child { page-break-after: auto; }
+          .portada { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+          .portada .marco { position: absolute; inset: 9mm; border: 1.4px solid #cdb28a; }
+          .portada .marco2 { position: absolute; inset: 11mm; border: 0.6px solid #cdb28a; }
+          .portada .mi { font-style: italic; color: #7a6c5e; font-size: 13pt; margin: 0; }
+          .portada h1 { margin: 2mm 0 5mm; font-size: 34pt; color: #3a2d24; }
+          .portada .rango { font-size: 12pt; margin: 0 0 2mm; }
+          .portada .hojas { font-size: 10pt; color: #7a6c5e; margin: 0; }
+          .portada .growth { position: absolute; bottom: 14mm; font-style: italic; font-size: 9pt; color: #7a6c5e; }
+          .hoja { padding: 16mm 14mm 14mm 20mm; border: 0; }
+          .hoja::before { content: ""; position: absolute; inset: 9mm; border: 0.8px solid #cdb28a; }
+          .hoja::after { content: ""; position: absolute; top: 24mm; bottom: 20mm; left: 20mm; right: 14mm;
+            background: repeating-linear-gradient(to bottom, transparent 0, transparent 6.4mm, #e6ddc9 6.4mm, #e6ddc9 6.6mm); z-index: 0; }
+          .margen { position: absolute; top: 11mm; bottom: 11mm; left: 15mm; width: 1px; background: #c96c56; }
+          header { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.6px solid #cdb28a; padding-bottom: 2mm; margin-bottom: 4mm; }
+          header h2 { margin: 0; font-size: 15pt; color: #3a2d24; text-transform: capitalize; }
+          .animo { font-size: 9.5pt; color: #2d281e; border-radius: 999px; padding: 1mm 3mm; }
+          .bloque { position: relative; z-index: 1; margin: 0 0 3mm; }
+          .pregunta { margin: 0; font-style: italic; font-weight: bold; color: #4c7020; font-size: 11pt; line-height: 6.5mm; }
+          .texto { margin: 0; font-size: 12pt; line-height: 6.5mm; white-space: pre-wrap; }
+          footer { position: absolute; bottom: 11mm; left: 0; right: 0; text-align: center; font-style: italic; font-size: 9pt; color: #7a6c5e; }
+        </style></head><body>
+        <section class="portada">
+          <div class="marco"></div><div class="marco2"></div>
+          <p class="mi">mi</p>
+          <h1>Journaling</h1>
+          <p class="rango">${rango}</p>
+          <p class="hojas">${hojas.length} ${hojas.length === 1 ? "hoja" : "hojas"}</p>
+          <p class="growth">Growth</p>
+        </section>
+        ${paginas}
+      </body></html>`;
+      const { uri } = await Print.printToFileAsync({ html, width: 420, height: 595, base64: false });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, {
+          mimeType: "application/pdf",
+          UTI: "com.adobe.pdf",
+          dialogTitle: "Mi journaling",
+        });
+      }
+    } catch (e) {
+      Alert.alert("No se pudo exportar", "Probá de nuevo en un momento.");
+    } finally {
+      setExportando(false);
+    }
+  };
+
   // Panel de métricas del ánimo (caritas): promedio + distribución.
   const renderMetricas = () => {
     const serie = animoSerie;
@@ -553,12 +655,12 @@ export default function JournalingPanel({ visible, onClose }) {
                       style={[
                         styles.vistaThumb,
                         {
-                          width: (toggleW - 8) / 2,
+                          width: (toggleW - 6) / 2,
                           transform: [
                             {
                               translateX: toggleAnim.interpolate({
                                 inputRange: [0, 1],
-                                outputRange: [0, (toggleW - 8) / 2],
+                                outputRange: [0, (toggleW - 6) / 2],
                               }),
                             },
                           ],
@@ -574,7 +676,7 @@ export default function JournalingPanel({ visible, onClose }) {
                   >
                     <Ionicons
                       name="book-outline"
-                      size={17}
+                      size={15}
                       color={vista === "libro" ? "#0e1a0e" : colors.muted}
                     />
                   </TouchableOpacity>
@@ -586,7 +688,7 @@ export default function JournalingPanel({ visible, onClose }) {
                   >
                     <Ionicons
                       name="calendar-outline"
-                      size={17}
+                      size={15}
                       color={vista === "calendario" ? "#0e1a0e" : colors.muted}
                     />
                   </TouchableOpacity>
@@ -902,6 +1004,16 @@ export default function JournalingPanel({ visible, onClose }) {
                   hint: "Cómo venís en el tiempo",
                   icon: "stats-chart-outline",
                   onPress: () => setMetricasOpen(true),
+                },
+                {
+                  key: "pdf",
+                  label: exportando ? "Exportando…" : "Exportar (PDF)",
+                  hint: entradas.length
+                    ? `${entradas.length} ${entradas.length === 1 ? "hoja escrita" : "hojas escritas"}`
+                    : "Todavía no hay hojas escritas",
+                  icon: "download-outline",
+                  disabled: !entradas.length || exportando,
+                  onPress: descargarPDF,
                 },
               ].map((it, i, arr) => (
                 <TouchableOpacity
@@ -1225,12 +1337,13 @@ const makeStyles = (colors) =>
       textTransform: "capitalize",
     },
 
-    vistaRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    vistaRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
     vistaToggle: {
       position: "relative",
-      flex: 1,
+      alignSelf: "center",
+      width: 150,
       flexDirection: "row",
-      padding: 4,
+      padding: 3,
       borderRadius: 999,
       borderWidth: 1,
       borderColor: colors.cardBorder,
@@ -1290,9 +1403,9 @@ const makeStyles = (colors) =>
     },
     vistaThumb: {
       position: "absolute",
-      top: 4,
-      bottom: 4,
-      left: 4,
+      top: 3,
+      bottom: 3,
+      left: 3,
       borderRadius: 999,
       backgroundColor: colors.greenBright,
     },
@@ -1302,7 +1415,7 @@ const makeStyles = (colors) =>
       alignItems: "center",
       justifyContent: "center",
       gap: 6,
-      paddingVertical: 9,
+      paddingVertical: 6,
       borderRadius: 999,
     },
     vistaBtnText: { color: colors.muted, fontSize: 13, fontWeight: "800" },
