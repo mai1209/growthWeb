@@ -510,17 +510,15 @@ export default function JournalingPanel({ visible, onClose }) {
               ) : null}
             </View>
           </View>
-          {/* Plantillas: arriba a la derecha del todo (sólo hoy). */}
-          {esHoy ? (
-            <TouchableOpacity
-              style={styles.plantillasBtn}
-              onPress={() => setPlantillasOpen(true)}
-            >
-              <Ionicons name="grid-outline" size={15} color={colors.text} />
-              <Text style={styles.plantillasBtnText}>Plantillas</Text>
-              <Ionicons name="chevron-down" size={14} color={colors.muted} />
-            </TouchableOpacity>
-          ) : null}
+          {/* Sugerencias de preguntas: arriba a la derecha del todo. */}
+          <TouchableOpacity
+            style={styles.sugerenciasLink}
+            onPress={() => setAyudaOpen(true)}
+            hitSlop={8}
+          >
+            <Text style={styles.sugerenciasLinkText}>Sugerencias</Text>
+            <Ionicons name="help-circle-outline" size={13} color={colors.green} />
+          </TouchableOpacity>
         </View>
 
         {cargando ? (
@@ -536,17 +534,19 @@ export default function JournalingPanel({ visible, onClose }) {
             <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
               {/* Ánimo: slider con carita viajera */}
               <View style={styles.animoBox}>
-                {/* Sin pregunta: la carita del slider se explica sola */}
-                <View style={styles.animoLabelRow}>
-                  <TouchableOpacity
-                    style={styles.sugerenciasLink}
-                    onPress={() => setAyudaOpen(true)}
-                    hitSlop={8}
-                  >
-                    <Text style={styles.sugerenciasLinkText}>Sugerencias</Text>
-                    <Ionicons name="help-circle-outline" size={13} color={colors.green} />
-                  </TouchableOpacity>
-                </View>
+                {/* Sin pregunta: la carita del slider se explica sola. Plantillas (sólo hoy) a la izquierda. */}
+                {esHoy ? (
+                  <View style={styles.animoLabelRow}>
+                    <TouchableOpacity
+                      style={styles.plantillasBtn}
+                      onPress={() => setPlantillasOpen(true)}
+                    >
+                      <Ionicons name="grid-outline" size={15} color={colors.text} />
+                      <Text style={styles.plantillasBtnText}>Plantillas</Text>
+                      <Ionicons name="chevron-down" size={14} color={colors.muted} />
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
                 <AnimoSlider value={entrada.animo} onChange={onAnimoChange} styles={styles} />
               </View>
 
@@ -985,7 +985,7 @@ const makeStyles = (colors) =>
     animoLabelRow: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "flex-end",
+      justifyContent: "flex-start",
       gap: 8,
     },
     animoLabel: { color: colors.muted, fontSize: 10.5, fontWeight: "800", letterSpacing: 1 },
