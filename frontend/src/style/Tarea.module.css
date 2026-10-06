@@ -2959,8 +2959,7 @@
   border-radius: 14px;
 }
 
-.taskModalHeader button,
-.taskModalClose {
+.closeModalButton {
   border-radius: 8px;
 }
 
