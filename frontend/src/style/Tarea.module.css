@@ -2953,3 +2953,53 @@
   opacity: 0;
   cursor: pointer;
 }
+
+/* ---- Modal Nueva tarea: todo con bordes más cuadrados ---- */
+.taskModal {
+  border-radius: 14px;
+}
+
+.taskModalHeader button,
+.taskModalClose {
+  border-radius: 8px;
+}
+
+.formField input:not([type="checkbox"]),
+.formField select,
+.formControl,
+.formDateButton,
+.prioridadEditor {
+  border-radius: 10px;
+}
+
+.formDateIcon {
+  border-radius: 8px;
+}
+
+.momentoButton,
+.prioridadChip,
+.prioridadNueva,
+.dayChip span,
+.cancelButton,
+.saveTaskButton,
+.prioridadBtnGuardar,
+.prioridadBtnCancelar,
+.prioridadBtnEliminar,
+.dayFilterBtn {
+  border-radius: 8px;
+}
+
+.taskColorButton,
+.taskColorMas,
+.prioridadColor,
+.prioridadColorMas {
+  border-radius: 8px;
+}
+
+.repeatToggle input {
+  border-radius: 6px;
+}
+
+.prioridadDot {
+  border-radius: 3px;
+}
