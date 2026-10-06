@@ -2633,3 +2633,279 @@
   border-color: rgba(229, 72, 77, 0.6);
   color: #e5484d;
 }
+
+/* ---- Panel izquierdo de Tareas (rediseño: fecha + HOY + anillo + stats + tarjetas) ---- */
+.progressCard {
+  min-height: 0;
+  padding: 1.1rem 1.1rem 1.2rem;
+  border-radius: 22px;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.12));
+  background: var(--surface-card, rgba(255, 255, 255, 0.03));
+  gap: 0.85rem;
+}
+
+.panelDate {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.2rem;
+}
+
+.panelDateRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+}
+
+.panelDateTitle {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text);
+}
+
+.panelDateTitle::first-letter {
+  text-transform: uppercase;
+}
+
+.panelTodayBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.38rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.16));
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.panelTodayBtn:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+:global(body[data-theme="light"]) .panelTodayBtn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.panelTodayBtn svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Anillo más grande, con aro fino (la "dona" del mockup) */
+.progressRing {
+  width: 160px;
+  background: conic-gradient(var(--color-verde, #5dc72d) var(--progress), rgba(127, 137, 129, 0.22) 0);
+  box-shadow: none;
+}
+
+.progressRingInner {
+  width: 138px;
+  background: var(--surface-card, #0f1713);
+  border: none;
+}
+
+.progressRingInner strong {
+  color: var(--color-text);
+  font-size: 1.9rem;
+}
+
+.progressRingInner span {
+  color: var(--color-muted);
+  font-size: 0.7rem;
+}
+
+:global(body[data-theme="light"]) .progressRingInner {
+  background: #ffffff;
+}
+
+.progressLabel {
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+}
+
+/* Filas: punto + etiqueta ... número */
+.progressStatsList {
+  width: 100%;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+}
+
+.progressStatsList li {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.2rem;
+  border-top: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.progressStatsList li:last-child {
+  border-bottom: 1px solid var(--border-color, rgba(216, 241, 224, 0.1));
+}
+
+.progressStatDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.progressStatDotDone {
+  background: #75f94c;
+}
+
+.progressStatDotPending {
+  background: #eb3223;
+}
+
+.progressStatLabel {
+  flex: 1;
+}
+
+.progressStatDone,
+.progressStatPending {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.progressStatDone {
+  color: #75f94c;
+}
+
+.progressStatPending {
+  color: #eb3223;
+}
+
+/* Tarjetas con ícono redondo a la izquierda */
+.comparativaCard,
+.fraseCard {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.12));
+  background: var(--surface-input, rgba(255, 255, 255, 0.03));
+  text-align: left;
+}
+
+.fraseCard {
+  border-color: rgba(93, 199, 45, 0.35);
+  background: linear-gradient(160deg, rgba(93, 199, 45, 0.12), rgba(93, 199, 45, 0.03));
+}
+
+.panelIcon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(93, 199, 45, 0.14);
+  color: var(--color-verde, #5dc72d);
+}
+
+.panelIcon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.progresoComparativa {
+  text-align: left;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.fraseBody {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.fraseLabel {
+  font-size: 0.95rem;
+}
+
+.fraseTexto {
+  font-size: 0.86rem;
+  color: var(--color-muted);
+}
+
+/* ---- Filtros de la lista del día (Todas / Pendientes / Completadas) ---- */
+.dayFilters {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 10px;
+}
+
+.dayFilterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 32px;
+  padding: 0 0.85rem;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.14));
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dayFilterBtn:hover {
+  color: var(--color-text);
+}
+
+.dayFilterActive,
+.dayFilterActive:hover {
+  background: #75f94c;
+  border-color: #75f94c;
+  color: #06210a;
+  font-weight: 700;
+}
+
+.dayFilterCount {
+  min-width: 20px;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}
+
+.dayFilterCountPending {
+  background: rgba(235, 50, 35, 0.18);
+  color: #ff6b5e;
+}
+
+.dayFilterCountDone {
+  background: rgba(117, 249, 76, 0.18);
+  color: #75f94c;
+}
+
+.dayFilterActive .dayFilterCount {
+  background: rgba(6, 33, 10, 0.18);
+  color: #06210a;
+}

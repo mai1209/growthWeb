@@ -310,6 +310,9 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
   const [formSuccess, setFormSuccess] = useState("");
   const [formSaving, setFormSaving] = useState(false);
   const [isTaskDatePickerOpen, setIsTaskDatePickerOpen] = useState(false);
+  // Filtro de la lista del día: todas / pendientes / completadas
+  const [dayFilter, setDayFilter] = useState("all");
+  const [isPanelDatePickerOpen, setIsPanelDatePickerOpen] = useState(false);
 
   const visibleTasks = useMemo(
     () => filterTasksForDate(tasks, selectedDate),
@@ -794,14 +797,23 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
   const renderContent = () => {
     if (loading) return <p className={style.emptyMessage}>Cargando tareas...</p>;
     if (error) return <p className={style.errorMessage}>{error}</p>;
-    if (visibleTasks.length === 0)
+    const filtradas = visibleTasks.filter((t) => {
+      if (dayFilter === "pending") return !isTaskCompleted(t);
+      if (dayFilter === "done") return isTaskCompleted(t);
+      return true;
+    });
+    if (filtradas.length === 0)
       return (
         <p className={style.emptyMessage}>
-          Aun no tienes tareas. Anade una para comenzar.
+          {visibleTasks.length === 0
+            ? "Aun no tienes tareas. Anade una para comenzar."
+            : dayFilter === "pending"
+              ? "No quedan tareas pendientes. ¡Bien ahí!"
+              : "Todavía no completaste ninguna tarea hoy."}
         </p>
       );
 
-    const ordenadas = [...visibleTasks].sort((a, b) => agendaKey(a) - agendaKey(b));
+    const ordenadas = [...filtradas].sort((a, b) => agendaKey(a) - agendaKey(b));
 
     return (
       <div className={style.agenda}>
@@ -1150,48 +1162,42 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
           <div className={style.headerTop}>
             {/* Barra compacta: fecha grande + ‹ › + HOY (según el mockup) */}
             <div className={style.headerDateGroup}>
-              <h1 className={style.dayTitle}>
-                {viewMode === "calendar"
-                  ? "Calendario"
-                  : viewMode === "history"
-                    ? "Historial"
-                    : selectedDate.toLocaleDateString("es-AR", {
-                        weekday: "long",
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
-              </h1>
-
               {viewMode === "day" ? (
-                <>
-                  <div className={style.dayNav}>
+                /* Filtros de la lista del día (la fecha vive en el panel izquierdo) */
+                <div className={style.dayFilters} role="tablist" aria-label="Filtrar tareas del día">
+                  {[
+                    { value: "all", label: "Todas", count: null },
+                    { value: "pending", label: "Pendientes", count: daySummary.pending },
+                    { value: "done", label: "Completadas", count: daySummary.done },
+                  ].map((f) => (
                     <button
+                      key={f.value}
                       type="button"
-                      className={style.dayNavBtn}
-                      onClick={() => shiftSelectedDay(-1)}
-                      aria-label="Día anterior"
+                      role="tab"
+                      aria-selected={dayFilter === f.value}
+                      className={`${style.dayFilterBtn} ${
+                        dayFilter === f.value ? style.dayFilterActive : ""
+                      }`}
+                      onClick={() => setDayFilter(f.value)}
                     >
-                      <FiChevronLeft />
+                      {f.label}
+                      {f.count !== null ? (
+                        <span
+                          className={`${style.dayFilterCount} ${
+                            f.value === "done" ? style.dayFilterCountDone : style.dayFilterCountPending
+                          }`}
+                        >
+                          {f.count}
+                        </span>
+                      ) : null}
                     </button>
-                    <button
-                      type="button"
-                      className={style.dayNavBtn}
-                      onClick={() => shiftSelectedDay(1)}
-                      aria-label="Día siguiente"
-                    >
-                      <FiChevronRight />
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    className={style.todayBtn}
-                    onClick={() => setSelectedDate(new Date())}
-                  >
-                    Hoy
-                  </button>
-                </>
-              ) : null}
+                  ))}
+                </div>
+              ) : (
+                <h1 className={style.dayTitle}>
+                  {viewMode === "calendar" ? "Calendario" : "Historial"}
+                </h1>
+              )}
             </div>
 
             <div className={style.headerAside}>
@@ -1243,6 +1249,61 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
 
       <div className={style.tasksWorkspace}>
         <aside className={style.progressCard} aria-label="Progreso de tareas">
+          {viewMode === "day" ? (
+            <div className={style.panelDate}>
+              <div className={style.panelDateRow}>
+                <button
+                  type="button"
+                  className={style.dayNavBtn}
+                  onClick={() => shiftSelectedDay(-1)}
+                  aria-label="Día anterior"
+                >
+                  <FiChevronLeft />
+                </button>
+                <h1 className={style.panelDateTitle}>
+                  {selectedDate.toLocaleDateString("es-AR", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </h1>
+                <button
+                  type="button"
+                  className={style.dayNavBtn}
+                  onClick={() => shiftSelectedDay(1)}
+                  aria-label="Día siguiente"
+                >
+                  <FiChevronRight />
+                </button>
+              </div>
+              {/* Pill HOY: abre un calendario para saltar a cualquier día */}
+              <DatePicker
+                selected={selectedDate}
+                onChange={(date) => {
+                  if (date) setSelectedDate(date);
+                  setIsPanelDatePickerOpen(false);
+                }}
+                customInput={
+                  <button type="button" className={style.panelTodayBtn}>
+                    <FiCalendar />
+                    {isSameDay(selectedDate, new Date())
+                      ? "Hoy"
+                      : selectedDate.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" })}
+                    <FiChevronDown />
+                  </button>
+                }
+                open={isPanelDatePickerOpen}
+                onInputClick={() => setIsPanelDatePickerOpen((prev) => !prev)}
+                onClickOutside={() => setIsPanelDatePickerOpen(false)}
+                onCalendarClose={() => setIsPanelDatePickerOpen(false)}
+                shouldCloseOnSelect
+                popperClassName={style.taskDatepickerPopper}
+                popperPlacement="bottom"
+              />
+            </div>
+          ) : null}
+
           <div
             className={style.progressRing}
             style={{ "--progress": `${progressPercent}%` }}
@@ -1252,34 +1313,47 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
               <span>hecho</span>
             </div>
           </div>
+          <span className={style.progressLabel}>
+            {viewMode === "history"
+              ? "Progreso del período"
+              : viewMode === "calendar"
+                ? "Progreso del mes"
+                : "Progreso del día"}
+          </span>
 
-          <div className={style.progressCopy}>
-            <span className={style.progressLabel}>Progreso</span>
-            <div className={style.progressStats}>
-              <p className={style.statCompletadas}>
-                <strong>{completedTasksCount}</strong>
-                tareas completadas
-              </p>
-              <p className={style.statPendientes}>
-                <strong>{pendingTasksCount}</strong>
-                tareas pendientes
-              </p>
-            </div>
-          </div>
+          <ul className={style.progressStatsList}>
+            <li>
+              <span className={`${style.progressStatDot} ${style.progressStatDotDone}`} />
+              <span className={style.progressStatLabel}>Tareas completadas</span>
+              <strong className={style.progressStatDone}>{completedTasksCount}</strong>
+            </li>
+            <li>
+              <span className={`${style.progressStatDot} ${style.progressStatDotPending}`} />
+              <span className={style.progressStatLabel}>Tareas pendientes</span>
+              <strong className={style.progressStatPending}>{pendingTasksCount}</strong>
+            </li>
+          </ul>
 
           {comparativaMes.total > 0 || comparativaMes.totalAnt > 0 ? (
-            <p className={style.progresoComparativa}>
-              Este mes cumpliste el{" "}
-              <strong>{comparativaMes.actual}%</strong> de tus tareas · el mes
-              pasado fue <strong>{comparativaMes.anterior}%</strong>
-            </p>
+            <div className={style.comparativaCard}>
+              <span className={style.panelIcon}>
+                <FiTarget />
+              </span>
+              <p className={style.progresoComparativa}>
+                Este mes cumpliste el <strong>{comparativaMes.actual}%</strong> de tus
+                tareas · el mes pasado fue <strong>{comparativaMes.anterior}%</strong>
+              </p>
+            </div>
           ) : null}
 
           <div className={style.fraseCard}>
-            <p className={style.fraseTexto}>
-              <span className={style.fraseLabel}>Frase del día: </span>
-              {fraseDelDia}
-            </p>
+            <span className={style.panelIcon}>
+              <FiTarget />
+            </span>
+            <div className={style.fraseBody}>
+              <span className={style.fraseLabel}>Frase del día</span>
+              <p className={style.fraseTexto}>“{fraseDelDia}”</p>
+            </div>
           </div>
         </aside>
 
