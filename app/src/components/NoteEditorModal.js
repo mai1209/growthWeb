@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Keyboard,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RichEditor, RichToolbar, actions } from "react-native-pell-rich-editor";
@@ -155,6 +156,12 @@ export default function NoteEditorModal({
   const [editorKey, setEditorKey] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   // Popup "Nueva etiqueta": null o { nombre, color, error }
+  // Cierra el teclado (el del editor y el nativo) al tocar fuera del texto
+  const cerrarTeclado = () => {
+    Keyboard.dismiss();
+    richText.current?.dismissKeyboard?.();
+    setTagEditing(false);
+  };
   const [tagPopup, setTagPopup] = useState(null);
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
 
@@ -458,7 +465,11 @@ export default function NoteEditorModal({
     <Modal visible={visible} animationType="slide" onRequestClose={handleClose} statusBarTranslucent>
       <View style={[styles.safe, { paddingBottom: insets.bottom }]}>
         {/* Header: cerrar · título (editable con el lápiz) · editar · borrar */}
-        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+        <Pressable
+          style={[styles.header, { paddingTop: insets.top + 10 }]}
+          onPress={cerrarTeclado}
+          accessible={false}
+        >
           <TouchableOpacity onPress={handleClose} hitSlop={10} style={styles.closeBtn}>
             <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
@@ -522,7 +533,7 @@ export default function NoteEditorModal({
               <Ionicons name="trash-outline" size={21} color={colors.red} />
             </TouchableOpacity>
           )}
-        </View>
+        </Pressable>
 
         <KeyboardAvoidingView
           style={{ flex: 1 }}
@@ -533,6 +544,7 @@ export default function NoteEditorModal({
             style={{ flex: 1 }}
             contentContainerStyle={styles.body}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             nestedScrollEnabled
           >
             {/* Etiqueta: escribí una nueva o elegí una del desplegable (flecha) */}
@@ -783,6 +795,8 @@ export default function NoteEditorModal({
             </Pressable>
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
+            {/* Espacio vacío debajo del texto: tocarlo cierra el teclado */}
+            <Pressable style={{ flex: 1, minHeight: 90 }} onPress={cerrarTeclado} accessible={false} />
           </ScrollView>
 
           {/* Barra de formato (pegada abajo, sobre el teclado) */}
