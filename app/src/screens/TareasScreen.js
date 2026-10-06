@@ -228,6 +228,8 @@ export default function TareasScreen() {
 
   // Filtro de la lista del día: todas / pendientes / completadas
   const [dayFilter, setDayFilter] = useState("all");
+  // Progreso/frase del panel: plegado por defecto, se abre al tocar
+  const [panelAbierto, setPanelAbierto] = useState(false);
 
   // Tareas ordenadas por horario para el riel de la izquierda (según el filtro).
   const sortedTasks = useMemo(
@@ -450,6 +452,24 @@ export default function TareasScreen() {
                     <Ionicons name="chevron-down" size={13} color={colors.muted} />
                   </TouchableOpacity>
 
+                  {/* Toggle: lo de abajo (anillo, stats, tarjetas) queda oculto hasta tocar */}
+                  <TouchableOpacity
+                    style={styles.panelToggle}
+                    onPress={() => setPanelAbierto((v) => !v)}
+                    accessibilityLabel={panelAbierto ? "Ocultar progreso" : "Ver progreso"}
+                  >
+                    <Text style={styles.panelToggleText}>
+                      {panelAbierto ? "Ocultar progreso" : `Progreso del día · ${progressPercent}%`}
+                    </Text>
+                    <Ionicons
+                      name={panelAbierto ? "chevron-up" : "chevron-down"}
+                      size={15}
+                      color={colors.muted}
+                    />
+                  </TouchableOpacity>
+
+                  {panelAbierto ? (
+                  <>
                   <View style={styles.panelRing}>
                     <ProgressRing percent={progressPercent} size={150} stroke={10} />
                   </View>
@@ -489,6 +509,8 @@ export default function TareasScreen() {
                       <Text style={styles.fraseTexto}>“{fraseDelDia}”</Text>
                     </View>
                   </View>
+                  </>
+                  ) : null}
                 </View>
 
                 {/* Filtros: Todas / Pendientes / Completadas */}
@@ -857,6 +879,14 @@ const makeStyles = (colors) => StyleSheet.create({
     borderColor: colors.cardBorder,
   },
   panelTodayText: { color: colors.text, fontSize: 11, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase" },
+  panelToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    paddingVertical: 4,
+  },
+  panelToggleText: { color: colors.muted, fontSize: 12, fontWeight: "700" },
   panelRing: { alignItems: "center", marginTop: 6 },
   panelKicker: {
     textAlign: "center",
