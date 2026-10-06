@@ -1068,27 +1068,34 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     return counts;
   }, [notasVivas]);
 
+  // Etiquetas guardadas en el usuario (las mismas que en la app). Reemplazan la
+  // lista local, así lo que se crea o borra en el teléfono se ve acá también.
+  // Se releen al volver a la pestaña.
   useEffect(() => {
     let activo = true;
-    taskService
-      .getEtiquetasNotas()
-      .then(({ data }) => {
-        if (!activo || !Array.isArray(data?.etiquetas)) return;
-        const map = {};
-        data.etiquetas.forEach((e) => {
-          if (e?.nombre && e?.color) map[e.nombre.toLowerCase()] = e.color;
-        });
-        setTagColors(map);
-        // Las etiquetas creadas en otro dispositivo también aparecen acá.
-        setCustomFolders((prev) => {
-          const set = new Set(prev);
-          data.etiquetas.forEach((e) => e?.nombre && set.add(e.nombre));
-          return [...set];
-        });
-      })
-      .catch(() => {});
+    const cargar = () =>
+      taskService
+        .getEtiquetasNotas()
+        .then(({ data }) => {
+          if (!activo || !Array.isArray(data?.etiquetas)) return;
+          const map = {};
+          data.etiquetas.forEach((e) => {
+            if (e?.nombre && e?.color) map[e.nombre.toLowerCase()] = e.color;
+          });
+          setTagColors(map);
+          setCustomFolders(data.etiquetas.map((e) => e?.nombre).filter(Boolean));
+        })
+        .catch(() => {});
+    cargar();
+    const onFocus = () => {
+      if (document.visibilityState === "visible") cargar();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
     return () => {
       activo = false;
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
     };
   }, []);
 
@@ -1290,6 +1297,14 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   const handleDeleteFolder = (name) => {
     setCustomFolders((prev) => prev.filter((folder) => folder !== name));
     setActiveFolder((current) => (current === name ? ALL_FOLDERS : current));
+    const nextColors = { ...tagColors };
+    delete nextColors[name.toLowerCase()];
+    setTagColors(nextColors);
+    // También en el backend, si no vuelve a aparecer (acá y en la app)
+    const lista = folders
+      .filter((f) => f !== name)
+      .map((n) => ({ nombre: n, color: nextColors[n.toLowerCase()] || folderColor(n) }));
+    taskService.saveEtiquetasNotas(lista).catch(() => {});
   };
 
   const handleCreateFolderInEditor = () => {

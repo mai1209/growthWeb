@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Modal,
+  Alert,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -73,26 +74,44 @@ export default function NotasScreen() {
   const [tagColors, setTagColors] = useState({});
   const insets = useSafeAreaInsets();
 
+  // Etiquetas con color guardadas en el usuario (compartidas con la web).
+  // Reemplaza la lista local: así una etiqueta borrada en la web también se va acá.
+  const cargarEtiquetas = useCallback(async () => {
+    try {
+      const { data } = await taskService.getEtiquetasNotas();
+      if (!Array.isArray(data?.etiquetas)) return;
+      const map = {};
+      data.etiquetas.forEach((e) => {
+        if (e?.nombre && e?.color) map[e.nombre.toLowerCase()] = e.color;
+      });
+      setTagColors(map);
+      const nombres = data.etiquetas.map((e) => e?.nombre).filter(Boolean);
+      setCustom(nombres);
+      setCustomFolders(nombres).catch(() => {});
+    } catch {
+      // sin red: quedan las guardadas en el teléfono
+    }
+  }, []);
+
   useEffect(() => {
     getCustomFolders().then((arr) => setCustom(arr));
-    // Etiquetas con color guardadas en el usuario (compartidas con la web)
-    taskService
-      .getEtiquetasNotas()
-      .then(({ data }) => {
-        if (!Array.isArray(data?.etiquetas)) return;
-        const map = {};
-        data.etiquetas.forEach((e) => {
-          if (e?.nombre && e?.color) map[e.nombre.toLowerCase()] = e.color;
-        });
-        setTagColors(map);
-        setCustom((prev) => {
-          const set = new Set(prev);
-          data.etiquetas.forEach((e) => e?.nombre && set.add(e.nombre));
-          return [...set];
-        });
-      })
-      .catch(() => {});
-  }, []);
+    cargarEtiquetas();
+    // Al volver a la pantalla se vuelve a leer (por si se creó/borró una en la web)
+    const unsub = navigation.addListener("focus", cargarEtiquetas);
+    return unsub;
+  }, [cargarEtiquetas, navigation]);
+
+  // Borra una etiqueta vacía (sin notas): local + backend.
+  const handleDeleteFolder = (name) => {
+    const next = customFolders.filter((f) => f !== name);
+    const nextColors = { ...tagColors };
+    delete nextColors[name.toLowerCase()];
+    setCustom(next);
+    setTagColors(nextColors);
+    setCustomFolders(next).catch(() => {});
+    if (folder === name) setFolder(ALL_FOLDERS);
+    guardarEtiquetas(folders.filter((f) => f !== name), nextColors);
+  };
 
   // Guarda en el backend la lista completa de etiquetas con su color.
   const guardarEtiquetas = async (nombres, colores) => {
@@ -453,6 +472,20 @@ export default function NotasScreen() {
                   {f}
                 </Text>
                 <Text style={styles.folderItemCount}>{folderCounts.get(f) || 0}</Text>
+                {(folderCounts.get(f) || 0) === 0 ? (
+                  <TouchableOpacity
+                    onPress={() =>
+                      Alert.alert("¿Borrar etiqueta?", `Se va a borrar "${f}".`, [
+                        { text: "Cancelar", style: "cancel" },
+                        { text: "Borrar", style: "destructive", onPress: () => handleDeleteFolder(f) },
+                      ])
+                    }
+                    hitSlop={8}
+                    accessibilityLabel={`Borrar etiqueta ${f}`}
+                  >
+                    <Ionicons name="trash-outline" size={17} color="#e5484d" />
+                  </TouchableOpacity>
+                ) : null}
               </TouchableOpacity>
             ))}
 
