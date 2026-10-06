@@ -2713,7 +2713,8 @@
 
 .progressRingInner {
   width: 138px;
-  background: var(--surface-card, #0f1713);
+  /* Fondo sólido (no translúcido) para que el aro no se vea a través del centro */
+  background: var(--background-color, #071821);
   border: none;
 }
 
@@ -2727,9 +2728,6 @@
   font-size: 0.7rem;
 }
 
-:global(body[data-theme="light"]) .progressRingInner {
-  background: #ffffff;
-}
 
 .progressLabel {
   font-size: 0.68rem;
