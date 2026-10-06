@@ -82,6 +82,9 @@ export const taskService = {
   // 🎨 Prioridades personalizadas (nombre + color)
   getPrioridades: () => api.get("/api/task/prioridades"),
   savePrioridades: (prioridades) => api.put("/api/task/prioridades", { prioridades }),
+  // 🏷️ Etiquetas de notas (nombre + color)
+  getEtiquetasNotas: () => api.get("/api/task/etiquetas-notas"),
+  saveEtiquetasNotas: (etiquetas) => api.put("/api/task/etiquetas-notas", { etiquetas }),
   update: (taskId, data) => api.put(`/api/task/${taskId}`, data),
   // 🖼️ Imagen de nota (data URI) → URL en Vercel Blob
   subirImagen: (data) => api.post("/api/task/imagen", data),

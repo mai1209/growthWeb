@@ -20,6 +20,7 @@ import { taskService } from "../api";
 import { isCloudinaryConfigured, uploadImageToCloudinary } from "../cloudinary";
 import { useTheme } from "../theme";
 import { NOTE_COLOR_KEYS, getNoteColor } from "../utils/notes";
+import { TAG_COLOR_CHOICES, colorDeEtiqueta } from "../utils/etiquetasNotas";
 import ColorPickerModal from "./ColorPickerModal";
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -120,6 +121,9 @@ export default function NoteEditorModal({
   visible,
   note,
   folders = [],
+  // Colores guardados por etiqueta y aviso al crear una nueva (nombre, color)
+  tagColors = {},
+  onTagCreated,
   defaultCarpeta = "",
   onClose,
   onSaved,
@@ -150,6 +154,23 @@ export default function NoteEditorModal({
   const [error, setError] = useState("");
   const [editorKey, setEditorKey] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Popup "Nueva etiqueta": null o { nombre, color, error }
+  const [tagPopup, setTagPopup] = useState(null);
+  const [tagPickerOpen, setTagPickerOpen] = useState(false);
+
+  const confirmarNuevaEtiqueta = () => {
+    if (!tagPopup) return;
+    const nombre = tagPopup.nombre.trim();
+    if (!nombre) {
+      setTagPopup((prev) => ({ ...prev, error: "Escribí un nombre." }));
+      return;
+    }
+    const existente = folders.find((f) => f.toLowerCase() === nombre.toLowerCase());
+    const nombreFinal = existente || nombre;
+    setCarpeta(nombreFinal);
+    onTagCreated?.(nombreFinal, tagPopup.color);
+    setTagPopup(null);
+  };
   const [folderListOpen, setFolderListOpen] = useState(false);
 
   // Convierte el texto seleccionado a minúsculas / MAYÚSCULAS dentro del editor.
@@ -520,7 +541,18 @@ export default function NoteEditorModal({
               <View
                 style={[styles.metaPill, { flex: 1 }, !carpeta.trim() && styles.metaPillEmpty]}
               >
-                <Ionicons name="pricetag-outline" size={14} color={colors.greenBright2} />
+                {carpeta.trim() ? (
+                  <View
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: 999,
+                      backgroundColor: colorDeEtiqueta(tagColors, carpeta.trim()),
+                    }}
+                  />
+                ) : (
+                  <Ionicons name="pricetag-outline" size={14} color={colors.greenBright2} />
+                )}
                 {/* En reposo es un Text (queda centrado seguro); recién al
                     tocarlo pasa a ser un input para escribir. */}
                 {tagEditing ? (
@@ -598,10 +630,13 @@ export default function NoteEditorModal({
                           setFolderListOpen(false);
                         }}
                       >
-                        <Ionicons
-                          name={active ? "pricetag" : "pricetag-outline"}
-                          size={15}
-                          color={active ? colors.greenDark : colors.muted}
+                        <View
+                          style={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: 999,
+                            backgroundColor: colorDeEtiqueta(tagColors, f),
+                          }}
                         />
                         <Text style={[styles.folderRowText, active && { color: colors.greenDark }]}>
                           {f}
@@ -612,9 +647,8 @@ export default function NoteEditorModal({
                   <TouchableOpacity
                     style={[styles.folderRow2, { borderBottomWidth: 0 }]}
                     onPress={() => {
-                      setCarpeta("");
                       setFolderListOpen(false);
-                      setTagEditing(true);
+                      setTagPopup({ nombre: "", color: TAG_COLOR_CHOICES[0], error: "" });
                     }}
                   >
                     <Ionicons name="add" size={17} color={colors.greenBright} />
@@ -789,6 +823,84 @@ export default function NoteEditorModal({
         onClose={() => setPickerOpen(false)}
         onSelect={(hex) => cambiarColor(hex)}
       />
+
+      {/* Popup "Nueva etiqueta": nombre + color (5 a la vista + "+") */}
+      <Modal
+        visible={!!tagPopup}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setTagPopup(null)}
+      >
+        <KeyboardAvoidingView
+          style={styles.tagPopupOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setTagPopup(null)} />
+          {tagPopup ? (
+            <View style={styles.tagPopup}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Ionicons name="pricetag-outline" size={16} color={colors.greenBright} />
+                <Text style={styles.tagPopupTitle}>Nueva etiqueta</Text>
+              </View>
+              <TextInput
+                style={styles.tagPopupInput}
+                value={tagPopup.nombre}
+                onChangeText={(t) => setTagPopup((prev) => ({ ...prev, nombre: t, error: "" }))}
+                placeholder="Nombre de la etiqueta"
+                placeholderTextColor={colors.muted}
+                maxLength={30}
+                autoFocus
+                returnKeyType="done"
+                onSubmitEditing={confirmarNuevaEtiqueta}
+              />
+              <Text style={styles.tagPopupLabel}>Color</Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                {[
+                  ...TAG_COLOR_CHOICES,
+                  ...(TAG_COLOR_CHOICES.includes(tagPopup.color) ? [] : [tagPopup.color]),
+                ].map((c) => {
+                  const active = tagPopup.color === c;
+                  return (
+                    <TouchableOpacity
+                      key={c}
+                      style={[styles.tagPopupColor, { backgroundColor: c }, active && styles.tagPopupColorActive]}
+                      onPress={() => setTagPopup((prev) => ({ ...prev, color: c }))}
+                    >
+                      {active ? <Ionicons name="checkmark" size={14} color="#16241d" /> : null}
+                    </TouchableOpacity>
+                  );
+                })}
+                <TouchableOpacity
+                  style={styles.tagPopupColorMore}
+                  onPress={() => setTagPickerOpen(true)}
+                  accessibilityLabel="Elegir otro color"
+                >
+                  <Ionicons name="add" size={16} color={colors.muted} />
+                </TouchableOpacity>
+              </View>
+              {tagPopup.error ? <Text style={styles.tagPopupError}>{tagPopup.error}</Text> : null}
+              <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 8, marginTop: 4 }}>
+                <TouchableOpacity style={styles.tagPopupBtn} onPress={() => setTagPopup(null)}>
+                  <Text style={[styles.tagPopupBtnText, { color: colors.muted }]}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.tagPopupBtn, { borderColor: colors.greenBright }]}
+                  onPress={confirmarNuevaEtiqueta}
+                >
+                  <View style={{ width: 9, height: 9, borderRadius: 999, backgroundColor: tagPopup.color }} />
+                  <Text style={[styles.tagPopupBtnText, { color: colors.greenDark }]}>Crear etiqueta</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : null}
+        </KeyboardAvoidingView>
+        <ColorPickerModal
+          visible={tagPickerOpen}
+          initialColor={tagPopup?.color || TAG_COLOR_CHOICES[0]}
+          onClose={() => setTagPickerOpen(false)}
+          onSelect={(hex) => setTagPopup((prev) => (prev ? { ...prev, color: hex } : prev))}
+        />
+      </Modal>
     </Modal>
   );
 }
@@ -925,6 +1037,66 @@ const makeStyles = (colors) =>
       borderBottomColor: colors.cardBorder,
     },
     folderRowText: { color: colors.text, fontSize: 14, fontWeight: "600" },
+    // Popup "Nueva etiqueta"
+    tagPopupOverlay: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(0,0,0,0.45)",
+      padding: 20,
+    },
+    tagPopup: {
+      width: "100%",
+      maxWidth: 360,
+      gap: 10,
+      padding: 16,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.bg,
+    },
+    tagPopupTitle: { color: colors.text, fontSize: 15, fontWeight: "800" },
+    tagPopupInput: {
+      backgroundColor: colors.card,
+      borderColor: colors.cardBorder,
+      borderWidth: 1,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 11,
+      color: colors.text,
+      fontSize: 15,
+    },
+    tagPopupLabel: {
+      color: colors.muted,
+      fontSize: 11,
+      fontWeight: "800",
+      letterSpacing: 0.8,
+      textTransform: "uppercase",
+    },
+    tagPopupColor: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+    tagPopupColorActive: { borderWidth: 2.5, borderColor: colors.greenBright, transform: [{ scale: 1.06 }] },
+    tagPopupColorMore: {
+      width: 30,
+      height: 30,
+      borderRadius: 9,
+      borderWidth: 1.5,
+      borderStyle: "dashed",
+      borderColor: colors.cardBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    tagPopupError: { color: "#e5484d", fontSize: 12, fontWeight: "700" },
+    tagPopupBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingVertical: 8,
+      paddingHorizontal: 13,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+    },
+    tagPopupBtnText: { fontSize: 13, fontWeight: "800" },
     folderChipText: { color: colors.muted, fontWeight: "700", fontSize: 12 },
     folderChipTextActive: { color: colors.greenDark },
 

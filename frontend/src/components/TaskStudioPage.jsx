@@ -117,6 +117,8 @@ const folderColor = (name) => {
   for (const ch of String(name || "")) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return FOLDER_DOT_COLORS[h % FOLDER_DOT_COLORS.length];
 };
+// Colores a la vista al crear una etiqueta (el "+" permite cualquier otro).
+const TAG_COLOR_CHOICES = FOLDER_DOT_COLORS.slice(0, 5);
 
 // Estilo inline para colores libres (hex) elegidos con el picker de la app.
 // El color del texto se decide por luminancia del fondo.
@@ -495,6 +497,11 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   });
   const [activeFolder, setActiveFolder] = useState(ALL_FOLDERS);
   const [customFolders, setCustomFolders] = useState(() => readStoredFolders(activeWorkspace));
+  // Color elegido por etiqueta (nombre en minúsculas → hex). Se guarda en el usuario
+  // para que sea el mismo en la app. Sin color guardado se usa el del hash.
+  const [tagColors, setTagColors] = useState({});
+  // Popup "Nueva etiqueta": null o { origen: "side" | "editor", nombre, color, error }
+  const [tagPopup, setTagPopup] = useState(null);
 
   // URL ⇄ vista: el nav deep-linkea (?view=shopping/journal) y las pestañas
   // internas mantienen la URL en sync (así el nav resalta la sección correcta).
@@ -1061,6 +1068,33 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     return counts;
   }, [notasVivas]);
 
+  useEffect(() => {
+    let activo = true;
+    taskService
+      .getEtiquetasNotas()
+      .then(({ data }) => {
+        if (!activo || !Array.isArray(data?.etiquetas)) return;
+        const map = {};
+        data.etiquetas.forEach((e) => {
+          if (e?.nombre && e?.color) map[e.nombre.toLowerCase()] = e.color;
+        });
+        setTagColors(map);
+        // Las etiquetas creadas en otro dispositivo también aparecen acá.
+        setCustomFolders((prev) => {
+          const set = new Set(prev);
+          data.etiquetas.forEach((e) => e?.nombre && set.add(e.nombre));
+          return [...set];
+        });
+      })
+      .catch(() => {});
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  const colorDeEtiqueta = (name) =>
+    tagColors[String(name || "").toLowerCase()] || folderColor(name);
+
   const folders = useMemo(() => {
     const set = new Set(customFolders.filter(Boolean));
     folderCounts.forEach((_, folder) => set.add(folder));
@@ -1222,11 +1256,35 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   };
 
   const handleCreateFolder = () => {
-    const name = window.prompt("Nombre de la etiqueta")?.trim();
-    if (!name) return;
+    setTagPopup({ origen: "side", nombre: "", color: TAG_COLOR_CHOICES[0], error: "" });
+  };
 
-    setCustomFolders((prev) => (prev.includes(name) ? prev : [...prev, name]));
-    setActiveFolder(name);
+  // Crea la etiqueta del popup: la agrega a la lista, guarda su color y la deja
+  // seleccionada (en el panel lateral o en la nota, según de dónde se abrió).
+  const confirmarNuevaEtiqueta = async () => {
+    if (!tagPopup) return;
+    const name = tagPopup.nombre.trim();
+    if (!name) {
+      setTagPopup((prev) => ({ ...prev, error: "Escribí un nombre." }));
+      return;
+    }
+    const existente = folders.find((f) => f.toLowerCase() === name.toLowerCase());
+    const nombreFinal = existente || name;
+    const nextColors = { ...tagColors, [nombreFinal.toLowerCase()]: tagPopup.color };
+    setTagColors(nextColors);
+    setCustomFolders((prev) => (prev.includes(nombreFinal) ? prev : [...prev, nombreFinal]));
+    if (tagPopup.origen === "editor") handleFieldChange("carpeta", nombreFinal);
+    else setActiveFolder(nombreFinal);
+    setTagPopup(null);
+    const lista = [...new Set([...folders, nombreFinal])].map((n) => ({
+      nombre: n,
+      color: nextColors[n.toLowerCase()] || folderColor(n),
+    }));
+    try {
+      await taskService.saveEtiquetasNotas(lista);
+    } catch {
+      /* el color queda igual en esta sesión aunque no se haya podido guardar */
+    }
   };
 
   const handleDeleteFolder = (name) => {
@@ -1235,11 +1293,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
   };
 
   const handleCreateFolderInEditor = () => {
-    const name = window.prompt("Nombre de la etiqueta")?.trim();
-    if (!name) return;
-
-    setCustomFolders((prev) => (prev.includes(name) ? prev : [...prev, name]));
-    handleFieldChange("carpeta", name);
+    setTagPopup({ origen: "editor", nombre: "", color: TAG_COLOR_CHOICES[0], error: "" });
   };
 
   // Insertar imagen desde el selector de archivos (sube por el API a Vercel Blob → URL).
@@ -1909,6 +1963,75 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
 
   return (
     <section className={style.page}>
+      {tagPopup ? (
+        <div
+          className={style.tagPopupOverlay}
+          role="presentation"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setTagPopup(null);
+          }}
+        >
+          <div className={style.tagPopup} role="dialog" aria-label="Nueva etiqueta">
+            <p className={style.tagPopupTitle}>
+              <FiTag /> Nueva etiqueta
+            </p>
+            <input
+              type="text"
+              className={style.tagPopupInput}
+              value={tagPopup.nombre}
+              maxLength={30}
+              placeholder="Nombre de la etiqueta"
+              autoFocus
+              onChange={(e) => setTagPopup((prev) => ({ ...prev, nombre: e.target.value, error: "" }))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  confirmarNuevaEtiqueta();
+                }
+                if (e.key === "Escape") setTagPopup(null);
+              }}
+            />
+            <span className={style.tagPopupLabel}>Color</span>
+            <div className={style.tagPopupColors}>
+              {[
+                ...TAG_COLOR_CHOICES,
+                ...(TAG_COLOR_CHOICES.includes(tagPopup.color) ? [] : [tagPopup.color]),
+              ].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`${style.tagPopupColor} ${
+                    tagPopup.color === c ? style.tagPopupColorActivo : ""
+                  }`}
+                  style={{ background: c }}
+                  onClick={() => setTagPopup((prev) => ({ ...prev, color: c }))}
+                  aria-label={`Color ${c}`}
+                />
+              ))}
+              <label className={style.tagPopupColorMas} title="Elegir otro color">
+                <FiPlus />
+                <input
+                  type="color"
+                  value={tagPopup.color}
+                  onChange={(e) =>
+                    setTagPopup((prev) => ({ ...prev, color: e.target.value.toLowerCase() }))
+                  }
+                />
+              </label>
+            </div>
+            {tagPopup.error ? <p className={style.tagPopupError}>{tagPopup.error}</p> : null}
+            <div className={style.tagPopupActions}>
+              <button type="button" className={style.tagPopupCancel} onClick={() => setTagPopup(null)}>
+                Cancelar
+              </button>
+              <button type="button" className={style.tagPopupCreate} onClick={confirmarNuevaEtiqueta}>
+                <span className={style.folderDot} style={{ background: tagPopup.color }} />
+                Crear etiqueta
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
    
 
       <div
@@ -2171,7 +2294,7 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
                               className={`${style.sideItem} ${isActive ? style.sideItemOn : ""}`}
                               onClick={() => setActiveFolder(folder)}
                             >
-                              <span className={style.folderDot} style={{ background: folderColor(folder) }} />
+                              <span className={style.folderDot} style={{ background: colorDeEtiqueta(folder) }} />
                               <span className={style.sideItemName}>{folder}</span>
                               <span className={style.sideCount}>{count}</span>
                             </button>
@@ -2444,7 +2567,11 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
               <div className={style.noteMetaRow}>
                 <div className={style.noteTags}>
                   <label className={style.noteMetaFolder} title="Cambiar la etiqueta de la nota">
-                    <FiTag />
+                    {form.carpeta ? (
+                      <span className={style.folderDot} style={{ background: colorDeEtiqueta(form.carpeta) }} />
+                    ) : (
+                      <FiTag />
+                    )}
                     <select
                       value={form.carpeta || ""}
                       onChange={(event) => handleFieldChange("carpeta", event.target.value)}

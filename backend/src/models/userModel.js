@@ -63,6 +63,12 @@ const userSchema = new mongoose.Schema(
       type: [{ _id: false, nombre: { type: String, trim: true }, color: { type: String, trim: true } }],
       default: [],
     },
+    // Etiquetas de notas del usuario (nombre + color), para que el color sea
+    // el mismo en la web y en la app.
+    etiquetasNotas: {
+      type: [{ _id: false, nombre: { type: String, trim: true }, color: { type: String, trim: true } }],
+      default: [],
+    },
     // Comunidad: si el perfil es visible/descubrible por otros usuarios.
     perfilPublico: {
       type: Boolean,

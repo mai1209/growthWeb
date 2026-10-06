@@ -26,6 +26,8 @@ import ShoppingListsPanel from "../components/ShoppingListsPanel";
 import AfirmacionesPanel from "../components/AfirmacionesPanel";
 import JournalingPanel from "../components/JournalingPanel";
 import { getCustomFolders, setCustomFolders } from "../storage";
+import ColorPickerModal from "../components/ColorPickerModal";
+import { TAG_COLOR_CHOICES, colorDeEtiqueta, hashTagColor } from "../utils/etiquetasNotas";
 
 const ALL_FOLDERS = "__all__";
 
@@ -65,11 +67,58 @@ export default function NotasScreen() {
     else if (v === "afirmaciones") setAfirmacionesOpen(true);
   }, [route.params?.view, route.params?._navTs]);
   const [newFolderName, setNewFolderName] = useState("");
+  // Color elegido para la etiqueta nueva + colores guardados por etiqueta
+  const [newFolderColor, setNewFolderColor] = useState(TAG_COLOR_CHOICES[0]);
+  const [newFolderPickerOpen, setNewFolderPickerOpen] = useState(false);
+  const [tagColors, setTagColors] = useState({});
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
     getCustomFolders().then((arr) => setCustom(arr));
+    // Etiquetas con color guardadas en el usuario (compartidas con la web)
+    taskService
+      .getEtiquetasNotas()
+      .then(({ data }) => {
+        if (!Array.isArray(data?.etiquetas)) return;
+        const map = {};
+        data.etiquetas.forEach((e) => {
+          if (e?.nombre && e?.color) map[e.nombre.toLowerCase()] = e.color;
+        });
+        setTagColors(map);
+        setCustom((prev) => {
+          const set = new Set(prev);
+          data.etiquetas.forEach((e) => e?.nombre && set.add(e.nombre));
+          return [...set];
+        });
+      })
+      .catch(() => {});
   }, []);
+
+  // Guarda en el backend la lista completa de etiquetas con su color.
+  const guardarEtiquetas = async (nombres, colores) => {
+    const lista = [...new Set(nombres)].map((n) => ({
+      nombre: n,
+      color: colores[n.toLowerCase()] || hashTagColor(n),
+    }));
+    try {
+      await taskService.saveEtiquetasNotas(lista);
+    } catch {
+      // noop: el color queda en esta sesión igual
+    }
+  };
+
+  // Etiqueta creada desde el editor de una nota (nombre + color).
+  const handleTagCreated = (name, color) => {
+    const limpio = String(name || "").trim();
+    if (!limpio) return;
+    const nextColors = { ...tagColors, [limpio.toLowerCase()]: color };
+    setTagColors(nextColors);
+    const exists = [...customFolders, ...folders].some((f) => f.toLowerCase() === limpio.toLowerCase());
+    const next = exists ? customFolders : [...customFolders, limpio];
+    setCustom(next);
+    setCustomFolders(next).catch(() => {});
+    guardarEtiquetas([...folders, limpio], nextColors);
+  };
 
   const handleCreateFolder = async () => {
     const name = newFolderName.trim();
@@ -79,8 +128,11 @@ export default function NotasScreen() {
       (f) => f.toLowerCase() === name.toLowerCase()
     );
     const next = exists ? customFolders : [...customFolders, name];
+    const nextColors = { ...tagColors, [name.toLowerCase()]: newFolderColor };
+    setTagColors(nextColors);
     setCustom(next);
     setNewFolderName("");
+    setNewFolderColor(TAG_COLOR_CHOICES[0]);
     setFolder(name); // la dejamos seleccionada
     setFoldersOpen(false);
     try {
@@ -88,6 +140,7 @@ export default function NotasScreen() {
     } catch {
       // noop
     }
+    guardarEtiquetas([...folders, name], nextColors);
   };
 
   const fetchNotes = useCallback(async () => {
@@ -167,6 +220,9 @@ export default function NotasScreen() {
                   style={[styles.folderChip, active && styles.folderChipActive]}
                   onPress={() => setFolder(f.key)}
                 >
+                  {f.key !== ALL_FOLDERS ? (
+                    <View style={[styles.tagDot, { backgroundColor: colorDeEtiqueta(tagColors, f.key) }]} />
+                  ) : null}
                   <Text style={[styles.folderChipText, active && styles.folderChipTextActive]}>
                     {f.label}
                   </Text>
@@ -274,6 +330,8 @@ export default function NotasScreen() {
         visible={editorOpen}
         note={activeNote}
         folders={folders}
+        tagColors={tagColors}
+        onTagCreated={handleTagCreated}
         defaultCarpeta={!activeNote && folder !== ALL_FOLDERS ? folder : ""}
         onClose={() => setEditorOpen(false)}
         onSaved={fetchNotes}
@@ -332,11 +390,36 @@ export default function NotasScreen() {
               onSubmitEditing={handleCreateFolder}
             />
             <TouchableOpacity
-              style={[styles.newFolderBtn, !newFolderName.trim() && { opacity: 0.4 }]}
+              style={[styles.newFolderBtn, { backgroundColor: newFolderColor }, !newFolderName.trim() && { opacity: 0.4 }]}
               onPress={handleCreateFolder}
               disabled={!newFolderName.trim()}
             >
               <Ionicons name="add" size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          {/* Color de la etiqueta nueva: 5 a la vista + "+" para cualquier otro */}
+          <View style={styles.newFolderColors}>
+            {[
+              ...TAG_COLOR_CHOICES,
+              ...(TAG_COLOR_CHOICES.includes(newFolderColor) ? [] : [newFolderColor]),
+            ].map((c) => {
+              const active = newFolderColor === c;
+              return (
+                <TouchableOpacity
+                  key={c}
+                  style={[styles.tagColor, { backgroundColor: c }, active && styles.tagColorActive]}
+                  onPress={() => setNewFolderColor(c)}
+                >
+                  {active ? <Ionicons name="checkmark" size={14} color="#16241d" /> : null}
+                </TouchableOpacity>
+              );
+            })}
+            <TouchableOpacity
+              style={styles.tagColorMore}
+              onPress={() => setNewFolderPickerOpen(true)}
+              accessibilityLabel="Elegir otro color"
+            >
+              <Ionicons name="add" size={16} color={colors.muted} />
             </TouchableOpacity>
           </View>
 
@@ -365,7 +448,7 @@ export default function NotasScreen() {
                   setFoldersOpen(false);
                 }}
               >
-                <Ionicons name="pricetag-outline" size={18} color={colors.muted} />
+                <View style={[styles.tagDot, { width: 11, height: 11, backgroundColor: colorDeEtiqueta(tagColors, f) }]} />
                 <Text style={styles.folderItemName} numberOfLines={1}>
                   {f}
                 </Text>
@@ -377,6 +460,12 @@ export default function NotasScreen() {
               <Text style={styles.foldersEmpty}>No hay etiquetas que coincidan.</Text>
             ) : null}
           </ScrollView>
+          <ColorPickerModal
+            visible={newFolderPickerOpen}
+            initialColor={newFolderColor}
+            onClose={() => setNewFolderPickerOpen(false)}
+            onSelect={(hex) => setNewFolderColor(hex)}
+          />
         </View>
       </Modal>
     </SafeAreaView>
@@ -429,6 +518,9 @@ const makeStyles = (colors) => StyleSheet.create({
   folderRowWrap: { paddingBottom: 4 },
   folderRow: { paddingHorizontal: 16, gap: 8, paddingVertical: 4 },
   folderChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 999,
@@ -437,6 +529,27 @@ const makeStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.card,
   },
   folderChipActive: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
+  tagDot: { width: 8, height: 8, borderRadius: 999 },
+  newFolderColors: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 8,
+  },
+  tagColor: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+  tagColorActive: { borderWidth: 2.5, borderColor: colors.greenBright, transform: [{ scale: 1.06 }] },
+  tagColorMore: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: colors.cardBorder,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   folderChipText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
   folderChipTextActive: { color: colors.greenDark },
   folderChipMore: {

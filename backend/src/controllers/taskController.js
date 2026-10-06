@@ -739,3 +739,28 @@ export const savePrioridades = async (req, res) => {
     res.status(500).json({ message: "Error al guardar las prioridades", error: error.message });
   }
 };
+
+// ──────────────────────────────────────────────────────────────
+// 🏷️ Etiquetas de notas (nombre + color) por usuario
+// ──────────────────────────────────────────────────────────────
+
+export const getEtiquetasNotas = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("etiquetasNotas").lean();
+    res.json({ etiquetas: user?.etiquetasNotas || [] });
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener las etiquetas", error: error.message });
+  }
+};
+
+// Reemplaza la lista completa (misma limpieza que las prioridades).
+export const saveEtiquetasNotas = async (req, res) => {
+  try {
+    const lista = normalizePrioridades(req.body?.etiquetas);
+    if (!lista) return res.status(400).json({ message: "Lista de etiquetas inválida" });
+    await User.findByIdAndUpdate(req.user.id, { etiquetasNotas: lista });
+    res.json({ etiquetas: lista });
+  } catch (error) {
+    res.status(500).json({ message: "Error al guardar las etiquetas", error: error.message });
+  }
+};
