@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Modal,
   View,
@@ -9,6 +9,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
@@ -75,6 +76,11 @@ export default function TaskFormModal({
   const [prioridadEditor, setPrioridadEditor] = useState(null);
   const [prioridadError, setPrioridadError] = useState("");
   const [prioridadSaving, setPrioridadSaving] = useState(false);
+  // Selector libre de color para la prioridad + scroll para que el editor no quede bajo el teclado
+  const [prioridadPickerOpen, setPrioridadPickerOpen] = useState(false);
+  const scrollRef = useRef(null);
+  const editorY = useRef(0);
+  const PRIORIDAD_BASE = PRIORIDAD_COLORES.slice(0, 5);
 
   // Pocos colores a la vista + "+" que abre el selector libre (color10 blanco no se lee)
   const allColorKeys = Object.keys(TASK_COLORS).filter((k) => k !== "color10");
@@ -152,6 +158,15 @@ export default function TaskFormModal({
 
   const toggleDay = (d) =>
     setDias((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]));
+
+  useEffect(() => {
+    if (!prioridadEditor) return;
+    // Espera a que aparezca el teclado y deja el editor a la vista
+    const t = setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(editorY.current - 24, 0), animated: true });
+    }, 350);
+    return () => clearTimeout(t);
+  }, [prioridadEditor?.original, prioridadEditor !== null]);
 
   const guardarPrioridades = async (lista, nombreElegido) => {
     setPrioridadSaving(true);
@@ -242,7 +257,10 @@ export default function TaskFormModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
         <View style={styles.sheet}>
           <View style={styles.header}>
             <Text style={styles.title}>{editTask ? "Editar tarea" : "Nueva tarea"}</Text>
@@ -251,7 +269,11 @@ export default function TaskFormModal({
             </TouchableOpacity>
           </View>
 
-          <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={styles.body}
+            keyboardShouldPersistTaps="handled"
+          >
             <Text style={styles.label}>Tarea</Text>
             <TextInput
               style={styles.input}
@@ -397,7 +419,12 @@ export default function TaskFormModal({
             </View>
 
             {prioridadEditor ? (
-              <View style={styles.prioridadEditor}>
+              <View
+                style={styles.prioridadEditor}
+                onLayout={(e) => {
+                  editorY.current = e.nativeEvent.layout.y;
+                }}
+              >
                 <TextInput
                   style={styles.input}
                   value={prioridadEditor.nombre}
@@ -409,8 +436,12 @@ export default function TaskFormModal({
                   returnKeyType="done"
                   onSubmitEditing={confirmarPrioridad}
                 />
+                {/* Como el color de la tarea: 5 principales + el elegido a mano + "+" */}
                 <View style={[styles.colorRow, { flexWrap: "wrap", marginTop: 10 }]}>
-                  {PRIORIDAD_COLORES.map((c) => {
+                  {(PRIORIDAD_BASE.includes(prioridadEditor.color)
+                    ? PRIORIDAD_BASE
+                    : [...PRIORIDAD_BASE, prioridadEditor.color]
+                  ).map((c) => {
                     const active = prioridadEditor.color === c;
                     return (
                       <TouchableOpacity
@@ -422,6 +453,13 @@ export default function TaskFormModal({
                       </TouchableOpacity>
                     );
                   })}
+                  <TouchableOpacity
+                    style={[styles.colorMore, { width: 30, height: 30, borderRadius: 10 }]}
+                    onPress={() => setPrioridadPickerOpen(true)}
+                    accessibilityLabel="Elegir otro color"
+                  >
+                    <Ionicons name="add" size={16} color={colors.muted} />
+                  </TouchableOpacity>
                 </View>
                 {prioridadError ? <Text style={styles.error}>{prioridadError}</Text> : null}
                 <View style={styles.prioridadAcciones}>
@@ -538,7 +576,14 @@ export default function TaskFormModal({
             </TouchableOpacity>
           </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
+
+      <ColorPickerModal
+        visible={prioridadPickerOpen}
+        initialColor={prioridadEditor?.color || PRIORIDAD_BASE[0]}
+        onClose={() => setPrioridadPickerOpen(false)}
+        onSelect={(hex) => setPrioridadEditor((prev) => (prev ? { ...prev, color: hex } : prev))}
+      />
 
       <ColorPickerModal
         visible={pickerOpen}

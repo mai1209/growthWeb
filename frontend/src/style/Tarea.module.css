@@ -2907,3 +2907,26 @@
   background: rgba(6, 33, 10, 0.18);
   color: #06210a;
 }
+
+/* "+" para elegir cualquier color de prioridad (input color escondido) */
+.prioridadColorMas {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1.5px dashed var(--border-color, rgba(216, 241, 224, 0.3));
+  color: var(--color-muted);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.prioridadColorMas input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}

@@ -306,6 +306,8 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
   // null = cerrado; { original: nombre|null, nombre, color }
   const [prioridadEditor, setPrioridadEditor] = useState(null);
   const [prioridadError, setPrioridadError] = useState("");
+  // Colores elegidos a mano con el "+" (se suman a los 5 principales)
+  const [prioridadColoresExtra, setPrioridadColoresExtra] = useState([]);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [formSaving, setFormSaving] = useState(false);
@@ -1597,8 +1599,16 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                         }
                       }}
                     />
+                    {/* 5 colores principales + los elegidos a mano + "+" para otro */}
                     <div className={style.prioridadColores}>
-                      {PRIORIDAD_COLORES.map((c) => (
+                      {[
+                        ...PRIORIDAD_COLORES.slice(0, 5),
+                        ...prioridadColoresExtra,
+                        ...(PRIORIDAD_COLORES.slice(0, 5).includes(prioridadEditor.color) ||
+                        prioridadColoresExtra.includes(prioridadEditor.color)
+                          ? []
+                          : [prioridadEditor.color]),
+                      ].map((c) => (
                         <button
                           key={c}
                           type="button"
@@ -1610,6 +1620,22 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                           aria-label={`Color ${c}`}
                         />
                       ))}
+                      <label className={style.prioridadColorMas} title="Elegir otro color">
+                        <FiPlus />
+                        <input
+                          type="color"
+                          value={prioridadEditor.color}
+                          onChange={(e) => {
+                            const c = e.target.value.toLowerCase();
+                            setPrioridadColoresExtra((prev) =>
+                              PRIORIDAD_COLORES.slice(0, 5).includes(c) || prev.includes(c)
+                                ? prev
+                                : [...prev, c]
+                            );
+                            setPrioridadEditor((prev) => ({ ...prev, color: c }));
+                          }}
+                        />
+                      </label>
                     </div>
                     {prioridadError ? (
                       <p className={style.prioridadErrorTexto}>{prioridadError}</p>
