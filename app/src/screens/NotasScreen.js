@@ -148,18 +148,6 @@ export default function NotasScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={[]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title}>Tus notas</Text>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{notes.length}</Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
       {/* Carpetas */}
       {folders.length > 0 && (
         <View style={styles.folderRowWrap}>
