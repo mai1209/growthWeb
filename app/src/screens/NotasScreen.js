@@ -79,7 +79,8 @@ export default function NotasScreen() {
   const cargarEtiquetas = useCallback(async () => {
     try {
       const { data } = await taskService.getEtiquetasNotas();
-      if (!Array.isArray(data?.etiquetas)) return;
+      // Si el usuario todavía no guardó ninguna, se respetan las del teléfono.
+      if (!Array.isArray(data?.etiquetas) || data.etiquetas.length === 0) return;
       const map = {};
       data.etiquetas.forEach((e) => {
         if (e?.nombre && e?.color) map[e.nombre.toLowerCase()] = e.color;

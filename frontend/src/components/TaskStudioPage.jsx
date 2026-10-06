@@ -1077,7 +1077,8 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
       taskService
         .getEtiquetasNotas()
         .then(({ data }) => {
-          if (!activo || !Array.isArray(data?.etiquetas)) return;
+          // Si el usuario todavía no guardó ninguna, se respetan las locales.
+          if (!activo || !Array.isArray(data?.etiquetas) || data.etiquetas.length === 0) return;
           const map = {};
           data.etiquetas.forEach((e) => {
             if (e?.nombre && e?.color) map[e.nombre.toLowerCase()] = e.color;
