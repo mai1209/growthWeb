@@ -250,7 +250,6 @@ export default function TareasScreen() {
       d.setDate(d.getDate() + delta);
       return d;
     });
-  const esHoy = selectedDate.toDateString() === new Date().toDateString();
 
   const toggleComplete = async (task) => {
     const id = task._id;
@@ -439,19 +438,6 @@ export default function TareasScreen() {
                       <Ionicons name="chevron-forward" size={18} color={colors.muted} />
                     </TouchableOpacity>
                   </View>
-                  <TouchableOpacity
-                    style={styles.panelTodayBtn}
-                    onPress={() => (esHoy ? setViewMode("calendar") : setSelectedDate(new Date()))}
-                  >
-                    <Ionicons name="calendar-outline" size={13} color={colors.text} />
-                    <Text style={styles.panelTodayText}>
-                      {esHoy
-                        ? "Hoy"
-                        : selectedDate.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" })}
-                    </Text>
-                    <Ionicons name="chevron-down" size={13} color={colors.muted} />
-                  </TouchableOpacity>
-
                   {/* Toggle: lo de abajo (anillo, stats, tarjetas) queda oculto hasta tocar */}
                   <TouchableOpacity
                     style={styles.panelToggle}
@@ -867,18 +853,6 @@ const makeStyles = (colors) => StyleSheet.create({
     fontWeight: "700",
     textTransform: "capitalize",
   },
-  panelTodayBtn: {
-    alignSelf: "center",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  panelTodayText: { color: colors.text, fontSize: 11, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase" },
   panelToggle: {
     flexDirection: "row",
     alignItems: "center",
