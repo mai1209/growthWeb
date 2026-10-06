@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { taskService } from "../api";
 import { useTheme } from "../theme";
 import ColorPickerModal from "./ColorPickerModal";
+import { DEFAULT_PRIORIDADES, PRIORIDAD_COLORES } from "../utils/prioridades";
 
 const MOMENTOS = [
   { value: "Mañana", label: "Mañana", icon: "sunny-outline" },
@@ -22,8 +23,6 @@ const MOMENTOS = [
   { value: "Noche", label: "Noche", icon: "moon-outline" },
   { value: "", label: "Indiferente", icon: "remove-outline" },
 ];
-
-const URGENCIAS = ["importante", "urgente", "no importante", "obligaciones"];
 
 export const TASK_COLORS = {
   color1: "#5dc72d",
@@ -51,6 +50,8 @@ export default function TaskFormModal({
   link = null,
   onClose,
   onSaved,
+  // Avisa a la pantalla cuando cambia la lista de prioridades (para pintar los chips)
+  onPrioridadesChange,
 }) {
   const { colors, isDark } = useTheme();
   const styles = makeStyles(colors);
@@ -68,6 +69,12 @@ export default function TaskFormModal({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Prioridades del usuario (nombre + color) y mini-editor para crear/editar una
+  const [prioridades, setPrioridades] = useState(DEFAULT_PRIORIDADES);
+  // null = cerrado; { original: nombre|null, nombre, color }
+  const [prioridadEditor, setPrioridadEditor] = useState(null);
+  const [prioridadError, setPrioridadError] = useState("");
+  const [prioridadSaving, setPrioridadSaving] = useState(false);
 
   // Pocos colores a la vista + "+" que abre el selector libre (color10 blanco no se lee)
   const allColorKeys = Object.keys(TASK_COLORS).filter((k) => k !== "color10");
@@ -88,6 +95,24 @@ export default function TaskFormModal({
 
   useEffect(() => {
     if (!visible) return;
+    let activo = true;
+    taskService
+      .getPrioridades()
+      .then(({ data }) => {
+        if (activo && Array.isArray(data?.prioridades) && data.prioridades.length) {
+          setPrioridades(data.prioridades);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      activo = false;
+    };
+  }, [visible]);
+
+  useEffect(() => {
+    if (!visible) return;
+    setPrioridadEditor(null);
+    setPrioridadError("");
     if (editTask) {
       // Precargar para edición
       setMeta(editTask.meta || "");
@@ -127,6 +152,56 @@ export default function TaskFormModal({
 
   const toggleDay = (d) =>
     setDias((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]));
+
+  const guardarPrioridades = async (lista, nombreElegido) => {
+    setPrioridadSaving(true);
+    try {
+      const { data } = await taskService.savePrioridades(lista);
+      const nuevas =
+        Array.isArray(data?.prioridades) && data.prioridades.length ? data.prioridades : lista;
+      setPrioridades(nuevas);
+      onPrioridadesChange?.(nuevas);
+      if (nombreElegido !== undefined) setUrgencia(nombreElegido);
+      setPrioridadEditor(null);
+    } catch (err) {
+      setPrioridadError(err?.response?.data?.message || "No se pudo guardar la prioridad.");
+    } finally {
+      setPrioridadSaving(false);
+    }
+  };
+
+  const confirmarPrioridad = () => {
+    if (!prioridadEditor) return;
+    const nombre = prioridadEditor.nombre.trim();
+    if (!nombre) {
+      setPrioridadError("Escribí un nombre.");
+      return;
+    }
+    const repetida = prioridades.some(
+      (p) =>
+        p.nombre.toLowerCase() === nombre.toLowerCase() && p.nombre !== prioridadEditor.original
+    );
+    if (repetida) {
+      setPrioridadError("Ya existe una prioridad con ese nombre.");
+      return;
+    }
+    const lista = prioridadEditor.original
+      ? prioridades.map((p) =>
+          p.nombre === prioridadEditor.original ? { nombre, color: prioridadEditor.color } : p
+        )
+      : [...prioridades, { nombre, color: prioridadEditor.color }];
+    guardarPrioridades(lista, nombre);
+  };
+
+  const eliminarPrioridad = () => {
+    if (!prioridadEditor?.original) return;
+    if (prioridades.length <= 1) {
+      setPrioridadError("Tiene que quedar al menos una prioridad.");
+      return;
+    }
+    const lista = prioridades.filter((p) => p.nombre !== prioridadEditor.original);
+    guardarPrioridades(lista, urgencia === prioridadEditor.original ? lista[0].nombre : undefined);
+  };
 
   const handleSave = async () => {
     setError("");
@@ -274,18 +349,116 @@ export default function TaskFormModal({
 
             <Text style={styles.label}>Prioridad</Text>
             <View style={styles.wrap}>
-              {URGENCIAS.map((u) => (
-                <TouchableOpacity
-                  key={u}
-                  style={[styles.chip, urgencia === u && styles.chipActive]}
-                  onPress={() => setUrgencia(u)}
-                >
-                  <Text style={[styles.chipText, urgencia === u && styles.chipTextActive, { textTransform: "capitalize" }]}>
-                    {u}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {prioridades.map((p) => {
+                const active = (urgencia || "").toLowerCase() === p.nombre.toLowerCase();
+                return (
+                  <TouchableOpacity
+                    key={p.nombre}
+                    style={[styles.chip, active && { borderColor: p.color, backgroundColor: colors.card }]}
+                    onPress={() => setUrgencia(p.nombre)}
+                    onLongPress={() => {
+                      setPrioridadError("");
+                      setPrioridadEditor({ original: p.nombre, nombre: p.nombre, color: p.color });
+                    }}
+                  >
+                    <View style={[styles.prioridadDot, { backgroundColor: p.color }]} />
+                    <Text
+                      style={[
+                        styles.chipText,
+                        active && { color: p.color },
+                        { textTransform: "capitalize" },
+                      ]}
+                    >
+                      {p.nombre}
+                    </Text>
+                    <TouchableOpacity
+                      hitSlop={6}
+                      onPress={() => {
+                        setPrioridadError("");
+                        setPrioridadEditor({ original: p.nombre, nombre: p.nombre, color: p.color });
+                      }}
+                      accessibilityLabel={`Editar prioridad ${p.nombre}`}
+                    >
+                      <Ionicons name="pencil" size={11} color={colors.muted} />
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                );
+              })}
+              <TouchableOpacity
+                style={[styles.chip, styles.prioridadNueva]}
+                onPress={() => {
+                  setPrioridadError("");
+                  setPrioridadEditor({ original: null, nombre: "", color: PRIORIDAD_COLORES[0] });
+                }}
+              >
+                <Ionicons name="add" size={14} color={colors.muted} />
+                <Text style={styles.chipText}>Nueva prioridad</Text>
+              </TouchableOpacity>
             </View>
+
+            {prioridadEditor ? (
+              <View style={styles.prioridadEditor}>
+                <TextInput
+                  style={styles.input}
+                  value={prioridadEditor.nombre}
+                  onChangeText={(t) => setPrioridadEditor((prev) => ({ ...prev, nombre: t }))}
+                  placeholder="Nombre de la prioridad"
+                  placeholderTextColor={colors.muted}
+                  maxLength={30}
+                  autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={confirmarPrioridad}
+                />
+                <View style={[styles.colorRow, { flexWrap: "wrap", marginTop: 10 }]}>
+                  {PRIORIDAD_COLORES.map((c) => {
+                    const active = prioridadEditor.color === c;
+                    return (
+                      <TouchableOpacity
+                        key={c}
+                        style={[styles.prioridadColor, { backgroundColor: c }, active && styles.colorDotActive]}
+                        onPress={() => setPrioridadEditor((prev) => ({ ...prev, color: c }))}
+                      >
+                        {active ? <Ionicons name="checkmark" size={14} color={checkColorFor(c)} /> : null}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                {prioridadError ? <Text style={styles.error}>{prioridadError}</Text> : null}
+                <View style={styles.prioridadAcciones}>
+                  {prioridadEditor.original ? (
+                    <TouchableOpacity
+                      style={[styles.prioridadBtn, styles.prioridadBtnEliminar]}
+                      onPress={eliminarPrioridad}
+                      disabled={prioridadSaving}
+                    >
+                      <Ionicons name="trash-outline" size={13} color="#e5484d" />
+                      <Text style={[styles.prioridadBtnText, { color: "#e5484d" }]}>Eliminar</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                  <View style={{ flex: 1 }} />
+                  <TouchableOpacity
+                    style={[styles.prioridadBtn, styles.prioridadBtnCancelar]}
+                    onPress={() => setPrioridadEditor(null)}
+                    disabled={prioridadSaving}
+                  >
+                    <Text style={[styles.prioridadBtnText, { color: colors.muted }]}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.prioridadBtn}
+                    onPress={confirmarPrioridad}
+                    disabled={prioridadSaving}
+                  >
+                    {prioridadSaving ? (
+                      <ActivityIndicator size="small" color={colors.greenDark} />
+                    ) : (
+                      <Text style={[styles.prioridadBtnText, { color: colors.greenDark }]}>
+                        {prioridadEditor.original ? "Guardar cambios" : "Crear prioridad"}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : null}
 
             <Text style={styles.label}>Color</Text>
             <View style={styles.colorRow}>
@@ -457,6 +630,34 @@ const makeStyles = (colors) => StyleSheet.create({
     justifyContent: "center",
   },
   colorDotActive: { borderWidth: 2.5, borderColor: colors.greenBright, transform: [{ scale: 1.06 }] },
+  // Prioridades personalizadas
+  prioridadDot: { width: 9, height: 9, borderRadius: 999 },
+  prioridadNueva: { borderStyle: "dashed" },
+  prioridadEditor: {
+    marginTop: 10,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: colors.greenBorder,
+    backgroundColor: colors.card,
+  },
+  prioridadColor: { width: 30, height: 30, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  prioridadAcciones: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12 },
+  prioridadBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: colors.greenBorder,
+  },
+  prioridadBtnCancelar: { borderColor: colors.cardBorder },
+  prioridadBtnEliminar: { borderColor: "#e5484d" },
+  prioridadBtnText: { fontSize: 12, fontWeight: "800" },
   colorMore: {
     width: 34,
     height: 34,

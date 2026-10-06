@@ -66,6 +66,9 @@ export const googleService = {
 export const taskService = {
   getAll: (params) => api.get("/api/task", { params }),
   create: (data) => api.post("/api/task", data),
+  // 🎨 Prioridades personalizadas (nombre + color)
+  getPrioridades: () => api.get("/api/task/prioridades"),
+  savePrioridades: (prioridades) => api.put("/api/task/prioridades", { prioridades }),
   update: (id, data) => api.put(`/api/task/${id}`, data),
   updateStatus: (id, data) => api.put(`/api/task/${id}/status`, data),
   delete: (id) => api.delete(`/api/task/${id}`),

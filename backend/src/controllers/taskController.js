@@ -681,3 +681,61 @@ export const subirImagenNota = async (req, res) => {
     return res.status(500).json({ message: "No se pudo subir la imagen." });
   }
 };
+
+// ──────────────────────────────────────────────────────────────
+// 🎨 Prioridades personalizadas (nombre + color) por usuario
+// ──────────────────────────────────────────────────────────────
+
+// Las 4 de siempre, con un color cada una. Se devuelven cuando el usuario
+// todavía no guardó su propia lista.
+export const DEFAULT_PRIORIDADES = [
+  { nombre: "importante", color: "#f0c419" },
+  { nombre: "urgente", color: "#e05252" },
+  { nombre: "no importante", color: "#8e9baa" },
+  { nombre: "obligaciones", color: "#3f9fe7" },
+];
+
+const MAX_PRIORIDADES = 20;
+const COLOR_RE = /^#[0-9a-f]{6}$/i;
+
+// Deja la lista limpia: nombres sin espacios de más (máx. 30), sin repetidos
+// (ignorando mayúsculas) y colores hex válidos.
+const normalizePrioridades = (lista) => {
+  if (!Array.isArray(lista)) return null;
+  const vistos = new Set();
+  const limpias = [];
+  for (const item of lista) {
+    const nombre = typeof item?.nombre === "string" ? item.nombre.trim().slice(0, 30) : "";
+    const color = typeof item?.color === "string" ? item.color.trim().toLowerCase() : "";
+    if (!nombre || !COLOR_RE.test(color)) continue;
+    const clave = nombre.toLowerCase();
+    if (vistos.has(clave)) continue;
+    vistos.add(clave);
+    limpias.push({ nombre, color });
+  }
+  return limpias.slice(0, MAX_PRIORIDADES);
+};
+
+export const getPrioridades = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("prioridadesTarea").lean();
+    const lista = user?.prioridadesTarea?.length ? user.prioridadesTarea : DEFAULT_PRIORIDADES;
+    res.json({ prioridades: lista });
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener las prioridades", error: error.message });
+  }
+};
+
+// Reemplaza la lista completa.
+export const savePrioridades = async (req, res) => {
+  try {
+    const lista = normalizePrioridades(req.body?.prioridades);
+    if (!lista || lista.length === 0) {
+      return res.status(400).json({ message: "Tiene que haber al menos una prioridad" });
+    }
+    await User.findByIdAndUpdate(req.user.id, { prioridadesTarea: lista });
+    res.json({ prioridades: lista });
+  } catch (error) {
+    res.status(500).json({ message: "Error al guardar las prioridades", error: error.message });
+  }
+};

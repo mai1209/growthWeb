@@ -14,6 +14,8 @@ import {
   salirDeTarea,
   quitarColaborador,
   subirImagenNota,
+  getPrioridades,
+  savePrioridades,
 } from '../controllers/taskController.js';
 import { requireAuth } from '../middlewares/authJwt.js';
 
@@ -23,6 +25,10 @@ router.post('/', requireAuth, createHabito);
 // 🖼️ Imagen de una nota → Vercel Blob (devuelve { url })
 router.post('/imagen', requireAuth, subirImagenNota);
 router.get('/', requireAuth, getTasks);
+
+// 🎨 Prioridades personalizadas (nombre + color) del usuario
+router.get('/prioridades', requireAuth, getPrioridades);
+router.put('/prioridades', requireAuth, savePrioridades);
 
 // --- 👥 Compartir tareas (rutas específicas ANTES de las de /:id) ---
 router.get('/buscar-usuario', requireAuth, buscarUsuarioTarea);

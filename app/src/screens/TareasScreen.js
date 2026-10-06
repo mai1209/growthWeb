@@ -25,6 +25,7 @@ import {
 import { loadNotifSettings } from "../utils/notifSettings";
 import { syncTaskReminders } from "../utils/taskReminders";
 import TaskFormModal, { TASK_COLORS } from "../components/TaskFormModal";
+import { DEFAULT_PRIORIDADES, colorDePrioridad, textoSobre } from "../utils/prioridades";
 import TaskCalendar from "../components/TaskCalendar";
 import TaskHistory from "../components/TaskHistory";
 import ProgressRing from "../components/ProgressRing";
@@ -120,12 +121,23 @@ export default function TareasScreen() {
     SecureStore.setItemAsync("tip_widget_tareas", "1").catch(() => {});
   };
 
+  // Prioridades del usuario (nombre + color) para pintar el chip de cada tarea
+  const [prioridades, setPrioridades] = useState(DEFAULT_PRIORIDADES);
+
   const fetchTasks = useCallback(async () => {
     setError("");
     try {
       const res = await taskService.getAll({ tipo: "task" });
       const list = Array.isArray(res.data) ? res.data : [];
       setAllTasks(list);
+      taskService
+        .getPrioridades()
+        .then(({ data }) => {
+          if (Array.isArray(data?.prioridades) && data.prioridades.length) {
+            setPrioridades(data.prioridades);
+          }
+        })
+        .catch(() => {});
       // Invitaciones a tareas compartidas (para el banner de arriba).
       taskService
         .invitaciones()
@@ -455,7 +467,21 @@ export default function TareasScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.cardTitle, done && styles.cardTitleDone]}>{item.meta}</Text>
                       <View style={styles.metaRow}>
-                        {item.urgencia ? <Text style={styles.metaChip}>{item.urgencia}</Text> : null}
+                        {item.urgencia ? (
+                          <Text
+                            style={[
+                              styles.metaChip,
+                              colorDePrioridad(prioridades, item.urgencia)
+                                ? {
+                                    backgroundColor: colorDePrioridad(prioridades, item.urgencia),
+                                    color: textoSobre(colorDePrioridad(prioridades, item.urgencia)),
+                                  }
+                                : null,
+                            ]}
+                          >
+                            {item.urgencia}
+                          </Text>
+                        ) : null}
                         {item.compartida ? (
                           <View style={styles.compartidaChip}>
                             <Ionicons name="people" size={11} color="#16241d" />
@@ -551,6 +577,7 @@ export default function TareasScreen() {
           setEditTask(null);
         }}
         onSaved={fetchTasks}
+        onPrioridadesChange={setPrioridades}
       />
 
       {compartirTask ? (

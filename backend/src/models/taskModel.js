@@ -86,9 +86,11 @@ const TaskSchema = new mongoose.Schema({
   horario: {
     type: String,
   },
+  // Prioridad: texto libre porque cada usuario puede crear las suyas
+  // (la lista y el color de cada una viven en User.prioridadesTarea).
   urgencia: {
     type: String,
-    enum: ['importante', 'urgente', 'no importante', 'obligaciones'],
+    trim: true,
     default: 'importante',
   },
     color: {

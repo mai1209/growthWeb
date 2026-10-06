@@ -2516,3 +2516,120 @@
 .historyLegend {
   font-size: 0.72rem;
 }
+
+/* ---- Prioridades personalizadas (nombre + color) ---- */
+.prioridadChip {
+  text-transform: capitalize;
+}
+
+.prioridadChipActive,
+.prioridadChipActive:hover {
+  background: var(--surface-input);
+}
+
+.prioridadDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.prioridadEditar {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.15rem;
+  padding: 0.15rem;
+  border-radius: 50%;
+  color: var(--color-muted);
+  opacity: 0.55;
+  transition: opacity var(--transition-fast), color var(--transition-fast);
+}
+
+.prioridadEditar svg {
+  width: 12px;
+  height: 12px;
+}
+
+.momentoButton:hover .prioridadEditar,
+.prioridadEditar:hover,
+.prioridadEditar:focus-visible {
+  opacity: 1;
+  color: var(--color-text);
+  outline: none;
+}
+
+.prioridadNueva {
+  border-style: dashed;
+}
+
+.prioridadEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+  padding: 0.8rem;
+  border: 1px dashed var(--accent-border);
+  border-radius: 16px;
+  background: var(--surface-input);
+}
+
+.prioridadColores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.prioridadColor {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  padding: 0;
+}
+
+.prioridadColorActivo {
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.9),
+    0 0 0 5px rgba(59, 203, 35, 0.24);
+}
+
+.prioridadErrorTexto {
+  margin: 0;
+  color: #e5484d;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.prioridadEditorAcciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.prioridadBtnGuardar,
+.prioridadBtnCancelar,
+.prioridadBtnEliminar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-pill);
+  border: 1px dashed var(--accent-border);
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.prioridadBtnCancelar {
+  border-color: rgba(216, 241, 224, 0.2);
+  color: var(--color-muted);
+}
+
+.prioridadBtnEliminar {
+  margin-right: auto;
+  border-color: rgba(229, 72, 77, 0.6);
+  color: #e5484d;
+}

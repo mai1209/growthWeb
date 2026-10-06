@@ -57,6 +57,12 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: 160,
     },
+    // Prioridades de tareas del usuario (nombre + color). Vacío = las 4 por
+    // defecto (ver DEFAULT_PRIORIDADES en taskController).
+    prioridadesTarea: {
+      type: [{ _id: false, nombre: { type: String, trim: true }, color: { type: String, trim: true } }],
+      default: [],
+    },
     // Comunidad: si el perfil es visible/descubrible por otros usuarios.
     perfilPublico: {
       type: Boolean,

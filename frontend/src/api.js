@@ -79,6 +79,9 @@ export const taskService = {
     api.put(`/api/task/${taskId}/status`, data),
   delete: (taskId) => api.delete(`/api/task/${taskId}`),
   create: (data) => api.post("/api/task", data),
+  // 🎨 Prioridades personalizadas (nombre + color)
+  getPrioridades: () => api.get("/api/task/prioridades"),
+  savePrioridades: (prioridades) => api.put("/api/task/prioridades", { prioridades }),
   update: (taskId, data) => api.put(`/api/task/${taskId}`, data),
   // 🖼️ Imagen de nota (data URI) → URL en Vercel Blob
   subirImagen: (data) => api.post("/api/task/imagen", data),

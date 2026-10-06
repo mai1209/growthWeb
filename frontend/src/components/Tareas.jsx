@@ -4,6 +4,12 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Tarea.module.css";
 import {
+  DEFAULT_PRIORIDADES,
+  PRIORIDAD_COLORES,
+  colorDePrioridad,
+  textoSobre,
+} from "../utils/prioridades";
+import {
   filterTasksForDate,
   getTaskDayCode,
   getTaskRepeatDays,
@@ -295,6 +301,11 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
   const [dayActionDate, setDayActionDate] = useState(null); // día tocado en el calendario
   const [editingTask, setEditingTask] = useState(null);
   const [formData, setFormData] = useState(initialFormData);
+  // Prioridades del usuario (nombre + color) y mini-editor para crear/editar una
+  const [prioridades, setPrioridades] = useState(DEFAULT_PRIORIDADES);
+  // null = cerrado; { original: nombre|null, nombre, color }
+  const [prioridadEditor, setPrioridadEditor] = useState(null);
+  const [prioridadError, setPrioridadError] = useState("");
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [formSaving, setFormSaving] = useState(false);
@@ -426,6 +437,21 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks, refreshKey]);
+
+  useEffect(() => {
+    let activo = true;
+    taskService
+      .getPrioridades()
+      .then(({ data }) => {
+        if (activo && Array.isArray(data?.prioridades) && data.prioridades.length) {
+          setPrioridades(data.prioridades);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   const getStatusDate = (value) => {
     if (typeof value === "string") {
@@ -597,6 +623,71 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
     setFormData((prev) => ({ ...prev, color }));
   };
 
+  const abrirNuevaPrioridad = () => {
+    setPrioridadError("");
+    setPrioridadEditor({ original: null, nombre: "", color: PRIORIDAD_COLORES[0] });
+  };
+
+  const abrirEditarPrioridad = (p) => {
+    setPrioridadError("");
+    setPrioridadEditor({ original: p.nombre, nombre: p.nombre, color: p.color });
+  };
+
+  const guardarPrioridades = async (lista, nombreElegido) => {
+    const { data } = await taskService.savePrioridades(lista);
+    const nuevas = Array.isArray(data?.prioridades) && data.prioridades.length ? data.prioridades : lista;
+    setPrioridades(nuevas);
+    if (nombreElegido !== undefined) {
+      setFormData((prev) => ({ ...prev, urgencia: nombreElegido }));
+    }
+    setPrioridadEditor(null);
+  };
+
+  const confirmarPrioridad = async () => {
+    if (!prioridadEditor) return;
+    const nombre = prioridadEditor.nombre.trim();
+    if (!nombre) {
+      setPrioridadError("Escribí un nombre.");
+      return;
+    }
+    const repetida = prioridades.some(
+      (p) =>
+        p.nombre.toLowerCase() === nombre.toLowerCase() &&
+        p.nombre !== prioridadEditor.original
+    );
+    if (repetida) {
+      setPrioridadError("Ya existe una prioridad con ese nombre.");
+      return;
+    }
+    const lista = prioridadEditor.original
+      ? prioridades.map((p) =>
+          p.nombre === prioridadEditor.original ? { nombre, color: prioridadEditor.color } : p
+        )
+      : [...prioridades, { nombre, color: prioridadEditor.color }];
+    try {
+      await guardarPrioridades(lista, nombre);
+    } catch (err) {
+      setPrioridadError(err?.response?.data?.message || "No se pudo guardar la prioridad.");
+    }
+  };
+
+  const eliminarPrioridad = async () => {
+    if (!prioridadEditor?.original) return;
+    if (prioridades.length <= 1) {
+      setPrioridadError("Tiene que quedar al menos una prioridad.");
+      return;
+    }
+    const lista = prioridades.filter((p) => p.nombre !== prioridadEditor.original);
+    try {
+      await guardarPrioridades(
+        lista,
+        formData.urgencia === prioridadEditor.original ? lista[0].nombre : undefined
+      );
+    } catch (err) {
+      setPrioridadError(err?.response?.data?.message || "No se pudo eliminar la prioridad.");
+    }
+  };
+
   const handleMomentoSelect = (value) => {
     setFormData((prev) => {
       if (value === "exacta") {
@@ -753,7 +844,17 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                     <FiCalendar />
                     {task.fecha ? task.fecha.slice(0, 10) : "-"}
                   </span>
-                  <span className={`${style.taskChip} ${style.taskUrgency}`}>
+                  <span
+                    className={`${style.taskChip} ${style.taskUrgency}`}
+                    style={
+                      colorDePrioridad(prioridades, task.urgencia)
+                        ? {
+                            background: colorDePrioridad(prioridades, task.urgencia),
+                            color: textoSobre(colorDePrioridad(prioridades, task.urgencia)),
+                          }
+                        : undefined
+                    }
+                  >
                     {task.urgencia || "Normal"}
                   </span>
                   <span className={`${style.taskChip} ${style.taskSchedule}`}>
@@ -1354,15 +1455,119 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                 ) : null}
               </div>
 
-              <label className={style.formField}>
+              <div className={style.formField}>
                 <span>Prioridad</span>
-                <select name="urgencia" value={formData.urgencia} onChange={handleFormChange}>
-                  <option value="importante">Importante</option>
-                  <option value="urgente">Urgente</option>
-                  <option value="no importante">No importante</option>
-                  <option value="obligaciones">Obligaciones</option>
-                </select>
-              </label>
+                <div className={style.momentoGrid}>
+                  {prioridades.map((p) => {
+                    const activa =
+                      (formData.urgencia || "").toLowerCase() === p.nombre.toLowerCase();
+                    return (
+                      <button
+                        key={p.nombre}
+                        type="button"
+                        className={`${style.momentoButton} ${style.prioridadChip} ${
+                          activa ? style.prioridadChipActive : ""
+                        }`}
+                        style={activa ? { borderColor: p.color, color: p.color } : undefined}
+                        onClick={() => setFormData((prev) => ({ ...prev, urgencia: p.nombre }))}
+                      >
+                        <span className={style.prioridadDot} style={{ background: p.color }} />
+                        {p.nombre}
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          className={style.prioridadEditar}
+                          title="Cambiar nombre o color"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            abrirEditarPrioridad(p);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              abrirEditarPrioridad(p);
+                            }
+                          }}
+                        >
+                          <FiEdit2 />
+                        </span>
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    className={`${style.momentoButton} ${style.prioridadNueva}`}
+                    onClick={abrirNuevaPrioridad}
+                  >
+                    <FiPlus />
+                    Nueva prioridad
+                  </button>
+                </div>
+
+                {prioridadEditor ? (
+                  <div className={style.prioridadEditor}>
+                    <input
+                      type="text"
+                      value={prioridadEditor.nombre}
+                      maxLength={30}
+                      placeholder="Nombre de la prioridad"
+                      autoFocus
+                      onChange={(e) =>
+                        setPrioridadEditor((prev) => ({ ...prev, nombre: e.target.value }))
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          confirmarPrioridad();
+                        }
+                      }}
+                    />
+                    <div className={style.prioridadColores}>
+                      {PRIORIDAD_COLORES.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          className={`${style.prioridadColor} ${
+                            prioridadEditor.color === c ? style.prioridadColorActivo : ""
+                          }`}
+                          style={{ background: c }}
+                          onClick={() => setPrioridadEditor((prev) => ({ ...prev, color: c }))}
+                          aria-label={`Color ${c}`}
+                        />
+                      ))}
+                    </div>
+                    {prioridadError ? (
+                      <p className={style.prioridadErrorTexto}>{prioridadError}</p>
+                    ) : null}
+                    <div className={style.prioridadEditorAcciones}>
+                      {prioridadEditor.original ? (
+                        <button
+                          type="button"
+                          className={style.prioridadBtnEliminar}
+                          onClick={eliminarPrioridad}
+                        >
+                          <FiTrash2 /> Eliminar
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        className={style.prioridadBtnCancelar}
+                        onClick={() => setPrioridadEditor(null)}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        className={style.prioridadBtnGuardar}
+                        onClick={confirmarPrioridad}
+                      >
+                        {prioridadEditor.original ? "Guardar cambios" : "Crear prioridad"}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
 
               <div className={style.formField}>
                 <span>Color</span>
