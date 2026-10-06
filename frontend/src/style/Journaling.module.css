@@ -781,22 +781,48 @@
   color: var(--color-verde, #5dc72d);
 }
 
+/* Mientras se editan las preguntas: Guardar en verde y Cancelar en rojo, los dos con borde de rayas */
+.preguntasBtnGuardar,
+.preguntasBtnGuardar:hover {
+  border-color: var(--color-verde, #5dc72d);
+  color: var(--color-verde, #5dc72d);
+}
+
+.preguntasBtnGuardar:hover {
+  background: var(--accent-soft, rgba(93, 199, 45, 0.12));
+}
+
+.preguntasBtnCancelar,
+.preguntasBtnCancelar:hover {
+  border-color: #e5484d;
+  color: #e5484d;
+}
+
+.preguntasBtnCancelar:hover {
+  background: rgba(229, 72, 77, 0.1);
+}
+
 .preguntaInput {
   width: 100%;
   padding: 0.45rem 0.7rem;
-  border: 1px solid var(--accent-border, rgba(93, 199, 45, 0.4));
+  /* Van sobre la hoja clara: tinta oscura como el resto del papel (el verde claro no se leía) */
+  border: 1px solid rgba(58, 45, 36, 0.25);
   border-radius: 16px;
-  background: var(--surface-input, rgba(127, 137, 129, 0.08));
-  color: var(--color-verde, #5dc72d);
+  background: rgba(255, 255, 255, 0.55);
+  color: #2c2620;
   font-size: 0.84rem;
   font-weight: 800;
   font-family: inherit;
 }
 
+.preguntaInput::placeholder {
+  color: rgba(44, 38, 32, 0.45);
+}
+
 .preguntaInput:focus {
   outline: none;
-  border-color: #5dc72d;
-  box-shadow: 0 0 0 3px rgba(93, 199, 45, 0.16);
+  border-color: #4c7020;
+  box-shadow: 0 0 0 3px rgba(76, 112, 32, 0.16);
 }
 
 /* Editor de preguntas (base + extras) */
@@ -841,10 +867,10 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.5rem 0.9rem;
-  border: 1px dashed var(--accent-border, rgba(93, 199, 45, 0.5));
+  border: 1px dashed rgba(76, 112, 32, 0.6);
   border-radius: 999px;
   background: transparent;
-  color: var(--color-verde, #5dc72d);
+  color: #4c7020;
   font-size: 0.82rem;
   font-weight: 800;
   cursor: pointer;

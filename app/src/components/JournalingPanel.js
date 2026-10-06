@@ -82,6 +82,10 @@ const PLANTILLAS = [
   },
 ];
 
+// Verde y rojo de los botones Guardar/Cancelar sobre el papel claro.
+const VERDE_PAPEL = "#4c7020";
+const ROJO_PAPEL = "#c0392b";
+
 // Color de cada nivel de ánimo (rojo → verde) para el gráfico.
 const ANIMO_COLORS = { 1: "#e5484d", 2: "#e58a3a", 3: "#c9a23a", 4: "#8fbf3f", 5: "#14d95f" };
 
@@ -494,9 +498,6 @@ export default function JournalingPanel({ visible, onClose }) {
             <Ionicons name="chevron-back" size={22} color={colors.text} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <View style={styles.kickerRow}>
-              <Text style={styles.kicker}>JOURNALING</Text>
-            </View>
             <View style={styles.titleRow}>
               {/* La fecha del día hace de título (antes decía "Tu journal"). */}
               <Text style={styles.title} numberOfLines={1}>
@@ -535,15 +536,15 @@ export default function JournalingPanel({ visible, onClose }) {
             <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
               {/* Ánimo: slider con carita viajera */}
               <View style={styles.animoBox}>
+                {/* Sin pregunta: la carita del slider se explica sola */}
                 <View style={styles.animoLabelRow}>
-                  <Text style={styles.animoLabel}>¿CÓMO TE SENTÍS HOY?</Text>
                   <TouchableOpacity
                     style={styles.sugerenciasLink}
                     onPress={() => setAyudaOpen(true)}
                     hitSlop={8}
                   >
+                    <Text style={styles.sugerenciasLinkText}>Sugerencias</Text>
                     <Ionicons name="help-circle-outline" size={13} color={colors.green} />
-                    <Text style={styles.sugerenciasLinkText}>Sugerencias de preguntas</Text>
                   </TouchableOpacity>
                 </View>
                 <AnimoSlider value={entrada.animo} onChange={onAnimoChange} styles={styles} />
@@ -716,16 +717,23 @@ export default function JournalingPanel({ visible, onClose }) {
                       <View style={styles.libroEditRow}>
                         {editandoPreguntas ? (
                           <>
-                            <TouchableOpacity style={styles.libroEditBtn} onPress={guardarPreguntas}>
-                              <Ionicons name="checkmark" size={13} color="#2b2416" />
-                              <Text style={styles.libroEditBtnText}>Guardar preguntas</Text>
+                            <TouchableOpacity
+                              style={[styles.libroEditBtn, styles.libroEditBtnGuardar]}
+                              onPress={guardarPreguntas}
+                            >
+                              <Ionicons name="checkmark" size={13} color={VERDE_PAPEL} />
+                              <Text style={[styles.libroEditBtnText, styles.libroEditBtnTextGuardar]}>
+                                Guardar preguntas
+                              </Text>
                             </TouchableOpacity>
                             <TouchableOpacity
-                              style={styles.libroEditBtn}
+                              style={[styles.libroEditBtn, styles.libroEditBtnCancelar]}
                               onPress={() => setEditandoPreguntas(false)}
                             >
-                              <Ionicons name="close" size={13} color="#2b2416" />
-                              <Text style={styles.libroEditBtnText}>Cancelar</Text>
+                              <Ionicons name="close" size={13} color={ROJO_PAPEL} />
+                              <Text style={[styles.libroEditBtnText, styles.libroEditBtnTextCancelar]}>
+                                Cancelar
+                              </Text>
                             </TouchableOpacity>
                           </>
                         ) : (
@@ -977,7 +985,7 @@ const makeStyles = (colors) =>
     animoLabelRow: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
+      justifyContent: "flex-end",
       gap: 8,
     },
     animoLabel: { color: colors.muted, fontSize: 10.5, fontWeight: "800", letterSpacing: 1 },
@@ -1299,6 +1307,11 @@ const makeStyles = (colors) =>
       borderColor: "rgba(43, 36, 22, 0.4)",
     },
     libroEditBtnText: { color: "#2b2416", fontSize: 11, fontWeight: "700" },
+    // Guardar / Cancelar mientras se editan las preguntas: borde fino de rayas, verde y rojo
+    libroEditBtnGuardar: { borderColor: VERDE_PAPEL },
+    libroEditBtnTextGuardar: { color: VERDE_PAPEL },
+    libroEditBtnCancelar: { borderColor: ROJO_PAPEL },
+    libroEditBtnTextCancelar: { color: ROJO_PAPEL },
     libroPreguntaInput: {
       color: "#8a5a2a",
       fontSize: 13.5,

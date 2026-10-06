@@ -819,19 +819,23 @@ function Journaling() {
         </div>
         <div className={style.headerAcciones}>
           <button type="button" className={style.ayudaLink} onClick={() => setAyudaOpen(true)}>
-            <FiHelpCircle /> Sugerencias de preguntas
+            <FiHelpCircle /> Sugerencias
           </button>
 
           {/* Personalizar preguntas (sólo hoy) */}
           {esHoy ? (
             editandoPreguntas ? (
               <>
-                <button type="button" className={style.preguntasBtn} onClick={guardarPreguntas}>
+                <button
+                  type="button"
+                  className={`${style.preguntasBtn} ${style.preguntasBtnGuardar}`}
+                  onClick={guardarPreguntas}
+                >
                   <FiCheck /> Guardar preguntas
                 </button>
                 <button
                   type="button"
-                  className={style.preguntasBtn}
+                  className={`${style.preguntasBtn} ${style.preguntasBtnCancelar}`}
                   onClick={() => setEditandoPreguntas(false)}
                 >
                   <FiX /> Cancelar
