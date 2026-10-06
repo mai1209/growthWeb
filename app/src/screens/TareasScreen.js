@@ -226,11 +226,29 @@ export default function TareasScreen() {
   }, [allTasks]);
   const fraseDelDia = FRASES_TAREAS[diaDelAnio(new Date()) % FRASES_TAREAS.length];
 
-  // Tareas ordenadas por horario para el riel de la izquierda.
+  // Filtro de la lista del día: todas / pendientes / completadas
+  const [dayFilter, setDayFilter] = useState("all");
+
+  // Tareas ordenadas por horario para el riel de la izquierda (según el filtro).
   const sortedTasks = useMemo(
-    () => [...dayTasks].sort((a, b) => agendaKey(a) - agendaKey(b)),
-    [dayTasks]
+    () =>
+      dayTasks
+        .filter((t) => {
+          if (dayFilter === "pending") return !isTaskCompletedOnDate(t, selectedDate);
+          if (dayFilter === "done") return isTaskCompletedOnDate(t, selectedDate);
+          return true;
+        })
+        .sort((a, b) => agendaKey(a) - agendaKey(b)),
+    [dayTasks, dayFilter, selectedDate]
   );
+
+  const shiftSelectedDay = (delta) =>
+    setSelectedDate((prev) => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + delta);
+      return d;
+    });
+  const esHoy = selectedDate.toDateString() === new Date().toDateString();
 
   const toggleComplete = async (task) => {
     const id = task._id;
@@ -354,26 +372,10 @@ export default function TareasScreen() {
         <TaskHistory tasks={allTasks} />
       ) : (
         <>
-          {/* Frase del día, arriba de todo (entre el switch y el header del día) */}
-          <View style={styles.fraseWrap}>
-            <View style={styles.fraseCard}>
-              <Text style={styles.fraseTexto}>
-                <Text style={styles.fraseLabel}>Frase del día: </Text>
-                {fraseDelDia}
-              </Text>
-            </View>
-          </View>
-
-          {/* Día seleccionado (se cambia desde el Calendario) */}
-          <View style={styles.dayHeader}>
-            <Ionicons name="calendar-outline" size={16} color={colors.greenDark} />
-            <Text style={styles.dayHeaderText}>{dateLabel}</Text>
-          </View>
-
           <FlatList
             data={sortedTasks}
             keyExtractor={(item) => item._id}
-            contentContainerStyle={{ padding: 16, paddingTop: 2, gap: 10, paddingBottom: 90 }}
+            contentContainerStyle={{ padding: 16, paddingTop: 10, gap: 10, paddingBottom: 90 }}
             refreshControl={
               <RefreshControl refreshing={false} onRefresh={fetchTasks} tintColor={colors.green} />
             }
@@ -412,30 +414,132 @@ export default function TareasScreen() {
                   </View>
                 ))}
 
-                <View style={styles.progressCard}>
-                  <ProgressRing percent={progressPercent} />
-                  <View style={styles.progressSide}>
-                    <Text style={styles.progressKicker}>Progreso</Text>
-                    <View style={styles.progressStats}>
-                      <Text style={styles.statLine}>
-                        <Text style={styles.statCompletadas}>{completedCount}</Text> tareas completadas
+                {/* Panel del día (mismo diseño que la web): fecha, HOY, anillo, stats y tarjetas */}
+                <View style={styles.panel}>
+                  <View style={styles.panelDateRow}>
+                    <TouchableOpacity
+                      style={styles.panelNavBtn}
+                      onPress={() => shiftSelectedDay(-1)}
+                      hitSlop={6}
+                      accessibilityLabel="Día anterior"
+                    >
+                      <Ionicons name="chevron-back" size={18} color={colors.muted} />
+                    </TouchableOpacity>
+                    <Text style={styles.panelDateText} numberOfLines={1}>
+                      {dateLabel}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.panelNavBtn}
+                      onPress={() => shiftSelectedDay(1)}
+                      hitSlop={6}
+                      accessibilityLabel="Día siguiente"
+                    >
+                      <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+                    </TouchableOpacity>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.panelTodayBtn}
+                    onPress={() => (esHoy ? setViewMode("calendar") : setSelectedDate(new Date()))}
+                  >
+                    <Ionicons name="calendar-outline" size={13} color={colors.text} />
+                    <Text style={styles.panelTodayText}>
+                      {esHoy
+                        ? "Hoy"
+                        : selectedDate.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" })}
+                    </Text>
+                    <Ionicons name="chevron-down" size={13} color={colors.muted} />
+                  </TouchableOpacity>
+
+                  <View style={styles.panelRing}>
+                    <ProgressRing percent={progressPercent} size={150} stroke={10} />
+                  </View>
+                  <Text style={styles.panelKicker}>Progreso del día</Text>
+
+                  <View style={styles.statRow}>
+                    <View style={[styles.statDot, { backgroundColor: "#75F94C" }]} />
+                    <Text style={styles.statLabel}>Tareas completadas</Text>
+                    <Text style={styles.statCompletadas}>{completedCount}</Text>
+                  </View>
+                  <View style={[styles.statRow, styles.statRowLast]}>
+                    <View style={[styles.statDot, { backgroundColor: "#EB3223" }]} />
+                    <Text style={styles.statLabel}>Tareas pendientes</Text>
+                    <Text style={styles.statPendientes}>{pendingCount}</Text>
+                  </View>
+
+                  {comparativaMes.total > 0 || comparativaMes.totalAnt > 0 ? (
+                    <View style={styles.panelCard}>
+                      <View style={styles.panelIcon}>
+                        <Ionicons name="locate-outline" size={16} color={colors.greenBright} />
+                      </View>
+                      <Text style={styles.comparativa}>
+                        Este mes cumpliste el{" "}
+                        <Text style={styles.comparativaStrong}>{comparativaMes.actual}%</Text> de tus
+                        tareas · el mes pasado fue{" "}
+                        <Text style={styles.comparativaStrong}>{comparativaMes.anterior}%</Text>
                       </Text>
-                      <Text style={styles.statLine}>
-                        <Text style={styles.statPendientes}>{pendingCount}</Text> tareas pendientes
-                      </Text>
+                    </View>
+                  ) : null}
+
+                  <View style={[styles.panelCard, styles.fraseCard]}>
+                    <View style={styles.panelIcon}>
+                      <Ionicons name="locate-outline" size={16} color={colors.greenBright} />
+                    </View>
+                    <View style={{ flex: 1, gap: 3 }}>
+                      <Text style={styles.fraseLabel}>Frase del día</Text>
+                      <Text style={styles.fraseTexto}>“{fraseDelDia}”</Text>
                     </View>
                   </View>
                 </View>
 
-                {comparativaMes.total > 0 || comparativaMes.totalAnt > 0 ? (
-                  <Text style={styles.comparativa}>
-                    Este mes cumpliste el {comparativaMes.actual}% de tus tareas ·
-                    el mes pasado fue {comparativaMes.anterior}%
-                  </Text>
-                ) : null}
+                {/* Filtros: Todas / Pendientes / Completadas */}
+                <View style={styles.filtersRow}>
+                  {[
+                    { value: "all", label: "Todas", count: null },
+                    { value: "pending", label: "Pendientes", count: pendingCount, tone: "pending" },
+                    { value: "done", label: "Completadas", count: completedCount, tone: "done" },
+                  ].map((f) => {
+                    const active = dayFilter === f.value;
+                    return (
+                      <TouchableOpacity
+                        key={f.value}
+                        style={[styles.filterBtn, active && styles.filterBtnActive]}
+                        onPress={() => setDayFilter(f.value)}
+                      >
+                        <Text style={[styles.filterText, active && styles.filterTextActive]}>{f.label}</Text>
+                        {f.count !== null ? (
+                          <View
+                            style={[
+                              styles.filterCount,
+                              f.tone === "done" ? styles.filterCountDone : styles.filterCountPending,
+                              active && styles.filterCountActive,
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.filterCountText,
+                                { color: f.tone === "done" ? "#75F94C" : "#ff6b5e" },
+                                active && { color: "#06210a" },
+                              ]}
+                            >
+                              {f.count}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
               </View>
             }
-            ListEmptyComponent={<Text style={styles.empty}>No hay tareas para este día.</Text>}
+            ListEmptyComponent={
+              <Text style={styles.empty}>
+                {dayTasks.length === 0
+                  ? "No hay tareas para este día."
+                  : dayFilter === "pending"
+                    ? "No quedan tareas pendientes. ¡Bien ahí!"
+                    : "Todavía no completaste ninguna tarea este día."}
+              </Text>
+            }
             renderItem={({ item }) => {
               const done = isTaskCompletedOnDate(item, selectedDate);
               const accent =
@@ -720,52 +824,104 @@ const makeStyles = (colors) => StyleSheet.create({
   },
   invAceptarTxt: { color: "#06210a", fontSize: 13, fontWeight: "800" },
 
-  progressCard: {
+  // Panel del día (solo borde, como en la web)
+  panel: {
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 14,
+    marginBottom: 12,
+    gap: 10,
+  },
+  panelDateRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
+  panelNavBtn: { width: 30, height: 30, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+  panelDateText: {
+    flex: 1,
+    textAlign: "center",
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "700",
+    textTransform: "capitalize",
+  },
+  panelTodayBtn: {
+    alignSelf: "center",
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: 6,
     paddingVertical: 6,
-    paddingBottom: 12,
-  },
-  // Comparativa de progreso + frase del día
-  comparativa: {
-    color: colors.muted,
-    fontSize: 12,
-    lineHeight: 17,
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  fraseWrap: { paddingHorizontal: 16, paddingTop: 12 },
-  fraseCard: {
-    padding: 14,
-    borderRadius: 16,
+    paddingHorizontal: 12,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "rgba(93,199,45,0.28)",
-    backgroundColor: "rgba(93,199,45,0.09)",
-    marginBottom: 12,
+    borderColor: colors.cardBorder,
   },
-  fraseLabel: {
-    color: colors.greenBright,
-    fontWeight: "800",
-  },
-  fraseTexto: {
-    color: colors.text,
-    fontSize: 14,
-    lineHeight: 21,
-    fontWeight: "600",
-  },
-  progressStats: { gap: 4, marginTop: 2 },
-  statLine: { color: colors.muted, fontSize: 13 },
-  statCompletadas: { color: "#75F94C", fontSize: 15, fontWeight: "800" },
-  statPendientes: { color: "#EB3223", fontSize: 15, fontWeight: "800" },
-  progressSide: { flex: 1, gap: 8 },
-  progressKicker: {
+  panelTodayText: { color: colors.text, fontSize: 11, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase" },
+  panelRing: { alignItems: "center", marginTop: 6 },
+  panelKicker: {
+    textAlign: "center",
     color: colors.muted,
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: "900",
-    letterSpacing: 1,
+    letterSpacing: 1.6,
     textTransform: "uppercase",
   },
+  statRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  statRowLast: { borderBottomWidth: 1, marginTop: -10 },
+  statDot: { width: 9, height: 9, borderRadius: 999 },
+  statLabel: { flex: 1, color: colors.text, fontSize: 13.5, fontWeight: "600" },
+  statCompletadas: { color: "#75F94C", fontSize: 16, fontWeight: "800" },
+  statPendientes: { color: "#EB3223", fontSize: 16, fontWeight: "800" },
+  // Tarjetas con ícono redondo (comparativa del mes y frase del día)
+  panelCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  panelIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(93,199,45,0.14)",
+  },
+  comparativa: { flex: 1, color: colors.text, fontSize: 12.5, lineHeight: 18, fontWeight: "600" },
+  comparativaStrong: { fontWeight: "800" },
+  fraseCard: { borderColor: "rgba(93,199,45,0.35)" },
+  fraseLabel: { color: colors.greenBright, fontSize: 14, fontWeight: "800" },
+  fraseTexto: { color: colors.muted, fontSize: 13, lineHeight: 19, fontWeight: "600" },
+  // Filtros de la lista del día
+  filtersRow: { flexDirection: "row", gap: 6, marginBottom: 6 },
+  filterBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 11,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  filterBtnActive: { backgroundColor: "#75F94C", borderColor: "#75F94C" },
+  filterText: { color: colors.muted, fontSize: 12.5, fontWeight: "600" },
+  filterTextActive: { color: "#06210a", fontWeight: "800" },
+  filterCount: { minWidth: 20, paddingHorizontal: 5, borderRadius: 999, alignItems: "center" },
+  filterCountPending: { backgroundColor: "rgba(235,50,35,0.18)" },
+  filterCountDone: { backgroundColor: "rgba(117,249,76,0.18)" },
+  filterCountActive: { backgroundColor: "rgba(6,33,10,0.18)" },
+  filterCountText: { fontSize: 11, fontWeight: "800", lineHeight: 17 },
 
   card: {
     borderRadius: 16,
