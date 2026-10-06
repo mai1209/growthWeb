@@ -156,6 +156,17 @@ export default function NoteEditorModal({
   const [editorKey, setEditorKey] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   // Popup "Nueva etiqueta": null o { nombre, color, error }
+  // Saber si el teclado está abierto (para que tocar la hoja lo cierre)
+  const [tecladoVisible, setTecladoVisible] = useState(false);
+  useEffect(() => {
+    const a = Keyboard.addListener("keyboardDidShow", () => setTecladoVisible(true));
+    const b = Keyboard.addListener("keyboardDidHide", () => setTecladoVisible(false));
+    return () => {
+      a.remove();
+      b.remove();
+    };
+  }, []);
+
   // Cierra el teclado (el del editor y el nativo) al tocar fuera del texto
   const cerrarTeclado = () => {
     Keyboard.dismiss();
@@ -768,11 +779,13 @@ export default function NoteEditorModal({
               </TouchableOpacity>
             </ScrollView>
 
-            {/* Hoja: llega hasta el final de la pantalla; tocar la parte vacía
-                también pone el cursor en el texto */}
+            {/* Hoja: llega hasta el final de la pantalla. Tocar la parte vacía
+                cierra el teclado si está abierto; si no, pone el cursor en el texto */}
             <Pressable
               style={[styles.paper, { backgroundColor: palette.bg }]}
-              onPress={() => richText.current?.focusContentEditor?.()}
+              onPress={() =>
+                tecladoVisible ? cerrarTeclado() : richText.current?.focusContentEditor?.()
+              }
             >
               <RichEditor
                 key={editorKey}
@@ -795,8 +808,6 @@ export default function NoteEditorModal({
             </Pressable>
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
-            {/* Espacio vacío debajo del texto: tocarlo cierra el teclado */}
-            <Pressable style={{ flex: 1, minHeight: 90 }} onPress={cerrarTeclado} accessible={false} />
           </ScrollView>
 
           {/* Barra de formato (pegada abajo, sobre el teclado) */}
