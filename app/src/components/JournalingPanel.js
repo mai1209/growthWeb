@@ -226,6 +226,9 @@ export default function JournalingPanel({ visible, onClose }) {
   const [plantillasOpen, setPlantillasOpen] = useState(false);
   const [vista, setVista] = useState("libro"); // libro (hoja editable) | calendario
   const [ayudaOpen, setAyudaOpen] = useState(false);
+  // Menú "Utilidades" (plantillas / sugerencias / métricas) y popup de métricas
+  const [utilidadesOpen, setUtilidadesOpen] = useState(false);
+  const [metricasOpen, setMetricasOpen] = useState(false);
   const [calRef, setCalRef] = useState(() => new Date());
   const guardadoRef = useRef(null);
 
@@ -510,14 +513,15 @@ export default function JournalingPanel({ visible, onClose }) {
               ) : null}
             </View>
           </View>
-          {/* Sugerencias de preguntas: arriba a la derecha del todo. */}
+          {/* Utilidades: despliega Plantillas / Sugerencias / Métricas */}
           <TouchableOpacity
             style={styles.sugerenciasLink}
-            onPress={() => setAyudaOpen(true)}
+            onPress={() => setUtilidadesOpen(true)}
             hitSlop={8}
+            accessibilityLabel="Utilidades"
           >
-            <Text style={styles.sugerenciasLinkText}>Sugerencias</Text>
-            <Ionicons name="help-circle-outline" size={13} color={colors.green} />
+            <Text style={styles.sugerenciasLinkText}>Utilidades</Text>
+            <Ionicons name="chevron-down" size={13} color={colors.green} />
           </TouchableOpacity>
         </View>
 
@@ -534,19 +538,7 @@ export default function JournalingPanel({ visible, onClose }) {
             <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
               {/* Ánimo: slider con carita viajera */}
               <View style={styles.animoBox}>
-                {/* Sin pregunta: la carita del slider se explica sola. Plantillas (sólo hoy) a la izquierda. */}
-                {esHoy ? (
-                  <View style={styles.animoLabelRow}>
-                    <TouchableOpacity
-                      style={styles.plantillasBtn}
-                      onPress={() => setPlantillasOpen(true)}
-                    >
-                      <Ionicons name="grid-outline" size={15} color={colors.text} />
-                      <Text style={styles.plantillasBtnText}>Plantillas</Text>
-                      <Ionicons name="chevron-down" size={14} color={colors.muted} />
-                    </TouchableOpacity>
-                  </View>
-                ) : null}
+                {/* Sin pregunta: la carita del slider se explica sola */}
                 <AnimoSlider value={entrada.animo} onChange={onAnimoChange} styles={styles} />
               </View>
 
@@ -600,26 +592,9 @@ export default function JournalingPanel({ visible, onClose }) {
                   </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity
-                  style={[
-                    styles.metricasBtn,
-                    vista === "metricas" && styles.metricasBtnActivo,
-                  ]}
-                  activeOpacity={0.8}
-                  onPress={() => setVista(vista === "metricas" ? "libro" : "metricas")}
-                  accessibilityLabel="Métricas de ánimo"
-                >
-                  <Ionicons
-                    name="stats-chart-outline"
-                    size={17}
-                    color={vista === "metricas" ? "#0e1a0e" : colors.muted}
-                  />
-                </TouchableOpacity>
               </View>
 
-              {vista === "metricas" ? (
-                <React.Fragment key="v-metricas">{renderMetricas()}</React.Fragment>
-              ) : vista === "calendario" ? (
+              {vista === "calendario" ? (
                 <View key="v-calendario" style={styles.calBox}>
                   <View style={styles.calNav}>
                     <TouchableOpacity
@@ -892,6 +867,94 @@ export default function JournalingPanel({ visible, onClose }) {
           </KeyboardAvoidingView>
         )}
 
+        {/* Menú Utilidades: se despliega bajo el botón, arriba a la derecha */}
+        <Modal
+          visible={utilidadesOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setUtilidadesOpen(false)}
+        >
+          <TouchableOpacity
+            style={styles.utilidadesBackdrop}
+            activeOpacity={1}
+            onPress={() => setUtilidadesOpen(false)}
+          >
+            <View style={[styles.utilidadesMenu, { top: insets.top + 48 }]}>
+              {[
+                {
+                  key: "plantillas",
+                  label: "Plantillas",
+                  hint: esHoy ? "Sets de preguntas" : "Solo para el día de hoy",
+                  icon: "grid-outline",
+                  disabled: !esHoy,
+                  onPress: () => setPlantillasOpen(true),
+                },
+                {
+                  key: "sugerencias",
+                  label: "Sugerencias",
+                  hint: "Preguntas para inspirarte",
+                  icon: "help-circle-outline",
+                  onPress: () => setAyudaOpen(true),
+                },
+                {
+                  key: "metricas",
+                  label: "Métricas de ánimo",
+                  hint: "Cómo venís en el tiempo",
+                  icon: "stats-chart-outline",
+                  onPress: () => setMetricasOpen(true),
+                },
+              ].map((it, i, arr) => (
+                <TouchableOpacity
+                  key={it.key}
+                  style={[
+                    styles.utilidadesItem,
+                    i === arr.length - 1 && { borderBottomWidth: 0 },
+                    it.disabled && { opacity: 0.45 },
+                  ]}
+                  disabled={it.disabled}
+                  onPress={() => {
+                    setUtilidadesOpen(false);
+                    it.onPress();
+                  }}
+                >
+                  <View style={styles.utilidadesIcon}>
+                    <Ionicons name={it.icon} size={16} color={colors.greenBright} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.utilidadesLabel}>{it.label}</Text>
+                    <Text style={styles.utilidadesHint}>{it.hint}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={15} color={colors.muted} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
+        {/* Popup de métricas del ánimo */}
+        <Modal
+          visible={metricasOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setMetricasOpen(false)}
+        >
+          <TouchableOpacity
+            style={styles.plantillasBackdrop}
+            activeOpacity={1}
+            onPress={() => setMetricasOpen(false)}
+          >
+            <View style={styles.metricasSheet}>
+              <View style={styles.metricasSheetHead}>
+                <Text style={styles.plantillasTitulo}>Métricas de ánimo</Text>
+                <TouchableOpacity onPress={() => setMetricasOpen(false)} hitSlop={10}>
+                  <Ionicons name="close" size={20} color={colors.muted} />
+                </TouchableOpacity>
+              </View>
+              {renderMetricas()}
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
         {/* Menú de plantillas */}
         <Modal
           visible={plantillasOpen}
@@ -991,6 +1054,52 @@ const makeStyles = (colors) =>
     animoLabel: { color: colors.muted, fontSize: 10.5, fontWeight: "800", letterSpacing: 1 },
     sugerenciasLink: { flexDirection: "row", alignItems: "center", gap: 4 },
     sugerenciasLinkText: { color: colors.green, fontSize: 12, fontWeight: "800" },
+    // Menú Utilidades
+    utilidadesBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.25)" },
+    utilidadesMenu: {
+      position: "absolute",
+      right: 12,
+      width: 250,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.card,
+      overflow: "hidden",
+    },
+    utilidadesItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingVertical: 11,
+      paddingHorizontal: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.cardBorder,
+    },
+    utilidadesIcon: {
+      width: 30,
+      height: 30,
+      borderRadius: 8,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(93,199,45,0.14)",
+    },
+    utilidadesLabel: { color: colors.text, fontSize: 14, fontWeight: "800" },
+    utilidadesHint: { color: colors.muted, fontSize: 11.5, fontWeight: "600", marginTop: 1 },
+    // Popup de métricas
+    metricasSheet: {
+      borderRadius: 18,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      backgroundColor: colors.bg,
+      padding: 12,
+      gap: 8,
+    },
+    metricasSheetHead: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 4,
+    },
     animoSliderRow: { flexDirection: "row", alignItems: "center" },
     animoSliderWrap: { flex: 1, height: 40, justifyContent: "center" },
     animoTrack: {
