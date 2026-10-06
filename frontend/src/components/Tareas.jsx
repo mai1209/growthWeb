@@ -308,6 +308,8 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
   const [prioridadError, setPrioridadError] = useState("");
   // Colores elegidos a mano con el "+" (se suman a los 5 principales)
   const [prioridadColoresExtra, setPrioridadColoresExtra] = useState([]);
+  // Colores de tarea elegidos a mano con el "+" (se suman a los 5 principales)
+  const [taskColoresExtra, setTaskColoresExtra] = useState([]);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [formSaving, setFormSaving] = useState(false);
@@ -1671,18 +1673,43 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
 
               <div className={style.formField}>
                 <span>Color</span>
+                {/* 5 colores principales + los elegidos a mano + "+" para otro */}
                 <div className={style.taskColorPicker}>
-                  {colorOptions.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      className={`${style.taskColorButton} ${style[color]} ${
-                        formData.color === color ? style.taskColorSelected : ""
-                      }`}
-                      onClick={() => handleColorSelect(color)}
-                      aria-label={`Elegir color ${color}`}
+                  {[
+                    ...colorOptions.slice(0, 5),
+                    ...taskColoresExtra,
+                    ...(colorOptions.slice(0, 5).includes(formData.color) ||
+                    taskColoresExtra.includes(formData.color) ||
+                    !formData.color
+                      ? []
+                      : [formData.color]),
+                  ].map((color) => {
+                    const esHex = color.startsWith("#");
+                    return (
+                      <button
+                        key={color}
+                        type="button"
+                        className={`${style.taskColorButton} ${esHex ? "" : style[color]} ${
+                          formData.color === color ? style.taskColorSelected : ""
+                        }`}
+                        style={esHex ? { background: color } : undefined}
+                        onClick={() => handleColorSelect(color)}
+                        aria-label={`Elegir color ${color}`}
+                      />
+                    );
+                  })}
+                  <label className={style.taskColorMas} title="Elegir otro color">
+                    <FiPlus />
+                    <input
+                      type="color"
+                      value={formData.color?.startsWith?.("#") ? formData.color : "#5dc72d"}
+                      onChange={(e) => {
+                        const c = e.target.value.toLowerCase();
+                        setTaskColoresExtra((prev) => (prev.includes(c) ? prev : [...prev, c]));
+                        handleColorSelect(c);
+                      }}
                     />
-                  ))}
+                  </label>
                 </div>
               </div>
 
