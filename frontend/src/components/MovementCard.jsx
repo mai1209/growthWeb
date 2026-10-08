@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import {
   FiArrowDown,
@@ -338,7 +339,7 @@ export default function MovementCard({
         </p>
       ) : null}
 
-      {settleOpen ? (
+      {settleOpen ? createPortal(
         <div className={style.settleOverlay} onClick={() => setSettleOpen(false)}>
           <div
             className={style.settleModal}
@@ -401,7 +402,8 @@ export default function MovementCard({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </article>
   );

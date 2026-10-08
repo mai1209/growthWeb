@@ -2469,3 +2469,44 @@
     min-width: 0;
   }
 }
+
+/* ---- Popup "Pagar deuda": por encima de todo, más cuadrado y con letra más chica ---- */
+.settleOverlay {
+  z-index: 5000;
+}
+
+.settleModal {
+  max-width: 340px;
+  gap: 0.6rem;
+  padding: 1.1rem 1.15rem;
+  border-radius: 12px;
+}
+
+.settleModalTitle {
+  font-size: 0.98rem;
+}
+
+.settleModalSub {
+  font-size: 0.78rem;
+}
+
+.settleModal .modeBtn {
+  min-height: 36px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+
+.settleModal .input {
+  min-height: 40px;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
+.settleModal .cancelDebtButton,
+.settleModal .confirmDebtButton {
+  min-height: 34px;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+}
