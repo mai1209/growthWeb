@@ -529,8 +529,8 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
                       style={{ height: 320, width: "100%", borderRadius: 12 }}
                     >
                       <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
                       />
                       {/* halo ancho tenue: donde se superponen más rutas, más brillo */}
                       {heatLL.map((r, i) => (
@@ -558,8 +558,8 @@ function RecorridosModalWeb({ hoy, onClose, onCaminatas }) {
                     style={{ height: 320, width: "100%", borderRadius: 12 }}
                   >
                     <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                      url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
                     {/* Ruta completa, tenue, de fondo */}
                     <Polyline positions={rutaLL} pathOptions={{ color: "#5dc72d", weight: 5, opacity: 0.35 }} />
