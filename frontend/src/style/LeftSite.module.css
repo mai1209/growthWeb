@@ -2362,3 +2362,21 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   font-size: 0.76rem;
 }
+
+/* ---- Panel izquierdo del Home: arranca a la altura de "Panel de movimientos"
+        y las flechas del historial van solas, sin círculo de fondo ---- */
+.container {
+  padding-top: 2rem;
+}
+
+.movIcon {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+}
+
+.movIcon svg {
+  width: 18px;
+  height: 18px;
+}
