@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -33,7 +34,30 @@ import {
   formatDayLabel,
 } from "../utils/finance";
 
-const TYPE_FILTERS = [{ value: "all", label: "Todos" }, ...MOVEMENT_TYPE_OPTIONS];
+// Filtros (mismas opciones que la web)
+const TYPE_FILTERS = [
+  { value: "all", label: "Todos" },
+  ...MOVEMENT_TYPE_OPTIONS,
+  { value: "usar_ahorro", label: "Usar ahorro" },
+  { value: "ingreso_fijo", label: "Ingreso fijo" },
+  { value: "gasto_fijo", label: "Gasto fijo" },
+];
+const RECURRENCE_FILTERS = [
+  { value: "all", label: "Todos" },
+  { value: "manual", label: "Manual" },
+  { value: "fixed", label: "Fijos" },
+];
+const METHOD_FILTERS = [
+  { value: "all", label: "Todos" },
+  { value: "efectivo", label: "Efectivo" },
+  { value: "transferencia", label: "Transferencia" },
+];
+const PICKERS = {
+  type: { title: "Tipo", options: TYPE_FILTERS, icon: "funnel-outline" },
+  recurrence: { title: "Origen", options: RECURRENCE_FILTERS, icon: "repeat-outline" },
+  method: { title: "Medio", options: METHOD_FILTERS, icon: "card-outline" },
+};
+const optionLabel = (options, value) => options.find((o) => o.value === value)?.label || "Todos";
 
 // Colores por tipo (mismos que Métricas/web) para resumen y distribución
 const TYPE_COLORS = {
@@ -143,6 +167,9 @@ export default function FiltrosScreen() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [type, setType] = useState("all");
+  const [recurrence, setRecurrence] = useState("all");
+  const [method, setMethod] = useState("all");
+  const [openPicker, setOpenPicker] = useState(null);
   const [editMov, setEditMov] = useState(null);
   const [settleDebt, setSettleDebt] = useState(null);
   // Facturación (ARCA): si el perfil la tiene activa mostramos "Emitir factura"
@@ -257,7 +284,19 @@ export default function FiltrosScreen() {
       } else if (type === "egreso") {
         // Egreso excluye los usos de ahorro (viven en Ahorro)
         if (t !== "egreso" || m.desdeAhorro) return false;
+      } else if (type === "usar_ahorro") {
+        if (t !== "egreso" || !m.desdeAhorro) return false;
+      } else if (type === "ingreso_fijo") {
+        if (t !== "ingreso" || !m.esRecurrente) return false;
+      } else if (type === "gasto_fijo") {
+        if (t !== "egreso" || !m.esRecurrente || m.desdeAhorro) return false;
       } else if (type !== "all" && t !== type) return false;
+      if (recurrence === "fixed" && !m.esRecurrente) return false;
+      if (recurrence === "manual" && m.esRecurrente) return false;
+      if (method !== "all") {
+        if (t === "deuda" && m.deudaEstado !== "pagada") return false;
+        if (m.medio !== method) return false;
+      }
       if (!q) return true;
       const hay = [m.categoria, m.detalle, m.deudaAcreedor, m.tipo]
         .filter(Boolean)
@@ -305,7 +344,7 @@ export default function FiltrosScreen() {
       })),
       monthBreakdown: breakdown,
     };
-  }, [movimientos, currency, month, year, period, search, type]);
+  }, [movimientos, currency, month, year, period, search, type, recurrence, method]);
 
   const monthLabel = month.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
   const monthShort = month.toLocaleDateString("es-AR", { month: "short", year: "numeric" });
@@ -569,59 +608,102 @@ export default function FiltrosScreen() {
             <Ionicons name="funnel-outline" size={15} color={filtersOpen ? "#06210a" : colors.greenDark} />
             <Text style={[styles.filterToggleText, filtersOpen && { color: "#06210a" }]}>Filtrar</Text>
           </TouchableOpacity>
-          {search || type !== "all" ? (
-            <TouchableOpacity
-              style={styles.clearTop}
-              onPress={() => {
-                setSearch("");
-                setType("all");
-              }}
-            >
-              <Ionicons name="close" size={14} color={colors.red} />
-              <Text style={styles.clearTopText}>Limpiar</Text>
-            </TouchableOpacity>
-          ) : null}
         </View>
       </View>
 
-      {/* Panel de filtros: búsqueda + chips en una línea */}
+      {/* Panel de filtros (como la web): búsqueda, tipo, origen, medio y limpiar */}
       {filtersOpen && (
         <View style={styles.filtersPanel}>
-          <View style={styles.searchBox}>
-            <Ionicons name="search" size={16} color={colors.muted} />
-            <TextInput
-              style={styles.searchInput}
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Categoría, detalle o tipo"
-              placeholderTextColor={colors.muted}
-            />
-            {search ? (
-              <TouchableOpacity onPress={() => setSearch("")} hitSlop={8}>
-                <Ionicons name="close-circle" size={16} color={colors.muted} />
-              </TouchableOpacity>
-            ) : null}
+          <View style={styles.filterField}>
+            <Text style={styles.fieldLabel}>Búsqueda</Text>
+            <View style={styles.searchBox}>
+              <TextInput
+                style={styles.searchInput}
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Buscar por categoría, detalle o tipo"
+                placeholderTextColor={colors.muted}
+              />
+              {search ? (
+                <TouchableOpacity onPress={() => setSearch("")} hitSlop={8}>
+                  <Ionicons name="close-circle" size={16} color={colors.muted} />
+                </TouchableOpacity>
+              ) : (
+                <Ionicons name="search" size={15} color={colors.muted} />
+              )}
+            </View>
           </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.typeRow}
-          >
-            {TYPE_FILTERS.map((t) => (
-              <TouchableOpacity
-                key={t.value}
-                style={[styles.typeChip, type === t.value && styles.typeChipActive]}
-                onPress={() => setType(t.value)}
-              >
-                <Text style={[styles.typeChipText, type === t.value && styles.typeChipTextActive]}>
-                  {t.label}
-                </Text>
-              </TouchableOpacity>
+
+          <View style={styles.pickerRow}>
+            {[
+              ["type", type],
+              ["recurrence", recurrence],
+              ["method", method],
+            ].map(([key, value]) => (
+              <View key={key} style={styles.filterField}>
+                <Text style={styles.fieldLabel}>{PICKERS[key].title}</Text>
+                <TouchableOpacity style={styles.filterTrigger} onPress={() => setOpenPicker(key)}>
+                  <Ionicons name={PICKERS[key].icon} size={13} color={colors.greenBright} />
+                  <Text style={styles.filterTriggerText} numberOfLines={1}>
+                    {optionLabel(PICKERS[key].options, value)}
+                  </Text>
+                  <Ionicons name="chevron-down" size={13} color={colors.muted} />
+                </TouchableOpacity>
+              </View>
             ))}
-          </ScrollView>
+          </View>
+
+          <TouchableOpacity
+            style={styles.clearBtn}
+            onPress={() => {
+              setSearch("");
+              setType("all");
+              setRecurrence("all");
+              setMethod("all");
+            }}
+          >
+            <Ionicons name="trash-outline" size={14} color={colors.greenBright} />
+            <Text style={styles.clearBtnText}>Limpiar filtros</Text>
+          </TouchableOpacity>
         </View>
       )}
+
+      {/* Selector de opciones (Tipo / Origen / Medio) */}
+      <Modal
+        visible={Boolean(openPicker)}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setOpenPicker(null)}
+      >
+        <TouchableOpacity style={styles.pickerOverlay} activeOpacity={1} onPress={() => setOpenPicker(null)}>
+          <View style={styles.pickerSheet} onStartShouldSetResponder={() => true}>
+            <View style={styles.pickerHandle} />
+            <Text style={styles.pickerTitle}>{openPicker ? PICKERS[openPicker].title : ""}</Text>
+            {(openPicker ? PICKERS[openPicker].options : []).map((opt) => {
+              const current =
+                openPicker === "type" ? type : openPicker === "recurrence" ? recurrence : method;
+              const active = current === opt.value;
+              return (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[styles.pickerOption, active && styles.pickerOptionActive]}
+                  onPress={() => {
+                    if (openPicker === "type") setType(opt.value);
+                    else if (openPicker === "recurrence") setRecurrence(opt.value);
+                    else setMethod(opt.value);
+                    setOpenPicker(null);
+                  }}
+                >
+                  <Text style={[styles.pickerOptionText, active && styles.pickerOptionTextActive]}>
+                    {opt.label}
+                  </Text>
+                  {active ? <Ionicons name="checkmark" size={15} color="#06210a" /> : null}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Totales del mes: fila compacta deslizable, FIJA */}
       <View style={styles.summaryWrap}>
@@ -914,18 +996,6 @@ const makeStyles = (colors) => StyleSheet.create({
   monthNav: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   monthLabel: { color: colors.text, fontSize: 17, fontWeight: "800", textTransform: "capitalize" },
   topActions: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
-  clearTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingVertical: 7,
-    paddingHorizontal: 11,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.redSoft,
-    backgroundColor: colors.redSoft,
-  },
-  clearTopText: { color: colors.red, fontWeight: "800", fontSize: 12.5 },
   currencySwitch: {
     flexDirection: "row",
     gap: 4,
@@ -963,6 +1033,8 @@ const makeStyles = (colors) => StyleSheet.create({
     borderRadius: 10,
     padding: 14,
   },
+  filterField: { flex: 1, minWidth: 0, gap: 5 },
+  fieldLabel: { color: colors.muted, fontSize: 11, fontWeight: "700", letterSpacing: 0.2 },
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
@@ -971,33 +1043,67 @@ const makeStyles = (colors) => StyleSheet.create({
     borderColor: colors.cardBorder,
     borderRadius: 8,
     paddingHorizontal: 12,
-    backgroundColor: colors.bg,
+    backgroundColor: "transparent",
   },
-  searchInput: { flex: 1, paddingVertical: 10, color: colors.text, fontSize: 15 },
-  typeRow: { flexDirection: "row", gap: 8, paddingRight: 8 },
-  typeChip: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.bg,
-  },
-  typeChipActive: { backgroundColor: "#75f94c", borderColor: "#75f94c" },
-  typeChipText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
-  typeChipTextActive: { color: "#06210a", fontWeight: "800" },
-  clearChip: {
+  searchInput: { flex: 1, paddingVertical: 9, color: colors.text, fontSize: 12.5 },
+  pickerRow: { flexDirection: "row", gap: 8 },
+  filterTrigger: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    gap: 5,
     borderWidth: 1,
-    borderColor: colors.redSoft,
-    backgroundColor: colors.redSoft,
+    borderColor: colors.cardBorder,
+    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 9,
+    backgroundColor: "transparent",
   },
-  clearChipText: { color: colors.red, fontWeight: "700", fontSize: 13 },
+  filterTriggerText: { flex: 1, color: colors.text, fontWeight: "700", fontSize: 12 },
+  clearBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 8,
+    paddingVertical: 9,
+    backgroundColor: "transparent",
+  },
+  clearBtnText: { color: colors.text, fontWeight: "700", fontSize: 12.5 },
+  pickerOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },
+  pickerSheet: {
+    backgroundColor: colors.bg,
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    padding: 16,
+    paddingBottom: 28,
+    gap: 6,
+  },
+  pickerHandle: {
+    alignSelf: "center",
+    width: 38,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: colors.cardBorder,
+    marginBottom: 6,
+  },
+  pickerTitle: { color: colors.text, fontSize: 13, fontWeight: "700", marginBottom: 4 },
+  pickerOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  pickerOptionActive: { backgroundColor: "#75f94c", borderColor: "#75f94c" },
+  pickerOptionText: { color: colors.text, fontWeight: "700", fontSize: 13 },
+  pickerOptionTextActive: { color: "#06210a", fontWeight: "800" },
 
   error: { color: colors.red, padding: 16 },
   empty: { color: colors.muted, padding: 16, textAlign: "center" },
