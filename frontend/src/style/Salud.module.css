@@ -1991,3 +1991,61 @@
   border: none;
   padding: 0;
 }
+
+/* ---- Movilidad: Peso compacto (le deja más lugar a Caminatas),
+        subtítulos más chicos, tiles del resumen más livianos ---- */
+.trioRow > section:first-child {
+  flex: 0 1 300px;
+}
+
+.trioRow > section:nth-child(2) {
+  flex: 1 1 420px;
+}
+
+.pesoFila {
+  justify-content: flex-start;
+  gap: 1.2rem;
+}
+
+.pesoNum {
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.pesoForm input {
+  width: 72px;
+  padding: 0.45rem 0.5rem;
+  border-radius: 7px;
+  background: transparent;
+}
+
+.pesoForm button {
+  padding: 0.45rem 0.8rem;
+  border-radius: 7px;
+  background: #75f94c;
+  color: #06210a;
+  font-size: 0.82rem;
+}
+
+.cardHead h2 {
+  font-size: 0.88rem;
+}
+
+.cardHead h2 :global(svg) {
+  width: 14px;
+  height: 14px;
+}
+
+.resTile {
+  padding: 0.65rem 0.4rem;
+}
+
+.resTile strong {
+  font-size: 1.25rem;
+}
+
+@media (max-width: 760px) {
+  .resumenTiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
