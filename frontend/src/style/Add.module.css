@@ -1487,3 +1487,40 @@
 }
 
 /* En tema claro el color fuerte se ve igual; sólo cambia el fondo de atrás */
+
+/* Tema claro: mismo color fuerte y mismos campos oscuros (las reglas viejas
+   del tema claro ponían degradado y campos blancos) */
+:global(body[data-theme="light"]) .formIngreso { background: #75f94c; border-color: transparent; }
+:global(body[data-theme="light"]) .formEgreso { background: #ff7b6b; border-color: transparent; }
+:global(body[data-theme="light"]) .formAhorro { background: #58eba4; border-color: transparent; }
+:global(body[data-theme="light"]) .formDeuda { background: #ffd55c; border-color: transparent; }
+
+:global(body[data-theme="light"]) .formCard .inputMonto,
+:global(body[data-theme="light"]) .formCard .btn,
+:global(body[data-theme="light"]) .formCard .detalle,
+:global(body[data-theme="light"]) .formCard .datePicker,
+:global(body[data-theme="light"]) .formCard .select,
+:global(body[data-theme="light"]) .formCard .input {
+  background: rgba(0, 0, 0, 0.22);
+  border-color: rgba(0, 0, 0, 0.28);
+  color: #ffffff;
+}
+
+:global(body[data-theme="light"]) .formCard .inputMonto::placeholder,
+:global(body[data-theme="light"]) .formCard .btn::placeholder,
+:global(body[data-theme="light"]) .formCard .detalle::placeholder,
+:global(body[data-theme="light"]) .formCard .datePicker::placeholder {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+:global(body[data-theme="light"]) .formCard .currencySwitch,
+:global(body[data-theme="light"]) .formCard .methodSwitch {
+  background: rgba(0, 0, 0, 0.22);
+  border-color: transparent;
+}
+
+:global(body[data-theme="light"]) .formCard .buttonSend {
+  background: #0e1a0e;
+  color: #ffffff;
+  border-color: transparent;
+}
