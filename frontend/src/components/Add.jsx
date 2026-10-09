@@ -621,7 +621,8 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
                 value={deudaAcreedor}
                 onChange={(event) => setDeudaAcreedor(capitalizarPrimera(event.target.value))}
                 required
-              />
+              autoComplete="off"
+                />
             </div>
 
           </div>
@@ -662,7 +663,8 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
               placeholder="Agrega una referencia, nota breve o descripcion"
               value={detalle}
               onChange={(event) => setDetalle(capitalizarPrimera(event.target.value))}
-            />
+            autoComplete="off"
+                />
           </div>
 
           <div className={style.submitWrap}>

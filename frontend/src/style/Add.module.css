@@ -1647,3 +1647,17 @@
 .fieldGridTriple > .field {
   min-width: 0;
 }
+
+/* Si el navegador igual autocompleta, el relleno toma el color de cada tarjeta (no negro) */
+.formIngreso .btn:-webkit-autofill,
+.formIngreso .detalle:-webkit-autofill,
+.formIngreso .inputMonto:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #6ee344 inset; -webkit-text-fill-color: #0e1a0e; }
+.formEgreso .btn:-webkit-autofill,
+.formEgreso .detalle:-webkit-autofill,
+.formEgreso .inputMonto:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #ec7261 inset; -webkit-text-fill-color: #0e1a0e; }
+.formAhorro .btn:-webkit-autofill,
+.formAhorro .detalle:-webkit-autofill,
+.formAhorro .inputMonto:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #52d996 inset; -webkit-text-fill-color: #0e1a0e; }
+.formDeuda .btn:-webkit-autofill,
+.formDeuda .detalle:-webkit-autofill,
+.formDeuda .inputMonto:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #ecc654 inset; -webkit-text-fill-color: #0e1a0e; }
