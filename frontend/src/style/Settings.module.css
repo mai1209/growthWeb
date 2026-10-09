@@ -1857,3 +1857,94 @@
   color: var(--color-muted);
   margin: 0.4rem 0 0.9rem;
 }
+
+/* ---- Borrar datos de finanzas ---- */
+.wipeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #e5484d;
+  background: transparent;
+  color: #e5484d;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.wipeBtn:hover {
+  background: rgba(229, 72, 77, 0.12);
+}
+
+.wipeOk {
+  margin: 0;
+  color: var(--color-verde, #75f94c);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.wipeErr {
+  margin: 0;
+  color: #e5484d;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.wipeModal {
+  max-width: 420px;
+  border-radius: 14px;
+  background: var(--background-color, #071821);
+}
+
+.wipeModal h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 1rem;
+}
+
+.wipeModal h3 svg {
+  color: #e5484d;
+}
+
+.wipeInput {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.wipeInput:focus {
+  outline: none;
+  border-color: #e5484d;
+}
+
+.wipeCancel,
+.wipeConfirm {
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.wipeConfirm {
+  border-color: #e5484d;
+  background: #e5484d;
+  color: #ffffff;
+}
+
+.wipeConfirm:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

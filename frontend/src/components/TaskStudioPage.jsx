@@ -1890,8 +1890,13 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     setIsEditorOpen(true);
   };
 
-  // Borrar = mandar a la papelera (se puede restaurar). Sin confirmación: es reversible.
-  const handleDelete = async (taskId) => {
+  // Confirmación de borrado de notas en popup: { tipo: "papelera"|"definitivo"|"vaciar", id }
+  const [confirmNota, setConfirmNota] = useState(null);
+
+  // Borrar = mandar a la papelera (se puede restaurar). Pide confirmación en popup.
+  const handleDelete = (taskId) => setConfirmNota({ tipo: "papelera", id: taskId });
+
+  const moverAPapelera = async (taskId) => {
     const snapshot = tasks;
     setTasks((prev) =>
       prev.map((task) =>
@@ -1923,8 +1928,9 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     }
   };
 
-  const eliminarDefinitivo = async (taskId) => {
-    if (!window.confirm("¿Eliminar esta nota para siempre? No se puede deshacer.")) return;
+  const eliminarDefinitivo = (taskId) => setConfirmNota({ tipo: "definitivo", id: taskId });
+
+  const eliminarDefinitivoConfirmado = async (taskId) => {
     try {
       await taskService.delete(taskId);
       setTasks((prev) => prev.filter((task) => task._id !== taskId));
@@ -1933,10 +1939,14 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     }
   };
 
-  const vaciarPapelera = async () => {
+  const vaciarPapelera = () => {
+    if (!tasks.some((task) => task.papelera)) return;
+    setConfirmNota({ tipo: "vaciar", id: null });
+  };
+
+  const vaciarPapeleraConfirmado = async () => {
     const enPapelera = tasks.filter((task) => task.papelera);
     if (!enPapelera.length) return;
-    if (!window.confirm(`¿Vaciar la papelera? Se eliminan ${enPapelera.length} nota${enPapelera.length === 1 ? "" : "s"} para siempre.`)) return;
     try {
       await Promise.all(enPapelera.map((task) => taskService.delete(task._id)));
       setTasks((prev) => prev.filter((task) => !task.papelera));
@@ -1977,8 +1987,53 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditorOpen]);
 
+  const confirmarBorradoNota = async () => {
+    if (!confirmNota) return;
+    const { tipo, id } = confirmNota;
+    setConfirmNota(null);
+    if (tipo === "papelera") await moverAPapelera(id);
+    else if (tipo === "definitivo") await eliminarDefinitivoConfirmado(id);
+    else await vaciarPapeleraConfirmado();
+  };
+  const enPapeleraCount = tasks.filter((task) => task.papelera).length;
+
   return (
     <section className={style.page}>
+      {confirmNota ? (
+        <div
+          className={style.tagPopupOverlay}
+          role="presentation"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setConfirmNota(null);
+          }}
+        >
+          <div className={style.tagPopup} role="dialog" aria-label="Confirmar">
+            <p className={style.tagPopupTitle}>
+              <FiTrash2 />{" "}
+              {confirmNota.tipo === "papelera"
+                ? "¿Mover esta nota a la papelera?"
+                : confirmNota.tipo === "definitivo"
+                  ? "¿Eliminar esta nota para siempre?"
+                  : "¿Vaciar la papelera?"}
+            </p>
+            <p className={style.confirmText}>
+              {confirmNota.tipo === "papelera"
+                ? "La vas a poder restaurar desde la papelera."
+                : confirmNota.tipo === "definitivo"
+                  ? "No se puede deshacer."
+                  : `Se eliminan ${enPapeleraCount} nota${enPapeleraCount === 1 ? "" : "s"} para siempre. No se puede deshacer.`}
+            </p>
+            <div className={style.tagPopupActions}>
+              <button type="button" className={style.tagPopupCancel} onClick={() => setConfirmNota(null)}>
+                Cancelar
+              </button>
+              <button type="button" className={style.confirmDanger} onClick={confirmarBorradoNota}>
+                {confirmNota.tipo === "papelera" ? "Mover a la papelera" : "Eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {tagPopup ? (
         <div
           className={style.tagPopupOverlay}

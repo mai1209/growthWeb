@@ -8,6 +8,7 @@ import {
   getAllIncomeEgress,
   settleDebtMovement,
   emitirFacturaMovimiento,
+  deleteAllIncomeEgress,
 } from "../controllers/ingresoEgresoController.js";
 import { requireAuth } from "../middlewares/authJwt.js";
 
@@ -24,6 +25,9 @@ router.get("/", requireAuth, getIncomeEgress);
 // Obtener todos los movimientos
 // GET /api/add/all
 router.get("/all", requireAuth, getAllIncomeEgress);
+
+// 🧹 Borrar todos los datos de finanzas del usuario (antes de las rutas /:id)
+router.delete("/all", requireAuth, deleteAllIncomeEgress);
 
 // Marcar deuda como pagada
 // POST /api/add/:id/settle-debt

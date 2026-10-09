@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiChevronDown, FiFileText, FiHeart, FiInfo, FiLink, FiLock, FiMoon, FiSettings } from "react-icons/fi";
+import { FiChevronDown, FiFileText, FiHeart, FiInfo, FiLink, FiLock, FiMoon, FiSettings, FiTrash2 } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 import style from "../style/SettingsSidePanel.module.css";
 
@@ -33,6 +33,12 @@ const OPTIONS = [
     label: "Apoyar Growth",
     description: "Colaborá para mantener la app.",
     icon: FiHeart,
+  },
+  {
+    to: "/ajustes?tab=datos",
+    label: "Borrar datos",
+    description: "Empezá de cero en Finanzas.",
+    icon: FiTrash2,
   },
 ];
 

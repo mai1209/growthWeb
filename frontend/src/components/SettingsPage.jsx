@@ -31,8 +31,9 @@ import {
   FiUpload,
   FiUser,
   FiX,
+  FiAlertTriangle,
 } from "react-icons/fi";
-import { authService, googleService, fiscalService, communityService } from "../api";
+import { authService, googleService, fiscalService, communityService, movimientoService } from "../api";
 import PhotoCropper from "./PhotoCropper";
 import ApoyarPage from "./ApoyarPage";
 import PostCard from "./comunidad/PostCard";
@@ -45,6 +46,11 @@ import { COMUNIDAD_HABILITADA } from "../config";
 import style from "../style/Settings.module.css";
 
 const TAB_META = {
+  datos: {
+    title: "Borrar datos",
+    text: "Borrá todos los movimientos de Finanzas y empezá de cero.",
+    icon: FiTrash2,
+  },
   password: {
     title: "Cambiar contraseña",
     text: "Actualiza tu clave desde la sesión iniciada.",
@@ -118,6 +124,31 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
     : TAB_META[searchParams.get("tab")]
     ? searchParams.get("tab")
     : "tema";
+
+  // Borrar datos de finanzas: modal con confirmación escrita
+  const [wipeOpen, setWipeOpen] = useState(false);
+  const [wipeText, setWipeText] = useState("");
+  const [wipeBusy, setWipeBusy] = useState(false);
+  const [wipeResult, setWipeResult] = useState(null); // { ok, text }
+
+  const borrarFinanzas = async () => {
+    if (wipeText.trim().toUpperCase() !== "BORRAR" || wipeBusy) return;
+    setWipeBusy(true);
+    setWipeResult(null);
+    try {
+      const { data } = await movimientoService.deleteAll();
+      setWipeOpen(false);
+      setWipeText("");
+      setWipeResult({
+        ok: true,
+        text: `Listo: se borraron ${data.movimientos} movimiento${data.movimientos === 1 ? "" : "s"} y ${data.categorias} categoría${data.categorias === 1 ? "" : "s"}.`,
+      });
+    } catch (err) {
+      setWipeResult({ ok: false, text: err.response?.data?.error || "No se pudieron borrar los datos." });
+    } finally {
+      setWipeBusy(false);
+    }
+  };
 
   const [profile, setProfile] = useState({
     username: "",
@@ -1765,6 +1796,66 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
       ) : null}
 
       {activeTab === "apoyar" ? <ApoyarPage embedded /> : null}
+
+      {activeTab === "datos" ? (
+        <section className={style.card}>
+          <div className={style.businessHeader}>
+            <div>
+              <p className={style.kicker}>Ajustes</p>
+              <h2>Borrar datos de finanzas</h2>
+            </div>
+          </div>
+          <p className={style.themeIntro}>
+            Borra <strong>todos</strong> tus movimientos (ingresos, egresos, ahorros, deudas y fijos, de
+            todos los espacios) y tus categorías, para arrancar de cero. Las notas, tareas, metas y lo
+            de salud no se tocan. <strong>No se puede deshacer.</strong>
+          </p>
+          <div>
+            <button type="button" className={style.wipeBtn} onClick={() => { setWipeResult(null); setWipeText(""); setWipeOpen(true); }}>
+              <FiTrash2 /> Borrar todos los datos de finanzas
+            </button>
+          </div>
+          {wipeResult ? (
+            <p className={wipeResult.ok ? style.wipeOk : style.wipeErr}>{wipeResult.text}</p>
+          ) : null}
+
+          {wipeOpen ? (
+            <div className={style.modalOverlay} onClick={() => !wipeBusy && setWipeOpen(false)} role="presentation">
+              <div className={`${style.modalCard} ${style.wipeModal}`} onClick={(e) => e.stopPropagation()}>
+                <div className={style.modalHead}>
+                  <h3><FiAlertTriangle /> ¿Seguro que querés borrar todo?</h3>
+                </div>
+                <p className={style.themeIntro}>
+                  Se van a eliminar todos tus movimientos y categorías de Finanzas. Para confirmar,
+                  escribí <strong>BORRAR</strong>.
+                </p>
+                <input
+                  type="text"
+                  className={style.wipeInput}
+                  value={wipeText}
+                  onChange={(e) => setWipeText(e.target.value)}
+                  placeholder="BORRAR"
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === "Enter") borrarFinanzas(); }}
+                />
+                <div className={style.modalActions}>
+                  <button type="button" className={style.wipeCancel} onClick={() => setWipeOpen(false)} disabled={wipeBusy}>
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className={style.wipeConfirm}
+                    onClick={borrarFinanzas}
+                    disabled={wipeBusy || wipeText.trim().toUpperCase() !== "BORRAR"}
+                  >
+                    {wipeBusy ? "Borrando…" : "Sí, borrar todo"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       {false ? (
         <section className={style.card}>

@@ -5799,3 +5799,29 @@ button.folderItem {
   font-size: 0.8rem;
   font-weight: 700;
 }
+
+/* Popup de confirmación al borrar notas */
+.confirmText {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.confirmDanger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid #e5484d;
+  background: transparent;
+  color: #e5484d;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.confirmDanger:hover {
+  background: rgba(229, 72, 77, 0.12);
+}

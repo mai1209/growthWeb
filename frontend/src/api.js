@@ -104,6 +104,8 @@ export const movimientoService = {
   settleDebt: (id, data) => api.post(`/api/add/${id}/settle-debt`, data),
   emitirFactura: (id) => api.post(`/api/add/${id}/factura`),
   delete: (id) => api.delete(`/api/add/${id}`),
+  // 🧹 Borrar todos los movimientos y categorías (empezar de cero)
+  deleteAll: () => api.delete("/api/add/all", { data: { confirmar: "BORRAR" } }),
 };
 
 export const categoriesService = {

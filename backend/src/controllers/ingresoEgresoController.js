@@ -1,5 +1,6 @@
 import IngresoEgresoModel from "../models/ingresoEgresoModel.js";
 import FiscalConfigModel from "../models/fiscalConfigModel.js";
+import CategoryModel from "../models/categoryModel.js";
 import mongoose from 'mongoose';
 
 // Carga perezosa del servicio de facturación: si el paquete @afipsdk/afip.js
@@ -578,5 +579,23 @@ export const emitirFacturaMovimiento = async (req, res) => {
   } catch (error) {
     console.error("Error al emitir factura:", error);
     res.status(500).json({ error: error.message || "No se pudo emitir la factura." });
+  }
+};
+
+// 🧹 Borra TODOS los movimientos del usuario (ingresos, egresos, ahorros,
+// deudas, fijos, de todos los espacios) y sus categorías. Pensado para
+// "empezar de cero" desde Ajustes. Requiere confirmación explícita en el body.
+export const deleteAllIncomeEgress = async (req, res) => {
+  try {
+    if (req.body?.confirmar !== "BORRAR") {
+      return res.status(400).json({ error: "Falta la confirmación." });
+    }
+    const userId = req.user.id;
+    const movs = await IngresoEgresoModel.deleteMany({ usuario: userId });
+    const cats = await CategoryModel.deleteMany({ usuario: userId });
+    res.json({ ok: true, movimientos: movs.deletedCount || 0, categorias: cats.deletedCount || 0 });
+  } catch (error) {
+    console.error("Error al borrar los datos de finanzas:", error);
+    res.status(500).json({ error: "No se pudieron borrar los datos." });
   }
 };
