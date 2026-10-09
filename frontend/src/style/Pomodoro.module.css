@@ -661,3 +661,25 @@
   font-size: 0.92rem;
   font-weight: 700;
 }
+
+/* ---- Cabecera: título chico y a la izquierda; ajustes sin fondo, en blanco ---- */
+.header {
+  text-align: left;
+  justify-content: flex-start;
+}
+
+.header h1 {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.gearBtn,
+.gearBtn:hover {
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+}
+
+.gearBtn:hover {
+  opacity: 0.75;
+}
