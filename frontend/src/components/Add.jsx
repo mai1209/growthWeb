@@ -585,11 +585,11 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
             <div className={style.fieldLabelRow}>
               <label className={style.fieldLabel}>Medio</label>
               <span className={style.fieldTag}>
-                {medio === "transferencia" ? "Digital" : medio === "credito" ? "Virtual" : "Fisico"}
+                {medio === "transferencia" ? "Digital" : "Fisico"}
               </span>
             </div>
 
-            {/* Efectivo / Transferencia / Crédito (virtual: tarjeta, Mercado Pago…) */}
+            {/* Efectivo / Transferencia */}
             <div className={style.methodChips}>
               {MOVEMENT_METHOD_OPTIONS.map((option) => (
                 <button

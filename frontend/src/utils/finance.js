@@ -21,8 +21,6 @@ export const RECURRENCE_OPTIONS = [
 export const MOVEMENT_METHOD_OPTIONS = [
   { value: "efectivo", label: "Efectivo" },
   { value: "transferencia", label: "Transferencia" },
-  // Crédito / virtual (tarjeta, Mercado Pago, etc.): plata que no es física
-  { value: "credito", label: "Crédito" },
 ];
 
 export const normalizeCurrency = (currency) =>
