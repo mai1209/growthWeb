@@ -67,7 +67,7 @@ function SparkMini({ data, color, amp = 1, width = 74, height = 22 }) {
 }
 
 // Anillo del resumen: composición por tipo con el saldo neto al centro
-function RingNeto({ items, size = 140, stroke = 18, colors, centerTitle, centerSub }) {
+function RingNeto({ items, size = 140, stroke = 8, colors, centerTitle, centerSub }) {
   const data = items.filter((i) => i.value > 0);
   const total = data.reduce((a, i) => a + i.value, 0);
   const r = (size - stroke) / 2;
@@ -806,8 +806,8 @@ export default function FiltrosScreen() {
               <View style={styles.movCard}>
                 {/* Ícono único por tipo, monocromo (como la web); el circulito
                     conserva el tinte del tipo de movimiento. */}
-                <View style={[styles.movIcon, { borderColor: meta.color + "55", backgroundColor: meta.color + "1f" }]}>
-                  <Ionicons name={movementIcon(item)} size={19} color={colors.text} />
+                <View style={styles.movIcon}>
+                  <Ionicons name={movementIcon(item)} size={22} color={meta.color} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.movTitle}>{item.categoria || "Sin categoría"}</Text>
@@ -837,7 +837,7 @@ export default function FiltrosScreen() {
                       style={styles.payDebtBtn}
                       onPress={() => setSettleDebt(item)}
                     >
-                      <Ionicons name="cash-outline" size={15} color="#3a2d05" />
+                      <Ionicons name="cash-outline" size={15} color="#e0b32e" />
                       <Text style={styles.payDebtText}>Pagar deuda</Text>
                     </TouchableOpacity>
                   ) : null}
@@ -946,11 +946,11 @@ const makeStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    borderRadius: 12,
+    borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
-  filterToggleActive: { backgroundColor: colors.greenDark, borderColor: colors.greenDark },
+  filterToggleActive: { backgroundColor: "#75f94c", borderColor: "#75f94c" },
   filterToggleText: { color: colors.text, fontWeight: "700", fontSize: 13 },
 
   filtersPanel: {
@@ -960,7 +960,7 @@ const makeStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.bg, // sin relleno: solo borde, como las cards del Home
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    borderRadius: 16,
+    borderRadius: 10,
     padding: 14,
   },
   searchBox: {
@@ -969,7 +969,7 @@ const makeStyles = (colors) => StyleSheet.create({
     gap: 8,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    borderRadius: 12,
+    borderRadius: 8,
     paddingHorizontal: 12,
     backgroundColor: colors.bg,
   },
@@ -978,21 +978,21 @@ const makeStyles = (colors) => StyleSheet.create({
   typeChip: {
     paddingVertical: 8,
     paddingHorizontal: 14,
-    borderRadius: 999,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     backgroundColor: colors.bg,
   },
-  typeChipActive: { backgroundColor: colors.segActive, borderColor: colors.segActive },
+  typeChipActive: { backgroundColor: "#75f94c", borderColor: "#75f94c" },
   typeChipText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
-  typeChipTextActive: { color: colors.segActiveText, fontWeight: "800" },
+  typeChipTextActive: { color: "#06210a", fontWeight: "800" },
   clearChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 999,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.redSoft,
     backgroundColor: colors.redSoft,
@@ -1009,7 +1009,7 @@ const makeStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.bg, // sin relleno: solo borde, como las cards del Home
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    borderRadius: 14,
+    borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
@@ -1023,7 +1023,7 @@ const makeStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.bg, // sin relleno: solo borde, como las cards del Home
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    borderRadius: 16,
+    borderRadius: 10,
     padding: 14,
   },
   resumenTitle: {
@@ -1048,7 +1048,7 @@ const makeStyles = (colors) => StyleSheet.create({
   distLabel: { width: 62, color: colors.muted, fontSize: 11.5, fontWeight: "700" },
   distTrack: {
     flex: 1,
-    height: 8,
+    height: 4,
     borderRadius: 999,
     backgroundColor: colors.cardBorder,
     overflow: "hidden",
@@ -1100,7 +1100,7 @@ const makeStyles = (colors) => StyleSheet.create({
     flexDirection: "row",
     gap: 3,
     padding: 3,
-    borderRadius: 999,
+    borderRadius: 9,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     backgroundColor: colors.card,
@@ -1111,7 +1111,7 @@ const makeStyles = (colors) => StyleSheet.create({
     gap: 6,
     paddingHorizontal: 8,
     paddingVertical: 5,
-    borderRadius: 999,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     backgroundColor: colors.card,
@@ -1125,10 +1125,10 @@ const makeStyles = (colors) => StyleSheet.create({
     textAlign: "center",
     textTransform: "capitalize",
   },
-  periodBtn: { paddingVertical: 5, paddingHorizontal: 14, borderRadius: 999 },
-  periodBtnActive: { backgroundColor: colors.segActive },
+  periodBtn: { paddingVertical: 5, paddingHorizontal: 14, borderRadius: 7 },
+  periodBtnActive: { backgroundColor: "#75f94c" },
   periodText: { color: colors.muted, fontSize: 12.5, fontWeight: "800" },
-  periodTextActive: { color: colors.segActiveText },
+  periodTextActive: { color: "#06210a" },
 
   // Mini gráfico de barras del año
   yearChart: {
@@ -1195,7 +1195,7 @@ const makeStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.bg, // sin relleno: solo borde, como las cards del Home
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    borderRadius: 14,
+    borderRadius: 10,
     paddingVertical: 12,
     paddingRight: 13,
     paddingLeft: 12,
@@ -1204,10 +1204,8 @@ const makeStyles = (colors) => StyleSheet.create({
   },
   movBar: { position: "absolute", left: 0, top: 0, bottom: 0, width: 4 },
   movIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1.5,
+    width: 30,
+    height: 30,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1230,12 +1228,14 @@ const makeStyles = (colors) => StyleSheet.create({
     alignSelf: "flex-start",
     gap: 5,
     marginTop: 10,
-    paddingVertical: 7,
+    paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 999,
-    backgroundColor: "#e0b32e",
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: "#e0b32e",
+    backgroundColor: "transparent",
   },
-  payDebtText: { color: "#3a2d05", fontWeight: "800", fontSize: 13 },
+  payDebtText: { color: "#e0b32e", fontWeight: "800", fontSize: 13 },
   facturaBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -1244,7 +1244,7 @@ const makeStyles = (colors) => StyleSheet.create({
     marginTop: 10,
     paddingVertical: 7,
     paddingHorizontal: 12,
-    borderRadius: 999,
+    borderRadius: 7,
     borderWidth: 1,
     borderColor: colors.green,
     backgroundColor: colors.greenSoft,

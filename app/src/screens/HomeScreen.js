@@ -769,8 +769,8 @@ export default function HomeScreen() {
                                       activeOpacity={0.7}
                                       onPress={() => toggleMovExpand(item._id)}
                                     >
-                                      <View style={[styles.movRedIcon, { borderColor: meta.color + "55", backgroundColor: meta.color + "1f" }]}>
-                                        <Ionicons name={movementIcon(item)} size={17} color={meta.color} />
+                                      <View style={styles.movRedIcon}>
+                                        <Ionicons name={movementIcon(item)} size={20} color={meta.color} />
                                       </View>
                                       <View style={styles.movTkInfo}>
                                         <Text style={styles.movRedTitle} numberOfLines={1}>
@@ -814,7 +814,7 @@ export default function HomeScreen() {
                                         <View style={styles.movRedActions}>
                                           {isPendingDebt ? (
                                             <TouchableOpacity style={styles.movRedPay} onPress={() => setShowHistory(true)}>
-                                              <Ionicons name="cash-outline" size={15} color="#3a2d05" />
+                                              <Ionicons name="cash-outline" size={15} color="#f4c622" />
                                               <Text style={styles.movRedPayText}>Pagar deuda</Text>
                                             </TouchableOpacity>
                                           ) : (
@@ -1541,10 +1541,8 @@ const makeStyles = (u, p) => StyleSheet.create({
   movTkRight: { alignItems: "flex-end", gap: 2 },
   movTkBody: { paddingBottom: 12, paddingTop: 2, gap: 4 },
   movRedIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1,
+    width: 30,
+    height: 30,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1553,10 +1551,8 @@ const makeStyles = (u, p) => StyleSheet.create({
   movRedAmount: { fontSize: 16, fontWeight: "800", fontVariant: ["tabular-nums"] },
   movPendTag: {
     color: "#f4c622",
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
   },
   movRedDetail: { color: p.muted, fontSize: 13.5 },
   movRedDebt: { color: VERDE, fontSize: 13, fontWeight: "700" },
@@ -1566,12 +1562,14 @@ const makeStyles = (u, p) => StyleSheet.create({
     gap: 6,
     alignSelf: "flex-start",
     marginTop: 10,
-    backgroundColor: "#f4c622",
-    borderRadius: 999,
-    paddingVertical: 7,
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#f4c622",
+    borderRadius: 7,
+    paddingVertical: 6,
     paddingHorizontal: 14,
   },
-  movRedPayText: { color: "#3a2d05", fontSize: 13, fontWeight: "800" },
+  movRedPayText: { color: "#f4c622", fontSize: 13, fontWeight: "800" },
   movRedActions: {
     flexDirection: "row",
     alignItems: "center",
