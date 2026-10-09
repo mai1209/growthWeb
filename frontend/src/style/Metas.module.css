@@ -1504,3 +1504,23 @@ select.input {
 .areaNuevaRow .areaNuevaCancel:hover {
   color: var(--color-text);
 }
+
+/* Nueva área: Agregar y Cancelar en una fila debajo del campo, uno al lado del otro */
+.areaNuevaRow .areaNuevaOk {
+  height: 28px;
+  min-height: 28px;
+  padding: 0 0.6rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.areaNuevaRow .areaNuevaCancel {
+  flex-basis: auto;
+  align-self: center;
+  margin-left: 0.5rem;
+  color: #e5484d;
+}
+
+.areaNuevaRow .areaNuevaCancel:hover {
+  color: #ff6b6f;
+}
