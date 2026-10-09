@@ -1966,3 +1966,191 @@
   font-weight: 800;
   color: var(--color-text);
 }
+
+/* ---- Cambiar contraseña: flujo nuevo ---- */
+.pwCard {
+  max-width: 560px;
+  gap: 1rem;
+}
+
+/* Un solo borde: el del contenedor (el input interno no lleva ni borde ni anillo) */
+.passwordField input,
+.passwordField input:focus {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+  min-height: 42px;
+}
+
+.passwordField {
+  border-radius: 8px;
+  background: transparent;
+}
+
+.passwordField:focus-within {
+  box-shadow: none;
+  border-color: var(--color-verde, #75f94c);
+}
+
+.passwordFieldError,
+.passwordFieldError:focus-within {
+  border-color: #e5484d;
+}
+
+.pwFieldError {
+  color: #e5484d;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.pwMatchOk {
+  color: var(--color-verde, #75f94c);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.pwMeter {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.pwMeterBars {
+  display: flex;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.pwMeterBars i {
+  width: 34px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-color);
+}
+
+.pwBar1 { background: #e5484d; }
+.pwBar2 { background: #ff9d5c; }
+.pwBar3 { background: #ffd55c; }
+.pwBar4 { background: var(--color-verde, #75f94c); }
+
+.pwChecks {
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.pwChecks li {
+  position: relative;
+  padding-left: 1.1rem;
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.pwChecks li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.45em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+}
+
+.pwChecks li.pwCheckOk {
+  color: var(--color-text);
+}
+
+.pwChecks li.pwCheckOk::before {
+  background: var(--color-verde, #75f94c);
+  border-color: var(--color-verde, #75f94c);
+}
+
+.pwActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.pwActions .saveButton {
+  border-radius: 8px;
+  background: #75f94c;
+  color: #06210a;
+  box-shadow: none;
+}
+
+.pwForgot {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.pwForgot:hover {
+  color: var(--color-text);
+}
+
+.pwResetHint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
+}
+
+.pwResetHint a {
+  color: var(--color-verde, #75f94c);
+}
+
+.pwDone {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--accent-border, rgba(117, 249, 76, 0.4));
+}
+
+.pwDone > svg {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  color: var(--color-verde, #75f94c);
+}
+
+.pwDone strong {
+  display: block;
+  color: var(--color-text);
+}
+
+.pwDone p {
+  margin: 0.1rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
+.pwDoneBtn {
+  margin-left: auto;
+  padding: 0.45rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}

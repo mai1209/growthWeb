@@ -759,30 +759,48 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
     }
   };
 
+  // Cambio de contraseña: estado del flujo y validación en vivo
+  const [pwDone, setPwDone] = useState(false);
+  const [pwCurrentError, setPwCurrentError] = useState("");
+  const pwStrength = useMemo(() => {
+    const v = newPassword || "";
+    let score = 0;
+    if (v.length >= 6) score += 1;
+    if (v.length >= 10) score += 1;
+    if (/[A-Z]/.test(v) && /[a-z]/.test(v)) score += 1;
+    if (/\d/.test(v) && /[^A-Za-z0-9]/.test(v)) score += 1;
+    else if (/\d/.test(v)) score += 0.5;
+    score = Math.min(4, Math.round(score));
+    const label = ["Muy débil", "Débil", "Regular", "Buena", "Muy buena"][score] || "";
+    return { score, label };
+  }, [newPassword]);
+  const pwValido =
+    currentPassword.length > 0 &&
+    newPassword.length >= 6 &&
+    repeatPassword === newPassword &&
+    newPassword !== currentPassword;
+
   const handlePasswordSubmit = async (event) => {
     event.preventDefault();
     setError("");
     setMessage("");
-
-    if (newPassword !== repeatPassword) {
-      setError("Las contraseñas nuevas no coinciden");
-      return;
-    }
+    setPwCurrentError("");
+    if (!pwValido) return;
 
     setLoadingPassword(true);
-
     try {
-      const response = await authService.changePassword({
-        currentPassword,
-        newPassword,
-      });
-
-      setMessage(response.data.message || "Contraseña actualizada correctamente");
+      await authService.changePassword({ currentPassword, newPassword });
+      setPwDone(true);
       setCurrentPassword("");
       setNewPassword("");
       setRepeatPassword("");
+      setShowCurrentPassword(false);
+      setShowNewPassword(false);
+      setShowRepeatPassword(false);
     } catch (err) {
-      setError(err.response?.data?.error || "No se pudo cambiar la contraseña");
+      const msg = err.response?.data?.error || "No se pudo cambiar la contraseña";
+      if (/actual/i.test(msg)) setPwCurrentError(msg);
+      else setError(msg);
     } finally {
       setLoadingPassword(false);
     }
@@ -1576,68 +1594,117 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
       ) : null}
 
       {activeTab === "password" ? (
-        <form className={style.card} onSubmit={handlePasswordSubmit}>
-          <label className={style.field}>
-            <span>Contraseña actual</span>
-            <div className={style.passwordField}>
-              <input
-                type={showCurrentPassword ? "text" : "password"}
-                value={currentPassword}
-                onChange={(event) => setCurrentPassword(event.target.value)}
-                required
-              />
-              <button
-                type="button"
-                className={style.eyeButton}
-                onClick={() => setShowCurrentPassword((prev) => !prev)}
-              >
-                {showCurrentPassword ? <FiEyeOff /> : <FiEye />}
+        <form className={`${style.card} ${style.pwCard}`} onSubmit={handlePasswordSubmit} noValidate>
+          <div className={style.businessHeader}>
+            <div>
+              <p className={style.kicker}>Ajustes</p>
+              <h2>Cambiar contraseña</h2>
+            </div>
+          </div>
+          <p className={style.themeIntro}>
+            Confirmá tu contraseña actual y elegí una nueva. Vas a seguir con la sesión abierta.
+          </p>
+
+          {pwDone ? (
+            <div className={style.pwDone}>
+              <FiCheckCircle />
+              <div>
+                <strong>Contraseña actualizada</strong>
+                <p>La próxima vez que entres, usá la nueva.</p>
+              </div>
+              <button type="button" className={style.pwDoneBtn} onClick={() => setPwDone(false)}>
+                Cambiar otra vez
               </button>
             </div>
-          </label>
+          ) : (
+            <>
+              <label className={style.field}>
+                <span>Contraseña actual</span>
+                <div className={`${style.passwordField} ${pwCurrentError ? style.passwordFieldError : ""}`}>
+                  <input
+                    type={showCurrentPassword ? "text" : "password"}
+                    value={currentPassword}
+                    onChange={(event) => { setCurrentPassword(event.target.value); setPwCurrentError(""); }}
+                    autoComplete="current-password"
+                    placeholder="Tu contraseña de ahora"
+                  />
+                  <button type="button" className={style.eyeButton} onClick={() => setShowCurrentPassword((p) => !p)} aria-label="Mostrar u ocultar">
+                    {showCurrentPassword ? <FiEyeOff /> : <FiEye />}
+                  </button>
+                </div>
+                {pwCurrentError ? <small className={style.pwFieldError}>{pwCurrentError}</small> : null}
+              </label>
 
-          <label className={style.field}>
-            <span>Nueva contraseña</span>
-            <div className={style.passwordField}>
-              <input
-                type={showNewPassword ? "text" : "password"}
-                value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
-                required
-              />
-              <button
-                type="button"
-                className={style.eyeButton}
-                onClick={() => setShowNewPassword((prev) => !prev)}
-              >
-                {showNewPassword ? <FiEyeOff /> : <FiEye />}
-              </button>
-            </div>
-          </label>
+              <label className={style.field}>
+                <span>Nueva contraseña</span>
+                <div className={style.passwordField}>
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    autoComplete="new-password"
+                    placeholder="Mínimo 6 caracteres"
+                  />
+                  <button type="button" className={style.eyeButton} onClick={() => setShowNewPassword((p) => !p)} aria-label="Mostrar u ocultar">
+                    {showNewPassword ? <FiEyeOff /> : <FiEye />}
+                  </button>
+                </div>
+                {newPassword ? (
+                  <div className={style.pwMeter} aria-label={`Seguridad: ${pwStrength.label}`}>
+                    <div className={style.pwMeterBars}>
+                      {[1, 2, 3, 4].map((n) => (
+                        <i key={n} className={n <= pwStrength.score ? style[`pwBar${pwStrength.score}`] : ""} />
+                      ))}
+                    </div>
+                    <span>{pwStrength.label}</span>
+                  </div>
+                ) : null}
+                <ul className={style.pwChecks}>
+                  <li className={newPassword.length >= 6 ? style.pwCheckOk : ""}>Al menos 6 caracteres (mejor 8 o más)</li>
+                  <li className={/[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) ? style.pwCheckOk : ""}>Mayúsculas y minúsculas</li>
+                  <li className={/\d/.test(newPassword) ? style.pwCheckOk : ""}>Algún número</li>
+                  <li className={newPassword && currentPassword && newPassword !== currentPassword ? style.pwCheckOk : ""}>Distinta de la actual</li>
+                </ul>
+              </label>
 
-          <label className={style.field}>
-            <span>Repetir nueva contraseña</span>
-            <div className={style.passwordField}>
-              <input
-                type={showRepeatPassword ? "text" : "password"}
-                value={repeatPassword}
-                onChange={(event) => setRepeatPassword(event.target.value)}
-                required
-              />
-              <button
-                type="button"
-                className={style.eyeButton}
-                onClick={() => setShowRepeatPassword((prev) => !prev)}
-              >
-                {showRepeatPassword ? <FiEyeOff /> : <FiEye />}
-              </button>
-            </div>
-          </label>
+              <label className={style.field}>
+                <span>Repetir nueva contraseña</span>
+                <div className={`${style.passwordField} ${repeatPassword && repeatPassword !== newPassword ? style.passwordFieldError : ""}`}>
+                  <input
+                    type={showRepeatPassword ? "text" : "password"}
+                    value={repeatPassword}
+                    onChange={(event) => setRepeatPassword(event.target.value)}
+                    autoComplete="new-password"
+                    placeholder="La misma de arriba"
+                  />
+                  <button type="button" className={style.eyeButton} onClick={() => setShowRepeatPassword((p) => !p)} aria-label="Mostrar u ocultar">
+                    {showRepeatPassword ? <FiEyeOff /> : <FiEye />}
+                  </button>
+                </div>
+                {repeatPassword ? (
+                  <small className={repeatPassword === newPassword ? style.pwMatchOk : style.pwFieldError}>
+                    {repeatPassword === newPassword ? "Coinciden" : "No coinciden"}
+                  </small>
+                ) : null}
+              </label>
 
-          <button type="submit" className={style.saveButton} disabled={loadingPassword}>
-            <FiKey />
-            {loadingPassword ? "Guardando..." : "Guardar nueva contraseña"}
-          </button>
+              <div className={style.pwActions}>
+                <button type="submit" className={style.saveButton} disabled={loadingPassword || !pwValido}>
+                  <FiKey />
+                  {loadingPassword ? "Guardando..." : "Guardar nueva contraseña"}
+                </button>
+                <button type="button" className={style.pwForgot} onClick={handleRecoverPassword} disabled={recovering}>
+                  {recovering ? "Generando enlace…" : "No me acuerdo la actual"}
+                </button>
+              </div>
+              {resetUrl ? (
+                <p className={style.pwResetHint}>
+                  Abrí este enlace para crear una contraseña nueva sin la actual (vence en poco tiempo):{" "}
+                  <a href={resetUrl}>{resetUrl}</a>
+                </p>
+              ) : null}
+            </>
+          )}
         </form>
       ) : null}
 
