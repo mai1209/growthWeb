@@ -2380,3 +2380,23 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   width: 18px;
   height: 18px;
 }
+
+/* ---- Deudas / Ahorros: contador más chico, tarjetas solo con borde,
+        título más chico y estado (Pendiente, etc.) solo texto ---- */
+.typeCount {
+  font-size: 0.72rem;
+}
+
+.typeItem,
+.typeItem:hover {
+  background: transparent;
+}
+
+.typeItemMain strong {
+  font-size: 0.82rem;
+}
+
+.typeChip {
+  padding: 0;
+  background: transparent;
+}

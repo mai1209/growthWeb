@@ -674,8 +674,7 @@ function LeftSite({
                   </p>
                 ) : (
                   <p className={style.typeCount}>
-                    {typeMovs.length} {typeMovs.length === 1 ? "movimiento" : "movimientos"} en{" "}
-                    {typeCurrency}
+                    {typeMovs.length} {typeMovs.length === 1 ? "movimiento" : "movimientos"}
                   </p>
                 )}
               </div>
