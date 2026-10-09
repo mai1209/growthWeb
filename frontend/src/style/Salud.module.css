@@ -2049,3 +2049,21 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Título con la (i) al lado (el subtítulo pasó al globito) */
+.tituloConInfo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.tituloConInfo .infoIcon {
+  color: var(--color-verde, #75f94c);
+  font-size: 0.95rem;
+}
+
+.tituloConInfo .infoTip {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}

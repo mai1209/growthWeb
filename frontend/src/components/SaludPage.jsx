@@ -1313,12 +1313,22 @@ export default function SaludPage() {
     <div className={style.wrap}>
       <header className={style.header}>
         <div>
-          <h1>{esCalorias ? "Calorías diarias" : "Movilidad"}</h1>
-          <p className={style.subtitulo}>
-            {esCalorias
-              ? "Anotá tus comidas y mirá cuánto te queda del día."
-              : "Los pasos y caminatas se miden desde el teléfono; lo demás también lo podés cargar acá."}
-          </p>
+          {/* El subtítulo va en una (i) al lado del título */}
+          <h1 className={style.tituloConInfo}>
+            {esCalorias ? "Calorías diarias" : "Movilidad"}
+            <span
+              className={style.infoIcon}
+              tabIndex={0}
+              aria-label="Más información"
+            >
+              <FiInfo />
+              <span className={style.infoTip}>
+                {esCalorias
+                  ? "Anotá tus comidas y mirá cuánto te queda del día."
+                  : "Los pasos y caminatas se miden desde el teléfono; lo demás también lo podés cargar acá."}
+              </span>
+            </span>
+          </h1>
         </div>
       </header>
 
