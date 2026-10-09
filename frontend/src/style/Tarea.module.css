@@ -3002,3 +3002,36 @@
 .prioridadDot {
   border-radius: 3px;
 }
+
+/* ---- Teléfono: el panel de progreso se apila en una sola columna
+        (fecha, anillo, stats, tarjetas), como en desktop pero compacto ---- */
+@media (max-width: 1000px) {
+  .progressCard {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+
+  .panelDateTitle {
+    font-size: 0.95rem;
+  }
+
+  .progressRing {
+    width: 120px;
+  }
+
+  .progressRingInner {
+    width: 100px;
+  }
+
+  .progressRingInner strong {
+    font-size: 1.4rem;
+  }
+
+  .progressStatsList,
+  .comparativaCard,
+  .fraseCard {
+    width: 100%;
+  }
+}

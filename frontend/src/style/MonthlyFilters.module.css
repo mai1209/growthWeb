@@ -2760,3 +2760,25 @@
     grid-template-columns: 92px minmax(0, 1fr) 130px 140px 140px 72px;
   }
 }
+
+/* ---- Teléfono: la tarjeta vuelve a 2 filas (las columnas fijas de desktop
+        la hacían desbordar a lo ancho) ---- */
+@media (max-width: 860px) {
+  .tblRow {
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+
+  .tblRow .tblPill,
+  .tblRow .tblPayBtn {
+    width: auto;
+    max-width: 100%;
+  }
+
+  .tblRow .tblCellMethod {
+    justify-self: start;
+  }
+
+  .tblRow .tblAmount {
+    white-space: nowrap;
+  }
+}
