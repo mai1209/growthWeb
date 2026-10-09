@@ -997,14 +997,13 @@ function MetasPage({ activeWorkspace }) {
                 <button type="button" className={style.areaNuevaOk} onClick={confirmarAreaNueva}>
                   <FiCheck /> Agregar
                 </button>
+                {/* Cancelar como texto, debajo del campo */}
                 <button
                   type="button"
                   className={style.areaNuevaCancel}
                   onClick={() => setAreaNueva(null)}
-                  aria-label="Cancelar"
-                  title="Cancelar"
                 >
-                  <FiX />
+                  Cancelar
                 </button>
               </div>
             )}

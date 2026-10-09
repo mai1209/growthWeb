@@ -1467,3 +1467,40 @@ select.input {
 :global(body[data-theme="light"]) .input[type="date"]::-webkit-calendar-picker-indicator {
   filter: none;
 }
+
+/* Nueva área: campo largo + "Agregar" chico; "Cancelar" como texto debajo */
+.areaNuevaRow {
+  flex-wrap: wrap;
+}
+
+.areaNuevaRow .input {
+  flex: 1 1 200px;
+}
+
+.areaNuevaRow .areaNuevaOk {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 0.7rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  gap: 0.3rem;
+}
+
+.areaNuevaRow .areaNuevaCancel {
+  flex-basis: 100%;
+  width: auto;
+  height: auto;
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.areaNuevaRow .areaNuevaCancel:hover {
+  color: var(--color-text);
+}
