@@ -2469,3 +2469,16 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 .typeActions {
   flex-wrap: wrap;
 }
+
+/* La cabecera de Deudas/Ahorros no puede ser más ancha que su panel, y la
+   columna nunca scrollea a lo ancho */
+.typePanel > * {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.panel {
+  overflow-x: hidden;
+}
