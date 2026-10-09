@@ -1287,3 +1287,74 @@
   width: 15px;
   height: 15px;
 }
+
+/* ---- Monto sin fondo blanco al autocompletar, Guardar del mismo verde que el switch,
+        ayuda de deuda / fijos en una (i) junto al título ---- */
+.inputMonto:-webkit-autofill,
+.inputMonto:-webkit-autofill:hover,
+.inputMonto:-webkit-autofill:focus,
+.btn:-webkit-autofill,
+.detalle:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #0a1f26 inset;
+  -webkit-text-fill-color: var(--color-text);
+  caret-color: var(--color-text);
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+.buttonSend {
+  background: #75f94c;
+  color: #06210a;
+  box-shadow: none;
+}
+
+.formEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.infoTip {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  color: var(--color-verde, #75f94c);
+  cursor: help;
+  outline: none;
+}
+
+.infoTip svg {
+  width: 14px;
+  height: 14px;
+}
+
+.infoTipText {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  width: 260px;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color, rgba(216, 241, 224, 0.14));
+  background: var(--background-color, #071821);
+  color: var(--color-text);
+  font-size: 0.74rem;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+}
+
+.infoTip:hover .infoTipText,
+.infoTip:focus .infoTipText,
+.infoTip:focus-within .infoTipText {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}

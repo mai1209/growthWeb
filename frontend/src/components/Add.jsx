@@ -1,6 +1,6 @@
 import { forwardRef, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiArrowLeft, FiAlertTriangle, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiAlertTriangle, FiInfo, FiX } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import EmojiPicker, { Theme } from "emoji-picker-react";
@@ -441,7 +441,19 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
       <form className={`${style.formCard} ${toneClass}`} onSubmit={handleSubmit}>
         <div className={style.formHeader}>
           <div>
-            <p className={style.formEyebrow}>{mode.title}</p>
+            <p className={style.formEyebrow}>
+              {mode.title}
+              {isDebtMode || mode.recurrente ? (
+                <span className={style.infoTip} tabIndex={0} aria-label="Más información">
+                  <FiInfo />
+                  <span className={style.infoTipText} role="tooltip">
+                    {isDebtMode
+                      ? "La deuda queda visible en el panel principal y después la podés marcar como pagada desde el detalle mensual."
+                      : "Se tomará la fecha elegida como inicio y se repetirá según la frecuencia seleccionada."}
+                  </span>
+                </span>
+              ) : null}
+            </p>
           </div>
 
           <div
@@ -480,6 +492,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
             onChange={setMonto}
             placeholder={`Monto en ${moneda === "USD" ? "USD" : "ARS"}`}
             id="monto"
+            autoComplete="off"
           />
         </div>
 
@@ -615,10 +628,6 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
               />
             </div>
 
-            <div className={`${style.helperBox} ${style.field}`}>
-              La deuda queda visible en el panel principal y despues la podes
-              marcar como pagada desde el detalle mensual.
-            </div>
           </div>
         )}
 
@@ -642,10 +651,6 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
               </select>
             </div>
 
-            <div className={`${style.helperBox} ${style.field}`}>
-              Se tomara la fecha elegida como inicio y se repetira segun la
-              frecuencia seleccionada.
-            </div>
           </div>
         )}
 
