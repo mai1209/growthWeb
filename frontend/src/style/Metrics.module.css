@@ -1586,3 +1586,12 @@
   background: transparent;
   box-shadow: none;
 }
+
+/* Ranking: "N° 1", "N° 2"… en un chip un poco más ancho */
+.rankChip {
+  width: auto;
+  min-width: 40px;
+  padding: 0 0.45rem;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}

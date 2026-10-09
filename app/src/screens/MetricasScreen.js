@@ -688,7 +688,7 @@ export default function MetricasScreen() {
                   {rankingItems.map((it, index) => (
                     <View key={it.label} style={[styles.rankRow, index > 0 && styles.rankRowDivider]}>
                       <View style={styles.rankChip}>
-                        <Text style={styles.rankChipText}>{index + 1}</Text>
+                        <Text style={styles.rankChipText}>{`N° ${index + 1}`}</Text>
                       </View>
                       <Text style={styles.rankName} numberOfLines={1}>
                         {it.label}
@@ -801,7 +801,7 @@ const makeStyles = (colors) =>
       backgroundColor: colors.bg,
     },
     titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
-    title: { color: colors.text, fontSize: 22, fontWeight: "800" },
+    title: { color: colors.text, fontSize: 17, fontWeight: "700" },
     content: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 30 },
     error: { color: colors.red, marginBottom: 10 },
 
@@ -870,13 +870,12 @@ const makeStyles = (colors) =>
     blockHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 14 },
     kicker: {
       color: colors.greenBright2,
-      fontSize: 10.5,
-      fontWeight: "800",
-      textTransform: "uppercase",
-      letterSpacing: 1,
+      fontSize: 12,
+      fontWeight: "700",
+      letterSpacing: 0.2,
     },
-    blockTitle: { color: colors.text, fontSize: 16, fontWeight: "800", marginTop: 3 },
-    blockRight: { color: colors.text, fontSize: 14, fontWeight: "800" },
+    blockTitle: { color: colors.text, fontSize: 13.5, fontWeight: "600", marginTop: 2 },
+    blockRight: { color: colors.text, fontSize: 13, fontWeight: "800" },
 
     // KPIs 2x2 separados por líneas
     summaryGrid: { flexDirection: "row", flexWrap: "wrap" },
@@ -902,7 +901,7 @@ const makeStyles = (colors) =>
     compLine: { flexDirection: "row", alignItems: "center", gap: 10 },
     compTrack: {
       flex: 1,
-      height: 12,
+      height: 5,
       borderRadius: 999,
       backgroundColor: colors.cardBorder,
       overflow: "hidden",
@@ -951,16 +950,17 @@ const makeStyles = (colors) =>
     rankRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 10 },
     rankRowDivider: { borderTopWidth: 1, borderTopColor: colors.cardBorder },
     rankChip: {
-      width: 26,
-      height: 26,
-      borderRadius: 8,
-      backgroundColor: colors.greenSoft,
+      minWidth: 40,
+      height: 24,
+      paddingHorizontal: 6,
+      borderRadius: 7,
+      backgroundColor: "transparent",
       borderWidth: 1,
       borderColor: colors.greenBorder,
       alignItems: "center",
       justifyContent: "center",
     },
-    rankChipText: { color: colors.greenDark, fontSize: 12, fontWeight: "800" },
+    rankChipText: { color: colors.text, fontSize: 11, fontWeight: "800" },
     rankName: { flex: 1, color: colors.text, fontSize: 13.5, fontWeight: "600" },
     rankAmt: { color: colors.text, fontSize: 13.5, fontWeight: "800", fontVariant: ["tabular-nums"] },
     rankPct: { color: colors.muted, fontSize: 11.5, fontWeight: "700" },

@@ -661,7 +661,7 @@ function MetricsPage({
             <div className={style.rankRows}>
               {rankingItems.map((item, index) => (
                 <div key={item.label} className={style.rankItemRow}>
-                  <span className={style.rankChip}>{index + 1}</span>
+                  <span className={style.rankChip}>{`N° ${index + 1}`}</span>
                   <span className={style.rankName}>{item.label}</span>
                   <span className={style.rankAmt}>
                     {formatMoney(item.value, currency)}
