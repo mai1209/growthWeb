@@ -2788,3 +2788,48 @@
   background: var(--background-color, #071821);
   color: var(--color-text);
 }
+
+/* ---- Teléfono: la vista anual no se pasa del ancho (switch Mes/Año cortado) ---- */
+@media (max-width: 860px) {
+  .detailsLayout,
+  .listPanel,
+  .listShell,
+  .panelHeader {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .listPanel {
+    overflow-x: hidden;
+  }
+
+  .yearChart {
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+  }
+
+  .chartCol {
+    min-width: 22px;
+  }
+
+  .monthGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panelKicker {
+    font-size: 0.78rem;
+  }
+
+  .periodSwitch {
+    padding: 2px;
+    margin-bottom: 0;
+  }
+
+  .periodButton {
+    padding: 0.22rem 0.6rem;
+    font-size: 0.72rem;
+  }
+}
