@@ -3131,3 +3131,15 @@
     justify-content: center;
   }
 }
+
+/* Los selectores de hora no se estiran a todo el ancho */
+.formField .horaSelect,
+.formField select.horaSelect {
+  width: auto;
+  flex: 0 0 auto;
+  min-width: 72px;
+}
+
+.horaRow {
+  width: fit-content;
+}
