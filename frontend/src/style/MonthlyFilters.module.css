@@ -2510,3 +2510,83 @@
   border-radius: 8px;
   font-size: 0.78rem;
 }
+
+/* ---- Tarjetas de movimiento (Home y Filtros): más livianas ----
+   Ícono sin fondo ni círculo, descripción más ancha, categoría solo con borde,
+   estado (Pendiente, etc.) solo texto de color, Pagar solo borde del color del tipo. */
+.tblRow {
+  grid-template-columns: 92px minmax(0, 2.3fr) minmax(0, 0.9fr) max-content 150px 72px;
+}
+
+.tblRow .rowIcon {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+}
+
+.tblRow .rowIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.incomeRow .rowIcon { color: #75f94c; background: transparent; }
+.expenseRow .rowIcon { color: #ff7b6b; background: transparent; }
+.savingsRow .rowIcon { color: #58eba4; background: transparent; }
+.debtRow .rowIcon { color: #ffd55c; background: transparent; }
+
+/* Categoría / método: solo ícono y texto con borde, sin relleno */
+.tblRow .tblPill {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* El botón de pagar va pegado al monto */
+.tblRow .tblCellMethod {
+  justify-self: end;
+}
+
+/* Estado: solo el texto, con el color que le corresponde */
+.tblRow .badge,
+.tblRow .badgeAccent,
+.tblRow .badgeWarning,
+.tblRow .badgeNeutral {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.76rem;
+}
+
+.tblRow .badgeWarning { color: #ffd55c; }
+.tblRow .badgeAccent { color: var(--accent, #75f94c); }
+.tblRow .badge,
+.tblRow .badgeNeutral { color: var(--color-muted); }
+
+/* Botones de acción (Pagar, Emitir factura): sin fondo, borde y texto del color del tipo */
+.tblRow .tblPayBtn,
+.tblRow .facturaBtn {
+  background: transparent;
+  border: 1px solid #ffd55c;
+  color: #ffd55c;
+  font-weight: 800;
+}
+
+.tblRow .tblPayBtn:hover,
+.tblRow .facturaBtn:hover {
+  background: rgba(255, 213, 92, 0.12);
+}
+
+.incomeRow .tblPayBtn,
+.incomeRow .facturaBtn { border-color: #75f94c; color: #75f94c; }
+.incomeRow .tblPayBtn:hover,
+.incomeRow .facturaBtn:hover { background: rgba(117, 249, 76, 0.12); }
+
+.expenseRow .tblPayBtn,
+.expenseRow .facturaBtn { border-color: #ff7b6b; color: #ff7b6b; }
+.expenseRow .tblPayBtn:hover,
+.expenseRow .facturaBtn:hover { background: rgba(255, 123, 107, 0.12); }
+
+.savingsRow .tblPayBtn,
+.savingsRow .facturaBtn { border-color: #58eba4; color: #58eba4; }
+.savingsRow .tblPayBtn:hover,
+.savingsRow .facturaBtn:hover { background: rgba(88, 235, 164, 0.12); }
