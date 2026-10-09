@@ -293,7 +293,7 @@ function LineChart({ points, color, unidad }) {
       }}
     >
       <svg className={style.lineSvg} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img">
-        {area ? <path d={area} fill={color} opacity="0.13" /> : null}
+        {area ? <path d={area} fill={color} opacity="0.06" /> : null}
         <path
           d={line}
           fill="none"
@@ -308,7 +308,12 @@ function LineChart({ points, color, unidad }) {
         <>
           <div className={style.chartGuide} style={{ left: `${h.x}%` }} />
           <div className={style.chartDot} style={{ left: `${h.x}%`, top: `${h.y}px`, background: color }} />
-          <div className={style.chartTip} style={{ left: `${h.x}%`, borderColor: color }}>
+          <div
+            className={`${style.chartTip} ${
+              h.x > 82 ? style.chartTipLeft : h.x < 18 ? style.chartTipRight : ""
+            }`}
+            style={{ left: `${h.x}%`, borderColor: color }}
+          >
             <strong>{h.p.value.toLocaleString("es-AR")}</strong> {unidad}
           </div>
         </>
@@ -1459,7 +1464,7 @@ export default function SaludPage() {
                 {data.caminatas.slice(0, 5).map((c, i) => (
                   <li key={i}>
                     <ActIcon tipo={c.tipo} className={style.caminataTipo} />
-                    <span>{c.fecha}</span>
+                    <span>{String(c.fecha || "").slice(0, 10).split("-").reverse().join("/")}</span>
                     <strong>{(c.metros / 1000).toFixed(2)} km</strong>
                     <span>{Math.floor((c.secs || 0) / 60)} min</span>
                     {c.kcal ? <span className={style.caminataKcal}>{c.kcal} kcal</span> : null}

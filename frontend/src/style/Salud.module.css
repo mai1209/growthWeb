@@ -1959,3 +1959,35 @@
 :global(body:not([data-theme="light"])) .recMapa :global(.leaflet-tile-pane) {
   filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.6);
 }
+
+/* ---- Movilidad: ajustes del panel ---- */
+/* Globito del gráfico: cerca del borde derecho se abre hacia la izquierda (y al revés) */
+.chartTipLeft {
+  transform: translate(calc(-100% + 6px), -100%);
+}
+
+.chartTipRight {
+  transform: translate(-6px, -100%);
+}
+
+/* Filas de caminatas: sin fondo, separadas por una línea, alineadas con el resto */
+.caminatas {
+  gap: 0;
+}
+
+.caminatas li {
+  padding: 0.55rem 0;
+  border-radius: 0;
+  background: transparent;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.caminatas li:last-child {
+  border-bottom: none;
+}
+
+/* "desde el teléfono" es informativo, no un botón */
+.badgeTel {
+  border: none;
+  padding: 0;
+}
