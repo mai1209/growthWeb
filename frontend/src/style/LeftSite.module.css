@@ -2400,3 +2400,21 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   padding: 0;
   background: transparent;
 }
+
+/* ---- Ahorros: "Disponible: $…" en una línea, switch ARS/USD y ojo a la altura del título,
+        "Nuevo ahorro" con texto negro ---- */
+.typeHead {
+  align-items: flex-start;
+}
+
+.typeHeadRight {
+  margin-top: 0.1rem;
+}
+
+.typePot {
+  white-space: nowrap;
+}
+
+.typeAddAhorro {
+  color: #04140b;
+}
