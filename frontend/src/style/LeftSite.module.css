@@ -2418,3 +2418,22 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 .typeAddAhorro {
   color: #04140b;
 }
+
+/* ---- Switch AR$ / US$ / Deudas / Ahorros: cuadrado, borde fino y activo verde con texto negro ---- */
+.tabsShell {
+  border-radius: 10px;
+  border-color: var(--border-color, rgba(216, 241, 224, 0.14));
+  padding: 3px;
+}
+
+.tabsShell .segmentTab {
+  min-height: 32px;
+  border-radius: 7px;
+  font-size: 0.78rem;
+}
+
+.tabsShell .segmentTabActive,
+.tabsShell .segmentTabActive:hover {
+  background: #75f94c;
+  color: #06210a;
+}
