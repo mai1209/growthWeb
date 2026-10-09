@@ -934,3 +934,60 @@
   color: inherit;
   font-size: 0.82rem;
 }
+
+/* ============================================================
+   Nuevo estilo (Gym): título chico sin ícono, pestañas y pastillas cuadradas
+   con activo verde, tarjetas solo con borde, rótulos en minúscula
+   ============================================================ */
+.header h1 {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.tabs,
+.dateNav,
+.periodoSel {
+  border-radius: 9px;
+  padding: 2px;
+}
+
+.tabOn,
+.tabOff,
+.dateNav button,
+.vaciarBtn,
+.ejGrupo,
+.entrenarBtn,
+.chipOff,
+.periodoOn,
+.periodoOff,
+.calHead button,
+.addBtn {
+  border-radius: 7px;
+}
+
+.tabOn,
+.periodoOn,
+.addBtn,
+.entrenarBtn {
+  background: #75f94c;
+  color: #06210a;
+}
+
+.rutinaCard,
+.progresoCard,
+.statTile,
+.cal {
+  background: transparent;
+  border-radius: 10px;
+}
+
+.setsHead,
+.rutinaEjEditHead,
+.statTile span {
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.chartTip {
+  box-shadow: none;
+}

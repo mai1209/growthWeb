@@ -184,7 +184,7 @@ function DateNav({ fecha, setFecha, hoy, tieneDatos }) {
   );
 }
 
-function Ring({ percent, size = 130, stroke = 12, color, children }) {
+function Ring({ percent, size = 130, stroke = 6, color, children }) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const pct = Math.max(0, Math.min(100, percent || 0));

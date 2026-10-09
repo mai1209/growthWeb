@@ -124,9 +124,7 @@ export default function GymView() {
   return (
     <div className={style.wrap}>
       <header className={style.header}>
-        <h1>
-          <TbBarbell /> Gym
-        </h1>
+        <h1>Gym</h1>
         <div className={style.tabs}>
           {[
             { k: "rutinas", label: "1 · Creá tu rutina" },

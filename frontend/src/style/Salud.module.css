@@ -1841,3 +1841,105 @@
 .recorridosBtn svg {
   font-size: 1.05rem;
 }
+
+/* ============================================================
+   Nuevo estilo (Movilidad / Calorías): título chico, rótulos en minúscula,
+   pastillas cuadradas con activo verde, fondos lisos sin luces, anillo fino
+   ============================================================ */
+.header h1 {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.header .kicker,
+.planGrupoLbl {
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.cardHead h2 {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+/* Selectores de período / métrica / modo: cuadrados, activo verde con texto negro */
+.periodoSel,
+.periodoToggle,
+.modoToggle,
+.dateNav,
+.recVistaToggle {
+  border-radius: 9px;
+  padding: 2px;
+}
+
+.periodoOn,
+.periodoOff,
+.metricaOn,
+.metricaOff,
+.dateNavLabel,
+.dateNav button,
+.planBtn,
+.planChipOn,
+.recVistaOn,
+.pasosManualBtn,
+.badgeTel,
+.recorridosBtn,
+.calHead button,
+.aguaBtn,
+.comidaOk,
+.recPlay {
+  border-radius: 7px !important;
+}
+
+.periodoOn,
+.metricaOn,
+.recVistaOn,
+.planChipOn,
+.comidaOk {
+  background: #75f94c;
+  border-color: #75f94c;
+  color: #06210a;
+}
+
+/* Sin luces ni degradados */
+.recorridosBtn,
+.recorridosBtn:hover,
+.sugerencias,
+.chartTip,
+.infoTip {
+  box-shadow: none;
+}
+
+.recorridosBtn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--color-text);
+}
+
+.recorridosBtn:hover {
+  border-color: var(--accent-border);
+  transform: none;
+}
+
+.recMapa {
+  background: transparent;
+}
+
+/* Tarjetas de resultados y botones de agua: solo borde */
+.resTile,
+.aguaBtn {
+  background: transparent;
+  border-radius: 10px;
+}
+
+/* Modales: menos redondeados */
+.calModal,
+.recModal,
+.histModal,
+.planModal {
+  border-radius: 14px;
+}
+
+.recClose {
+  border-radius: 8px;
+}
