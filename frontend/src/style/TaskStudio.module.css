@@ -5790,3 +5790,12 @@ button.folderItem {
     padding: 0.4rem 0.2rem;
   }
 }
+
+/* Rótulos verdes de la sección (Afirmaciones, Journaling…) en minúscula */
+.kicker,
+.cardKicker {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
