@@ -5772,3 +5772,9 @@ button.folderItem {
 .tagPopupCreate:hover {
   background: rgba(93, 199, 45, 0.12);
 }
+
+/* Puntitos de las etiquetas de notas más chicos */
+.folderDot {
+  width: 6px;
+  height: 6px;
+}
