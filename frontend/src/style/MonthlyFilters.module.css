@@ -2734,3 +2734,29 @@
   width: 6px;
   height: 6px;
 }
+
+/* ---- Tarjetas de movimiento: columnas fijas para que categoría, medio/Pagar
+        y monto queden alineados en todas las filas ---- */
+.tblRow {
+  grid-template-columns: 92px minmax(0, 1fr) 150px 150px 150px 72px;
+}
+
+.tblRow .tblCellCategory,
+.tblRow .tblCellMethod {
+  justify-self: stretch;
+}
+
+.tblRow .tblPill {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.tblRow .tblPayBtn {
+  width: 100%;
+}
+
+@media (max-width: 1400px) {
+  .tblRow {
+    grid-template-columns: 92px minmax(0, 1fr) 130px 140px 140px 72px;
+  }
+}
