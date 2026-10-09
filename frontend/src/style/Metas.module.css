@@ -1533,3 +1533,59 @@ select.input {
 .statIcon {
   border-radius: 8px;
 }
+
+/* ---- Teléfono: el panel no se pasa del ancho (el gráfico de barras scrollea adentro)
+        y las 3 tarjetas de resumen van una al lado de la otra ---- */
+@media (max-width: 640px) {
+  .page {
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+    overflow-x: hidden;
+  }
+
+  .stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
+  .stat {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.55rem 0.6rem;
+    min-width: 0;
+  }
+
+  .statIcono {
+    width: 16px;
+    height: 16px;
+  }
+
+  .statNumero {
+    font-size: 1rem;
+  }
+
+  .statLabel {
+    font-size: 0.64rem;
+    line-height: 1.15;
+  }
+
+  .chartsGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chartCard {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .candleScroll {
+    justify-content: flex-start;
+    max-width: 100%;
+  }
+
+  .candleSvg {
+    height: 170px;
+  }
+}
