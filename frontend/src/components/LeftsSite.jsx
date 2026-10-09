@@ -667,16 +667,6 @@ function LeftSite({
                     <FiInfo />
                   </button>
                 </h2>
-                {viewTab === "ahorro" ? (
-                  <p className={style.typePot}>
-                    Disponible:{" "}
-                    {areTotalsVisible ? formatMoney(savingsPot[typeCurrency], typeCurrency) : "••••"}
-                  </p>
-                ) : (
-                  <p className={style.typeCount}>
-                    {typeMovs.length} {typeMovs.length === 1 ? "movimiento" : "movimientos"}
-                  </p>
-                )}
               </div>
               {/* Sub-switch ARS/USD para separar deuda/ahorro por moneda + ojo */}
               <div className={style.typeHeadRight}>
@@ -703,6 +693,17 @@ function LeftSite({
                 </button>
               </div>
             </div>
+            {/* Subtítulo a todo el ancho (así "Disponible: $ …" nunca se corta) */}
+            {viewTab === "ahorro" ? (
+              <p className={style.typePot}>
+                Disponible:{" "}
+                {areTotalsVisible ? formatMoney(savingsPot[typeCurrency], typeCurrency) : "••••"}
+              </p>
+            ) : (
+              <p className={style.typeCount}>
+                {typeMovs.length} {typeMovs.length === 1 ? "movimiento" : "movimientos"}
+              </p>
+            )}
 
             <div className={style.typeActions}>
               <button

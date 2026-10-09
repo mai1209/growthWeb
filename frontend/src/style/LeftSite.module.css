@@ -2487,3 +2487,8 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   /* la columna de la grilla no puede crecer con el contenido (montos largos) */
   grid-template-columns: minmax(0, 1fr);
 }
+
+.typePot,
+.typeCount {
+  margin-top: -0.35rem;
+}
