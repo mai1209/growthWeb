@@ -1757,3 +1757,40 @@
     height: auto;
   }
 }
+
+/* ---- Barra "comprados / eliminar": sin caja, una línea discreta ----
+   Texto a la izquierda y "Eliminar comprados" como enlace rojo a la derecha,
+   todo en una sola fila también en el teléfono. */
+.footBarV2 {
+  padding: 0.5rem 0.2rem 0;
+  border: none;
+  border-top: 1px solid var(--border-color);
+  border-radius: 0;
+  background: transparent;
+  gap: 0.6rem;
+}
+
+.footBarInfo {
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.footBarDelete {
+  padding: 0.3rem 0;
+  border: none;
+  background: transparent;
+  color: #ff6b5e;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.footBarDelete:hover:not(:disabled) {
+  background: transparent;
+  text-decoration: underline;
+}
+
+.footBarDelete svg {
+  width: 13px;
+  height: 13px;
+}
