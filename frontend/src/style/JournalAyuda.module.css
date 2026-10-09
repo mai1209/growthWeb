@@ -213,3 +213,25 @@
   border-color: var(--accent, #5dc72d);
   color: var(--accent-contrast, #0e1a0e);
 }
+
+/* ---- Cabecera más simple: título chico en una línea, ícono solo, flechas verdes ---- */
+.titulo {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.headIcono {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-verde, #75f94c);
+}
+
+.temaChevron {
+  color: var(--color-verde, #75f94c);
+}

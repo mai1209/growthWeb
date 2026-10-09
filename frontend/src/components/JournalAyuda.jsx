@@ -230,7 +230,6 @@ function JournalAyuda({ onClose }) {
       <div className={style.panel} onClick={(e) => e.stopPropagation()}>
         <header className={style.head}>
           <div>
-            <p className={style.kicker}>Ayuda para tu journal</p>
             <h2 className={style.titulo}>¿No sabés qué escribir?</h2>
           </div>
           <div className={style.headRight}>
