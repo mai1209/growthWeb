@@ -103,7 +103,15 @@ const Spark = ({ data, color, amp = 1 }) => {
   );
 };
 
-const TYPE_FILTERS = [{ value: "all", label: "Todos" }, ...MOVEMENT_TYPE_OPTIONS];
+// Tipos del filtro: los 4 básicos + los "modos" de carga (uso de ahorro y fijos),
+// que en los datos son egresos/ingresos con una marca (desdeAhorro / esRecurrente).
+const TYPE_FILTERS = [
+  { value: "all", label: "Todos" },
+  ...MOVEMENT_TYPE_OPTIONS,
+  { value: "usar_ahorro", label: "Usar ahorro" },
+  { value: "ingreso_fijo", label: "Ingreso fijo" },
+  { value: "gasto_fijo", label: "Gasto fijo" },
+];
 const METHOD_FILTERS = [{ value: "all", label: "Todos" }, ...MOVEMENT_METHOD_OPTIONS];
 
 const getMonthInputValue = (date = new Date()) => {
@@ -297,6 +305,14 @@ function MonthlyFilters({
         } else if (selectedType === "egreso") {
           // Egreso excluye los usos de ahorro (viven en Ahorro)
           if (movimiento.tipo !== "egreso" || movimiento.desdeAhorro) {
+            return false;
+          }
+        } else if (selectedType === "usar_ahorro") {
+          if (movimiento.tipo !== "egreso" || !movimiento.desdeAhorro) return false;
+        } else if (selectedType === "ingreso_fijo") {
+          if (movimiento.tipo !== "ingreso" || !movimiento.esRecurrente) return false;
+        } else if (selectedType === "gasto_fijo") {
+          if (movimiento.tipo !== "egreso" || !movimiento.esRecurrente || movimiento.desdeAhorro) {
             return false;
           }
         } else if (selectedType !== "all" && movimiento.tipo !== selectedType) {
