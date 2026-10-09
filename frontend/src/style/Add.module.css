@@ -1624,3 +1624,26 @@
   min-height: 48px;
   text-align: center;
 }
+
+/* Medio: chips centrados, sin pasarse del ancho; letra más chica para "Transferencia" */
+.methodChips {
+  width: 100%;
+  min-width: 0;
+}
+
+.methodChip {
+  min-width: 0;
+  padding: 0.5rem 0.4rem;
+  font-size: 0.74rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* La columna de Medio no puede ser más angosta que su contenido */
+.fieldGridTriple > .field {
+  min-width: 0;
+}
