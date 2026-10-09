@@ -1209,7 +1209,7 @@ function MetasPage({ activeWorkspace }) {
                 {(() => {
                   const LEFT = 32; // espacio para las etiquetas del eje Y (%)
                   const COL = 92; // ancho por meta (más aire para el texto)
-                  const BODY = 22; // ancho del cuerpo de la vela
+                  const BODY = 10; // ancho del cuerpo de la vela (fina)
                   const TOP = 12;
                   const PLOT = 150;
                   const H = 210;

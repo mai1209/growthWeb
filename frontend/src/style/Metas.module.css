@@ -1362,3 +1362,58 @@
 .chipActivo {
   font-weight: 700;
 }
+
+/* ---- Metas: título más chico, gráficos finos, rótulos en minúscula,
+        tarjetas sin fondo (solo líneas), plazos solo texto de color ---- */
+.titulo {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.boxLabel {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* Sin fondos: solo el borde */
+.stat,
+.chartCard,
+.card {
+  background: transparent;
+}
+
+.card:hover {
+  box-shadow: none;
+}
+
+/* Dona finita: el agujero crece y toma el fondo de la página */
+.donutHole {
+  width: 104px;
+  height: 104px;
+  background: var(--background-color, #071821);
+}
+
+/* Títulos de las tarjetas más chicos y con mayúscula inicial */
+.cardTitulo {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.cardTitulo::first-letter {
+  text-transform: uppercase;
+}
+
+/* Plazo: solo el texto del color que corresponde */
+.pill,
+.pill_corto,
+.pill_mediano,
+.pill_largo {
+  padding: 0;
+  background: transparent;
+}
+
+.pillArea {
+  background: transparent;
+}
