@@ -643,3 +643,36 @@
     font-size: 1.15rem;
   }
 }
+
+/* ---- Afirmaciones: fondos lisos, sin luces ni resplandores ---- */
+.numeroOn,
+:global(body[data-theme="light"]) .numeroOn {
+  box-shadow: none;
+}
+
+.input:hover {
+  box-shadow: none;
+}
+
+.input:focus,
+.inputResaltada,
+:global(body[data-theme="light"]) .input:focus,
+:global(body[data-theme="light"]) .inputResaltada {
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.leerHecho {
+  box-shadow: none;
+}
+
+.carta,
+.cartaG,
+.cartaG:hover,
+.cartaLeyendo {
+  box-shadow: none;
+}
+
+.cartaG:hover {
+  transform: none;
+}

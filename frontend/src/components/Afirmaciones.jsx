@@ -339,9 +339,11 @@ function Afirmaciones() {
               style={
                 escrita
                   ? {
+                      /* Fondo liso (sin resplandor): tinte suave + borde del color;
+                         resaltada = borde más marcado, nada de luz */
                       background: `${tint}1f`,
-                      borderColor: `${tint}59`,
-                      boxShadow: resaltadas.has(i) ? `0 0 22px ${tint}73` : undefined,
+                      borderColor: resaltadas.has(i) ? tint : `${tint}59`,
+                      borderWidth: resaltadas.has(i) ? 2 : 1,
                     }
                   : undefined
               }
