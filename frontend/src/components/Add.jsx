@@ -428,7 +428,9 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
               key={key}
               type="button"
               className={`${style.modeButton} ${
-                selectedMode === key ? style.modeButtonActive : ""
+                selectedMode === key
+                  ? `${style.modeButtonActive} ${style[`modeActive_${config.tone}`] || ""}`
+                  : ""
               }`}
               onClick={() => setSelectedMode(key)}
             >

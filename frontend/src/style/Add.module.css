@@ -1524,3 +1524,61 @@
   color: #ffffff;
   border-color: transparent;
 }
+
+/* ---- Tarjeta de color: todos los textos en negro (también lo que se escribe y los placeholders) ---- */
+.formCard .inputMonto,
+.formCard .btn,
+.formCard .detalle,
+.formCard .datePicker,
+.formCard .select,
+.formCard .input,
+:global(body[data-theme="light"]) .formCard .inputMonto,
+:global(body[data-theme="light"]) .formCard .btn,
+:global(body[data-theme="light"]) .formCard .detalle,
+:global(body[data-theme="light"]) .formCard .datePicker,
+:global(body[data-theme="light"]) .formCard .select,
+:global(body[data-theme="light"]) .formCard .input {
+  color: #0e1a0e;
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.22);
+}
+
+.formCard .inputMonto::placeholder,
+.formCard .btn::placeholder,
+.formCard .detalle::placeholder,
+.formCard .datePicker::placeholder,
+:global(body[data-theme="light"]) .formCard .inputMonto::placeholder,
+:global(body[data-theme="light"]) .formCard .btn::placeholder,
+:global(body[data-theme="light"]) .formCard .detalle::placeholder,
+:global(body[data-theme="light"]) .formCard .datePicker::placeholder {
+  color: rgba(14, 26, 14, 0.55);
+}
+
+.formCard .inputMonto:-webkit-autofill,
+.formCard .btn:-webkit-autofill,
+.formCard .detalle:-webkit-autofill {
+  -webkit-text-fill-color: #0e1a0e;
+}
+
+.formCard .catOption {
+  color: #0e1a0e;
+}
+
+.formCard .catDropdown {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.formCard .catOption:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* Selector de arriba: el activo toma el color de la tarjeta */
+.modeActive_ingreso,
+.modeActive_ingreso:hover { background: #75f94c; color: #06210a; }
+.modeActive_egreso,
+.modeActive_egreso:hover { background: #ff7b6b; color: #06210a; }
+.modeActive_ahorro,
+.modeActive_ahorro:hover { background: #58eba4; color: #06210a; }
+.modeActive_deuda,
+.modeActive_deuda:hover { background: #ffd55c; color: #06210a; }
