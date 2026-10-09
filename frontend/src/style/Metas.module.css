@@ -1524,3 +1524,12 @@ select.input {
 .areaNuevaRow .areaNuevaCancel:hover {
   color: #ff6b6f;
 }
+
+/* Tarjetas En curso / Completadas / Avance promedio: cuadradas (poco radio), ícono también */
+.stat {
+  border-radius: 10px;
+}
+
+.statIcon {
+  border-radius: 8px;
+}
