@@ -633,7 +633,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
 
         {mode.recurrente && (
           <div className={style.fieldGrid}>
-            <div className={style.field}>
+            <div className={`${style.field} ${style.fieldFull}`}>
               <label className={style.fieldLabel} htmlFor="frecuencia">
                 Frecuencia
               </label>

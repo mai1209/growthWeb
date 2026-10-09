@@ -1358,3 +1358,14 @@
   visibility: visible;
   transform: translateY(0);
 }
+
+/* ---- Títulos de los campos en minúscula; Frecuencia a todo el ancho ---- */
+.fieldLabel,
+.formEyebrow {
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.fieldGrid > .fieldFull {
+  grid-column: 1 / -1;
+}
