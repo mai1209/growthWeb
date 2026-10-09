@@ -3,6 +3,7 @@ import { taskService } from "../api"; // Importamos el servicio
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import style from "../style/Tarea.module.css";
+import { capitalizarPrimera } from "../utils/texto";
 import {
   DEFAULT_PRIORIDADES,
   PRIORIDAD_COLORES,
@@ -616,7 +617,12 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
 
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : name === "meta"
+            ? capitalizarPrimera(value)
+            : value,
     }));
   };
 
@@ -1491,7 +1497,26 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                   onCalendarClose={() => setIsTaskDatePickerOpen(false)}
                   shouldCloseOnSelect
                   popperClassName={style.taskDatepickerPopper}
-                />
+                  popperPlacement="bottom"
+                >
+                  {/* Pie del calendario: Hoy y Cancelar */}
+                  <div className={style.datepickerFoot}>
+                    <button
+                      type="button"
+                      className={style.datepickerFootBtn}
+                      onClick={() => handleTaskDateChange(new Date())}
+                    >
+                      Hoy
+                    </button>
+                    <button
+                      type="button"
+                      className={`${style.datepickerFootBtn} ${style.datepickerFootCancel}`}
+                      onClick={() => setIsTaskDatePickerOpen(false)}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </DatePicker>
               </div>
 
               <div className={style.formField}>
@@ -1523,13 +1548,36 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                 </div>
 
                 {formData.momento === "exacta" ? (
-                  <input
-                    className={style.momentoTimeInput}
-                    name="horario"
-                    type="time"
-                    value={isExactTime(formData.horario) ? formData.horario : ""}
-                    onChange={handleFormChange}
-                  />
+                  <div className={style.horaRow} aria-label="Hora exacta">
+                    <select
+                      className={style.horaSelect}
+                      aria-label="Hora"
+                      value={(isExactTime(formData.horario) ? formData.horario : "09:00").split(":")[0]}
+                      onChange={(e) => {
+                        const min = (isExactTime(formData.horario) ? formData.horario : "09:00").split(":")[1];
+                        setFormData((prev) => ({ ...prev, horario: `${e.target.value}:${min}` }));
+                      }}
+                    >
+                      {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0")).map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                    <span className={style.horaSep}>:</span>
+                    <select
+                      className={style.horaSelect}
+                      aria-label="Minutos"
+                      value={(isExactTime(formData.horario) ? formData.horario : "09:00").split(":")[1]}
+                      onChange={(e) => {
+                        const hr = (isExactTime(formData.horario) ? formData.horario : "09:00").split(":")[0];
+                        setFormData((prev) => ({ ...prev, horario: `${hr}:${e.target.value}` }));
+                      }}
+                    >
+                      {Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0")).map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                    <span className={style.horaHint}>hs</span>
+                  </div>
                 ) : null}
               </div>
 
