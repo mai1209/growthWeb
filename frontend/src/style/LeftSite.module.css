@@ -2423,7 +2423,12 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 .tabsShell {
   border-radius: 10px;
   border-color: var(--border-color, rgba(216, 241, 224, 0.14));
-  padding: 3px;
+  /* Solo arriba y a los lados: el padding de abajo lo pone .tabsShellCard
+     (es el espacio donde se monta la tarjeta de saldo; si se pisa, la tarjeta
+     tapa el switch) */
+  padding-top: 3px;
+  padding-left: 3px;
+  padding-right: 3px;
 }
 
 .tabsShell .segmentTab {
