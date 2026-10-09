@@ -640,7 +640,7 @@ export default function FiltrosScreen() {
               ["recurrence", recurrence],
               ["method", method],
             ].map(([key, value]) => (
-              <View key={key} style={styles.filterField}>
+              <View key={key} style={[styles.filterField, styles.pickerField]}>
                 <Text style={styles.fieldLabel}>{PICKERS[key].title}</Text>
                 <TouchableOpacity style={styles.filterTrigger} onPress={() => setOpenPicker(key)}>
                   <Ionicons name={PICKERS[key].icon} size={13} color={colors.greenBright} />
@@ -1033,7 +1033,8 @@ const makeStyles = (colors) => StyleSheet.create({
     borderRadius: 10,
     padding: 14,
   },
-  filterField: { flex: 1, minWidth: 0, gap: 5 },
+  filterField: { gap: 5 },
+  pickerField: { flex: 1, minWidth: 0 },
   fieldLabel: { color: colors.muted, fontSize: 11, fontWeight: "700", letterSpacing: 0.2 },
   searchBox: {
     flexDirection: "row",
@@ -1043,9 +1044,10 @@ const makeStyles = (colors) => StyleSheet.create({
     borderColor: colors.cardBorder,
     borderRadius: 8,
     paddingHorizontal: 12,
+    minHeight: 42,
     backgroundColor: "transparent",
   },
-  searchInput: { flex: 1, paddingVertical: 9, color: colors.text, fontSize: 12.5 },
+  searchInput: { flex: 1, height: 40, paddingVertical: 0, color: colors.text, fontSize: 12.5 },
   pickerRow: { flexDirection: "row", gap: 8 },
   filterTrigger: {
     flexDirection: "row",
