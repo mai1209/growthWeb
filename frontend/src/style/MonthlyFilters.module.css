@@ -2782,3 +2782,9 @@
     white-space: nowrap;
   }
 }
+
+/* Popup Pagar deuda: fondo del tema (en tema claro quedaba oscuro con texto oscuro) */
+.settleModal {
+  background: var(--background-color, #071821);
+  color: var(--color-text);
+}
