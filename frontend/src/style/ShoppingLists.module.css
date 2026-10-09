@@ -1606,3 +1606,47 @@
   align-items: center;
   padding: 4px;
 }
+
+/* ---- Listas de compras: título más chico y todo blanco, creador solo con líneas
+        y cursor verde, carritos sin fondo, círculos de color más chicos ---- */
+.headTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.headTitle span {
+  color: var(--color-text);
+}
+
+.composerV2 {
+  background: transparent;
+}
+
+.composerV2Icon {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  font-size: 1.2rem;
+}
+
+.composerV2Input {
+  background: transparent;
+  caret-color: var(--color-verde, #75f94c);
+}
+
+.swatchV2 {
+  width: 18px;
+  height: 18px;
+  font-size: 0.66rem;
+}
+
+.swatchV2On {
+  box-shadow: 0 0 0 2px var(--background-color, #071821), 0 0 0 3px var(--acc);
+}
+
+.cardV2Icon {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  font-size: 1.25rem;
+}
