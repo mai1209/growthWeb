@@ -50,7 +50,7 @@ export default function TaskHistory({ tasks }) {
     <ScrollView contentContainerStyle={styles.body}>
       {/* Progreso del período (anillo) */}
       <View style={styles.progressCard}>
-        <ProgressRing percent={summary.percent} />
+        <ProgressRing stroke={7} percent={summary.percent} />
         <View style={styles.progressSide}>
           <Text style={styles.progressKicker}>Progreso</Text>
           <View style={styles.progressBoxes}>
