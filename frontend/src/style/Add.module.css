@@ -1187,3 +1187,103 @@
     opacity: 0.45;
   }
 }
+
+/* ---- Cargar movimiento: selector de tipo en una línea y cuadrado, switches cuadrados,
+        textos más chicos e íconos de categoría de línea (todos del mismo color) ---- */
+.modeSelector {
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 10px;
+  background: transparent;
+  overflow-x: auto;
+}
+
+.modeButton {
+  padding: 0.42rem 0.75rem;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.modeButtonActive,
+.modeButtonActive:hover {
+  background: #75f94c;
+  color: #06210a;
+}
+
+.currencySwitch {
+  min-width: 170px;
+  padding: 0.2rem;
+  border-radius: 9px;
+  background: transparent;
+}
+
+.currencySwitch::before {
+  top: 0.2rem;
+  bottom: 0.2rem;
+  left: 0.2rem;
+  width: calc(50% - 0.3rem);
+  border-radius: 7px;
+  background: #75f94c;
+  box-shadow: none;
+}
+
+.currencySwitchUsd::before {
+  transform: translateX(calc(100% + 0.2rem));
+}
+
+.currencyOption {
+  padding: 0.45rem 0.7rem;
+  border-radius: 7px;
+  font-size: 0.8rem;
+}
+
+.currencyOptionActive {
+  color: #06210a;
+}
+
+.methodSwitch {
+  min-height: 42px;
+  padding: 0.2rem;
+  border-radius: 9px;
+  background: transparent;
+}
+
+.methodSwitch::before {
+  top: 0.2rem;
+  bottom: 0.2rem;
+  left: 0.2rem;
+  width: calc(50% - 0.3rem);
+  border-radius: 7px;
+  background: #75f94c;
+  box-shadow: none;
+}
+
+.methodSwitchTransferencia::before {
+  transform: translateX(calc(100% + 0.2rem));
+}
+
+.methodOption {
+  padding: 0.5rem 0.4rem;
+  border-radius: 7px;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.methodOptionActive {
+  color: #06210a;
+}
+
+.catOption span.catOptionIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  font-size: 1rem;
+  color: var(--color-verde, #75f94c);
+}
+
+.catOptionIcon svg {
+  width: 15px;
+  height: 15px;
+}

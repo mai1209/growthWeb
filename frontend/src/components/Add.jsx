@@ -6,6 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import EmojiPicker, { Theme } from "emoji-picker-react";
 import style from "../style/Add.module.css";
 import InputMonto from "./InputMonto";
+import CategoryIcon from "../utils/categoryIcons";
 import { movimientoService, categoriesService } from "../api";
 import {
   CURRENCY_OPTIONS,
@@ -540,7 +541,10 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
                       setCatOpen(false);
                     }}
                   >
-                    <span>{c.icono}</span> {c.nombre}
+                    <span className={style.catOptionIcon}>
+                      <CategoryIcon icono={c.icono} nombre={c.nombre} />
+                    </span>
+                    {c.nombre}
                   </button>
                 ))}
               </div>

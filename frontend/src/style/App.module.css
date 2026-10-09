@@ -1371,3 +1371,35 @@
     padding: 0 0.5rem;
   }
 }
+
+/* ---- Home: "Panel de movimientos" en minúscula, ARS sin fondo,
+        Cargar movimiento del mismo alto que el switch Hoy/Mensual/Anual ---- */
+.eyebrow {
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.dashboardInfoBadge {
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+}
+
+.dashboardInfoHeader {
+  align-items: center;
+}
+
+.dashboardPeriodButton {
+  min-height: 32px;
+  padding: 0 1rem;
+  font-size: 0.78rem;
+}
+
+.dashboardAddBtn {
+  min-height: 40px; /* = 32 del botón + 3+3 de padding + bordes del switch */
+  padding: 0 0.9rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+}
