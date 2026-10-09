@@ -566,8 +566,8 @@ export default function FiltrosScreen() {
             style={[styles.filterToggle, filtersOpen && styles.filterToggleActive]}
             onPress={() => setFiltersOpen((v) => !v)}
           >
-            <Ionicons name="funnel-outline" size={15} color={filtersOpen ? "#fff" : colors.greenDark} />
-            <Text style={[styles.filterToggleText, filtersOpen && { color: "#fff" }]}>Filtrar</Text>
+            <Ionicons name="funnel-outline" size={15} color={filtersOpen ? "#06210a" : colors.greenDark} />
+            <Text style={[styles.filterToggleText, filtersOpen && { color: "#06210a" }]}>Filtrar</Text>
           </TouchableOpacity>
           {search || type !== "all" ? (
             <TouchableOpacity
@@ -936,9 +936,9 @@ const makeStyles = (colors) => StyleSheet.create({
     padding: 4,
   },
   curBtn: { paddingVertical: 7, paddingHorizontal: 14, borderRadius: 9 },
-  curBtnActive: { backgroundColor: colors.segActive },
+  curBtnActive: { backgroundColor: "#75f94c" },
   curText: { color: colors.muted, fontWeight: "800", fontSize: 13 },
-  curTextActive: { color: colors.segActiveText },
+  curTextActive: { color: "#06210a" },
   filterToggle: {
     flexDirection: "row",
     alignItems: "center",

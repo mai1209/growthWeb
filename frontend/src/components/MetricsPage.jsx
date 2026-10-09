@@ -135,19 +135,23 @@ const acortarEtiqueta = (texto, max = 12) =>
 
 // Gráfico de radar por categorías: una punta por categoría (como el "rombo"
 // de servicios), con leyenda de color · categoría · monto · % abajo.
-// Con menos de 3 categorías un polígono no dice nada, así que se muestra
-// como barras horizontales (mismo look que "Composición").
+// Con menos de 3 categorías se completan ejes vacíos para que el radar
+// (el "triángulo") se dibuje siempre; la leyenda muestra solo las reales.
 const RadarCard = ({ title, subtitle, items, emptyLabel, currency }) => {
   const shown = items.filter((item) => item.value > 0);
   const total = shown.reduce((acc, item) => acc + item.value, 0);
   const maxValue = Math.max(...shown.map((item) => item.value), 0);
+  const axes = shown.slice();
+  while (axes.length > 0 && axes.length < 3) {
+    axes.push({ label: "", value: 0, color: "transparent", vacio: true });
+  }
 
   const W = 240;
   const H = 240;
   const cx = W / 2;
   const cy = H / 2;
   const R = 78; // radio máximo del polígono (deja aire para las etiquetas)
-  const n = shown.length;
+  const n = axes.length;
 
   // Ángulo de cada eje, arrancando arriba (como el reloj) y en sentido horario.
   const angleFor = (i) => -Math.PI / 2 + (i * 2 * Math.PI) / n;
@@ -156,8 +160,8 @@ const RadarCard = ({ title, subtitle, items, emptyLabel, currency }) => {
     y: cy + radius * Math.sin(angleFor(i)),
   });
 
-  const axisPoints = shown.map((_, i) => pointFor(i, R));
-  const valuePoints = shown.map((item, i) => pointFor(i, maxValue ? (item.value / maxValue) * R : 0));
+  const axisPoints = axes.map((_, i) => pointFor(i, R));
+  const valuePoints = axes.map((item, i) => pointFor(i, maxValue ? (item.value / maxValue) * R : 0));
   const polygonPath = valuePoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
   const rings = [0.25, 0.5, 0.75, 1];
 
@@ -171,14 +175,14 @@ const RadarCard = ({ title, subtitle, items, emptyLabel, currency }) => {
         <strong>{total ? "100%" : "0%"}</strong>
       </div>
 
-      {n >= 3 ? (
+      {total ? (
         <>
           <div className={style.radarWrap}>
             <svg className={style.radarSvg} viewBox={`0 0 ${W} ${H}`} role="img">
               {rings.map((ratio) => (
                 <polygon
                   key={ratio}
-                  points={shown.map((_, i) => {
+                  points={axes.map((_, i) => {
                     const p = pointFor(i, R * ratio);
                     return `${p.x},${p.y}`;
                   }).join(" ")}
@@ -186,26 +190,29 @@ const RadarCard = ({ title, subtitle, items, emptyLabel, currency }) => {
                 />
               ))}
               {axisPoints.map((p, i) => (
-                <line key={shown[i].label} x1={cx} y1={cy} x2={p.x} y2={p.y} className={style.radarGrid} />
+                <line key={`eje-${i}`} x1={cx} y1={cy} x2={p.x} y2={p.y} className={style.radarGrid} />
               ))}
               <path d={polygonPath} className={style.radarArea} />
-              {valuePoints.map((p, i) => (
-                <circle key={shown[i].label} cx={p.x} cy={p.y} r="3.5" fill={shown[i].color} className={style.radarDot} />
-              ))}
+              {valuePoints.map((p, i) =>
+                axes[i].vacio ? null : (
+                  <circle key={`pt-${i}`} cx={p.x} cy={p.y} r="3.5" fill={axes[i].color} className={style.radarDot} />
+                )
+              )}
               {axisPoints.map((p, i) => {
+                if (axes[i].vacio) return null;
                 const label = pointFor(i, R + 20);
                 const anchor = Math.abs(Math.cos(angleFor(i))) < 0.35 ? "middle" : label.x > cx ? "start" : "end";
                 return (
                   <text
-                    key={`label-${shown[i].label}`}
+                    key={`label-${i}`}
                     x={label.x}
                     y={label.y}
                     textAnchor={anchor}
                     dominantBaseline="middle"
                     className={style.radarAxisText}
                   >
-                    <title>{shown[i].label}</title>
-                    {acortarEtiqueta(shown[i].label)}
+                    <title>{axes[i].label}</title>
+                    {acortarEtiqueta(axes[i].label)}
                   </text>
                 );
               })}

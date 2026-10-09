@@ -111,7 +111,13 @@ function BarList({ items, total, styles }) {
 
 // Radar por categorías (mismo dibujo que la web): anillos + ejes, polígono
 // verde translúcido, un punto de color por categoría y su nombre en la punta.
-function Radar({ items, colors, size }) {
+function Radar({ items: reales, colors, size }) {
+  // Con menos de 3 categorías se completan ejes vacíos: el radar (el
+  // "triángulo") se dibuja siempre, igual que en la web.
+  const items = reales.slice();
+  while (items.length > 0 && items.length < 3) {
+    items.push({ label: "", value: 0, color: "transparent", vacio: true });
+  }
   const n = items.length;
   const W = size;
   const H = Math.round(size * 0.86);
@@ -141,7 +147,7 @@ function Radar({ items, colors, size }) {
       {items.map((it, i) => {
         const p = pointFor(i, R);
         return (
-          <Line key={`eje-${it.label}`} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke={colors.cardBorder} strokeWidth={1} />
+          <Line key={`eje-${i}`} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke={colors.cardBorder} strokeWidth={1} />
         );
       })}
       <Polygon
@@ -151,9 +157,9 @@ function Radar({ items, colors, size }) {
         strokeWidth={2}
         strokeLinejoin="round"
       />
-      {valuePoints.map((p, i) => (
+      {valuePoints.map((p, i) => items[i].vacio ? null : (
         <Circle
-          key={`pt-${items[i].label}`}
+          key={`pt-${i}`}
           cx={p.x}
           cy={p.y}
           r={4}
@@ -163,12 +169,13 @@ function Radar({ items, colors, size }) {
         />
       ))}
       {items.map((it, i) => {
+        if (it.vacio) return null;
         const p = pointFor(i, R + 14);
         const cos = Math.cos(angleFor(i));
         const anchor = Math.abs(cos) < 0.35 ? "middle" : cos > 0 ? "start" : "end";
         return (
           <SvgText
-            key={`lbl-${it.label}`}
+            key={`lbl-${i}`}
             x={p.x}
             y={p.y + 3.5}
             fontSize={10}
@@ -356,7 +363,7 @@ export default function MetricasScreen() {
     return (
       <View style={styles.block}>
         <BlockHeader kicker={kicker} title={title} right={total ? "100%" : "0%"} styles={styles} />
-        {shown.length >= 3 ? (
+        {total ? (
           <>
             <View style={{ alignItems: "center" }}>
               <Radar items={shown} colors={colors} size={Math.min(anchoBloque, 340)} />
@@ -374,9 +381,6 @@ export default function MetricasScreen() {
               ))}
             </View>
           </>
-        ) : total ? (
-          // Con menos de 3 categorías un polígono no dice nada: barras
-          <BarList items={shown} total={total} styles={styles} />
         ) : (
           <Text style={styles.muted}>{emptyLabel}</Text>
         )}

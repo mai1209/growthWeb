@@ -2868,3 +2868,34 @@
     font-size: 0.72rem;
   }
 }
+
+/* Botón "Filtrar" activo: verde claro con letra oscura (también al pasar el mouse) */
+.filterToggleActive,
+.filterToggleActive:hover {
+  background: #75f94c;
+  border-color: #75f94c;
+  color: #06210a;
+}
+
+.filterToggle:hover:not(.filterToggleActive) {
+  background: transparent;
+  border-color: rgba(117, 249, 76, 0.55);
+}
+
+:global(body[data-theme="light"]) .filterToggleActive,
+:global(body[data-theme="light"]) .filterToggleActive:hover {
+  background: #75f94c;
+  border-color: #75f94c;
+  color: #06210a;
+}
+
+/* Switch AR$/US$: mismo verde claro que el botón Filtrar activo */
+.currencySwitch::before,
+:global(body[data-theme="light"]) .currencySwitch::before {
+  background: #75f94c;
+}
+
+.currencyButtonActive,
+:global(body[data-theme="light"]) .currencyButtonActive {
+  color: #06210a;
+}
