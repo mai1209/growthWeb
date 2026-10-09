@@ -320,3 +320,31 @@
   display: grid;
   gap: 0.5rem;
 }
+
+/* Que nada del panel se pase de su borde: el ancho incluye el relleno y el
+   contenido queda recortado adentro */
+.container {
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.containerOpen {
+  width: 236px;
+}
+
+.panel,
+.header,
+.optionLink {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.header h2 {
+  font-size: 0.8rem;
+}
+
+.headerChevron {
+  width: 14px;
+  height: 14px;
+}
