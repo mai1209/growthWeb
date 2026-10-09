@@ -1341,7 +1341,7 @@ export default function SaludPage() {
             {/* El botón Manual va pegado al título: carga pasos a mano */}
             <div className={style.pasosTituloRow}>
               <h2>
-                <FiActivity /> Pasos de hoy
+                <FiActivity className={style.pasosHeadIcon} /> Pasos de hoy
               </h2>
               <button
                 type="button"
@@ -1358,7 +1358,7 @@ export default function SaludPage() {
                   mutate({ pasosManual: { [hoy]: n } });
                 }}
               >
-                <FiPlus /> Manual
+                <FiPlus /> <span className={style.pasosManualTxt}>Manual</span>
               </button>
             </div>
             <button
@@ -1367,7 +1367,7 @@ export default function SaludPage() {
               title="Ver los recorridos de tus caminatas por GPS"
               onClick={() => setRecorridosOpen(true)}
             >
-              <FiMap /> Ver recorridos
+              <FiMap /> <span className={style.recorridosTxt}>Ver recorridos</span>
             </button>
           </div>
 
