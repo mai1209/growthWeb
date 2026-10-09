@@ -1380,3 +1380,110 @@
   background-position: right 1.1rem center;
   background-size: 14px;
 }
+
+/* ---- Cargar movimiento: la tarjeta toma el color fuerte y liso de cada tipo.
+        Texto oscuro encima; campos y switches en oscuro translúcido. ---- */
+.formIngreso,
+.formEgreso,
+.formAhorro,
+.formDeuda {
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+  border-color: transparent;
+  color: #0e1a0e;
+}
+
+.formIngreso { background: #75f94c; }
+.formEgreso { background: #ff7b6b; }
+.formAhorro { background: #58eba4; }
+.formDeuda { background: #ffd55c; }
+
+/* Textos de la tarjeta en oscuro */
+.formCard .formEyebrow,
+.formCard .fieldLabel,
+.formCard .fieldTag,
+.formCard .helperBox {
+  color: #0e1a0e;
+}
+
+.formCard .fieldTag {
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.formCard .infoTip {
+  color: #0e1a0e;
+}
+
+/* Campos: oscuro translúcido con texto claro */
+.formCard .inputMonto,
+.formCard .btn,
+.formCard .detalle,
+.formCard .datePicker,
+.formCard .select,
+.formCard .input {
+  background: rgba(0, 0, 0, 0.22);
+  border-color: rgba(0, 0, 0, 0.28);
+  color: #ffffff;
+}
+
+.formCard .inputMonto::placeholder,
+.formCard .btn::placeholder,
+.formCard .detalle::placeholder,
+.formCard .datePicker::placeholder {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.formCard .inputMonto:focus,
+.formCard .btn:focus,
+.formCard .detalle:focus,
+.formCard .datePicker:focus,
+.formCard .select:focus {
+  border-color: rgba(0, 0, 0, 0.6);
+  box-shadow: none;
+}
+
+.formCard .inputMonto:-webkit-autofill,
+.formCard .btn:-webkit-autofill,
+.formCard .detalle:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px rgba(20, 30, 24, 0.95) inset;
+  -webkit-text-fill-color: #ffffff;
+}
+
+/* Switches ARS/USD y Efectivo/Transferencia: pista oscura, activo claro */
+.formCard .currencySwitch,
+.formCard .methodSwitch {
+  background: rgba(0, 0, 0, 0.22);
+  border-color: transparent;
+}
+
+.formCard .currencySwitch::before,
+.formCard .methodSwitch::before {
+  background: #0e1a0e;
+}
+
+.formCard .currencyOption,
+.formCard .methodOption {
+  color: rgba(14, 26, 14, 0.75);
+}
+
+.formCard .currencyOptionActive,
+.formCard .methodOptionActive {
+  color: #ffffff;
+}
+
+/* Guardar: oscuro sobre el color */
+.formCard .buttonSend {
+  background: #0e1a0e;
+  color: #ffffff;
+}
+
+/* Lista de categorías y el "+" de nueva categoría */
+.formCard .catDropdown {
+  background: #0e1a0e;
+  border-color: rgba(0, 0, 0, 0.4);
+}
+
+.formCard .catOption {
+  color: #ffffff;
+}
+
+/* En tema claro el color fuerte se ve igual; sólo cambia el fondo de atrás */
