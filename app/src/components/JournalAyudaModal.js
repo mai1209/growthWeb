@@ -223,8 +223,7 @@ export default function JournalAyudaModal({ visible, onClose, onUsarPregunta }) 
             <Ionicons name="chevron-back" size={22} color={colors.text} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={styles.kicker}>AYUDA PARA TU JOURNAL</Text>
-            <Text style={styles.title}>¿No sabés qué escribir?</Text>
+            <Text style={styles.title} numberOfLines={1}>¿No sabés qué escribir?</Text>
           </View>
           <View style={styles.headIcono}>
             <Ionicons name="help-circle-outline" size={22} color={colors.green} />
@@ -261,7 +260,7 @@ export default function JournalAyudaModal({ visible, onClose, onUsarPregunta }) 
                     <Ionicons
                       name={abierto ? "chevron-up" : "chevron-down"}
                       size={16}
-                      color={colors.muted}
+                      color={colors.greenBright}
                     />
                   </TouchableOpacity>
 
@@ -316,14 +315,10 @@ const makeStyles = (colors) =>
     },
     backBtn: { padding: 4 },
     kicker: { color: colors.greenDark, fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
-    title: { color: colors.text, fontSize: 20, fontWeight: "800", marginTop: 2 },
+    title: { color: colors.text, fontSize: 15, fontWeight: "700" },
     headIcono: {
-      width: 38,
-      height: 38,
-      borderRadius: 999,
-      borderWidth: 1,
-      borderColor: colors.greenBorder,
-      backgroundColor: colors.greenSoft,
+      width: 26,
+      height: 26,
       alignItems: "center",
       justifyContent: "center",
     },

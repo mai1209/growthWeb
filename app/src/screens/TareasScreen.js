@@ -457,7 +457,7 @@ export default function TareasScreen() {
                   {panelAbierto ? (
                   <>
                   <View style={styles.panelRing}>
-                    <ProgressRing percent={progressPercent} size={150} stroke={10} />
+                    <ProgressRing percent={progressPercent} size={150} stroke={7} />
                   </View>
                   <Text style={styles.panelKicker}>Progreso del día</Text>
 
