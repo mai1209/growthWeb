@@ -1745,3 +1745,15 @@
     flex-basis: 100%;
   }
 }
+
+/* (una regla vieja ponía el compositor en columna en pantallas chicas) */
+@media (max-width: 720px) {
+  .composerV2 {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .composerV2Input {
+    height: auto;
+  }
+}
