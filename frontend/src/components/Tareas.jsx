@@ -8,7 +8,6 @@ import {
   DEFAULT_PRIORIDADES,
   PRIORIDAD_COLORES,
   colorDePrioridad,
-  textoSobre,
 } from "../utils/prioridades";
 import {
   filterTasksForDate,
@@ -843,9 +842,14 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
             className={`${style.taskCard} ${
               completed ? style.completed : ""
             } ${style[task.color] || style.color1}`}
-            style={
-              task.color?.startsWith?.("#") ? { background: task.color } : undefined
-            }
+            style={(() => {
+              // La tarjeta entera se pinta con el color de la prioridad; si la
+              // prioridad no tiene color, con el color propio de la tarea.
+              const fondo =
+                colorDePrioridad(prioridades, task.urgencia) ||
+                (task.color?.startsWith?.("#") ? task.color : null);
+              return fondo ? { background: fondo } : undefined;
+            })()}
           >
             <div className={style.taskTop}>
               {/* Izquierda: opciones (tres puntitos) */}
@@ -866,17 +870,7 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
                     <FiCalendar />
                     {task.fecha ? task.fecha.slice(0, 10) : "-"}
                   </span>
-                  <span
-                    className={`${style.taskChip} ${style.taskUrgency}`}
-                    style={
-                      colorDePrioridad(prioridades, task.urgencia)
-                        ? {
-                            background: colorDePrioridad(prioridades, task.urgencia),
-                            color: textoSobre(colorDePrioridad(prioridades, task.urgencia)),
-                          }
-                        : undefined
-                    }
-                  >
+                  <span className={`${style.taskChip} ${style.taskUrgency}`}>
                     {task.urgencia || "Normal"}
                   </span>
                   <span className={`${style.taskChip} ${style.taskSchedule}`}>

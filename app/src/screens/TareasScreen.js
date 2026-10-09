@@ -25,7 +25,7 @@ import {
 import { loadNotifSettings } from "../utils/notifSettings";
 import { syncTaskReminders } from "../utils/taskReminders";
 import TaskFormModal, { TASK_COLORS } from "../components/TaskFormModal";
-import { DEFAULT_PRIORIDADES, colorDePrioridad, textoSobre } from "../utils/prioridades";
+import { DEFAULT_PRIORIDADES, colorDePrioridad } from "../utils/prioridades";
 import TaskCalendar from "../components/TaskCalendar";
 import TaskHistory from "../components/TaskHistory";
 import ProgressRing from "../components/ProgressRing";
@@ -550,7 +550,10 @@ export default function TareasScreen() {
             }
             renderItem={({ item }) => {
               const done = isTaskCompletedOnDate(item, selectedDate);
+              // La tarjeta entera se pinta con el color de la prioridad; si la
+              // prioridad no tiene color, con el color propio de la tarea.
               const accent =
+                colorDePrioridad(prioridades, item.urgencia) ||
                 TASK_COLORS[item.color] ||
                 (item.color?.startsWith?.("#") ? item.color : TASK_COLORS.color1);
               const menuOpen = openMenu === item._id;
@@ -580,19 +583,7 @@ export default function TareasScreen() {
                       <Text style={[styles.cardTitle, done && styles.cardTitleDone]}>{item.meta}</Text>
                       <View style={styles.metaRow}>
                         {item.urgencia ? (
-                          <Text
-                            style={[
-                              styles.metaChip,
-                              colorDePrioridad(prioridades, item.urgencia)
-                                ? {
-                                    backgroundColor: colorDePrioridad(prioridades, item.urgencia),
-                                    color: textoSobre(colorDePrioridad(prioridades, item.urgencia)),
-                                  }
-                                : null,
-                            ]}
-                          >
-                            {item.urgencia}
-                          </Text>
+                          <Text style={styles.metaChip}>{item.urgencia}</Text>
                         ) : null}
                         {item.compartida ? (
                           <View style={styles.compartidaChip}>
