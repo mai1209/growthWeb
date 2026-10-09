@@ -2848,3 +2848,23 @@
     border-radius: 10px;
   }
 }
+
+/* ---- Filtros: rótulos (Búsqueda, Tipo, Origen, Medio) y títulos de las tarjetas
+        (Ingresos, Egresos, Ahorros, Deuda pendiente) en minúscula; placeholder chico ---- */
+.filterField label,
+.summaryCard span {
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.searchWrap .input::placeholder,
+.filtersPanel .input::placeholder {
+  font-size: 0.78rem;
+}
+
+@media (max-width: 860px) {
+  .searchWrap .input::placeholder,
+  .filtersPanel .input::placeholder {
+    font-size: 0.72rem;
+  }
+}
