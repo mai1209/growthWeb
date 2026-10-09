@@ -499,7 +499,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
           />
         </div>
 
-        <div className={isDebtMode ? style.fieldGridDual : style.fieldGridTriple}>
+        <div className={style.fieldGridTriple}>
           <div className={`${style.field} ${style.catField}`}>
             <label className={style.fieldLabel} htmlFor="categoria">
               Categoria
@@ -581,37 +581,30 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
             />
           </div>
 
-          {!isDebtMode && (
-            <div className={style.field}>
-              <div className={style.fieldLabelRow}>
-                <label className={style.fieldLabel}>Medio</label>
-                <span className={style.fieldTag}>
-                  {medio === "transferencia" ? "Digital" : "Fisico"}
-                </span>
-              </div>
-
-              <div
-                className={`${style.methodSwitch} ${
-                  medio === "transferencia"
-                    ? style.methodSwitchTransferencia
-                    : style.methodSwitchEfectivo
-                }`}
-              >
-                {MOVEMENT_METHOD_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`${style.methodOption} ${
-                      medio === option.value ? style.methodOptionActive : ""
-                    }`}
-                    onClick={() => setMedio(option.value)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+          <div className={style.field}>
+            <div className={style.fieldLabelRow}>
+              <label className={style.fieldLabel}>Medio</label>
+              <span className={style.fieldTag}>
+                {medio === "transferencia" ? "Digital" : medio === "credito" ? "Virtual" : "Fisico"}
+              </span>
             </div>
-          )}
+
+            {/* Efectivo / Transferencia / Crédito (virtual: tarjeta, Mercado Pago…) */}
+            <div className={style.methodChips}>
+              {MOVEMENT_METHOD_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`${style.methodChip} ${
+                    medio === option.value ? style.methodChipActive : ""
+                  }`}
+                  onClick={() => setMedio(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {isDebtMode && (

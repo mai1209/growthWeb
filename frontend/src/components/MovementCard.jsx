@@ -307,7 +307,7 @@ export default function MovementCard({
       <div className={`${style.tblCell} ${style.tblCellMethod}`}>
         {!isPendingDebt ? (
           <span className={style.tblPill} title={`Método: ${methodMeta.label}`}>
-            {methodMeta.value === "transferencia" ? <FiSend /> : <FiDollarSign />}
+            {methodMeta.value === "transferencia" ? <FiSend /> : methodMeta.value === "credito" ? <FiCreditCard /> : <FiDollarSign />}
             <span className={style.tblPillText}>{methodMeta.label}</span>
           </span>
         ) : (

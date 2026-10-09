@@ -19,7 +19,7 @@ const loadFacturaService = async () => {
 
 const ALLOWED_TYPES = ["ingreso", "egreso", "ahorro", "deuda"];
 const ALLOWED_CURRENCIES = ["ARS", "USD"];
-const ALLOWED_METHODS = ["efectivo", "transferencia"];
+const ALLOWED_METHODS = ["efectivo", "transferencia", "credito"];
 const ALLOWED_RECURRENCES = ["mensual", "quincenal", "semanal"];
 
 const normalizeWorkspaceValue = (value) => {
@@ -111,7 +111,7 @@ const normalizeMovementDate = (value) => {
 };
 
 const normalizeMovementMethod = (value) =>
-  value === "transferencia" ? "transferencia" : "efectivo";
+  ALLOWED_METHODS.includes(value) ? value : "efectivo";
 
 const normalizeDebtStatus = (value) =>
   value === "pagada" ? "pagada" : "pendiente";

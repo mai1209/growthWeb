@@ -1582,3 +1582,28 @@
 .modeActive_ahorro:hover { background: #58eba4; color: #06210a; }
 .modeActive_deuda,
 .modeActive_deuda:hover { background: #ffd55c; color: #06210a; }
+
+/* Medio: chips Efectivo / Transferencia / Crédito (sobre la tarjeta de color) */
+.methodChips {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.methodChip {
+  padding: 0.5rem 0.8rem;
+  border-radius: 7px;
+  border: 1px solid rgba(0, 0, 0, 0.22);
+  background: rgba(0, 0, 0, 0.1);
+  color: #0e1a0e;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.methodChipActive,
+.methodChipActive:hover {
+  background: #0e1a0e;
+  border-color: #0e1a0e;
+  color: #ffffff;
+}

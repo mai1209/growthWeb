@@ -21,6 +21,8 @@ export const RECURRENCE_OPTIONS = [
 export const MOVEMENT_METHOD_OPTIONS = [
   { value: "efectivo", label: "Efectivo" },
   { value: "transferencia", label: "Transferencia" },
+  // Crédito / virtual (tarjeta, Mercado Pago, etc.): plata que no es física
+  { value: "credito", label: "Crédito" },
 ];
 
 export const normalizeCurrency = (currency) =>
@@ -30,7 +32,7 @@ export const normalizeMovementType = (type) =>
   ["ingreso", "egreso", "ahorro", "deuda"].includes(type) ? type : "egreso";
 
 export const normalizeMovementMethod = (method) =>
-  method === "transferencia" ? "transferencia" : "efectivo";
+  MOVEMENT_METHOD_OPTIONS.some((o) => o.value === method) ? method : "efectivo";
 
 export const getCurrencyMeta = (currency) =>
   CURRENCY_OPTIONS.find((option) => option.value === normalizeCurrency(currency)) ||

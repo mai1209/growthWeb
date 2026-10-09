@@ -29,7 +29,7 @@ const ingresoEgresoSchema = new mongoose.Schema({
   },
   medio: {
     type: String,
-    enum: ['efectivo', 'transferencia'],
+    enum: ['efectivo', 'transferencia', 'credito'],
     default: 'efectivo'
   },
   workspace: {
