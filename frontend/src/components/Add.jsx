@@ -7,6 +7,7 @@ import EmojiPicker, { Theme } from "emoji-picker-react";
 import style from "../style/Add.module.css";
 import InputMonto from "./InputMonto";
 import CategoryIcon from "../utils/categoryIcons";
+import { capitalizarPrimera } from "../utils/texto";
 import { movimientoService, categoriesService } from "../api";
 import {
   CURRENCY_OPTIONS,
@@ -518,7 +519,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
                 }
                 value={categoria}
                 onChange={(event) => {
-                  setCategoria(event.target.value);
+                  setCategoria(capitalizarPrimera(event.target.value));
                   setCatOpen(true);
                 }}
                 onFocus={() => setCatOpen(true)}
@@ -625,7 +626,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
                 className={style.btn}
                 placeholder="Ej: banco, amigo, proveedor"
                 value={deudaAcreedor}
-                onChange={(event) => setDeudaAcreedor(event.target.value)}
+                onChange={(event) => setDeudaAcreedor(capitalizarPrimera(event.target.value))}
                 required
               />
             </div>
@@ -667,7 +668,7 @@ function Add({ onMovementAdded, movementToEdit, only, defaultCurrency = "ARS", i
               className={style.detalle}
               placeholder="Agrega una referencia, nota breve o descripcion"
               value={detalle}
-              onChange={(event) => setDetalle(event.target.value)}
+              onChange={(event) => setDetalle(capitalizarPrimera(event.target.value))}
             />
           </div>
 
