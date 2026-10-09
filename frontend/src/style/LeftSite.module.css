@@ -2442,3 +2442,30 @@ border: 1px solid rgba(255, 255, 255, 0.12);
   background: #75f94c;
   color: #06210a;
 }
+
+/* ---- Deudas / Ahorros: que nada se pase del ancho de la columna
+        (con "Disponible: $ 1.000.000" la cabecera se desbordaba) ---- */
+.panel > * {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.typeHead > div:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.typeHeadRight {
+  flex-shrink: 0;
+}
+
+.typePot,
+.typeCount {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.typeActions {
+  flex-wrap: wrap;
+}
