@@ -649,6 +649,7 @@ function MonthlyFilters({
                 title="Cambiar mes"
               >
                 <FiCalendar />
+                <span className={style.heroDateBtnText}>Calendario</span>
                 <input
                   ref={monthInputRef}
                   type="month"
