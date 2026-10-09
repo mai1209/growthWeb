@@ -29,7 +29,7 @@ import Svg, { Defs, LinearGradient, Stop, Rect } from "react-native-svg";
 import * as SecureStore from "expo-secure-store";
 import { movimientoService } from "../api";
 import { useTheme } from "../theme";
-import MovementFormModal from "../components/MovementFormModal";
+import MovementFormModal, { MOVEMENT_MODES } from "../components/MovementFormModal";
 import HistoryModal from "../components/HistoryModal";
 import {
   filterMovimientosByCurrency,
@@ -269,6 +269,8 @@ export default function HomeScreen() {
   const [resumenTab, setResumenTab] = useState("resumen"); // resumen | historial
   const [expandedMovs, setExpandedMovs] = useState(() => new Set()); // filas abiertas
   const [editMov, setEditMov] = useState(null); // movimiento a editar (form)
+  // Selector de tipo para cargar un movimiento desde el "+" del ticket
+  const [tipoPickerOpen, setTipoPickerOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false); // popup "cómo funciona"
 
   const toggleMovExpand = (id) =>
@@ -614,6 +616,15 @@ export default function HomeScreen() {
                     ) : (
                       <View />
                     )}
+                    {/* "+" para cargar cualquier movimiento (abre el selector de tipo) */}
+                    <TouchableOpacity
+                      style={styles.ticketAddBtn}
+                      onPress={() => setTipoPickerOpen(true)}
+                      hitSlop={6}
+                      accessibilityLabel="Cargar movimiento"
+                    >
+                      <Ionicons name="add" size={18} color="#000000" />
+                    </TouchableOpacity>
                     <View style={styles.ticketSwitch}>
                       {[
                         ["resumen", "Resumen"],
@@ -995,6 +1006,42 @@ export default function HomeScreen() {
             )}
           </View>
       </ScrollView>
+
+      {/* Selector de tipo (desde el "+") */}
+      <Modal visible={tipoPickerOpen} transparent animationType="fade" onRequestClose={() => setTipoPickerOpen(false)}>
+        <TouchableOpacity style={styles.tipoPickerBackdrop} activeOpacity={1} onPress={() => setTipoPickerOpen(false)}>
+          <View style={styles.tipoPickerSheet}>
+            <Text style={styles.tipoPickerTitle}>¿Qué querés cargar?</Text>
+            {[
+              ["ingreso", "Ingreso"],
+              ["egreso", "Egreso"],
+              ["ahorro", "Ahorro"],
+              ["ahorro-uso", "Usar ahorro"],
+              ["deuda", "Deuda"],
+              ["ingreso-fijo", "Ingreso fijo"],
+              ["egreso-fijo", "Gasto fijo"],
+            ].map(([k, l]) => (
+              <TouchableOpacity
+                key={k}
+                style={styles.tipoPickerItem}
+                onPress={() => {
+                  setTipoPickerOpen(false);
+                  setModalMode(k);
+                }}
+              >
+                <View
+                  style={[
+                    styles.tipoPickerDot,
+                    { backgroundColor: ACCENTS[(MOVEMENT_MODES[k] || {}).tone] || VERDE },
+                  ]}
+                />
+                <Text style={styles.tipoPickerText}>{l}</Text>
+                <Ionicons name="chevron-forward" size={16} color={pal.muted} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       <MovementFormModal
         visible={Boolean(modalMode)}
@@ -1416,6 +1463,43 @@ const makeStyles = (u, p) => StyleSheet.create({
   ticketSegText: { fontFamily: "Menda-Medium", fontSize: 25 * u, letterSpacing: -1 * u, color: p.txt },
   ticketSegTextOn: { color: "#000000" },
   verTodosWrap: { flexDirection: "row", alignItems: "center", gap: 2, paddingLeft: 4 },
+  ticketAddBtn: {
+    width: 34 * u,
+    height: 34 * u,
+    borderRadius: 10 * u,
+    backgroundColor: VERDE,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: "auto",
+    marginRight: 8 * u,
+  },
+  tipoPickerBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "flex-end",
+  },
+  tipoPickerSheet: {
+    backgroundColor: p.bg,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 34,
+    gap: 4,
+  },
+  tipoPickerTitle: { color: p.muted, fontSize: 12, fontWeight: "800", marginBottom: 6 },
+  tipoPickerItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: p.linea,
+  },
+  tipoPickerDot: { width: 8, height: 8, borderRadius: 999 },
+  tipoPickerText: { flex: 1, color: p.txt, fontSize: 15, fontWeight: "700" },
   verTodos: { fontFamily: "Menda-Medium", color: p.verdeTexto, fontSize: 14.5 },
 
   ticketBody: { marginTop: 18 * u, gap: 14 * u },
