@@ -1794,3 +1794,58 @@
   width: 13px;
   height: 13px;
 }
+
+/* ---- Total sin fondo (solo una línea arriba) y precio como campo cuadrado,
+        marcado con borde punteado para que se note que se escribe ahí ---- */
+.totalRow {
+  padding: 0.7rem 0.2rem 0.2rem;
+  border-radius: 0;
+  border-top: 1px solid var(--border-color);
+  background: transparent;
+}
+
+.totalLabel {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+
+.totalMonto {
+  color: var(--color-verde, #75f94c);
+}
+
+.precioBtn {
+  min-width: 96px;
+  padding: 0.3rem 0.65rem;
+  border-radius: 7px;
+  border: 1px dashed color-mix(in srgb, var(--color-text) 40%, transparent);
+  background: transparent;
+  color: var(--color-muted);
+  text-align: left;
+}
+
+.precioBtn:hover {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  border-color: var(--color-verde, #75f94c);
+  color: var(--color-text);
+}
+
+.precioBtnSet {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--color-verde, #75f94c) 55%, transparent);
+  color: var(--color-verde, #75f94c);
+}
+
+.precioEdit .precioInput,
+.precioEdit .cantInput {
+  border-radius: 7px;
+  border: 1px solid var(--color-verde, #75f94c);
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+.precioEdit .precioInput:focus,
+.precioEdit .cantInput:focus {
+  box-shadow: none;
+  border-width: 2px;
+}
