@@ -24,3 +24,7 @@ export const COMUNIDAD_HABILITADA = false;
 // Es una función LOCAL (arma la imagen y la guardás/compartís desde el teléfono),
 // no es social, así que va independiente de la comunidad y puede ir en on.
 export const COMPARTIR_IMAGEN_HABILITADO = true;
+
+// Integración con Google Calendar: armada, pero Google todavía no aprobó la app.
+// Queda tras "Próximamente" hasta que se pueda conectar.
+export const GOOGLE_CALENDAR_HABILITADO = false;

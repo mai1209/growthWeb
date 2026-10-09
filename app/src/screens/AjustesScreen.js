@@ -19,7 +19,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { authService, googleService, fiscalService, taskService } from "../api";
-import { ARCA_HABILITADO } from "../config";
+import { ARCA_HABILITADO, GOOGLE_CALENDAR_HABILITADO } from "../config";
 import { useTheme } from "../theme";
 import { useAuth } from "../auth/AuthContext";
 import { loadNotifSettings, saveNotifSettings } from "../utils/notifSettings";
@@ -139,14 +139,7 @@ export default function AjustesScreen({ navigation }) {
             <TouchableOpacity
               key={r.key}
               style={[styles.row, i < ROWS.length - 1 && styles.rowBorder]}
-              onPress={() =>
-                r.key === "integraciones"
-                  ? Alert.alert(
-                      "Próximamente",
-                      "Las integraciones (Google Calendar) van a estar disponibles muy pronto."
-                    )
-                  : setSection(r.key)
-              }
+              onPress={() => setSection(r.key)}
             >
               <View style={styles.rowIcon}>
                 <Ionicons name={r.icon} size={20} color={colors.greenDark} />
@@ -448,6 +441,27 @@ function PasswordModal({ visible, onClose, colors, styles }) {
 
 /* ---------- Integraciones (Google) ---------- */
 function IntegracionesModal({ visible, onClose, colors, styles }) {
+  // Mientras Google no apruebe la app, el mismo "Próximamente" que Facturación (ARCA).
+  if (!GOOGLE_CALENDAR_HABILITADO) {
+    return (
+      <SheetModal visible={visible} onClose={onClose} title="Integraciones" colors={colors} styles={styles}>
+        <View style={styles.comingSoon}>
+          <Text style={styles.comingSoonBadge}>Próximamente</Text>
+          <Text style={styles.comingSoonText}>
+            La conexión con Google Calendar está en camino. Muy pronto vas a poder sincronizar
+            tus tareas y eventos entre Growth y tu calendario.
+          </Text>
+          <TouchableOpacity style={styles.primaryBtn} onPress={onClose}>
+            <Text style={styles.primaryText}>Entendido</Text>
+          </TouchableOpacity>
+        </View>
+      </SheetModal>
+    );
+  }
+  return <IntegracionesModalReal visible={visible} onClose={onClose} colors={colors} styles={styles} />;
+}
+
+function IntegracionesModalReal({ visible, onClose, colors, styles }) {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);

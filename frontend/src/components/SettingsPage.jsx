@@ -34,6 +34,7 @@ import {
   FiAlertTriangle,
 } from "react-icons/fi";
 import { authService, googleService, fiscalService, communityService, movimientoService, taskService } from "../api";
+import { GOOGLE_CALENDAR_HABILITADO } from "../featureFlags";
 import PhotoCropper from "./PhotoCropper";
 import ApoyarPage from "./ApoyarPage";
 import PostCard from "./comunidad/PostCard";
@@ -517,11 +518,6 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
   };
 
   const handleTabChange = (tab) => {
-    // Integraciones todavía no está disponible: por ahora avisamos y no entramos.
-    if (tab === "integraciones") {
-      window.alert("Próximamente");
-      return;
-    }
     setSearchParams({ tab });
     setError("");
     setMessage("");
@@ -1678,7 +1674,52 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
         </section>
       ) : null}
 
-      {activeTab === "integraciones" ? (
+      {activeTab === "integraciones" && !GOOGLE_CALENDAR_HABILITADO ? (
+        <div
+          className={style.modalOverlay}
+          onClick={() => setSearchParams({ tab: "tema" })}
+          role="presentation"
+        >
+          <div
+            className={style.modalCard}
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-label="Integraciones"
+          >
+            <div className={style.modalHead}>
+              <h3>Integraciones</h3>
+              <button
+                type="button"
+                className={style.modalClose}
+                onClick={() => setSearchParams({ tab: "tema" })}
+                aria-label="Cerrar"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <div className={style.comingSoon}>
+              <span className={style.comingSoonBadge}>Próximamente</span>
+              <p>
+                La conexión con Google Calendar está en camino. Muy pronto vas a poder
+                sincronizar tus tareas y eventos entre Growth y tu calendario.
+              </p>
+            </div>
+
+            <div className={style.modalActions}>
+              <button
+                type="button"
+                className={style.saveButton}
+                onClick={() => setSearchParams({ tab: "tema" })}
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {activeTab === "integraciones" && GOOGLE_CALENDAR_HABILITADO ? (
         <section className={style.card}>
           <div className={style.googleBox}>
             <div className={style.googleInfo}>

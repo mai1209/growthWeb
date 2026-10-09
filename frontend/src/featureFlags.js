@@ -5,3 +5,8 @@
 // tener un plan pago de AfipSDK. Cuando exista el sistema de planes, cambiar a
 // true para activarla entera (config en Ajustes + botón "Emitir factura").
 export const ARCA_HABILITADO = false;
+
+// GOOGLE_CALENDAR_HABILITADO: la integración con Google Calendar está armada
+// (conectar / sincronizar / desconectar), pero Google todavía no aprobó la app,
+// así que queda OCULTA tras "Próximamente". Cambiar a true cuando se pueda conectar.
+export const GOOGLE_CALENDAR_HABILITADO = false;
