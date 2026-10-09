@@ -2684,3 +2684,53 @@
 .heroDateBtnText {
   white-space: nowrap;
 }
+
+/* ---- Filtros, segunda pasada: resultados y filtros solo con borde, switch Mes/Año
+        cuadrado, puntitos del resumen más chicos, "Detalle del mes" en minúscula ---- */
+
+/* Tarjetas de movimiento: sin relleno, solo el borde con el color del tipo */
+.tblRow.incomeRow,
+.tblRow.expenseRow,
+.tblRow.savingsRow,
+.tblRow.debtRow {
+  background: transparent;
+}
+
+.tblRow.incomeRow { border-color: rgba(117, 249, 76, 0.3); }
+.tblRow.expenseRow { border-color: rgba(255, 123, 107, 0.3); }
+.tblRow.savingsRow { border-color: rgba(88, 235, 164, 0.3); }
+.tblRow.debtRow { border-color: rgba(255, 213, 92, 0.3); }
+
+/* Campos de filtro (búsqueda, tipo, origen, medio, limpiar): sin fondo */
+.filtersPanel .input,
+.filtersPanel .filterTrigger,
+.filtersPanel .clearButton,
+.searchWrap .input {
+  background: transparent;
+}
+
+/* Switch Mes / Año cuadrado */
+.periodSwitch {
+  padding: 3px;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.periodButton,
+.periodButtonActive,
+.periodButtonActive:hover {
+  border-radius: 6px;
+}
+
+/* "Detalle del mes" sin mayúsculas */
+.panelKicker {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+
+/* Puntitos de la leyenda del resumen más chicos */
+.resumenRow i {
+  width: 6px;
+  height: 6px;
+}
