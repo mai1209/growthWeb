@@ -33,7 +33,7 @@ import {
   FiX,
   FiAlertTriangle,
 } from "react-icons/fi";
-import { authService, googleService, fiscalService, communityService, movimientoService } from "../api";
+import { authService, googleService, fiscalService, communityService, movimientoService, taskService } from "../api";
 import PhotoCropper from "./PhotoCropper";
 import ApoyarPage from "./ApoyarPage";
 import PostCard from "./comunidad/PostCard";
@@ -130,21 +130,43 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
   const [wipeText, setWipeText] = useState("");
   const [wipeBusy, setWipeBusy] = useState(false);
   const [wipeResult, setWipeResult] = useState(null); // { ok, text }
+  // Qué se borra: "finanzas" (movimientos + categorías) o "tareas" (tareas + historial)
+  const [wipeKind, setWipeKind] = useState("finanzas");
 
-  const borrarFinanzas = async () => {
+  const abrirWipe = (kind) => {
+    setWipeKind(kind);
+    setWipeResult(null);
+    setWipeText("");
+    setWipeOpen(true);
+  };
+
+  const borrarDatos = async () => {
     if (wipeText.trim().toUpperCase() !== "BORRAR" || wipeBusy) return;
     setWipeBusy(true);
     setWipeResult(null);
     try {
-      const { data } = await movimientoService.deleteAll();
+      if (wipeKind === "tareas") {
+        const { data } = await taskService.deleteAll();
+        setWipeResult({
+          ok: true,
+          text: `Listo: se borraron ${data.tareas} tarea${data.tareas === 1 ? "" : "s"} con su historial${
+            data.compartidas ? ` y te quitaste de ${data.compartidas} compartida${data.compartidas === 1 ? "" : "s"}` : ""
+          }.`,
+        });
+      } else {
+        const { data } = await movimientoService.deleteAll();
+        setWipeResult({
+          ok: true,
+          text: `Listo: se borraron ${data.movimientos} movimiento${data.movimientos === 1 ? "" : "s"} y ${data.categorias} categoría${data.categorias === 1 ? "" : "s"}.`,
+        });
+      }
       setWipeOpen(false);
       setWipeText("");
-      setWipeResult({
-        ok: true,
-        text: `Listo: se borraron ${data.movimientos} movimiento${data.movimientos === 1 ? "" : "s"} y ${data.categorias} categoría${data.categorias === 1 ? "" : "s"}.`,
-      });
     } catch (err) {
-      setWipeResult({ ok: false, text: err.response?.data?.error || "No se pudieron borrar los datos." });
+      setWipeResult({
+        ok: false,
+        text: err.response?.data?.error || err.response?.data?.message || "No se pudieron borrar los datos.",
+      });
     } finally {
       setWipeBusy(false);
     }
@@ -1805,16 +1827,31 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
               <h2>Borrar datos de finanzas</h2>
             </div>
           </div>
-          <p className={style.themeIntro}>
-            Borra <strong>todos</strong> tus movimientos (ingresos, egresos, ahorros, deudas y fijos, de
-            todos los espacios) y tus categorías, para arrancar de cero. Las notas, tareas, metas y lo
-            de salud no se tocan. <strong>No se puede deshacer.</strong>
-          </p>
-          <div>
-            <button type="button" className={style.wipeBtn} onClick={() => { setWipeResult(null); setWipeText(""); setWipeOpen(true); }}>
+          <div className={style.wipeBlock}>
+            <h3 className={style.wipeTitle}>Finanzas</h3>
+            <p className={style.themeIntro}>
+              Borra <strong>todos</strong> tus movimientos (ingresos, egresos, ahorros, deudas y fijos, de
+              todos los espacios) y tus categorías, para arrancar de cero. Las notas, tareas, metas y lo
+              de salud no se tocan. <strong>No se puede deshacer.</strong>
+            </p>
+            <button type="button" className={style.wipeBtn} onClick={() => abrirWipe("finanzas")}>
               <FiTrash2 /> Borrar todos los datos de finanzas
             </button>
           </div>
+
+          <div className={style.wipeBlock}>
+            <h3 className={style.wipeTitle}>Tareas</h3>
+            <p className={style.themeIntro}>
+              Borra <strong>todas</strong> tus tareas con su historial de completadas, de todos los
+              espacios. Las notas, las listas de compras y las metas quedan como están. Si compartiste
+              una tarea, desaparece también para la otra persona; de las que te compartieron a vos,
+              solo te quitás. <strong>No se puede deshacer.</strong>
+            </p>
+            <button type="button" className={style.wipeBtn} onClick={() => abrirWipe("tareas")}>
+              <FiTrash2 /> Borrar todas las tareas
+            </button>
+          </div>
+
           {wipeResult ? (
             <p className={wipeResult.ok ? style.wipeOk : style.wipeErr}>{wipeResult.text}</p>
           ) : null}
@@ -1826,8 +1863,10 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
                   <h3><FiAlertTriangle /> ¿Seguro que querés borrar todo?</h3>
                 </div>
                 <p className={style.themeIntro}>
-                  Se van a eliminar todos tus movimientos y categorías de Finanzas. Para confirmar,
-                  escribí <strong>BORRAR</strong>.
+                  {wipeKind === "tareas"
+                    ? "Se van a eliminar todas tus tareas y su historial."
+                    : "Se van a eliminar todos tus movimientos y categorías de Finanzas."}{" "}
+                  Para confirmar, escribí <strong>BORRAR</strong>.
                 </p>
                 <input
                   type="text"
@@ -1836,7 +1875,7 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
                   onChange={(e) => setWipeText(e.target.value)}
                   placeholder="BORRAR"
                   autoFocus
-                  onKeyDown={(e) => { if (e.key === "Enter") borrarFinanzas(); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") borrarDatos(); }}
                 />
                 <div className={style.modalActions}>
                   <button type="button" className={style.wipeCancel} onClick={() => setWipeOpen(false)} disabled={wipeBusy}>
@@ -1845,7 +1884,7 @@ function SettingsPage({ theme, onThemeToggle, mode, currentWorkspace }) {
                   <button
                     type="button"
                     className={style.wipeConfirm}
-                    onClick={borrarFinanzas}
+                    onClick={borrarDatos}
                     disabled={wipeBusy || wipeText.trim().toUpperCase() !== "BORRAR"}
                   >
                     {wipeBusy ? "Borrando…" : "Sí, borrar todo"}

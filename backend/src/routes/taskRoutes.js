@@ -18,6 +18,7 @@ import {
   savePrioridades,
   getEtiquetasNotas,
   saveEtiquetasNotas,
+  deleteAllTasks,
 } from '../controllers/taskController.js';
 import { requireAuth } from '../middlewares/authJwt.js';
 
@@ -34,6 +35,9 @@ router.put('/prioridades', requireAuth, savePrioridades);
 // 🏷️ Etiquetas de notas (nombre + color) del usuario
 router.get('/etiquetas-notas', requireAuth, getEtiquetasNotas);
 router.put('/etiquetas-notas', requireAuth, saveEtiquetasNotas);
+
+// 🧹 Borrar todas las tareas del usuario (antes de las rutas /:id)
+router.delete('/all', requireAuth, deleteAllTasks);
 
 // --- 👥 Compartir tareas (rutas específicas ANTES de las de /:id) ---
 router.get('/buscar-usuario', requireAuth, buscarUsuarioTarea);

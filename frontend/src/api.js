@@ -78,6 +78,8 @@ export const taskService = {
   updateStatus: (taskId, data) =>
     api.put(`/api/task/${taskId}/status`, data),
   delete: (taskId) => api.delete(`/api/task/${taskId}`),
+  // 🧹 Borrar todas las tareas (empezar de cero)
+  deleteAll: () => api.delete("/api/task/all", { data: { confirmar: "BORRAR" } }),
   create: (data) => api.post("/api/task", data),
   // 🎨 Prioridades personalizadas (nombre + color)
   getPrioridades: () => api.get("/api/task/prioridades"),

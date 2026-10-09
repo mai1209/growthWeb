@@ -764,3 +764,31 @@ export const saveEtiquetasNotas = async (req, res) => {
     res.status(500).json({ message: "Error al guardar las etiquetas", error: error.message });
   }
 };
+
+// ──────────────────────────────────────────────────────────────
+// 🧹 Borrar TODAS las tareas del usuario (empezar de cero)
+// ──────────────────────────────────────────────────────────────
+// Solo las tareas propias (tipo "task", en todos los espacios), con su
+// historial de completadas. Notas y listas de compras no se tocan, y las
+// tareas que te compartió otra persona tampoco (son de esa persona): solo
+// te quitás de ellas como colaborador.
+export const deleteAllTasks = async (req, res) => {
+  try {
+    if (req.body?.confirmar !== "BORRAR") {
+      return res.status(400).json({ message: "Falta la confirmación." });
+    }
+    const userId = req.user.id;
+    const propias = await Task.deleteMany({ user: userId, tipo: "task" });
+    const ajenas = await Task.updateMany(
+      { tipo: "task", "colaboradores.user": userId },
+      { $pull: { colaboradores: { user: userId } } }
+    );
+    res.json({
+      ok: true,
+      tareas: propias.deletedCount || 0,
+      compartidas: ajenas.modifiedCount || 0,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "No se pudieron borrar las tareas.", error: error.message });
+  }
+};

@@ -1948,3 +1948,21 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+.wipeBlock {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.wipeBlock .wipeBtn {
+  justify-self: start;
+}
+
+.wipeTitle {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
