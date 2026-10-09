@@ -1053,3 +1053,9 @@
   background: #75f94c;
   color: #06210a;
 }
+
+/* Nav expandido: el switch sol/luna no se estira; queda centrado y del tamaño de los íconos */
+.railExpanded .themeSwitch {
+  align-self: center;
+  width: auto;
+}
