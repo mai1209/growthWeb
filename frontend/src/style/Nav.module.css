@@ -1017,3 +1017,39 @@
 .rail {
   background: transparent;
 }
+
+/* ---- Sol / luna del tema, arriba de la foto de perfil ---- */
+.themeSwitch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.themeBtn {
+  width: 26px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.themeBtn :global(svg) {
+  font-size: 0.8rem;
+}
+
+.themeBtn:hover {
+  color: var(--color-text);
+}
+
+.themeBtnOn,
+.themeBtnOn:hover {
+  background: #75f94c;
+  color: #06210a;
+}

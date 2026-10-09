@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { jwtDecode } from "jwt-decode";
-import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiWatch, FiPieChart, FiSettings, FiSun, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers, FiArrowRight, FiHeart, FiActivity, FiZap } from "react-icons/fi";
+import { FiBriefcase, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiClock, FiWatch, FiPieChart, FiSettings, FiSun, FiMoon, FiTarget, FiX, FiLogOut, FiHome, FiFilter, FiShare2, FiCheckSquare, FiEdit3, FiFlag, FiDollarSign, FiTrendingUp, FiShoppingCart, FiFeather, FiUsers, FiArrowRight, FiHeart, FiActivity, FiZap } from "react-icons/fi";
 import { TbBarbell } from "react-icons/tb";
 import style from "../style/Nav.module.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -100,6 +100,7 @@ function Nav({
   onCloseMobilePanel,
   panelContent,
   panelLabel = "Dashboard",
+  theme = "dark",
   onThemeToggle,
   activeWorkspace = "personal",
   onWorkspaceChange,
@@ -499,6 +500,28 @@ function Nav({
 
         {currentToken && (
           <div className={style.railBottom}>
+            {/* Tema: sol (claro) y luna (oscuro), uno al lado del otro */}
+            <div className={style.themeSwitch} role="group" aria-label="Tema">
+              <button
+                type="button"
+                className={`${style.themeBtn} ${theme === "light" ? style.themeBtnOn : ""}`}
+                onClick={() => theme !== "light" && onThemeToggle?.()}
+                aria-label="Tema claro"
+                title="Tema claro"
+              >
+                <FiSun />
+              </button>
+              <button
+                type="button"
+                className={`${style.themeBtn} ${theme === "dark" ? style.themeBtnOn : ""}`}
+                onClick={() => theme !== "dark" && onThemeToggle?.()}
+                aria-label="Tema oscuro"
+                title="Tema oscuro"
+              >
+                <FiMoon />
+              </button>
+            </div>
+
             <div className={style.railProfile}>
               <ProfileDropdown />
             </div>
