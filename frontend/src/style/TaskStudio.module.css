@@ -5778,3 +5778,15 @@ button.folderItem {
   width: 6px;
   height: 6px;
 }
+
+/* Teléfono: compras/notas/journaling a todo el ancho (menos relleno) */
+@media (max-width: 720px) {
+  .page {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .listCard {
+    padding: 0.4rem 0.2rem;
+  }
+}

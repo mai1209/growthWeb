@@ -697,15 +697,7 @@ function ListDetail({
           <div className={style.detailV2Titles}>
             <span className={style.detailV2Kicker}>Lista de compras</span>
             <h3 className={style.detailV2Title}>{list.meta || "Sin título"}</h3>
-            <p className={style.detailV2Sub}>
-              {items.length
-                ? `${items.length} ítem${items.length === 1 ? "" : "s"} · ${
-                    items.length - doneCount === 0
-                      ? "todo comprado"
-                      : `${items.length - doneCount} pendiente${items.length - doneCount === 1 ? "" : "s"}`
-                  }`
-                : "Anotá lo que necesites comprar."}
-            </p>
+            
           </div>
           <div className={style.detailV2Actions}>
             {list.compartida ? (
