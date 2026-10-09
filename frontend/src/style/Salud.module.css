@@ -1943,3 +1943,13 @@
 .recClose {
   border-radius: 8px;
 }
+
+/* Semana / Mes / Todo: la pastilla se ajusta a la palabra (heredaba el ancho
+   fijo de 30px del selector D/S/M/A y "Semana" quedaba cortada) */
+.periodoToggle .periodoOn,
+.periodoToggle .periodoOff {
+  width: auto;
+  min-width: 0;
+  height: auto;
+  padding: 0.34rem 0.8rem;
+}
