@@ -67,6 +67,16 @@ const TONE_COLORS = {
   deuda: "#d6a92e",
 };
 
+// Color fuerte y liso de la tarjeta por tipo (igual que la web) y tinta oscura encima
+const CARD_COLORS = {
+  ingreso: "#75f94c",
+  egreso: "#ff7b6b",
+  ahorro: "#58eba4",
+  deuda: "#ffd55c",
+};
+const INK = "#0e1a0e";
+const INK_SOFT = "rgba(14, 26, 14, 0.6)";
+
 const FRECUENCIAS = [
   { value: "mensual", label: "Todos los meses" },
   { value: "quincenal", label: "Cada 15 días" },
@@ -98,6 +108,7 @@ export default function MovementFormModal({
   const mode = MOVEMENT_MODES[effectiveModeKey] || MOVEMENT_MODES.ingreso;
   const isDebt = mode.tipo === "deuda";
   const tone = TONE_COLORS[mode.tone] || colors.green;
+  const cardColor = CARD_COLORS[mode.tone] || CARD_COLORS.ingreso;
 
   const [monto, setMonto] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -279,12 +290,11 @@ export default function MovementFormModal({
         style={styles.overlay}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { backgroundColor: cardColor }]}>
           <View style={styles.header}>
-            <View style={[styles.toneDot, { backgroundColor: tone }]} />
-            <Text style={styles.title}>{editMovement ? "Editar movimiento" : mode.title}</Text>
+            <Text style={[styles.title, { color: INK }]}>{editMovement ? "Editar movimiento" : mode.title}</Text>
             <TouchableOpacity onPress={onClose} hitSlop={10}>
-              <Ionicons name="close" size={24} color={colors.muted} />
+              <Ionicons name="close" size={24} color={INK} />
             </TouchableOpacity>
           </View>
 
@@ -300,7 +310,7 @@ export default function MovementFormModal({
               value={monto}
               onChangeText={setMonto}
               placeholder="0"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={INK_SOFT}
             />
 
             {/* Moneda */}
@@ -327,7 +337,7 @@ export default function MovementFormModal({
                 onFocus={() => setCatFocused(true)}
                 onBlur={() => setTimeout(() => setCatFocused(false), 150)}
                 placeholder="Ej: Sueldo, Supermercado..."
-                placeholderTextColor={colors.muted}
+                placeholderTextColor={INK_SOFT}
               />
             </View>
             {catFocused ? (
@@ -371,13 +381,13 @@ export default function MovementFormModal({
               value={detalle}
               onChangeText={setDetalle}
               placeholder="Una nota corta"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={INK_SOFT}
             />
 
             {/* Fecha */}
             <Text style={styles.label}>Fecha</Text>
             <TouchableOpacity style={styles.input} onPress={() => setShowDate(true)}>
-              <Text style={{ color: colors.text, fontSize: 16 }}>{toYMD(fecha)}</Text>
+              <Text style={{ color: INK, fontSize: 16 }}>{toYMD(fecha)}</Text>
             </TouchableOpacity>
             {showDate && (
               <DateTimePicker
@@ -420,7 +430,7 @@ export default function MovementFormModal({
                   value={deudaAcreedor}
                   onChangeText={setDeudaAcreedor}
                   placeholder="Nombre del acreedor"
-                  placeholderTextColor={colors.muted}
+                  placeholderTextColor={INK_SOFT}
                 />
               </>
             )}
@@ -448,7 +458,7 @@ export default function MovementFormModal({
             {error ? <Text style={styles.error}>{error}</Text> : null}
 
             <TouchableOpacity
-              style={[styles.saveBtn, { backgroundColor: tone }, saving && { opacity: 0.6 }]}
+              style={[styles.saveBtn, { backgroundColor: INK }, saving && { opacity: 0.6 }]}
               onPress={handleSave}
               disabled={saving}
             >
@@ -483,7 +493,7 @@ export default function MovementFormModal({
               value={newCatName}
               onChangeText={setNewCatName}
               placeholder="Nombre (ej: Comida)"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={INK_SOFT}
               maxLength={40}
               autoFocus
             />
@@ -611,23 +621,23 @@ const makeStyles = (colors) => StyleSheet.create({
   toneDot: { width: 12, height: 12, borderRadius: 6 },
   title: { flex: 1, color: colors.text, fontSize: 20, fontWeight: "800" },
   body: { paddingHorizontal: 20, paddingBottom: 40, gap: 4 },
+  // Sobre la tarjeta de color: rótulos y textos en tinta oscura
   label: {
-    color: colors.muted,
-    fontSize: 12,
+    color: INK,
+    fontSize: 13,
     fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
     marginTop: 14,
     marginBottom: 6,
   },
   input: {
-    backgroundColor: colors.card,
-    borderColor: colors.cardBorder,
+    backgroundColor: "rgba(0,0,0,0.10)",
+    borderColor: "rgba(0,0,0,0.22)",
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 13,
-    color: colors.text,
+    color: INK,
     fontSize: 16,
   },
   toggleRow: { flexDirection: "row", gap: 8 },
@@ -636,25 +646,25 @@ const makeStyles = (colors) => StyleSheet.create({
     flex: 1,
     alignItems: "center",
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.card,
+    borderColor: "rgba(0,0,0,0.22)",
+    backgroundColor: "rgba(0,0,0,0.10)",
   },
-  toggleActive: { backgroundColor: colors.greenSoft, borderColor: colors.greenBorder },
-  toggleText: { color: colors.muted, fontWeight: "700" },
-  toggleTextActive: { color: colors.greenDark },
+  toggleActive: { backgroundColor: INK, borderColor: INK },
+  toggleText: { color: INK, fontWeight: "700" },
+  toggleTextActive: { color: "#ffffff" },
   // ===== Categorías =====
   catInputRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  catOptionNew: { backgroundColor: colors.greenSoft },
-  catOptionNewText: { color: colors.greenDark, fontSize: 14.5, fontWeight: "700", flex: 1 },
+  catOptionNew: { backgroundColor: "rgba(0,0,0,0.06)" },
+  catOptionNewText: { color: INK, fontSize: 14.5, fontWeight: "700", flex: 1 },
   catNewPlus: {
     width: 20,
     height: 20,
     borderRadius: 6,
     borderWidth: 1.5,
     borderStyle: "dashed",
-    borderColor: colors.greenBorder,
+    borderColor: INK,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -662,9 +672,9 @@ const makeStyles = (colors) => StyleSheet.create({
   catDropdown: {
     marginTop: 6,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 12,
-    backgroundColor: colors.card,
+    borderColor: "rgba(0,0,0,0.22)",
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.88)",
     overflow: "hidden",
   },
   catOption: {
@@ -677,7 +687,7 @@ const makeStyles = (colors) => StyleSheet.create({
     borderBottomColor: colors.cardBorder,
   },
   catOptionIcon: { fontSize: 17 },
-  catOptionText: { color: colors.text, fontSize: 15, fontWeight: "600" },
+  catOptionText: { color: INK, fontSize: 15, fontWeight: "600" },
   catOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -735,10 +745,10 @@ const makeStyles = (colors) => StyleSheet.create({
   },
   catSaveText: { color: colors.segActiveText, fontWeight: "800" },
 
-  error: { color: colors.red, marginTop: 12 },
+  error: { color: "#8a1c1c", marginTop: 12, fontWeight: "700" },
   saveBtn: {
     marginTop: 22,
-    borderRadius: 14,
+    borderRadius: 10,
     paddingVertical: 15,
     alignItems: "center",
   },
