@@ -2833,3 +2833,18 @@
     font-size: 0.72rem;
   }
 }
+
+/* Teléfono: la tira de Ingresos / Egresos / Ahorros / Deuda más cuadrada */
+@media (max-width: 860px) {
+  .summaryStrip {
+    border-radius: 10px;
+  }
+
+  .summaryStrip .summaryCard {
+    border-radius: 0;
+  }
+
+  .summaryCard {
+    border-radius: 10px;
+  }
+}
