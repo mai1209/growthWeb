@@ -781,12 +781,7 @@ export default function NoteEditorModal({
 
             {/* Hoja: llega hasta el final de la pantalla. Tocar la parte vacía
                 cierra el teclado si está abierto; si no, pone el cursor en el texto */}
-            <Pressable
-              style={[styles.paper, { backgroundColor: palette.bg }]}
-              onPress={() =>
-                tecladoVisible ? cerrarTeclado() : richText.current?.focusContentEditor?.()
-              }
-            >
+            <View style={[styles.paper, { backgroundColor: palette.bg }]}>
               <RichEditor
                 key={editorKey}
                 ref={richText}
@@ -805,7 +800,16 @@ export default function NoteEditorModal({
                 }}
                 style={[styles.editor, { backgroundColor: palette.bg }]}
               />
-            </Pressable>
+              {/* Solo la parte vacía debajo del texto: cierra el teclado si está
+                  abierto; si no, pone el cursor al final. Dentro del texto, el
+                  toque lo maneja el editor (así se puede subir a un renglón). */}
+              <Pressable
+                style={{ flex: 1, minHeight: 60 }}
+                onPress={() =>
+                  tecladoVisible ? cerrarTeclado() : richText.current?.focusContentEditor?.()
+                }
+              />
+            </View>
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
           </ScrollView>
