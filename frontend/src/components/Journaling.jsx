@@ -206,6 +206,9 @@ function Journaling() {
   const [extras, setExtras] = useState([]); // definiciones [{id, texto}]
   const [borradorExtras, setBorradorExtras] = useState([]);
   const [plantillasOpen, setPlantillasOpen] = useState(false);
+  // Menú "Utilidades" (sugerencias / personalizar / plantillas) y calendario en popup (teléfono)
+  const [utilidadesOpen, setUtilidadesOpen] = useState(false);
+  const [calOpen, setCalOpen] = useState(false);
   const [metricasOpen, setMetricasOpen] = useState(false);
   const [ayudaOpen, setAyudaOpen] = useState(false);
   const [calRef, setCalRef] = useState(() => new Date());
@@ -809,7 +812,6 @@ function Journaling() {
     <div className={style.wrap}>
       <header className={style.header}>
         <div className={style.fechaBloque}>
-          <FiFeather className={style.fechaIcono} />
           <span className={style.fecha}>Journaling</span>
           {racha > 0 ? (
             <span className={style.racha} title={`${racha} días seguidos escribiendo`}>
@@ -818,59 +820,111 @@ function Journaling() {
           ) : null}
         </div>
         <div className={style.headerAcciones}>
-          <button type="button" className={style.ayudaLink} onClick={() => setAyudaOpen(true)}>
-            <FiHelpCircle /> Sugerencias
+          {/* Calendario en popup (en teléfono; en desktop está en la columna derecha) */}
+          <button
+            type="button"
+            className={`${style.plantillasBtn} ${style.calMobileBtn}`}
+            onClick={() => setCalOpen(true)}
+          >
+            <FiCalendar /> Calendario
           </button>
 
-          {/* Personalizar preguntas (sólo hoy) */}
-          {esHoy ? (
-            editandoPreguntas ? (
-              <>
-                <button
-                  type="button"
-                  className={`${style.preguntasBtn} ${style.preguntasBtnGuardar}`}
-                  onClick={guardarPreguntas}
-                >
-                  <FiCheck /> Guardar preguntas
-                </button>
-                <button
-                  type="button"
-                  className={`${style.preguntasBtn} ${style.preguntasBtnCancelar}`}
-                  onClick={() => setEditandoPreguntas(false)}
-                >
-                  <FiX /> Cancelar
-                </button>
-              </>
-            ) : (
+          {editandoPreguntas ? (
+            <>
               <button
                 type="button"
-                className={style.preguntasBtn}
-                onClick={() => {
-                  setBorradorPreguntas(preguntas);
-                  setBorradorExtras(extras.map((x) => ({ ...x })));
-                  setEditandoPreguntas(true);
-                }}
-                title="Cambiá tus preguntas o agregá más"
+                className={`${style.preguntasBtn} ${style.preguntasBtnGuardar}`}
+                onClick={guardarPreguntas}
               >
-                <FiEdit2 /> Personalizar
+                <FiCheck /> Guardar preguntas
               </button>
-            )
+              <button
+                type="button"
+                className={`${style.preguntasBtn} ${style.preguntasBtnCancelar}`}
+                onClick={() => setEditandoPreguntas(false)}
+              >
+                <FiX /> Cancelar
+              </button>
+            </>
           ) : null}
 
-          {/* Plantillas de preguntas por nivel (sólo hoy) */}
-          {esHoy ? (
+          {/* Utilidades: despliega Sugerencias / Personalizar / Plantillas (como en la app) */}
           <div className={style.plantillasWrap}>
             <button
               type="button"
-              className={`${style.plantillasBtn} ${plantillasOpen ? style.plantillasBtnOpen : ""}`}
-              onClick={() => setPlantillasOpen((prev) => !prev)}
-              aria-expanded={plantillasOpen}
+              className={`${style.plantillasBtn} ${utilidadesOpen ? style.plantillasBtnOpen : ""}`}
+              onClick={() => setUtilidadesOpen((prev) => !prev)}
+              aria-expanded={utilidadesOpen}
             >
-              <FiGrid /> Plantillas
+              Utilidades
               <FiChevronDown
-                className={`${style.plantillasChevron} ${plantillasOpen ? style.plantillasChevronOpen : ""}`}
+                className={`${style.plantillasChevron} ${utilidadesOpen ? style.plantillasChevronOpen : ""}`}
               />
             </button>
+            {utilidadesOpen ? (
+              <>
+                <div
+                  className={style.plantillasBackdrop}
+                  onClick={() => setUtilidadesOpen(false)}
+                  role="presentation"
+                />
+                <div className={`${style.plantillasMenu} ${style.utilidadesMenu}`} role="menu">
+                  <button
+                    type="button"
+                    className={style.utilidadItem}
+                    role="menuitem"
+                    onClick={() => {
+                      setUtilidadesOpen(false);
+                      setAyudaOpen(true);
+                    }}
+                  >
+                    <span className={style.utilidadIcono}><FiHelpCircle /></span>
+                    <span className={style.utilidadTextos}>
+                      <span className={style.utilidadLabel}>Sugerencias</span>
+                      <span className={style.utilidadHint}>Preguntas para inspirarte</span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className={style.utilidadItem}
+                    role="menuitem"
+                    disabled={!esHoy}
+                    onClick={() => {
+                      setUtilidadesOpen(false);
+                      setBorradorPreguntas(preguntas);
+                      setBorradorExtras(extras.map((x) => ({ ...x })));
+                      setEditandoPreguntas(true);
+                    }}
+                  >
+                    <span className={style.utilidadIcono}><FiEdit2 /></span>
+                    <span className={style.utilidadTextos}>
+                      <span className={style.utilidadLabel}>Personalizar</span>
+                      <span className={style.utilidadHint}>
+                        {esHoy ? "Cambiá tus preguntas o agregá más" : "Solo para el día de hoy"}
+                      </span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className={style.utilidadItem}
+                    role="menuitem"
+                    disabled={!esHoy}
+                    onClick={() => {
+                      setUtilidadesOpen(false);
+                      setPlantillasOpen(true);
+                    }}
+                  >
+                    <span className={style.utilidadIcono}><FiGrid /></span>
+                    <span className={style.utilidadTextos}>
+                      <span className={style.utilidadLabel}>Plantillas</span>
+                      <span className={style.utilidadHint}>
+                        {esHoy ? "Sets de preguntas" : "Solo para el día de hoy"}
+                      </span>
+                    </span>
+                  </button>
+                </div>
+              </>
+            ) : null}
             {plantillasOpen ? (
               <>
                 <div
@@ -907,9 +961,25 @@ function Journaling() {
               </>
             ) : null}
           </div>
-          ) : null}
         </div>
       </header>
+
+      {/* Calendario en popup (teléfono) */}
+      {calOpen ? (
+        <div className={style.calOverlay} onClick={() => setCalOpen(false)} role="presentation">
+          <div className={style.calPopup} onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className={style.calPopupCerrar}
+              onClick={() => setCalOpen(false)}
+              aria-label="Cerrar"
+            >
+              <FiX />
+            </button>
+            {renderCalendario()}
+          </div>
+        </div>
+      ) : null}
 
       <div className={style.cols}>
         {/* La hoja: se escribe DIRECTAMENTE sobre el papel (lo que ves es lo
