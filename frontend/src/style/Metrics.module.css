@@ -1524,3 +1524,54 @@
 .rankSwitchBtn {
   border-radius: 7px;
 }
+
+/* ---- Métricas: títulos más chicos, barras finas, rótulos en minúscula,
+        calendario verde con hover de borde fino, ranking sin luz ---- */
+.pageTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.chartHeader h2 {
+  font-size: 1rem;
+}
+
+.chartHeader > strong {
+  font-size: 1.05rem;
+}
+
+.kicker {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+
+.compTrack {
+  height: 5px;
+}
+
+.compFill {
+  min-width: 3px;
+  box-shadow: none;
+}
+
+/* Calendario: ícono verde y borde verde fino al pasar el mouse */
+.periodRow input::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) sepia(1) saturate(4) hue-rotate(60deg) brightness(1.1);
+}
+
+.periodRow select:hover,
+.periodRow input:hover,
+.periodRow select:focus,
+.periodRow input:focus {
+  outline: none;
+  border-color: var(--color-verde, #75f94c);
+}
+
+/* Ranking: el número con borde fino, sin relleno ni resplandor */
+.rankChip {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--color-text);
+  box-shadow: none;
+}
