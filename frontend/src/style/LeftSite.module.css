@@ -2365,9 +2365,9 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 
 /* ---- Panel izquierdo del Home: arranca a la altura de "Panel de movimientos"
         y las flechas del historial van solas, sin círculo de fondo ---- */
-.container {
-  padding-top: 2rem;
-}
+/* (la alineación con "Panel de movimientos" se hace bajando el contenido del
+   Home, no empujando esta columna: si no, la columna se pasa del alto del
+   monitor y queda cortada arriba al scrollear) */
 
 .movIcon {
   width: 24px;

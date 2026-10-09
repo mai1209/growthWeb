@@ -1403,3 +1403,12 @@
   border-radius: 8px;
   font-size: 0.78rem;
 }
+
+/* Home: el contenido arranca a la misma altura que la columna izquierda */
+.homeViewport .contentLayout {
+  margin-top: 0;
+}
+
+.homeViewport .dashboardInfoCard {
+  padding-top: 0;
+}
