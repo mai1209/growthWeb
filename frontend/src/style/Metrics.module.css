@@ -1575,3 +1575,14 @@
   color: var(--color-text);
   box-shadow: none;
 }
+
+/* ---- Métricas: panel sin fondo, solo el borde y las líneas divisorias ---- */
+.unifiedPanel {
+  background: transparent;
+  box-shadow: none;
+}
+
+.unifiedPanel .statCard {
+  background: transparent;
+  box-shadow: none;
+}
