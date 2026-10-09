@@ -3143,3 +3143,32 @@
 .horaRow {
   width: fit-content;
 }
+
+/* Historial: gráfico SVG de barras finas (estilo Métricas) */
+.historyChart {
+  display: block;
+  height: auto;
+  padding: 0.6rem 0.4rem 0.2rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: transparent;
+  overflow-x: auto;
+}
+
+.historySvg {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+}
+
+.historyAxis {
+  fill: var(--color-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.historyValue {
+  fill: #75f94c;
+  font-size: 11px;
+  font-weight: 800;
+}

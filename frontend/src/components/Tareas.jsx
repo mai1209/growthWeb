@@ -1130,22 +1130,73 @@ function Tareas({ refreshKey, onTaskSaved, activeWorkspace = "personal" }) {
           <p className={style.emptyMessage}>No hay tareas en este período.</p>
         ) : (
           <>
+            {/* Barras finas con % arriba y eje 0–100, como "Avance" en Métricas */}
             <div className={style.historyChart}>
-              {buckets.map((b, index) => (
-                <div
-                  key={index}
-                  className={style.historyBar}
-                  title={`${b.label}: ${b.done}/${b.total} (${b.percent}%)`}
-                >
-                  <div className={style.historyBarTrack}>
-                    <div
-                      className={style.historyBarFill}
-                      style={{ height: `${b.percent}%` }}
-                    />
-                  </div>
-                  <span className={style.historyBarLabel}>{b.label}</span>
-                </div>
-              ))}
+              {(() => {
+                const LEFT = 34;
+                const COL = buckets.length > 12 ? 34 : 56;
+                const BODY = 10;
+                const TOP = 22;
+                const H = 200;
+                const BOTTOM = 26;
+                const PLOT = H - TOP - BOTTOM;
+                const W = LEFT + buckets.length * COL;
+                const yVal = (pct) => TOP + PLOT * (1 - pct / 100);
+                return (
+                  <svg
+                    className={style.historySvg}
+                    width={W}
+                    height={H}
+                    viewBox={`0 0 ${W} ${H}`}
+                    role="img"
+                    aria-label="Porcentaje de tareas completadas por período"
+                  >
+                    {[0, 25, 50, 75, 100].map((pct) => (
+                      <g key={pct}>
+                        <line
+                          x1={LEFT}
+                          x2={W}
+                          y1={yVal(pct)}
+                          y2={yVal(pct)}
+                          stroke="var(--border-color)"
+                          strokeWidth="1"
+                          opacity="0.5"
+                        />
+                        <text x={LEFT - 6} y={yVal(pct) + 3} textAnchor="end" className={style.historyAxis}>
+                          {pct}%
+                        </text>
+                      </g>
+                    ))}
+                    {buckets.map((b, i) => {
+                      const cx = LEFT + i * COL + COL / 2;
+                      const top = yVal(b.percent);
+                      const h = Math.max(b.total ? 3 : 0, yVal(0) - top);
+                      return (
+                        <g key={i}>
+                          <title>{`${b.label}: ${b.done}/${b.total} (${b.percent}%)`}</title>
+                          <rect
+                            x={cx - BODY / 2}
+                            y={yVal(0) - h}
+                            width={BODY}
+                            height={h}
+                            rx="3"
+                            fill="#75f94c"
+                            opacity={b.total ? 1 : 0.25}
+                          />
+                          {b.total ? (
+                            <text x={cx} y={Math.max(yVal(0) - h - 6, 10)} textAnchor="middle" className={style.historyValue}>
+                              {b.percent}%
+                            </text>
+                          ) : null}
+                          <text x={cx} y={H - 8} textAnchor="middle" className={style.historyAxis}>
+                            {b.label}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                );
+              })()}
             </div>
 
             <p className={style.historyLegend}>

@@ -2117,15 +2117,16 @@ function TaskStudioPage({ activeWorkspace = "personal" }) {
             {effectiveView !== "notes" && effectiveView !== "shopping" && (
               <div className={style.editorHeader}>
                 <div>
-                  <p className={style.cardKicker}>
-                    {effectiveView === "shopping"
-                      ? "Listas"
-                      : effectiveView === "afirmaciones"
-                      ? "Afirmaciones"
-                      : effectiveView === "journal"
-                      ? "Journaling"
-                      : "Notas"}
-                  </p>
+                  {/* Journaling ya tiene su propio título adentro: no repetimos el rótulo */}
+                  {effectiveView !== "journal" ? (
+                    <p className={style.cardKicker}>
+                      {effectiveView === "shopping"
+                        ? "Listas"
+                        : effectiveView === "afirmaciones"
+                        ? "Afirmaciones"
+                        : "Notas"}
+                    </p>
+                  ) : null}
                   {/* En journal y afirmaciones no mostramos título grande: alcanza
                       con el rótulo de arriba (la fecha / el propio panel hacen de título). */}
                   {effectiveView !== "journal" && effectiveView !== "afirmaciones" && (
