@@ -2482,3 +2482,8 @@ border: 1px solid rgba(255, 255, 255, 0.12);
 .panel {
   overflow-x: hidden;
 }
+
+.typePanel {
+  /* la columna de la grilla no puede crecer con el contenido (montos largos) */
+  grid-template-columns: minmax(0, 1fr);
+}
